@@ -47,7 +47,7 @@ const managementNavGroups = [
             { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
             { title: 'Usuários', href: '/admin/users', icon: Users },
             { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
-            { title: 'Ver como Arrematante', href: '/admin/bidder-impersonation', icon: Eye }, // Link Adicionado
+            { title: 'Ver como Arrematante', href: '/admin/bidder-impersonation', icon: Eye },
         ]
     },
      { 
@@ -184,17 +184,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                                 {platformNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                                 
                                 {/* Settings Sub-menu */}
-                                <Accordion type="single" collapsible defaultValue={pathname.startsWith('/admin/settings') ? 'settings' : undefined}>
-                                  <AccordionItem value="settings" className="border-b-0">
-                                    <AccordionTrigger className={cn("text-sm font-medium text-sidebar-foreground/80 hover:no-underline rounded-md px-3 py-1.5 hover:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent", pathname.startsWith('/admin/settings') && 'text-sidebar-accent-foreground bg-sidebar-accent')}>
-                                      <Settings className="mr-2 h-4 w-4" /> Configurações
-                                    </AccordionTrigger>
-                                    <AccordionContent className="pt-1 space-y-1 pl-4 border-l border-sidebar-border ml-3">
-                                       <NavButton item={{href: '/admin/settings', title: 'Visão Geral', icon: Settings}} pathname={pathname} onLinkClick={onLinkClick} />
-                                       {settingsSubNavItems.map(item => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                                    </AccordionContent>
-                                  </AccordionItem>
-                                </Accordion>
+                                <NavButton item={{href: '/admin/settings', title: 'Configurações', icon: Settings}} pathname={pathname} onLinkClick={onLinkClick} />
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>

@@ -14,12 +14,12 @@ import { getSeller, updateSeller, deleteSeller, type SellerFormData } from '../a
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, Gavel, Package, TrendingUp } from 'lucide-react';
+import { BarChart3, Users, Gavel, Package, TrendingUp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getSellerDashboardDataAction } from '../analysis/actions';
 import type { SellerDashboardData } from '@/services/seller.service';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Loader2 } from 'recharts';
+import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import FormPageLayout from '@/components/admin/form-page-layout'; 
 import type { SellerProfileInfo } from '@/types';

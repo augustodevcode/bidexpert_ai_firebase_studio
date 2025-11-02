@@ -1,19 +1,8 @@
-E1027 03:09:06.509158   47550 dev.go:79] Failed to load initial config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:09:06.509805   47550 watch.go:102] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: lstat /home/user/studio/dataconnect: no such file or directory
-I1027 03:09:06.642657   47550 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
-E1027 03:09:16.518171   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:09:26.521853   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:09:36.511983   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:09:46.519000   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:09:56.519832   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:10:06.510545   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:10:16.519981   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:10:26.518943   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:10:36.511162   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:10:46.518917   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:10:56.519914   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:11:06.512807   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:11:06.512871   47550 watch.go:102] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: lstat /home/user/studio/dataconnect: no such file or directory
-E1027 03:11:16.510318   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:11:26.519853   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:11:36.511180   47550 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+I1102 22:36:50.279008     976 load.go:31] Reloading schema and connectors...
+E1102 22:36:50.292034     976 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "". No service has a schema.
+E1102 22:36:50.292163     976 load.go:73] Could not load sources: 
+Errors: .dataconnect/schema/prelude.gql:2:6: Cannot redeclare type AccessLevel.
+I1102 22:36:50.292621     976 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+Generated sources: prelude.gql [73219B] 
+I1102 22:36:50.294294     976 load.go:74] Finished reloading
+I1102 22:36:50.310243     976 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001

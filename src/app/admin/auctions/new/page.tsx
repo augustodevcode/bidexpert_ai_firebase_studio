@@ -1,7 +1,7 @@
 // src/app/admin/auctions/new/page.tsx
 /**
  * @fileoverview Página para criação de um novo Leilão.
- * Este componente busca os dados necessários para os seletores (categorias,
+ * Este componente de cliente busca os dados necessários para os seletores (categorias,
  * leiloeiros, etc.) e renderiza o `AuctionForm` para entrada de dados,
  * utilizando a server action `createAuction` para persistir o novo registro.
  */
@@ -21,14 +21,34 @@ import { useRouter } from 'next/navigation';
 import type { AuctioneerProfileInfo, SellerProfileInfo, StateInfo, CityInfo, LotCategory, JudicialProcess } from '@/types';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
+import SellerForm from '@/app/admin/sellers/seller-form';
+import { createSeller } from '@/app/admin/sellers/actions';
+import AuctioneerForm from '@/app/admin/auctioneers/auctioneer-form';
+import { createAuctioneer } from '@/app/admin/auctioneers/actions';
+import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
+import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
+import CategoryForm from '@/app/admin/categories/category-form';
+import { createLotCategory } from '@/app/admin/categories/actions';
+
 
 function NewAuctionPageContent() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [initialData, setInitialData] = useState<any>(null);
+  const [dependencies, setDependencies] = useState<{
+    auctioneers: AuctioneerProfileInfo[],
+    sellers: SellerProfileInfo[],
+    states: StateInfo[],
+    allCities: CityInfo[],
+    categories: LotCategory[],
+    judicialProcesses: JudicialProcess[]
+  } | null>(null);
+
   const formRef = React.useRef<any>(null);
+
+  const [subform, setSubform] = useState<'auctioneer' | 'seller' | 'judicialProcess' | 'category' | null>(null);
 
   const loadInitialData = useCallback(async () => {
     setIsLoadingData(true);
@@ -41,7 +61,7 @@ function NewAuctionPageContent() {
         getLotCategories(),
         getJudicialProcesses(),
       ]);
-      setInitialData({ auctioneers, sellers, states, allCities: cities, categories, judicialProcesses });
+      setDependencies({ auctioneers, sellers, states, allCities: cities, categories, judicialProcesses });
     } catch (error) {
       toast({ title: "Erro ao Carregar Dados", description: "Não foi possível carregar os dados necessários para criar um leilão.", variant: "destructive" });
     } finally {
@@ -72,12 +92,21 @@ function NewAuctionPageContent() {
     return result;
   }
   
-  if (isLoadingData) {
+  if (isLoadingData || !dependencies) {
       return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
+  }
+  
+  const handleAddNewEntity = (entity: 'auctioneer' | 'seller' | 'judicialProcess' | 'category') => {
+    setSubform(entity);
+  }
+
+  const handleSubformSuccess = () => {
+    setSubform(null);
+    loadInitialData();
   }
 
   return (
-     <div data-ai-id="admin-auction-form-card">
+     <>
         <FormPageLayout
             formTitle="Novo Leilão"
             formDescription="Preencha os detalhes para criar um novo leilão."
@@ -89,17 +118,68 @@ function NewAuctionPageContent() {
             onCancel={() => router.push('/admin/auctions')}
         >
             <AuctionForm
-                ref={formRef}
-                auctioneers={initialData.auctioneers}
-                sellers={initialData.sellers}
-                states={initialData.states}
-                allCities={initialData.allCities}
-                categories={initialData.categories}
-                judicialProcesses={initialData.judicialProcesses}
+                formRef={formRef}
+                auctioneers={dependencies.auctioneers}
+                sellers={dependencies.sellers}
+                states={dependencies.states}
+                allCities={dependencies.allCities}
+                categories={dependencies.categories}
+                judicialProcesses={dependencies.judicialProcesses}
                 onSubmitAction={handleCreateAuction}
+                onAddNewEntity={handleAddNewEntity}
+                formTitle=''
+                formDescription=''
             />
         </FormPageLayout>
-    </div>
+
+        <CrudFormContainer
+          isOpen={!!subform}
+          onClose={() => setSubform(null)}
+          title={`Novo(a) ${subform === 'auctioneer' ? 'Leiloeiro' : subform === 'seller' ? 'Comitente' : subform === 'judicialProcess' ? 'Processo Judicial' : 'Categoria'}`}
+          description="Preencha os dados abaixo. Após salvar, este registro estará disponível para seleção."
+        >
+          {subform === 'seller' && (
+              <SellerForm
+                  allStates={dependencies.states}
+                  allCities={dependencies.allCities}
+                  judicialBranches={[]} 
+                  onSubmitAction={(data) => createSeller(data)}
+                  onSuccess={handleSubformSuccess}
+                  onCancel={() => setSubform(null)}
+              />
+          )}
+           {subform === 'auctioneer' && (
+              <AuctioneerForm
+                  allStates={dependencies.states}
+                  allCities={dependencies.allCities}
+                  onSubmitAction={(data) => createAuctioneer(data)}
+                  onSuccess={handleSubformSuccess}
+                  onCancel={() => setSubform(null)}
+              />
+          )}
+           {subform === 'judicialProcess' && (
+              <JudicialProcessForm
+                  courts={[]} 
+                  allDistricts={[]}
+                  allBranches={[]}
+                  sellers={dependencies.sellers}
+                  onSubmitAction={(data) => createJudicialProcessAction(data)}
+                  onSuccess={handleSubformSuccess}
+                  onCancel={() => setSubform(null)}
+                  formTitle=""
+                  formDescription=""
+              />
+          )}
+          {subform === 'category' && (
+             <CategoryForm
+                  onSubmitAction={(data) => createLotCategory(data)}
+                  formTitle=""
+                  formDescription=""
+                  submitButtonText="Criar Categoria"
+              />
+          )}
+        </CrudFormContainer>
+     </>
   );
 }
 

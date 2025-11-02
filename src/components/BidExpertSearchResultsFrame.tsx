@@ -129,7 +129,7 @@ export default function BidExpertSearchResultsFrame<TItem extends {id: string}>(
   onItemsPerPageChange,
   onDeleteSelected,
 }: BidExpertSearchResultsFrameProps<TItem>) {
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('table');
   const [currentSortBy, setCurrentSortBy] = useState(initialSortBy);
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
   const itemsPerPage = controlledItemsPerPage || platformSettings?.searchItemsPerPage || 12;

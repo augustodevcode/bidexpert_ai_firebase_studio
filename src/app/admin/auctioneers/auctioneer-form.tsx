@@ -137,7 +137,13 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            {/* O CrudFormContainer agora gerencia os botões de ação globais */}
+            <div className="flex justify-end gap-2 pt-4">
+                {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+                <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+                    {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
+                    Salvar
+                </Button>
+            </div>
           </form>
       </Form>
       <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />

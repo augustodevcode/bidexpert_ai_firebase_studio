@@ -1,6 +1,6 @@
 // src/app/api/[[...slug]]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { tenantContext } from '@/lib/prisma';
+import { tenantContext } from '@/lib/tenant-context';
 import { getSession } from '@/server/lib/session';
 
 async function handler(req: NextRequest) {

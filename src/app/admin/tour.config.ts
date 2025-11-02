@@ -1,34 +1,45 @@
-
-// Guided Tour Configuration for the Admin Panel
+// src/app/admin/tour.config.ts
+/**
+ * @fileoverview Configuração para o tour guiado do painel de administração.
+ * Define os passos, alvos e conteúdo para guiar novos usuários.
+ */
 
 export interface TourStep {
   id: string;
   title: string;
   content: string;
-  target: string; // CSS selector for the element to highlight
+  target: string; // CSS selector
   order: number;
 }
 
+// Tour para a página de gerenciamento de Ativos (/admin/assets)
 export const assetsTour: TourStep[] = [
   {
     id: 'assets-step-1',
-    title: 'Lista de Ativos',
-    content: 'Aqui você encontra a lista de todos os ativos cadastrados. Você pode buscar, filtrar e ordenar os resultados.',
-    target: '#assets-data-table',
+    title: 'Bem-vindo ao Gerenciador de Ativos!',
+    content: 'Esta tabela lista todos os ativos (bens) cadastrados na plataforma. Ativos são os itens individuais antes de serem agrupados em lotes.',
+    target: '[data-ai-id="data-table-container"]',
     order: 1,
   },
   {
     id: 'assets-step-2',
-    title: 'Criar Novo Ativo',
-    content: 'Use este botão para abrir o formulário e cadastrar um novo ativo na plataforma.',
-    target: "button[name='Create Asset']",
+    title: 'Busca e Filtros',
+    content: 'Use a barra de busca e os filtros para encontrar ativos específicos rapidamente por nome, status, etc.',
+    target: '[data-ai-id="data-table-toolbar"]',
     order: 2,
   },
-  {
+   {
     id: 'assets-step-3',
-    title: 'Ações',
-    content: 'Para cada ativo, você pode editar ou excluir o registro usando estas ações.',
-    target: '.row-actions',
+    title: 'Criar Novo Ativo',
+    content: 'Clique aqui para cadastrar um novo bem. O formulário será aberto em um painel lateral ou modal.',
+    target: '[data-ai-id="admin-assets-card"] button',
     order: 3,
+  },
+  {
+    id: 'assets-step-4',
+    title: 'Visualização',
+    content: 'Alterne entre os modos de visualização: Tabela (padrão), Grade de cards ou Lista.',
+    target: '[data-ai-id="bid-expert-search-results-frame"] .flex.items-center.gap-1',
+    order: 4,
   },
 ];

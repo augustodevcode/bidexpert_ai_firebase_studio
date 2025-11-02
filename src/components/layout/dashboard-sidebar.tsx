@@ -17,7 +17,7 @@ import {
     BarChart, 
     Bell, 
     Settings,
-    Briefcase,
+    Briefcase as ConsignorIcon,
     ShieldCheck,
     Menu
 } from 'lucide-react';
@@ -39,21 +39,21 @@ const mainNavItems = [
 ];
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType }; pathname: string; onLinkClick?: () => void }) => (
-  <Button
-    key={item.href}
-    variant={pathname === item.href || (item.href !== '/dashboard/overview' && pathname.startsWith(item.href)) ? 'secondary' : 'ghost'}
-    className={cn(
-      'w-full justify-start',
-      (pathname === item.href || (item.href !== '/dashboard/overview' && pathname.startsWith(item.href))) && 'font-semibold text-primary hover:text-primary'
-    )}
-    asChild
-    onClick={onLinkClick}
-  >
-    <Link href={item.href}>
-      <item.icon className="mr-2 h-4 w-4" />
-      {item.title}
-    </Link>
-  </Button>
+    <Button
+        key={item.href}
+        variant={pathname === item.href || (item.href !== '/dashboard/overview' && pathname.startsWith(item.href)) ? 'secondary' : 'ghost'}
+        className={cn(
+            'w-full justify-start',
+            (pathname === item.href || (item.href !== '/dashboard/overview' && pathname.startsWith(item.href))) && 'font-semibold text-primary hover:text-primary'
+        )}
+        asChild
+        onClick={onLinkClick}
+    >
+        <Link href={item.href}>
+            <item.icon className="mr-2 h-4 w-4" />
+            {item.title}
+        </Link>
+    </Button>
 );
 
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
@@ -78,7 +78,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 {(canSeeConsignorDashboard || canSeeAdminDashboard) && <Separator className="my-2"/>}
                 
                 {canSeeConsignorDashboard && (
-                    <NavButton item={{href: '/consignor-dashboard/overview', title: 'Painel Comitente', icon: Briefcase}} pathname={pathname} onLinkClick={onLinkClick} />
+                    <NavButton item={{href: '/consignor-dashboard/overview', title: 'Painel Comitente', icon: ConsignorIcon}} pathname={pathname} onLinkClick={onLinkClick} />
                 )}
 
                 {canSeeAdminDashboard && (
@@ -97,22 +97,19 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
 
 export default function DashboardSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  
   return (
     <>
-      {/* Mobile Sidebar */}
-      <div className="md:hidden">
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/50 backdrop-blur-sm">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
-            <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
-          </SheetContent>
-        </Sheet>
-      </div>
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50 bg-background/50 backdrop-blur-sm">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+          <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
       {/* Desktop Sidebar */}
       <aside data-ai-id="user-dashboard-sidebar" className="sticky top-0 h-screen w-64 bg-background border-r flex-col hidden md:flex">

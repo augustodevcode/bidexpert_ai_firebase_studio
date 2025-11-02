@@ -56,4 +56,7 @@ export class TenantService {
     return this.tenantRepository.findBySubdomain(subdomain);
   }
 
+  async deleteMany(args: any) {
+    await this.tenantRepository.deleteMany(args);
+  }
 }

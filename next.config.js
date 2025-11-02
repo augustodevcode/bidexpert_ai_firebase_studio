@@ -1,11 +1,5 @@
 /** @type {import('next').NextConfig} */
-
-console.log(`[next.config.js] LOG: Reading Next.js configuration for NODE_ENV: ${process.env.NODE_ENV}`);
-
-const isDevelopment = process.env.NODE_ENV === 'development';
-
-const config = {
-  /* config options here */
+const nextConfig = {
   typescript: {
     // Forçar a verificação de erros de TypeScript durante o build de desenvolvimento
     ignoreBuildErrors: false,
@@ -38,7 +32,4 @@ const config = {
   },
 };
 
-// A lógica original foi alterada para sempre habilitar os checks.
-console.log(`[next.config.js] LOG: Strict build checks are now ENABLED for all environments.`);
-
-module.exports = config;
+module.exports = nextConfig;

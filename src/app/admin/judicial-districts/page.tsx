@@ -9,18 +9,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getJudicialDistricts, deleteJudicialDistrict, createJudicialDistrict, updateJudicialDistrict } from './actions';
+import { getJudicialDistricts, deleteJudicialDistrict, createJudicialDistrict, updateJudicialDistrict } from '@/app/admin/judicial-districts/actions';
 import type { JudicialDistrict, PlatformSettings, JudicialDistrictFormData, Court, StateInfo } from '@/types';
 import { PlusCircle, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { createColumns } from './columns';
+import { createColumns } from '@/app/admin/judicial-districts/columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getCourts } from '../courts/actions';
-import { getStates } from '../states/actions';
+import { getCourts } from '@/app/admin/courts/actions';
+import { getStates } from '@/app/admin/states/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import JudicialDistrictForm from './judicial-district-form';
+import JudicialDistrictForm from '@/app/admin/judicial-districts/judicial-district-form';
 
 export default function AdminJudicialDistrictsPage() {
   const [districts, setDistricts] = useState<JudicialDistrict[]>([]);
@@ -31,8 +31,8 @@ export default function AdminJudicialDistrictsPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   // Form Modal State
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingDistrict, setEditingDistrict] = useState<JudicialDistrict | null>(null);
+  const [modalState, setModalState] = useState<{ mode: 'closed' | 'create' | 'edit'; data?: JudicialDistrict }>({ mode: 'closed' });
+  const [isSubformOpen, setIsSubformOpen] = useState<'court' | 'state' | null>(null);
 
   // Dependencies for the form
   const [dependencies, setDependencies] = useState<{ courts: Court[], states: StateInfo[] } | null>(null);
@@ -67,21 +67,16 @@ export default function AdminJudicialDistrictsPage() {
   
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
-  }, []);
+    if(isSubformOpen) {
+      setIsSubformOpen(null);
+    }
+  }, [isSubformOpen]);
 
-  const handleNewClick = () => {
-    setEditingDistrict(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditClick = (district: JudicialDistrict) => {
-    setEditingDistrict(district);
-    setIsFormOpen(true);
-  };
+  const handleNewClick = () => setModalState({ mode: 'create' });
+  const handleEditClick = (district: JudicialDistrict) => setModalState({ mode: 'edit', data: district });
   
   const handleFormSuccess = () => {
-      setIsFormOpen(false);
-      setEditingDistrict(null);
+      setModalState({ mode: 'closed' });
       onUpdate();
   };
 
@@ -107,8 +102,8 @@ export default function AdminJudicialDistrictsPage() {
   const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
 
   const formAction = async (data: JudicialDistrictFormData) => {
-    if (editingDistrict) {
-      return updateJudicialDistrict(editingDistrict.id, data);
+    if (modalState.mode === 'edit' && modalState.data) {
+      return updateJudicialDistrict(modalState.data.id, data);
     }
     return createJudicialDistrict(data);
   };
@@ -155,27 +150,35 @@ export default function AdminJudicialDistrictsPage() {
                 searchTypeLabel="comarcas"
                 searchColumnId="name"
                 searchPlaceholder="Buscar por nome da comarca..."
-                onDeleteSelected={handleDeleteSelected as any}
+                onDeleteSelected={handleDeleteSelected}
                 sortOptions={[{ value: 'name', label: 'Nome' }]}
             />
         </CardContent>
       </Card>
     </div>
      <CrudFormContainer
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        isOpen={modalState.mode !== 'closed'}
+        onClose={() => setModalState({ mode: 'closed' })}
         mode={platformSettings?.crudFormMode || 'modal'}
-        title={editingDistrict ? 'Editar Comarca' : 'Nova Comarca'}
-        description={editingDistrict ? 'Modifique os detalhes da comarca.' : 'Cadastre uma nova comarca judicial.'}
+        title={modalState.mode === 'edit' ? 'Editar Comarca' : 'Nova Comarca'}
+        description={modalState.mode === 'edit' ? 'Modifique os detalhes da comarca.' : 'Cadastre uma nova comarca judicial.'}
     >
         <JudicialDistrictForm
-            initialData={editingDistrict}
+            initialData={modalState.mode === 'edit' ? modalState.data : null}
             courts={dependencies.courts}
             states={dependencies.states}
             onSubmitAction={formAction}
             onSuccess={handleFormSuccess}
+            onCancel={() => setModalState({ mode: 'closed' })}
+            onAddNewEntity={(entity) => {
+              // Esta é a lógica para abrir um sub-modal.
+              // A implementação real do sub-modal viveria aqui,
+              // gerenciando seu próprio estado de abertura.
+              alert(`Ação para abrir o modal de criação de '${entity}'`);
+            }}
         />
     </CrudFormContainer>
     </>
   );
 }
+

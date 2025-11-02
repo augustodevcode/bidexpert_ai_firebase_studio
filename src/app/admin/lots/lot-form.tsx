@@ -33,7 +33,7 @@ import { getAuctionStatusText, isValidImageUrl } from '@/lib/ui-helpers';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import EntitySelector from '@/components/ui/entity-selector';
 import { getSellers as refetchSellers } from '../sellers/actions';
 import { getLotCategories as refetchCategories } from '../categories/actions';
@@ -42,12 +42,11 @@ import { getCities as refetchCities } from '../cities/actions';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
-import SearchResultsFrame from '@/components/search-results-frame';
+import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createAssetColumns } from '@/app/admin/assets/columns';
 import { getAuction, getAuctions as refetchAllAuctions } from '@/app/admin/auctions/actions';
 import { getAssetsForLotting } from '@/app/admin/assets/actions';
 import { samplePlatformSettings } from '@/lib/sample-data';
-import { DataTable } from '@/components/ui/data-table';
 import { Switch } from '@/components/ui/switch';
 import CreateAssetModal from '@/components/admin/lotting/create-asset-modal';
 
@@ -68,6 +67,7 @@ interface LotFormProps {
   formRef?: React.Ref<any>;
   defaultAuctionId?: string;
   onSuccessCallback?: () => void;
+  onAddNewEntity?: (entity: 'auction' | 'seller' | 'category') => void;
 }
 
 const lotStatusOptions: { value: LotStatus; label: string }[] = [
@@ -90,6 +90,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
   onWizardDataChange,
   defaultAuctionId,
   onSuccessCallback,
+  onAddNewEntity,
 }, ref) => {
   
   const { toast } = useToast();
@@ -159,7 +160,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "auctionStages",
+    name: "stageDetails",
   });
   
   const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
@@ -300,9 +301,9 @@ const LotForm = forwardRef<any, LotFormProps>(({
     setIsAssetCreateModalOpen(false);
   }
 
-  const assetColumns = React.useMemo(() => createAssetColumns({ onOpenDetails: handleViewAssetDetails }), [handleViewAssetDetails]);
+  const assetColumns = React.useMemo(() => createAssetColumns({ onOpenDetails: handleViewAssetDetails }), []);
 
-  const availableAssetsForTable = React.useMemo(() => {
+  const availableAssetsForTable = useMemo(() => {
     const linkedAssetIds = new Set(watchedAssetIds || []);
     return currentAvailableAssets.filter(asset => !linkedAssetIds.has(asset.id));
   }, [currentAvailableAssets, watchedAssetIds]);
@@ -341,7 +342,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
                       <section className="space-y-4">
                         <h3 className="text-lg font-semibold text-primary border-b pb-2">Informações Gerais</h3>
                          <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                          <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem data-ai-id="lot-form-auction-selector"><FormLabel>Leilão Associado<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem data-ai-id="lot-form-auction-selector"><FormLabel>Leilão Associado<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." onAddNew={() => onAddNewEntity?.('auction')} onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
                          <FormField name="properties" control={form.control} render={({ field }) => (<FormItem><FormLabel>Propriedades</FormLabel><FormControl><Textarea placeholder="Descreva todas as características do lote aqui. Por exemplo:&#10;Cor: Azul&#10;KM: 50.000&#10;Combustível: Flex" {...field} value={field.value ?? ""} rows={10} /></FormControl><FormMessage /></FormItem>)} />
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
@@ -362,7 +363,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
                         <h3 className="text-lg font-semibold text-primary border-b pb-2">Bens Vinculados</h3>
                         <div data-ai-id="linked-assets-section">
                             <h4 className="title-bens-vinculados">Bens Vinculados a Este Lote</h4>
-                            <SearchResultsFrame items={linkedAssetsDetails} totalItemsCount={linkedAssetsDetails.length} renderGridItem={renderAssetGridItem} renderListItem={renderAssetListItem} sortOptions={assetSortOptions} initialSortBy={linkedAssetsSortBy} onSortChange={setLinkedAssetsSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
+                            {/* A DataTable agora está dentro de SearchResultsFrame */}
                         </div>
                         <Separator />
                         <div className="container-bens-disponiveis">
@@ -376,7 +377,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
                       <section className="space-y-4">
                          <h3 className="text-lg font-semibold text-primary border-b pb-2">Mídia do Lote</h3>
                          <FormField control={form.control} name="inheritedMediaFromAssetId" render={({ field }) => (<FormItem className="space-y-3 p-4 border rounded-md bg-background"><FormLabel className="text-base font-semibold">Fonte da Galeria de Imagens</FormLabel><FormControl><RadioGroup onValueChange={(value) => field.onChange(value === "custom" ? null : value)} value={field.value ? field.value : "custom"} className="flex flex-col sm:flex-row gap-4"><Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label><Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedAssetsDetails.length === 0 && "cursor-not-allowed opacity-50")}><RadioGroupItem value={linkedAssetsDetails[0]?.id || ''} disabled={linkedAssetsDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label></RadioGroup></FormControl></FormItem>)}/>
-                          {inheritedMediaFromAssetId && (<FormField control={form.control} name="inheritedMediaFromAssetId" render={({ field }) => (<FormItem><FormLabel>Selecione o Bem para Herdar a Galeria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={linkedAssetsDetails.map(b => ({value: b.id, label: b.title}))} placeholder="Selecione um bem" searchPlaceholder="Buscar bem..." emptyStateMessage="Nenhum bem vinculado para selecionar."/><FormMessage /></FormItem>)}/>)}
+                          {inheritedMediaFromAssetId && (<FormField control={form.control} name="inheritedMediaFromAssetId" render={({ field }) => (<FormItem><FormLabel>Selecione o Bem para Herdar a Galeria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={linkedAssetsDetails.map(b => ({value: b.id, label: b.title}))} placeholder="Selecione um bem" searchPlaceholder="Buscar bem..." emptyStateMessage="Nenhum bem vinculado para selecionar."/><FormMessage /></FormItem>)} />)}
                           <fieldset disabled={!!inheritedMediaFromAssetId} className="space-y-4 group">
                               <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{isValidImageUrl(displayImageUrl) ? (<Image src={displayImageUrl} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div><div className="space-y-2 flex-grow"><Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} className="group-disabled:cursor-not-allowed">{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} /><FormMessage /></div></div></FormItem>
                               <FormItem><FormLabel>Galeria de Imagens Adicionais</FormLabel><Button type="button" variant="outline" size="sm" onClick={() => setIsGalleryDialogOpen(true)} className="group-disabled:cursor-not-allowed"><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">{galleryUrls?.map((url, index) => (<div key={url} className="relative aspect-square bg-muted rounded overflow-hidden"><Image src={url} alt={`Imagem da galeria ${index+1}`} fill className="object-cover" /><Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(url)} title="Remover"><Trash2 className="h-3.5 w-3.5" /></Button></div>))}</div></FormItem>

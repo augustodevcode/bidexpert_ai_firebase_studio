@@ -13,9 +13,14 @@ export class TenantRepository {
     });
   }
 
-  async findById(id: string): Promise<Tenant | null> {
+  async findById(id: bigint): Promise<Tenant | null> {
     return prisma.tenant.findUnique({
       where: { id },
     });
+  }
+
+  async deleteMany(args: Prisma.TenantDeleteManyArgs): Promise<Prisma.BatchPayload> {
+    // A correção é garantir que 'args' (que contém a cláusula 'where') seja passado diretamente.
+    return prisma.tenant.deleteMany(args);
   }
 }

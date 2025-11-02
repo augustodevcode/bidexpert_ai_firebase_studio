@@ -52,6 +52,7 @@ interface JudicialProcessFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  onAddNewEntity?: (entity: 'court' | 'district' | 'branch' | 'seller') => void;
 }
 
 const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
@@ -88,6 +89,7 @@ export default function JudicialProcessForm({
   formTitle,
   formDescription,
   submitButtonText,
+  onAddNewEntity,
 }: JudicialProcessFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -335,9 +337,9 @@ export default function JudicialProcessForm({
               
               <Separator />
               <h3 className="text-md font-semibold text-muted-foreground pt-2">Localização e Comitente</h3>
-              <FormField control={form.control} name="courtId" render={({ field }) => (<FormItem><FormLabel>Tribunal<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal encontrado" createNewUrl="/admin/courts/new" editUrlPrefix="/admin/courts" onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} /><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="districtId" render={({ field }) => (<FormItem><FormLabel>Comarca<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredDistricts.map(d => ({ value: d.id, label: d.name }))} placeholder={!selectedCourtId ? "Selecione um tribunal" : "Selecione a comarca"} searchPlaceholder="Buscar comarca..." emptyStateMessage="Nenhuma comarca encontrada" createNewUrl="/admin/judicial-districts/new" editUrlPrefix="/admin/judicial-districts" onRefetch={() => handleRefetch('districts')} isFetching={isFetchingDistricts} disabled={!selectedCourtId} /><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="branchId" render={({ field }) => (<FormItem><FormLabel>Vara<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredBranches.map(b => ({ value: b.id, label: b.name }))} placeholder={!selectedDistrictId ? "Selecione uma comarca" : "Selecione a vara"} searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada" createNewUrl="/admin/judicial-branches/new" editUrlPrefix="/admin/judicial-branches" onRefetch={() => handleRefetch('branches')} isFetching={isFetchingBranches} disabled={!selectedDistrictId} /><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="courtId" render={({ field }) => (<FormItem><FormLabel>Tribunal<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal encontrado" onAddNew={() => onAddNewEntity?.('court')} onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} /><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="districtId" render={({ field }) => (<FormItem><FormLabel>Comarca<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredDistricts.map(d => ({ value: d.id, label: d.name }))} placeholder={!selectedCourtId ? "Selecione um tribunal" : "Selecione a comarca"} searchPlaceholder="Buscar comarca..." emptyStateMessage="Nenhuma comarca encontrada" onAddNew={() => onAddNewEntity?.('district')} onRefetch={() => handleRefetch('districts')} isFetching={isFetchingDistricts} disabled={!selectedCourtId} /><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="branchId" render={({ field }) => (<FormItem><FormLabel>Vara<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredBranches.map(b => ({ value: b.id, label: b.name }))} placeholder={!selectedDistrictId ? "Selecione uma comarca" : "Selecione a vara"} searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada" onAddNew={() => onAddNewEntity?.('branch')} onRefetch={() => handleRefetch('branches')} isFetching={isFetchingBranches} disabled={!selectedDistrictId} /><FormMessage /></FormItem>)}/>
               
               <FormField control={form.control} name="sellerId" render={({ field }) => (
                   <FormItem>
@@ -350,8 +352,7 @@ export default function JudicialProcessForm({
                           placeholder="Selecione ou crie um comitente" 
                           searchPlaceholder="Buscar comitente..." 
                           emptyStateMessage="Nenhum comitente judicial." 
-                          createNewUrl="/admin/sellers/new" 
-                          editUrlPrefix="/admin/sellers"
+                          onAddNew={() => onAddNewEntity?.('seller')}
                           onRefetch={() => handleRefetch('sellers')}
                           isFetching={isFetchingSellers}
                           disabled={isCreatingSeller}

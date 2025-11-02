@@ -14,22 +14,21 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { judicialDistrictFormSchema, type JudicialDistrictFormValues } from './judicial-district-form-schema';
+import { judicialDistrictFormSchema, type JudicialDistrictFormValues } from '@/app/admin/judicial-districts/judicial-district-form-schema';
 import type { JudicialDistrict, Court, StateInfo } from '@/types';
 import { Loader2, Save, Map } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import EntitySelector from '@/components/ui/entity-selector';
-import { getCourts } from '../courts/actions';
-import { getStates } from '../states/actions';
+import { getCourts } from '@/app/admin/courts/actions';
+import { getStates } from '@/app/admin/states/actions';
 
 interface JudicialDistrictFormProps {
   initialData?: JudicialDistrict | null;
   courts: Court[];
   states: StateInfo[];
   onSubmitAction: (data: JudicialDistrictFormValues) => Promise<{ success: boolean; message: string; districtId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  onSuccess?: (districtId?: string) => void;
+  onCancel?: () => void;
+  onAddNewEntity?: (entity: 'court' | 'state') => void;
 }
 
 export default function JudicialDistrictForm({
@@ -37,12 +36,11 @@ export default function JudicialDistrictForm({
   courts: initialCourts,
   states: initialStates,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
+  onSuccess,
+  onCancel,
+  onAddNewEntity,
 }: JudicialDistrictFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const [courts, setCourts] = React.useState(initialCourts);
@@ -53,14 +51,11 @@ export default function JudicialDistrictForm({
   const form = useForm<JudicialDistrictFormValues>({
     resolver: zodResolver(judicialDistrictFormSchema),
     mode: 'onChange',
-    defaultValues: {
-      name: initialData?.name || '',
-      courtId: initialData?.courtId || '',
-      stateId: initialData?.stateId || '',
-      zipCode: initialData?.zipCode || '',
-    },
+    defaultValues: initialData || {},
   });
-  
+
+  const { formState } = form;
+
   const handleRefetch = React.useCallback(async (entity: 'courts' | 'states') => {
     if (entity === 'courts') {
       setIsFetchingCourts(true);
@@ -81,8 +76,7 @@ export default function JudicialDistrictForm({
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
-        router.push('/admin/judicial-districts');
-        router.refresh();
+        if(onSuccess) onSuccess(result.districtId);
       } else {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
       }
@@ -94,74 +88,66 @@ export default function JudicialDistrictForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-lg" data-ai-id="judicial-district-form-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Map className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
-            <FormField control={form.control} name="name" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome da Comarca<span className="text-destructive">*</span></FormLabel>
-                <FormControl><Input placeholder="Ex: Comarca de Lagarto" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField control={form.control} name="courtId" render={({ field }) => (
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-4">
+                <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tribunal<span className="text-destructive">*</span></FormLabel>
-                    <EntitySelector
-                      entityName="court"
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={courts.map(c => ({ value: c.id, label: `${c.name} (${c.stateUf})` }))}
-                      placeholder="Selecione o tribunal"
-                      searchPlaceholder="Buscar tribunal..."
-                      emptyStateMessage="Nenhum tribunal."
-                      createNewUrl="/admin/courts/new"
-                      editUrlPrefix="/admin/courts"
-                      onRefetch={() => handleRefetch('courts')}
-                      isFetching={isFetchingCourts}
-                    />
-                <FormMessage />
+                    <FormLabel>Nome da Comarca<span className="text-destructive">*</span></FormLabel>
+                    <FormControl><Input placeholder="Ex: Comarca de Lagarto" {...field} /></FormControl>
+                    <FormMessage />
                 </FormItem>
                 )} />
-                <FormField control={form.control} name="stateId" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estado<span className="text-destructive">*</span></FormLabel>
-                    <EntitySelector
-                      entityName="state"
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={states.map(s => ({ value: s.id, label: s.name }))}
-                      placeholder="Selecione o estado"
-                      searchPlaceholder="Buscar estado..."
-                      emptyStateMessage="Nenhum estado."
-                      createNewUrl="/admin/states/new"
-                      editUrlPrefix="/admin/states"
-                      onRefetch={() => handleRefetch('states')}
-                      isFetching={isFetchingStates}
-                    />
-                <FormMessage />
-                </FormItem>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="courtId" render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Tribunal<span className="text-destructive">*</span></FormLabel>
+                        <EntitySelector
+                        entityName="Tribunal"
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={courts.map(c => ({ value: c.id, label: `${c.name} (${c.stateUf})` }))}
+                        placeholder="Selecione o tribunal"
+                        searchPlaceholder="Buscar tribunal..."
+                        emptyStateMessage="Nenhum tribunal."
+                        onAddNew={() => onAddNewEntity?.('court')}
+                        onRefetch={() => handleRefetch('courts')}
+                        isFetching={isFetchingCourts}
+                        />
+                    <FormMessage />
+                    </FormItem>
+                    )} />
+                    <FormField control={form.control} name="stateId" render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Estado<span className="text-destructive">*</span></FormLabel>
+                        <EntitySelector
+                        entityName="Estado"
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={states.map(s => ({ value: s.id, label: s.name }))}
+                        placeholder="Selecione o estado"
+                        searchPlaceholder="Buscar estado..."
+                        emptyStateMessage="Nenhum estado."
+                        onAddNew={() => onAddNewEntity?.('state')}
+                        onRefetch={() => handleRefetch('states')}
+                        isFetching={isFetchingStates}
+                        />
+                    <FormMessage />
+                    </FormItem>
+                    )} />
+                </div>
+                <FormField control={form.control} name="zipCode" render={({ field }) => (
+                <FormItem><FormLabel>CEP (Opcional)</FormLabel><FormControl><Input placeholder="49400-000" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                 )} />
             </div>
-            <FormField control={form.control} name="zipCode" render={({ field }) => (
-              <FormItem><FormLabel>CEP (Opcional)</FormLabel><FormControl><Input placeholder="49400-000" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
-            )} />
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/judicial-districts')} disabled={isSubmitting}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
+            <div className="flex justify-end gap-2 pt-4">
+                {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+                <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Salvar
+                </Button>
+            </div>
         </form>
       </Form>
-    </Card>
   );
 }

@@ -6,12 +6,12 @@ import type { Prisma } from '@prisma/client';
 export class MediaRepository {
   async findAll(): Promise<MediaItem[]> {
     // @ts-ignore
-    return prisma.mediaItem.findMany({ orderBy: { createdAt: 'desc' } });
+    return prisma.mediaItem.findMany({ orderBy: { uploadedAt: 'desc' } });
   }
 
   async findById(id: string): Promise<MediaItem | null> {
     // @ts-ignore
-    return prisma.mediaItem.findUnique({ where: { id } });
+    return prisma.mediaItem.findUnique({ where: { id: id } });
   }
 
   async create(data: Prisma.MediaItemCreateInput): Promise<MediaItem> {
@@ -21,11 +21,11 @@ export class MediaRepository {
 
   async update(id: string, data: Prisma.MediaItemUpdateInput): Promise<MediaItem> {
     // @ts-ignore
-    return prisma.mediaItem.update({ where: { id }, data });
+    return prisma.mediaItem.update({ where: { id: id }, data });
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.mediaItem.delete({ where: { id } });
+    await prisma.mediaItem.delete({ where: { id: id } });
   }
 
   async deleteAll(): Promise<void> {

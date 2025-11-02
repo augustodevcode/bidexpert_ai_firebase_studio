@@ -62,8 +62,8 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction?.auctionType);
 
   React.useEffect(() => {
-    setIsFavorite(isLotFavoriteInStorage(lot.id));
-    setIsViewed(getRecentlyViewedIds().includes(lot.id));
+    setIsFavorite(isLotFavoriteInStorage(lot.id.toString()));
+    setIsViewed(getRecentlyViewedIds().includes(lot.id.toString()));
     if (typeof window !== 'undefined') {
         setLotFullUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
     }
@@ -75,9 +75,9 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
     if (newFavoriteState) {
-      addFavoriteLotIdToStorage(lot.id);
+      addFavoriteLotIdToStorage(lot.id.toString());
     } else {
-      removeFavoriteLotIdFromStorage(lot.id);
+      removeFavoriteLotIdFromStorage(lot.id.toString());
     }
     toast({
       title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
@@ -185,7 +185,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                          <DropdownMenuItem asChild><a href={getSocialLink('email', lotFullUrl, lot.title)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                {hasEditPermission && <EntityEditMenu entityType="lot" entityId={lot.id} publicId={lot.publicId} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate} />}
+                {hasEditPermission && <EntityEditMenu entityType="lot" entityId={lot.id.toString()} publicId={lot.publicId} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate} />}
               </TooltipProvider>
           </div>
         </div>

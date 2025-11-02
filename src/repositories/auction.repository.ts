@@ -12,12 +12,12 @@ export class AuctionRepository {
   
   async findAll(tenantId: string, where?: Prisma.AuctionWhereInput, limit?: number): Promise<any[]> {
     return this.prisma.auction.findMany({
-      where: { ...where, tenantId },
+      where: { ...where, tenantId: BigInt(tenantId) },
       orderBy: { auctionDate: 'desc' },
       take: limit,
       include: {
         _count: { select: { lots: true } },
-        seller: true,
+        Seller: true, // Corrected from 'seller'
         auctioneer: true,
         stages: true,
       },
@@ -26,15 +26,15 @@ export class AuctionRepository {
 
   async findById(tenantId: string | undefined, id: string): Promise<any | null> {
     const whereClause: Prisma.AuctionWhereInput = {
-        ...(tenantId && { tenantId }),
+        ...(tenantId && { tenantId: BigInt(tenantId) }),
     };
 
-    // Tenta primeiro buscar por publicId se for um CUID
-    if (id.includes('-')) {
+    const isNumericId = /^\d+$/.test(id);
+
+    if (!isNumericId) {
         whereClause.publicId = id;
     } else {
-        // Se não for um CUID, assume que é o ID numérico
-        whereClause.id = id;
+        whereClause.id = BigInt(id);
     }
     
     return this.prisma.auction.findFirst({
@@ -42,7 +42,7 @@ export class AuctionRepository {
       include: {
         lots: { include: { assets: { include: { asset: true } } } }, 
         auctioneer: true,
-        seller: true,
+        Seller: true, // Corrected from 'seller'
         stages: true,
       },
     });
@@ -50,14 +50,21 @@ export class AuctionRepository {
   
   async findByIds(tenantId: string, ids: string[]): Promise<any[]> {
     if (ids.length === 0) return [];
+    const numericIds = ids.filter(id => /^\d+$/.test(id)).map(id => BigInt(id));
+    const publicIds = ids.filter(id => !/^\d+$/.test(id));
+
     return this.prisma.auction.findMany({
       where: { 
-          OR: [{id: {in: ids}}, {publicId: {in: ids}}],
-          tenantId: tenantId
+          OR: [
+              { id: { in: numericIds } },
+              { publicId: { in: publicIds } }
+          ],
+          tenantId: BigInt(tenantId)
       },
       include: { 
           _count: { select: { lots: true } },
-          seller: true,
+          Seller: true, // Corrected from 'seller'
+          stages: true,
       }
     });
   }
@@ -67,50 +74,58 @@ export class AuctionRepository {
     return this.prisma.auction.create({ data });
   }
 
-  async update(tenantId: string, id: string, data: Prisma.AuctionUpdateInput): Promise<Auction> {
+  async update(tenantId: string, id: bigint, data: Prisma.AuctionUpdateInput): Promise<Auction> {
     // @ts-ignore
-    return this.prisma.auction.update({ where: { id, tenantId }, data });
+    return this.prisma.auction.update({ where: { id, tenantId: BigInt(tenantId) }, data });
   }
 
-  async delete(tenantId: string, id: string): Promise<void> {
-    await this.prisma.auction.delete({ where: { id, tenantId } });
+  async delete(tenantId: string, id: bigint): Promise<void> {
+    await this.prisma.auction.delete({ where: { id, tenantId: BigInt(tenantId) } });
   }
 
   async countLots(tenantId: string, auctionId: string): Promise<number> {
-    return this.prisma.lot.count({ where: { auctionId, tenantId } });
+    return this.prisma.lot.count({ where: { auctionId: BigInt(auctionId), tenantId: BigInt(tenantId) } });
   }
 
   async findByAuctioneerSlug(tenantId: string, auctioneerSlug: string): Promise<any[]> {
+    const isNumericId = /^\d+$/.test(auctioneerSlug);
     return this.prisma.auction.findMany({
       where: {
-        tenantId,
+        tenantId: BigInt(tenantId),
         auctioneer: {
           OR: [
             { slug: auctioneerSlug },
-            { id: auctioneerSlug },
             { publicId: auctioneerSlug },
+             ...(isNumericId ? [{ id: BigInt(auctioneerSlug) }] : []),
           ],
         },
       },
       include: {
         _count: { select: { lots: true } },
-        seller: true,
+        Seller: true, // Corrected from 'seller'
+        stages: true,
       },
       orderBy: { auctionDate: 'desc' },
     });
   }
 
   async findBySellerSlug(tenantId: string, sellerSlugOrPublicId: string): Promise<any[]> {
+    const isNumericId = /^\d+$/.test(sellerSlugOrPublicId);
     return this.prisma.auction.findMany({
         where: {
-            tenantId,
-            seller: {
-                OR: [{ slug: sellerSlugOrPublicId }, { id: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }]
+            tenantId: BigInt(tenantId),
+            Seller: { // Corrected from 'seller'
+                OR: [
+                    { slug: sellerSlugOrPublicId }, 
+                    { publicId: sellerSlugOrPublicId },
+                    ...(isNumericId ? [{ id: BigInt(sellerSlugOrPublicId) }] : []),
+                ]
             }
         },
         include: { 
             _count: { select: { lots: true } },
-            seller: true 
+            Seller: true, // Corrected from 'seller'
+            stages: true,
         }
     });
   }

@@ -4,7 +4,7 @@
  * gerenciar a lógica de negócio para as configurações globais da plataforma.
  */
 import { prisma } from '@/lib/prisma';
-import type { Prisma, PlatformSettings as PrismaPlatformSettings } from '@prisma/client';
+import { Prisma, type PlatformSettings as PrismaPlatformSettings } from '@prisma/client';
 import type { PlatformSettings } from '@/types';
 
 export class PlatformSettingsService {
@@ -22,32 +22,63 @@ export class PlatformSettingsService {
      */
     async getSettings(tenantId: string): Promise<PlatformSettings> {
         try {
-            let settings = await this.prisma.platformSettings.findUnique({
-                where: { tenantId: tenantId },
-                include: {
-                    themes: { include: { colors: true } },
-                    platformPublicIdMasks: true,
-                    mapSettings: true,
-                    biddingSettings: true,
-                    paymentGatewaySettings: true,
-                    notificationSettings: true,
-                    mentalTriggerSettings: true,
-                    sectionBadgeVisibility: true,
-                    variableIncrementTable: true,
-                },
-            });
+            const findSettings = async () => {
+                return await this.prisma.platformSettings.findUnique({
+                    where: { tenantId: tenantId },
+                    include: {
+                        themes: { include: { colors: true } },
+                        platformPublicIdMasks: true,
+                        mapSettings: true,
+                        biddingSettings: true,
+                        paymentGatewaySettings: true,
+                        notificationSettings: true,
+                        mentalTriggerSettings: true,
+                        sectionBadgeVisibility: true,
+                        variableIncrementTable: true,
+                    },
+                });
+            };
+
+            let settings = await findSettings();
 
             if (!settings) {
-                console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating with default values.`);
-                settings = await this.prisma.platformSettings.create({
-                    data: {
-                        tenantId: tenantId,
-                        siteTitle: 'BidExpert',
-                        siteTagline: 'Sua plataforma de leilões online.',
-                        isSetupComplete: false,
-                        crudFormMode: 'modal',
+                try {
+                    console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating with default values.`);
+                    settings = await this.prisma.platformSettings.create({
+                        data: {
+                            tenantId: tenantId,
+                            siteTitle: 'BidExpert',
+                            siteTagline: 'Sua plataforma de leilões online.',
+                            isSetupComplete: false,
+                            crudFormMode: 'modal',
+                        },
+                        include: {
+                            themes: { include: { colors: true } },
+                            platformPublicIdMasks: true,
+                            mapSettings: true,
+                            biddingSettings: true,
+                            paymentGatewaySettings: true,
+                            notificationSettings: true,
+                            mentalTriggerSettings: true,
+                            sectionBadgeVisibility: true,
+                            variableIncrementTable: true,
+                        },
+                    });
+                } catch (error: any) {
+                    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                        // Unique constraint violation, settings were likely created by a concurrent request.
+                        // We can now safely assume the settings exist.
+                        console.log(`[PlatformSettingsService] Settings for tenant ${tenantId} created concurrently. Fetching again.`);
+                        settings = await findSettings();
+                        if (!settings) {
+                            // This should theoretically not happen in this race condition scenario
+                            throw new Error('Failed to fetch settings after a concurrent creation attempt.');
+                        }
+                    } else {
+                        // Re-throw other errors
+                        throw error;
                     }
-                });
+                }
             }
 
             return {
@@ -68,8 +99,8 @@ export class PlatformSettingsService {
      * @param data - Os dados parciais das configurações, incluindo sub-objetos.
      * @returns Um objeto indicando o sucesso da operação.
      */
-    async updateSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-        const { tenantId, themes, mapSettings, biddingSettings, paymentGatewaySettings, notificationSettings, mentalTriggerSettings, sectionBadgeVisibility, platformPublicIdMasks, variableIncrementTable, ...mainSettings } = data;
+    async updateSettings(tenantId: string, data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
+        const { themes, mapSettings, biddingSettings, paymentGatewaySettings, notificationSettings, mentalTriggerSettings, sectionBadgeVisibility, platformPublicIdMasks, variableIncrementTable, ...mainSettings } = data;
 
         if (!tenantId) {
             return { success: false, message: 'O ID do Tenant é obrigatório para atualizar as configurações.' };
@@ -79,17 +110,17 @@ export class PlatformSettingsService {
             const settings = await this.getSettings(tenantId);
             const platformSettingsId = settings.id;
 
-            await this.prisma.platformSettings.upsert({
+            await this.prisma.platformSettings.update({
                 where: { tenantId: tenantId },
-                update: {
+                data: {
                     ...mainSettings,
-                    ...(mapSettings && { mapSettings: { upsert: { create: mapSettings, update: mapSettings, where: { platformSettingsId } } } }),
-                    ...(biddingSettings && { biddingSettings: { upsert: { create: biddingSettings, update: biddingSettings, where: { platformSettingsId } } } }),
-                    ...(paymentGatewaySettings && { paymentGatewaySettings: { upsert: { create: paymentGatewaySettings, update: paymentGatewaySettings, where: { platformSettingsId } } } }),
-                    ...(notificationSettings && { notificationSettings: { upsert: { create: notificationSettings, update: notificationSettings, where: { platformSettingsId } } } }),
-                    ...(mentalTriggerSettings && { mentalTriggerSettings: { upsert: { create: mentalTriggerSettings, update: mentalTriggerSettings, where: { platformSettingsId } } } }),
-                    ...(sectionBadgeVisibility && { sectionBadgeVisibility: { upsert: { create: sectionBadgeVisibility as any, update: sectionBadgeVisibility as any, where: { platformSettingsId } } } }),
-                    ...(platformPublicIdMasks && { platformPublicIdMasks: { upsert: { create: platformPublicIdMasks as any, update: platformPublicIdMasks as any, where: { platformSettingsId } } } }),
+                    ...(mapSettings && { mapSettings: { upsert: { create: mapSettings, update: mapSettings } } }),
+                    ...(biddingSettings && { biddingSettings: { upsert: { create: biddingSettings, update: biddingSettings } } }),
+                    ...(paymentGatewaySettings && { paymentGatewaySettings: { upsert: { create: paymentGatewaySettings, update: paymentGatewaySettings } } }),
+                    ...(notificationSettings && { notificationSettings: { upsert: { create: notificationSettings, update: notificationSettings } } }),
+                    ...(mentalTriggerSettings && { mentalTriggerSettings: { upsert: { create: mentalTriggerSettings, update: mentalTriggerSettings } } }),
+                    ...(sectionBadgeVisibility && { sectionBadgeVisibility: { upsert: { create: sectionBadgeVisibility as any, update: sectionBadgeVisibility as any } } }),
+                    ...(platformPublicIdMasks && { platformPublicIdMasks: { upsert: { create: platformPublicIdMasks as any, update: platformPublicIdMasks as any } } }),
                     ...(variableIncrementTable && {
                         variableIncrementTable: {
                             deleteMany: {}, // Limpa as regras existentes
@@ -100,18 +131,6 @@ export class PlatformSettingsService {
                             }))
                         }
                     })
-                },
-                create: {
-                    ...(mainSettings as any),
-                    tenantId: tenantId,
-                    mapSettings: mapSettings ? { create: mapSettings } : undefined,
-                    biddingSettings: biddingSettings ? { create: biddingSettings } : undefined,
-                    paymentGatewaySettings: paymentGatewaySettings ? { create: paymentGatewaySettings } : undefined,
-                    notificationSettings: notificationSettings ? { create: notificationSettings } : undefined,
-                    mentalTriggerSettings: mentalTriggerSettings ? { create: mentalTriggerSettings } : undefined,
-                    sectionBadgeVisibility: sectionBadgeVisibility ? { create: sectionBadgeVisibility as any } : undefined,
-                    platformPublicIdMasks: platformPublicIdMasks ? { create: platformPublicIdMasks as any } : undefined,
-                    variableIncrementTable: variableIncrementTable ? { create: variableIncrementTable } : undefined,
                 },
             });
 

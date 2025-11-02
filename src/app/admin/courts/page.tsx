@@ -9,17 +9,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCourts, deleteCourt, createCourt, updateCourt } from './actions';
+import { getCourts, deleteCourt, createCourt, updateCourt } from '@/app/admin/courts/actions';
 import type { Court, PlatformSettings, CourtFormData, StateInfo } from '@/types';
 import { PlusCircle, Scale } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { createColumns } from './columns';
+import { createColumns } from '@/app/admin/courts/columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import CourtForm from './court-form';
+import CourtForm from '@/app/admin/courts/court-form';
 
 export default function AdminCourtsPage() {
   const [courts, setCourts] = useState<Court[]>([]);
@@ -29,8 +29,7 @@ export default function AdminCourtsPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingCourt, setEditingCourt] = useState<Court | null>(null);
+  const [modalState, setModalState] = useState<{ mode: 'closed' | 'create' | 'edit'; data?: Court }>({ mode: 'closed' });
   const [dependencies, setDependencies] = useState<{ states: StateInfo[] } | null>(null);
 
 
@@ -60,9 +59,9 @@ export default function AdminCourtsPage() {
   }, [refetchTrigger, fetchPageData]);
 
   const onUpdate = useCallback(() => setRefetchTrigger(c => c + 1), []);
-  const handleNewClick = () => { setEditingCourt(null); setIsFormOpen(true); };
-  const handleEditClick = (court: Court) => { setEditingCourt(court); setIsFormOpen(true); };
-  const handleFormSuccess = () => { setIsFormOpen(false); setEditingCourt(null); onUpdate(); };
+  const handleNewClick = () => setModalState({ mode: 'create' });
+  const handleEditClick = (court: Court) => setModalState({ mode: 'edit', data: court });
+  const handleFormSuccess = () => { setIsModalState({ mode: 'closed' }); onUpdate(); };
 
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteCourt(id);
@@ -86,8 +85,8 @@ export default function AdminCourtsPage() {
   const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
 
   const formAction = async (data: CourtFormData) => {
-    if (editingCourt) {
-      return updateCourt(editingCourt.id, data);
+    if (modalState.mode === 'edit' && modalState.data) {
+      return updateCourt(modalState.data.id, data);
     }
     return createCourt(data);
   };
@@ -134,27 +133,28 @@ export default function AdminCourtsPage() {
                   searchTypeLabel="tribunais"
                   searchColumnId="name"
                   searchPlaceholder="Buscar por nome..."
-                  onDeleteSelected={handleDeleteSelected as any}
+                  onDeleteSelected={handleDeleteSelected}
                   sortOptions={[{ value: 'name', label: 'Nome' }]}
               />
           </CardContent>
         </Card>
       </div>
       <CrudFormContainer
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
+          isOpen={modalState.mode !== 'closed'}
+          onClose={() => setModalState({ mode: 'closed' })}
           mode={platformSettings?.crudFormMode || 'modal'}
-          title={editingCourt ? 'Editar Tribunal' : 'Novo Tribunal'}
-          description={editingCourt ? 'Modifique os detalhes do tribunal.' : 'Cadastre um novo tribunal de justiça.'}
+          title={modalState.mode === 'edit' ? 'Editar Tribunal' : 'Novo Tribunal'}
+          description={modalState.mode === 'edit' ? 'Modifique os detalhes do tribunal.' : 'Cadastre um novo tribunal de justiça.'}
       >
           <CourtForm
-              initialData={editingCourt}
+              initialData={modalState.mode === 'edit' ? modalState.data : null}
               states={dependencies.states}
               onSubmitAction={formAction}
               onSuccess={handleFormSuccess}
-              onCancel={() => setIsFormOpen(false)}
+              onCancel={() => setModalState({ mode: 'closed' })}
           />
       </CrudFormContainer>
     </>
   );
 }
+

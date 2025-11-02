@@ -100,7 +100,7 @@ const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerate
             {win.paymentStatus === 'PENDENTE' && (
                 <div className="flex items-center text-xs text-amber-600">
                     <CalendarCheck className="h-4 w-4 mr-2" />
-                    <span>Prazo para Pagamento: <ClientOnlyDate date={addDays(new Date(win.winDate as string), 5)} format="dd/MM/yyyy"/></span>
+                    <span>Prazo para Pagamento: <ClientOnlyDate date={new Date(new Date(win.winDate as string).getTime() + 5 * 24 * 60 * 60 * 1000)} format="dd/MM/yyyy"/></span>
                 </div>
             )}
             <div className="flex items-center">
@@ -179,8 +179,8 @@ function WinsPageContent() {
     }, [searchParams, toast]);
 
     useEffect(() => {
-        if (userProfileWithPermissions?.uid) {
-        fetchWins(userProfileWithPermissions.uid);
+        if (userProfileWithPermissions?.id) {
+        fetchWins(userProfileWithPermissions.id);
         } else {
         setIsLoading(false); // No user, stop loading
         }

@@ -85,9 +85,12 @@ export default function ConsignorFinancialPage() {
     let totalRevenue = 0;
     let paidCount = 0;
     wins.forEach(win => {
-      if (win.paymentStatus === 'PAGO') {
+      // Contabiliza o faturamento se o pagamento estiver PAGO ou PROCESSANDO (parcelado)
+      if (win.paymentStatus === 'PAGO' || win.paymentStatus === 'PROCESSANDO') {
         totalRevenue += win.winningBidAmount;
-        paidCount++;
+        if(win.paymentStatus === 'PAGO') {
+          paidCount++;
+        }
       }
     });
     const totalCommission = totalRevenue * 0.05; // Assuming a flat 5% commission

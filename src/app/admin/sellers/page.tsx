@@ -3,7 +3,7 @@
  * @fileoverview Página principal para listagem e gerenciamento de Comitentes (Vendedores).
  * Utiliza o componente BidExpertSearchResultsFrame para exibir os dados de forma interativa,
  * permitindo busca, ordenação, filtros por faceta e visualização em grade, lista ou tabela.
- * A criação e edição são feitas através de um modal (`CrudFormContainer`).
+ * A criação e edição são feitas através de um modal (`CrudFormContainer`), com suporte a sub-modais para criação de entidades relacionadas.
  */
 'use client';
 
@@ -26,11 +26,11 @@ import { getJudicialBranches } from '../judicial-branches/actions';
 import { getStates } from '../states/actions';
 import { getCities } from '../cities/actions';
 
-const sortOptions = [
-  { value: 'name_asc', label: 'Nome A-Z' },
-  { value: 'name_desc', label: 'Nome Z-A' },
-  { value: 'createdAt_desc', label: 'Mais Recentes' },
-];
+// Define os tipos de modais que esta página pode abrir
+type ModalState = 
+  | { mode: 'closed' }
+  | { mode: 'create' }
+  | { mode: 'edit'; seller: SellerProfileInfo };
 
 export default function AdminSellersPage() {
   const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
@@ -40,9 +40,10 @@ export default function AdminSellersPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingSeller, setEditingSeller] = useState<SellerProfileInfo | null>(null);
-  
+  // Estado para controlar o modal principal (criação/edição de Seller)
+  const [modalState, setModalState] = useState<ModalState>({ mode: 'closed' });
+
+  // Dependências para os formulários
   const [dependencies, setDependencies] = useState<{
     judicialBranches: JudicialBranch[],
     allStates: StateInfo[],
@@ -72,31 +73,20 @@ export default function AdminSellersPage() {
       setIsLoading(false);
     }
   }, [toast]);
-
+  
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
   
-  const onUpdate = useCallback(() => {
-    setRefetchTrigger(c => c + 1);
-  }, []);
-
-  const handleNewClick = () => {
-    setEditingSeller(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditClick = (seller: SellerProfileInfo) => {
-    setEditingSeller(seller);
-    setIsFormOpen(true);
-  };
+  const onUpdate = useCallback(() => setRefetchTrigger(c => c + 1), []);
+  const handleNewClick = () => setModalState({ mode: 'create' });
+  const handleEditClick = (seller: SellerProfileInfo) => setModalState({ mode: 'edit', seller });
   
-  const handleFormSuccess = () => {
-      setIsFormOpen(false);
-      setEditingSeller(null);
-      onUpdate();
+  const handleFormSuccess = (sellerId?: string) => {
+    setModalState({ mode: 'closed' });
+    onUpdate();
   };
-  
+
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteSeller(id);
     if(result.success) {
@@ -106,7 +96,7 @@ export default function AdminSellersPage() {
       toast({ title: "Erro", description: result.message, variant: "destructive" });
     }
   }, [toast, onUpdate]);
-  
+
   const handleDeleteSelected = useCallback(async (selectedItems: SellerProfileInfo[]) => {
       for (const item of selectedItems) {
         await deleteSeller(item.id);
@@ -116,21 +106,21 @@ export default function AdminSellersPage() {
   }, [onUpdate, toast]);
   
   const formAction = async (data: SellerFormData) => {
-    if (editingSeller) {
-      return updateSeller(editingSeller.id, data);
+    if (modalState.mode === 'edit') {
+      return updateSeller(modalState.seller.id, data);
     }
     return createSeller(data);
   };
 
   const renderGridItem = (item: SellerProfileInfo) => <BidExpertCard item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: SellerProfileInfo) => <BidExpertListItem item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
-
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
+  
   const facetedFilterOptions = useMemo(() => {
       const stateOptions = [...new Set(allSellers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
       return [
           { id: 'state', title: 'Estado', options: stateOptions },
-          { id: 'isJudicial', title: 'Tipo', options: [{value: 'true', label: 'Judicial'}, {value: 'false', label: 'Não Judicial'}]}
+          { id: 'isJudicial', title: 'Tipo', options: [{ value: 'true', label: 'Judicial'}, { value: 'false', label: 'Não Judicial'}]}
       ];
   }, [allSellers]);
   
@@ -183,26 +173,27 @@ export default function AdminSellersPage() {
         emptyStateMessage="Nenhum comitente encontrado."
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='name'
-        searchPlaceholder='Buscar por nome ou email...'
+        searchPlaceholder='Buscar por nome...'
         onDeleteSelected={handleDeleteSelected as any}
       />
     </div>
+    
     <CrudFormContainer
-      isOpen={isFormOpen}
-      onClose={() => setIsFormOpen(false)}
+      isOpen={modalState.mode !== 'closed'}
+      onClose={() => setModalState({ mode: 'closed' })}
       mode={platformSettings?.crudFormMode || 'modal'}
-      title={editingSeller ? 'Editar Comitente' : 'Novo Comitente'}
-      description={editingSeller ? 'Modifique os detalhes do comitente.' : 'Cadastre um novo comitente/vendedor.'}
+      title={modalState.mode === 'edit' ? 'Editar Comitente' : 'Novo Comitente'}
+      description={modalState.mode === 'edit' ? 'Modifique os detalhes do comitente.' : 'Cadastre um novo comitente/vendedor.'}
     >
-      <SellerForm
-        initialData={editingSeller}
-        judicialBranches={dependencies.judicialBranches}
-        allStates={dependencies.allStates}
-        allCities={dependencies.allCities}
-        onSubmitAction={formAction}
-        onSuccess={handleFormSuccess}
-        onCancel={() => setIsFormOpen(false)}
-      />
+        <SellerForm
+            initialData={modalState.mode === 'edit' ? modalState.seller : null}
+            judicialBranches={dependencies.judicialBranches}
+            allStates={dependencies.allStates}
+            allCities={dependencies.allCities}
+            onSubmitAction={formAction}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setModalState({ mode: 'closed' })}
+        />
     </CrudFormContainer>
     </>
   );

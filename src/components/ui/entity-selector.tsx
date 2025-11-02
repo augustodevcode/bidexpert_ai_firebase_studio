@@ -38,19 +38,18 @@ export const createEntitySelectorColumns = (onSelect: (value: string) => void): 
 ];
 
 interface EntitySelectorProps {
-  value: string | null | undefined;
+  value: string | bigint | null | undefined;
   onChange: (value: string | null) => void;
-  options: { value: string; label: string; [key: string]: any }[];
+  options: { value: string | bigint; label: string; [key: string]: any }[];
   entityName?: string; 
   placeholder: string;
   searchPlaceholder: string;
   emptyStateMessage: string;
-  createNewUrl?: string | null;
+  onAddNew?: () => void;
   editUrlPrefix?: string | null;
   onRefetch?: () => void;
   isFetching?: boolean;
   disabled?: boolean;
-  onAddNew?: () => void;
 }
 
 export default function EntitySelector({
@@ -61,33 +60,24 @@ export default function EntitySelector({
   placeholder,
   searchPlaceholder,
   emptyStateMessage,
-  createNewUrl,
+  onAddNew,
   editUrlPrefix,
   onRefetch,
   isFetching = false,
   disabled = false,
-  onAddNew
 }: EntitySelectorProps) {
   const [isListModalOpen, setIsListModalOpen] = React.useState(false);
 
-  const selectedOption = options.find((option) => option.value === value);
+  const stringValue = value?.toString() ?? null;
+
+  const selectedOption = options.find((option) => option.value.toString() === stringValue);
   
-  const handleSelectAndClose = (selectedValue: string) => {
-    onChange(selectedValue);
+  const handleSelectAndClose = (selectedValue: string | bigint) => {
+    onChange(selectedValue.toString());
     setIsListModalOpen(false);
   }
   
   const tableColumns = React.useMemo(() => createEntitySelectorColumns(handleSelectAndClose), [handleSelectAndClose]);
-
-  const handleAddNewClick = () => {
-    setIsListModalOpen(false); // Fecha o modal de lista
-    if (onAddNew) {
-        onAddNew(); // Chama a função para abrir o formulário de criação
-    } else if (createNewUrl) {
-        // Fallback para abrir em nova aba se onAddNew não for fornecido
-        window.open(createNewUrl, '_blank');
-    }
-  }
 
   return (
     <div className="flex items-center gap-2" data-ai-id={`entity-selector-container-${entityName}`}>
@@ -121,7 +111,7 @@ export default function EntitySelector({
               <div className="flex-grow overflow-hidden p-4">
                   <DataTable
                       columns={tableColumns}
-                      data={options.map(opt => ({...opt, id: opt.value}))}
+                      data={options.map(opt => ({...opt, id: opt.value.toString()}))}
                       searchColumnId="label"
                       searchPlaceholder={searchPlaceholder}
                       isLoading={isFetching}
@@ -129,8 +119,8 @@ export default function EntitySelector({
                   />
               </div>
               <DialogFooter className="p-4 border-t flex justify-between">
-                  {(createNewUrl || onAddNew) && (
-                      <Button variant="secondary" onClick={handleAddNewClick} data-ai-id={`entity-selector-add-new-${entityName}`}>
+                  {onAddNew && (
+                      <Button variant="secondary" onClick={onAddNew} data-ai-id={`entity-selector-add-new-${entityName}`}>
                           <PlusCircle className="mr-2 h-4 w-4"/>
                           Criar Novo
                       </Button>
@@ -152,7 +142,7 @@ export default function EntitySelector({
       
       {value && editUrlPrefix && (
            <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" disabled={disabled} title="Editar registro selecionado" asChild>
-              <Link href={`${editUrlPrefix}/${value}/edit`} target="_blank">
+              <Link href={`${editUrlPrefix}/${value}`} target="_blank">
                   <Pencil className="h-4 w-4" />
               </Link>
           </Button>

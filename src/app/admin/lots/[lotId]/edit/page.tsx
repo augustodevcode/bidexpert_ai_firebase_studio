@@ -64,10 +64,10 @@ export default function EditLotPage() {
         return;
       }
       
-      const parentAuction = await getAuction(fetchedLot.auctionId);
+      const parentAuction = await getAuction(fetchedLot.auctionId.toString());
       const filterForAssets = parentAuction?.auctionType === 'JUDICIAL' && parentAuction.judicialProcessId
-        ? { judicialProcessId: parentAuction.judicialProcessId }
-        : (parentAuction?.sellerId ? { sellerId: parentAuction.sellerId } : {});
+        ? { judicialProcessId: parentAuction.judicialProcessId.toString() }
+        : (parentAuction?.sellerId ? { sellerId: parentAuction.sellerId.toString() } : {});
 
       const [fetchedCategories, fetchedAuctions, fetchedStates, fetchedCities, fetchedAssets, fetchedSellers] = await Promise.all([
         getLotCategories(),
@@ -151,7 +151,7 @@ export default function EditLotPage() {
           formTitle="Editar Lote"
           formDescription="Modifique os detalhes do lote existente."
           submitButtonText="Salvar Alterações"
-          defaultAuctionId={lot.auctionId}
+          defaultAuctionId={lot.auctionId.toString()}
           onSuccessCallback={fetchPageData}
         />
 
@@ -174,7 +174,7 @@ export default function EditLotPage() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Confirmar Finalização?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta ação irá determinar o vencedor com base no lance mais alto, atualizar o status do lote para &quot;Vendido&quot; (ou &quot;Não Vendido&quot;) e notificar o vencedor. Esta ação não pode ser desfeita.
+                              Esta ação irá determinar o vencedor com base no lance mais alto, atualizar o status do lote para "Vendido" (ou "Não Vendido") e notificar o vencedor. Esta ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

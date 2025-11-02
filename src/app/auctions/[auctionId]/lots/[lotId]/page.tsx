@@ -1,3 +1,4 @@
+
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
 /**
  * @fileoverview Página de servidor para renderização inicial dos detalhes de um lote.
@@ -17,6 +18,8 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,12 +39,12 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   console.log(`[getLotPageData] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
   const [
-    platformSettings,
-    auctionFromDb,
-    lotFromDb,
-    allCategories,
-    allSellers,
-    allAuctioneers
+      platformSettings,
+      auctionFromDb,
+      lotFromDb,
+      allCategories,
+      allSellers,
+      allAuctioneers
   ] = await Promise.all([
     getPlatformSettings(),
     getAuction(currentAuctionId, true), // Public call
@@ -104,20 +107,14 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   };
 }
 
-export default async function LotDetailPage({ params }: { params: { auctionId: string, lotId: string } }) {
-  const { 
-    lot, 
-    auction, 
-    platformSettings,
-    sellerName, 
-    lotIndex, 
-    previousLotId, 
-    nextLotId, 
-    totalLotsInAuction,
-    allCategories,
-    allSellers,
-    auctioneer,
-  } = await getLotPageData(params.auctionId, params.lotId);
+export default async function LotDetailPage({ params, searchParams }: { params: { auctionId: string, lotId: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
+  const version = searchParams?.v === '2' ? 'v2' : 'v1';
+
+  if (!params.auctionId || !params.lotId) {
+    notFound();
+  }
+
+  const { lot, auction, ...rest } = await getLotPageData(params.auctionId, params.lotId);
 
   if (!lot || !auction) {
     return (
@@ -136,20 +133,28 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
   }
 
   return (
-    <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 
-      <LotDetailClientContent
-        lot={lot}
-        auction={auction}
-        platformSettings={platformSettings!}
-        sellerName={sellerName}
-        lotIndex={lotIndex}
-        previousLotId={previousLotId}
-        nextLotId={nextLotId}
-        totalLotsInAuction={totalLotsInAuction}
-        allCategories={allCategories}
-        allSellers={allSellers}
-        auctioneer={auctioneer}
-      />
+    <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8">
+        <div className="mb-4 flex justify-end">
+            <Tabs defaultValue={version}>
+                <TabsList>
+                    <TabsTrigger value="v1" asChild>
+                        <Link href={`/auctions/${params.auctionId}/lots/${params.lotId}`}>V1</Link>
+                    </TabsTrigger>
+                    <TabsTrigger value="v2" asChild>
+                        <Link href={`/auctions/${params.auctionId}/lots/${params.lotId}/v2`}>V2</Link>
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
+        </div>
+        {version === 'v1' ? (
+             <LotDetailClientContent
+                lot={lot}
+                auction={auction}
+                {...rest}
+            />
+        ) : (
+             <p>A versão 2 será renderizada aqui.</p>
+        )}
     </div>
   );
 }

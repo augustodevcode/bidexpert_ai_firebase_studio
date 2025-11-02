@@ -32,6 +32,7 @@ interface CourtFormProps {
   onSubmitAction: (data: CourtFormValues) => Promise<{ success: boolean; message: string; courtId?: string }>;
   onSuccess?: (id?: string) => void;
   onCancel?: () => void;
+  onAddNewEntity?: (entity: 'state') => void;
 }
 
 export default function CourtForm({
@@ -40,6 +41,7 @@ export default function CourtForm({
   onSubmitAction,
   onSuccess,
   onCancel,
+  onAddNewEntity,
 }: CourtFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -55,6 +57,8 @@ export default function CourtForm({
   React.useEffect(() => {
     form.reset(initialData || {});
   }, [initialData, form]);
+
+  const { formState } = form;
 
   const handleRefetchStates = React.useCallback(async () => {
     setIsFetchingStates(true);
@@ -103,13 +107,14 @@ export default function CourtForm({
             <FormItem>
               <FormLabel>Estado (UF)<span className="text-destructive">*</span></FormLabel>
               <EntitySelector
+                  entityName="Estado"
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(value) => field.onChange(value || '')}
                   options={states.map(s => ({ value: s.uf, label: `${s.name} (${s.uf})` }))}
                   placeholder="Selecione o estado"
                   searchPlaceholder="Buscar estado..."
                   emptyStateMessage="Nenhum estado encontrado."
-                  createNewUrl="/admin/states/new"
+                  onAddNew={() => onAddNewEntity?.('state')}
                   onRefetch={handleRefetchStates}
                   isFetching={isFetchingStates}
                 />
@@ -132,7 +137,7 @@ export default function CourtForm({
         />
         <div className="flex justify-end gap-2 pt-4">
             {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
-            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+            <Button type="submit" disabled={isSubmitting || !formState.isValid}>
                 {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
                 Salvar
             </Button>

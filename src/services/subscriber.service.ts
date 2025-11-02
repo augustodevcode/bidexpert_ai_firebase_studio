@@ -4,7 +4,7 @@
  * gerencia a criação de novos inscritos na newsletter.
  */
 import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client'; // Importar Prisma
 import { z } from 'zod';
 
 // Zod schema for input validation
@@ -21,17 +21,19 @@ export class SubscriberService {
    * @param data Os dados do formulário de inscrição.
    * @returns Resultado da operação.
    */
-  async createSubscriber(data: SubscriptionFormData): Promise<{ success: boolean; message: string; }> {
+  async createSubscriber(data: SubscriptionFormData, tenantId: string = '1'): Promise<{ success: boolean; message: string; }> {
     const validation = subscriptionFormSchema.safeParse(data);
     if (!validation.success) {
       return { success: false, message: validation.error.errors.map(e => e.message).join(', ') };
     }
 
     const { email, name } = validation.data;
+    const tenantIdAsBigInt = BigInt(tenantId);
 
     try {
+      // Correção: Usar o índice único composto 'email_tenantId'
       const existingSubscriber = await prisma.subscriber.findUnique({
-        where: { email },
+        where: { email_tenantId: { email, tenantId: tenantIdAsBigInt } },
       });
 
       if (existingSubscriber) {
@@ -42,12 +44,14 @@ export class SubscriberService {
         data: {
           email,
           name,
+          tenant: { connect: { id: tenantIdAsBigInt } }
         },
       });
 
       return { success: true, message: 'Inscrição realizada com sucesso!' };
     } catch (error: any) {
       console.error("[SubscriberService] Error creating subscriber:", error);
+      // Correção: Agora Prisma.PrismaClientKnownRequestError está definido
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
          return { success: false, message: 'Este e-mail já está inscrito.' };
       }
@@ -55,7 +59,7 @@ export class SubscriberService {
     }
   }
 
-  async deleteMany(args: any) {
-    await prisma.subscriber.deleteMany(args);
+  async deleteMany(where: Prisma.SubscriberWhereInput) {
+    return prisma.subscriber.deleteMany({ where });
   }
 }

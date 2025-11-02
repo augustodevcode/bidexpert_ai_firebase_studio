@@ -9,14 +9,14 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronRight, ListChecks } from 'lucide-react';
 
-interface MegaMenuLinkItem {
+export interface MegaMenuLinkItem {
   href: string;
   label: string;
   description?: string;
   icon?: React.ReactNode;
 }
 
-interface MegaMenuGroup {
+export interface MegaMenuGroup {
   title?: string;
   items: MegaMenuLinkItem[];
 }

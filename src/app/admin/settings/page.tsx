@@ -34,7 +34,7 @@ const SettingCard = ({ title, description, icon: Icon, link, dataAiId }: Setting
 function AdminSettingsPageContent() {
     const settingSections: SettingCardProps[] = [
         { title: "Identidade Visual e Temas", description: "Gerencie o título, logo e o tema de cores.", icon: Palette, link: "/admin/settings/themes", dataAiId: "settings-card-themes" },
-        { title: "Configurações Gerais", description: "Gerencie modos de formulário e máscaras de ID.", icon: Wrench, link: "/admin/settings/general", dataAiId: "settings-card-general" },
+        { title: "Geral", description: "Gerencie modos de formulário e máscaras de ID.", icon: Wrench, link: "/admin/settings/general", dataAiId: "settings-card-general" },
         { title: "Configurações de Mapa", description: "Escolha o provedor de mapas e chaves de API.", icon: MapIcon, link: "/admin/settings/maps", dataAiId: "settings-card-maps" },
         { title: "Regras de Lances", description: "Defina lances instantâneos e intervalos.", icon: Zap, link: "/admin/settings/bidding", dataAiId: "settings-card-bidding" },
         { title: "Incremento Variável", description: "Configure a tabela de incrementos por valor.", icon: ArrowUpDown, link: "/admin/settings/increments", dataAiId: "settings-card-increments" },

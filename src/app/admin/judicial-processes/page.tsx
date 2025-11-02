@@ -24,8 +24,10 @@ import { getJudicialDistricts } from '../judicial-districts/actions';
 import { getJudicialBranches } from '../judicial-branches/actions';
 import { getSellers } from '../sellers/actions';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function AdminJudicialProcessesPage() {
+  const router = useRouter();
   const [processes, setProcesses] = useState<JudicialProcess[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +38,9 @@ export default function AdminJudicialProcessesPage() {
   // Form Modal State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProcess, setEditingProcess] = useState<JudicialProcess | null>(null);
+
+  // Subform states
+  const [subform, setSubform] = useState<'court' | 'district' | 'branch' | 'seller' | null>(null);
 
   // Dependencies for the form
   const [dependencies, setDependencies] = useState<{
@@ -73,15 +78,26 @@ export default function AdminJudicialProcessesPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
+  
+  const onUpdate = useCallback(() => {
+    setRefetchTrigger(c => c + 1);
+    if (subform) {
+      setSubform(null);
+    }
+  }, [subform]);
 
-  const onUpdate = useCallback(() => setRefetchTrigger(c => c + 1), []);
-  const handleNewClick = () => { setEditingProcess(null); setIsFormOpen(true); };
+  const handleNewClick = () => {
+    router.push('/admin/judicial-processes/new');
+  };
   const handleEditClick = (process: JudicialProcess) => { setEditingProcess(process); setIsFormOpen(true); };
-  const handleFormSuccess = (processId?: string) => { 
-    setIsFormOpen(false); 
-    setEditingProcess(null); 
-    onUpdate();
-    // Logic to redirect if it was a new process, if needed.
+  
+  const handleFormSuccess = (processId?: string) => {
+      setIsFormOpen(false);
+      setEditingProcess(null);
+      onUpdate();
+      if(processId) {
+        router.push(`/admin/judicial-processes/${processId}/edit`);
+      }
   };
 
   const handleDelete = useCallback(async (id: string) => {
@@ -103,7 +119,7 @@ export default function AdminJudicialProcessesPage() {
     onUpdate();
   }, [onUpdate, toast]);
   
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
 
   const formAction = async (data: JudicialProcessFormData) => {
     if (editingProcess) {
@@ -120,6 +136,7 @@ export default function AdminJudicialProcessesPage() {
       { id: 'branchName', title: 'Vara', options: branches.map(name => ({label: name!, value: name!})) }
     ];
   }, [processes]);
+
 
   if (isLoading || !platformSettings || !dependencies) {
     return (
@@ -146,11 +163,11 @@ export default function AdminJudicialProcessesPage() {
                 Gerenciar Processos Judiciais
               </CardTitle>
               <CardDescription>
-                Adicione, edite ou remova os processos judiciais que originam os leilões.
+                Adicione, edite ou remova os processos que originam os leilões judiciais.
               </CardDescription>
             </div>
-             <div className="flex items-center gap-2">
-                <Button asChild variant="secondary">
+            <div className="flex items-center gap-2">
+                 <Button asChild variant="secondary">
                     <Link href="/admin/import/cnj">
                         <FileUp className="mr-2 h-4 w-4" /> Importar do CNJ
                     </Link>
@@ -193,6 +210,7 @@ export default function AdminJudicialProcessesPage() {
               onSubmitAction={formAction}
               onSuccess={handleFormSuccess}
               onCancel={() => setIsFormOpen(false)}
+              onAddNewEntity={(entity) => setSubform(entity)}
           />
       </CrudFormContainer>
     </>

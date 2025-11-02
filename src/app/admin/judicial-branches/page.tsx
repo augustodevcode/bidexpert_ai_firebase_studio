@@ -9,17 +9,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getJudicialBranches, deleteJudicialBranch, createJudicialBranch, updateJudicialBranch } from './actions';
+import { getJudicialBranches, deleteJudicialBranch, createJudicialBranch, updateJudicialBranch } from '@/app/admin/judicial-branches/actions';
 import type { JudicialBranch, PlatformSettings, JudicialBranchFormData, JudicialDistrict } from '@/types';
 import { PlusCircle, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { createColumns } from './columns';
+import { createColumns } from '@/app/admin/judicial-branches/columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getJudicialDistricts } from '../judicial-districts/actions';
+import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import JudicialBranchForm from './judicial-branch-form';
+import JudicialBranchForm from '@/app/admin/judicial-branches/judicial-branch-form';
 
 export default function AdminJudicialBranchesPage() {
   const [branches, setBranches] = useState<JudicialBranch[]>([]);
@@ -30,8 +30,8 @@ export default function AdminJudicialBranchesPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   // Form Modal State
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingBranch, setEditingBranch] = useState<JudicialBranch | null>(null);
+  const [modalState, setModalState] = useState<{ mode: 'closed' | 'create' | 'edit'; data?: JudicialBranch }>({ mode: 'closed' });
+  const [isSubformOpen, setIsSubformOpen] = useState(false);
 
   // Dependencies for the form
   const [dependencies, setDependencies] = useState<{ districts: JudicialDistrict[] } | null>(null);
@@ -64,21 +64,15 @@ export default function AdminJudicialBranchesPage() {
   
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
-  }, []);
+    if(isSubformOpen) {
+      setIsSubformOpen(false);
+    }
+  }, [isSubformOpen]);
 
-  const handleNewClick = () => {
-    setEditingBranch(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditClick = (branch: JudicialBranch) => {
-    setEditingBranch(branch);
-    setIsFormOpen(true);
-  };
-  
+  const handleNewClick = () => setModalState({ mode: 'create' });
+  const handleEditClick = (branch: JudicialBranch) => setModalState({ mode: 'edit', data: branch });
   const handleFormSuccess = () => {
-      setIsFormOpen(false);
-      setEditingBranch(null);
+      setModalState({ mode: 'closed' });
       onUpdate();
   };
 
@@ -104,8 +98,8 @@ export default function AdminJudicialBranchesPage() {
   const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
 
   const formAction = async (data: JudicialBranchFormData) => {
-    if (editingBranch) {
-      return updateJudicialBranch(editingBranch.id, data);
+    if (modalState.mode === 'edit' && modalState.data) {
+      return updateJudicialBranch(modalState.data.id, data);
     }
     return createJudicialBranch(data);
   };
@@ -160,26 +154,28 @@ export default function AdminJudicialBranchesPage() {
                 searchColumnId="name"
                 searchPlaceholder="Buscar por nome da vara..."
                 facetedFilterColumns={facetedFilterOptions}
-                onDeleteSelected={handleDeleteSelected as any}
+                onDeleteSelected={handleDeleteSelected}
                 sortOptions={[{ value: 'name', label: 'Nome' }, { value: 'districtName', label: 'Comarca' }]}
             />
         </CardContent>
       </Card>
     </div>
     <CrudFormContainer
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        isOpen={modalState.mode !== 'closed'}
+        onClose={() => setModalState({ mode: 'closed' })}
         mode={platformSettings?.crudFormMode || 'modal'}
-        title={editingBranch ? 'Editar Vara Judicial' : 'Nova Vara Judicial'}
-        description={editingBranch ? 'Modifique os detalhes da vara.' : 'Cadastre uma nova vara judicial.'}
+        title={modalState.mode === 'edit' ? 'Editar Vara Judicial' : 'Nova Vara Judicial'}
+        description={modalState.mode === 'edit' ? 'Modifique os detalhes da vara.' : 'Cadastre uma nova vara judicial.'}
     >
         <JudicialBranchForm
-            initialData={editingBranch}
+            initialData={modalState.mode === 'edit' ? modalState.data : null}
             districts={dependencies.districts}
             onSubmitAction={formAction}
             onSuccess={handleFormSuccess}
+            onCancel={() => setModalState({ mode: 'closed' })}
         />
     </CrudFormContainer>
     </>
   );
 }
+

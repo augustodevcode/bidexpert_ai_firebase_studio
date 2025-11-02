@@ -82,3 +82,4 @@ export default function WizardStepper({ steps, currentStep, onStepClick }: Wizar
     </nav>
   );
 }
+

@@ -1,3 +1,4 @@
+
 // src/services/lot.service.ts
 /**
  * @fileoverview Este arquivo contém a classe LotService, que encapsula a
@@ -26,6 +27,24 @@ export class LotService {
     this.repository = new LotRepository();
     this.prisma = prisma;
     this.assetService = new AssetService();
+  }
+  
+  async getLotDetailsForV2(lotIdOrPublicId: string) {
+    const lot = await this.getLotById(lotIdOrPublicId);
+    if (!lot) return null;
+
+    const [auction, seller, auctioneer, bids, questions, reviews] = await Promise.all([
+        this.prisma.auction.findUnique({ where: { id: lot.auctionId }, include: { stages: true } }),
+        lot.sellerId ? this.prisma.seller.findUnique({ where: { id: lot.sellerId } }) : null,
+        lot.auctioneerId ? this.prisma.auctioneer.findUnique({ where: { id: lot.auctioneerId } }) : null,
+        this.getBidHistory(lotIdOrPublicId),
+        this.getQuestions(lotIdOrPublicId),
+        this.getReviews(lotIdOrPublicId),
+    ]);
+    
+    if (!auction) return null;
+
+    return { lot, auction, seller, auctioneer, bids, questions, reviews };
   }
 
   private mapLotWithDetails(lot: any): Lot {
@@ -259,7 +278,7 @@ export class LotService {
       try {
         await this.prisma.lotQuestion.update({
             where: { id: BigInt(questionId) },
-            data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: nowInSaoPaulo() }
+            data: { answerText, answeredByUserId: BigInt(answeredByUserId), answeredByUserDisplayName, answeredAt: nowInSaoPaulo() }
         });
         return { success: true, message: "Resposta enviada com sucesso." };
       } catch (error) {
@@ -329,7 +348,7 @@ export class LotService {
         dataToCreate.subcategory = { connect: { id: BigInt(subcategoryId) } };
       }
       if (data.hasOwnProperty('inheritedMediaFromAssetId') && data.inheritedMediaFromAssetId) {
-        dataToCreate.inheritedMediaFromAssetId = data.inheritedMediaFromAssetId as any;
+        dataToCreate.inheritedMediaFromAssetId = BigInt(data.inheritedMediaFromAssetId as string);
       }
       
       const newLot = await this.repository.create(dataToCreate, (assetIds || []).map(id => BigInt(id)), creatorId || '');

@@ -128,7 +128,7 @@ export default function AdminAssetsPage() {
     onUpdate();
   }, [onUpdate, toast]);
   
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
   const renderGridItem = (item: Asset) => <BidExpertCard item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Asset) => <BidExpertListItem item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
 

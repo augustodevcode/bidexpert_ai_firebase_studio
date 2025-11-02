@@ -25,6 +25,11 @@ export interface AuctioneerDashboardData {
   salesByMonth: { name: string; Faturamento: number }[];
 }
 
+const mapAuctioneer = (auctioneer: any): AuctioneerProfileInfo => ({
+  ...auctioneer,
+  userId: auctioneer.userId ?? null,
+});
+
 export class AuctioneerService {
   private auctioneerRepository: AuctioneerRepository;
   private prisma;
@@ -35,23 +40,26 @@ export class AuctioneerService {
   }
 
   async getAuctioneers(tenantId: string, limit?: number): Promise<AuctioneerProfileInfo[]> {
-    // @ts-ignore
-    return this.auctioneerRepository.findAll(tenantId, limit);
+    const auctioneers = await this.auctioneerRepository.findAll(tenantId, limit);
+    return auctioneers.map(mapAuctioneer);
   }
 
   async getAuctioneerById(tenantId: string, id: string): Promise<AuctioneerProfileInfo | null> {
-    // @ts-ignore
-    return this.auctioneerRepository.findById(tenantId, id);
+    const auctioneer = await this.auctioneerRepository.findById(tenantId, id);
+    if (!auctioneer) return null;
+    return mapAuctioneer(auctioneer);
   }
 
   async getAuctioneerBySlug(tenantId: string, slugOrId: string): Promise<AuctioneerProfileInfo | null> {
-      // @ts-ignore
-      return this.auctioneerRepository.findBySlug(tenantId, slugOrId);
+      const auctioneer = await this.auctioneerRepository.findBySlug(tenantId, slugOrId);
+      if (!auctioneer) return null;
+      return mapAuctioneer(auctioneer);
   }
 
   async getAuctioneerByName(tenantId: string, name: string): Promise<AuctioneerProfileInfo | null> {
-    // @ts-ignore
-    return this.auctioneerRepository.findByName(tenantId, name);
+    const auctioneer = await this.auctioneerRepository.findByName(tenantId, name);
+    if (!auctioneer) return null;
+    return mapAuctioneer(auctioneer);
   }
 
   async createAuctioneer(tenantId: string, data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
@@ -86,7 +94,7 @@ export class AuctioneerService {
       }
       
       const newAuctioneer = await this.auctioneerRepository.create(dataToCreate);
-      return { success: true, message: 'Leiloeiro criado com sucesso.', auctioneerId: newAuctioneer.id };
+      return { success: true, message: 'Leiloeiro criado com sucesso.', auctioneerId: newAuctioneer.id.toString() };
     } catch (error: any) {
       console.error("Error in AuctioneerService.createAuctioneer:", error);
       if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
@@ -159,7 +167,7 @@ export class AuctioneerService {
     try {
       const auctioneers = await this.auctioneerRepository.findAll(tenantId);
       for (const auctioneer of auctioneers) {
-        await this.deleteAuctioneer(tenantId, auctioneer.id);
+        await this.deleteAuctioneer(tenantId, auctioneer.id.toString());
       }
       return { success: true, message: 'Todos os leiloeiros foram excluídos.' };
     } catch (error: any) {
@@ -256,7 +264,7 @@ export class AuctioneerService {
       const salesRate = totalLotsInAuctions > 0 ? (lotsSoldCount / totalLotsInAuctions) * 100 : 0;
 
       return {
-        id: auctioneer.id,
+        id: auctioneer.id.toString(),
         name: auctioneer.name,
         totalAuctions: auctioneer._count.auctions,
         totalLots: totalLotsInAuctions,

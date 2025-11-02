@@ -4,9 +4,7 @@
  * Este componente Server-Side é o ponto de entrada para toda a aplicação.
  * Ele busca dados essenciais como configurações da plataforma e o estado de
  * autenticação do usuário, envolve a aplicação com providers de contexto
- * (Autenticação, Tooltip) e renderiza a estrutura HTML base. Também inclui
- * o `AppContentWrapper` que decide qual layout principal renderizar (público ou admin)
- * e o `SubscriptionPopup` para capturar novos inscritos.
+ * (Autenticação, Tooltip) e renderiza a estrutura HTML base.
  */
 import type { Metadata } from 'next';
 import './globals.css';
@@ -16,7 +14,6 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { AppContentWrapper } from './app-content-wrapper';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import SubscriptionPopup from '@/components/subscription-popup';
-import { getCurrentUser } from '@/app/auth/actions';
 
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
@@ -25,9 +22,6 @@ export const metadata: Metadata = {
   description: 'Sua plataforma especialista em leilões online.',
 };
 
-/**
- * Fetches only the essential data for the main layout, which is platform settings.
- */
 async function getLayoutData() {
   try {
     const settings = await getPlatformSettings();
@@ -61,16 +55,16 @@ export default async function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <TooltipProvider delayDuration={0}>
+        <TooltipProvider delayDuration={0}>
             <AppContentWrapper 
-              isSetupComplete={true}
-              platformSettings={platformSettings}
+            isSetupComplete={true}
+            platformSettings={platformSettings}
             >
-              {children}
+            {children}
             </AppContentWrapper>
             {/* <SubscriptionPopup /> */}
             <Toaster />
-          </TooltipProvider>
+        </TooltipProvider>
         </AuthProvider>
       </body>
     </html>

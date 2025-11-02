@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Users, Clock, Star, TrendingUp, Pencil } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, isValidImageUrl } from '@/lib/ui-helpers';
+import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import BidExpertAuctionStagesTimeline from '../auction/BidExpertAuctionStagesTimeline'; // Corrigido o import
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import EntityEditMenu from '../entity-edit-menu';
 
@@ -24,9 +24,7 @@ interface AuctionListItemProps {
 }
 
 export default function AuctionListItem({ auction, onUpdate }: AuctionListItemProps) {
-  const auctionTypeDisplay = auction.auctionType === 'TOMADA_DE_PRECOS' 
-    ? { label: 'Tomada de Preços', icon: <TomadaPrecosIcon className="h-3.5 w-3.5" /> }
-    : { label: auction.auctionType || 'Leilão', icon: <AuctionTypeIcon className="h-3.5 w-3.5" /> };
+  const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
 
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
   const sellerName = auction.seller?.name;
@@ -137,10 +135,12 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
-              <div className="flex items-center">
-                {auctionTypeDisplay.icon && React.cloneElement(auctionTypeDisplay.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" })}
-                <span>{auctionTypeDisplay.label}</span>
-              </div>
+              {auctionTypeDisplay?.icon && (
+                 <div className="flex items-center">
+                    {React.cloneElement(auctionTypeDisplay.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" })}
+                    <span>{auctionTypeDisplay.label}</span>
+                </div>
+              )}
               <div className="flex items-center">
                 <Tag className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
                 <span>{auction.category?.name || 'Não especificada'}</span>

@@ -42,6 +42,7 @@ export class MediaService {
         storagePath: url, // For local adapter, path is the URL
         uploadedBy: { connect: { id: userId } }, // Connect to User using string ID
         ...(judicialProcessId && { judicialProcess: { connect: { id: judicialProcessId } } }),
+        sizeBytes: itemData.sizeBytes || 0, // Ensure sizeBytes is included, default to 0 if not provided
       };
 
       const newItem = await this.repository.create(dataToCreate);
