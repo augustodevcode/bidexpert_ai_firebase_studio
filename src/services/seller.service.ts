@@ -1,4 +1,3 @@
-
 // src/services/seller.service.ts
 /**
  * @fileoverview Este arquivo funciona como a camada de Controller, expondo funções que o cliente
@@ -160,11 +159,11 @@ export class SellerService {
       }
       
       if (cityId) {
-        const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+        const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }});
         if (city) dataToUpdate.city = city.name;
       }
       if (stateId) {
-        const state = await this.prisma.state.findUnique({ where: { id: stateId }});
+        const state = await this.prisma.state.findUnique({ where: { id: BigInt(stateId) }});
         if (state) dataToUpdate.state = state.uf;
       }
 
@@ -179,10 +178,10 @@ export class SellerService {
   async deleteSeller(tenantId: string, id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // Disconnect from related models
-      await this.prisma.auction.updateMany({ where: { sellerId: id }, data: { sellerId: null } });
-      await this.prisma.lot.updateMany({ where: { sellerId: id }, data: { sellerId: null } });
-      await this.prisma.asset.updateMany({ where: { sellerId: id }, data: { sellerId: null } });
-      await this.prisma.judicialProcess.updateMany({ where: { sellerId: id }, data: { sellerId: null } });
+      await this.prisma.auction.updateMany({ where: { sellerId: BigInt(id) }, data: { sellerId: null } });
+      await this.prisma.lot.updateMany({ where: { sellerId: BigInt(id) }, data: { sellerId: null } });
+      await this.prisma.asset.updateMany({ where: { sellerId: BigInt(id) }, data: { sellerId: null } });
+      await this.prisma.judicialProcess.updateMany({ where: { sellerId: BigInt(id) }, data: { sellerId: null } });
 
       await this.sellerRepository.delete(tenantId, id);
       return { success: true, message: 'Comitente excluído com sucesso.' };
@@ -206,13 +205,13 @@ export class SellerService {
   
   async getSellerDashboardData(tenantId: string, sellerId: string): Promise<SellerDashboardData | null> {
     const sellerData = await this.prisma.seller.findFirst({
-      where: { id: sellerId, tenantId },
+      where: { id: BigInt(sellerId), tenantId: BigInt(tenantId) },
       include: {
         _count: {
           select: { auctions: true, lots: true },
         },
         lots: {
-          where: { status: 'VENDIDO', tenantId },
+          where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
           select: { price: true, updatedAt: true }
         },
       },

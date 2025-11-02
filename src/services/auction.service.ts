@@ -11,6 +11,8 @@ import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { PrismaClientValidationError } from '@prisma/client/runtime/library';
 import { v4 as uuidv4 } from 'uuid';
+import { utcToZonedTime } from 'date-fns-tz';
+import { getPrismaInstance } from '@/lib/prisma';
 import { nowInSaoPaulo } from '@/lib/timezone';
 import { prisma } from '@/lib/prisma';
 
