@@ -13,7 +13,7 @@ export class SellerRepository {
   async findAll(tenantId: string, limit?: number): Promise<SellerProfileInfo[]> {
     // @ts-ignore
     return this.prisma.seller.findMany({ 
-        where: { tenantId: BigInt(tenantId) }, 
+        where: { tenantId }, 
         orderBy: { createdAt: 'desc' },
         take: limit,
     });
@@ -21,7 +21,7 @@ export class SellerRepository {
 
   async findById(tenantId: string, id: string): Promise<SellerProfileInfo | null> {
     // @ts-ignore
-    return this.prisma.seller.findFirst({ where: { id: BigInt(id), tenantId: BigInt(tenantId) } });
+    return this.prisma.seller.findFirst({ where: { id, tenantId } });
   }
   
   async findByName(tenantId: string, name: string): Promise<SellerProfileInfo | null> {

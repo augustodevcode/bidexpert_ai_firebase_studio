@@ -7,13 +7,13 @@
  */
 import { DocumentTemplateRepository } from '@/repositories/document-template.repository';
 import type { DocumentTemplate, DocumentTemplateFormData } from '@/types';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 
 export class DocumentTemplateService {
   private repository: DocumentTemplateRepository;
 
-  constructor() {
-    this.repository = new DocumentTemplateRepository();
+  constructor(prismaClient: PrismaClient) {
+    this.repository = new DocumentTemplateRepository(prismaClient);
   }
 
   async getDocumentTemplates(): Promise<DocumentTemplate[]> {

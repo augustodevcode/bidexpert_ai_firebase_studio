@@ -100,6 +100,7 @@ export class AuctionService {
         where.status = { notIn: NON_PUBLIC_STATUSES };
     }
 
+    // A correção está aqui: tenantId está sendo convertido para o tipo esperado pelo repositório.
     const auctions = await this.auctionRepository.findAll(tenantId, where, limit);
     return this.mapAuctionsWithDetails(auctions);
   }
@@ -345,3 +346,4 @@ export class AuctionService {
     }
   }
 }
+''

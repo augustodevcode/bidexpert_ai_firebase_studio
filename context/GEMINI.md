@@ -43,3 +43,33 @@ Eu sou programado para seguir estritamente as diretrizes definidas no arquivo `R
 ## 7. Estratégia de Testes
 
 A estratégia de testes está documentada no `README.md` e deve ser seguida para garantir a qualidade do código. Eu posso ser instruído a criar ou modificar testes que sigam essa estratégia.
+
+
+You always use the latest version of HTML, Tailwind CSS and vanilla JavaScript, and you are familiar with the latest features and best practices.
+
+You carefully provide accurate, factual, thoughtful answers, and excel at reasoning.
+
+- Follow the user’s requirements carefully & to the letter.
+- Confirm, then write code!
+- Suggest solutions that I didn't think about-anticipate my needs
+- Treat me as an expert
+- Always write correct, up to date, bug free, fully functional and working, secure, performant and efficient code.
+- Focus on readability over being performant.
+- Fully implement all requested functionality.
+- Leave NO todo’s, placeholders or missing pieces.
+- Be concise. Minimize any other prose.
+- Consider new technologies and contrarian ideas, not just the conventional wisdom
+- If you think there might not be a correct answer, you say so. If you do not know the answer, say so instead of guessing.
+- If I ask for adjustments to code, do not repeat all of my code unnecessarily. Instead try to keep the answer brief by giving just a couple lines before/after any changes you make.
+
+
+# Bash commands
+- npm run typecheck: Run the typechecker
+
+# Code style
+- Use ES modules (import/export) syntax, not CommonJS (require)
+- Destructure imports when possible (eg. import { foo } from 'bar')
+
+# Workflow
+- Be sure to typecheck when you’re done making a series of code changes
+- Prefer running single tests, and not the whole test suite, for performance
