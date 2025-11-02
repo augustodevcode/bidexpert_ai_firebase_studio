@@ -17,7 +17,7 @@ export class AuctionRepository {
       take: limit,
       include: {
         _count: { select: { lots: true } },
-        seller: true,
+        Seller: true, // Corrected from 'seller'
         auctioneer: true,
         stages: true,
       },
@@ -42,7 +42,7 @@ export class AuctionRepository {
       include: {
         lots: { include: { assets: { include: { asset: true } } } }, 
         auctioneer: true,
-        seller: true,
+        Seller: true, // Corrected from 'seller'
         stages: true,
       },
     });
@@ -63,7 +63,7 @@ export class AuctionRepository {
       },
       include: { 
           _count: { select: { lots: true } },
-          seller: true,
+          Seller: true, // Corrected from 'seller'
           stages: true,
       }
     });
@@ -102,7 +102,7 @@ export class AuctionRepository {
       },
       include: {
         _count: { select: { lots: true } },
-        seller: true,
+        Seller: true, // Corrected from 'seller'
         stages: true,
       },
       orderBy: { auctionDate: 'desc' },
@@ -114,7 +114,7 @@ export class AuctionRepository {
     return this.prisma.auction.findMany({
         where: {
             tenantId: BigInt(tenantId),
-            seller: {
+            Seller: { // Corrected from 'seller'
                 OR: [
                     { slug: sellerSlugOrPublicId }, 
                     { publicId: sellerSlugOrPublicId },
@@ -124,7 +124,7 @@ export class AuctionRepository {
         },
         include: { 
             _count: { select: { lots: true } },
-            seller: true,
+            Seller: true, // Corrected from 'seller'
             stages: true,
         }
     });

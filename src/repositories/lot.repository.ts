@@ -1,4 +1,3 @@
-
 // src/repositories/lot.repository.ts
 import { prisma } from '@/lib/prisma';
 import type { Lot, LotFormData } from '@/types';
@@ -17,9 +16,7 @@ export class LotRepository {
     
     if (isPublicCall) {
         finalWhere.auction = {
-            is: { // Correção aqui
-                status: { notIn: NON_PUBLIC_AUCTION_STATUSES }
-            }
+            status: { notIn: NON_PUBLIC_AUCTION_STATUSES }
         }
     }
     

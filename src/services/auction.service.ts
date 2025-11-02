@@ -53,10 +53,10 @@ export class AuctionService {
             categoryId: a.categoryId?.toString() ?? null,
             judicialProcessId: a.judicialProcessId?.toString() ?? null,
             tenantId: a.tenantId.toString(),
-            seller: a.seller ? { ...a.seller, id: a.seller.id.toString() } : null,
+            seller: a.Seller ? { ...a.Seller, id: a.Seller.id.toString() } : null,
             auctioneer: a.auctioneer ? { ...a.auctioneer, id: a.auctioneer.id.toString() } : null,
             category: a.category ? { ...a.category, id: a.category.id.toString() } : null,
-            sellerName: a.seller?.name,
+            sellerName: a.Seller?.name,
             auctioneerName: a.auctioneer?.name,
             categoryName: a.category?.name,
             // Se imageMediaId for 'INHERIT', usa a imagem do lote em destaque. Senão, usa a do leilão.
@@ -100,7 +100,6 @@ export class AuctionService {
         where.status = { notIn: NON_PUBLIC_STATUSES };
     }
 
-    // A correção está aqui: tenantId está sendo convertido para o tipo esperado pelo repositório.
     const auctions = await this.auctionRepository.findAll(tenantId, where, limit);
     return this.mapAuctionsWithDetails(auctions);
   }
@@ -120,13 +119,10 @@ export class AuctionService {
         return null; 
     }
 
-    // Busca a categoria separadamente, já que o relacionamento direto foi removido
     if (auction.categoryId) {
         const category = await this.prisma.lotCategory.findUnique({ where: { id: auction.categoryId }});
         // @ts-ignore
         auction.category = category;
-        // @ts-ignore
-        auction.categoryName = category?.name;
     }
 
     return this.mapAuctionsWithDetails([auction])[0];
@@ -201,7 +197,7 @@ export class AuctionService {
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
             auctioneer: { connect: { id: BigInt(auctioneerId) } },
-            seller: { connect: { id: BigInt(sellerId) } },
+            Seller: { connect: { id: BigInt(sellerId) } }, // Corrected relation name
             category: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
             tenant: { connect: { id: BigInt(tenantId) } },
             city: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
@@ -268,7 +264,7 @@ export class AuctionService {
         if (data.title) dataToUpdate.slug = slugify(data.title);
         
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: BigInt(auctioneerId) } };
-        if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } };
+        if (sellerId) dataToUpdate.Seller = { connect: { id: BigInt(sellerId) } }; // Corrected relation name
         if (categoryId) dataToUpdate.category = { connect: { id: BigInt(categoryId) } };
         if (cityId) dataToUpdate.city = { connect: {id: BigInt(cityId) }};
         if (stateId) dataToUpdate.state = { connect: {id: BigInt(stateId) }};
@@ -346,4 +342,3 @@ export class AuctionService {
     }
   }
 }
-''
