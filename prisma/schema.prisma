@@ -1076,7 +1076,7 @@ model Report {
 
 model Subscriber {
   id          BigInt   @id @default(autoincrement())
-  email       String   @unique
+  email       String
   name        String?
   phone       String?
   preferences Json?
@@ -1084,6 +1084,8 @@ model Subscriber {
   updatedAt   DateTime @updatedAt
   tenantId    BigInt
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([email, tenantId], name: "email_tenantId")
 }
 
 model PasswordResetToken {

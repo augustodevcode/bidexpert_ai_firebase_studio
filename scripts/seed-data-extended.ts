@@ -10,10 +10,11 @@
  */
 import { PrismaClient, Prisma, UserHabilitationStatus, AssetStatus, AuctionStatus, AuctionType, AuctionMethod, AuctionParticipation, ProcessPartyType, LotStatus, PaymentStatus, DirectSaleOfferStatus, DirectSaleOfferType } from '@prisma/client';
 import { faker } from '@faker-js/faker/locale/pt_BR';
+import { add } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import { add } from 'date-fns';
+import logger from './utils/logger';
 
 // Importa os serviços reais da aplicação
 import { AssetService } from '../src/services/asset.service';
@@ -56,8 +57,11 @@ import { DataSourceService } from '../src/services/data-source.service';
 const prisma = new PrismaClient();
 
 // --- Funções Utilitárias ---
-const log = (message: string, level = 0) => {
-  console.log(`${'  '.repeat(level)}- ${message}`);
+function log(message: string, level = 0) {
+  const indent = '  '.repeat(level);
+  const fullMessage = `${indent}${message}`;
+  logger.log(fullMessage);
+  return fullMessage;
 };
 
 const randomEnum = <T extends object>(e: T): T[keyof T] => {
@@ -172,13 +176,16 @@ const IMAGE_PLACEHOLDER_DIR = path.join(process.cwd(), 'public/uploads/sample-im
 // --- Lógica Principal de Seeding ---
 
 async function runStep(stepFunction: () => Promise<any>, stepName: string) {
+  const stepLog = log(`- ${stepName}...`);
   try {
-    log(`Iniciando: ${stepName}...`, 0);
+    const startTime = Date.now();
     await stepFunction();
-    log(`Concluído: ${stepName}.`, 0);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    log(`✅ ${stepName} concluído em ${duration}s.`);
   } catch (error) {
-    console.error(`
-❌ Erro na etapa: ${stepName}`);
+    const errorMessage = `❌ Erro em ${stepName}: ${error.message}`;
+    logger.error(stepLog, error);
+    log(errorMessage, 1);
     throw error;
   }
 }
@@ -830,11 +837,115 @@ async function seedAuctionsAndLots() {
                 sellerId: seller.id.toString()
             };
             
-            const lotResult = await services.lot.createLot(
-                lotData,
-                entityStore.tenantId,
-                entityStore.users[0].id.toString()
-            );
+            // Converter os IDs dos ativos para BigInt
+            const assetIdsBigInt = lotData.assetIds.map((id: string) => BigInt(id));
+            
+            // Obter o leilão para pegar informações adicionais
+            const auction = await prisma.auction.findUnique({
+                where: { id: BigInt(auctionResult.auctionId) },
+                select: {
+                    id: true,
+                    sellerId: true,
+                    auctioneerId: true,
+                    cityId: true,
+                    stateId: true,
+                    tenantId: true,
+                    status: true,
+                    auctionDate: true,
+                    endDate: true,
+                    title: true,
+                    description: true
+                }
+            });
+
+            if (!auction) {
+                console.error(`Leilão não encontrado: ${auctionResult.auctionId}`);
+                return { success: false, message: 'Leilão não encontrado' };
+            }
+
+            // Criar o lote usando o repositório diretamente
+            const lotResult = await prisma.$transaction(async (tx) => {
+                // 1. Criar o lote
+                // Definir a data de término do lote (7 dias após a data do leilão)
+                const auctionDate = auction.auctionDate || new Date();
+                const endDate = new Date(auctionDate.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias após a data do leilão
+                
+                // Construir o objeto de criação do lote
+                const lotInput: Prisma.LotCreateInput = {
+                    publicId: `LOT-${uuidv4()}`,
+                    title: lotData.title || `Lote ${j + 1} - ${auction.title || 'Sem título'}`,
+                    description: lotData.description || auction.description || 'Descrição não fornecida',
+                    status: lotData.status as any, // Usando 'as any' para evitar problemas com o tipo enum
+                    type: lotData.type || 'OUTROS',
+                    price: new Prisma.Decimal(lotData.price || 0),
+                    initialPrice: new Prisma.Decimal(lotData.initialPrice || lotData.price || 0),
+                    secondInitialPrice: new Prisma.Decimal(0), // Valor padrão
+                    bidIncrementStep: new Prisma.Decimal(lotData.bidIncrementStep || 100),
+                    number: (j + 1).toString(),
+                    slug: `${slugify(lotData.title || `lote-${j + 1}`)}-${Date.now()}`,
+                    bidsCount: 0,
+                    views: 0,
+                    isFeatured: false,
+                    isExclusive: false,
+                    allowInstallmentBids: false,
+                    isRelisted: false,
+                    relistCount: 0,
+                    endDate: auction.endDate || endDate,
+                    lotSpecificAuctionDate: auctionDate,
+                    secondAuctionDate: auction.endDate ? new Date(auction.endDate.getTime() + 7 * 24 * 60 * 60 * 1000) : new Date(endDate.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 dias após o fim do leilão
+                    tenant: { connect: { id: BigInt(auction.tenantId) } },
+                    auction: { connect: { id: BigInt(lotData.auctionId) } },
+                    // Usar os IDs diretamente do leilão
+                    ...(auction.sellerId && { seller: { connect: { id: BigInt(auction.sellerId) } } }),
+                    ...(auction.auctioneerId && { auctioneer: { connect: { id: BigInt(auction.auctioneerId) } } }),
+                    ...(auction.cityId && { 
+                        city: { connect: { id: BigInt(auction.cityId) } },
+                        cityName: 'Cidade do Leilão' // Valor padrão, pode ser ajustado conforme necessário
+                    }),
+                    ...(auction.stateId && { 
+                        state: { connect: { id: BigInt(auction.stateId) } },
+                        stateUf: 'SP' // Valor padrão, pode ser ajustado conforme necessário
+                    }),
+                    // Campos obrigatórios adicionais
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    // Relacionamentos opcionais
+                    ...(lotData.categoryId && { 
+                        category: { connect: { id: BigInt(lotData.categoryId) } } 
+                    }),
+                    ...(lotData.subcategoryId && { 
+                        subcategory: { connect: { id: BigInt(lotData.subcategoryId) } } 
+                    }),
+                    // Campos adicionais obrigatórios
+                    condition: 'USADO', // Valor padrão
+                    mapAddress: 'Endereço não especificado', // Valor padrão
+                    latitude: new Prisma.Decimal(0), // Valor padrão
+                    longitude: new Prisma.Decimal(0) // Valor padrão
+                };
+
+                const newLot = await tx.lot.create({ data: lotInput });
+
+                // 2. Associar os ativos ao lote
+                if (assetIdsBigInt.length > 0) {
+                    await tx.assetsOnLots.createMany({
+                        data: assetIdsBigInt.map((assetId: bigint) => ({
+                            lotId: newLot.id,
+                            assetId: assetId,
+                            assignedBy: entityStore.users[0]?.id?.toString() || 'system',
+                            assignedAt: new Date()
+                        })),
+                        skipDuplicates: true
+                    });
+
+                    // Atualizar status dos ativos para LOTEADO
+                    await tx.asset.updateMany({
+                        where: { id: { in: assetIdsBigInt } },
+                        data: { status: 'LOTEADO' as AssetStatus }
+                    });
+                }
+
+                return { success: true, lotId: newLot.id.toString() };
+            });
 
             if(lotResult.success && lotResult.lotId) {
                 const lot = await prisma.lot.findUnique({
@@ -991,8 +1102,24 @@ async function seedScenario_BiddingWar() {
 
     // Bidder A defines um lance máximo
     const maxBidAmount = currentPrice + (increment * 5);
-    await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
-        user: { connect: { id: bidderA.id } }, lot: { connect: { id: lot.id } }, maxAmount: maxBidAmount,
+    // Usar o serviço de lance direto do Prisma para evitar problemas com o schema
+    await prisma.userLotMaxBid.upsert({
+        where: {
+            userId_lotId: {
+                userId: BigInt(bidderA.id),
+                lotId: BigInt(lot.id)
+            }
+        },
+        update: {
+            maxAmount: maxBidAmount
+        },
+        create: {
+            user: { connect: { id: BigInt(bidderA.id) } },
+            lot: { connect: { id: BigInt(lot.id) } },
+            maxAmount: maxBidAmount,
+            isActive: true,
+            createdAt: new Date()
+        }
     });
     log(`Arrematante A (${bidderA.fullName}) definiu lance máximo de R$ ${maxBidAmount} para o lote #${lot.number}.`, 2);
 
@@ -1144,8 +1271,26 @@ async function seedUserLotMaxBids() {
     for (const lot of lotsWithBids) {
         if (faker.datatype.boolean(0.3)) {
             const user = faker.helpers.arrayElement(habilitatedUsers);
-            await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
-                user: { connect: { id: user.id } }, lot: { connect: { id: lot.id } }, maxAmount: Number(lot.price) + faker.number.int({ min: 500, max: 5000 }),
+            const maxBidAmount = Number(lot.price) + faker.number.int({ min: 500, max: 5000 });
+            
+            // Usar o Prisma diretamente para evitar problemas com o serviço
+            await prisma.userLotMaxBid.upsert({
+                where: {
+                    userId_lotId: {
+                        userId: BigInt(user.id),
+                        lotId: BigInt(lot.id)
+                    }
+                },
+                update: {
+                    maxAmount: maxBidAmount
+                },
+                create: {
+                    user: { connect: { id: BigInt(user.id) } },
+                    lot: { connect: { id: BigInt(lot.id) } },
+                    maxAmount: maxBidAmount,
+                    isActive: true,
+                    createdAt: new Date()
+                }
             });
         }
     }
@@ -1193,8 +1338,29 @@ async function seedPostAuctionInteractions() {
     for (const lot of entityStore.lots) {
         if (faker.datatype.boolean(0.2)) {
             const user = faker.helpers.arrayElement(users);
-            const questionResult = await services.lotQuestion.create({
-                lot: { connect: { id: lot.id } }, user: { connect: { id: user.id } }, authorName: user.fullName!, question: faker.lorem.sentence() + '?'
+            const questionText = faker.lorem.sentence() + '?';
+            
+            // Obter o leilão do lote para garantir que temos o ID do leilão
+            const lotWithAuction = await prisma.lot.findUnique({
+                where: { id: lot.id },
+                select: { auctionId: true }
+            });
+            
+            if (!lotWithAuction) {
+                log(`Lote com ID ${lot.id} não encontrado. Pulando criação de pergunta.`, 2);
+                continue;
+            }
+            
+            // Criar a pergunta usando o Prisma diretamente para evitar problemas de conversão de tipos
+            const questionResult = await prisma.lotQuestion.create({
+                data: {
+                    lotId: lot.id,
+                    userId: user.id,
+                    auctionId: lotWithAuction.auctionId,
+                    userDisplayName: user.fullName || 'Usuário Anônimo',
+                    questionText: questionText,
+                    isPublic: true
+                }
             });
             if (questionResult) {
                 await services.lotQuestion.addAnswer(questionResult.id.toString(), faker.lorem.sentence(), entityStore.users[0].id.toString(), entityStore.users[0].fullName!);
