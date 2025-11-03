@@ -1,4 +1,3 @@
-
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import { AuctionRepository } from '@/repositories/auction.repository';
@@ -12,8 +11,8 @@ import { AssetService } from './asset.service';
 // Inicializa o cliente Prisma
 const prisma = new PrismaClient();
 
-const NON_PUBLIC_AUCTION_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
 const NON_PUBLIC_LOT_STATUSES: LotStatus[] = ['RASCUNHO', 'CANCELADO'];
+const NON_PUBLIC_AUCTION_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
 
 
 export class LotService {
@@ -65,15 +64,17 @@ export class LotService {
       where.auctionId = BigInt(auctionId);
     }
     
-    if (isPublicCall) {
-        where.auction = {
-            status: {
-                notIn: NON_PUBLIC_AUCTION_STATUSES
-            }
-        };
-    }
-
     const lots = await this.repository.findAll(tenantId, where, limit);
+
+    if (isPublicCall) {
+        // Filter in application code
+        return lots
+            .filter(lot => 
+                !NON_PUBLIC_LOT_STATUSES.includes(lot.status) &&
+                lot.auction && !NON_PUBLIC_AUCTION_STATUSES.includes(lot.auction.status)
+            )
+            .map(lot => this.mapLotWithDetails(lot));
+    }
     
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
@@ -534,7 +535,7 @@ export class LotService {
         sellerId,
         auctioneerId,
         ...cleanData 
-      } = lotData;
+      } = lotData as any;
 
       // Convert string IDs to BigInt
       const auctionIdBigInt = BigInt(auctionId);
@@ -559,7 +560,7 @@ export class LotService {
         initialPrice: toDecimal(lotData.initialPrice),
         secondInitialPrice: toDecimal(lotData.secondInitialPrice),
         bidIncrementStep: toDecimal(lotData.bidIncrementStep),
-        publicId: `LOTE-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         number: lotData.number || null,
         slug: lotData.slug || slugify(lotData.title),
         lotSpecificAuctionDate: lotData.lotSpecificAuctionDate || null,
@@ -646,5 +647,3 @@ export class LotService {
     }
   }
 }
-
-    

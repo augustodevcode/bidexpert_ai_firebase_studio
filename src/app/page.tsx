@@ -42,7 +42,7 @@ export default async function HomePage() {
   ] = await Promise.all([
       getPlatformSettings(),
       getAuctions(true, 10), // Limitar para 10 leilões
-      getLots(undefined, true, 12), // Limitar para 12 lotes
+      getLots(undefined, undefined, 12, true), // Public call
       getLotCategories(),
       getSellers(true),
   ]);
@@ -54,96 +54,95 @@ export default async function HomePage() {
   const closingSoonLotsWithStages = await prisma.lot.findMany({
       where: {
           status: 'ABERTO_PARA_LANCES',
-          auction: {
-              stages: {
-                  some: {
-                      endDate: {
-                          gte: now,
-                          lte: sevenDaysFromNow,
-                      }
-                  }
-              }
-          }
+          // O filtro aninhado foi movido para o código da aplicação
       },
       include: {
           auction: {
               include: {
                   stages: {
                       orderBy: { endDate: 'desc' },
-                      take: 1,
                   }
               }
           }
       },
-      take: 8,
+      take: 50, // Pega mais para garantir que teremos 8 após o filtro
   });
 
-  // Mapear para adicionar a data da última etapa ao lote e converter tipos
-  const closingSoonLots = closingSoonLotsWithStages.map(lot => {
-    const relevantEndDate = lot.auction?.stages?.[0]?.endDate || lot.endDate;
+  // Mapear para adicionar a data da última etapa ao lote, filtrar e converter tipos
+  const closingSoonLots = closingSoonLotsWithStages
+    .map(lot => {
+      const lastStage = lot.auction?.stages?.[0];
+      const relevantEndDate = lastStage?.endDate || lot.endDate;
+
+      if (!relevantEndDate || isPast(new Date(relevantEndDate)) || new Date(relevantEndDate) > sevenDaysFromNow) {
+          return null; // Ignorar lotes que não se encaixam no critério
+      }
+      
+      // Converter todos os IDs de bigint para string e mapear para o tipo Lot
+      return {
+          ...lot,
+          id: lot.id.toString(),
+          auctionId: lot.auctionId.toString(),
+          categoryId: lot.categoryId?.toString() || null,
+          subcategoryId: lot.subcategoryId?.toString() || null,
+          sellerId: lot.sellerId?.toString() || null,
+          auctioneerId: lot.auctioneerId?.toString() || null,
+          cityId: lot.cityId?.toString() || null,
+          stateId: lot.stateId?.toString() || null,
+          winnerId: lot.winnerId?.toString() || null,
+          tenantId: lot.tenantId.toString(), // Convert tenantId to string
+          originalLotId: 'original_lot_id' in lot ? (lot as any).original_lot_id?.toString() : null,
+          inheritedMediaFromAssetId: 'inheritedMediaFromAssetId' in lot ? (lot as any).inheritedMediaFromAssetId?.toString() : null,
+          price: Number(lot.price),
+          initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+          secondInitialPrice: 'secondInitialPrice' in lot && lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
+          bidIncrementStep: 'bidIncrementStep' in lot && lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
+          evaluationValue: 'evaluationValue' in lot && lot.evaluationValue ? Number(lot.evaluationValue) : null,
+          latitude: 'latitude' in lot ? (lot.latitude !== null ? Number(lot.latitude) : null) : null,
+          longitude: 'longitude' in lot ? (lot.longitude !== null ? Number(lot.longitude) : null) : null,
+          stageDetails: [], // Initialize as empty array to match LotStageDetails[] type
+          endDate: relevantEndDate,
+          auction: lot.auction ? {
+              ...lot.auction,
+              id: lot.auction.id.toString(),
+              tenantId: lot.auction.tenantId.toString(),
+              auctioneerId: lot.auction.auctioneerId?.toString() || null,
+              sellerId: lot.auction.sellerId?.toString() || null,
+              cityId: lot.auction.cityId?.toString() || null,
+              stateId: lot.auction.stateId?.toString() || null,
+              judicialProcessId: lot.auction.judicialProcessId?.toString() || null,
+              categoryId: 'categoryId' in lot.auction && lot.auction.categoryId ? lot.auction.categoryId.toString() : null,
+              originalAuctionId: lot.auction.originalAuctionId?.toString() || null,
+              latitude: lot.auction.latitude !== null ? Number(lot.auction.latitude) : null,
+              longitude: lot.auction.longitude !== null ? Number(lot.auction.longitude) : null,
+              initialOffer: 'initialOffer' in lot.auction && lot.auction.initialOffer !== null ? Number(lot.auction.initialOffer) : undefined,
+              estimatedRevenue: 'estimatedRevenue' in lot.auction && lot.auction.estimatedRevenue !== null ? Number(lot.auction.estimatedRevenue) : undefined,
+              achievedRevenue: 'achievedRevenue' in lot.auction && lot.auction.achievedRevenue !== null ? Number(lot.auction.achievedRevenue) : undefined,
+              decrementAmount: 'decrementAmount' in lot.auction ? (lot.auction.decrementAmount !== null ? Number(lot.auction.decrementAmount) : null) : null,
+              floorPrice: 'floorPrice' in lot.auction ? (lot.auction.floorPrice !== null ? Number(lot.auction.floorPrice) : null) : null,
+              additionalTriggers: ('additionalTriggers' in lot.auction && Array.isArray(lot.auction.additionalTriggers) 
+                  ? lot.auction.additionalTriggers.filter((t): t is string => typeof t === 'string')
+                  : []) as string[],
+              autoRelistSettings: 'autoRelistSettings' in lot.auction ? lot.auction.autoRelistSettings : undefined,
+              stages: (lot.auction.stages || []).map(stage => ({
+                  id: stage.id.toString(),
+                  auctionId: stage.auctionId.toString(),
+                  name: stage.name,
+                  startDate: stage.startDate,
+                  endDate: stage.endDate,
+                  initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
+                  status: 'ATIVO' as const, // Default status
+                  order: 0, // Default order
+                  createdAt: new Date(), // Default to current date
+                  updatedAt: new Date(), // Default to current date
+                  tenantId: lot.tenantId.toString()
+              }))
+          } : undefined
+      };
+    })
+    .filter((lot): lot is Lot => lot !== null) // Remove os nulos (lotes que não passaram no filtro de data)
+    .slice(0, 8); // Pega os 8 primeiros após o filtro
     
-    // Converter todos os IDs de bigint para string e mapear para o tipo Lot
-    return {
-        ...lot,
-        id: lot.id.toString(),
-        auctionId: lot.auctionId.toString(),
-        categoryId: lot.categoryId?.toString() || null,
-        subcategoryId: lot.subcategoryId?.toString() || null,
-        sellerId: lot.sellerId?.toString() || null,
-        auctioneerId: lot.auctioneerId?.toString() || null,
-        cityId: lot.cityId?.toString() || null,
-        stateId: lot.stateId?.toString() || null,
-        winnerId: lot.winnerId?.toString() || null,
-        tenantId: lot.tenantId.toString(), // Convert tenantId to string
-        originalLotId: 'original_lot_id' in lot ? (lot as any).original_lot_id?.toString() : null,
-        inheritedMediaFromAssetId: 'inherited_media_from_asset_id' in lot ? (lot as any).inherited_media_from_asset_id?.toString() : null,
-        price: Number(lot.price),
-        initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
-        secondInitialPrice: 'secondInitialPrice' in lot && lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
-        bidIncrementStep: 'bidIncrementStep' in lot && lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
-        evaluationValue: 'evaluationValue' in lot && lot.evaluationValue ? Number(lot.evaluationValue) : null,
-        latitude: 'latitude' in lot ? (lot.latitude !== null ? Number(lot.latitude) : null) : null,
-        longitude: 'longitude' in lot ? (lot.longitude !== null ? Number(lot.longitude) : null) : null,
-        stageDetails: [], // Initialize as empty array to match LotStageDetails[] type
-        endDate: relevantEndDate,
-        auction: lot.auction ? {
-            ...lot.auction,
-            id: lot.auction.id.toString(),
-            tenantId: lot.auction.tenantId.toString(),
-            auctioneerId: lot.auction.auctioneerId?.toString() || null,
-            sellerId: lot.auction.sellerId?.toString() || null,
-            cityId: lot.auction.cityId?.toString() || null,
-            stateId: lot.auction.stateId?.toString() || null,
-            judicialProcessId: lot.auction.judicialProcessId?.toString() || null,
-            categoryId: lot.auction.categoryId?.toString() || null,
-            originalAuctionId: lot.auction.originalAuctionId?.toString() || null,
-            latitude: lot.auction.latitude !== null ? Number(lot.auction.latitude) : null,
-            longitude: lot.auction.longitude !== null ? Number(lot.auction.longitude) : null,
-            initialOffer: 'initialOffer' in lot.auction && lot.auction.initialOffer !== null ? Number(lot.auction.initialOffer) : undefined,
-            estimatedRevenue: 'estimatedRevenue' in lot.auction && lot.auction.estimatedRevenue !== null ? Number(lot.auction.estimatedRevenue) : undefined,
-            achievedRevenue: 'achievedRevenue' in lot.auction && lot.auction.achievedRevenue !== null ? Number(lot.auction.achievedRevenue) : undefined,
-            decrementAmount: 'decrementAmount' in lot.auction ? (lot.auction.decrementAmount !== null ? Number(lot.auction.decrementAmount) : null) : null,
-            floorPrice: 'floorPrice' in lot.auction ? (lot.auction.floorPrice !== null ? Number(lot.auction.floorPrice) : null) : null,
-            additionalTriggers: ('additionalTriggers' in lot.auction && Array.isArray(lot.auction.additionalTriggers) 
-                ? lot.auction.additionalTriggers.filter((t): t is string => typeof t === 'string')
-                : []) as string[],
-            autoRelistSettings: 'autoRelistSettings' in lot.auction ? lot.auction.autoRelistSettings : undefined,
-            stages: (lot.auction.stages || []).map(stage => ({
-                id: stage.id.toString(),
-                auctionId: stage.auctionId.toString(),
-                name: stage.name,
-                startDate: stage.startDate,
-                endDate: stage.endDate,
-                initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
-                status: 'ATIVO' as const, // Default status
-                order: 0, // Default order
-                createdAt: new Date(), // Default to current date
-                updatedAt: new Date(), // Default to current date
-                tenantId: lot.tenantId.toString()
-            }))
-        } : undefined
-    };
-  }).filter(lot => lot.endDate && !isPast(new Date(lot.endDate as string | Date)));
 
   return (
     <Suspense fallback={<HomePageSkeleton />}>
