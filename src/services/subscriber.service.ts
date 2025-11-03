@@ -31,31 +31,40 @@ export class SubscriberService {
     const tenantIdAsBigInt = BigInt(tenantId);
 
     try {
-      // Correção: Usar o índice único composto 'email_tenantId'
-      const existingSubscriber = await prisma.subscriber.findUnique({
-        where: { email_tenantId: { email, tenantId: tenantIdAsBigInt } },
+      // Verifica se já existe um assinante com este email para este tenant
+      const existingSubscriber = await prisma.subscriber.findFirst({
+        where: {
+          email,
+          tenantId: tenantIdAsBigInt
+        },
       });
 
       if (existingSubscriber) {
         return { success: false, message: 'Este e-mail já está inscrito.' };
       }
 
+      // Cria um novo assinante
       await prisma.subscriber.create({
         data: {
           email,
           name,
-          tenant: { connect: { id: tenantIdAsBigInt } }
+          tenantId: tenantIdAsBigInt
         },
       });
 
       return { success: true, message: 'Inscrição realizada com sucesso!' };
     } catch (error: any) {
       console.error("[SubscriberService] Error creating subscriber:", error);
-      // Correção: Agora Prisma.PrismaClientKnownRequestError está definido
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-         return { success: false, message: 'Este e-mail já está inscrito.' };
+      // Trata erros de chave duplicada ou outros erros do Prisma
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          return { success: false, message: 'Este e-mail já está inscrito.' };
+        }
       }
-      return { success: false, message: 'Não foi possível completar a inscrição no momento.' };
+      return { 
+        success: false, 
+        message: 'Não foi possível completar a inscrição no momento. Por favor, tente novamente mais tarde.' 
+      };
     }
   }
 
