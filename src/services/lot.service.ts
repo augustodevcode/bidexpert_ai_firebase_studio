@@ -498,4 +498,169 @@ export class LotService {
       };
     }
   }
+
+  async createLot(
+    lotData: {
+      assetIds?: string[];
+      auctionId: string;
+      title: string;
+      description?: string | null;
+      status?: LotStatus;
+      price?: number | string | Prisma.Decimal;
+      initialPrice?: number | string | Prisma.Decimal | null;
+      secondInitialPrice?: number | string | Prisma.Decimal | null;
+      bidIncrementStep?: number | string | Prisma.Decimal | null;
+      number?: string | null;
+      slug?: string | null;
+      lotSpecificAuctionDate?: Date | null;
+      secondAuctionDate?: Date | null;
+      bidsCount?: number;
+      views?: number;
+      isRelisted?: boolean;
+      relistCount?: number;
+      isFeatured?: boolean;
+      isExclusive?: boolean;
+      type?: string;
+      condition?: string | null;
+      dataAiHint?: string | null;
+      imageUrl?: string | null;
+      galleryImageUrls?: any;
+      mediaItemIds?: any;
+      categoryId?: string | null;
+      subcategoryId?: string | null;
+      sellerId?: string | null;
+      auctioneerId?: string | null;
+    },
+    tenantId: string,
+    userId: string = 'system'
+  ): Promise<{ success: boolean; message: string; lotId?: string }> {
+    try {
+      // Validate required fields
+      if (!lotData.title || !lotData.auctionId) {
+        return { 
+          success: false, 
+          message: 'Título e ID do leilão são obrigatórios para criar um lote.' 
+        };
+      }
+
+      // Prepare data for creation
+      const { 
+        assetIds = [],
+        auctionId,
+        categoryId,
+        subcategoryId,
+        sellerId,
+        auctioneerId,
+        ...cleanData 
+      } = lotData;
+
+      // Convert string IDs to BigInt
+      const auctionIdBigInt = BigInt(auctionId);
+      const categoryIdBigInt = categoryId ? BigInt(categoryId) : null;
+      const subcategoryIdBigInt = subcategoryId ? BigInt(subcategoryId) : null;
+      const sellerIdBigInt = sellerId ? BigInt(sellerId) : null;
+      const auctioneerIdBigInt = auctioneerId ? BigInt(auctioneerId) : null;
+      const tenantIdBigInt = BigInt(tenantId);
+
+      // Helper function to safely convert to Prisma.Decimal
+      const toDecimal = (value?: number | string | Prisma.Decimal | null): Prisma.Decimal | null => {
+        if (value === null || value === undefined) return null;
+        return value instanceof Prisma.Decimal ? value : new Prisma.Decimal(value);
+      };
+
+      // Create lot data in Prisma format with only the fields that exist in the schema
+      const lotCreateInput: Prisma.LotCreateInput = {
+        title: lotData.title,
+        description: lotData.description || null,
+        status: lotData.status || 'RASCUNHO',
+        price: toDecimal(lotData.price) || new Prisma.Decimal(0),
+        initialPrice: toDecimal(lotData.initialPrice),
+        secondInitialPrice: toDecimal(lotData.secondInitialPrice),
+        bidIncrementStep: toDecimal(lotData.bidIncrementStep),
+        publicId: `LOTE-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        number: lotData.number || null,
+        slug: lotData.slug || slugify(lotData.title),
+        lotSpecificAuctionDate: lotData.lotSpecificAuctionDate || null,
+        secondAuctionDate: lotData.secondAuctionDate || null,
+        bidsCount: lotData.bidsCount || 0,
+        views: lotData.views || 0,
+        isRelisted: lotData.isRelisted || false,
+        relistCount: lotData.relistCount || 0,
+        isFeatured: lotData.isFeatured || false,
+        isExclusive: lotData.isExclusive || false,
+        type: lotData.type || 'STANDARD',
+        condition: lotData.condition || null,
+        dataAiHint: lotData.dataAiHint || null,
+        imageUrl: lotData.imageUrl || null,
+        galleryImageUrls: lotData.galleryImageUrls || Prisma.JsonNull,
+        mediaItemIds: lotData.mediaItemIds || Prisma.JsonNull,
+        auction: { connect: { id: auctionIdBigInt } },
+        tenant: { connect: { id: tenantIdBigInt } }
+      };
+
+      // Add optional relationships
+      if (categoryIdBigInt) {
+        lotCreateInput.category = { connect: { id: categoryIdBigInt } };
+      }
+      
+      if (subcategoryIdBigInt) {
+        lotCreateInput.subcategory = { connect: { id: subcategoryIdBigInt } };
+      }
+      
+      if (sellerIdBigInt) {
+        lotCreateInput.seller = { connect: { id: sellerIdBigInt } };
+      }
+      
+      if (auctioneerIdBigInt) {
+        lotCreateInput.auctioneer = { connect: { id: auctioneerIdBigInt } };
+      }
+
+      // Use transaction to ensure consistency
+      const result = await this.prisma.$transaction(async (tx) => {
+        // 1. Create the lot
+        const newLot = await tx.lot.create({
+          data: lotCreateInput,
+          select: { id: true }
+        });
+
+        // 2. Associate assets if provided
+        if (assetIds && assetIds.length > 0) {
+          const assetIdsToAssociate = assetIds.map(id => BigInt(id));
+          
+          // Create entries in the join table
+          await tx.assetsOnLots.createMany({
+            data: assetIdsToAssociate.map(assetId => ({
+              lotId: newLot.id,
+              assetId: assetId,
+              assignedBy: userId,
+              assignedAt: new Date()
+            })),
+          });
+
+          // Update asset status to 'LOTEADO'
+          await tx.asset.updateMany({
+            where: { id: { in: assetIdsToAssociate } },
+            data: { status: 'LOTEADO' }
+          });
+        }
+
+        // 3. Return the created lot ID
+        return { 
+          success: true, 
+          message: 'Lote criado com sucesso.',
+          lotId: newLot.id.toString()
+        };
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error creating lot:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error 
+          ? `Erro ao criar lote: ${error.message}` 
+          : 'Erro desconhecido ao criar o lote' 
+      };
+    }
+  }
 }
