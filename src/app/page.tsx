@@ -8,7 +8,7 @@ import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import HomePageClient from './home-page-client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { isPast } from 'date-fns';
 
 function HomePageSkeleton() {
@@ -48,8 +48,6 @@ export default async function HomePage() {
   ]);
 
   // Buscar lotes encerrando em breve baseado na última etapa do leilão
-  const prisma = new PrismaClient();
-  
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   
@@ -88,8 +86,6 @@ export default async function HomePage() {
         endDate: relevantEndDate, // Use a data da etapa se disponível
     };
   }).filter(lot => lot.endDate && !isPast(new Date(lot.endDate as string))) as unknown as Lot[];
-
-  await prisma.$disconnect();
 
   return (
     <Suspense fallback={<HomePageSkeleton />}>

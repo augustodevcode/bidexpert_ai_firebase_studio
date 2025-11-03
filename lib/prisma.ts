@@ -1,2 +1,5 @@
-// This file is now obsolete and has been deleted.
-// The project has fully migrated to the database adapter pattern.
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export default prisma;

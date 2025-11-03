@@ -1,0 +1,1 @@
+node e:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\bin\next build

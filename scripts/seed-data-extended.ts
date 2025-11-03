@@ -361,25 +361,32 @@ async function seedPlatformSettings() {
       siteTagline: 'A sua melhor oportunidade, a um lance de distância.',
       isSetupComplete: true,
       crudFormMode: 'sheet',
-      searchPaginationType: "PAGINATION",
+      searchPaginationType: "numberedPages",
       showCountdownOnCards: true,
       showCountdownOnLotDetail: true,
       showRelatedLotsOnLotDetail: true,
       relatedLotsCount: 4,
-                              searchItemsPerPage: 12,
-                              themes: {
-                                create: [
-                                  {
-                                    name: 'BidExpert Padrão',
-                                    colors: {
-                                      create: {
-                                        background: "hsl(0 0% 100%)",
-                                        primary: "hsl(222.2 47.4% 11.2%)",
-                                      }
-                                    }
-                                  }
-                                ]
-                              },      platformPublicIdMasks: {
+      searchItemsPerPage: 12,
+      themes: {
+        create: [
+          {
+            name: 'BidExpert Padrão',
+            colors: {
+              create: {
+                light: JSON.stringify({
+                  background: "hsl(0 0% 100%)",
+                  primary: "hsl(222.2 47.4% 11.2%)"
+                }),
+                dark: JSON.stringify({
+                  background: "hsl(222.2 47.4% 11.2%)",
+                  primary: "hsl(0 0% 100%)"
+                })
+              }
+            }
+          }
+        ]
+      },
+      platformPublicIdMasks: {
         create: {
           auctionCodeMask: "LE#",
           lotCodeMask: "LT#",
@@ -495,6 +502,9 @@ async function seedReportBuilderData() {
             data: {
                 name: `Relatório Mensal de Faturamento`,
                 description: `Um relatório de exemplo para análise de faturamento.`,
+                createdBy: {
+                    connect: { id: adminUser.id }
+                },
                 definition: JSON.stringify({
                     title: `Faturamento por Leilão`,
                     type: `barChart`,
@@ -502,7 +512,7 @@ async function seedReportBuilderData() {
                     xAxis: `title`,
                     yAxis: `achievedRevenue`
                 }),
-                tenantId: entityStore.tenantId,
+                tenant: { connect: { id: entityStore.tenantId } },
             }
         });
         log(`1 relatório de exemplo criado.`, 1);
@@ -675,6 +685,8 @@ async function seedParticipants() {
     
     await seedJudicialProcesses();
 
+    await seedUserDocuments();
+
     const userStatuses = Object.values(UserHabilitationStatus);
     for (let i = 0; i < TOTAL_USERS; i++) {
         const email = `arrematante${i}@bidexpert.com`;
@@ -689,7 +701,6 @@ async function seedParticipants() {
     const allUsers = await services.user.getUsers();
     entityStore.users = [...entityStore.users, ...allUsers.filter(u => u.email.startsWith('arrematante')).map(u => ({...u, id: u.id}))] as any[];
     log(`${TOTAL_USERS} usuários (arrematantes) criados.`, 1);
-    await seedUserDocuments();
 }
 
 async function seedUserDocuments() {
@@ -810,6 +821,7 @@ async function seedAuctionsAndLots() {
                 price: evaluationValue,
                 status: lotStatus,
                 type: assetsForLot[0].categoryId?.toString(),
+                assignedBy: entityStore.users[0].id.toString()
             }, entityStore.tenantId, entityStore.users[0].id.toString());
 
             if(lotResult.success && lotResult.lotId) {
@@ -913,7 +925,7 @@ async function seedScenario_BiddingWar() {
     let currentPrice = Number(lot.price);
     const increment = Number(lot.bidIncrementStep) || 100;
 
-    // Bidder A define um lance máximo
+    // Bidder A defines um lance máximo
     const maxBidAmount = currentPrice + (increment * 5);
     await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
         userId: bidderA.id, lotId: lot.id, maxAmount: maxBidAmount,

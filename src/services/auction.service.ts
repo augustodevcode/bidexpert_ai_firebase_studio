@@ -11,13 +11,11 @@ import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { PrismaClientValidationError } from '@prisma/client/runtime/library';
 import { v4 as uuidv4 } from 'uuid';
-import { utcToZonedTime } from 'date-fns-tz';
-import { getPrismaInstance } from '@/lib/prisma';
 import { nowInSaoPaulo } from '@/lib/timezone';
 import { prisma } from '@/lib/prisma';
 
 // Status que NUNCA devem ser visíveis publicamente
-const NON_PUBLIC_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
+const NON_PUBLIC_STATUSES: Auction['status'][] = ['RASCUNHO', 'EM_PREPARACAO'];
 
 export class AuctionService {
   private auctionRepository: AuctionRepository;
@@ -55,10 +53,10 @@ export class AuctionService {
             categoryId: a.categoryId?.toString() ?? null,
             judicialProcessId: a.judicialProcessId?.toString() ?? null,
             tenantId: a.tenantId.toString(),
-            seller: a.Seller ? { ...a.Seller, id: a.Seller.id.toString() } : null,
+            seller: a.seller ? { ...a.seller, id: a.seller.id.toString() } : null,
             auctioneer: a.auctioneer ? { ...a.auctioneer, id: a.auctioneer.id.toString() } : null,
             category: a.category ? { ...a.category, id: a.category.id.toString() } : null,
-            sellerName: a.Seller?.name,
+            sellerName: a.seller?.name,
             auctioneerName: a.auctioneer?.name,
             categoryName: a.category?.name,
             // Se imageMediaId for 'INHERIT', usa a imagem do lote em destaque. Senão, usa a do leilão.
@@ -181,10 +179,10 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, imageUrl, ...restOfData } = data;
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, ...restOfData } = data;
 
-      let finalImageUrl = imageUrl;
-      if (data.imageMediaId && data.imageMediaId !== 'INHERIT' && !imageUrl) {
+      let finalImageUrl = (data as any).imageUrl;
+      if (data.imageMediaId && data.imageMediaId.toString() !== 'INHERIT' && !(data as any).imageUrl) {
         const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: BigInt(data.imageMediaId) }});
         if (mediaItem) finalImageUrl = mediaItem.urlOriginal;
       }
@@ -199,11 +197,11 @@ export class AuctionService {
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
             auctioneer: { connect: { id: BigInt(auctioneerId) } },
-            Seller: { connect: { id: BigInt(sellerId) } }, // Corrected relation name
+            seller: { connect: { id: BigInt(sellerId) } }, // Corrected relation name
             category: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
             tenant: { connect: { id: BigInt(tenantId) } },
-            city: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
-            state: stateId ? { connect: { id: BigInt(stateId) } } : undefined,
+            cityRef: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
+            stateRef: stateId ? { connect: { id: BigInt(stateId) } } : undefined,
             judicialProcess: judicialProcessId ? { connect: { id: BigInt(judicialProcessId) } } : undefined,
           }
         });
@@ -249,10 +247,10 @@ export class AuctionService {
       }
       const internalId = BigInt(auctionToUpdate.id);
 
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, imageUrl, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, cityId, stateId, tenantId: _tenantId, ...restOfData } = data;
 
-      let finalImageUrl = imageUrl;
-      if (data.imageMediaId && data.imageMediaId !== 'INHERIT' && !imageUrl) {
+      let finalImageUrl = (data as any).imageUrl;
+      if (data.imageMediaId && data.imageMediaId.toString() !== 'INHERIT' && !(data as any).imageUrl) {
         const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: BigInt(data.imageMediaId) }});
         if (mediaItem) finalImageUrl = mediaItem.urlOriginal;
       }
@@ -266,10 +264,10 @@ export class AuctionService {
         if (data.title) dataToUpdate.slug = slugify(data.title);
         
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: BigInt(auctioneerId) } };
-        if (sellerId) dataToUpdate.Seller = { connect: { id: BigInt(sellerId) } }; // Corrected relation name
+        if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } }; // Corrected relation name
         if (categoryId) dataToUpdate.category = { connect: { id: BigInt(categoryId) } };
-        if (cityId) dataToUpdate.city = { connect: {id: BigInt(cityId) }};
-        if (stateId) dataToUpdate.state = { connect: {id: BigInt(stateId) }};
+        if (cityId) dataToUpdate.cityRef = { connect: {id: BigInt(cityId) }};
+        if (stateId) dataToUpdate.stateRef = { connect: {id: BigInt(stateId) }};
         if (judicialProcessId) {
           dataToUpdate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
         } else if (data.hasOwnProperty('judicialProcessId')) {
