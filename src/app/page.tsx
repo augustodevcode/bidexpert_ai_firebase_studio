@@ -54,7 +54,6 @@ export default async function HomePage() {
   const closingSoonLotsWithStages = await prisma.lot.findMany({
       where: {
           status: 'ABERTO_PARA_LANCES',
-          // O filtro aninhado foi movido para o código da aplicação
       },
       include: {
           auction: {
@@ -65,12 +64,17 @@ export default async function HomePage() {
               }
           }
       },
-      take: 50, // Pega mais para garantir que teremos 8 após o filtro
+      take: 50,
   });
 
   // Mapear para adicionar a data da última etapa ao lote, filtrar e converter tipos
   const closingSoonLots = closingSoonLotsWithStages
     .map(lot => {
+      // **FIX**: If lot.auction is null, we can't process this lot. Skip it.
+      if (!lot.auction) {
+        return null;
+      }
+      
       const lastStage = lot.auction?.stages?.[0];
       const relevantEndDate = lastStage?.endDate || lot.endDate;
 
@@ -102,7 +106,7 @@ export default async function HomePage() {
           longitude: 'longitude' in lot ? (lot.longitude !== null ? Number(lot.longitude) : null) : null,
           stageDetails: [], // Initialize as empty array to match LotStageDetails[] type
           endDate: relevantEndDate,
-          auction: lot.auction ? {
+          auction: {
               ...lot.auction,
               id: lot.auction.id.toString(),
               tenantId: lot.auction.tenantId.toString(),
@@ -137,10 +141,10 @@ export default async function HomePage() {
                   updatedAt: new Date(), // Default to current date
                   tenantId: lot.tenantId.toString()
               }))
-          } : undefined
+          }
       };
     })
-    .filter((lot): lot is Lot => lot !== null) // Remove os nulos (lotes que não passaram no filtro de data)
+    .filter((lot): lot is Lot => lot !== null) // Remove os nulos (lotes que não passaram no filtro)
     .slice(0, 8); // Pega os 8 primeiros após o filtro
     
 
