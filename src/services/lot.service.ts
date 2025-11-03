@@ -65,13 +65,15 @@ export class LotService {
       where.auctionId = BigInt(auctionId);
     }
     
-    const lots = await this.repository.findAll(tenantId, where, limit);
-
     if (isPublicCall) {
-        return lots.filter(lot => 
-            lot.auction && !NON_PUBLIC_AUCTION_STATUSES.includes(lot.auction.status)
-        ).map(lot => this.mapLotWithDetails(lot));
+        where.auction = {
+            status: {
+                notIn: NON_PUBLIC_AUCTION_STATUSES
+            }
+        };
     }
+
+    const lots = await this.repository.findAll(tenantId, where, limit);
     
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
@@ -94,7 +96,9 @@ export class LotService {
     
     // If it's a numeric ID, convert to BigInt
     if (/^\d+$/.test(id)) {
-      return this.repository.findById(id);
+      const lot = await this.repository.findById(id);
+      if (!lot) return null;
+      return this.mapLotWithDetails(lot);
     }
     
     // Otherwise, it's a public ID, search by publicId
@@ -163,7 +167,7 @@ export class LotService {
     }
   }
 
-  async getLotBids(lotId: string): Promise<BidInfo[]> {
+  async getBidHistory(lotId: string): Promise<BidInfo[]> {
     try {
       const bids = await this.prisma.bid.findMany({
         where: { lotId: BigInt(lotId) },
@@ -208,7 +212,7 @@ export class LotService {
       }
 
       // Verificar se o leilão ainda está ativo
-      const auction = await this.auctionRepository.findById(lot.auctionId.toString(), lot.tenantId);
+      const auction = await this.auctionRepository.findById(lot.auctionId.toString(), lot.tenantId.toString());
       if (!auction || auction.status !== 'EM_ANDAMENTO') {
         return { success: false, message: 'Este leilão não está mais ativo.' };
       }
@@ -270,7 +274,7 @@ export class LotService {
     }
   }
 
-  async updateLot(id: string, data: Partial<LotFormData>, userId: string): Promise<{ success: boolean; message: string }> {
+  async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }> {
     try {
       // Converter strings para BigInt onde necessário
       const lotId = BigInt(id);
@@ -308,8 +312,7 @@ export class LotService {
           data: {
             ...cleanData,
             ...updateRelations,
-            updatedAt: new Date(),
-            updatedBy: userId
+            updatedAt: new Date()
           } as Prisma.LotUpdateInput
         });
         
@@ -330,9 +333,9 @@ export class LotService {
               data: assetIdsBigInt.map(assetId => ({
                 lotId,
                 assetId,
-                assignedBy: userId
+                assignedBy: 'system', // ou o ID do usuário
+                assignedAt: new Date()
               })),
-              skipDuplicates: true
             });
             
             // Atualizar status dos ativos para 'LOTEADO'
@@ -356,7 +359,7 @@ export class LotService {
     }
   }
 
-  async deleteLot(id: string, userId: string): Promise<{ success: boolean; message: string }> {
+  async deleteLot(id: string): Promise<{ success: boolean; message: string }> {
     try {
       const lotId = BigInt(id);
       
@@ -396,7 +399,7 @@ export class LotService {
     }
   }
   
-  async finalizeLot(lotId: string, sold: boolean, userId: string): Promise<{ success: boolean; message: string }> {
+  async finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
     try {
       // Verificar se o lote existe
       const lot = await this.repository.findById(lotId);
@@ -406,24 +409,13 @@ export class LotService {
 
       // Usar transação para garantir consistência
       await this.prisma.$transaction(async (tx) => {
-        // 1. Encontrar o lance vencedor se o lote foi vendido
-        let winningBid = null;
-        if (sold) {
-          winningBid = await tx.bid.findFirst({
-            where: { lotId: BigInt(lotId) },
-            orderBy: { amount: 'desc' },
-            select: {
-              id: true,
-              amount: true,
-              bidderId: true,
-              bidderDisplay: true
-            }
-          });
+        // 1. Encontrar o lance vencedor
+        const winningBid = await tx.bid.findFirst({
+          where: { lotId: BigInt(lotId) },
+          orderBy: { amount: 'desc' }
+        });
 
-          if (!winningBid) {
-            throw new Error('Nenhum lance encontrado para este lote.');
-          }
-        }
+        const sold = !!winningBid;
 
         // 2. Atualizar o lote
         const updateData: Prisma.LotUpdateInput = {
@@ -435,31 +427,11 @@ export class LotService {
         if (sold && winningBid) {
           updateData.winner = { connect: { id: winningBid.bidderId } };
           updateData.price = winningBid.amount;
-          // Atualizar contador de lances
-          updateData.bidsCount = { increment: 1 };
-          
-          // Criar registro de vitória
-          await tx.userWin.create({
-            data: {
-              lot: { connect: { id: BigInt(lotId) } },
-              user: { connect: { id: winningBid.bidderId } },
-              winningBidAmount: winningBid.amount,
-              winDate: new Date(),
-              paymentStatus: 'PENDENTE',
-              retrievalStatus: 'PENDENTE'
-            }
-          });
         }
         
         await tx.lot.update({
           where: { id: BigInt(lotId) },
-          data: updateData,
-          select: {
-            id: true,
-            status: true,
-            updatedAt: true,
-            price: true
-          }
+          data: updateData
         });
 
         // 3. Obter os ativos associados ao lote
@@ -674,3 +646,5 @@ export class LotService {
     }
   }
 }
+
+    
