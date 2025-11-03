@@ -4,37 +4,14 @@ import { prisma } from '@/lib/prisma';
 import type { Lot, LotFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 
-const NON_PUBLIC_AUCTION_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
-
 export class LotRepository {
     
-  async findAll(tenantId: string | undefined, where: Prisma.LotWhereInput = {}, limit?: number, isPublicCall = false): Promise<any[]> {
+  async findAll(tenantId: string | undefined, where: Prisma.LotWhereInput = {}, limit?: number): Promise<any[]> {
     const finalWhere: Prisma.LotWhereInput = {
       ...where,
       ...(tenantId && { tenantId: BigInt(tenantId) }),
     };
 
-    // If it's a public call, we need to filter out lots from non-public auctions.
-    // The filtering is now done after fetching, as direct relation filtering was causing issues.
-    if (isPublicCall) {
-        const allLots = await prisma.lot.findMany({
-            where: finalWhere,
-            take: limit, // Apply limit here if possible
-            include: {
-                auction: { // We must include the auction to filter by its status
-                    select: { status: true, title: true }
-                },
-                category: { select: { name: true } },
-                subcategory: { select: { name: true } },
-                seller: { select: { name: true } },
-            },
-            orderBy: { number: 'asc' }
-        });
-        
-        // Filter in the application code
-        return allLots.filter(lot => lot.auction && !NON_PUBLIC_AUCTION_STATUSES.includes(lot.auction.status));
-    }
-    
     // For non-public calls (admin view), we fetch everything without status filtering.
     return prisma.lot.findMany({
         where: finalWhere,

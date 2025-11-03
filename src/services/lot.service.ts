@@ -1,7 +1,8 @@
+
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import { AuctionRepository } from '@/repositories/auction.repository';
-import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion, LotStatus } from '@/types';
+import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion, LotStatus, Auction } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient, Prisma } from '@prisma/client';
@@ -11,7 +12,9 @@ import { AssetService } from './asset.service';
 // Inicializa o cliente Prisma
 const prisma = new PrismaClient();
 
-const NON_PUBLIC_STATUSES: LotStatus[] = ['RASCUNHO', 'CANCELADO'];
+const NON_PUBLIC_AUCTION_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
+const NON_PUBLIC_LOT_STATUSES: LotStatus[] = ['RASCUNHO', 'CANCELADO'];
+
 
 export class LotService {
   private repository: LotRepository;
@@ -62,7 +65,14 @@ export class LotService {
       where.auctionId = BigInt(auctionId);
     }
     
-    const lots = await this.repository.findAll(tenantId, where, limit, isPublicCall);
+    const lots = await this.repository.findAll(tenantId, where, limit);
+
+    if (isPublicCall) {
+        return lots.filter(lot => 
+            lot.auction && !NON_PUBLIC_AUCTION_STATUSES.includes(lot.auction.status)
+        ).map(lot => this.mapLotWithDetails(lot));
+    }
+    
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
@@ -72,7 +82,7 @@ export class LotService {
     if (isPublicCall) {
       // Garante que mesmo buscando por ID, os status não públicos e de leilões não publicados sejam respeitados
       return lots.filter(lot => 
-        !NON_PUBLIC_STATUSES.includes(lot.status) &&
+        !NON_PUBLIC_LOT_STATUSES.includes(lot.status) &&
         lot.auction && !['RASCUNHO', 'EM_PREPARACAO'].includes(lot.auction.status)
       ).map(lot => this.mapLotWithDetails(lot));
     }
@@ -110,7 +120,7 @@ export class LotService {
     
     // Se for uma chamada pública, verificar se o lote e o leilão estão públicos
     if (isPublicCall) {
-      const isLotPublic = !NON_PUBLIC_STATUSES.includes(lot.status);
+      const isLotPublic = !NON_PUBLIC_LOT_STATUSES.includes(lot.status);
       const isAuctionPublic = lot.auction && !['RASCUNHO', 'EM_PREPARACAO'].includes(lot.auction.status);
       
       if (!isLotPublic || !isAuctionPublic) {
