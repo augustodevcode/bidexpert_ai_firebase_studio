@@ -14,7 +14,7 @@ const essentialRoles = [
   { name: 'Tenant Admin', nameNormalized: 'TENANT_ADMIN', description: 'Administrador de um tenant específico.', permissions: 'manage_tenant_users,manage_tenant_auctions' },
   { name: 'Financial', nameNormalized: 'FINANCIAL', description: 'Gerencia pagamentos e faturamento.', permissions: 'financial:view,financial:manage' },
   { name: 'Auctioneer', nameNormalized: 'AUCTIONEER', description: 'Leiloeiro responsável por conduzir leilões.', permissions: 'conduct_auctions' },
-  { name: 'ADMIN', nameNormalized: 'ADMIN', description: 'Perfil ADMIN', permissions: '' },
+  { name: 'Administrador', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total ao sistema', permissions: 'users:manage,roles:manage,settings:manage,auctions:manage_all,lots:manage_all,reports:view_all,financial:manage,tenant:manage' },
   { name: 'SELLER_ADMIN', nameNormalized: 'SELLER_ADMIN', description: 'Perfil SELLER_ADMIN', permissions: '' },
   { name: 'AUCTIONEER_ADMIN', nameNormalized: 'AUCTIONEER_ADMIN', description: 'Perfil AUCTIONEER_ADMIN', permissions: '' },
 ];
@@ -32,18 +32,72 @@ const brazilianStates = [
   { name: 'Tocantins', uf: 'TO' }
 ];
 
+interface DataSourceField {
+  name: string;
+  type: string;
+  label: string;
+  filterable: boolean;
+  sortable: boolean;
+  visible: boolean;
+}
+
+interface DataSource {
+  name: string;
+  modelName: string;
+  fields: DataSourceField[];
+}
+
 async function seedDataSources() {
     console.log('[DB SEED] Seeding Data Sources for Report Builder...');
     
-    const dataSources = [
-        // ... (dataSources array remains the same)
+    const dataSources: DataSource[] = [
+      {
+        name: 'Leilões',
+        modelName: 'Auction',
+        fields: [
+          { name: 'id', type: 'string', label: 'ID', filterable: true, sortable: true, visible: true },
+          { name: 'title', type: 'string', label: 'Título', filterable: true, sortable: true, visible: true },
+          { name: 'status', type: 'string', label: 'Status', filterable: true, sortable: true, visible: true },
+          { name: 'startDate', type: 'date', label: 'Data de Início', filterable: true, sortable: true, visible: true },
+          { name: 'endDate', type: 'date', label: 'Data de Término', filterable: true, sortable: true, visible: true },
+        ]
+      },
+      {
+        name: 'Lotes',
+        modelName: 'Lot',
+        fields: [
+          { name: 'id', type: 'string', label: 'ID', filterable: true, sortable: true, visible: true },
+          { name: 'title', type: 'string', label: 'Título', filterable: true, sortable: true, visible: true },
+          { name: 'status', type: 'string', label: 'Status', filterable: true, sortable: true, visible: true },
+          { name: 'currentPrice', type: 'number', label: 'Lance Atual', filterable: true, sortable: true, visible: true },
+          { name: 'auctionTitle', type: 'string', label: 'Leilão', filterable: true, sortable: true, visible: true },
+        ]
+      },
+      {
+        name: 'Usuários',
+        modelName: 'User',
+        fields: [
+          { name: 'id', type: 'string', label: 'ID', filterable: true, sortable: true, visible: true },
+          { name: 'name', type: 'string', label: 'Nome', filterable: true, sortable: true, visible: true },
+          { name: 'email', type: 'string', label: 'E-mail', filterable: true, sortable: true, visible: true },
+          { name: 'status', type: 'string', label: 'Status', filterable: true, sortable: true, visible: true },
+          { name: 'createdAt', type: 'date', label: 'Data de Cadastro', filterable: true, sortable: true, visible: true },
+        ]
+      }
     ];
 
     for (const source of dataSources) {
         await prisma.dataSource.upsert({
             where: { modelName: source.modelName },
-            update: { fields: source.fields as any, name: source.name },
-            create: { name: source.name, modelName: source.modelName, fields: source.fields as any },
+            update: { 
+                name: source.name,
+                fields: source.fields as any // Using 'as any' since Prisma's Json type is flexible
+            },
+            create: { 
+                name: source.name, 
+                modelName: source.modelName, 
+                fields: source.fields as any 
+            },
         });
     }
 
@@ -66,9 +120,14 @@ async function seedEssentialData() {
 
     console.log('[DB SEED] Seeding Landlord Tenant...');
     const landlordTenant = await prisma.tenant.upsert({
-        where: { id: "1" },
+        where: { id: 1 },
         update: {},
-        create: { id: "1", name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+        create: { 
+            id: 1, 
+            name: 'Landlord', 
+            subdomain: 'www', 
+            domain: 'bidexpert.com.br' 
+        },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     

@@ -814,35 +814,99 @@ async function seedAuctionsAndLots() {
             const evaluationValue = assetsForLot.reduce((sum, a) => sum + (Number(a.evaluationValue) || 0), 0);
             const lotStatus = status === AuctionStatus.ABERTO_PARA_LANCES ? LotStatus.ABERTO_PARA_LANCES : LotStatus.EM_BREVE;
 
-            const lotResult = await services.lot.createLot({
+            const lotData: any = {
                 title: faker.commerce.productName(),
                 auctionId: auctionResult.auctionId,
                 assetIds: assetsForLot.map(a => a.id.toString()),
                 price: evaluationValue,
+                initialPrice: evaluationValue,
+                bidIncrementStep: Math.max(100, Math.floor(evaluationValue * 0.05)),
                 status: lotStatus,
-                type: assetsForLot[0].categoryId?.toString(),
-                assignedBy: entityStore.users[0].id.toString()
-            }, entityStore.tenantId, entityStore.users[0].id.toString());
+                type: assetsForLot[0].categoryId?.toString() || 'IMOVEL',
+                description: faker.lorem.paragraphs(2),
+                tenantId: entityStore.tenantId,
+                categoryId: assetsForLot[0].categoryId?.toString(),
+                subcategoryId: assetsForLot[0].subcategoryId?.toString(),
+                sellerId: seller.id.toString()
+            };
+            
+            const lotResult = await services.lot.createLot(
+                lotData,
+                entityStore.tenantId,
+                entityStore.users[0].id.toString()
+            );
 
             if(lotResult.success && lotResult.lotId) {
-                const lot = await prisma.lot.findUnique({where: {id: lotResult.lotId}, include: { stagePrices: true }});
-                if(lot) {
-                    if (hasTwoStages) {
-                        const auctionStages = await prisma.auctionStage.findMany({ where: { auctionId: lot.auctionId }});
+                const lot = await prisma.lot.findUnique({
+                    where: { id: BigInt(lotResult.lotId) },
+                    include: { 
+                        lotPrices: true,
+                        assets: {
+                            include: {
+                                asset: true
+                            }
+                        },
+                        auction: true,
+                        category: true,
+                        subcategory: true,
+                        seller: true
+                    }
+                });
+                
+                if (lot && hasTwoStages) {
+                    const auctionStages = await prisma.auctionStage.findMany({ 
+                        where: { auctionId: BigInt(lot.auctionId) } 
+                    });
+                    
+                    if (auctionStages.length >= 2) {
+                        // Criar preços de estágio individualmente para evitar problemas com campos gerados automaticamente
                         await prisma.lotStagePrice.create({
-                            data: { lotId: lot.id, auctionId: lot.auctionId, auctionStageId: auctionStages[0].id, initialBid: evaluationValue }
+                            data: {
+                                lotId: BigInt(lot.id),
+                                auctionId: BigInt(lot.auctionId),
+                                auctionStageId: auctionStages[0].id,
+                                initialBid: evaluationValue
+                            }
                         });
+                        
                         await prisma.lotStagePrice.create({
-                            data: { lotId: lot.id, auctionId: lot.auctionId, auctionStageId: auctionStages[1].id, initialBid: evaluationValue * 0.5 }
+                            data: {
+                                lotId: BigInt(lot.id),
+                                auctionId: BigInt(lot.auctionId),
+                                auctionStageId: auctionStages[1].id,
+                                initialBid: evaluationValue * 0.5
+                            }
                         });
                     }
-                    const updatedLot = await prisma.lot.findUnique({where: {id: lot.id}, include: { stagePrices: true }});
+                    // Buscar o lote atualizado com todas as relações necessárias
+                    const updatedLot = await prisma.lot.findUnique({
+                        where: { id: BigInt(lot.id) },
+                        include: { 
+                            lotPrices: true,
+                            assets: {
+                                include: {
+                                    asset: true
+                                }
+                            },
+                            auction: true,
+                            category: true,
+                            subcategory: true,
+                            seller: true
+                        }
+                    });
                     entityStore.lots.push(updatedLot as any);
                     assetsForLot.forEach(a => { a.status = AssetStatus.LOTEADO });
                 }
             }
         }
-        const auction = await prisma.auction.findUnique({ where: { id: auctionResult.auctionId }, include: { stages: true, judicialProcess: true, seller: true } });
+        const auction = await prisma.auction.findUnique({ 
+            where: { id: BigInt(auctionResult.auctionId) }, 
+            include: { 
+                stages: true, 
+                judicialProcess: true, 
+                seller: true 
+            } 
+        });
         if (auction) {
             entityStore.auctions.push(auction as any);
             await seedAuctionHabilitations(auction.id.toString());
@@ -896,7 +960,7 @@ async function seedAuctionHabilitations(auctionId: string) {
     for (const user of usersToHabilitate) {
         await prisma.auctionHabilitation.create({
             data: {
-                auctionId: auctionId,
+                auctionId: BigInt(auctionId),
                 userId: user.id,
             }
         });
@@ -928,7 +992,7 @@ async function seedScenario_BiddingWar() {
     // Bidder A defines um lance máximo
     const maxBidAmount = currentPrice + (increment * 5);
     await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
-        userId: bidderA.id, lotId: lot.id, maxAmount: maxBidAmount,
+        user: { connect: { id: bidderA.id } }, lot: { connect: { id: lot.id } }, maxAmount: maxBidAmount,
     });
     log(`Arrematante A (${bidderA.fullName}) definiu lance máximo de R$ ${maxBidAmount} para o lote #${lot.number}.`, 2);
 
@@ -994,7 +1058,7 @@ async function seedScenario_UnsoldAndRelistedLot() {
             price: newPrice,
             initialPrice: newPrice,
             isRelisted: true,
-            original_lot_id: originalLot.id,
+            originalLotId: originalLot.id,
             relistCount: (originalLot.relistCount || 0) + 1,
             status: LotStatus.EM_BREVE,
         }, entityStore.tenantId, entityStore.users[0].id.toString());
@@ -1006,7 +1070,11 @@ async function seedScenario_UnsoldAndRelistedLot() {
             throw new Error(relistedLotResult.message);
         }
     } catch (error) {
-        log(`FALHA ao tentar relistar o lote: ${error.message}`, 2);
+        if (error instanceof Error) {
+            log(`FALHA ao tentar relistar o lote: ${error.message}`, 2);
+        } else {
+            log('FALHA ao tentar relistar o lote: erro desconhecido', 2);
+        }
     }
 }
 
@@ -1077,7 +1145,7 @@ async function seedUserLotMaxBids() {
         if (faker.datatype.boolean(0.3)) {
             const user = faker.helpers.arrayElement(habilitatedUsers);
             await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
-                userId: user.id, lotId: lot.id, maxAmount: Number(lot.price) + faker.number.int({ min: 500, max: 5000 }),
+                user: { connect: { id: user.id } }, lot: { connect: { id: lot.id } }, maxAmount: Number(lot.price) + faker.number.int({ min: 500, max: 5000 }),
             });
         }
     }
@@ -1126,7 +1194,7 @@ async function seedPostAuctionInteractions() {
         if (faker.datatype.boolean(0.2)) {
             const user = faker.helpers.arrayElement(users);
             const questionResult = await services.lotQuestion.create({
-                lotId: lot.id.toString(), userId: user.id.toString(), userDisplayName: user.fullName!, questionText: faker.lorem.sentence() + '?', auctionId: lot.auctionId.toString()
+                lot: { connect: { id: lot.id } }, user: { connect: { id: user.id } }, authorName: user.fullName!, question: faker.lorem.sentence() + '?'
             });
             if (questionResult) {
                 await services.lotQuestion.addAnswer(questionResult.id.toString(), faker.lorem.sentence(), entityStore.users[0].id.toString(), entityStore.users[0].fullName!);
@@ -1141,7 +1209,7 @@ async function seedPostAuctionInteractions() {
             const lot = await prisma.lot.findUnique({ where: { id: win.lotId } });
             if (lot && user) {
                 await services.review.create({
-                    lotId: win.lotId.toString(), auctionId: lot.auctionId.toString(), userId: win.userId.toString(), userDisplayName: user.fullName!,
+                    lot: { connect: { id: win.lotId } }, user: { connect: { id: win.userId } }, authorName: user.fullName!,
                     rating: faker.number.int({ min: 3, max: 5 }), comment: faker.lorem.paragraph(),
                 });
             }

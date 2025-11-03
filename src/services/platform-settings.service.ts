@@ -20,11 +20,13 @@ export class PlatformSettingsService {
      * @param tenantId O ID do tenant.
      * @returns O objeto de configurações completo.
      */
-    async getSettings(tenantId: string): Promise<PlatformSettings> {
+    async getSettings(tenantId: string | bigint | number): Promise<PlatformSettings> {
+        // Garante que tenantId seja um BigInt para a consulta
+        const tenantIdBigInt = BigInt(tenantId);
         try {
             const findSettings = async () => {
                 return await this.prisma.platformSettings.findUnique({
-                    where: { tenantId: tenantId },
+                    where: { tenantId: tenantIdBigInt },
                     include: {
                         themes: { include: { colors: true } },
                         platformPublicIdMasks: true,
@@ -46,7 +48,7 @@ export class PlatformSettingsService {
                     console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating with default values.`);
                     settings = await this.prisma.platformSettings.create({
                         data: {
-                            tenantId: tenantId,
+                            tenantId: tenantIdBigInt,
                             siteTitle: 'BidExpert',
                             siteTagline: 'Sua plataforma de leilões online.',
                             isSetupComplete: false,
@@ -89,7 +91,7 @@ export class PlatformSettingsService {
             } as unknown as PlatformSettings;
 
         } catch (error: any) {
-            console.error(`[PlatformSettingsService] Error getting settings for tenant ${tenantId}:`, error);
+            console.error(`[PlatformSettingsService] Error getting settings for tenant ${String(tenantId)}:`, error);
             throw new Error(`Falha ao carregar configurações: ${error.message}`);
         }
     }
@@ -99,8 +101,25 @@ export class PlatformSettingsService {
      * @param data - Os dados parciais das configurações, incluindo sub-objetos.
      * @returns Um objeto indicando o sucesso da operação.
      */
-    async updateSettings(tenantId: string, data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-        const { themes, mapSettings, biddingSettings, paymentGatewaySettings, notificationSettings, mentalTriggerSettings, sectionBadgeVisibility, platformPublicIdMasks, variableIncrementTable, ...mainSettings } = data;
+    async updateSettings(tenantId: string | bigint | number, data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
+        // Garante que tenantId seja um BigInt para a consulta
+        const tenantIdBigInt = BigInt(tenantId);
+        
+        // Remove campos que não devem ser atualizados diretamente
+        const { 
+            tenantId: _, 
+            id: __, 
+            themes, 
+            mapSettings, 
+            biddingSettings, 
+            paymentGatewaySettings, 
+            notificationSettings, 
+            mentalTriggerSettings, 
+            sectionBadgeVisibility, 
+            platformPublicIdMasks, 
+            variableIncrementTable, 
+            ...mainSettings 
+        } = data;
 
         if (!tenantId) {
             return { success: false, message: 'O ID do Tenant é obrigatório para atualizar as configurações.' };
@@ -110,34 +129,130 @@ export class PlatformSettingsService {
             const settings = await this.getSettings(tenantId);
             const platformSettingsId = settings.id;
 
-            await this.prisma.platformSettings.update({
-                where: { tenantId: tenantId },
-                data: {
-                    ...mainSettings,
-                    ...(mapSettings && { mapSettings: { upsert: { create: mapSettings, update: mapSettings } } }),
-                    ...(biddingSettings && { biddingSettings: { upsert: { create: biddingSettings, update: biddingSettings } } }),
-                    ...(paymentGatewaySettings && { paymentGatewaySettings: { upsert: { create: paymentGatewaySettings, update: paymentGatewaySettings } } }),
-                    ...(notificationSettings && { notificationSettings: { upsert: { create: notificationSettings, update: notificationSettings } } }),
-                    ...(mentalTriggerSettings && { mentalTriggerSettings: { upsert: { create: mentalTriggerSettings, update: mentalTriggerSettings } } }),
-                    ...(sectionBadgeVisibility && { sectionBadgeVisibility: { upsert: { create: sectionBadgeVisibility as any, update: sectionBadgeVisibility as any } } }),
-                    ...(platformPublicIdMasks && { platformPublicIdMasks: { upsert: { create: platformPublicIdMasks as any, update: platformPublicIdMasks as any } } }),
-                    ...(variableIncrementTable && {
-                        variableIncrementTable: {
-                            deleteMany: {}, // Limpa as regras existentes
-                            create: variableIncrementTable.map(rule => ({
-                                from: rule.from,
-                                to: rule.to,
-                                increment: rule.increment,
-                            }))
-                        }
-                    })
-                },
-            });
+            // Prepara os dados de atualização
+            const updateData: any = {
+                ...mainSettings
+            };
 
-            return { success: true, message: 'Configurações atualizadas com sucesso.' };
+            // Adiciona os relacionamentos apenas se existirem nos dados
+            if (mapSettings) {
+                updateData.mapSettings = {
+                    upsert: {
+                        create: { ...mapSettings, id: undefined },
+                        update: { ...mapSettings, id: undefined }
+                    }
+                };
+            }
+
+            if (biddingSettings) {
+                updateData.biddingSettings = {
+                    upsert: {
+                        create: { ...biddingSettings, id: undefined },
+                        update: { ...biddingSettings, id: undefined }
+                    }
+                };
+            }
+
+            if (paymentGatewaySettings) {
+                updateData.paymentGatewaySettings = {
+                    upsert: {
+                        create: { ...paymentGatewaySettings, id: undefined },
+                        update: { ...paymentGatewaySettings, id: undefined }
+                    }
+                };
+            }
+
+            if (notificationSettings) {
+                updateData.notificationSettings = {
+                    upsert: {
+                        create: {
+                            notifyOnNewAuction: notificationSettings.notifyOnNewAuction ?? true,
+                            notifyOnFeaturedLot: notificationSettings.notifyOnFeaturedLot ?? false,
+                            notifyOnAuctionEndingSoon: notificationSettings.notifyOnAuctionEndingSoon ?? true,
+                            notifyOnPromotions: notificationSettings.notifyOnPromotions ?? true
+                        },
+                        update: {
+                            notifyOnNewAuction: notificationSettings.notifyOnNewAuction ?? true,
+                            notifyOnFeaturedLot: notificationSettings.notifyOnFeaturedLot ?? false,
+                            notifyOnAuctionEndingSoon: notificationSettings.notifyOnAuctionEndingSoon ?? true,
+                            notifyOnPromotions: notificationSettings.notifyOnPromotions ?? true
+                        }
+                    }
+                };
+            }
+
+            if (mentalTriggerSettings) {
+                updateData.mentalTriggerSettings = {
+                    upsert: {
+                        create: {
+                            showDiscountBadge: mentalTriggerSettings.showDiscountBadge ?? true,
+                            showPopularityBadge: mentalTriggerSettings.showPopularityBadge ?? true,
+                            popularityViewThreshold: mentalTriggerSettings.popularityViewThreshold ?? 500,
+                            showHotBidBadge: mentalTriggerSettings.showHotBidBadge ?? true,
+                            hotBidThreshold: mentalTriggerSettings.hotBidThreshold ?? 10,
+                            showExclusiveBadge: mentalTriggerSettings.showExclusiveBadge ?? true
+                        },
+                        update: {
+                            showDiscountBadge: mentalTriggerSettings.showDiscountBadge ?? true,
+                            showPopularityBadge: mentalTriggerSettings.showPopularityBadge ?? true,
+                            popularityViewThreshold: mentalTriggerSettings.popularityViewThreshold ?? 500,
+                            showHotBidBadge: mentalTriggerSettings.showHotBidBadge ?? true,
+                            hotBidThreshold: mentalTriggerSettings.hotBidThreshold ?? 10,
+                            showExclusiveBadge: mentalTriggerSettings.showExclusiveBadge ?? true
+                        }
+                    }
+                };
+            }
+
+            if (sectionBadgeVisibility) {
+                updateData.sectionBadgeVisibility = {
+                    upsert: {
+                        create: {
+                            searchGrid: sectionBadgeVisibility.searchGrid ?? {},
+                            lotDetail: sectionBadgeVisibility.lotDetail ?? {}
+                        },
+                        update: {
+                            searchGrid: sectionBadgeVisibility.searchGrid ?? {},
+                            lotDetail: sectionBadgeVisibility.lotDetail ?? {}
+                        }
+                    }
+                };
+            }
+
+            if (platformPublicIdMasks) {
+                updateData.platformPublicIdMasks = {
+                    upsert: {
+                        create: { ...platformPublicIdMasks },
+                        update: { ...platformPublicIdMasks }
+                    }
+                };
+            }
+
+            if (variableIncrementTable) {
+                updateData.variableIncrementTable = {
+                    deleteMany: {}, // Limpa as regras existentes
+                    create: variableIncrementTable.map(rule => ({
+                        from: rule.from,
+                        to: rule.to,
+                        increment: rule.increment
+                    }))
+                };
+            }
+
+            try {
+                await this.prisma.platformSettings.update({
+                    where: { tenantId: tenantIdBigInt },
+                    data: updateData
+                });
+
+                return { success: true, message: 'Configurações atualizadas com sucesso.' };
+            } catch (error: any) {
+                console.error(`[PlatformSettingsService] Error updating settings for tenant ${String(tenantId)}:`, error);
+                return { success: false, message: `Falha ao atualizar configurações: ${error.message}` };
+            }
         } catch (error: any) {
-            console.error(`[PlatformSettingsService] Error updating settings for tenant ${tenantId}:`, error);
-            return { success: false, message: `Falha ao atualizar configurações: ${error.message}` };
+            console.error(`[PlatformSettingsService] Unexpected error in updateSettings for tenant ${String(tenantId)}:`, error);
+            return { success: false, message: `Erro inesperado ao atualizar configurações: ${error.message}` };
         }
     }
 }
