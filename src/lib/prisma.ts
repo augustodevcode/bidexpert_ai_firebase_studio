@@ -6,11 +6,15 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-export const prisma = new PrismaClient();
+const prismaClient = new PrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma;
+  global.prisma = prismaClient;
 }
+
+// Export as both default and named export for compatibility
+export const prisma = prismaClient;
+export default prismaClient;
 
 // const businessCodeService = new BusinessCodeService();
 //

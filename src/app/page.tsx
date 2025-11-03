@@ -8,7 +8,7 @@ import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import HomePageClient from './home-page-client';
 import { Skeleton } from '@/components/ui/skeleton';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { isPast } from 'date-fns';
 
 function HomePageSkeleton() {

@@ -104,31 +104,32 @@ export class LotRepository {
     });
   }
 
-  async update(id: string, lotData: Prisma.LotUpdateInput, assetIds?: bigint[]): Promise<Lot> {
+  async update(id: string, lotData: Prisma.LotUpdateInput, assetIds?: bigint[], creatorId: string = 'system'): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
-        const lotIdAsBigInt = BigInt(id);
-        
-        if (assetIds !== undefined) {
-            await tx.assetsOnLots.deleteMany({
-                where: { lotId: lotIdAsBigInt },
-            });
-            if (assetIds.length > 0) {
-                await tx.assetsOnLots.createMany({
-                    data: assetIds.map(assetId => ({
-                        lotId: lotIdAsBigInt,
-                        assetId: assetId,
-                        assignedBy: 'system-update', // Or get user from context
-                    })),
-                });
-            }
-        }
-        
-        const updatedLot = await tx.lot.update({
-            where: { id: lotIdAsBigInt },
-            data: lotData,
+      const lotIdAsBigInt = BigInt(id);
+      
+      if (assetIds !== undefined) {
+        await tx.assetsOnLots.deleteMany({
+          where: { lotId: lotIdAsBigInt },
         });
+        
+        if (assetIds.length > 0) {
+          await tx.assetsOnLots.createMany({
+            data: assetIds.map(assetId => ({
+              lotId: lotIdAsBigInt,
+              assetId: assetId,
+              assignedBy: creatorId,
+            })),
+          });
+        }
+      }
+      
+      const updatedLot = await tx.lot.update({
+        where: { id: lotIdAsBigInt },
+        data: lotData,
+      });
 
-        return updatedLot as Lot;
+      return updatedLot as Lot;
     });
   }
 

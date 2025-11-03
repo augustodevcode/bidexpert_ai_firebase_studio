@@ -313,7 +313,7 @@ export class LotService {
     }
   }
 
-  async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
+  async updateLot(id: string, data: Partial<LotFormData>, creatorId: string = 'system'): Promise<{ success: boolean; message: string; }> {
     try {
       const { 
         assetIds, categoryId, subcategoryId, type, auctionId, 
@@ -360,7 +360,7 @@ export class LotService {
       }
       
       // A atualização dos ativos vinculados e a atualização dos detalhes das etapas são agora transacionais
-      await this.repository.update(id, dataToUpdate, assetIds);
+      await this.repository.update(id, dataToUpdate, assetIds, creatorId);
 
       return { success: true, message: 'Lote atualizado com sucesso.' };
     } catch (error: any) {
