@@ -51,7 +51,11 @@ export default function SubscriptionForm() {
         <p className="text-muted-foreground mt-2 mb-6 max-w-2xl mx-auto">
           Inscreva-se para receber alertas exclusivos sobre os próximos leilões, lotes em destaque e oportunidades imperdíveis diretamente no seu e-mail.
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center justify-center gap-2 max-w-lg mx-auto">
+        <form 
+          onSubmit={handleSubmit} 
+          className="flex flex-col sm:flex-row items-center justify-center gap-2 max-w-lg mx-auto"
+          suppressHydrationWarning
+        >
           <Input
             type="text"
             placeholder="Seu nome (opcional)"

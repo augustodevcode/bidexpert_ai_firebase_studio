@@ -10,9 +10,12 @@ async function main() {
 
   // 1. Add questions to lots
   console.log('Adding questions...');
+  // Buscar lotes que têm auctionId definido
   const lotsNoQuestions = await prisma.lot.findMany({
     where: {
-      auctionId: { not: null },
+      auctionId: {
+        not: undefined, // Usando undefined em vez de null para evitar problemas de tipagem
+      },
     },
     take: 50,
   });

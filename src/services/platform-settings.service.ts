@@ -4,7 +4,7 @@
  * gerenciar a lógica de negócio para as configurações globais da plataforma.
  */
 import { prisma } from '@/lib/prisma';
-import { Prisma, type PlatformSettings as PrismaPlatformSettings } from '@prisma/client';
+import { Prisma, type PlatformSettings as PrismaPlatformSettings, type Tenant } from '@prisma/client';
 import type { PlatformSettings } from '@/types';
 
 export class PlatformSettingsService {
@@ -20,10 +20,47 @@ export class PlatformSettingsService {
      * @param tenantId O ID do tenant.
      * @returns O objeto de configurações completo.
      */
+    /**
+     * Garante que um tenant exista no banco de dados.
+     * Se não existir, cria um tenant padrão.
+     * @param tenantId O ID do tenant a ser verificado/criado
+     * @returns O ID do tenant (como BigInt)
+     */
+    private async ensureTenantExists(tenantId: bigint): Promise<bigint> {
+        try {
+            // Tenta encontrar o tenant
+            const tenant = await this.prisma.tenant.findUnique({
+                where: { id: tenantId },
+            });
+
+            // Se o tenant não existir, cria um novo
+            if (!tenant) {
+                console.warn(`[PlatformSettingsService] Tenant com ID ${tenantId} não encontrado. Criando tenant padrão.`);
+                const newTenant = await this.prisma.tenant.create({
+                    data: {
+                        id: tenantId,
+                        name: 'BidExpert Tenant',
+                        subdomain: 'default',
+                    },
+                });
+                console.log(`[PlatformSettingsService] Tenant padrão criado com sucesso: ${newTenant.id}`);
+            }
+
+            return tenantId;
+        } catch (error) {
+            console.error('[PlatformSettingsService] Erro ao verificar/criar tenant:', error);
+            throw new Error('Falha ao verificar/criar tenant');
+        }
+    }
+
     async getSettings(tenantId: string | bigint | number): Promise<PlatformSettings> {
         // Garante que tenantId seja um BigInt para a consulta
         const tenantIdBigInt = BigInt(tenantId);
+        
         try {
+            // Primeiro, garante que o tenant existe
+            await this.ensureTenantExists(tenantIdBigInt);
+
             const findSettings = async () => {
                 return await this.prisma.platformSettings.findUnique({
                     where: { tenantId: tenantIdBigInt },
