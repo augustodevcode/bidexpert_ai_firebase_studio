@@ -6,6 +6,7 @@
  * de serem enviados para as server actions.
  */
 import * as z from 'zod';
+import type { SellerProfileInfo, SellerFormData } from '@/types';
 
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
 
@@ -28,8 +29,7 @@ export const sellerFormSchema = z.object({
   }).optional().nullable(),
   judicialBranchId: z.string().optional().nullable(),
   isJudicial: z.boolean().default(false),
-  // Campos de Endereço
-  street: z.string().max(255).optional().nullable(),
+  street: z.string().max(200).optional().nullable(),
   number: z.string().max(20).optional().nullable(),
   complement: z.string().max(100).optional().nullable(),
   neighborhood: z.string().max(100).optional().nullable(),
@@ -40,4 +40,49 @@ export const sellerFormSchema = z.object({
   longitude: z.coerce.number().optional().nullable(),
 });
 
-export type SellerFormValues = z.infer<typeof sellerFormSchema>;
+// Tipo que estende o schema do formulário com campos adicionais
+export type SellerFormValues = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating' | 'tenantId' | 'cityId' | 'stateId'> & {
+  // Campos do formulário
+  name: string;
+  description: string | null;
+  logoUrl: string | null;
+  logoMediaId: string | null;
+  dataAiHintLogo: string | null;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
+  contactName: string | null;
+  isJudicial: boolean;
+  judicialBranchId: string | null;
+  
+  // Campos de endereço (podem vir do AddressGroup)
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  neighborhood: string | null;
+  cityId?: string; // string | undefined para compatibilidade com SellerFormData
+  stateId?: string; // string | undefined para compatibilidade com SellerFormData
+  zipCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  
+  // Campos para exibição (não são salvos no banco)
+  address?: string;
+  city?: string;
+  state?: string;
+  
+  // IDs de relacionamento
+  userId: string | null;
+  tenantId: string;
+  
+  // Campos opcionais para edição
+  id?: string;
+  publicId?: string;
+  slug?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  activeLotsCount?: number;
+  memberSince?: Date;
+  auctionsFacilitatedCount?: number;
+  rating?: number;
+} & Pick<SellerFormData, 'cityId' | 'stateId'>; // Garante que cityId e stateId sejam do tipo string | undefined

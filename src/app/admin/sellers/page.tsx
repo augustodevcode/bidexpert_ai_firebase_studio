@@ -25,6 +25,7 @@ import SellerForm from './seller-form';
 import { getJudicialBranches } from '../judicial-branches/actions';
 import { getStates } from '../states/actions';
 import { getCities } from '../cities/actions';
+import { RowSelectionState } from '@tanstack/react-table';
 
 // Define os tipos de modais que esta página pode abrir
 type ModalState = 
@@ -34,9 +35,20 @@ type ModalState =
 
 export default function AdminSellersPage() {
   const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
+  const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Opções de ordenação para a lista de vendedores
+  const sortOptions = [
+    { value: 'name_asc', label: 'Nome (A-Z)' },
+    { value: 'name_desc', label: 'Nome (Z-A)' },
+    { value: 'createdAt_desc', label: 'Mais recentes' },
+    { value: 'createdAt_asc', label: 'Mais antigos' },
+    { value: 'status_asc', label: 'Status (A-Z)' },
+    { value: 'status_desc', label: 'Status (Z-A)' },
+  ];
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   
