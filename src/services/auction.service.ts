@@ -1,4 +1,3 @@
-
 // src/services/auction.service.ts
 /**
  * @fileoverview Este arquivo contém a classe AuctionService, que encapsula
@@ -61,7 +60,6 @@ export class AuctionService {
             auctioneerName: a.auctioneer?.name,
             categoryName: a.category?.name,
             imageUrl: a.imageMediaId === 'INHERIT' ? featuredLot?.imageUrl : a.imageUrl,
-            // **FIX**: Safely map stages only if they exist
             auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
                 ...stage,
                 id: stage.id.toString(),
