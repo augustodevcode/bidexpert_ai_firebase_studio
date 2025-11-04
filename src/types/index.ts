@@ -171,7 +171,7 @@ export type CityInfo = Omit<PmCity, 'id' | 'stateId' | 'latitude' | 'longitude'>
 };
 export type MediaItem = Omit<PmMediaItem, 'id' | 'uploadedByUserId' | 'judicialProcessId'> & { id: string; uploadedByUserId?: string | null; judicialProcessId?: string | null; };
 export type DataSource = PmDataSource;
-export type Report = PmReport;
+export type ContactMessage = Omit<PmContactMessage, 'id'> & { id: string };
 export type VehicleMake = Omit<PmVehicleMake, 'id'> & { id: string };
 export type VehicleModel = Omit<PmVehicleModel, 'id' | 'makeId'> & { id: string; makeId: string; makeName?: string };
 
@@ -343,7 +343,7 @@ export interface ConsignorDashboardStats {
 
 // Para usar em formulários onde não temos o ID completo ainda
 export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating' | 'tenantId'> & { userId?: string | null; tenantId?: string; cityId?: string; stateId?: string; };
-export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id'| 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating' | 'tenantId'> & { userId?: string | null; tenantId?: string; cityId?: string; stateId?: string; };
+export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id'| 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating' | 'tenantId'> & { userId?: string | null; tenantId?: string; cityId?: string; stateId?: string; street?: string; number?: string; complement?: string; neighborhood?: string; latitude?: number; longitude?: number; };
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'category' | 'sellerName' | 'auctioneerName' | 'categoryName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl' | 'tenantId'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
 export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls' | 'tenantId'> & { type: string, assetIds?: string[], inheritedMediaFromAssetId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null, mediaItemIds?: string[], galleryImageUrls?: string[] };
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;

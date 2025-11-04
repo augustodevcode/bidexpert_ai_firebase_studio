@@ -32,7 +32,7 @@ export class BidderService {
 
     if (!profile) {
       profile = await this.bidderRepository.create({
-        userId,
+        user: { connect: { id: userId } },
         emailNotifications: true,
         smsNotifications: false,
         isActive: true
@@ -142,7 +142,7 @@ export class BidderService {
     }
 
     // Aplicar ordenação
-    const orderBy = options.sort?.field ? {
+    const orderBy: any = options.sort?.field ? {
       [options.sort.field]: options.sort.direction
     } : { wonAt: 'desc' };
 
@@ -223,7 +223,7 @@ export class BidderService {
       };
     }
 
-    const orderBy = options.sort?.field ? {
+    const orderBy: any = options.sort?.field ? {
       [options.sort.field]: options.sort.direction
     } : { createdAt: 'desc' };
 
@@ -289,7 +289,7 @@ export class BidderService {
       where.title = { contains: options.filters.search, mode: 'insensitive' };
     }
 
-    const orderBy = options.sort?.field ? {
+    const orderBy: any = options.sort?.field ? {
       [options.sort.field]: options.sort.direction
     } : { participatedAt: 'desc' };
 

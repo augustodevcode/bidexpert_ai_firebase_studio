@@ -10,11 +10,15 @@ import type { JudicialDistrict, JudicialDistrictFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 
+import { prisma } from '@/lib/prisma';
+
 export class JudicialDistrictService {
   private repository: JudicialDistrictRepository;
+  private prisma;
 
   constructor() {
     this.repository = new JudicialDistrictRepository();
+    this.prisma = prisma;
   }
 
   async getJudicialDistricts(): Promise<JudicialDistrict[]> {
@@ -42,16 +46,16 @@ export class JudicialDistrictService {
         name: data.name,
         slug: slugify(data.name),
         zipCode: data.zipCode,
-        ...(data.courtId && { court: { connect: { id: data.courtId } } }),
-        ...(data.stateId && { state: { connect: { id: data.stateId } } })
+        ...(data.courtId && { court: { connect: { id: BigInt(data.courtId) } } }),
+        ...(data.stateId && { state: { connect: { id: BigInt(data.stateId) } } })
       };
       
-      const newDistrict = await prisma.judicialDistrict.upsert({
+      const newDistrict = await this.prisma.judicialDistrict.upsert({
         where: { slug: slugify(data.name) },
         update: dataToUpsert,
         create: dataToUpsert,
       });
-      return { success: true, message: 'Comarca criada/atualizada com sucesso.', districtId: newDistrict.id };
+      return { success: true, message: 'Comarca criada/atualizada com sucesso.', districtId: newDistrict.id.toString() };
     } catch (error: any) {
       console.error("Error in JudicialDistrictService.create:", error);
       return { success: false, message: `Falha ao criar comarca: ${error.message}` };
@@ -65,10 +69,10 @@ export class JudicialDistrictService {
         dataToUpdate.slug = slugify(data.name);
       }
       if (data.courtId) {
-          dataToUpdate.court = { connect: { id: data.courtId } };
+          dataToUpdate.court = { connect: { id: BigInt(data.courtId) } };
       }
       if (data.stateId) {
-          dataToUpdate.state = { connect: { id: data.stateId } };
+          dataToUpdate.state = { connect: { id: BigInt(data.stateId) } };
       }
       
       await this.repository.update(id, dataToUpdate);

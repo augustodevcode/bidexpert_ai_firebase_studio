@@ -160,7 +160,7 @@ export interface BidderDashboardOverview {
   paymentSummary: {
     totalPending: Decimal;
     totalOverdue: Decimal;
-    nextDueDate?: Date;
+    nextDueDate?: Date | null;
   };
 }
 

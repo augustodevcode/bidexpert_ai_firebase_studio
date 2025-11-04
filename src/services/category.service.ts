@@ -23,7 +23,7 @@ export class CategoryService {
     const categories = await this.categoryRepository.findAll();
     return categories.map(c => ({
       ...c, 
-      id: c.id, // Keep BigInt as is
+      id: c.id.toString(), // Keep BigInt as is
       _count: { lots: c._count.lots }
     }));
   }
@@ -31,13 +31,13 @@ export class CategoryService {
   async getCategoryById(id: bigint): Promise<LotCategory | null> {
     const category = await this.categoryRepository.findById(id);
     if (!category) return null;
-    return {...category, id: category.id};
+    return {...category, id: category.id.toString()};
   }
 
   async getCategoryByName(name: string): Promise<LotCategory | null> {
     const category = await this.categoryRepository.findByName(name);
     if (!category) return null;
-    return {...category, id: category.id};
+    return {...category, id: category.id.toString()};
   }
 
   async createCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean; message: string; category?: LotCategory; }> {
@@ -50,7 +50,7 @@ export class CategoryService {
         create: { ...data, slug, hasSubcategories: false },
       });
 
-      return { success: true, message: 'Categoria criada/atualizada com sucesso.', category: { ...newCategory, id: newCategory.id } };
+      return { success: true, message: 'Categoria criada/atualizada com sucesso.', category: { ...newCategory, id: newCategory.id.toString() } };
     } catch (error: any) {
       return { success: false, message: `Falha ao criar categoria: ${error.message}` };
     }
@@ -58,7 +58,7 @@ export class CategoryService {
 
   async updateCategory(id: bigint, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean; message: string }> {
     try {
-      const dataToUpdate: Partial<LotCategory> = { ...data };
+      const dataToUpdate: Partial<Prisma.LotCategoryUpdateInput> = { ...data };
       if (data.name) {
         dataToUpdate.slug = slugify(data.name);
       }

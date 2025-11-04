@@ -8,7 +8,7 @@
  */
 import { JudicialProcessRepository } from '@/repositories/judicial-process.repository';
 import { SellerService } from './seller.service';
-import type { JudicialProcess, JudicialProcessFormData } from '@/types';
+import type { JudicialProcess, JudicialProcessFormData, ProcessParty } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -28,10 +28,17 @@ export class JudicialProcessService {
     const processes = await this.repository.findAll(tenantId);
     return processes.map(p => ({
       ...p,
+      id: p.id.toString(),
+      tenantId: p.tenantId.toString(),
+      courtId: p.courtId?.toString(),
+      districtId: p.districtId?.toString(),
+      branchId: p.branchId?.toString(),
+      sellerId: p.sellerId?.toString(),
       courtName: p.court?.name,
       districtName: p.district?.name,
       branchName: p.branch?.name,
       sellerName: p.seller?.name,
+      parties: p.parties.map(party => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
     }));
   }
 
@@ -40,10 +47,17 @@ export class JudicialProcessService {
     if (!process) return null;
     return {
       ...process,
+      id: process.id.toString(),
+      tenantId: process.tenantId.toString(),
+      courtId: process.courtId?.toString(),
+      districtId: process.districtId?.toString(),
+      branchId: process.branchId?.toString(),
+      sellerId: process.sellerId?.toString(),
       courtName: process.court?.name,
       districtName: process.district?.name,
       branchName: process.branch?.name,
       sellerName: process.seller?.name,
+      parties: process.parties.map(party => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
     };
   }
 
@@ -53,11 +67,11 @@ export class JudicialProcessService {
       let finalSellerId = providedSellerId;
 
       if (!finalSellerId && branchId) {
-        const branchSeller = await prisma.seller.findFirst({ where: { judicialBranchId: branchId, tenantId }});
+        const branchSeller = await prisma.seller.findFirst({ where: { judicialBranchId: BigInt(branchId), tenantId: BigInt(tenantId) }});
         if (branchSeller) {
-          finalSellerId = branchSeller.id;
+          finalSellerId = branchSeller.id.toString();
         } else {
-          const branchDetails = await prisma.judicialBranch.findUnique({ where: { id: branchId }});
+          const branchDetails = await prisma.judicialBranch.findUnique({ where: { id: BigInt(branchId) }});
           if (branchDetails) {
             const newSellerResult = await this.sellerService.createSeller(tenantId, {
               name: branchDetails.name,
@@ -77,25 +91,25 @@ export class JudicialProcessService {
         ...processData,
         publicId: `PROC-${uuidv4()}`,
         parties: {
-          create: parties,
+          create: parties as any,
         },
-        tenant: { connect: { id: tenantId } },
+        tenant: { connect: { id: BigInt(tenantId) } },
       };
 
-      if (courtId) dataToCreate.court = { connect: { id: courtId } };
-      if (districtId) dataToCreate.district = { connect: { id: districtId } };
-      if (branchId) dataToCreate.branch = { connect: { id: branchId } };
+      if (courtId) dataToCreate.court = { connect: { id: BigInt(courtId) } };
+      if (districtId) dataToCreate.district = { connect: { id: BigInt(districtId) } };
+      if (branchId) dataToCreate.branch = { connect: { id: BigInt(branchId) } };
 
       if (finalSellerId) {
-        dataToCreate.seller = { connect: { id: finalSellerId } };
+        dataToCreate.seller = { connect: { id: BigInt(finalSellerId) } };
       }
 
       const newProcess = await prisma.judicialProcess.upsert({
-        where: { processNumber_tenantId: { processNumber: processData.processNumber, tenantId } },
+        where: { processNumber_tenantId: { processNumber: processData.processNumber, tenantId: BigInt(tenantId) } },
         update: dataToCreate,
         create: dataToCreate,
       });
-      return { success: true, message: 'Processo judicial criado/atualizado com sucesso.', processId: newProcess.id };
+      return { success: true, message: 'Processo judicial criado/atualizado com sucesso.', processId: newProcess.id.toString() };
     } catch (error: any) {
       console.error("Error in JudicialProcessService.create:", error);
       return { success: false, message: `Falha ao criar processo: ${error.message}` };
@@ -107,13 +121,13 @@ export class JudicialProcessService {
       const { parties, courtId, districtId, branchId, sellerId, ...processData } = data;
       const dataToUpdate: Partial<Prisma.JudicialProcessUpdateInput> = {...processData};
 
-      if (courtId) dataToUpdate.court = { connect: { id: courtId } };
-      if (districtId) dataToUpdate.district = { connect: { id: districtId } };
-      if (branchId) dataToUpdate.branch = { connect: { id: branchId } };
-      if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
+      if (courtId) dataToUpdate.court = { connect: { id: BigInt(courtId) } };
+      if (districtId) dataToUpdate.district = { connect: { id: BigInt(districtId) } };
+      if (branchId) dataToUpdate.branch = { connect: { id: BigInt(branchId) } };
+      if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } };
       else if (data.hasOwnProperty('sellerId')) dataToUpdate.seller = { disconnect: true };
 
-      await this.repository.update(tenantId, id, dataToUpdate, parties);
+      await this.repository.update(tenantId, id, dataToUpdate, parties as any[]);
       return { success: true, message: 'Processo judicial atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in JudicialProcessService.update for id ${id}:`, error);
@@ -135,7 +149,7 @@ export class JudicialProcessService {
     try {
       const processes = await this.repository.findAll(tenantId);
       for (const process of processes) {
-        await this.deleteJudicialProcess(tenantId, process.id);
+        await this.deleteJudicialProcess(tenantId, process.id.toString());
       }
       return { success: true, message: 'Todos os processos judiciais foram excluídos.' };
     } catch (error: any) {

@@ -154,253 +154,145 @@ function generateRandomAsset(index: number) {
 }
 
 async function seedAssets() {
-  console.log('🚀 Iniciando seed de Ativos...');
-  
-  try {
-    // Verifica se já existem ativos
-    const existingAssets = await prisma.asset.count();
-    if (existingAssets > 0) {
-      console.log(`✅ Já existem ${existingAssets} ativos no banco de dados.`);
-      return;
-    }
+    console.log('🚀 Iniciando seed de Ativos...');
+    const assetsToCreate: any[] = [];
 
-    // Obtém o primeiro tenant
-    const tenant = await prisma.tenant.findFirst();
-    if (!tenant) {
-      throw new Error('Nenhum tenant encontrado. É necessário ter pelo menos um tenant para criar ativos.');
-    }
-
-    // Obtém as categorias disponíveis
-    const categories = await prisma.lotCategory.findMany();
-    if (categories.length === 0) {
-      throw new Error('Nenhuma categoria encontrada. É necessário ter pelo menos uma categoria para criar ativos.');
-    }
-
-    // Cria 50 ativos de exemplo
-    const assetCount = 50;
-    
-    for (let i = 0; i < assetCount; i++) {
-      const category = faker.helpers.arrayElement(categories);
-      
-      // Busca subcategorias da categoria atual (se houver)
-      let subcategory = null;
-      if (category.hasSubcategories) {
-        const subcategories = await prisma.subcategory.findMany({
-          where: { 
-            categoryId: category.id 
-          },
-          take: 10
-        });
-        if (subcategories.length > 0) {
-          subcategory = faker.helpers.arrayElement(subcategories);
-        }
-      }
-      
-      const assetData = generateRandomAsset(i);
-      const isVehicle = 'plate' in assetData;
-      
-      // Cria o objeto base com campos comuns
-      const baseAsset: any = {
-        publicId: assetData.publicId,
-        title: assetData.title,
-        description: assetData.description,
-        status: 'DISPONIVEL',
-        imageUrl: assetData.imageUrl,
-        galleryImageUrls: assetData.galleryImageUrls,
-        locationCity: assetData.locationCity,
-        locationState: assetData.locationState,
-        address: assetData.address,
-        latitude: assetData.latitude,
-        longitude: assetData.longitude,
-        createdAt: assetData.createdAt,
-        updatedAt: assetData.updatedAt,
-        tenantId: tenant.id,
-        categoryId: category.id,
-        subcategoryId: subcategory?.id,
-      };
-      
-      // Adiciona campos específicos de veículo ou imóvel
-      if (isVehicle) {
-        const vehicleData = assetData as any;
-        baseAsset.plate = vehicleData.plate;
-        baseAsset.make = vehicleData.make;
-        baseAsset.model = vehicleData.model;
-        baseAsset.version = vehicleData.version;
-          year: vehicleData.year,
-          modelYear: vehicleData.modelYear,
-          mileage: vehicleData.mileage,
-          color: vehicleData.color,
-          fuelType: vehicleData.fuelType,
-          transmissionType: vehicleData.transmissionType,
-          bodyType: vehicleData.bodyType,
-          vin: vehicleData.vin,
-          renavam: vehicleData.renavam,
-          enginePower: vehicleData.enginePower,
-          numberOfDoors: vehicleData.numberOfDoors,
-          vehicleOptions: vehicleData.vehicleOptions,
-          runningCondition: vehicleData.runningCondition,
-          bodyCondition: vehicleData.bodyCondition,
-          tiresCondition: vehicleData.tiresCondition,
-          hasKey: vehicleData.hasKey,
-        };
-      } else {
-        const propertyData = assetData as any;
-        return {
-          ...baseAsset,
-          propertyRegistrationNumber: propertyData.propertyRegistrationNumber,
-          iptuNumber: propertyData.iptuNumber,
-          isOccupied: propertyData.isOccupied,
-          totalArea: propertyData.totalArea,
-          builtArea: propertyData.builtArea,
-          bedrooms: propertyData.bedrooms,
-          suites: propertyData.suites,
-          bathrooms: propertyData.bathrooms,
-          parkingSpaces: propertyData.parkingSpaces,
-          constructionType: propertyData.constructionType,
-          finishes: propertyData.finishes,
-          infrastructure: propertyData.infrastructure,
-          condoDetails: propertyData.condoDetails,
-          improvements: propertyData.improvements,
-          topography: propertyData.topography,
-          hasHabiteSe: propertyData.hasHabiteSe,
-          zoningRestrictions: propertyData.zoningRestrictions,
-        };
-      }
-      const category = faker.helpers.arrayElement(categories);
-      
-      // Busca subcategorias da categoria atual (se houver)
-      let subcategory = null;
-      if (category.hasSubcategories) {
-        const subcategories = await prisma.subcategory.findMany({
-          where: { 
-            category: { id: category.id } 
-          },
-          take: 10
-        });
-        if (subcategories.length > 0) {
-          subcategory = faker.helpers.arrayElement(subcategories);
-        }
-      }
-      
-      const assetData = generateRandomAsset(i);
-      const isVehicle = 'plate' in assetData;
-      
-      // Cria o objeto base com campos comuns
-      const baseAsset: any = {
-        publicId: assetData.publicId,
-        title: assetData.title,
-        description: assetData.description,
-        status: 'DISPONIVEL',
-        imageUrl: assetData.imageUrl,
-        galleryImageUrls: assetData.galleryImageUrls,
-        locationCity: assetData.locationCity,
-        locationState: assetData.locationState,
-        address: assetData.address,
-        latitude: assetData.latitude,
-        longitude: assetData.longitude,
-        createdAt: assetData.createdAt,
-        updatedAt: assetData.updatedAt,
-        tenantId: tenant.id,
-        categoryId: category.id,
-        subcategoryId: subcategory?.id,
-      };
-      
-      // Adiciona campos específicos de veículo ou imóvel
-      if (isVehicle) {
-        const vehicleData = assetData as any;
-        baseAsset.plate = vehicleData.plate;
-        baseAsset.make = vehicleData.make;
-        baseAsset.model = vehicleData.model;
-        baseAsset.version = vehicleData.version;
-        baseAsset.year = vehicleData.year;
-        baseAsset.modelYear = vehicleData.modelYear;
-        baseAsset.mileage = vehicleData.mileage;
-        baseAsset.color = vehicleData.color;
-        baseAsset.fuelType = vehicleData.fuelType;
-        baseAsset.transmissionType = vehicleData.transmissionType;
-        baseAsset.bodyType = vehicleData.bodyType;
-        baseAsset.vin = vehicleData.vin;
-        baseAsset.renavam = vehicleData.renavam;
-        baseAsset.enginePower = vehicleData.enginePower;
-        baseAsset.numberOfDoors = vehicleData.numberOfDoors;
-        baseAsset.vehicleOptions = vehicleData.vehicleOptions;
-        baseAsset.runningCondition = vehicleData.runningCondition;
-        baseAsset.bodyCondition = vehicleData.bodyCondition;
-        baseAsset.tiresCondition = vehicleData.tiresCondition;
-        baseAsset.hasKey = vehicleData.hasKey;
-      } else {
-        const propertyData = assetData as any;
-        baseAsset.propertyRegistrationNumber = propertyData.propertyRegistrationNumber;
-        baseAsset.iptuNumber = propertyData.iptuNumber;
-        baseAsset.isOccupied = propertyData.isOccupied;
-        baseAsset.totalArea = propertyData.totalArea;
-        baseAsset.builtArea = propertyData.builtArea;
-        baseAsset.bedrooms = propertyData.bedrooms;
-        baseAsset.suites = propertyData.suites;
-        baseAsset.bathrooms = propertyData.bathrooms;
-        baseAsset.parkingSpaces = propertyData.parkingSpaces;
-        baseAsset.constructionType = propertyData.constructionType;
-        baseAsset.finishes = propertyData.finishes;
-        baseAsset.infrastructure = propertyData.infrastructure;
-        baseAsset.condoDetails = propertyData.condoDetails;
-        baseAsset.improvements = propertyData.improvements;
-        baseAsset.topography = propertyData.topography;
-        baseAsset.hasHabiteSe = propertyData.hasHabiteSe;
-        baseAsset.zoningRestrictions = propertyData.zoningRestrictions;
-      }
-      
-      assetsToCreate.push(baseAsset);
-      
-      // Insere o ativo no banco de dados
-      try {
-        await prisma.asset.create({
-          data: baseAsset,
-        });
-        
-        if ((i + 1) % 5 === 0 || i === assetCount - 1) {
-          console.log(`✅ ${i + 1}/${assetCount} ativos criados`);
-        }
-      } catch (error) {
-        console.error(`❌ Erro ao criar ativo ${i + 1}:`, error);
-      }
-    }
-
-    console.log(`\n✨ Seed de Ativos concluído com sucesso!`);
-    console.log(`✅ Total de ativos criados: ${assetCount}`);
-    
-  } catch (error) {
-    // Insere o ativo no banco de dados
     try {
-      await prisma.asset.create({
-        data: baseAsset,
-      });
-      
-      if ((i + 1) % 5 === 0 || i === assetCount - 1) {
-        console.log(`✅ ${i + 1}/${assetCount} ativos criados`);
-      }
-    } catch (error) {
-      console.error(`❌ Erro ao criar ativo ${i + 1}:`, error);
-    }
-  }
+        const existingAssets = await prisma.asset.count();
+        if (existingAssets > 0) {
+            console.log(`✅ Já existem ${existingAssets} ativos no banco de dados.`);
+            return;
+        }
 
-  console.log(`\n✨ Seed de Ativos concluído com sucesso!`);
-  console.log(`✅ Total de ativos criados: ${assetCount}`);
-  
-} catch (error) {
-  console.error('❌ Erro durante o seed de Ativos:', error);
-  throw error;
-} finally {
-  await prisma.$disconnect();
-}
+        const tenant = await prisma.tenant.findFirst();
+        if (!tenant) {
+            throw new Error('Nenhum tenant encontrado. É necessário ter pelo menos um tenant para criar ativos.');
+        }
+
+        const categories = await prisma.lotCategory.findMany();
+        if (categories.length === 0) {
+            throw new Error('Nenhuma categoria encontrada. É necessário ter pelo menos uma categoria para criar ativos.');
+        }
+
+        const assetCount = 50;
+
+        for (let i = 0; i < assetCount; i++) {
+            const category = faker.helpers.arrayElement(categories);
+
+            let subcategory = null;
+            if (category.hasSubcategories) {
+                const subcategories = await prisma.subcategory.findMany({
+                    where: {
+                        categoryId: category.id
+                    },
+                    take: 10
+                });
+                if (subcategories.length > 0) {
+                    subcategory = faker.helpers.arrayElement(subcategories);
+                }
+            }
+
+            const assetData = generateRandomAsset(i);
+            const isVehicle = 'plate' in assetData;
+
+            const baseAsset: any = {
+                publicId: assetData.publicId,
+                title: assetData.title,
+                description: assetData.description,
+                status: 'DISPONIVEL',
+                imageUrl: assetData.imageUrl,
+                galleryImageUrls: assetData.galleryImageUrls,
+                locationCity: assetData.locationCity,
+                locationState: assetData.locationState,
+                address: assetData.address,
+                latitude: assetData.latitude,
+                longitude: assetData.longitude,
+                createdAt: assetData.createdAt,
+                updatedAt: assetData.updatedAt,
+                tenantId: tenant.id,
+                categoryId: category.id,
+                subcategoryId: subcategory?.id,
+            };
+
+            if (isVehicle) {
+                const vehicleData = assetData as any;
+                baseAsset.plate = vehicleData.plate;
+                baseAsset.make = vehicleData.make;
+                baseAsset.model = vehicleData.model;
+                baseAsset.version = vehicleData.version;
+                baseAsset.year = vehicleData.year;
+                baseAsset.modelYear = vehicleData.modelYear;
+                baseAsset.mileage = vehicleData.mileage;
+                baseAsset.color = vehicleData.color;
+                baseAsset.fuelType = vehicleData.fuelType;
+                baseAsset.transmissionType = vehicleData.transmissionType;
+                baseAsset.bodyType = vehicleData.bodyType;
+                baseAsset.vin = vehicleData.vin;
+                baseAsset.renavam = vehicleData.renavam;
+                baseAsset.enginePower = vehicleData.enginePower;
+                baseAsset.numberOfDoors = vehicleData.numberOfDoors;
+                baseAsset.vehicleOptions = vehicleData.vehicleOptions;
+                baseAsset.runningCondition = vehicleData.runningCondition;
+                baseAsset.bodyCondition = vehicleData.bodyCondition;
+                baseAsset.tiresCondition = vehicleData.tiresCondition;
+                baseAsset.hasKey = vehicleData.hasKey;
+            } else {
+                const propertyData = assetData as any;
+                baseAsset.propertyRegistrationNumber = propertyData.propertyRegistrationNumber;
+                baseAsset.iptuNumber = propertyData.iptuNumber;
+                baseAsset.isOccupied = propertyData.isOccupied;
+                baseAsset.totalArea = propertyData.totalArea;
+                baseAsset.builtArea = propertyData.builtArea;
+                baseAsset.bedrooms = propertyData.bedrooms;
+                baseAsset.suites = propertyData.suites;
+                baseAsset.bathrooms = propertyData.bathrooms;
+                baseAsset.parkingSpaces = propertyData.parkingSpaces;
+                baseAsset.constructionType = propertyData.constructionType;
+                baseAsset.finishes = propertyData.finishes;
+                baseAsset.infrastructure = propertyData.infrastructure;
+                baseAsset.condoDetails = propertyData.condoDetails;
+                baseAsset.improvements = propertyData.improvements;
+                baseAsset.topography = propertyData.topography;
+                baseAsset.hasHabiteSe = propertyData.hasHabiteSe;
+                baseAsset.zoningRestrictions = propertyData.zoningRestrictions;
+            }
+
+            assetsToCreate.push(baseAsset);
+        }
+
+        for (let i = 0; i < assetsToCreate.length; i++) {
+            try {
+                await prisma.asset.create({
+                    data: assetsToCreate[i],
+                });
+
+                if ((i + 1) % 5 === 0 || i === assetsToCreate.length - 1) {
+                    console.log(`✅ ${i + 1}/${assetsToCreate.length} ativos criados`);
+                }
+            } catch (error) {
+                console.error(`❌ Erro ao criar ativo ${i + 1}:`, error);
+            }
+        }
+
+        console.log(`
+✨ Seed de Ativos concluído com sucesso!`);
+        console.log(`✅ Total de ativos criados: ${assetsToCreate.length}`);
+
+    } catch (error) {
+        console.error('❌ Erro durante o seed de Ativos:', error);
+        throw error;
+    } finally {
+        await prisma.$disconnect();
+    }
 }
 
 // Executa o seed
 seedAssets()
-  .then(() => {
-    console.log('✅ Seed de Ativos concluído!');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('❌ Erro durante o seed de Ativos:', error);
-    process.exit(1);
-  });
+    .then(() => {
+        console.log('✅ Seed de Ativos concluído!');
+        process.exit(0);
+    })
+    .catch((error) => {
+        console.error('❌ Erro durante o seed de Ativos:', error);
+        process.exit(1);
+    });

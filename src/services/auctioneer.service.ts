@@ -76,20 +76,20 @@ export class AuctioneerService {
         address: fullAddress,
         slug: slugify(data.name),
         publicId: `LEILOE-${uuidv4()}`,
-        tenant: { connect: { id: tenantId } },
+        tenant: { connect: { id: BigInt(tenantId) } },
       };
 
       if (userId) {
-        dataToCreate.user = { connect: { id: userId } };
+        dataToCreate.user = { connect: { id: BigInt(userId) } };
       }
 
       if (cityId) {
-        const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+        const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }});
         if (city) dataToCreate.city = city.name;
       }
 
       if (stateId) {
-        const state = await this.prisma.state.findUnique({ where: { id: stateId }});
+        const state = await this.prisma.state.findUnique({ where: { id: BigInt(stateId) }});
         if (state) dataToCreate.state = state.uf;
       }
       
@@ -133,11 +133,11 @@ export class AuctioneerService {
       }
 
       if (cityId) {
-        const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+        const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }});
         if (city) dataToUpdate.city = city.name;
       }
       if (stateId) {
-        const state = await this.prisma.state.findUnique({ where: { id: stateId }});
+        const state = await this.prisma.state.findUnique({ where: { id: BigInt(stateId) }});
         if (state) dataToUpdate.state = state.uf;
       }
 
@@ -152,8 +152,8 @@ export class AuctioneerService {
   async deleteAuctioneer(tenantId: string, id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // Disconnect from related models
-      await this.prisma.auction.updateMany({ where: { auctioneerId: id }, data: { auctioneerId: null } });
-      await this.prisma.lot.updateMany({ where: { auctioneerId: id }, data: { auctioneerId: null } });
+      await this.prisma.auction.updateMany({ where: { auctioneerId: BigInt(id) }, data: { auctioneerId: null } });
+      await this.prisma.lot.updateMany({ where: { auctioneerId: BigInt(id) }, data: { auctioneerId: null } });
 
       await this.auctioneerRepository.delete(tenantId, id);
       return { success: true, message: 'Leiloeiro excluído com sucesso.' };
@@ -176,8 +176,8 @@ export class AuctioneerService {
   }
 
   async getAuctioneerDashboardData(tenantId: string, auctioneerId: string): Promise<AuctioneerDashboardData | null> {
-    const auctioneerData = await this.prisma.auctioneer.findFirst({
-      where: { id: auctioneerId, tenantId },
+    const auctioneerData: any = await this.prisma.auctioneer.findFirst({
+      where: { id: BigInt(auctioneerId), tenantId: BigInt(tenantId) },
       include: {
         _count: {
           select: { auctions: true },
@@ -185,7 +185,7 @@ export class AuctioneerService {
         auctions: {
           include: {
             lots: {
-              where: { status: 'VENDIDO', tenantId },
+              where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
               select: { price: true, updatedAt: true }
             },
             _count: {
@@ -198,10 +198,10 @@ export class AuctioneerService {
 
     if (!auctioneerData) return null;
 
-    const allLotsFromAuctions = auctioneerData.auctions.flatMap(auc => auc.lots);
-    const totalLots = auctioneerData.auctions.reduce((sum, auc) => sum + auc._count.lots, 0);
+    const allLotsFromAuctions = (auctioneerData as any).auctions.flatMap((auc: any) => auc.lots);
+    const totalLots = (auctioneerData as any).auctions.reduce((sum: number, auc: any) => sum + auc._count.lots, 0);
     
-    const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
+    const totalRevenue = allLotsFromAuctions.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
     const lotsSoldCount = allLotsFromAuctions.length;
     const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
     const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
@@ -214,7 +214,7 @@ export class AuctioneerService {
       salesByMonthMap.set(monthKey, 0);
     }
     
-    allLotsFromAuctions.forEach(lot => {
+    allLotsFromAuctions.forEach((lot: any) => {
         const monthKey = formatInSaoPaulo(lot.updatedAt, 'MMM/yy'); // Use timezone-aware function
         if (salesByMonthMap.has(monthKey)) {
             salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price ? Number(lot.price) : 0));
@@ -225,7 +225,7 @@ export class AuctioneerService {
 
     return {
       totalRevenue,
-      totalAuctions: auctioneerData._count.auctions,
+      totalAuctions: (auctioneerData as any)._count.auctions,
       totalLots,
       lotsSoldCount,
       salesRate,
@@ -235,8 +235,8 @@ export class AuctioneerService {
   }
 
   async getAuctioneersPerformance(tenantId: string): Promise<any[]> {
-    const auctioneers = await this.prisma.auctioneer.findMany({
-      where: { tenantId },
+    const auctioneers: any[] = await this.prisma.auctioneer.findMany({
+      where: { tenantId: BigInt(tenantId) },
       include: {
         _count: {
           select: { auctions: true },
@@ -244,7 +244,7 @@ export class AuctioneerService {
         auctions: {
           include: {
             lots: {
-              where: { status: 'VENDIDO', tenantId },
+              where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
               select: { price: true },
             },
             _count: {
@@ -255,11 +255,11 @@ export class AuctioneerService {
       },
     });
 
-    return auctioneers.map(auctioneer => {
-      const allLotsFromAuctions = auctioneer.auctions.flatMap(auc => auc.lots);
-      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
+    return auctioneers.map((auctioneer: any) => {
+      const allLotsFromAuctions = auctioneer.auctions.flatMap((auc: any) => auc.lots);
+      const totalRevenue = allLotsFromAuctions.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const lotsSoldCount = allLotsFromAuctions.length;
-      const totalLotsInAuctions = auctioneer.auctions.reduce((acc, auc) => acc + auc._count.lots, 0);
+      const totalLotsInAuctions = auctioneer.auctions.reduce((acc: number, auc: any) => acc + auc._count.lots, 0);
       const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
       const salesRate = totalLotsInAuctions > 0 ? (lotsSoldCount / totalLotsInAuctions) * 100 : 0;
 

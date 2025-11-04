@@ -24,7 +24,7 @@ export class ContactMessageService {
     return messages.map(m => ({ ...m, id: m.id.toString() }));
   }
 
-  async saveMessage(data: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string; }> {
+  async saveMessage(data: Prisma.ContactMessageCreateInput): Promise<{ success: boolean; message: string; }> {
     try {
       await this.repository.create(data);
       return { success: true, message: 'Mensagem salva com sucesso.' };

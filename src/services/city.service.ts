@@ -30,6 +30,8 @@ export class CityService {
     const cities = await this.cityRepository.findAll(stateIdFilter);
     return cities.map(city => ({
       ...city,
+      id: city.id.toString(),
+      stateId: city.stateId.toString(),
       stateUf: city.state.uf,
     }));
   }
@@ -44,6 +46,8 @@ export class CityService {
     if (!city) return null;
     return {
       ...city,
+      id: city.id.toString(),
+      stateId: city.stateId.toString(),
       stateUf: city.state.uf,
     };
   }
@@ -64,12 +68,12 @@ export class CityService {
       const dataToUpsert: Prisma.CityCreateInput = {
         name: data.name,
         slug: slugify(data.name),
-        state: { connect: { id: data.stateId } },
+        state: { connect: { id: BigInt(data.stateId) } },
         ibgeCode: data.ibgeCode || null,
       };
 
       const newCity = await this.cityRepository.upsert(dataToUpsert);
-      return { success: true, message: 'Cidade criada/atualizada com sucesso.', cityId: newCity.id };
+      return { success: true, message: 'Cidade criada/atualizada com sucesso.', cityId: newCity.id.toString() };
     } catch (error: any) {
       console.error("Error in CityService.createCity:", error);
       return { success: false, message: `Falha ao criar cidade: ${error.message}` };
@@ -85,14 +89,16 @@ export class CityService {
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       const dataToUpdate: Prisma.CityUpdateInput = {};
-      if (data.name) dataToUpdate.name = data.name; dataToUpdate.slug = slugify(data.name);
+      if (data.name) {
+        dataToUpdate.name = data.name;
+        dataToUpdate.slug = slugify(data.name);
+      }
       if (data.ibgeCode) dataToUpdate.ibgeCode = data.ibgeCode;
 
       if (data.stateId) {
         const parentState = await this.stateRepository.findById(data.stateId);
         if (parentState) {
-          dataToUpdate.state = { connect: { id: data.stateId } };
-          dataToUpdate.stateUf = parentState.uf;
+          dataToUpdate.state = { connect: { id: BigInt(data.stateId) } };
         }
       }
       
