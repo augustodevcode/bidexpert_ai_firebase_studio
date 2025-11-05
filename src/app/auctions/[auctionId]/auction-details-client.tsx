@@ -37,7 +37,7 @@ import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 
 
-const BidExpertFilter = dynamic(() => import('@/components/BidExpertFilter'), {
+const SidebarFilter = dynamic(() => import('@/components/BidExpertFilter'), {
   loading: () => <SidebarFiltersSkeleton />,
   ssr: false,
 });
@@ -315,7 +315,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
         
         <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 items-start">
            <aside className="hidden md:block sticky top-24 h-fit">
-             <BidExpertFilter
+             <SidebarFilter
                categories={allCategories}
                locations={uniqueLocationsForFilter}
                sellers={sellersForFilter.map(s => s.name)}

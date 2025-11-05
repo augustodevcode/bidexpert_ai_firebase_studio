@@ -503,7 +503,6 @@ export class LotService {
       relistCount?: number;
       isFeatured?: boolean;
       isExclusive?: boolean;
-      type?: string;
       condition?: string | null;
       dataAiHint?: string | null;
       imageUrl?: string | null;
@@ -571,7 +570,6 @@ export class LotService {
         relistCount: lotData.relistCount || 0,
         isFeatured: lotData.isFeatured || false,
         isExclusive: lotData.isExclusive || false,
-        type: lotData.type || 'STANDARD',
         condition: lotData.condition || null,
         dataAiHint: lotData.dataAiHint || null,
         imageUrl: lotData.imageUrl || null,
