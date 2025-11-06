@@ -1,37 +1,22 @@
 
 /**
- * @file Extended Seed Script (v2)
- * @version 2.3
+ * @file Extended Seed Script (v2.4)
+ * @version 2.4
  * @description Populates the database with a comprehensive and interconnected set of data
  *              that covers all major scenarios of the BidExpert application.
+ *              This version corrects all BigInt/string type mismatches and uses the service layer consistently.
  * 
  * @ai-guidelines
  *   - 1. SCRIPT PHILOSOPHY: This script uses SERVICE classes for creating business entities
- *     (Auctions, Lots, Users, etc.) to ensure all business logic is applied. Direct
- *     database calls (`prisma.create`) are ONLY used for foundational, non-business
- *     data like the Landlord Tenant and global settings where a fixed ID or
- *     bootstrapping is necessary.
- * 
- *   - 2. WHY NOT ACTIONS: Server Actions (`.../actions.ts`) are NOT used because they
- *     import `server-only`, which causes this script (running in a standard Node.js
- *     environment) to fail. The services contain the core logic, so using them is the
- *     correct approach here.
- * 
- *   - 3. ID TYPES: All service methods are designed to accept and return IDs as `string`.
- *     The conversion to and from `BigInt` is handled within the service/repository layer.
- *     Therefore, this script should ONLY work with string IDs when interacting with services.
- * 
- *   - 4. ADDING NEW ENTITIES: To add a new entity, first check if a service exists in
- *     `../src/services/`. If so, import it, instantiate it, and use its `create` or
- *     update method. Follow the existing patterns in the `seed...` functions below.
- * 
- *   - 5. DATABASE CLEANING: The `cleanDatabase` function at the beginning is critical.
- *     If you add a new model to the schema with relations, you MUST add its table to this list in the correct reverse dependency order.
+ *     to ensure all business logic is applied. Direct database calls (`prisma.create`) are
+ *     ONLY used for foundational, non-business data where a fixed ID or bootstrapping is necessary.
+ *   - 2. SERVICE LAYER API: All service methods are designed to accept and return IDs as `string`.
+ *     The conversion to and from `BigInt` is handled within the repository/service layer.
+ *     This script MUST ONLY work with string IDs when interacting with services.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import { hash } from 'bcryptjs';
 import { slugify } from '../src/lib/ui-helpers';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -71,9 +56,7 @@ import { DocumentTemplateService } from '../src/services/document-template.servi
 import { ReportService } from '../src/services/report.service';
 import { SubscriberService } from '../src/services/subscriber.service';
 import { prisma } from '../src/lib/prisma';
-import type { Prisma, Role } from '@prisma/client';
-import type { AssetFormData } from '../src/types';
-
+import type { Role, AssetFormData } from '../src/types';
 
 // AI-NOTE: Instantiate all required services here.
 const services = {
@@ -153,7 +136,7 @@ async function cleanDatabase() {
 }
 
 async function main() {
-  console.log("--- STARTING EXTENDED SEED (V2.3) ---");
+  console.log("--- STARTING EXTENDED SEED (V2.4) ---");
   await cleanDatabase();
 
   console.log("Seeding foundational data (Roles, Landlord, Settings, States)...");
@@ -174,7 +157,7 @@ async function main() {
   });
   const tenantId = landlordTenant.id.toString();
 
-  const platformSettings = await prisma.platformSettings.upsert({
+  await prisma.platformSettings.upsert({
     where: { tenantId: BigInt(tenantId) },
     update: {},
     create: { tenantId: BigInt(tenantId), siteTitle: 'BidExpert', siteTagline: 'Sua plataforma de leilões online.', isSetupComplete: true },
@@ -250,52 +233,51 @@ async function main() {
   if(!citySPResult.success || !citySPResult.cityId) throw new Error(citySPResult.message);
   const citySP = await services.city.getCityById(citySPResult.cityId);
 
-  const courtTJSPResult = await services.court.createCourt({ name: 'Tribunal de Justiça de São Paulo', stateUf: 'SP', website: '' });
+  const courtTJSPResult = await services.court.createCourt({ name: 'Tribunal de Justiça de São Paulo', stateUf: 'SP', website: 'www.tjsp.jus.br' });
   if(!courtTJSPResult.success || !courtTJSPResult.courtId) throw new Error(courtTJSPResult.message);
   const courtTJSP = await services.court.getCourtById(courtTJSPResult.courtId);
 
   if(!courtTJSP) throw new Error("Court TJSP not found");
-  const districtSPResult = await services.judicialDistrict.createJudicialDistrict({ name: 'Comarca de São Paulo', courtId: courtTJSP.id, stateId: stateSP.id, zipCode: '' });
+  const districtSPResult = await services.judicialDistrict.createJudicialDistrict({ name: 'Comarca de São Paulo', courtId: courtTJSP.id, stateId: stateSP.id, zipCode: '01000-000' });
   if(!districtSPResult.success || !districtSPResult.districtId) throw new Error(districtSPResult.message);
   const districtSP = await services.judicialDistrict.getJudicialDistrictById(districtSPResult.districtId);
 
   if(!districtSP) throw new Error("Judicial District SP not found");
-  const branchCivilResult = await services.judicialBranch.createJudicialBranch({ name: '1ª Vara Cível', districtId: districtSP.id, contactName: '', phone: '', email: '' });
+  const branchCivilResult = await services.judicialBranch.createJudicialBranch({ name: '1ª Vara Cível', districtId: districtSP.id, contactName: 'Chefe de Cartório', phone: '(11) 5555-1234', email: 'vara1@tjsp.jus.br' });
   if(!branchCivilResult.success || !branchCivilResult.branchId) throw new Error(branchCivilResult.message);
   const branchCivil = await services.judicialBranch.getJudicialBranchById(branchCivilResult.branchId);
 
-  const mainAuctioneerResult = await services.auctioneer.createAuctioneer(tenantId.toString(), {
+  const mainAuctioneerResult = await services.auctioneer.createAuctioneer(tenantId, {
     name: 'Leiloeiro Oficial & Associados',
     registrationNumber: 'JUCESP-123',
     userId: auctioneerUser!.id,
-    city: 'São Paulo',
-    website: '', zipCode: '', contactName: '', phone: '', email: '', address: '', state: 'SP',
-    description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
+    city: 'São Paulo', website: 'leiloeiro.com', zipCode: '01000-000', contactName: 'Contato Leiloeiro', phone: '11999999999', email: 'contato@leiloeiro.com', address: 'Rua do Leiloeiro, 123', state: 'SP',
+    description: 'Leiloeiro com anos de experiência.', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
   if(!mainAuctioneerResult.success || !mainAuctioneerResult.auctioneerId) throw new Error(mainAuctioneerResult.message);
-  const mainAuctioneer = await services.auctioneer.getAuctioneerById(tenantId.toString(), mainAuctioneerResult.auctioneerId);
+  const mainAuctioneer = await services.auctioneer.getAuctioneerById(tenantId, mainAuctioneerResult.auctioneerId);
 
   if(!branchCivil) throw new Error("Judicial Branch Civil not found");
-  const judicialSellerResult = await services.seller.createSeller(tenantId.toString(), {
+  const judicialSellerResult = await services.seller.createSeller(tenantId, {
     name: '1ª Vara Cível de São Paulo',
     isJudicial: true,
     judicialBranchId: branchCivil.id,
     userId: null,
-    city: 'São Paulo', website: '', zipCode: '', contactName: '', phone: '', email: '', address: '', state: 'SP',
-    description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
+    city: 'São Paulo', website: 'tjsp.jus.br', zipCode: '01000-000', contactName: 'Gabinete', phone: '1155551111', email: 'gabinete@tjsp.jus.br', address: 'Praça da Sé, s/n',
+    state: 'SP', description: 'Comitente representando a 1ª Vara Cível.', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
   if(!judicialSellerResult.success || !judicialSellerResult.sellerId) throw new Error(judicialSellerResult.message);
-  const judicialSeller = await services.seller.getSellerById(tenantId.toString(), judicialSellerResult.sellerId);
+  const judicialSeller = await services.seller.getSellerById(tenantId, judicialSellerResult.sellerId);
 
-  const extrajudicialSellerResult = await services.seller.createSeller(tenantId.toString(), {
+  const extrajudicialSellerResult = await services.seller.createSeller(tenantId, {
     name: 'Banco Vende Tudo S/A',
     isJudicial: false,
     userId: sellerUser!.id,
-    city: 'São Paulo', website: '', zipCode: '', contactName: '', phone: '', email: '', address: '',
-    state: 'SP', description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
+    city: 'São Paulo', website: 'banco.com', zipCode: '01000-000', contactName: 'Gerente de Ativos', phone: '1133333333', email: 'ativos@banco.com', address: 'Av. Faria Lima, 1000',
+    state: 'SP', description: 'Banco liquidando carteira de ativos.', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
   if(!extrajudicialSellerResult.success || !extrajudicialSellerResult.sellerId) throw new Error(extrajudicialSellerResult.message);
-  const extrajudicialSeller = await services.seller.getSellerById(tenantId.toString(), extrajudicialSellerResult.sellerId);
+  const extrajudicialSeller = await services.seller.getSellerById(tenantId, extrajudicialSellerResult.sellerId);
 
   const catImoveisResult = await services.category.createCategory({ name: 'Imóveis', description: 'Imóveis em geral' });
   if(!catImoveisResult.success || !catImoveisResult.category) throw new Error(catImoveisResult.message);
@@ -305,11 +287,11 @@ async function main() {
   if(!catVeiculosResult.success || !catVeiculosResult.category) throw new Error(catVeiculosResult.message);
   const catVeiculos = catVeiculosResult.category;
 
-  await services.subcategory.createSubcategory({ name: 'Apartamentos', parentCategoryId: catImoveis.id, description: '', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
-  await services.subcategory.createSubcategory({ name: 'Carros', parentCategoryId: catVeiculos.id, description: '', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
+  await services.subcategory.createSubcategory({ name: 'Apartamentos', parentCategoryId: catImoveis.id, description: 'Apartamentos', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
+  await services.subcategory.createSubcategory({ name: 'Carros', parentCategoryId: catVeiculos.id, description: 'Carros', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
 
   if(!courtTJSP || !districtSP || !branchCivil || !judicialSeller) throw new Error("Judicial entity setup failed.");
-  const judicialProcessResult = await services.judicialProcess.createJudicialProcessAction({
+  const judicialProcessResult = await services.judicialProcess.createJudicialProcess({
     processNumber: '0012345-67.2024.8.26.0001',
     isElectronic: true,
     parties: [],
@@ -319,7 +301,7 @@ async function main() {
     sellerId: judicialSeller.id,
   });
   if(!judicialProcessResult.success || !judicialProcessResult.processId) throw new Error(judicialProcessResult.message);
-  const judicialProcess = await services.judicialProcess.getJudicialProcess(judicialProcessResult.processId);
+  const judicialProcess = await services.judicialProcess.getJudicialProcessById(tenantId, judicialProcessResult.processId);
 
   const assetApartmentResult = await services.asset.createAsset(tenantId, {
     title: 'Apartamento em Moema, 2 dorms', description: 'Lindo apartamento com vista para o parque.',
@@ -337,19 +319,19 @@ async function main() {
   if(!assetCarResult.success || !assetCarResult.assetId) throw new Error(assetCarResult.message);
   const assetCar = await services.asset.getAssetById(tenantId, assetCarResult.assetId);
 
-  const judicialAuctionResult = await services.auction.createAuction(tenantId.toString(), {
+  const judicialAuctionResult = await services.auction.createAuction(tenantId, {
     title: 'Leilão Judicial de Imóveis - TJSP', auctionType: 'JUDICIAL', status: 'ABERTO_PARA_LANCES',
     auctioneerId: mainAuctioneer!.id, sellerId: judicialSeller.id, auctionDate: faker.date.future(),
   });
   if(!judicialAuctionResult.success || !judicialAuctionResult.auctionId) throw new Error(judicialAuctionResult.message);
-  const judicialAuction = await services.auction.getAuctionById(tenantId.toString(), judicialAuctionResult.auctionId);
+  const judicialAuction = await services.auction.getAuctionById(tenantId, judicialAuctionResult.auctionId);
 
-  const extrajudicialAuctionResult = await services.auction.createAuction(tenantId.toString(), {
+  const extrajudicialAuctionResult = await services.auction.createAuction(tenantId, {
     title: 'Leilão de Veículos do Banco Vende Tudo', auctionType: 'EXTRAJUDICIAL', status: 'ABERTO_PARA_LANCES',
     auctioneerId: mainAuctioneer!.id, sellerId: extrajudicialSeller!.id, auctionDate: faker.date.future(),
   });
   if(!extrajudicialAuctionResult.success || !extrajudicialAuctionResult.auctionId) throw new Error(extrajudicialAuctionResult.message);
-  const extrajudicialAuction = await services.auction.getAuctionById(tenantId.toString(), extrajudicialAuctionResult.auctionId);
+  const extrajudicialAuction = await services.auction.getAuctionById(tenantId, extrajudicialAuctionResult.auctionId);
 
   if(!assetApartment || !judicialAuction) throw new Error("Asset Apartment or Judicial Auction not found");
   const lotApartmentResult = await services.lot.createLot({
@@ -367,31 +349,31 @@ async function main() {
 
   for (const user of bidderUsers) {
     if (!user) continue;
-    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: judicialAuction!.id } as any);
-    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: extrajudicialAuction!.id } as any);
+    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: judicialAuction!.id });
+    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: extrajudicialAuction!.id });
   }
 
   const bidder1 = bidderUsers[0];
   if(!bidder1 || !lotApartment || !extrajudicialAuction) throw new Error("Bidder or lot info missing");
-  await services.bid.createBid({ lotId: lotApartment.id, bidderId: bidder1.id, amount: new Decimal(755000.00), auctionId: judicialAuction!.id, tenantId: BigInt(tenantId) } as any);
+  await services.bid.createBid({ lot: { connect: { id: BigInt(lotApartment.id) } }, bidder: { connect: { id: BigInt(bidder1.id) } }, amount: new Decimal(755000.00), auction: { connect: { id: BigInt(judicialAuction!.id) } }, tenant: { connect: { id: BigInt(tenantId) } } });
   
   const lotCar = await prisma.lot.findFirst({ where: { auctionId: BigInt(extrajudicialAuction.id) }});
   if (!lotCar) throw new Error('Lot for extrajudicial auction not found');
 
   const bidder2 = bidderUsers[1];
   if(!bidder2) throw new Error("Bidder 2 not found");
-  await services.bid.createBid({ lotId: lotCar.id, bidderId: bidder2.id, amount: new Decimal(46000.00), auctionId: extrajudicialAuction.id, tenantId: BigInt(tenantId) } as any);
+  await services.bid.createBid({ lot: { connect: { id: lotCar.id } }, bidder: { connect: { id: BigInt(bidder2.id) } }, amount: new Decimal(46000.00), auction: { connect: { id: BigInt(extrajudicialAuction.id) } }, tenant: { connect: { id: BigInt(tenantId) } } });
 
   const winningBid = await prisma.bid.findFirst({ where: { lotId: lotCar.id }, orderBy: { amount: 'desc' } });
   if (winningBid) {
     const userWin = await services.userWin.create({
-      lotId: lotCar.id,
-      userId: winningBid.bidderId,
+      lot: { connect: { id: lotCar.id } },
+      user: { connect: { id: winningBid.bidderId } },
       winningBidAmount: winningBid.amount,
       paymentStatus: 'PENDENTE',
-    } as any);
+    });
     if(userWin) {
-      await services.installmentPayment.createInstallmentsForWin(userWin as any, 3);
+      await services.installmentPayment.createInstallmentsForWin(userWin, 3);
     }
   }
 
@@ -400,13 +382,13 @@ async function main() {
   if(!docTypeRGResult || !docTypeCPFResult) throw new Error("Failed to create document types");
   
   if(adminUser) {
-    await services.userDocument.createUserDocument({ user: { connect: { id: adminUser.id } }, documentType: { connect: { id: docTypeRGResult.id } }, fileUrl: faker.image.url(), fileName: 'rg_admin.pdf' });
-    await services.userDocument.createUserDocument({ user: { connect: { id: adminUser.id } }, documentType: { connect: { id: docTypeCPFResult.id } }, fileUrl: faker.image.url(), fileName: 'cpf_admin.pdf' });
+    await services.userDocument.createUserDocument({ user: { connect: { id: BigInt(adminUser.id) } }, documentType: { connect: { id: BigInt(docTypeRGResult.id) } }, fileUrl: faker.image.url(), fileName: 'rg_admin.pdf' });
+    await services.userDocument.createUserDocument({ user: { connect: { id: BigInt(adminUser.id) } }, documentType: { connect: { id: BigInt(docTypeCPFResult.id) } }, fileUrl: faker.image.url(), fileName: 'cpf_admin.pdf' });
   }
 
   const mediaItem1Result = await services.mediaItem.createMediaItem({
     fileName: 'apartment_image.jpg', mimeType: 'image/jpeg', storagePath: '/uploads/apartment_image.jpg',
-    urlOriginal: faker.image.url(), title: 'Apartamento Moema', user: { connect: { id: adminUser!.id } }
+    urlOriginal: faker.image.url(), title: 'Apartamento Moema', user: { connect: { id: BigInt(adminUser!.id) } }
   });
   if (!mediaItem1Result.success) throw new Error(mediaItem1Result.message);
   
@@ -439,17 +421,15 @@ async function main() {
 
   await services.subscriber.createSubscriber({ email: faker.internet.email(), name: faker.person.fullName(), }, tenantId.toString());
 
-  console.log("--- SEED SCRIPT V2.3 FINISHED SUCCESSFULLY ---");
+  console.log("--- SEED SCRIPT V2.4 FINISHED SUCCESSFULLY ---");
 }
 
 main()
   .catch((e) => {
-    console.error("--- SEED SCRIPT V2.3 FAILED ---");
+    console.error("--- SEED SCRIPT V2.4 FAILED ---");
     console.error(e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
   });
-
-    

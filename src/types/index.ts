@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { 
     User as PmUser, 
@@ -360,18 +361,18 @@ export interface ConsignorDashboardStats {
     salesData: { name: string; sales: number }[];
 }
 
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating' | 'tenantId'> & { userId?: string | null; tenantId?: string; cityId?: string; stateId?: string; };
-export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id'| 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating' | 'tenantId'> & { userId?: string | null; tenantId?: string; cityId?: string; stateId?: string; street?: string; number?: string; complement?: string; neighborhood?: string; latitude?: number; longitude?: number; };
+export type SellerFormData = Partial<Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating' | 'tenantId' | 'cityId' | 'stateId'>> & { name: string; isJudicial?: boolean; userId?: string | null; tenantId?: string; cityId?: string | null; stateId?: string | null; judicialBranchId?: string | null; };
+export type AuctioneerFormData = Partial<Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating' | 'tenantId' | 'cityId' | 'stateId'>> & { name: string; userId?: string | null; tenantId?: string; cityId?: string | null; stateId?: string | null; };
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'category' | 'sellerName' | 'auctioneerName' | 'categoryName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl' | 'tenantId'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
 export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls' | 'tenantId'> & { type: string, assetIds?: string[], inheritedMediaFromAssetId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null, mediaItemIds?: string[], galleryImageUrls?: string[] };
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;
 export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'cityCount' | 'createdAt' | 'updatedAt'>;
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
-export type CourtFormData = Omit<Court, 'id' | 'slug' | 'createdAt' | 'updatedAt'>;
-export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf' | 'createdAt' | 'updatedAt'>;
-export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf' | 'createdAt' | 'updatedAt'>;
+export type CourtFormData = Omit<Court, 'id' | 'slug'>;
+export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf'>;
+export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf'>;
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName' | 'sellerName' | 'tenantId'>;
-export type AssetFormData = Partial<Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'tenantId' | 'lotInfo' | 'lots'>>;
+export type AssetFormData = Partial<Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'tenantId' | 'lotInfo' | 'lots' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName'>> & { title: string; };
 export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'parentCategoryName' | 'itemCount'>;
 export type VehicleMakeFormData = Omit<VehicleMake, 'id' | 'slug'>;
 export type VehicleModelFormData = Omit<VehicleModel, 'id' | 'slug' | 'makeName'>;

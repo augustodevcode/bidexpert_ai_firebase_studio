@@ -1,3 +1,4 @@
+
 // src/services/judicial-process.service.ts
 /**
  * @fileoverview Este arquivo contém a classe JudicialProcessService, que
@@ -38,7 +39,7 @@ export class JudicialProcessService {
       districtName: p.district?.name,
       branchName: p.branch?.name,
       sellerName: p.seller?.name,
-      parties: p.parties.map(party => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
+      parties: p.parties.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
     }));
   }
 
@@ -57,7 +58,7 @@ export class JudicialProcessService {
       districtName: process.district?.name,
       branchName: process.branch?.name,
       sellerName: process.seller?.name,
-      parties: process.parties.map(party => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
+      parties: process.parties.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
     };
   }
 

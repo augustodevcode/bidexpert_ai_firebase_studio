@@ -1,3 +1,4 @@
+
 // src/services/review.service.ts
 import { ReviewRepository } from '@/repositories/review.repository';
 import type { CreateReviewInput } from '@/lib/zod/review-schema';
@@ -14,11 +15,12 @@ export class ReviewService {
   }
 
   async create(data: CreateReviewInput) {
+    const { lotId, userId, auctionId, ...rest } = data;
     return this.repository.create({
-      ...data,
-      lot: { connect: { id: data.lotId } },
-      user: { connect: { id: data.userId } },
-      auction: { connect: { id: data.auctionId } }
+      ...rest,
+      lot: { connect: { id: BigInt(lotId) } },
+      user: { connect: { id: BigInt(userId) } },
+      auction: { connect: { id: BigInt(auctionId) } }
     });
   }
 

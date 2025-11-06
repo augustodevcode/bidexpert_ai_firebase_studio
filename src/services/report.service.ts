@@ -1,3 +1,4 @@
+
 // src/services/report.service.ts
 /**
  * @fileoverview Este arquivo contém a classe ReportService, que encapsula a
@@ -26,14 +27,17 @@ export class ReportService {
     return this.repository.findById(finalTenantId, id);
   }
   
-  async createReport(data: Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId'>, tenantId?: string): Promise<{ success: boolean; message: string; report?: Report }> {
+  async createReport(data: Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'createdById'> & { createdById: string }, tenantId?: string): Promise<{ success: boolean; message: string; report?: Report }> {
       const finalTenantId = tenantId || tenantContext.getStore()?.tenantId || '1';
       try {
-          const reportData = {
-              ...data,
-              tenant: { connect: { id: finalTenantId } },
-          }
-          const newReport = await this.repository.create(reportData as Prisma.ReportCreateInput);
+          const reportData: Prisma.ReportCreateInput = {
+              name: data.name,
+              description: data.description,
+              definition: data.definition,
+              tenant: { connect: { id: BigInt(finalTenantId) } },
+              createdBy: { connect: { id: BigInt(data.createdById) } }
+          };
+          const newReport = await this.repository.create(reportData);
           return { success: true, message: 'Relatório criado com sucesso.', report: newReport };
       } catch (error: any) {
           return { success: false, message: `Falha ao criar relatório: ${error.message}`};
