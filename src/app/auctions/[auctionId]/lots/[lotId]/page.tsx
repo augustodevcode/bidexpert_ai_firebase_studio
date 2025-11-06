@@ -1,4 +1,3 @@
-
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
 /**
  * @fileoverview Página de servidor para renderização inicial dos detalhes de um lote.
@@ -10,6 +9,7 @@
  */
 import type { Lot, Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import LotDetailClientContent from './lot-detail-client';
+import LotDetailPageV2 from './v2/page'; // Importando a V2
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
@@ -108,7 +108,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 }
 
 export default async function LotDetailPage({ params, searchParams }: { params: { auctionId: string, lotId: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
-  const version = searchParams?.v === '2' ? 'v2' : 'v1';
+  const version = searchParams?.v === '1' ? 'v1' : 'v2'; // Default to v2
 
   if (!params.auctionId || !params.lotId) {
     notFound();
@@ -138,10 +138,10 @@ export default async function LotDetailPage({ params, searchParams }: { params: 
             <Tabs defaultValue={version}>
                 <TabsList>
                     <TabsTrigger value="v1" asChild>
-                        <Link href={`/auctions/${params.auctionId}/lots/${params.lotId}`}>V1</Link>
+                        <Link href={`/auctions/${params.auctionId}/lots/${params.lotId}?v=1`}>V1</Link>
                     </TabsTrigger>
                     <TabsTrigger value="v2" asChild>
-                        <Link href={`/auctions/${params.auctionId}/lots/${params.lotId}/v2`}>V2</Link>
+                        <Link href={`/auctions/${params.auctionId}/lots/${params.lotId}`}>V2</Link>
                     </TabsTrigger>
                 </TabsList>
             </Tabs>
@@ -153,7 +153,7 @@ export default async function LotDetailPage({ params, searchParams }: { params: 
                 {...rest}
             />
         ) : (
-             <p>A versão 2 será renderizada aqui.</p>
+            <LotDetailPageV2 params={{ lotId: params.lotId, auctionId: params.auctionId }} />
         )}
     </div>
   );
