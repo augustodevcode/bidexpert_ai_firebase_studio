@@ -632,10 +632,11 @@ export class LotService {
           lotId: newLot.id.toString()
         };
       });
+      console.log("Returning from createLot with lotId:", result.lotId);
 
       return result;
     } catch (error) {
-      console.error('Error creating lot:', error);
+      console.error('Error creating lot in service:', error);
       return { 
         success: false, 
         message: error instanceof Error 

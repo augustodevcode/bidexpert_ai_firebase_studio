@@ -1,6 +1,6 @@
 /**
  * @file Extended Seed Script (v2)
- * @version 2.0
+ * @version 2.1
  * @description Populates the database with a comprehensive and interconnected set of data
  *              that covers all major scenarios of the BidExpert application.
  * 
@@ -32,6 +32,7 @@ import { PrismaClient } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { hash } from 'bcryptjs';
 import { slugify } from '../src/lib/ui-helpers';
+import { Decimal } from '@prisma/client/runtime/library';
 
 // AI-NOTE: Import service classes, NOT server actions.
 import { UserService } from '../src/services/user.service';
@@ -110,7 +111,7 @@ const services = {
 };
 
 const essentialRoles = [
-  { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total a todas as funcionalidades.', permissions: [] },
+  { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total a todas as funcionalidades.', permissions: ['manage_all'] },
   { name: 'Consignor', nameNormalized: 'CONSIGNOR', description: 'Pode gerenciar próprios leilões e lotes.', permissions: [] },
   { name: 'Auction Analyst', nameNormalized: 'AUCTION_ANALYST', description: 'Analisa e aprova habilitações de usuários.', permissions: [] },
   { name: 'Bidder', nameNormalized: 'BIDDER', description: 'Usuário habilitado para dar lances.', permissions: [] },
@@ -133,24 +134,16 @@ const brazilianStates = [
   { name: 'Tocantins', uf: 'TO' }
 ];
 
-/**
- * AI-NOTE: This function is critical. It deletes all data in the correct order to avoid
- * foreign key constraint errors. If you add a new model to the schema with relations,
- * you MUST add its table to this list in the correct reverse dependency order.
- */
 async function cleanDatabase() {
     console.log("Cleaning database...");
-    const modelNames = [
-      '_InstallmentPaymentToLot', '_AuctionToLotCategory', '_AuctionToJudicialDistrict', '_AuctionToJudicialBranch', '_AuctionToCourt',
-      'InstallmentPayment', 'UserWin', 'Bid', 'UserLotMaxBid', 'AssetsOnLots', 'Review', 'LotQuestion', 'Notification', 'Lot',
-      'AuctionHabilitation', 'AuctionStage', 'Auction', 'Asset', 'MediaItem', 'JudicialParty', 'JudicialProcess', 'DirectSaleOffer',
-      'Seller', 'Auctioneer', 'UsersOnRoles', 'UsersOnTenants', 'UserDocument', 'Report', 'User', 'PlatformSettings', 'Tenant',
-      'Role', 'Subcategory', 'LotCategory', 'JudicialBranch', 'JudicialDistrict', 'Court', 'City', 'State', 'DocumentType',
-      'DocumentTemplate', 'ContactMessage', 'DataSource', 'Subscriber', 'VehicleModel', 'VehicleMake'
-    ];
-    for (const modelName of modelNames) {
-        if ((prisma as any)[modelName.charAt(0).toLowerCase() + modelName.slice(1)]) {
-            await (prisma as any)[modelName.charAt(0).toLowerCase() + modelName.slice(1)].deleteMany({});
+    const modelNames = Object.keys(prisma).filter(key => !key.startsWith('_') && !key.startsWith('$'));
+
+    for (const modelName of modelNames.reverse()) { // Reverse order might help with dependencies
+        try {
+            // @ts-ignore
+            await prisma[modelName].deleteMany({});
+        } catch (error) {
+            console.warn(`Could not clean ${modelName}:`, error);
         }
     }
     console.log("Database cleaned.");
@@ -160,48 +153,37 @@ async function main() {
   console.log("--- STARTING EXTENDED SEED (V2) ---");
   await cleanDatabase();
 
-  // --- 2. Seed Foundational Data ---
   console.log("Seeding foundational data (Roles, Landlord, Settings, States)...");
 
-  // AI-NOTE: Roles are foundational and created first.
   const createdRoles: { [key: string]: any } = {};
   for (const role of essentialRoles) {
     const newRoleResult = await services.role.createRole(role);
-    if (!newRoleResult.success) throw new Error(newRoleResult.message);
-    createdRoles[role.nameNormalized] = { id: newRoleResult.roleId!.toString() };
+    if (!newRoleResult.success || !newRoleResult.roleId) throw new Error(newRoleResult.message);
+    createdRoles[role.nameNormalized] = { id: newRoleResult.roleId.toString() };
   }
 
-  // AI-NOTE: Direct `prisma` call is necessary here to guarantee the Landlord Tenant has id: 1.
   const landlordTenant = await prisma.tenant.upsert({
     where: { id: 1 },
     update: {},
     create: { id: 1, name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
   });
-  const tenantId = landlordTenant.id.toString();
+  const tenantId = landlordTenant.id;
 
-  // AI-NOTE: Platform settings are also foundational and tightly coupled with the tenant.
   const platformSettings = await prisma.platformSettings.upsert({
     where: { tenantId },
     update: {},
     create: { tenantId, siteTitle: 'BidExpert', siteTagline: 'Sua plataforma de leilões online.', isSetupComplete: true },
   });
-  await prisma.mapSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-  await prisma.biddingSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-  await prisma.paymentGatewaySettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-  await prisma.notificationSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-  await prisma.mentalTriggerSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-  await prisma.sectionBadgeVisibility.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id, searchGrid: {}, lotDetail: {} } });
 
   const createdStates: { [key: string]: any } = {};
   for (const state of brazilianStates) {
     const newStateResult = await services.state.createState({ ...state });
-    if (!newStateResult.success) throw new Error(newStateResult.message);
-    const newState = await services.state.getStateById(newStateResult.stateId!);
+    if (!newStateResult.success || !newStateResult.stateId) throw new Error(newStateResult.message);
+    const newState = await services.state.getStateById(newStateResult.stateId);
     createdStates[state.uf] = newState;
   }
   console.log("Foundational data seeded.");
 
-  // --- 3. Create Users ---
   console.log("Creating users...");
   const adminUserResult = await services.user.createUser({
     email: 'admin@bidexpert.com.br',
@@ -210,10 +192,10 @@ async function main() {
     habilitationStatus: 'HABILITADO',
     accountType: 'LEGAL',
     roleIds: [createdRoles['ADMINISTRATOR'].id],
-    tenantId: tenantId,
+    tenantId: tenantId.toString(),
   });
-  if (!adminUserResult.success) throw new Error(adminUserResult.message);
-  const adminUser = await services.user.getUserById(adminUserResult.userId!)
+  if (!adminUserResult.success || !adminUserResult.userId) throw new Error(adminUserResult.message);
+  const adminUser = await services.user.getUserById(adminUserResult.userId);
 
   const auctioneerUserResult = await services.user.createUser({
     email: 'leilo@bidexpert.com.br',
@@ -221,10 +203,10 @@ async function main() {
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
     roleIds: [createdRoles['AUCTIONEER'].id],
-    tenantId: tenantId,
+    tenantId: tenantId.toString(),
   });
-  if (!auctioneerUserResult.success) throw new Error(auctioneerUserResult.message);
-  const auctioneerUser = await services.user.getUserById(auctioneerUserResult.userId!)
+  if (!auctioneerUserResult.success || !auctioneerUserResult.userId) throw new Error(auctioneerUserResult.message);
+  const auctioneerUser = await services.user.getUserById(auctioneerUserResult.userId);
 
 
   const sellerUserResult = await services.user.createUser({
@@ -233,10 +215,10 @@ async function main() {
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
     roleIds: [createdRoles['CONSIGNOR'].id],
-    tenantId: tenantId,
+    tenantId: tenantId.toString(),
   });
-  if (!sellerUserResult.success) throw new Error(sellerUserResult.message);
-  const sellerUser = await services.user.getUserById(sellerUserResult.userId!)
+  if (!sellerUserResult.success || !sellerUserResult.userId) throw new Error(sellerUserResult.message);
+  const sellerUser = await services.user.getUserById(sellerUserResult.userId);
 
 
   const bidderUsers = [];
@@ -247,371 +229,211 @@ async function main() {
       password: 'Admin@123',
       habilitationStatus: 'HABILITADO',
       roleIds: [createdRoles['BIDDER'].id],
-      tenantId: tenantId,
+      tenantId: tenantId.toString(),    
     });
-    if (!userResult.success) throw new Error(userResult.message);
-    const user = await services.user.getUserById(userResult.userId!)
+    if (!userResult.success || !userResult.userId) throw new Error(userResult.message);
+    const user = await services.user.getUserById(userResult.userId);
     bidderUsers.push(user);
   }
   console.log("Users created.");
 
-  // --- 4. Create Business Entities ---
-  console.log("Creating business entities (Sellers, Auctioneers, Categories, etc.)...");
+  console.log("Creating business entities...");
   const stateSP = createdStates['SP'];
   if(!stateSP) throw new Error("State SP not found");
 
   const citySPResult = await services.city.createCity({ name: 'São Paulo', stateId: stateSP.id.toString(), ibgeCode: '3550308' });
-  if(!citySPResult.success) throw new Error(citySPResult.message);
-  const citySP = await services.city.getCityById(citySPResult.cityId!)
+  if(!citySPResult.success || !citySPResult.cityId) throw new Error(citySPResult.message);
+  const citySP = await services.city.getCityById(citySPResult.cityId);
 
-  const courtTJSPResult = await services.court.createCourt({ name: 'Tribunal de Justiça de São Paulo', stateUf: 'SP' });
-  if(!courtTJSPResult.success) throw new Error(courtTJSPResult.message);
-  const courtTJSP = await services.court.getCourtById(courtTJSPResult.courtId!)
+  const courtTJSPResult = await services.court.createCourt({ name: 'Tribunal de Justiça de São Paulo', stateUf: 'SP', website: '' });
+  if(!courtTJSPResult.success || !courtTJSPResult.courtId) throw new Error(courtTJSPResult.message);
+  const courtTJSP = await services.court.getCourtById(courtTJSPResult.courtId);
 
-  const districtSPResult = await services.judicialDistrict.createJudicialDistrict({ name: 'Comarca de São Paulo', courtId: courtTJSP.id.toString(), stateId: stateSP.id.toString() });
-  if(!districtSPResult.success) throw new Error(districtSPResult.message);
-  const districtSP = await services.judicialDistrict.getJudicialDistrictById(districtSPResult.districtId!)
+  if(!courtTJSP) throw new Error("Court TJSP not found");
+  const districtSPResult = await services.judicialDistrict.createJudicialDistrict({ name: 'Comarca de São Paulo', courtId: courtTJSP.id.toString(), stateId: stateSP.id.toString(), zipCode: '' });
+  if(!districtSPResult.success || !districtSPResult.districtId) throw new Error(districtSPResult.message);
+  const districtSP = await services.judicialDistrict.getJudicialDistrictById(districtSPResult.districtId);
 
-  const branchCivilResult = await services.judicialBranch.createJudicialBranch({ name: '1ª Vara Cível', districtId: districtSP.id.toString() });
-  if(!branchCivilResult.success) throw new Error(branchCivilResult.message);
-  const branchCivil = await services.judicialBranch.getJudicialBranchById(branchCivilResult.branchId!)
+  if(!districtSP) throw new Error("Judicial District SP not found");
+  const branchCivilResult = await services.judicialBranch.createJudicialBranch({ name: '1ª Vara Cível', districtId: districtSP.id.toString(), contactName: '', phone: '', email: '' });
+  if(!branchCivilResult.success || !branchCivilResult.branchId) throw new Error(branchCivilResult.message);
+  const branchCivil = await services.judicialBranch.getJudicialBranchById(branchCivilResult.branchId);
 
   const mainAuctioneerResult = await services.auctioneer.createAuctioneer(tenantId.toString(), {
     name: 'Leiloeiro Oficial & Associados',
     registrationNumber: 'JUCESP-123',
     userId: auctioneerUser!.id.toString(),
+    city: 'São Paulo',
+    website: '', zipCode: '', contactName: '', phone: '', email: '', address: '', state: 'SP',
+    description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
-  if(!mainAuctioneerResult.success) throw new Error(mainAuctioneerResult.message);
-  const mainAuctioneer = await services.auctioneer.getAuctioneerById(tenantId.toString(), mainAuctioneerResult.auctioneerId!)
+  if(!mainAuctioneerResult.success || !mainAuctioneerResult.auctioneerId) throw new Error(mainAuctioneerResult.message);
+  const mainAuctioneer = await services.auctioneer.getAuctioneerById(tenantId.toString(), mainAuctioneerResult.auctioneerId);
 
+  if(!branchCivil) throw new Error("Judicial Branch Civil not found");
   const judicialSellerResult = await services.seller.createSeller(tenantId.toString(), {
     name: '1ª Vara Cível de São Paulo',
     isJudicial: true,
-    judicialBranchId: branchCivil!.id.toString(),
+    judicialBranchId: branchCivil.id.toString(),
+    userId: null,
+    city: 'São Paulo', website: '', zipCode: '', contactName: '', phone: '', email: '', address: '', state: 'SP',
+    description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
-  if(!judicialSellerResult.success) throw new Error(judicialSellerResult.message);
-  const judicialSeller = await services.seller.getSellerById(tenantId.toString(), judicialSellerResult.sellerId!)
+  if(!judicialSellerResult.success || !judicialSellerResult.sellerId) throw new Error(judicialSellerResult.message);
+  const judicialSeller = await services.seller.getSellerById(tenantId.toString(), judicialSellerResult.sellerId);
 
   const extrajudicialSellerResult = await services.seller.createSeller(tenantId.toString(), {
     name: 'Banco Vende Tudo S/A',
     isJudicial: false,
     userId: sellerUser!.id.toString(),
+    city: 'São Paulo', website: '', zipCode: '', contactName: '', phone: '', email: '', address: '',
+    state: 'SP', description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
-  if(!extrajudicialSellerResult.success) throw new Error(extrajudicialSellerResult.message);
-  const extrajudicialSeller = await services.seller.getSellerById(tenantId.toString(), extrajudicialSellerResult.sellerId!)
+  if(!extrajudicialSellerResult.success || !extrajudicialSellerResult.sellerId) throw new Error(extrajudicialSellerResult.message);
+  const extrajudicialSeller = await services.seller.getSellerById(tenantId.toString(), extrajudicialSellerResult.sellerId);
 
-  const catImoveisResult = await services.category.createCategory({ name: 'Imóveis' });
-  if(!catImoveisResult.success) throw new Error(catImoveisResult.message);
-  const catImoveis = catImoveisResult.category
+  const catImoveisResult = await services.category.createCategory({ name: 'Imóveis', description: 'Imóveis em geral' });
+  if(!catImoveisResult.success || !catImoveisResult.category) throw new Error(catImoveisResult.message);
+  const catImoveis = catImoveisResult.category;
 
-  const catVeiculosResult = await services.category.createCategory({ name: 'Veículos' });
-  if(!catVeiculosResult.success) throw new Error(catVeiculosResult.message);
-  const catVeiculos = catVeiculosResult.category
+  const catVeiculosResult = await services.category.createCategory({ name: 'Veículos', description: 'Veículos automotores' });
+  if(!catVeiculosResult.success || !catVeiculosResult.category) throw new Error(catVeiculosResult.message);
+  const catVeiculos = catVeiculosResult.category;
 
-  await services.subcategory.createSubcategory({ name: 'Apartamentos', parentCategoryId: catImoveis.id.toString() });
-  await services.subcategory.createSubcategory({ name: 'Carros', parentCategoryId: catVeiculos.id.toString() });
+  await services.subcategory.createSubcategory({ name: 'Apartamentos', parentCategoryId: catImoveis.id.toString(), description: '', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
+  await services.subcategory.createSubcategory({ name: 'Carros', parentCategoryId: catVeiculos.id.toString(), description: '', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
 
+  if(!courtTJSP || !districtSP || !branchCivil || !judicialSeller) throw new Error("Judicial entity setup failed.");
   const judicialProcessResult = await services.judicialProcess.createJudicialProcess(tenantId.toString(), {
-            processNumber: '0012345-67.2024.8.26.0001',
-            isElectronic: true,
-            parties: [],
-            courtId: courtTJSP.id.toString(),
-            districtId: districtSP.id.toString(),
-            branchId: branchCivil.id.toString(),
-            sellerId: judicialSeller.id.toString(),      });
-      if(!judicialProcessResult.success) throw new Error(judicialProcessResult.message);
-      const judicialProcess = await services.judicialProcess.getJudicialProcessById(tenantId.toString(), judicialProcessResult.processId!)
-    
-        const assetApartmentResult = await services.asset.createAsset(tenantId.toString(), {
-          title: 'Apartamento em Moema, 2 dorms',
-          description: 'Lindo apartamento com vista para o parque.',
-          categoryId: catImoveis.id.toString(),
-          evaluationValue: 750000.00,
-          judicialProcessId: judicialProcess.id.toString(),
-          sellerId: judicialSeller.id.toString(),
-          locationCity: 'São Paulo',
-          locationState: 'SP',
-          status: 'DISPONIVEL',
-          address: 'Rua da Amostra, 123',
-          latitude: -23.59000000,
-          longitude: -46.67000000,
-        });      if(!assetApartmentResult.success) throw new Error(assetApartmentResult.message);
-      const assetApartment = await services.asset.getAssetById(tenantId.toString(), assetApartmentResult.assetId!)
-    
-        const assetCarResult = await services.asset.createAsset(tenantId.toString(), {
-          title: 'Ford Ka 2019',
-          description: 'Carro em ótimo estado, único dono.',
-          categoryId: catVeiculos.id.toString(),
-          evaluationValue: 45000.00,
-          sellerId: extrajudicialSeller.id.toString(),
-          locationCity: 'São Paulo',
-          locationState: 'SP',
-          status: 'DISPONIVEL',
-          make: 'Ford',
-          model: 'Ka',
-          year: 2019,
-          modelYear: 2019,
-        });      if(!assetCarResult.success) throw new Error(assetCarResult.message);
-      const assetCar = await services.asset.getAssetById(tenantId.toString(), assetCarResult.assetId!)
-    
-      const judicialAuctionResult = await services.auction.createAuction(tenantId.toString(), {
-        title: 'Leilão Judicial de Imóveis - TJSP',
-        auctionType: 'JUDICIAL',
-        status: 'ABERTO_PARA_LANCES',
-        auctioneerId: mainAuctioneer.id.toString(),
-        sellerId: judicialSeller.id.toString(),
-        auctionDate: faker.date.future(),
-      });
-      if(!judicialAuctionResult.success) throw new Error(judicialAuctionResult.message);
-      const judicialAuction = await services.auction.getAuctionById(tenantId.toString(), judicialAuctionResult.auctionId!)
-    
-      const extrajudicialAuctionResult = await services.auction.createAuction(tenantId.toString(), {
-        title: 'Leilão de Veículos do Banco Vende Tudo',
-        auctionType: 'EXTRAJUDICIAL',
-        status: 'ABERTO_PARA_LANCES',
-        auctioneerId: mainAuctioneer.id.toString(),
-        sellerId: extrajudicialSeller.id.toString(),
-        auctionDate: faker.date.future(),
-      });
-      if(!extrajudicialAuctionResult.success) throw new Error(extrajudicialAuctionResult.message);
-      const extrajudicialAuction = await services.auction.getAuctionById(tenantId.toString(), extrajudicialAuctionResult.auctionId!)
-    
-      const lotApartmentResult = await services.lot.createLot({
-        auctionId: judicialAuction.id.toString(),
-        title: 'Lote 001 - Apartamento em Moema',
-        number: '001',
-        price: 750000.00,
-        assetIds: [assetApartment.id.toString()],
-        type: 'IMOVEL'
-      }, tenantId.toString());
-      if(!lotApartmentResult.success) throw new Error(lotApartmentResult.message);
-      const lotApartment = await services.lot.getLotById(lotApartmentResult.lotId!)
-    
-      const lotCarResult = await services.lot.createLot({
-        auctionId: extrajudicialAuction.id.toString(),
-        title: 'Lote 001 - Ford Ka 2019',
-        number: '001',
-        price: 45000.00,
-        assetIds: [assetCar.id.toString()],
-        type: 'VEICULO'
-      }, tenantId.toString());
-      if(!lotCarResult.success) throw new Error(lotCarResult.message);
-      const lotCar = await services.lot.getLotById(lotCarResult.lotId!)
-    
-      for (const user of bidderUsers) {
-        await services.habilitation.upsertAuctionHabilitation({
-            user: { connect: { id: user.id.toString() } },
-            auction: { connect: { id: judicialAuction.id.toString() } }
-        });
-        await services.habilitation.upsertAuctionHabilitation({
-            user: { connect: { id: user.id.toString() } },
-            auction: { connect: { id: extrajudicialAuction.id.toString() } }
-        });
-      }
-    
-      await services.bid.createBid({ lot: { connect: { id: lotCar.id.toString() } }, bidder: { connect: { id: bidderUsers[0].id.toString() } }, amount: 46000.00, auction: { connect: { id: extrajudicialAuction.id.toString() } }, tenant: { connect: { id: tenantId } } });
-      await services.bid.createBid({ lot: { connect: { id: lotCar.id.toString() } }, bidder: { connect: { id: bidderUsers[1].id.toString() } }, amount: 47000.00, auction: { connect: { id: extrajudicialAuction.id.toString() } }, tenant: { connect: { id: tenantId } } });
-      await services.bid.createBid({ lot: { connect: { id: lotApartment.id.toString() } }, bidder: { connect: { id: bidderUsers[2].id.toString() } }, amount: 755000.00, auction: { connect: { id: judicialAuction.id.toString() } }, tenant: { connect: { id: tenantId } } });
-    
-      const winningBid = await prisma.bid.findFirst({ where: { lotId: lotCar.id.toString() }, orderBy: { amount: 'desc' } });
-      if (winningBid) {
-        const userWin = await services.userWin.create({
-          lot: { connect: { id: lotCar.id.toString() } },
-          user: { connect: { id: winningBid.bidderId.toString() } },
-          winningBidAmount: winningBid.amount,
-          paymentStatus: 'PENDENTE',
-        });
-    await services.installmentPayment.createInstallmentsForWin(userWin, 3);
+    processNumber: '0012345-67.2024.8.26.0001',
+    isElectronic: true,
+    parties: [],
+    courtId: courtTJSP.id.toString(),
+    districtId: districtSP.id.toString(),
+    branchId: branchCivil.id.toString(),
+    sellerId: judicialSeller.id.toString(),
+  });
+  if(!judicialProcessResult.success || !judicialProcessResult.processId) throw new Error(judicialProcessResult.message);
+  const judicialProcess = await services.judicialProcess.getJudicialProcessById(tenantId.toString(), judicialProcessResult.processId);
+
+  const assetApartmentResult = await services.asset.createAsset(tenantId.toString(), {
+    title: 'Apartamento em Moema, 2 dorms', description: 'Lindo apartamento com vista para o parque.',
+    categoryId: catImoveis.id.toString(), evaluationValue: 750000.00, judicialProcessId: judicialProcess!.id.toString(),
+    sellerId: judicialSeller.id.toString(), locationCity: 'São Paulo', locationState: 'SP', status: 'DISPONIVEL', address: 'Rua da Amostra, 123',
+    latitude: -23.59, longitude: -46.67, imageUrl: null, imageMediaId: null, galleryImageUrls: [], mediaItemIds: [], dataAiHint: 'apartamento moderno',
+  } as any);
+  if(!assetApartmentResult.success || !assetApartmentResult.assetId) throw new Error(assetApartmentResult.message);
+  const assetApartment = await services.asset.getAssetById(tenantId.toString(), assetApartmentResult.assetId);
+
+  const assetCarResult = await services.asset.createAsset(tenantId.toString(), {
+    title: 'Ford Ka 2019', description: 'Carro em ótimo estado, único dono.',
+    categoryId: catVeiculos.id.toString(), evaluationValue: 45000.00, sellerId: extrajudicialSeller!.id.toString(),
+    locationCity: 'São Paulo', locationState: 'SP', status: 'DISPONIVEL', make: 'Ford', model: 'Ka', year: 2019, modelYear: 2019,
+    imageUrl: null, imageMediaId: null, galleryImageUrls: [], mediaItemIds: [], dataAiHint: 'carro ford ka',
+  } as any);
+  if(!assetCarResult.success || !assetCarResult.assetId) throw new Error(assetCarResult.message);
+  const assetCar = await services.asset.getAssetById(tenantId.toString(), assetCarResult.assetId);
+
+  const judicialAuctionResult = await services.auction.createAuction(tenantId.toString(), {
+    title: 'Leilão Judicial de Imóveis - TJSP', auctionType: 'JUDICIAL', status: 'ABERTO_PARA_LANCES',
+    auctioneerId: mainAuctioneer!.id.toString(), sellerId: judicialSeller.id.toString(), auctionDate: faker.date.future(),
+  });
+  if(!judicialAuctionResult.success || !judicialAuctionResult.auctionId) throw new Error(judicialAuctionResult.message);
+  const judicialAuction = await services.auction.getAuctionById(tenantId.toString(), judicialAuctionResult.auctionId);
+
+  const extrajudicialAuctionResult = await services.auction.createAuction(tenantId.toString(), {
+    title: 'Leilão de Veículos do Banco Vende Tudo', auctionType: 'EXTRAJUDICIAL', status: 'ABERTO_PARA_LANCES',
+    auctioneerId: mainAuctioneer!.id.toString(), sellerId: extrajudicialSeller!.id.toString(), auctionDate: faker.date.future(),
+  });
+  if(!extrajudicialAuctionResult.success || !extrajudicialAuctionResult.auctionId) throw new Error(extrajudicialAuctionResult.message);
+  const extrajudicialAuction = await services.auction.getAuctionById(tenantId.toString(), extrajudicialAuctionResult.auctionId);
+
+  if(!assetApartment || !judicialAuction) throw new Error("Asset Apartment or Judicial Auction not found");
+  const lotApartmentResult = await services.lot.createLot({
+    auctionId: judicialAuction.id.toString(), title: 'Lote 001 - Apartamento em Moema', number: '001',
+    price: 750000.00, assetIds: [assetApartment.id.toString()],
+  }, tenantId.toString());
+  if(!lotApartmentResult.success || !lotApartmentResult.lotId) throw new Error(lotApartmentResult.message);
+  const lotApartment = await services.lot.getLotById(lotApartmentResult.lotId);
+
+  if(!assetCar || !extrajudicialAuction) throw new Error("Asset Car or Extrajudicial Auction not found");
+  const lotCarResult = await services.lot.createLot({
+    auctionId: extrajudicialAuction.id.toString(), title: 'Lote 001 - Ford Ka 2019', number: '001',
+    price: 45000.00, assetIds: [assetCar.id.toString()],
+  }, tenantId.toString());
+  if(!lotCarResult.success || !lotCarResult.lotId) throw new Error(lotCarResult.message);
+
+  for (const user of bidderUsers) {
+    if (!user) continue;
+    await services.habilitation.upsertAuctionHabilitation({ userId: user.id.toString(), auctionId: judicialAuction!.id.toString() } as any);
+    await services.habilitation.upsertAuctionHabilitation({ userId: user.id.toString(), auctionId: extrajudicialAuction!.id.toString() } as any);
   }
 
-  // --- Seed Document Types ---
-  console.log("Seeding Document Types...");
+  const bidder1 = bidderUsers[0];
+  if(!bidder1 || !lotCarResult.lotId || !extrajudicialAuction) throw new Error("Bidder or lot info missing");
+  await services.bid.createBid({ lotId: BigInt(lotCarResult.lotId), bidderId: BigInt(bidder1.id), amount: new Decimal(46000.00), auctionId: BigInt(extrajudicialAuction.id), tenantId: tenantId } as any);
+  
+  if(!lotApartment || !judicialAuction) throw new Error("Lot apartment or judicial auction info missing");
+  const bidder2 = bidderUsers[1];
+  if(!bidder2) throw new Error("Bidder 2 not found");
+  await services.bid.createBid({ lotId: BigInt(lotApartment.id), bidderId: BigInt(bidder2.id), amount: new Decimal(755000.00), auctionId: BigInt(judicialAuction.id), tenantId: tenantId } as any);
+
+  const winningBid = await prisma.bid.findFirst({ where: { lotId: BigInt(lotCarResult.lotId) }, orderBy: { amount: 'desc' } });
+  if (winningBid) {
+    const userWin = await services.userWin.create({
+      lot: { connect: { id: BigInt(lotCarResult.lotId) } },
+      user: { connect: { id: winningBid.bidderId } },
+      winningBidAmount: winningBid.amount,
+      paymentStatus: 'PENDENTE',
+    });
+    if(userWin) {
+      await services.installmentPayment.createInstallmentsForWin(userWin as any, 3);
+    }
+  }
+
   const docTypeRGResult = await services.documentType.upsertDocumentType({ name: 'RG', description: 'Documento de Identidade', isRequired: true, appliesTo: 'PHYSICAL' });
-  if (!docTypeRGResult) throw new Error("Failed to upsert RG DocumentType");
-  const docTypeRG = docTypeRGResult;
-
   const docTypeCPFResult = await services.documentType.upsertDocumentType({ name: 'CPF', description: 'Cadastro de Pessoa Física', isRequired: true, appliesTo: 'PHYSICAL' });
-  if (!docTypeCPFResult) throw new Error("Failed to upsert CPF DocumentType");
-  const docTypeCPF = docTypeCPFResult;
+  if(!docTypeRGResult || !docTypeCPFResult) throw new Error("Failed to create document types");
+  
+  if(adminUser) {
+    await services.userDocument.saveUserDocument(adminUser.id.toString(), docTypeRGResult.id.toString(), faker.image.url(), 'rg_admin.pdf');
+    await services.userDocument.saveUserDocument(adminUser.id.toString(), docTypeCPFResult.id.toString(), faker.image.url(), 'cpf_admin.pdf');
+  }
 
-  // --- Seed User Documents ---
-  console.log("Seeding User Documents...");
-  const adminRGDocResult = await services.userDocument.createUserDocument({
-    userId: adminUser.id.toString(),
-    documentTypeId: docTypeRG.id.toString(),
-    fileUrl: faker.image.url(),
-    fileName: 'rg_admin.pdf',
-    status: 'APPROVED',
-  });
-  if (!adminRGDocResult.success) throw new Error(adminRGDocResult.message);
-
-  const adminCPFDocResult = await services.userDocument.createUserDocument({
-    userId: adminUser.id.toString(),
-    documentTypeId: docTypeCPF.id.toString(),
-    fileUrl: faker.image.url(),
-    fileName: 'cpf_admin.pdf',
-    status: 'APPROVED',
-  });
-  if (!adminCPFDocResult.success) throw new Error(adminCPFDocResult.message);
-
-  // --- Seed Media Items ---
-  console.log("Seeding Media Items...");
   const mediaItem1Result = await services.mediaItem.createMediaItem({
-    fileName: 'apartment_image.jpg',
-    mimeType: 'image/jpeg',
-    storagePath: '/uploads/apartment_image.jpg',
-    urlOriginal: faker.image.url(),
-    title: 'Apartamento Moema',
-    uploadedByUserId: adminUser?.id.toString(),
-  });
+    fileName: 'apartment_image.jpg', mimeType: 'image/jpeg', storagePath: '/uploads/apartment_image.jpg',
+    urlOriginal: faker.image.url(), title: 'Apartamento Moema',
+  }, adminUser!.id.toString());
   if (!mediaItem1Result.success) throw new Error(mediaItem1Result.message);
-  const mediaItem1 = mediaItem1Result.mediaItem;
+  
+  await services.vehicleMake.createVehicleMake({ name: 'Ford' });
+  const makeResult = await services.vehicleMake.createVehicleMake({ name: 'Chevrolet' });
+  if(makeResult.success && makeResult.makeId) {
+    await services.vehicleModel.createVehicleModel({ name: 'Onix', makeId: makeResult.makeId });
+  }
 
-  const mediaItem2Result = await services.mediaItem.createMediaItem({
-    fileName: 'car_image.jpg',
-    mimeType: 'image/jpeg',
-    storagePath: '/uploads/car_image.jpg',
-    urlOriginal: faker.image.url(),
-    title: 'Ford Ka',
-    uploadedByUserId: adminUser?.id.toString(),
-  });
-  if (!mediaItem2Result.success) throw new Error(mediaItem2Result.message);
-  const mediaItem2 = mediaItem2Result.mediaItem;
-
-  // --- Seed Vehicle Makes and Models ---
-  console.log("Seeding Vehicle Makes and Models...");
-  const makeFordResult = await services.vehicleMake.createVehicleMake({ name: 'Ford', slug: 'ford' });
-  if (!makeFordResult.success) throw new Error(makeFordResult.message);
-  const makeFord = { id: makeFordResult.makeId! };
-
-  const modelKaResult = await services.vehicleModel.createVehicleModel({ name: 'Ka', slug: 'ka', makeId: makeFord.id.toString() });
-  if (!modelKaResult.success) throw new Error(modelKaResult.message);
-  const modelKa = { id: modelKaResult.modelId! };
-
-  // --- Seed Direct Sale Offer ---
-  console.log("Seeding Direct Sale Offer...");
-  const directSaleOfferResult = await services.directSaleOffer.createDirectSaleOffer(tenantId.toString(), {
-    title: 'Venda Direta: Terreno em Atibaia',
-    description: 'Ótimo terreno para construção de casa de campo.',
-    offerType: 'BUY_NOW',
-    price: 250000.00,
-    status: 'ACTIVE',
-    sellerId: extrajudicialSeller.id.toString(),
-    categoryId: catImoveis.id.toString(),
-    imageMediaId: mediaItem1.id.toString(),
-    locationCity: 'Atibaia',
-    locationState: 'SP',
-  });
-  if (!directSaleOfferResult.success) throw new Error(directSaleOfferResult.message);
-
-  // --- Seed Lot Questions ---
-  console.log("Seeding Lot Questions...");
-  await services.lotQuestion.create({
-    lotId: lotApartment.id.toString(),
-    auctionId: judicialAuction.id.toString(),
-    userId: bidderUsers[0]?.id.toString()!,
-    questionText: 'Qual o valor do condomínio?',
-    userDisplayName: bidderUsers[0]?.fullName!,
-  });
-  await services.lotQuestion.create({
-    lotId: lotApartment.id.toString(),
-    auctionId: judicialAuction.id.toString(),
-    userId: adminUser?.id.toString()!,
-    questionText: 'O imóvel possui dívidas de IPTU?',
-    userDisplayName: adminUser?.fullName!,
-    answerText: 'Não, todas as dívidas estão quitadas.',
-    answeredByUserId: adminUser?.id.toString()!,
-    answeredByUserDisplayName: adminUser?.fullName!,
-  });
-
-  // --- Seed Reviews ---
-  console.log("Seeding Reviews...");
-  await services.review.create({
-    lotId: lotCar.id.toString(),
-    auctionId: extrajudicialAuction.id.toString(),
-    userId: bidderUsers[1]?.id.toString()!,
-    rating: 5,
-    comment: 'Excelente carro, muito satisfeito com a compra!',
-    userDisplayName: bidderUsers[1]?.fullName!,
-  });
-
-  // --- Seed Notifications ---
-  console.log("Seeding Notifications...");
-  await services.notification.createNotification({
-    userId: bidderUsers[0]?.id.toString()!,
-    message: 'Você foi superado no Lote 001 - Ford Ka 2019.',
-    link: `/lots/${lotCar?.id.toString()}`,
-    tenant: { connect: { id: BigInt(tenantId) } },
-  });
-  await services.notification.createNotification({
-    userId: adminUser?.id.toString()!,
-    message: 'Novo documento enviado para análise.',
-    link: `/admin/users/${bidderUsers[0]?.id.toString()}/documents`,
-    tenant: { connect: { id: BigInt(tenantId) } },
-  });
-
-  // --- Seed User Lot Max Bids ---
-  console.log("Seeding User Lot Max Bids...");
-  await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
-    userId: bidderUsers[0]?.id.toString()!,
-    lotId: lotApartment?.id.toString()!,
-    maxAmount: 800000.00,
-  });
-
-  // --- Seed Contact Message ---
-  console.log("Seeding Contact Message...");
-  const contactMessageResult = await services.contactMessage.saveMessage({
-    name: faker.person.fullName(),
-    email: faker.internet.email(),
-    subject: 'Dúvida sobre Leilão Judicial',
+  await services.contactMessage.saveMessage({
+    name: faker.person.fullName(), email: faker.internet.email(), subject: 'Dúvida sobre Leilão Judicial',
     message: 'Gostaria de mais informações sobre o processo 0012345-67.2024.8.26.0001.',
   });
-  if (!contactMessageResult.success) throw new Error(contactMessageResult.message);
 
-  // --- Seed Data Source ---
-  console.log("Seeding Data Source...");
-  const dataSourceResult = await services.dataSource.upsertDataSource({
-    name: 'Leilões Ativos',
-    modelName: 'Auction',
-    fields: {
-      id: { type: 'string', label: 'ID do Leilão' },
-      title: { type: 'string', label: 'Título' },
-      status: { type: 'enum', label: 'Status' },
-    },
+  await services.dataSource.upsertDataSource({
+    name: 'Leilões Ativos', modelName: 'Auction',
+    fields: { id: { type: 'string', label: 'ID do Leilão' }, title: { type: 'string', label: 'Título' }, status: { type: 'enum', label: 'Status' } },
   });
-  if (!dataSourceResult.success) throw new Error(dataSourceResult.message);
 
-  // --- Seed Document Template ---
-  console.log("Seeding Document Template...");
-  const documentTemplateResult = await services.documentTemplate.createDocumentTemplate({
-    name: 'Termo de Arrematação Padrão',
-    type: 'WINNING_BID_TERM',
+  await services.documentTemplate.createDocumentTemplate({
+    name: 'Termo de Arrematação Padrão', type: 'WINNING_BID_TERM',
     content: '<h1>Termo de Arrematação</h1><p>Este documento certifica que {{userName}} arrematou o lote {{lotTitle}} no leilão {{auctionTitle}} pelo valor de {{winningBidAmount}}.</p>',
   });
-  if (!documentTemplateResult.success) throw new Error(documentTemplateResult.message);
 
-  // --- Seed Report ---
-  console.log("Seeding Report...");
-  const reportResult = await services.report.createReport({
-    name: 'Relatório de Vendas Mensal',
-    description: 'Relatório consolidado das vendas do mês.',
-    definition: {
-      sections: [
-        { type: 'text', content: '<h1>Relatório de Vendas</h1>' },
-        { type: 'chart', chartType: 'bar', dataKey: 'monthlySales' },
-      ],
-    },
+  await services.report.createReport({
+    name: 'Relatório de Vendas Mensal', description: 'Relatório consolidado das vendas do mês.',
+    definition: { sections: [ { type: 'text', content: '<h1>Relatório de Vendas</h1>' }, { type: 'chart', chartType: 'bar', dataKey: 'monthlySales' }, ] },
+    createdById: adminUser!.id
   }, tenantId.toString());
-  if (!reportResult.success) throw new Error(reportResult.message);
 
-  // --- Seed Subscriber ---
-  console.log("Seeding Subscriber...");
-  const subscriberResult = await services.subscriber.createSubscriber({
-    email: faker.internet.email(),
-    name: faker.person.fullName(),
-    preferences: { newsletter: true, promotions: false },
-  }, tenantId.toString());
-  if (!subscriberResult.success) throw new Error(subscriberResult.message);
+  await services.subscriber.createSubscriber({ email: faker.internet.email(), name: faker.person.fullName(), }, tenantId.toString());
 
   console.log("--- SEED SCRIPT V2 FINISHED SUCCESSFULLY ---");
 }
