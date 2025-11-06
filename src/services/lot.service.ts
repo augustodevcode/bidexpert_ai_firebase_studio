@@ -1,3 +1,4 @@
+
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import { AuctionRepository } from '@/repositories/auction.repository';
@@ -29,6 +30,7 @@ export class LotService {
   }
 
   private mapLotWithDetails(lot: any): Lot {
+    if (!lot) return null as any;
     const assets = lot.assets?.map((la: any) => la.asset).filter(Boolean) || [];
     return {
       ...lot,
@@ -38,15 +40,19 @@ export class LotService {
       subcategoryId: lot.subcategoryId?.toString(),
       sellerId: lot.sellerId?.toString(),
       tenantId: lot.tenantId?.toString(),
-      price: lot.price ? new Prisma.Decimal(lot.price) : new Prisma.Decimal(0),
-      initialPrice: lot.initialPrice ? new Prisma.Decimal(lot.initialPrice) : null,
-      secondInitialPrice: lot.secondInitialPrice ? new Prisma.Decimal(lot.secondInitialPrice) : null,
-      bidIncrementStep: lot.bidIncrementStep ? new Prisma.Decimal(lot.bidIncrementStep) : null,
+      price: lot.price ? Number(lot.price) : 0,
+      initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+      secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
+      bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
       latitude: lot.latitude ? Number(lot.latitude) : null,
       longitude: lot.longitude ? Number(lot.longitude) : null,
-      evaluationValue: lot.evaluationValue ? new Prisma.Decimal(lot.evaluationValue) : null,
-      currentBidAmount: lot.currentBidAmount ? new Prisma.Decimal(lot.currentBidAmount) : null,
-      assets: assets,
+      evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
+      currentBidAmount: lot.currentBidAmount ? Number(lot.currentBidAmount) : null,
+      assets: assets.map((asset: any) => ({
+        ...asset,
+        id: asset.id.toString(),
+        evaluationValue: asset.evaluationValue ? Number(asset.evaluationValue) : null,
+      })),
       assetIds: assets.map((a: any) => a.id.toString()),
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
@@ -55,6 +61,8 @@ export class LotService {
       winningBidId: lot.winningBidId?.toString(),
       winningBidderId: lot.winningBidderId?.toString(),
       winnerId: lot.winnerId?.toString(),
+      originalLotId: lot.originalLotId?.toString() ?? null,
+      inheritedMediaFromAssetId: lot.inheritedMediaFromAssetId?.toString() ?? null,
     } as Lot;
   }
 
@@ -64,19 +72,19 @@ export class LotService {
       where.auctionId = BigInt(auctionId);
     }
     
-    const lots = await this.repository.findAll(tenantId, where, limit);
+    const lotsFromRepo = await this.repository.findAll(tenantId, where, limit);
+
+    const lots = lotsFromRepo.map(lot => this.mapLotWithDetails(lot));
 
     if (isPublicCall) {
-        // Filter in application code
-        return lots
-            .filter(lot => 
-                !NON_PUBLIC_LOT_STATUSES.includes(lot.status) &&
-                lot.auction && !NON_PUBLIC_AUCTION_STATUSES.includes(lot.auction.status)
-            )
-            .map(lot => this.mapLotWithDetails(lot));
+        return lots.filter(lot => 
+            lot &&
+            !NON_PUBLIC_LOT_STATUSES.includes(lot.status) &&
+            lot.auction && !NON_PUBLIC_AUCTION_STATUSES.includes(lot.auction.status)
+        );
     }
     
-    return lots.map(lot => this.mapLotWithDetails(lot));
+    return lots.filter(Boolean);
   }
 
   async getLotsByIds(ids: string[], isPublicCall = false): Promise<Lot[]> {
@@ -85,6 +93,7 @@ export class LotService {
     if (isPublicCall) {
       // Garante que mesmo buscando por ID, os status não públicos e de leilões não publicados sejam respeitados
       return lots.filter(lot => 
+        lot &&
         !NON_PUBLIC_LOT_STATUSES.includes(lot.status) &&
         lot.auction && !['RASCUNHO', 'EM_PREPARACAO'].includes(lot.auction.status)
       ).map(lot => this.mapLotWithDetails(lot));
@@ -94,30 +103,33 @@ export class LotService {
 
   async findLotById(id: string): Promise<Lot | null> {
     if (!id) return null;
-    
-    // If it's a numeric ID, convert to BigInt
+  
+    const whereClause: Prisma.LotWhereFirstInput = {
+        OR: [
+            { publicId: id },
+        ],
+    };
+  
     if (/^\d+$/.test(id)) {
-      const lot = await this.repository.findById(id);
-      if (!lot) return null;
-      return this.mapLotWithDetails(lot);
+        (whereClause.OR as any[]).push({ id: BigInt(id) });
     }
     
-    // Otherwise, it's a public ID, search by publicId
     const lot = await this.prisma.lot.findFirst({
-      where: { publicId: id },
-      include: {
-        assets: { include: { asset: true } },
-        auction: true,
-        seller: { select: { name: true } },
-        category: { select: { name: true } },
-        subcategory: { select: { name: true } },
-      },
+        where: whereClause,
+        include: {
+            assets: { include: { asset: true } },
+            auction: true,
+            seller: { select: { name: true } },
+            category: { select: { name: true } },
+            subcategory: { select: { name: true } },
+        },
     });
     
     if (!lot) return null;
     
     return this.mapLotWithDetails(lot);
   }
+  
 
   async getLotById(id: string, tenantId?: string, isPublicCall = false): Promise<Lot | null> {
     const lot = await this.findLotById(id);
@@ -182,10 +194,10 @@ export class LotService {
         auctionId: bid.auctionId.toString(),
         bidderId: bid.bidderId.toString(),
         tenantId: bid.tenantId.toString(),
-        amount: new Prisma.Decimal(bid.amount),
+        amount: Number(bid.amount),
         timestamp: bid.timestamp,
         bidderDisplay: bid.bidderDisplay
-      } as unknown as BidInfo));
+      }));
     } catch (error) {
       console.error('Erro ao buscar lances:', error);
       return [];
@@ -200,21 +212,21 @@ export class LotService {
       }
 
       // Verificar se o lote está ativo
-      if (lot.status !== 'ATIVO') {
+      if (lot.status !== 'ABERTO_PARA_LANCES') {
         return { success: false, message: 'Este lote não está mais disponível para lances.' };
       }
 
       // Verificar se o lance é maior que o lance atual
-      if (lot.currentBidAmount && amount <= Number(lot.currentBidAmount)) {
+      if (lot.price && amount <= Number(lot.price)) {
         return { 
           success: false, 
-          message: `O lance deve ser maior que o valor atual de ${lot.currentBidAmount}.` 
+          message: `O lance deve ser maior que o valor atual de ${lot.price}.` 
         };
       }
 
       // Verificar se o leilão ainda está ativo
-      const auction = await this.auctionRepository.findById(lot.auctionId.toString(), lot.tenantId.toString());
-      if (!auction || auction.status !== 'EM_ANDAMENTO') {
+      const auction = await this.auctionRepository.findById(lot.tenantId.toString(), lot.auctionId.toString());
+      if (!auction || auction.status !== 'ABERTO_PARA_LANCES') {
         return { success: false, message: 'Este leilão não está mais ativo.' };
       }
 
@@ -277,37 +289,28 @@ export class LotService {
 
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }> {
     try {
-      // Converter strings para BigInt onde necessário
       const lotId = BigInt(id);
       
-      // Preparar dados para atualização, convertendo IDs de string para BigInt se necessário
       const { 
-        auctionId, 
-        categoryId, 
-        subcategoryId, 
-        sellerId, 
         assetIds = [],
         ...cleanData 
       } = data as any;
       
-      // Atualizar relacionamentos se necessário
       const updateRelations: Record<string, any> = {};
       
-      if (categoryId) {
-        updateRelations.category = { connect: { id: BigInt(categoryId) } };
+      if (cleanData.categoryId) {
+        updateRelations.category = { connect: { id: BigInt(cleanData.categoryId) } };
       }
       
-      if (subcategoryId) {
-        updateRelations.subcategory = { connect: { id: BigInt(subcategoryId) } };
+      if (cleanData.subcategoryId) {
+        updateRelations.subcategory = { connect: { id: BigInt(cleanData.subcategoryId) } };
       }
       
-      if (sellerId) {
-        updateRelations.seller = { connect: { id: BigInt(sellerId) } };
+      if (cleanData.sellerId) {
+        updateRelations.seller = { connect: { id: BigInt(cleanData.sellerId) } };
       }
       
-      // Atualizar o lote
       await this.prisma.$transaction(async (tx) => {
-        // 1. Atualizar dados básicos do lote
         await tx.lot.update({
           where: { id: lotId },
           data: {
@@ -317,29 +320,25 @@ export class LotService {
           } as Prisma.LotUpdateInput
         });
         
-        // 2. Atualizar associações de ativos, se fornecidas
         if (Array.isArray(assetIds)) {
           const assetIdsBigInt = assetIds
             .filter((id): id is string => Boolean(id))
             .map(id => BigInt(id));
           
-          // Remover associações existentes
           await tx.assetsOnLots.deleteMany({
             where: { lotId }
           });
           
-          // Criar novas associações, se houver
           if (assetIdsBigInt.length > 0) {
             await tx.assetsOnLots.createMany({
               data: assetIdsBigInt.map(assetId => ({
                 lotId,
                 assetId,
-                assignedBy: 'system', // ou o ID do usuário
+                assignedBy: 'system', 
                 assignedAt: new Date()
               })),
             });
             
-            // Atualizar status dos ativos para 'LOTEADO'
             await tx.asset.updateMany({
               where: { id: { in: assetIdsBigInt } },
               data: { status: 'LOTEADO' }
@@ -364,9 +363,7 @@ export class LotService {
     try {
       const lotId = BigInt(id);
       
-      // Usar transação para garantir consistência
       await this.prisma.$transaction(async (tx) => {
-        // 1. Obter os IDs dos ativos associados
         const assetsOnLots = await tx.assetsOnLots.findMany({
           where: { lotId },
           select: { assetId: true }
@@ -374,17 +371,14 @@ export class LotService {
         
         const assetIds = assetsOnLots.map(a => a.assetId);
         
-        // 2. Excluir associações de ativos
         await tx.assetsOnLots.deleteMany({
           where: { lotId }
         });
         
-        // 3. Excluir o lote
         await tx.lot.delete({
           where: { id: lotId }
         });
         
-        // 4. Atualizar status dos ativos para DISPONIVEL
         if (assetIds.length > 0) {
           await tx.asset.updateMany({
             where: { id: { in: assetIds } },
@@ -402,29 +396,23 @@ export class LotService {
   
   async finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
     try {
-      // Verificar se o lote existe
       const lot = await this.repository.findById(lotId);
       if (!lot) {
         return { success: false, message: 'Lote não encontrado.' };
       }
 
-      // Usar transação para garantir consistência
       await this.prisma.$transaction(async (tx) => {
-        // 1. Encontrar o lance vencedor
         const winningBid = await tx.bid.findFirst({
           where: { lotId: BigInt(lotId) },
           orderBy: { amount: 'desc' }
         });
 
         const sold = !!winningBid;
-
-        // 2. Atualizar o lote
         const updateData: Prisma.LotUpdateInput = {
           status: sold ? 'VENDIDO' : 'NAO_VENDIDO',
           updatedAt: new Date()
         };
 
-        // Se vendido, atualizar informações do vencedor
         if (sold && winningBid) {
           updateData.winner = { connect: { id: winningBid.bidderId } };
           updateData.price = winningBid.amount;
@@ -435,13 +423,11 @@ export class LotService {
           data: updateData
         });
 
-        // 3. Obter os ativos associados ao lote
         const assetsOnLots = await tx.assetsOnLots.findMany({
           where: { lotId: BigInt(lotId) },
           select: { assetId: true }
         });
 
-        // 4. Atualizar status dos ativos
         if (assetsOnLots.length > 0) {
           const assetIds = assetsOnLots.map(a => a.assetId);
           
@@ -454,7 +440,6 @@ export class LotService {
           });
         }
 
-        // 5. Se vendido, criar registro de vencedor
         if (sold && winningBid) {
           await tx.userWin.create({
             data: {
@@ -512,12 +497,12 @@ export class LotService {
       subcategoryId?: string | null;
       sellerId?: string | null;
       auctioneerId?: string | null;
+      type?: string;
     },
     tenantId: string,
     userId: string = 'system'
   ): Promise<{ success: boolean; message: string; lotId?: string }> {
     try {
-      // Validate required fields
       if (!lotData.title || !lotData.auctionId) {
         return { 
           success: false, 
@@ -525,32 +510,26 @@ export class LotService {
         };
       }
 
-      // Prepare data for creation
       const { 
         assetIds = [],
         auctionId,
-        categoryId,
-        subcategoryId,
-        sellerId,
-        auctioneerId,
         ...cleanData 
       } = lotData as any;
-
-      // Convert string IDs to BigInt
-      const auctionIdBigInt = BigInt(auctionId);
-      const categoryIdBigInt = categoryId ? BigInt(categoryId) : null;
-      const subcategoryIdBigInt = subcategoryId ? BigInt(subcategoryId) : null;
-      const sellerIdBigInt = sellerId ? BigInt(sellerId) : null;
-      const auctioneerIdBigInt = auctioneerId ? BigInt(auctioneerId) : null;
-      const tenantIdBigInt = BigInt(tenantId);
-
-      // Helper function to safely convert to Prisma.Decimal
+      
       const toDecimal = (value?: number | string | Prisma.Decimal | null): Prisma.Decimal | null => {
         if (value === null || value === undefined) return null;
         return value instanceof Prisma.Decimal ? value : new Prisma.Decimal(value);
       };
 
-      // Create lot data in Prisma format with only the fields that exist in the schema
+      const auction = await this.auctionRepository.findById(tenantId, auctionId);
+      if (!auction) {
+        return {
+            success: false,
+            message: 'Leilão não encontrado para criar o lote.'
+        };
+      }
+      const lotType = lotData.type || auction.auctionType || 'EXTRAJUDICIAL';
+
       const lotCreateInput: Prisma.LotCreateInput = {
         title: lotData.title,
         description: lotData.description || null,
@@ -562,53 +541,27 @@ export class LotService {
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         number: lotData.number || null,
         slug: lotData.slug || slugify(lotData.title),
-        lotSpecificAuctionDate: lotData.lotSpecificAuctionDate || null,
-        secondAuctionDate: lotData.secondAuctionDate || null,
-        bidsCount: lotData.bidsCount || 0,
-        views: lotData.views || 0,
-        isRelisted: lotData.isRelisted || false,
-        relistCount: lotData.relistCount || 0,
-        isFeatured: lotData.isFeatured || false,
-        isExclusive: lotData.isExclusive || false,
-        condition: lotData.condition || null,
-        dataAiHint: lotData.dataAiHint || null,
-        imageUrl: lotData.imageUrl || null,
-        galleryImageUrls: lotData.galleryImageUrls || Prisma.JsonNull,
-        mediaItemIds: lotData.mediaItemIds || Prisma.JsonNull,
-        auction: { connect: { id: auctionIdBigInt } },
-        tenant: { connect: { id: tenantIdBigInt } }
+        type: lotType,
+        auction: { connect: { id: BigInt(auctionId) } },
+        tenant: { connect: { id: BigInt(tenantId) } }
       };
 
-      // Add optional relationships
-      if (categoryIdBigInt) {
-        lotCreateInput.category = { connect: { id: categoryIdBigInt } };
+      if (cleanData.categoryId) {
+        lotCreateInput.category = { connect: { id: BigInt(cleanData.categoryId) } };
+      }
+      if (cleanData.sellerId) {
+        lotCreateInput.seller = { connect: { id: BigInt(cleanData.sellerId) } };
       }
       
-      if (subcategoryIdBigInt) {
-        lotCreateInput.subcategory = { connect: { id: subcategoryIdBigInt } };
-      }
-      
-      if (sellerIdBigInt) {
-        lotCreateInput.seller = { connect: { id: sellerIdBigInt } };
-      }
-      
-      if (auctioneerIdBigInt) {
-        lotCreateInput.auctioneer = { connect: { id: auctioneerIdBigInt } };
-      }
-
-      // Use transaction to ensure consistency
       const result = await this.prisma.$transaction(async (tx) => {
-        // 1. Create the lot
         const newLot = await tx.lot.create({
           data: lotCreateInput,
           select: { id: true }
         });
 
-        // 2. Associate assets if provided
         if (assetIds && assetIds.length > 0) {
           const assetIdsToAssociate = assetIds.map(id => BigInt(id));
           
-          // Create entries in the join table
           await tx.assetsOnLots.createMany({
             data: assetIdsToAssociate.map(assetId => ({
               lotId: newLot.id,
@@ -618,21 +571,18 @@ export class LotService {
             })),
           });
 
-          // Update asset status to 'LOTEADO'
           await tx.asset.updateMany({
             where: { id: { in: assetIdsToAssociate } },
             data: { status: 'LOTEADO' }
           });
         }
 
-        // 3. Return the created lot ID
         return { 
           success: true, 
           message: 'Lote criado com sucesso.',
           lotId: newLot.id.toString()
         };
       });
-      console.log("Returning from createLot with lotId:", result.lotId);
 
       return result;
     } catch (error) {
@@ -645,4 +595,34 @@ export class LotService {
       };
     }
   }
+
+  async getReviews(lotId: string): Promise<Review[]> {
+    return [];
+  }
+  
+  async createReview(lotId: string, userId: string, userDisplayName: string, rating: number, comment: string): Promise<{ success: boolean; message: string; reviewId?: string }> {
+    return { success: false, message: 'Not implemented' };
+  }
+
+  async getQuestions(lotId: string): Promise<LotQuestion[]> {
+    return [];
+  }
+  
+  async createQuestion(lotId: string, userId: string, userDisplayName: string, questionText: string): Promise<{ success: boolean; message: string; questionId?: string }> {
+    return { success: false, message: 'Not implemented' };
+  }
+  
+  async answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }> {
+    return { success: false, message: 'Not implemented' };
+  }
+
+  async placeMaxBid(lotId: string, userId: string, maxAmount: number): Promise<{ success: boolean; message: string; }> {
+    return { success: false, message: 'Not implemented' };
+  }
+
+  async getActiveUserMaxBid(lotId: string, userId: string): Promise<UserLotMaxBid | null> {
+    return null;
+  }
 }
+
+    

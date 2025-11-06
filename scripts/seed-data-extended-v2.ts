@@ -122,9 +122,43 @@ const brazilianStates = [
 
 async function cleanDatabase() {
     console.log("Cleaning database...");
-    const modelNames = Object.keys(prisma).filter(key => !key.startsWith('_') && !key.startsWith('$'));
 
-    for (const modelName of modelNames.reverse()) { // Reverse order might help with dependencies
+    const orderedModelNames = [
+        'Bid',
+        'UserWin',
+        'InstallmentPayment',
+        'UserLotMaxBid',
+        'AssetsOnLots',
+        'LotStagePrice',
+        'Lot',
+        'AuctionHabilitation',
+        'AuctionStage',
+        'Notification',
+        'Review',
+        'LotQuestion',
+        'Auction',
+        'Asset',
+        'JudicialProcess',
+        'Seller',
+        'Auctioneer',
+        'Report',
+        'UserDocument',
+        'UsersOnRoles',
+        'UsersOnTenants',
+        'User',
+        'Role',
+        'Subcategory',
+        'LotCategory',
+        'JudicialBranch',
+        'JudicialDistrict',
+        'Court',
+        'City',
+        'State',
+        'PlatformSettings',
+        'Tenant',
+    ];
+
+    for (const modelName of orderedModelNames) {
         try {
             // @ts-ignore
             await prisma[modelName].deleteMany({});
@@ -132,6 +166,7 @@ async function cleanDatabase() {
             console.warn(`Could not clean ${modelName}:`, error);
         }
     }
+
     console.log("Database cleaned.");
 }
 
@@ -233,17 +268,17 @@ async function main() {
   if(!citySPResult.success || !citySPResult.cityId) throw new Error(citySPResult.message);
   const citySP = await services.city.getCityById(citySPResult.cityId);
 
-  const courtTJSPResult = await services.court.createCourt({ name: 'Tribunal de Justiça de São Paulo', stateUf: 'SP', website: 'www.tjsp.jus.br' });
+  const courtTJSPResult = await services.court.createCourt({ name: 'Tribunal de Justiça de São Paulo', stateUf: 'SP', website: 'www.tjsp.jus.br' } as any);
   if(!courtTJSPResult.success || !courtTJSPResult.courtId) throw new Error(courtTJSPResult.message);
   const courtTJSP = await services.court.getCourtById(courtTJSPResult.courtId);
 
   if(!courtTJSP) throw new Error("Court TJSP not found");
-  const districtSPResult = await services.judicialDistrict.createJudicialDistrict({ name: 'Comarca de São Paulo', courtId: courtTJSP.id, stateId: stateSP.id, zipCode: '01000-000' });
+  const districtSPResult = await services.judicialDistrict.createJudicialDistrict({ name: 'Comarca de São Paulo', courtId: courtTJSP.id, stateId: stateSP.id, zipCode: '01000-000' } as any);
   if(!districtSPResult.success || !districtSPResult.districtId) throw new Error(districtSPResult.message);
   const districtSP = await services.judicialDistrict.getJudicialDistrictById(districtSPResult.districtId);
 
   if(!districtSP) throw new Error("Judicial District SP not found");
-  const branchCivilResult = await services.judicialBranch.createJudicialBranch({ name: '1ª Vara Cível', districtId: districtSP.id, contactName: 'Chefe de Cartório', phone: '(11) 5555-1234', email: 'vara1@tjsp.jus.br' });
+  const branchCivilResult = await services.judicialBranch.createJudicialBranch({ name: '1ª Vara Cível', districtId: districtSP.id, contactName: 'Chefe de Cartório', phone: '(11) 5555-1234', email: 'vara1@tjsp.jus.br' } as any);
   if(!branchCivilResult.success || !branchCivilResult.branchId) throw new Error(branchCivilResult.message);
   const branchCivil = await services.judicialBranch.getJudicialBranchById(branchCivilResult.branchId);
 
@@ -291,7 +326,7 @@ async function main() {
   await services.subcategory.createSubcategory({ name: 'Carros', parentCategoryId: catVeiculos.id, description: 'Carros', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
 
   if(!courtTJSP || !districtSP || !branchCivil || !judicialSeller) throw new Error("Judicial entity setup failed.");
-  const judicialProcessResult = await services.judicialProcess.createJudicialProcess({
+  const judicialProcessResult = await services.judicialProcess.createJudicialProcess(tenantId, {
     processNumber: '0012345-67.2024.8.26.0001',
     isElectronic: true,
     parties: [],
@@ -336,7 +371,7 @@ async function main() {
   if(!assetApartment || !judicialAuction) throw new Error("Asset Apartment or Judicial Auction not found");
   const lotApartmentResult = await services.lot.createLot({
     auctionId: judicialAuction.id, title: 'Lote 001 - Apartamento em Moema', number: '001',
-    price: 750000.00, assetIds: [assetApartment.id],
+    price: 750000.00, assetIds: [assetApartment.id], type: judicialAuction.auctionType || 'JUDICIAL',
   }, tenantId.toString(), adminUser!.id);
   if(!lotApartmentResult.success || !lotApartmentResult.lotId) throw new Error(lotApartmentResult.message);
   const lotApartment = await services.lot.getLotById(lotApartmentResult.lotId);
@@ -344,13 +379,13 @@ async function main() {
   if(!assetCar || !extrajudicialAuction) throw new Error("Asset Car or Extrajudicial Auction not found");
   await services.lot.createLot({
     auctionId: extrajudicialAuction.id, title: 'Lote 001 - Ford Ka 2019', number: '001',
-    price: 45000.00, assetIds: [assetCar.id],
+    price: 45000.00, assetIds: [assetCar.id], type: extrajudicialAuction.auctionType || 'EXTRAJUDICIAL',
   }, tenantId.toString(), adminUser!.id);
 
   for (const user of bidderUsers) {
     if (!user) continue;
-    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: judicialAuction!.id });
-    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: extrajudicialAuction!.id });
+    await services.habilitation.upsertAuctionHabilitation({ user: { connect: { id: BigInt(user.id) } }, auction: { connect: { id: BigInt(judicialAuction!.id) } } });
+    await services.habilitation.upsertAuctionHabilitation({ user: { connect: { id: BigInt(user.id) } }, auction: { connect: { id: BigInt(extrajudicialAuction!.id) } } });
   }
 
   const bidder1 = bidderUsers[0];
@@ -388,7 +423,7 @@ async function main() {
 
   const mediaItem1Result = await services.mediaItem.createMediaItem({
     fileName: 'apartment_image.jpg', mimeType: 'image/jpeg', storagePath: '/uploads/apartment_image.jpg',
-    urlOriginal: faker.image.url(), title: 'Apartamento Moema', user: { connect: { id: BigInt(adminUser!.id) } }
+    urlOriginal: faker.image.url(), title: 'Apartamento Moema', userId: adminUser!.id
   });
   if (!mediaItem1Result.success) throw new Error(mediaItem1Result.message);
   

@@ -195,7 +195,7 @@ model Lot {
   longitude           Decimal?
   mapAddress          String?
   tenantId            BigInt
-  tenant              Tenant               @relation(fields: [tenantId], references: [id], onUpdate: Cascade)
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   bids                Bid[]
   wins                UserWin[]
   reviews             Review[]
@@ -237,7 +237,7 @@ model Asset {
   createdAt                    DateTime        @default(now())
   updatedAt                    DateTime        @updatedAt
   tenantId                     BigInt
-  tenant                       Tenant          @relation(fields: [tenantId], references: [id], onUpdate: Cascade)
+  tenant                       Tenant          @relation(fields: [tenantId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   lots                         AssetsOnLots[]
   gallery                      AssetMedia[]
 
@@ -474,7 +474,7 @@ model LotStagePrice {
   lotId           BigInt
   lot             Lot          @relation(fields: [lotId], references: [id], onDelete: Cascade)
   auctionId       BigInt
-  auction         Auction      @relation(fields: [auctionId], references: [id])
+    auction             Auction              @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   auctionStageId  BigInt
   auctionStage    AuctionStage @relation(fields: [auctionStageId], references: [id], onDelete: Cascade)
   initialBid      Decimal?     @db.Decimal(15, 2)
@@ -800,7 +800,7 @@ model DirectSaleOffer {
   sellerName           String?
   sellerLogoUrl        String?
   dataAiHintSellerLogo String?
-  tenant               Tenant              @relation(fields: [tenantId], references: [id])
+    tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tenantId             BigInt
   itemsIncluded        Json?
   views                Int                 @default(0)
@@ -1067,7 +1067,7 @@ model Report {
   description  String?
   definition   Json
   tenantId     BigInt
-  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+    tenant              Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   createdBy    User     @relation("CreatedBy", fields: [createdById], references: [id])

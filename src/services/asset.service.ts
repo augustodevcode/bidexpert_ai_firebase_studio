@@ -67,7 +67,7 @@ export class AssetService {
     const asset = await this.repository.findById(id.toString());
     // Embora o repositório possa ser chamado de múltiplos tenants, o serviço impõe a regra de negócio
     // de que a busca por ID deve respeitar o tenant atual.
-    if (!asset || asset.tenantId !== tenantId) return null;
+    if (!asset || asset.tenantId.toString() !== tenantId) return null;
     return this.mapAssetsWithDetails([asset])[0];
   }
 

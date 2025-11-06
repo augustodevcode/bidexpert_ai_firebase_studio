@@ -1,3 +1,6 @@
+ Esse seed precisa ser executado para melhorar a análise da plataforma de leilão BidExpert.
+ 
+ 
  1. Usar apenas `actions` e `services`: Nenhuma chamada direta ao Prisma ou DML SQL será usada.
    2. Criar cenários realistas: Os dados serão interligados para refletir os fluxos descritos nos arquivos REGRAS_NEGOCIO_CONSOLIDADO.md e TESTING_SCENARIOS.md.
    3. Cobrir todo o escopo: Vou criar um conjunto de dados rico, com foco especial em leilões judiciais, loteamentos, lances, arremates e pagamentos.
