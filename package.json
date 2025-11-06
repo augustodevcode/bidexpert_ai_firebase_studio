@@ -15,6 +15,7 @@
         "db:seed:samples": "npx tsx --env-file=.env scripts/seed-db-sample-data.ts",
         "db:seed:extended": "npx tsx --env-file=.env scripts/seed-data-extended-v2.ts",
         "db:seed:extended-v2": "npx tsx --env-file=.env scripts/seed-data-extended-v2.ts",
+        "db:seed:v3": "npx tsx --env-file=.env scripts/seed-data-extended-v3.ts",
         "db:seed:new": "npx tsx --env-file=.env prisma/seed.ts",
         "db:seed:resume": "npx tsx --env-file=.env scripts/seed-resume.ts",
         "db:seed:auctions": "npx tsx --env-file=.env scripts/seed-auctions-only.ts",

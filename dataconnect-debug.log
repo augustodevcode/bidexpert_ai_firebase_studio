@@ -1,8 +1,8 @@
-I1106 02:33:04.755845   13610 load.go:31] Reloading schema and connectors...
-E1106 02:33:04.773527   13610 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "". No service has a schema.
-E1106 02:33:04.773577   13610 load.go:73] Could not load sources: 
+I1106 03:45:57.485571    1813 load.go:31] Reloading schema and connectors...
+E1106 03:45:57.521870    1813 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "". No service has a schema.
+E1106 03:45:57.521989    1813 load.go:73] Could not load sources: 
 Errors: .dataconnect/schema/prelude.gql:2:6: Cannot redeclare type AccessLevel.
-I1106 02:33:04.774053   13610 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+I1106 03:45:57.523374    1813 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
 Generated sources: prelude.gql [73219B] 
-I1106 02:33:04.775634   13610 load.go:74] Finished reloading
-I1106 02:33:04.880922   13610 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+I1106 03:45:57.524912    1813 load.go:74] Finished reloading
+I1106 03:45:57.546930    1813 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
