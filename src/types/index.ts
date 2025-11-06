@@ -53,25 +53,25 @@ import { Decimal } from '@prisma/client/runtime/library';
 // Regra: IDs expostos para o frontend (em tipos, services, actions) devem ser strings.
 // A conversão de BigInt para string deve ocorrer na camada de serviço/repositório.
 
-export type Role = Omit<PmRole, 'id'> & { id: bigint };
-export type Tenant = Omit<PmTenant, 'id'> & { id: bigint };
+export type Role = Omit<PmRole, 'id'> & { id: string };
+export type Tenant = Omit<PmTenant, 'id'> & { id: string };
 export type User = Omit<PmUser, 'id'> & { 
-    id: bigint;
+    id: string;
     roles?: (Omit<UsersOnRoles, 'userId' | 'roleId'> & { role: Role })[];
     tenants?: (Omit<UsersOnTenants, 'userId' | 'tenantId'> & { tenant: Tenant })[];
 };
-export type LotCategory = Omit<PmLotCategory, 'id'> & { id: bigint; itemCount?: number; _count?: { lots: number, subcategories: number } };
-export type Subcategory = Omit<PmSubcategory, 'id' | 'parentCategoryId'> & { id: bigint; parentCategoryId: bigint; parentCategoryName?: string; itemCount?: number };
-export type AuctioneerProfileInfo = Omit<PmAuctioneer, 'id' | 'userId' | 'tenantId'> & { id: bigint; userId?: bigint | null; tenantId: bigint; auctionsConductedCount?: number; memberSince?: Date; rating?: number };
-export type SellerProfileInfo = Omit<PmSeller, 'id' | 'userId' | 'judicialBranchId' | 'tenantId'> & { id: bigint; userId?: bigint | null; judicialBranchId?: bigint | null; tenantId: bigint; activeLotsCount?: number; memberSince?: Date; auctionsFacilitatedCount?: number; rating?: number };
+export type LotCategory = Omit<PmLotCategory, 'id'> & { id: string; itemCount?: number; _count?: { lots: number, subcategories: number } };
+export type Subcategory = Omit<PmSubcategory, 'id' | 'parentCategoryId'> & { id: string; parentCategoryId: string; parentCategoryName?: string; itemCount?: number };
+export type AuctioneerProfileInfo = Omit<PmAuctioneer, 'id' | 'userId' | 'tenantId'> & { id: string; userId?: string | null; tenantId: string; auctionsConductedCount?: number; memberSince?: Date; rating?: number };
+export type SellerProfileInfo = Omit<PmSeller, 'id' | 'userId' | 'judicialBranchId' | 'tenantId'> & { id: string; userId?: string | null; judicialBranchId?: string | null; tenantId: string; activeLotsCount?: number; memberSince?: Date; auctionsFacilitatedCount?: number; rating?: number };
 
 export type Asset = Omit<PmAsset, 'id' | 'categoryId' | 'subcategoryId' | 'judicialProcessId' | 'sellerId' | 'tenantId' | 'evaluationValue' | 'latitude' | 'longitude' | 'totalArea' | 'builtArea' | 'year' | 'modelYear' | 'mileage' | 'numberOfDoors' | 'pieceCount' | 'bedrooms' | 'suites' | 'bathrooms' | 'parkingSpaces' | 'hoursUsed'> & { 
-  id: bigint;
-  categoryId?: bigint | null;
-  subcategoryId?: bigint | null;
-  judicialProcessId?: bigint | null;
-  sellerId?: bigint | null;
-  tenantId: bigint;
+  id: string;
+  categoryId?: string | null;
+  subcategoryId?: string | null;
+  judicialProcessId?: string | null;
+  sellerId?: string | null;
+  tenantId: string;
   categoryName?: string;
   subcategoryName?: string | null;
   judicialProcessNumber?: string | null;
@@ -96,15 +96,15 @@ export type Asset = Omit<PmAsset, 'id' | 'categoryId' | 'subcategoryId' | 'judic
 };
 
 export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'cityId' | 'stateId' | 'judicialProcessId' | 'tenantId' | 'categoryId' | 'originalAuctionId' | 'latitude' | 'longitude' | 'initialOffer' | 'estimatedRevenue' | 'achievedRevenue' | 'decrementAmount' | 'floorPrice'> & {
-  id: bigint;
-  auctioneerId?: bigint | null;
-  sellerId?: bigint | null;
-  cityId?: bigint | null;
-  stateId?: bigint | null;
-  judicialProcessId?: bigint | null;
-  tenantId: bigint;
-  categoryId?: bigint | null;
-  originalAuctionId?: bigint | null;
+  id: string;
+  auctioneerId?: string | null;
+  sellerId?: string | null;
+  cityId?: string | null;
+  stateId?: string | null;
+  judicialProcessId?: string | null;
+  tenantId: string;
+  categoryId?: string | null;
+  originalAuctionId?: string | null;
   lots?: Lot[];
   totalLots?: number;
   seller?: SellerProfileInfo;
@@ -129,18 +129,18 @@ export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'city
 };
 
 export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId' | 'sellerId' | 'auctioneerId' | 'cityId' | 'stateId' | 'winnerId' | 'tenantId' | 'originalLotId' | 'price' | 'initialPrice' | 'secondInitialPrice' | 'latitude' | 'longitude' | 'bidIncrementStep' | 'evaluationValue' | 'inheritedMediaFromAssetId'> & {
-  id: bigint;
-  auctionId: bigint;
-  categoryId?: bigint | null;
-  subcategoryId?: bigint | null;
-  sellerId?: bigint | null;
-  auctioneerId?: bigint | null;
-  cityId?: bigint | null;
-  stateId?: bigint | null;
-  winnerId?: bigint | null;
-  tenantId: bigint;
-  originalLotId?: bigint | null;
-  inheritedMediaFromAssetId?: bigint | null;
+  id: string;
+  auctionId: string;
+  categoryId?: string | null;
+  subcategoryId?: string | null;
+  sellerId?: string | null;
+  auctioneerId?: string | null;
+  cityId?: string | null;
+  stateId?: string | null;
+  winnerId?: string | null;
+  tenantId: string;
+  originalLotId?: string | null;
+  inheritedMediaFromAssetId?: string | null;
   assets?: Asset[];
   auction?: Auction;
   auctionName?: string | null;
@@ -157,45 +157,45 @@ export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId
   stageDetails?: LotStageDetails[];
 };
 
-export type BidInfo = Omit<PmBid, 'id' | 'auctionId' | 'lotId' | 'bidderId' | 'tenantId' | 'amount'> & { id: bigint; auctionId: bigint; lotId: bigint; bidderId: bigint; tenantId: bigint; amount: number; };
-export type UserWin = Omit<PmUserWin, 'id' | 'lotId' | 'userId' | 'winningBidAmount'> & { id: bigint; lotId: bigint; userId: bigint; winningBidAmount: number; lot: Lot };
-export type Review = Omit<PmReview, 'id' | 'lotId' | 'auctionId' | 'userId'> & { id: bigint; lotId: bigint; auctionId: bigint; userId: bigint; };
-export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId' | 'answeredByUserId'> & { id: bigint; lotId: bigint; auctionId: bigint; userId: bigint; answeredByUserId?: bigint | null };
-export type UserDocument = Omit<PmUserDocument, 'id' | 'userId' | 'documentTypeId'> & { id: bigint; userId: bigint; documentTypeId: bigint; documentType: DocumentType };
-export type DocumentType = Omit<PmDocumentType, 'id'> & { id: bigint };
+export type BidInfo = Omit<PmBid, 'id' | 'auctionId' | 'lotId' | 'bidderId' | 'tenantId' | 'amount'> & { id: string; auctionId: string; lotId: string; bidderId: string; tenantId: string; amount: number; };
+export type UserWin = Omit<PmUserWin, 'id' | 'lotId' | 'userId' | 'winningBidAmount'> & { id: string; lotId: string; userId: string; winningBidAmount: number; lot: Lot };
+export type Review = Omit<PmReview, 'id' | 'lotId' | 'auctionId' | 'userId'> & { id: string; lotId: string; auctionId: string; userId: string; };
+export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId' | 'answeredByUserId'> & { id: string; lotId: string; auctionId: string; userId: string; answeredByUserId?: string | null };
+export type UserDocument = Omit<PmUserDocument, 'id' | 'userId' | 'documentTypeId'> & { id: string; userId: string; documentTypeId: string; documentType: DocumentType };
+export type DocumentType = Omit<PmDocumentType, 'id'> & { id: string };
 export type DirectSaleOffer = Omit<PmDirectSaleOffer, 'id' | 'tenantId' | 'sellerId' | 'categoryId' | 'price' | 'minimumOfferPrice'> & {
-    id: bigint;
-    tenantId: bigint;
-    sellerId: bigint;
-    categoryId: bigint;
+    id: string;
+    tenantId: string;
+    sellerId: string;
+    categoryId: string;
     price?: number | null;
     minimumOfferPrice?: number | null;
     galleryImageUrls?: string[] | null;
     category?: string;
 };
-export type UserLotMaxBid = Omit<PmUserLotMaxBid, 'id' | 'userId' | 'lotId' | 'maxAmount'> & { id: bigint; userId: bigint; lotId: bigint; maxAmount: number; };
-export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { id: bigint; tenantId: bigint; courtId?: bigint | null; districtId?: bigint | null; branchId?: bigint | null; sellerId?: bigint | null; parties: ProcessParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string };
-export type Court = Omit<PmCourt, 'id'> & { id: bigint };
-export type JudicialDistrict = Omit<PmJudicialDistrict, 'id' | 'courtId' | 'stateId'> & { id: bigint; courtId?: bigint | null; stateId?: bigint | null; courtName?: string; stateUf?: string };
-export type JudicialBranch = Omit<PmJudicialBranch, 'id' | 'districtId'> & { id: bigint; districtId?: bigint | null; districtName?: string; stateUf?: string };
-export type ProcessParty = Omit<PmJudicialParty, 'id' | 'processId'> & { id: bigint; processId: bigint };
-export type StateInfo = Omit<PmState, 'id'> & { id: bigint; cityCount?: number };
+export type UserLotMaxBid = Omit<PmUserLotMaxBid, 'id' | 'userId' | 'lotId' | 'maxAmount'> & { id: string; userId: string; lotId: string; maxAmount: number; };
+export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { id: string; tenantId: string; courtId?: string | null; districtId?: string | null; branchId?: string | null; sellerId?: string | null; parties: ProcessParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string };
+export type Court = Omit<PmCourt, 'id'> & { id: string };
+export type JudicialDistrict = Omit<PmJudicialDistrict, 'id' | 'courtId' | 'stateId'> & { id: string; courtId?: string | null; stateId?: string | null; courtName?: string; stateUf?: string };
+export type JudicialBranch = Omit<PmJudicialBranch, 'id' | 'districtId'> & { id: string; districtId?: string | null; districtName?: string; stateUf?: string };
+export type ProcessParty = Omit<PmJudicialParty, 'id' | 'processId'> & { id: string; processId: string };
+export type StateInfo = Omit<PmState, 'id'> & { id: string; cityCount?: number };
 export type CityInfo = Omit<PmCity, 'id' | 'stateId' | 'latitude' | 'longitude'> & { 
-    id: bigint;
-    stateId: bigint;
+    id: string;
+    stateId: string;
     stateUf?: string,
     latitude?: number | null,
     longitude?: number | null,
 };
-export type MediaItem = Omit<PmMediaItem, 'id' | 'uploadedByUserId' | 'judicialProcessId'> & { id: bigint; uploadedByUserId?: bigint | null; judicialProcessId?: bigint | null; };
+export type MediaItem = Omit<PmMediaItem, 'id' | 'uploadedByUserId' | 'judicialProcessId'> & { id: string; uploadedByUserId?: string | null; judicialProcessId?: string | null; };
 export type DataSource = PmDataSource;
-export type Report = Omit<PmReport, 'id' | 'tenantId' | 'createdById'> & { id: bigint; tenantId: bigint; createdById: bigint };
-export type ContactMessage = Omit<PmContactMessage, 'id'> & { id: bigint };
-export type VehicleMake = Omit<PmVehicleMake, 'id'> & { id: bigint };
-export type VehicleModel = Omit<PmVehicleModel, 'id' | 'makeId'> & { id: bigint; makeId: bigint; makeName?: string };
+export type Report = Omit<PmReport, 'id' | 'tenantId' | 'createdById'> & { id: string; tenantId: string; createdById: string };
+export type ContactMessage = Omit<PmContactMessage, 'id'> & { id: string };
+export type VehicleMake = Omit<PmVehicleMake, 'id'> & { id: string };
+export type VehicleModel = Omit<PmVehicleModel, 'id' | 'makeId'> & { id: string; makeId: string; makeName?: string };
 
 
-export type UserCreationData = Omit<UserFormData, 'passwordConfirmation' | 'termsAccepted'> & { roleIds: bigint[], tenantId?: bigint | null, habilitationStatus?: UserHabilitationStatus };
+export type UserCreationData = Omit<UserFormData, 'passwordConfirmation' | 'termsAccepted'> & { roleIds: string[], tenantId?: string | null, habilitationStatus?: UserHabilitationStatus };
 export type EditableUserProfileData = Partial<Omit<User, 'id' | 'email' | 'password' | 'createdAt' | 'updatedAt'>>;
 export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITADO' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO' | 'CANCELADO' | 'ATRASADO';
@@ -213,21 +213,21 @@ export type AuctionParticipation = 'ONLINE' | 'PRESENCIAL' | 'HIBRIDO';
 export type UserProfileWithPermissions = User & {
     roles: (Omit<UsersOnRoles, 'userId' | 'roleId'> & { role: Role })[];
     tenants: (Omit<UsersOnTenants, 'userId' | 'tenantId'> & { tenant: Tenant })[];
-    roleIds?: bigint[];
+    roleIds?: string[];
     roleNames?: string[];
     permissions: string[];
     roleName?: string;
-    sellerId?: bigint | null;
-    auctioneerId?: bigint | null;
+    sellerId?: string | null;
+    auctioneerId?: string | null;
 };
 
-export type ThemeSettings = Omit<PmThemeSettings, 'id' | 'platformSettingsId'> & { id: bigint };
-export type IdMasks = Omit<PmIdMasks, 'id' | 'platformSettingsId'> & { id: bigint };
-export type ThemeColors = Omit<PmThemeColors, 'id' | 'themeSettingsId'> & { id: bigint };
-export type NotificationSettings = Omit<PmNotificationSettings, 'id' | 'platformSettingsId'> & { id: bigint };
+export type ThemeSettings = Omit<PmThemeSettings, 'id' | 'platformSettingsId'> & { id: string };
+export type IdMasks = Omit<PmIdMasks, 'id' | 'platformSettingsId'> & { id: string };
+export type ThemeColors = Omit<PmThemeColors, 'id' | 'themeSettingsId'> & { id: string };
+export type NotificationSettings = Omit<PmNotificationSettings, 'id' | 'platformSettingsId'> & { id: string };
 export type PlatformSettings = Omit<PmPlatformSettings, 'id' | 'tenantId' | 'crudFormMode'> & {
-  id: bigint;
-  tenantId: bigint;
+  id: string;
+  tenantId: string;
   crudFormMode?: 'modal' | 'sheet';
   themes?: ThemeSettings | null;
   platformPublicIdMasks?: IdMasks | null;
@@ -239,12 +239,12 @@ export type PlatformSettings = Omit<PmPlatformSettings, 'id' | 'tenantId' | 'cru
   sectionBadgeVisibility?: PmSectionBadgeVisibility | null;
   variableIncrementTable?: PmVariableIncrementRule[];
 };
-export type VariableIncrementRule = Omit<PmVariableIncrementRule, 'id' | 'platformSettingsId'> & { id: bigint };
-export type MapSettings = Omit<PmMapSettings, 'id' | 'platformSettingsId'> & { id: bigint };
-export type BiddingSettings = Omit<PmBiddingSettings, 'id' | 'platformSettingsId'> & { id: bigint };
-export type PaymentGatewaySettings = Omit<PmPaymentGatewaySettings, 'id' | 'platformSettingsId'> & { id: bigint };
-export type MentalTriggerSettings = Omit<PmMentalTriggerSettings, 'id' | 'platformSettingsId'> & { id: bigint };
-export type SectionBadgeVisibility = Omit<PmSectionBadgeVisibility, 'id' | 'platformSettingsId'> & { id: bigint };
+export type VariableIncrementRule = Omit<PmVariableIncrementRule, 'id' | 'platformSettingsId'> & { id: string };
+export type MapSettings = Omit<PmMapSettings, 'id' | 'platformSettingsId'> & { id: string };
+export type BiddingSettings = Omit<PmBiddingSettings, 'id' | 'platformSettingsId'> & { id: string };
+export type PaymentGatewaySettings = Omit<PmPaymentGatewaySettings, 'id' | 'platformSettingsId'> & { id: string };
+export type MentalTriggerSettings = Omit<PmMentalTriggerSettings, 'id' | 'platformSettingsId'> & { id: string };
+export type SectionBadgeVisibility = Omit<PmSectionBadgeVisibility, 'id' | 'platformSettingsId'> & { id: string };
 export type BadgeVisibilitySettings = { [key: string]: boolean | undefined; };
 
 export interface RecentlyViewedLotInfo {
@@ -306,8 +306,8 @@ export interface CnjProcessSource {
     assuntos?: any[]; // A estrutura detalhada pode ser adicionada se necessário
 }
 export type AuctionStage = Omit<PmAuctionStage, 'id' | 'auctionId' | 'initialPrice'> & {
-    id: bigint;
-    auctionId: bigint;
+    id: string;
+    auctionId: string;
     initialPrice?: number | null;
 };
 export type LotStageDetails = { stageId: string, stageName: string, initialBid?: number | null, bidIncrement?: number | null };
@@ -387,3 +387,5 @@ export type WizardData = {
     
 
   
+
+    
