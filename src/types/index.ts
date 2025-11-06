@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 
 import type { 
@@ -43,6 +44,7 @@ import type {
     MediaItem as PmMediaItem,
     DataSource as PmDataSource,
     Report as PmReport,
+    ContactMessage as PmContactMessage,
     VehicleMake as PmVehicleMake,
     VehicleModel as PmVehicleModel,
     AuctionHabilitation,
@@ -112,7 +114,7 @@ export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'city
   dataAiHint?: string;
   autoRelistSettings?: any;
 };
-export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId' | 'sellerId' | 'auctioneerId' | 'cityId' | 'stateId' | 'winnerId' | 'tenantId' | 'original_lot_id' | 'price' | 'initialPrice' | 'secondInitialPrice' | 'latitude' | 'longitude' | 'bidIncrementStep' | 'evaluationValue' | 'inheritedMediaFromAssetId'> & {
+export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId' | 'sellerId' | 'auctioneerId' | 'cityId' | 'stateId' | 'winnerId' | 'tenantId' | 'originalLotId' | 'price' | 'initialPrice' | 'secondInitialPrice' | 'latitude' | 'longitude' | 'bidIncrementStep' | 'evaluationValue' | 'inheritedMediaFromAssetId'> & {
   id: string;
   auctionId: string;
   categoryId?: string | null;
@@ -143,7 +145,7 @@ export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId
 export type BidInfo = Omit<PmBid, 'id' | 'auctionId' | 'lotId' | 'bidderId' | 'tenantId'> & { id: string; auctionId: string; lotId: string; bidderId: string; tenantId: string; amount: number; };
 export type UserWin = Omit<PmUserWin, 'id' | 'lotId' | 'userId' | 'winningBidAmount'> & { id: string; lotId: string; userId: string; winningBidAmount: number; lot: Lot };
 export type Review = Omit<PmReview, 'id' | 'lotId' | 'auctionId' | 'userId'> & { id: string; lotId: string; auctionId: string; userId: string; };
-export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId'> & { id: string; lotId: string; auctionId: string; userId: string; };
+export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId' | 'answeredByUserId'> & { id: string; lotId: string; auctionId: string; userId: string; answeredByUserId?: string | null };
 export type UserDocument = Omit<PmUserDocument, 'id' | 'userId' | 'documentTypeId'> & { id: string; userId: string; documentTypeId: string; documentType: DocumentType };
 export type DocumentType = Omit<PmDocumentType, 'id'> & { id: string };
 export type DirectSaleOffer = Omit<PmDirectSaleOffer, 'id' | 'tenantId' | 'sellerId' | 'categoryId' | 'price' | 'minimumOfferPrice'> & {
@@ -171,6 +173,7 @@ export type CityInfo = Omit<PmCity, 'id' | 'stateId' | 'latitude' | 'longitude'>
 };
 export type MediaItem = Omit<PmMediaItem, 'id' | 'uploadedByUserId' | 'judicialProcessId'> & { id: string; uploadedByUserId?: string | null; judicialProcessId?: string | null; };
 export type DataSource = PmDataSource;
+export type Report = PmReport;
 export type ContactMessage = Omit<PmContactMessage, 'id'> & { id: string };
 export type VehicleMake = Omit<PmVehicleMake, 'id'> & { id: string };
 export type VehicleModel = Omit<PmVehicleModel, 'id' | 'makeId'> & { id: string; makeId: string; makeName?: string };
@@ -349,9 +352,9 @@ export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;
 export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'cityCount' | 'createdAt' | 'updatedAt'>;
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
-export type CourtFormData = Omit<Court, 'id' | 'slug'>;
-export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf'>;
-export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf'>;
+export type CourtFormData = Omit<Court, 'id' | 'slug' | 'createdAt' | 'updatedAt'>;
+export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf' | 'createdAt' | 'updatedAt'>;
+export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf' | 'createdAt' | 'updatedAt'>;
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName' | 'sellerName' | 'tenantId'>;
 export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots' | 'lotInfo' | 'gallery' | 'tenantId'> & { cityId?: string; stateId?: string; };
 export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'parentCategoryName' | 'itemCount'>;
@@ -365,3 +368,5 @@ export type WizardData = {
     selectedAssets?: Asset[];
     createdLots?: Lot[];
 };
+
+    

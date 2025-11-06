@@ -1,3 +1,4 @@
+
 /**
  * @file Extended Seed Script (v2)
  * @version 2.1
@@ -22,7 +23,7 @@
  * 
  *   - 4. ADDING NEW ENTITIES: To add a new entity, first check if a service exists in
  *     `../src/services/`. If so, import it, instantiate it, and use its `create` or
- *     `update` method. Follow the existing patterns in the `seed...` functions below.
+ *     update method. Follow the existing patterns in the `seed...` functions below.
  * 
  *   - 5. DATABASE CLEANING: The `cleanDatabase` function at the beginning is critical.
  *     If you add a new model to the schema with relations, you MUST add its table to this list in the correct reverse dependency order.
@@ -365,8 +366,8 @@ async function main() {
 
   for (const user of bidderUsers) {
     if (!user) continue;
-    await services.habilitation.upsertAuctionHabilitation({ userId: user.id.toString(), auctionId: judicialAuction!.id.toString() } as any);
-    await services.habilitation.upsertAuctionHabilitation({ userId: user.id.toString(), auctionId: extrajudicialAuction!.id.toString() } as any);
+    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: judicialAuction!.id } as any);
+    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: extrajudicialAuction!.id } as any);
   }
 
   const bidder1 = bidderUsers[0];
@@ -396,14 +397,14 @@ async function main() {
   if(!docTypeRGResult || !docTypeCPFResult) throw new Error("Failed to create document types");
   
   if(adminUser) {
-    await services.userDocument.saveUserDocument(adminUser.id.toString(), docTypeRGResult.id.toString(), faker.image.url(), 'rg_admin.pdf');
-    await services.userDocument.saveUserDocument(adminUser.id.toString(), docTypeCPFResult.id.toString(), faker.image.url(), 'cpf_admin.pdf');
+    await services.userDocument.createUserDocument({ userId: BigInt(adminUser.id), documentTypeId: docTypeRGResult.id, fileUrl: faker.image.url(), fileName: 'rg_admin.pdf' });
+    await services.userDocument.createUserDocument({ userId: BigInt(adminUser.id), documentTypeId: docTypeCPFResult.id, fileUrl: faker.image.url(), fileName: 'cpf_admin.pdf' });
   }
 
   const mediaItem1Result = await services.mediaItem.createMediaItem({
     fileName: 'apartment_image.jpg', mimeType: 'image/jpeg', storagePath: '/uploads/apartment_image.jpg',
-    urlOriginal: faker.image.url(), title: 'Apartamento Moema',
-  }, adminUser!.id.toString());
+    urlOriginal: faker.image.url(), title: 'Apartamento Moema', uploadedBy: { connect: { id: BigInt(adminUser!.id) } }
+  });
   if (!mediaItem1Result.success) throw new Error(mediaItem1Result.message);
   
   await services.vehicleMake.createVehicleMake({ name: 'Ford' });
@@ -430,7 +431,7 @@ async function main() {
   await services.report.createReport({
     name: 'Relatório de Vendas Mensal', description: 'Relatório consolidado das vendas do mês.',
     definition: { sections: [ { type: 'text', content: '<h1>Relatório de Vendas</h1>' }, { type: 'chart', chartType: 'bar', dataKey: 'monthlySales' }, ] },
-    createdById: adminUser!.id
+    createdById: BigInt(adminUser!.id)
   }, tenantId.toString());
 
   await services.subscriber.createSubscriber({ email: faker.internet.email(), name: faker.person.fullName(), }, tenantId.toString());
@@ -447,3 +448,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+    
