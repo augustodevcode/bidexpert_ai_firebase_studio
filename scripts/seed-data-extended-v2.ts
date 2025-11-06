@@ -1,7 +1,7 @@
 
 /**
  * @file Extended Seed Script (v2)
- * @version 2.1
+ * @version 2.2
  * @description Populates the database with a comprehensive and interconnected set of data
  *              that covers all major scenarios of the BidExpert application.
  * 
@@ -70,8 +70,8 @@ import { DataSourceService } from '../src/services/data-source.service';
 import { DocumentTemplateService } from '../src/services/document-template.service';
 import { ReportService } from '../src/services/report.service';
 import { SubscriberService } from '../src/services/subscriber.service';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import type { Prisma, Asset, Role } from '@prisma/client';
 
 // AI-NOTE: Instantiate all required services here.
 const services = {
@@ -156,17 +156,19 @@ async function main() {
 
   console.log("Seeding foundational data (Roles, Landlord, Settings, States)...");
 
-  const createdRoles: { [key: string]: any } = {};
+  const createdRoles: { [key: string]: Role } = {};
   for (const role of essentialRoles) {
     const newRoleResult = await services.role.createRole(role);
     if (!newRoleResult.success || !newRoleResult.roleId) throw new Error(newRoleResult.message);
-    createdRoles[role.nameNormalized] = { id: newRoleResult.roleId.toString() };
+    const roleRecord = await services.role.getRoleById(newRoleResult.roleId);
+    if (!roleRecord) throw new Error("Failed to fetch created role");
+    createdRoles[role.nameNormalized] = roleRecord;
   }
 
   const landlordTenant = await prisma.tenant.upsert({
-    where: { id: 1 },
+    where: { id: BigInt(1) },
     update: {},
-    create: { id: 1, name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+    create: { id: BigInt(1), name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
   });
   const tenantId = landlordTenant.id;
 
@@ -192,22 +194,22 @@ async function main() {
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
     accountType: 'LEGAL',
-    roleIds: [createdRoles['ADMINISTRATOR'].id],
+    roleIds: [createdRoles['ADMINISTRATOR'].id.toString()],
     tenantId: tenantId.toString(),
   });
   if (!adminUserResult.success || !adminUserResult.userId) throw new Error(adminUserResult.message);
-  const adminUser = await services.user.getUserById(adminUserResult.userId);
+  const adminUser = await services.user.getUserById(BigInt(adminUserResult.userId));
 
   const auctioneerUserResult = await services.user.createUser({
     email: 'leilo@bidexpert.com.br',
     fullName: 'Leiloeiro de Teste',
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
-    roleIds: [createdRoles['AUCTIONEER'].id],
+    roleIds: [createdRoles['AUCTIONEER'].id.toString()],
     tenantId: tenantId.toString(),
   });
   if (!auctioneerUserResult.success || !auctioneerUserResult.userId) throw new Error(auctioneerUserResult.message);
-  const auctioneerUser = await services.user.getUserById(auctioneerUserResult.userId);
+  const auctioneerUser = await services.user.getUserById(BigInt(auctioneerUserResult.userId));
 
 
   const sellerUserResult = await services.user.createUser({
@@ -215,11 +217,11 @@ async function main() {
     fullName: 'Comitente de Teste',
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
-    roleIds: [createdRoles['CONSIGNOR'].id],
+    roleIds: [createdRoles['CONSIGNOR'].id.toString()],
     tenantId: tenantId.toString(),
   });
   if (!sellerUserResult.success || !sellerUserResult.userId) throw new Error(sellerUserResult.message);
-  const sellerUser = await services.user.getUserById(sellerUserResult.userId);
+  const sellerUser = await services.user.getUserById(BigInt(sellerUserResult.userId));
 
 
   const bidderUsers = [];
@@ -229,11 +231,11 @@ async function main() {
       fullName: faker.person.fullName(),
       password: 'Admin@123',
       habilitationStatus: 'HABILITADO',
-      roleIds: [createdRoles['BIDDER'].id],
+      roleIds: [createdRoles['BIDDER'].id.toString()],
       tenantId: tenantId.toString(),    
     });
     if (!userResult.success || !userResult.userId) throw new Error(userResult.message);
-    const user = await services.user.getUserById(userResult.userId);
+    const user = await services.user.getUserById(BigInt(userResult.userId));
     bidderUsers.push(user);
   }
   console.log("Users created.");
@@ -320,8 +322,7 @@ async function main() {
   const assetApartmentResult = await services.asset.createAsset(tenantId.toString(), {
     title: 'Apartamento em Moema, 2 dorms', description: 'Lindo apartamento com vista para o parque.',
     categoryId: catImoveis.id.toString(), evaluationValue: 750000.00, judicialProcessId: judicialProcess!.id.toString(),
-    sellerId: judicialSeller.id.toString(), locationCity: 'São Paulo', locationState: 'SP', status: 'DISPONIVEL', address: 'Rua da Amostra, 123',
-    latitude: -23.59, longitude: -46.67, imageUrl: null, imageMediaId: null, galleryImageUrls: [], mediaItemIds: [], dataAiHint: 'apartamento moderno',
+    sellerId: judicialSeller.id.toString(), locationCity: 'São Paulo', locationState: 'SP', status: 'DISPONIVEL',
   } as any);
   if(!assetApartmentResult.success || !assetApartmentResult.assetId) throw new Error(assetApartmentResult.message);
   const assetApartment = await services.asset.getAssetById(tenantId.toString(), assetApartmentResult.assetId);
@@ -330,7 +331,6 @@ async function main() {
     title: 'Ford Ka 2019', description: 'Carro em ótimo estado, único dono.',
     categoryId: catVeiculos.id.toString(), evaluationValue: 45000.00, sellerId: extrajudicialSeller!.id.toString(),
     locationCity: 'São Paulo', locationState: 'SP', status: 'DISPONIVEL', make: 'Ford', model: 'Ka', year: 2019, modelYear: 2019,
-    imageUrl: null, imageMediaId: null, galleryImageUrls: [], mediaItemIds: [], dataAiHint: 'carro ford ka',
   } as any);
   if(!assetCarResult.success || !assetCarResult.assetId) throw new Error(assetCarResult.message);
   const assetCar = await services.asset.getAssetById(tenantId.toString(), assetCarResult.assetId);
@@ -362,12 +362,11 @@ async function main() {
     auctionId: extrajudicialAuction.id.toString(), title: 'Lote 001 - Ford Ka 2019', number: '001',
     price: 45000.00, assetIds: [assetCar.id.toString()],
   }, tenantId.toString());
-  if(!lotCarResult.success || !lotCarResult.lotId) throw new Error(lotCarResult.message);
 
   for (const user of bidderUsers) {
     if (!user) continue;
-    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: judicialAuction!.id } as any);
-    await services.habilitation.upsertAuctionHabilitation({ userId: user.id, auctionId: extrajudicialAuction!.id } as any);
+    await services.habilitation.upsertAuctionHabilitation({ userId: user.id.toString(), auctionId: judicialAuction!.id.toString() } as any);
+    await services.habilitation.upsertAuctionHabilitation({ userId: user.id.toString(), auctionId: extrajudicialAuction!.id.toString() } as any);
   }
 
   const bidder1 = bidderUsers[0];
@@ -386,7 +385,7 @@ async function main() {
       user: { connect: { id: winningBid.bidderId } },
       winningBidAmount: winningBid.amount,
       paymentStatus: 'PENDENTE',
-    });
+    } as any);
     if(userWin) {
       await services.installmentPayment.createInstallmentsForWin(userWin as any, 3);
     }
@@ -397,13 +396,13 @@ async function main() {
   if(!docTypeRGResult || !docTypeCPFResult) throw new Error("Failed to create document types");
   
   if(adminUser) {
-    await services.userDocument.createUserDocument({ userId: BigInt(adminUser.id), documentTypeId: docTypeRGResult.id, fileUrl: faker.image.url(), fileName: 'rg_admin.pdf' });
-    await services.userDocument.createUserDocument({ userId: BigInt(adminUser.id), documentTypeId: docTypeCPFResult.id, fileUrl: faker.image.url(), fileName: 'cpf_admin.pdf' });
+    await services.userDocument.createUserDocument({ user: { connect: { id: adminUser.id } }, documentType: { connect: { id: docTypeRGResult.id } }, fileUrl: faker.image.url(), fileName: 'rg_admin.pdf' });
+    await services.userDocument.createUserDocument({ user: { connect: { id: adminUser.id } }, documentType: { connect: { id: docTypeCPFResult.id } }, fileUrl: faker.image.url(), fileName: 'cpf_admin.pdf' });
   }
 
   const mediaItem1Result = await services.mediaItem.createMediaItem({
     fileName: 'apartment_image.jpg', mimeType: 'image/jpeg', storagePath: '/uploads/apartment_image.jpg',
-    urlOriginal: faker.image.url(), title: 'Apartamento Moema', uploadedBy: { connect: { id: BigInt(adminUser!.id) } }
+    urlOriginal: faker.image.url(), title: 'Apartamento Moema', uploadedByUserId: adminUser!.id.toString()
   });
   if (!mediaItem1Result.success) throw new Error(mediaItem1Result.message);
   
@@ -449,4 +448,4 @@ main()
     await prisma.$disconnect();
   });
 
-    
+  
