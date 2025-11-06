@@ -182,7 +182,7 @@ async function main() {
   for (const state of brazilianStates) {
     const newStateResult = await services.state.createState({ ...state });
     if (!newStateResult.success || !newStateResult.stateId) throw new Error(newStateResult.message);
-    const newState = await services.state.getStateById(newStateResult.stateId);
+    const newState = await services.state.getStateById(BigInt(newStateResult.stateId));
     createdStates[state.uf] = newState;
   }
   console.log("Foundational data seeded.");
@@ -194,8 +194,8 @@ async function main() {
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
     accountType: 'LEGAL',
-    roleIds: [createdRoles['ADMINISTRATOR'].id.toString()],
-    tenantId: tenantId.toString(),
+    roleIds: [createdRoles['ADMINISTRATOR'].id],
+    tenantId: tenantId,
   });
   if (!adminUserResult.success || !adminUserResult.userId) throw new Error(adminUserResult.message);
   const adminUser = await services.user.getUserById(BigInt(adminUserResult.userId));
@@ -205,8 +205,8 @@ async function main() {
     fullName: 'Leiloeiro de Teste',
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
-    roleIds: [createdRoles['AUCTIONEER'].id.toString()],
-    tenantId: tenantId.toString(),
+    roleIds: [createdRoles['AUCTIONEER'].id],
+    tenantId: tenantId,
   });
   if (!auctioneerUserResult.success || !auctioneerUserResult.userId) throw new Error(auctioneerUserResult.message);
   const auctioneerUser = await services.user.getUserById(BigInt(auctioneerUserResult.userId));
@@ -217,8 +217,8 @@ async function main() {
     fullName: 'Comitente de Teste',
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
-    roleIds: [createdRoles['CONSIGNOR'].id.toString()],
-    tenantId: tenantId.toString(),
+    roleIds: [createdRoles['CONSIGNOR'].id],
+    tenantId: tenantId,
   });
   if (!sellerUserResult.success || !sellerUserResult.userId) throw new Error(sellerUserResult.message);
   const sellerUser = await services.user.getUserById(BigInt(sellerUserResult.userId));
@@ -231,8 +231,8 @@ async function main() {
       fullName: faker.person.fullName(),
       password: 'Admin@123',
       habilitationStatus: 'HABILITADO',
-      roleIds: [createdRoles['BIDDER'].id.toString()],
-      tenantId: tenantId.toString(),    
+      roleIds: [createdRoles['BIDDER'].id],
+      tenantId: tenantId,    
     });
     if (!userResult.success || !userResult.userId) throw new Error(userResult.message);
     const user = await services.user.getUserById(BigInt(userResult.userId));
@@ -244,56 +244,56 @@ async function main() {
   const stateSP = createdStates['SP'];
   if(!stateSP) throw new Error("State SP not found");
 
-  const citySPResult = await services.city.createCity({ name: 'São Paulo', stateId: stateSP.id.toString(), ibgeCode: '3550308' });
+  const citySPResult = await services.city.createCity({ name: 'São Paulo', stateId: stateSP.id, ibgeCode: '3550308' });
   if(!citySPResult.success || !citySPResult.cityId) throw new Error(citySPResult.message);
-  const citySP = await services.city.getCityById(citySPResult.cityId);
+  const citySP = await services.city.getCityById(BigInt(citySPResult.cityId));
 
   const courtTJSPResult = await services.court.createCourt({ name: 'Tribunal de Justiça de São Paulo', stateUf: 'SP', website: '' });
   if(!courtTJSPResult.success || !courtTJSPResult.courtId) throw new Error(courtTJSPResult.message);
-  const courtTJSP = await services.court.getCourtById(courtTJSPResult.courtId);
+  const courtTJSP = await services.court.getCourtById(BigInt(courtTJSPResult.courtId));
 
   if(!courtTJSP) throw new Error("Court TJSP not found");
-  const districtSPResult = await services.judicialDistrict.createJudicialDistrict({ name: 'Comarca de São Paulo', courtId: courtTJSP.id.toString(), stateId: stateSP.id.toString(), zipCode: '' });
+  const districtSPResult = await services.judicialDistrict.createJudicialDistrict({ name: 'Comarca de São Paulo', courtId: courtTJSP.id, stateId: stateSP.id, zipCode: '' });
   if(!districtSPResult.success || !districtSPResult.districtId) throw new Error(districtSPResult.message);
-  const districtSP = await services.judicialDistrict.getJudicialDistrictById(districtSPResult.districtId);
+  const districtSP = await services.judicialDistrict.getJudicialDistrictById(BigInt(districtSPResult.districtId));
 
   if(!districtSP) throw new Error("Judicial District SP not found");
-  const branchCivilResult = await services.judicialBranch.createJudicialBranch({ name: '1ª Vara Cível', districtId: districtSP.id.toString(), contactName: '', phone: '', email: '' });
+  const branchCivilResult = await services.judicialBranch.createJudicialBranch({ name: '1ª Vara Cível', districtId: districtSP.id, contactName: '', phone: '', email: '' });
   if(!branchCivilResult.success || !branchCivilResult.branchId) throw new Error(branchCivilResult.message);
-  const branchCivil = await services.judicialBranch.getJudicialBranchById(branchCivilResult.branchId);
+  const branchCivil = await services.judicialBranch.getJudicialBranchById(BigInt(branchCivilResult.branchId));
 
   const mainAuctioneerResult = await services.auctioneer.createAuctioneer(tenantId.toString(), {
     name: 'Leiloeiro Oficial & Associados',
     registrationNumber: 'JUCESP-123',
-    userId: auctioneerUser!.id.toString(),
+    userId: auctioneerUser!.id,
     city: 'São Paulo',
     website: '', zipCode: '', contactName: '', phone: '', email: '', address: '', state: 'SP',
     description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
   if(!mainAuctioneerResult.success || !mainAuctioneerResult.auctioneerId) throw new Error(mainAuctioneerResult.message);
-  const mainAuctioneer = await services.auctioneer.getAuctioneerById(tenantId.toString(), mainAuctioneerResult.auctioneerId);
+  const mainAuctioneer = await services.auctioneer.getAuctioneerById(tenantId.toString(), BigInt(mainAuctioneerResult.auctioneerId));
 
   if(!branchCivil) throw new Error("Judicial Branch Civil not found");
   const judicialSellerResult = await services.seller.createSeller(tenantId.toString(), {
     name: '1ª Vara Cível de São Paulo',
     isJudicial: true,
-    judicialBranchId: branchCivil.id.toString(),
+    judicialBranchId: branchCivil.id,
     userId: null,
     city: 'São Paulo', website: '', zipCode: '', contactName: '', phone: '', email: '', address: '', state: 'SP',
     description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
   if(!judicialSellerResult.success || !judicialSellerResult.sellerId) throw new Error(judicialSellerResult.message);
-  const judicialSeller = await services.seller.getSellerById(tenantId.toString(), judicialSellerResult.sellerId);
+  const judicialSeller = await services.seller.getSellerById(tenantId.toString(), BigInt(judicialSellerResult.sellerId));
 
   const extrajudicialSellerResult = await services.seller.createSeller(tenantId.toString(), {
     name: 'Banco Vende Tudo S/A',
     isJudicial: false,
-    userId: sellerUser!.id.toString(),
+    userId: sellerUser!.id,
     city: 'São Paulo', website: '', zipCode: '', contactName: '', phone: '', email: '', address: '',
     state: 'SP', description: '', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
   });
   if(!extrajudicialSellerResult.success || !extrajudicialSellerResult.sellerId) throw new Error(extrajudicialSellerResult.message);
-  const extrajudicialSeller = await services.seller.getSellerById(tenantId.toString(), extrajudicialSellerResult.sellerId);
+  const extrajudicialSeller = await services.seller.getSellerById(tenantId.toString(), BigInt(extrajudicialSellerResult.sellerId));
 
   const catImoveisResult = await services.category.createCategory({ name: 'Imóveis', description: 'Imóveis em geral' });
   if(!catImoveisResult.success || !catImoveisResult.category) throw new Error(catImoveisResult.message);
@@ -303,64 +303,64 @@ async function main() {
   if(!catVeiculosResult.success || !catVeiculosResult.category) throw new Error(catVeiculosResult.message);
   const catVeiculos = catVeiculosResult.category;
 
-  await services.subcategory.createSubcategory({ name: 'Apartamentos', parentCategoryId: catImoveis.id.toString(), description: '', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
-  await services.subcategory.createSubcategory({ name: 'Carros', parentCategoryId: catVeiculos.id.toString(), description: '', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
+  await services.subcategory.createSubcategory({ name: 'Apartamentos', parentCategoryId: catImoveis.id, description: '', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
+  await services.subcategory.createSubcategory({ name: 'Carros', parentCategoryId: catVeiculos.id, description: '', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
 
   if(!courtTJSP || !districtSP || !branchCivil || !judicialSeller) throw new Error("Judicial entity setup failed.");
   const judicialProcessResult = await services.judicialProcess.createJudicialProcess(tenantId.toString(), {
     processNumber: '0012345-67.2024.8.26.0001',
     isElectronic: true,
     parties: [],
-    courtId: courtTJSP.id.toString(),
-    districtId: districtSP.id.toString(),
-    branchId: branchCivil.id.toString(),
-    sellerId: judicialSeller.id.toString(),
+    courtId: courtTJSP.id,
+    districtId: districtSP.id,
+    branchId: branchCivil.id,
+    sellerId: judicialSeller.id,
   });
   if(!judicialProcessResult.success || !judicialProcessResult.processId) throw new Error(judicialProcessResult.message);
-  const judicialProcess = await services.judicialProcess.getJudicialProcessById(tenantId.toString(), judicialProcessResult.processId);
+  const judicialProcess = await services.judicialProcess.getJudicialProcessById(tenantId.toString(), BigInt(judicialProcessResult.processId));
 
   const assetApartmentResult = await services.asset.createAsset(tenantId.toString(), {
     title: 'Apartamento em Moema, 2 dorms', description: 'Lindo apartamento com vista para o parque.',
-    categoryId: catImoveis.id.toString(), evaluationValue: 750000.00, judicialProcessId: judicialProcess!.id.toString(),
-    sellerId: judicialSeller.id.toString(), locationCity: 'São Paulo', locationState: 'SP', status: 'DISPONIVEL',
+    categoryId: catImoveis.id, evaluationValue: 750000.00, judicialProcessId: judicialProcess!.id,
+    sellerId: judicialSeller.id, locationCity: 'São Paulo', locationState: 'SP', status: 'DISPONIVEL',
   } as any);
   if(!assetApartmentResult.success || !assetApartmentResult.assetId) throw new Error(assetApartmentResult.message);
-  const assetApartment = await services.asset.getAssetById(tenantId.toString(), assetApartmentResult.assetId);
+  const assetApartment = await services.asset.getAssetById(tenantId.toString(), BigInt(assetApartmentResult.assetId));
 
   const assetCarResult = await services.asset.createAsset(tenantId.toString(), {
     title: 'Ford Ka 2019', description: 'Carro em ótimo estado, único dono.',
-    categoryId: catVeiculos.id.toString(), evaluationValue: 45000.00, sellerId: extrajudicialSeller!.id.toString(),
+    categoryId: catVeiculos.id, evaluationValue: 45000.00, sellerId: extrajudicialSeller!.id,
     locationCity: 'São Paulo', locationState: 'SP', status: 'DISPONIVEL', make: 'Ford', model: 'Ka', year: 2019, modelYear: 2019,
   } as any);
   if(!assetCarResult.success || !assetCarResult.assetId) throw new Error(assetCarResult.message);
-  const assetCar = await services.asset.getAssetById(tenantId.toString(), assetCarResult.assetId);
+  const assetCar = await services.asset.getAssetById(tenantId.toString(), BigInt(assetCarResult.assetId));
 
   const judicialAuctionResult = await services.auction.createAuction(tenantId.toString(), {
     title: 'Leilão Judicial de Imóveis - TJSP', auctionType: 'JUDICIAL', status: 'ABERTO_PARA_LANCES',
-    auctioneerId: mainAuctioneer!.id.toString(), sellerId: judicialSeller.id.toString(), auctionDate: faker.date.future(),
+    auctioneerId: mainAuctioneer!.id, sellerId: judicialSeller.id, auctionDate: faker.date.future(),
   });
   if(!judicialAuctionResult.success || !judicialAuctionResult.auctionId) throw new Error(judicialAuctionResult.message);
-  const judicialAuction = await services.auction.getAuctionById(tenantId.toString(), judicialAuctionResult.auctionId);
+  const judicialAuction = await services.auction.getAuctionById(tenantId.toString(), BigInt(judicialAuctionResult.auctionId));
 
   const extrajudicialAuctionResult = await services.auction.createAuction(tenantId.toString(), {
     title: 'Leilão de Veículos do Banco Vende Tudo', auctionType: 'EXTRAJUDICIAL', status: 'ABERTO_PARA_LANCES',
-    auctioneerId: mainAuctioneer!.id.toString(), sellerId: extrajudicialSeller!.id.toString(), auctionDate: faker.date.future(),
+    auctioneerId: mainAuctioneer!.id, sellerId: extrajudicialSeller!.id, auctionDate: faker.date.future(),
   });
   if(!extrajudicialAuctionResult.success || !extrajudicialAuctionResult.auctionId) throw new Error(extrajudicialAuctionResult.message);
-  const extrajudicialAuction = await services.auction.getAuctionById(tenantId.toString(), extrajudicialAuctionResult.auctionId);
+  const extrajudicialAuction = await services.auction.getAuctionById(tenantId.toString(), BigInt(extrajudicialAuctionResult.auctionId));
 
   if(!assetApartment || !judicialAuction) throw new Error("Asset Apartment or Judicial Auction not found");
   const lotApartmentResult = await services.lot.createLot({
-    auctionId: judicialAuction.id.toString(), title: 'Lote 001 - Apartamento em Moema', number: '001',
-    price: 750000.00, assetIds: [assetApartment.id.toString()],
+    auctionId: judicialAuction.id, title: 'Lote 001 - Apartamento em Moema', number: '001',
+    price: 750000.00, assetIds: [assetApartment.id],
   }, tenantId.toString());
   if(!lotApartmentResult.success || !lotApartmentResult.lotId) throw new Error(lotApartmentResult.message);
-  const lotApartment = await services.lot.getLotById(lotApartmentResult.lotId);
+  const lotApartment = await services.lot.getLotById(BigInt(lotApartmentResult.lotId));
 
   if(!assetCar || !extrajudicialAuction) throw new Error("Asset Car or Extrajudicial Auction not found");
   const lotCarResult = await services.lot.createLot({
-    auctionId: extrajudicialAuction.id.toString(), title: 'Lote 001 - Ford Ka 2019', number: '001',
-    price: 45000.00, assetIds: [assetCar.id.toString()],
+    auctionId: extrajudicialAuction.id, title: 'Lote 001 - Ford Ka 2019', number: '001',
+    price: 45000.00, assetIds: [assetCar.id],
   }, tenantId.toString());
 
   for (const user of bidderUsers) {
@@ -402,14 +402,14 @@ async function main() {
 
   const mediaItem1Result = await services.mediaItem.createMediaItem({
     fileName: 'apartment_image.jpg', mimeType: 'image/jpeg', storagePath: '/uploads/apartment_image.jpg',
-    urlOriginal: faker.image.url(), title: 'Apartamento Moema', uploadedByUserId: adminUser!.id.toString()
+    urlOriginal: faker.image.url(), title: 'Apartamento Moema', user: { connect: { id: adminUser!.id } }
   });
   if (!mediaItem1Result.success) throw new Error(mediaItem1Result.message);
   
   await services.vehicleMake.createVehicleMake({ name: 'Ford' });
   const makeResult = await services.vehicleMake.createVehicleMake({ name: 'Chevrolet' });
   if(makeResult.success && makeResult.makeId) {
-    await services.vehicleModel.createVehicleModel({ name: 'Onix', makeId: makeResult.makeId });
+    await services.vehicleModel.createVehicleModel({ name: 'Onix', makeId: BigInt(makeResult.makeId) });
   }
 
   await services.contactMessage.saveMessage({
