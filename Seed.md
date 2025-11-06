@@ -1,4 +1,6 @@
  Esse seed precisa ser executado para melhorar a análise da plataforma de leilão BidExpert.
+
+ Deve conter todos os cenários possíveis que a plataforma possuir. Se necessário, olhar em todo o codebase para definição dos cenários.
  
  
  1. Usar apenas `actions` e `services`: Nenhuma chamada direta ao Prisma ou DML SQL será usada.
@@ -19,3 +21,5 @@
    10. Simulação de Habilitação de usuários e Lances (normais e máximos).
    11. Simulação de Arremates e geração de Pagamentos Parcelados.
    12. Criação de dados adicionais como Perguntas, Avaliações e Notificações.
+
+   Esete deve ser executado e monitorado para identificar possíveis erros. Os quais devem ser corrigidos.
