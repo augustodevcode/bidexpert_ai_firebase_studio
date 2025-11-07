@@ -2,7 +2,7 @@
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import { AuctionRepository } from '@/repositories/auction.repository';
-import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion, LotStatus, Auction } from '@/types';
+import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion, LotStatus, Auction, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient, Prisma } from '@prisma/client';
@@ -36,18 +36,21 @@ export class LotService {
       ...lot,
       id: lot.id?.toString(),
       auctionId: lot.auctionId?.toString(),
-      categoryId: lot.categoryId?.toString(),
-      subcategoryId: lot.subcategoryId?.toString(),
-      sellerId: lot.sellerId?.toString(),
+      categoryId: lot.categoryId?.toString() || null,
+      subcategoryId: lot.subcategoryId?.toString() || null,
+      sellerId: lot.sellerId?.toString() || null,
+      auctioneerId: lot.auctioneerId?.toString() || null,
+      cityId: lot.cityId?.toString() || null,
+      stateId: lot.stateId?.toString() || null,
+      winnerId: lot.winnerId?.toString() || null,
       tenantId: lot.tenantId?.toString(),
       price: lot.price ? Number(lot.price) : 0,
       initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
       secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
       bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
+      evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
       latitude: lot.latitude ? Number(lot.latitude) : null,
       longitude: lot.longitude ? Number(lot.longitude) : null,
-      evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
-      currentBidAmount: lot.currentBidAmount ? Number(lot.currentBidAmount) : null,
       assets: assets.map((asset: any) => ({
         ...asset,
         id: asset.id.toString(),
@@ -60,10 +63,60 @@ export class LotService {
       sellerName: lot.seller?.name,
       winningBidId: lot.winningBidId?.toString(),
       winningBidderId: lot.winningBidderId?.toString(),
-      winnerId: lot.winnerId?.toString(),
-      originalLotId: lot.originalLotId?.toString() ?? null,
-      inheritedMediaFromAssetId: lot.inheritedMediaFromAssetId?.toString() ?? null,
+      originalLotId: 'original_lot_id' in lot ? (lot as any).original_lot_id?.toString() : null,
+      inheritedMediaFromAssetId: 'inheritedMediaFromAssetId' in lot ? (lot as any).inheritedMediaFromAssetId?.toString() : null,
     } as Lot;
+  }
+
+  async getLotDetailsForV2(lotId: string): Promise<{
+    lot: Lot;
+    auction: Auction;
+    seller: SellerProfileInfo | null;
+    auctioneer: AuctioneerProfileInfo | null;
+    bids: BidInfo[];
+    questions: LotQuestion[];
+    reviews: Review[];
+  } | null> {
+    try {
+      const lot = await this.prisma.lot.findFirst({
+        where: {
+          OR: [{ id: /^\d+$/.test(lotId) ? BigInt(lotId) : -1n }, { publicId: lotId }],
+        },
+        include: {
+          auction: { include: { seller: true, auctioneer: true, stages: true } },
+          bids: { orderBy: { timestamp: 'desc' }, take: 20 },
+          questions: { orderBy: { createdAt: 'desc' } },
+          reviews: { orderBy: { createdAt: 'desc' } },
+        },
+      });
+
+      if (!lot || !lot.auction) {
+        return null;
+      }
+
+      // Reusing the mapping logic
+      const mappedLot = this.mapLotWithDetails(lot);
+      const mappedAuction = this.mapLotWithDetails(lot.auction as any); // Re-use might need casting
+
+      // Perform necessary type conversions for related data
+      const bids = lot.bids.map(b => ({ ...b, id: b.id.toString(), amount: Number(b.amount) })) as BidInfo[];
+      const questions = lot.questions.map(q => ({ ...q, id: q.id.toString() })) as LotQuestion[];
+      const reviews = lot.reviews.map(r => ({ ...r, id: r.id.toString() })) as Review[];
+
+
+      return {
+        lot: mappedLot,
+        auction: mappedAuction,
+        seller: lot.auction.seller ? { ...lot.auction.seller, id: lot.auction.seller.id.toString() } : null,
+        auctioneer: lot.auction.auctioneer ? { ...lot.auction.auctioneer, id: lot.auction.auctioneer.id.toString() } : null,
+        bids,
+        questions,
+        reviews,
+      };
+    } catch (error) {
+      console.error(`Error fetching detailed data for lot V2 (ID: ${lotId}):`, error);
+      return null;
+    }
   }
 
   async getLots(auctionId?: string, tenantId?: string, limit?: number, isPublicCall = false): Promise<Lot[]> {
@@ -624,5 +677,6 @@ export class LotService {
     return null;
   }
 }
+    
 
     
