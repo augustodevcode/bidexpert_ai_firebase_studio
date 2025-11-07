@@ -27,6 +27,9 @@ import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { getLotCategories } from '../categories/actions';
 import { getJudicialProcesses } from '../judicial-processes/actions';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
+import { useRouter } from 'next/navigation';
 
 const sortOptions = [
   { value: 'auctionDate_desc', label: 'Data: Mais Recentes' },
@@ -43,6 +46,8 @@ export default function AdminAuctionsPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const router = useRouter();
+
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
