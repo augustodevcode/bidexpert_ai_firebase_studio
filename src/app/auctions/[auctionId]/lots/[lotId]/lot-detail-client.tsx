@@ -28,7 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isPast, differenceInSeconds, parseISO, isValid } from 'date-fns';
+import { isPast, differenceInSeconds, parseISO, isValid, format, differenceInDays } from 'date-fns';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +60,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import BidExpertCard from '@/components/BidExpertCard';
+import { ptBR } from 'date-fns/locale';
 
 
 const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
