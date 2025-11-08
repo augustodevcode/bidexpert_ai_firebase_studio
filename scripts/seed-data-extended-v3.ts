@@ -1,19 +1,3 @@
-/**
- * @file Extended Seed Script (v3.0)
- * @version 3.0
- * @description Populates the database with a significantly larger and more diverse set of data
- *              to cover a wide array of scenarios for the BidExpert application.
- *              This version expands on v2, increasing quantities and complexity.
- *
- * @ai-guidelines
- *   - 1. SCRIPT PHILOSOPHY: This script uses SERVICE classes for creating business entities
- *     to ensure all business logic is applied. Direct database calls (`prisma.create`) are
- *     ONLY used for foundational, non-business data where a fixed ID or bootstrapping is necessary.
- *   - 2. SERVICE LAYER API: All service methods are designed to accept and return IDs as `string`.
- *     The conversion to and from `BigInt` is handled within the repository/service layer.
- *     This script MUST ONLY work with string IDs when interacting with services.
- */
-
 import { faker } from '@faker-js/faker';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -54,7 +38,7 @@ import { DocumentTemplateService } from '../src/services/document-template.servi
 import { ReportService } from '../src/services/report.service';
 import { SubscriberService } from '../src/services/subscriber.service';
 import { prisma } from '../src/lib/prisma';
-import type { Role, AssetFormData, AuctionStatus, LotStatus, Auction, Lot } from '../src/types';
+import type { Role, AssetFormData, AuctionStatus, LotStatus, Auction, Lot, JudicialDistrict, JudicialBranch, Court, CityInfo as City, JudicialProcessFormData, UserWin, DocumentType, VehicleMake, VehicleModel, MediaItem } from '../src/types';
 
 // AI-NOTE: Instantiate all required services here.
 const services = {
@@ -158,8 +142,8 @@ async function cleanDatabase() {
                  // @ts-ignore
                 await prisma[modelName].deleteMany({});
             }
-        } catch (error) {
-            console.warn(`Could not clean ${modelName}:`, error.message);
+        } catch (error: any) {
+            console.warn(`Could not clean ${modelName}:`, (error as Error).message);
         }
     }
 
@@ -185,7 +169,7 @@ async function main() {
   // Garantir que os IDs dos roles sejam strings para uso posterior
   Object.keys(createdRoles).forEach(key => {
     if (createdRoles[key] && typeof createdRoles[key].id !== 'string') {
-      createdRoles[key] = { ...createdRoles[key], id: createdRoles[key].id.toString() };
+      createdRoles[key] = { ...createdRoles[key], id: String(createdRoles[key].id) };
     }
   });
 
@@ -198,7 +182,7 @@ async function main() {
 
   await prisma.platformSettings.upsert({
     where: { tenantId: BigInt(tenantId) },
-    update: {},
+    update: { },
     create: { tenantId: BigInt(tenantId), siteTitle: 'BidExpert', siteTagline: 'Sua plataforma de leilões online.', isSetupComplete: true },
   });
 
@@ -218,7 +202,7 @@ async function main() {
     password: 'Admin@123',
     habilitationStatus: 'HABILITADO',
     accountType: 'LEGAL',
-    roleIds: [createdRoles['ADMINISTRATOR'].id.toString()],
+    roleIds: [String(createdRoles['ADMINISTRATOR'].id)],
     tenantId: tenantId,
   });
   if (!adminUserResult.success || !adminUserResult.userId) throw new Error(adminUserResult.message);
@@ -231,7 +215,7 @@ async function main() {
           fullName: faker.person.fullName(),
           password: 'Admin@123',
           habilitationStatus: 'HABILITADO',
-          roleIds: [createdRoles['AUCTIONEER'].id.toString()],
+          roleIds: [String(createdRoles['AUCTIONEER'].id)],
           tenantId: tenantId,
       });
       if (!userResult.success || !userResult.userId) throw new Error(userResult.message);
@@ -245,7 +229,7 @@ async function main() {
             fullName: faker.person.fullName(),
             password: 'Admin@123',
             habilitationStatus: 'HABILITADO',
-            roleIds: [createdRoles['CONSIGNOR'].id.toString()],
+            roleIds: [String(createdRoles['CONSIGNOR'].id)],
             tenantId: tenantId,
         });
         if (!userResult.success || !userResult.userId) throw new Error(userResult.message);
@@ -253,14 +237,14 @@ async function main() {
     }
 
 
-  const bidderUsers = [];
+  const bidderUsers: any[] = [];
   for (let i = 0; i < Constants.USER_COUNT; i++) {
     const userResult = await services.user.createUser({
       email: faker.internet.email(),
       fullName: faker.person.fullName(),
       password: 'Admin@123',
       habilitationStatus: i % 5 === 0 ? 'PENDING_DOCUMENTS' : 'HABILITADO',
-      roleIds: [createdRoles['BIDDER'].id.toString()],
+      roleIds: [String(createdRoles['BIDDER'].id)],
       tenantId: tenantId,
     });
     if (!userResult.success || !userResult.userId) throw new Error(userResult.message);
@@ -270,40 +254,37 @@ async function main() {
 
   console.log("Creating business entities (Cities, Courts, Sellers, etc.)...");
   
-  // Criar mais cidades
-  const cities = [];
+  const cities: City[] = [];
   const citySPResult = await services.city.createCity({ name: 'São Paulo', stateId: createdStates['SP'].id, ibgeCode: '3550308' });
   if(!citySPResult.success || !citySPResult.cityId) throw new Error(citySPResult.message);
-  cities.push(await services.city.getCityById(citySPResult.cityId));
+  cities.push((await services.city.getCityById(citySPResult.cityId))!);
 
   const cityRJResult = await services.city.createCity({ name: 'Rio de Janeiro', stateId: createdStates['RJ'].id, ibgeCode: '3304557' });
   if(!cityRJResult.success || !cityRJResult.cityId) throw new Error(cityRJResult.message);
-  cities.push(await services.city.getCityById(cityRJResult.cityId));
+  cities.push((await services.city.getCityById(cityRJResult.cityId))!);
 
-  // Criar cidades adicionais
   const additionalCityNames = ['Belo Horizonte', 'Curitiba', 'Porto Alegre', 'Salvador', 'Brasília', 'Fortaleza', 'Recife', 'Manaus'];
   for (const cityName of additionalCityNames) {
     const stateUF = faker.helpers.arrayElement(['SP', 'RJ', 'MG', 'PR', 'RS', 'BA', 'DF', 'CE', 'PE', 'AM']);
     const state = createdStates[stateUF];
     if (state) {
-      const cityResult = await services.city.createCity({ 
+      const cityResult = await services.city.createCity({
         name: cityName, 
         stateId: state.id, 
         ibgeCode: faker.string.numeric(7) 
       });
       if (cityResult.success && cityResult.cityId) {
-        cities.push(await services.city.getCityById(cityResult.cityId));
+        cities.push((await services.city.getCityById(cityResult.cityId))!);
       }
     }
   }
   console.log(`${cities.length} cities created.`);
 
-  // Criar Tribunais (Courts)
   console.log("Creating courts...");
-  const courts = [];
+  const courts: Court[] = [];
   const courtNames = ['Tribunal de Justiça de São Paulo', 'Tribunal de Justiça do Rio de Janeiro', 'Tribunal de Justiça de Minas Gerais', 'Tribunal Regional Federal da 3ª Região', 'Tribunal de Justiça do Paraná'];
   for (const courtName of courtNames) {
-    const courtResult = await services.court.createCourt({ name: courtName });
+        const courtResult = await services.court.createCourt({ name: courtName, website: faker.internet.url(), stateUf: faker.helpers.arrayElement(brazilianStates).uf });
     if (courtResult.success && courtResult.courtId) {
       const court = await services.court.getCourtById(courtResult.courtId);
       if (court) courts.push(court);
@@ -311,9 +292,8 @@ async function main() {
   }
   console.log(`${courts.length} courts created.`);
 
-  // Criar Comarcas (JudicialDistricts)
   console.log("Creating judicial districts...");
-  const districts = [];
+  const districts: JudicialDistrict[] = [];
   for (let i = 0; i < Constants.JUDICIAL_DISTRICT_COUNT; i++) {
     const stateUF = faker.helpers.arrayElement(['SP', 'RJ', 'MG', 'PR', 'RS']);
     const state = createdStates[stateUF];
@@ -333,9 +313,8 @@ async function main() {
   }
   console.log(`${districts.length} judicial districts created.`);
 
-  // Criar Varas (JudicialBranches)
   console.log("Creating judicial branches...");
-  const branches = [];
+  const branches: JudicialBranch[] = [];
   for (let i = 0; i < Constants.JUDICIAL_BRANCH_COUNT; i++) {
     const district = faker.helpers.arrayElement(districts);
     if (district) {
@@ -354,12 +333,14 @@ async function main() {
   }
   console.log(`${branches.length} judicial branches created.`);
 
-  const auctioneers = [];
+  const auctioneers: any[] = [];
   for(let i = 0; i < auctioneerUsers.length; i++) {
+      const user = auctioneerUsers[i];
+      if (!user) continue;
       const result = await services.auctioneer.createAuctioneer(tenantId, {
         name: `Leiloeiro Oficial ${i + 1}`,
         registrationNumber: `JUCESP-${faker.string.numeric(5)}`,
-        userId: auctioneerUsers[i]!.id.toString(),
+        userId: user.id.toString(),
         city: faker.location.city(), website: faker.internet.domainName(), zipCode: faker.location.zipCode(), contactName: faker.person.fullName(), phone: faker.phone.number(), email: faker.internet.email(), address: faker.location.streetAddress(), state: 'SP',
         description: 'Leiloeiro com anos de experiência.', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
       });
@@ -367,14 +348,15 @@ async function main() {
       auctioneers.push(await services.auctioneer.getAuctioneerById(tenantId, result.auctioneerId));
   }
 
-  // Criar Comitentes (Sellers) - Particulares e Judiciais
   console.log("Creating sellers...");
-  const sellers = [];
+  const sellers: any[] = [];
   for(let i = 0; i < sellerUsers.length; i++) {
+      const user = sellerUsers[i];
+      if (!user) continue;
       const result = await services.seller.createSeller(tenantId, {
         name: `Vendedor Particular ${i + 1}`,
         isJudicial: false,
-        userId: sellerUsers[i]!.id.toString(),
+        userId: user.id.toString(),
         city: faker.location.city(), website: faker.internet.domainName(), zipCode: faker.location.zipCode(), contactName: faker.person.fullName(), phone: faker.phone.number(), email: faker.internet.email(), address: faker.location.streetAddress(),
         state: 'SP', description: 'Vendedor de ativos diversos.', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
       });
@@ -382,7 +364,6 @@ async function main() {
       sellers.push(await services.seller.getSellerById(tenantId, result.sellerId));
   }
 
-  // Criar Comitentes Judiciais (vinculados a varas)
   for (let i = 0; i < Math.min(3, branches.length); i++) {
     const branch = branches[i];
     if (branch) {
@@ -424,9 +405,8 @@ async function main() {
   await services.subcategory.createSubcategory({ name: 'Celulares', parentCategoryId: catEletronicos.id, description: 'Celulares', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
   console.log("Categories and subcategories created.");
 
-  // Criar Marcas e Modelos de Veículos
   console.log("Creating vehicle makes and models...");
-  const vehicleMakes = [];
+  const vehicleMakes: VehicleMake[] = [];
   const makeNames = ['Toyota', 'Honda', 'Volkswagen', 'Ford', 'Chevrolet', 'Fiat', 'Hyundai', 'Nissan', 'Renault', 'Peugeot'];
   for (const makeName of makeNames.slice(0, Constants.VEHICLE_MAKE_COUNT)) {
     const makeResult = await services.vehicleMake.createVehicleMake({ name: makeName });
@@ -436,7 +416,7 @@ async function main() {
     }
   }
 
-  const vehicleModels = [];
+  const vehicleModels: VehicleModel[] = [];
   for (let i = 0; i < Constants.VEHICLE_MODEL_COUNT; i++) {
     const make = faker.helpers.arrayElement(vehicleMakes);
     if (make) {
@@ -452,9 +432,8 @@ async function main() {
   }
   console.log(`${vehicleMakes.length} vehicle makes and ${vehicleModels.length} models created.`);
 
-  // Criar Processos Judiciais
   console.log("Creating judicial processes...");
-  const judicialProcesses = [];
+  const judicialProcesses: any[] = [];
   for (let i = 0; i < Constants.JUDICIAL_PROCESS_COUNT; i++) {
     const court = faker.helpers.arrayElement(courts);
     const district = faker.helpers.arrayElement(districts);
@@ -471,18 +450,18 @@ async function main() {
         branchId: branch.id,
         sellerId: judicialSeller?.id,
         parties: [
-          {
-            name: faker.person.fullName(),
-            documentNumber: faker.string.numeric(11),
-            partyType: 'AUTOR',
-          },
-          {
-            name: faker.company.name(),
-            documentNumber: faker.string.numeric(14),
-            partyType: 'REU',
-          },
+            {
+              name: faker.person.fullName(),
+              documentNumber: faker.string.numeric(11),
+              partyType: 'AUTOR',
+            },
+            {
+              name: faker.company.name(),
+              documentNumber: faker.string.numeric(14),
+              partyType: 'REU',
+            },
         ],
-      });
+      } as JudicialProcessFormData);
       if (processResult.success && processResult.processId) {
         const process = await services.judicialProcess.getJudicialProcessById(tenantId, processResult.processId);
         if (process) judicialProcesses.push(process);
@@ -492,55 +471,68 @@ async function main() {
   console.log(`${judicialProcesses.length} judicial processes created.`);
 
 
-  // Criar MediaItems (Imagens)
   console.log("Creating media items...");
-  const mediaItems = [];
-  for (let i = 0; i < Constants.MEDIA_ITEM_COUNT; i++) {
-    const mediaResult = await services.mediaItem.createMediaItem({
-      userId: adminUser!.id.toString(),
-      fileName: `image-${i + 1}.jpg`,
-      fileType: 'image/jpeg',
-      fileSize: faker.number.int({ min: 100000, max: 5000000 }),
-      url: `https://picsum.photos/seed/${i}/800/600`,
-      mimeType: 'image/jpeg',
-    });
-    if (mediaResult.success && mediaResult.mediaItem) {
-      mediaItems.push(mediaResult.mediaItem);
+  const mediaItems: any[] = [];
+  if (adminUser) {
+    for (let i = 0; i < Constants.MEDIA_ITEM_COUNT; i++) {
+      const mediaResult = await services.mediaItem.createMediaItem({
+        userId: adminUser.id.toString(),
+        fileName: `image-${i + 1}.jpg`,
+        storagePath: `images/image-${i + 1}.jpg`,
+        sizeBytes: faker.number.int({ min: 100000, max: 5000000 }),
+        urlOriginal: `https://picsum.photos/seed/${i}/800/600`,
+        mimeType: 'image/jpeg',
+      });
+      if (mediaResult.success && mediaResult.mediaItem) {
+        mediaItems.push(mediaResult.mediaItem);
+      }
     }
   }
   console.log(`${mediaItems.length} media items created.`);
 
   console.log("Creating assets...");
-  const assets = [];
+  const assets: any[] = [];
   for (let i = 0; i < Constants.ASSET_COUNT; i++) {
       const category = faker.helpers.arrayElement([catImoveis, catVeiculos, catEletronicos]);
-      const seller = faker.helpers.arrayElement(sellers);
-      const city = faker.helpers.arrayElement(cities);
-      const mediaItem = faker.helpers.arrayElement(mediaItems);
+      const seller = faker.helpers.arrayElement(sellers.filter(Boolean));
+      const city = faker.helpers.arrayElement(cities.filter(Boolean));
+      const mediaItem = faker.helpers.arrayElement(mediaItems.filter(Boolean));
+
+      if (!seller || !city || !category) continue;
+
+      const state = Object.values(createdStates).find(s => s.id === city.stateId);
 
       let assetData: Partial<AssetFormData> = {
           title: '',
           description: faker.lorem.paragraph(),
           categoryId: category.id,
           evaluationValue: faker.number.int({ min: 1000, max: 500000 }),
-          sellerId: seller!.id,
-          locationCity: city!.name,
-          locationState: city!.state.uf,
+          sellerId: seller.id,
+          locationCity: city.name,
+          locationState: state?.uf ?? 'SP',
           status: 'DISPONIVEL',
-          imageUrl: mediaItem?.url || null,
+          imageUrl: mediaItem?.urlOriginal || null,
           imageMediaId: mediaItem?.id || null,
       };
 
       if (category.id === catVeiculos.id) {
-          const make = faker.helpers.arrayElement(vehicleMakes);
-          const model = faker.helpers.arrayElement(vehicleModels.filter(m => m?.makeId === make?.id));
-          assetData.title = `Veículo ${make?.name || faker.vehicle.manufacturer()} ${model?.name || faker.vehicle.model()}`;
-          assetData.make = make?.name || faker.vehicle.manufacturer();
-          assetData.model = model?.name || faker.vehicle.model();
+          if (vehicleModels.length > 0) {
+            const model = faker.helpers.arrayElement(vehicleModels);
+            if (model) {
+                const make = vehicleMakes.find(m => m.id === model.makeId);
+                assetData.title = `Veículo ${make?.name || ''} ${model.name}`;
+                assetData.make = make?.name;
+                assetData.model = model.name;
+            }
+          } else {
+            assetData.title = `Veículo ${faker.vehicle.manufacturer()} ${faker.vehicle.model()}`;
+            assetData.make = faker.vehicle.manufacturer();
+            assetData.model = faker.vehicle.model();
+          }
           assetData.year = faker.date.past({ years: 10 }).getFullYear();
           assetData.modelYear = assetData.year;
       } else if (category.id === catImoveis.id) {
-          assetData.title = `Imóvel em ${city!.name} - ${faker.location.streetAddress(false)}`;
+          assetData.title = `Imóvel em ${city.name} - ${faker.location.streetAddress(false)}`;
       } else {
           assetData.title = `Eletrônico: ${faker.commerce.productName()}`;
       }
@@ -556,76 +548,82 @@ async function main() {
 
 
   console.log("Creating auctions and lots...");
-  const auctions = [];
+  const auctions: (Auction | null)[] = [];
   let availableAssets = faker.helpers.shuffle(assets.filter(a => a?.status === 'DISPONIVEL'));
 
   for (let i = 0; i < Constants.AUCTION_COUNT; i++) {
-      const auctioneer = faker.helpers.arrayElement(auctioneers);
-      const seller = faker.helpers.arrayElement(sellers);
+      const auctioneer = faker.helpers.arrayElement(auctioneers.filter(Boolean));
+      const seller = faker.helpers.arrayElement(sellers.filter(Boolean));
+      if (!auctioneer || !seller) continue;
+
       const status = faker.helpers.arrayElement<AuctionStatus>(['ABERTO_PARA_LANCES', 'EM_BREVE', 'FINALIZADO', 'CANCELADO']);
 
-      // Criar leilão com ou sem processo judicial
       const isJudicial = i % 3 === 0 && judicialProcesses.length > 0;
       const judicialProcess = isJudicial ? faker.helpers.arrayElement(judicialProcesses) : null;
       
       const auctionResult = await services.auction.createAuction(tenantId, {
-          title: `Grande Leilão de ${seller!.name} - #${i + 1}`,
+          title: `Grande Leilão de ${seller.name} - #${i + 1}`,
           auctionType: isJudicial ? 'JUDICIAL' : 'EXTRAJUDICIAL',
           status: status,
-          auctioneerId: auctioneer!.id,
-          sellerId: seller!.id,
+          auctioneerId: auctioneer.id.toString(),
+          sellerId: seller.id.toString(),
           auctionDate: faker.date.future(),
-          softCloseEnabled: i % 2 === 0, // Enable soft close for half of the auctions
-          judicialProcessId: judicialProcess?.id,
+          softCloseEnabled: i % 2 === 0,
+          judicialProcessId: judicialProcess?.id.toString(),
       });
       if (!auctionResult.success || !auctionResult.auctionId) {
           console.warn(`Failed to create auction: ${auctionResult.message}`);
           continue;
       }
       const auction = await services.auction.getAuctionById(tenantId, auctionResult.auctionId);
-      auctions.push(auction);
+      if (auction) {
+        auctions.push(auction);
+      } else {
+        continue;
+      }
 
-      // Criar Etapas de Leilão (AuctionStages/Praças)
-      if (auction && status === 'ABERTO_PARA_LANCES') {
-        const stageResult = await services.auctionStage.createAuctionStage({
-          auction: { connect: { id: BigInt(auction.id) } },
-          name: '2ª Praça',
-          startDate: new Date(),
-          endDate: faker.date.future({ days: 7 }),
-          initialPrice: new Decimal(faker.number.int({ min: 10000, max: 100000 })),
+      if (auction && status === 'ABERTO_PARA_LANCES' && auction.auctionDate) {
+        const startDate = auction.auctionDate;
+        const endDate = faker.date.future({ refDate: startDate });
+        const initialPrice = new Decimal(faker.number.int({ min: 10000, max: 100000 }));
+        
+        const stageResult = await services.auctionStage.create({
+            auction: { connect: { id: auction.id } },
+            name: '1ª Praça',
+            startDate,
+            endDate,
+            initialPrice,
         });
+
         if (stageResult.success) {
           console.log(`  Created auction stage for auction ${auction.id}`);
         }
       }
 
-      // Create lots for this auction
       const numLots = faker.number.int({ min: 1, max: Constants.LOTS_PER_AUCTION_MAX });
       for (let j = 0; j < numLots; j++) {
           if (availableAssets.length === 0) continue;
 
-          const asset = availableAssets.pop(); // Take the next available asset
+          const asset = availableAssets.pop();
           if (!asset) continue;
 
           const lotResult = await services.lot.createLot({
-              auctionId: auction!.id,
+              auctionId: auction.id.toString(),
               title: `Lote ${j + 1} - ${asset.title}`,
               number: `${j + 1}`.padStart(3, '0'),
               price: asset.evaluationValue as number,
-              assetIds: [asset.id],
+              assetIds: [asset.id.toString()],
               type: 'EXTRAJUDICIAL',
-          }, tenantId, adminUser!.id.toString());
+          }, tenantId);
 
           if (lotResult.success && lotResult.lotId) {
-              // Mark asset as part of a lot - only if lot was created successfully
               try {
-                  await services.asset.updateAsset(tenantId, asset.id, { status: 'EM_LOTE' });
+                  await services.asset.updateAsset(tenantId, asset.id.toString(), { status: 'EM_LOTE' });
               } catch (error: any) {
                   console.warn(`Failed to update asset ${asset.id} status: ${error.message}`);
               }
           } else {
               console.warn(`Failed to create lot: ${lotResult.message}`);
-              // Return asset to available pool if lot creation failed
               availableAssets.push(asset);
           }
       }
@@ -633,20 +631,18 @@ async function main() {
   console.log(`${auctions.length} auctions created with lots.`);
 
 
-  // Criar Habilitações de Leilão
   console.log("Creating auction habilitations...");
-  for (const auction of auctions) {
-    if (auction.status === 'ABERTO_PARA_LANCES') {
+  for (const auction of auctions.filter(Boolean)) {
+    if (auction!.status === 'ABERTO_PARA_LANCES') {
       const habilitatedBidders = bidderUsers.filter(u => u?.habilitationStatus === 'HABILITADO').slice(0, 5);
-      for (const bidder of habilitatedBidders) {
+      for (const bidder of habilitatedBidders.filter(Boolean)) {
+        if (!bidder) continue;
         try {
           await services.habilitation.upsertAuctionHabilitation({
             user: { connect: { id: BigInt(bidder.id.toString()) } },
-            auction: { connect: { id: BigInt(auction.id) } },
-            status: 'HABILITADO',
+            auction: { connect: { id: BigInt(auction!.id.toString()) } },
           });
         } catch (error: any) {
-          // Ignora erros de habilitação duplicada
           if (!error.message?.includes('already') && !error.message?.includes('Unique constraint')) {
             console.warn(`Failed to create habilitation: ${error.message}`);
           }
@@ -656,32 +652,36 @@ async function main() {
   }
   console.log("Auction habilitations created.");
 
-  // Criar DocumentTypes
   console.log("Creating document types...");
-  const documentTypes = [];
+  const documentTypes: DocumentType[] = [];
   const docTypeNames = ['CPF', 'RG', 'CNH', 'Comprovante de Residência', 'Comprovante de Renda'];
   for (const docTypeName of docTypeNames) {
-    const docTypeResult = await services.documentType.createDocumentType({ name: docTypeName });
-    if (docTypeResult.success && docTypeResult.documentTypeId) {
-      const docType = await services.documentType.getDocumentTypeById(docTypeResult.documentTypeId);
-      if (docType) documentTypes.push(docType);
+    const docType = await services.documentType.upsertDocumentType({
+        name: docTypeName,
+        description: docTypeName,
+        isRequired: ['CPF', 'RG'].includes(docTypeName),
+        appliesTo: 'BOTH',
+    });
+    if (docType) {
+      documentTypes.push(docType);
     }
   }
   console.log(`${documentTypes.length} document types created.`);
 
-  // Criar UserDocuments para alguns usuários
   console.log("Creating user documents...");
+  const userDocuments: any[] = [];
   for (let i = 0; i < Math.min(10, bidderUsers.length); i++) {
     const user = bidderUsers[i];
     const docType = faker.helpers.arrayElement(documentTypes);
     if (user && docType) {
       try {
-        await services.userDocument.createUserDocument({
-          userId: user.id.toString(),
-          documentTypeId: docType.id,
-          status: 'APROVADO',
+        const docResult = await services.userDocument.create({
+          user: { connect: { id: user.id } },
+          documentType: { connect: { id: docType.id.toString() } },
+          status: 'APPROVED',
           documentNumber: faker.string.numeric(11),
         });
+        if (docResult.success) userDocuments.push(docResult);
       } catch (error: any) {
         console.warn(`Failed to create user document: ${error.message}`);
       }
@@ -690,11 +690,11 @@ async function main() {
   console.log("User documents created.");
 
   console.log("Simulating bids, wins, and user interactions...");
-  const openAuctions = await services.auction.getAuctionsByStatus(tenantId, 'ABERTO_PARA_LANCES');
+  const openAuctions = (await services.auction.getAuctions({ where: { status: 'ABERTO_PARA_LANCES' } })) || [];
 
   for (const auction of openAuctions) {
-      const lots = await services.lot.getLots(auction.id, tenantId, undefined, false);
-      const habilitatedBidders = bidderUsers.filter(u => u?.habilitationStatus === 'HABILITADO');
+      const lots = await services.lot.getLotsByAuctionId(auction.id.toString());
+      const habilitatedBidders = bidderUsers.filter(u => u?.habilitationStatus === 'HABILITADO' && u);
 
       for (const lot of lots) {
           const numBids = faker.number.int({ min: 0, max: Constants.BIDS_PER_LOT_MAX });
@@ -705,88 +705,83 @@ async function main() {
               if (!bidder) continue;
 
               lastBidAmount = lastBidAmount.plus(new Decimal(lot.bidIncrementStep || 100));
-              await services.bid.createBidFromStrings(
-                  lot.id,
-                  bidder.id.toString(),
-                  Number(lastBidAmount),
-                  auction.id,
-                  tenantId,
-                  bidder.fullName || undefined
+              await services.bid.create(
+                  {
+                    lot: { connect: { id: lot.id } },
+                    bidder: { connect: { id: bidder.id } },
+                    amount: Number(lastBidAmount),
+                    auction: { connect: { id: auction.id } },
+                    authorName: bidder.fullName || undefined
+                  }
               );
           }
 
-          // Criar algumas perguntas sobre lotes
           if (numBids > 0 && faker.datatype.boolean({ probability: 0.3 })) {
             const questioner = faker.helpers.arrayElement(habilitatedBidders);
             if (questioner && lot.auctionId) {
               try {
                 await services.lotQuestion.create({
-                  lotId: lot.id,
+                  lotId: lot.id.toString(),
                   userId: questioner.id.toString(),
-                  auctionId: lot.auctionId,
                   authorName: questioner.fullName || 'Usuário',
                   question: faker.lorem.sentence(),
                 });
               } catch (error: any) {
-                // Ignora erros
               }
             }
           }
 
-          // Criar algumas avaliações
           if (numBids > 0 && faker.datatype.boolean({ probability: 0.2 })) {
             const reviewer = faker.helpers.arrayElement(habilitatedBidders);
             if (reviewer && lot.auctionId) {
               try {
                 await services.review.create({
-                  lotId: lot.id,
+                  lotId: lot.id.toString(),
                   userId: reviewer.id.toString(),
-                  auctionId: lot.auctionId,
                   authorName: reviewer.fullName || 'Usuário',
                   rating: faker.number.int({ min: 3, max: 5 }),
                   comment: faker.lorem.sentence(),
                 });
               } catch (error: any) {
-                // Ignora erros
               }
             }
           }
 
-          // Simulate a win
           if (numBids > 0) {
-              const winningBid = await services.bid.getHighestBidForLot(lot.id);
+              const winningBid = await services.bid.getHighestBid(lot.id.toString());
               if (winningBid) {
-                  const userWin = await services.userWin.createFromStrings(
-                      lot.id,
-                      winningBid.bidderId.toString(),
-                      Number(winningBid.amount),
-                      'PENDENTE'
+                  const userWinResult = await services.userWin.create(
+                    {
+                      lotId: lot.id.toString(),
+                      winnerId: winningBid.bidderId.toString(),
+                      value: new Decimal(winningBid.amount),
+                      status: 'PENDENTE'
+                    }
                   );
-                  if (userWin) {
-                      await services.installmentPayment.createInstallmentsForWin(userWin, faker.helpers.arrayElement([1, 3, 6]));
+                  if (userWinResult.success && userWinResult.userWin) {
+                      await services.installmentPayment.createInstallmentsForWin(userWinResult.userWin as UserWin, faker.helpers.arrayElement([1, 3, 6]));
                   }
-                  await services.lot.updateLot(lot.id, { 
+                  await services.lot.updateLot(tenantId, lot.id.toString(), { 
                       status: 'VENDIDO', 
                       winnerId: winningBid.bidderId.toString() 
                   });
               }
           } else {
-               await services.lot.updateLot(lot.id, { status: 'NAO_VENDIDO' });
+               await services.lot.updateLot(tenantId, lot.id.toString(), { status: 'NAO_VENDIDO' });
           }
       }
   }
   console.log("Bidding and win simulation complete.");
 
-  // Criar algumas ofertas de venda direta
   console.log("Creating direct sale offers...");
   for (let i = 0; i < 5; i++) {
     const asset = faker.helpers.arrayElement(assets.filter(a => a?.status === 'DISPONIVEL'));
-    const seller = faker.helpers.arrayElement(sellers);
+    const seller = faker.helpers.arrayElement(sellers.filter(Boolean));
     if (asset && seller) {
       try {
         await services.directSaleOffer.createDirectSaleOffer(tenantId, {
-          assetId: asset.id,
-          sellerId: seller.id,
+          assetId: asset.id.toString(),
+          sellerId: seller.id.toString(),
           price: asset.evaluationValue as number,
           status: 'ATIVO',
         });
@@ -797,14 +792,14 @@ async function main() {
   }
   console.log("Direct sale offers created.");
 
-  // Criar algumas notificações
   console.log("Creating notifications...");
   for (let i = 0; i < 20; i++) {
-    const user = faker.helpers.arrayElement(bidderUsers);
+    const user = faker.helpers.arrayElement(bidderUsers.filter(Boolean));
     if (user) {
       try {
-        await services.notification.createNotification({
-          userId: user.id.toString(),
+        await services.notification.create({
+          tenant: { connect: { id: BigInt(tenantId) } },
+          user: { connect: { id: user.id } },
           message: faker.helpers.arrayElement([
             'Seu lance foi superado!',
             'Novo lote disponível para lances',
@@ -820,7 +815,6 @@ async function main() {
   }
   console.log("Notifications created.");
 
-  // Criar alguns assinantes
   console.log("Creating subscribers...");
   for (let i = 0; i < 10; i++) {
     try {
@@ -829,13 +823,13 @@ async function main() {
         name: faker.person.fullName(),
       }, tenantId);
     } catch (error: any) {
-      // Ignora erros de email duplicado
     }
   }
   console.log("Subscribers created.");
 
   console.log("--- SEED SCRIPT V3.0 FINISHED SUCCESSFULLY ---");
-  console.log("\n📊 RESUMO DO SEED:");
+  console.log(`
+📊 RESUMO DO SEED:`);
   console.log(`✅ ${Object.keys(createdRoles).length} Roles`);
   console.log(`✅ ${Object.keys(createdStates).length} Estados`);
   console.log(`✅ ${cities.length} Cidades`);

@@ -52,9 +52,6 @@ export default function AuctionStagesTimeline({
     return <div className="h-10 w-full animate-pulse rounded-md bg-muted" />;
   }
 
-  // Lógica corrigida para determinar o status de cada etapa
-  let activeStep = -1;
-
   const steps = stages.map((stage, index) => {
     const startDate = stage.startDate ? new Date(stage.startDate) : null;
     const endDate = stage.endDate ? new Date(stage.endDate) : null;
@@ -76,16 +73,14 @@ export default function AuctionStagesTimeline({
   });
 
   const activeStageIndex = steps.findIndex(s => s.status === 'active');
-  const firstUpcomingIndex = steps.findIndex(s => s.status === 'upcoming');
-
-  if (activeStageIndex !== -1) {
-    activeStep = activeStageIndex;
-  } else if (firstUpcomingIndex !== -1) {
-    activeStep = firstUpcomingIndex;
-  } else {
-    // If all stages are completed, set the last one as active for display purposes
-    activeStep = steps.length - 1;
+  let activeStep = activeStageIndex !== -1 ? activeStageIndex : steps.length;
+  if(activeStageIndex === -1 && steps.every(s => s.status === 'completed')) {
+    activeStep = steps.length;
+  } else if (activeStageIndex === -1 && steps.some(s => s.status === 'upcoming')) {
+    activeStep = steps.findIndex(s => s.status === 'upcoming');
   }
+
+
   
   if (variant === 'compact') {
       return (
