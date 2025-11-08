@@ -608,7 +608,7 @@ async function main() {
           if (!asset) continue;
 
           const lotResult = await services.lot.createLot({
-              auctionId: auction.id.toString(),
+              auctionId: auction.id,
               title: `Lote ${j + 1} - ${asset.title}`,
               number: `${j + 1}`.padStart(3, '0'),
               price: asset.evaluationValue as number,
@@ -618,7 +618,7 @@ async function main() {
 
           if (lotResult.success && lotResult.lotId) {
               try {
-                  await services.asset.updateAsset(tenantId, asset.id.toString(), { status: 'EM_LOTE' });
+                  await services.asset.updateAsset(asset.id.toString(), { status: 'EM_LOTE' });
               } catch (error: any) {
                   console.warn(`Failed to update asset ${asset.id} status: ${error.message}`);
               }
@@ -663,7 +663,7 @@ async function main() {
         appliesTo: 'BOTH',
     });
     if (docType) {
-      documentTypes.push(docType);
+      documentTypes.push({ ...docType, id: docType.id.toString() } as DocumentType);
     }
   }
   console.log(`${documentTypes.length} document types created.`);
@@ -675,7 +675,7 @@ async function main() {
     const docType = faker.helpers.arrayElement(documentTypes);
     if (user && docType) {
       try {
-        const docResult = await services.userDocument.create({
+        const docResult = await services.userDocument.createUserDocument({
           user: { connect: { id: user.id } },
           documentType: { connect: { id: docType.id.toString() } },
           status: 'APPROVED',
@@ -690,10 +690,10 @@ async function main() {
   console.log("User documents created.");
 
   console.log("Simulating bids, wins, and user interactions...");
-  const openAuctions = (await services.auction.getAuctions({ where: { status: 'ABERTO_PARA_LANCES' } })) || [];
+  const openAuctions = (await services.auction.getAuctions())?.filter(a => a.status === 'ABERTO_PARA_LANCES') || [];
 
   for (const auction of openAuctions) {
-      const lots = await services.lot.getLotsByAuctionId(auction.id.toString());
+      const lots = (await services.lot.getLots({ where: { auctionId: auction.id.toString() } })) || [];
       const habilitatedBidders = bidderUsers.filter(u => u?.habilitationStatus === 'HABILITADO' && u);
 
       for (const lot of lots) {
@@ -705,7 +705,7 @@ async function main() {
               if (!bidder) continue;
 
               lastBidAmount = lastBidAmount.plus(new Decimal(lot.bidIncrementStep || 100));
-              await services.bid.create(
+              await services.bid.createBid(
                   {
                     lot: { connect: { id: lot.id } },
                     bidder: { connect: { id: bidder.id } },
@@ -748,26 +748,24 @@ async function main() {
           }
 
           if (numBids > 0) {
-              const winningBid = await services.bid.getHighestBid(lot.id.toString());
+              const winningBid = await services.bid.getHighestBidForLot(lot.id.toString());
               if (winningBid) {
-                  const userWinResult = await services.userWin.create(
-                    {
-                      lotId: lot.id.toString(),
-                      winnerId: winningBid.bidderId.toString(),
+                  const userWinResult = await services.userWin.create({
+                      lot: { connect: { id: lot.id.toString() } },
+                      winner: { connect: { id: winningBid.bidderId.toString() } },
                       value: new Decimal(winningBid.amount),
                       status: 'PENDENTE'
-                    }
-                  );
-                  if (userWinResult.success && userWinResult.userWin) {
-                      await services.installmentPayment.createInstallmentsForWin(userWinResult.userWin as UserWin, faker.helpers.arrayElement([1, 3, 6]));
+                  });
+                  if (userWinResult) {
+                      await services.installmentPayment.createInstallmentsForWin(userWinResult as UserWin, faker.helpers.arrayElement([1, 3, 6]));
                   }
-                  await services.lot.updateLot(tenantId, lot.id.toString(), { 
+                  await services.lot.updateLot(lot.id.toString(), { 
                       status: 'VENDIDO', 
                       winnerId: winningBid.bidderId.toString() 
                   });
               }
           } else {
-               await services.lot.updateLot(tenantId, lot.id.toString(), { status: 'NAO_VENDIDO' });
+               await services.lot.updateLot(lot.id.toString(), { status: 'NAO_VENDIDO' });
           }
       }
   }
@@ -797,7 +795,7 @@ async function main() {
     const user = faker.helpers.arrayElement(bidderUsers.filter(Boolean));
     if (user) {
       try {
-        await services.notification.create({
+        await services.notification.createNotification({
           tenant: { connect: { id: BigInt(tenantId) } },
           user: { connect: { id: user.id } },
           message: faker.helpers.arrayElement([
