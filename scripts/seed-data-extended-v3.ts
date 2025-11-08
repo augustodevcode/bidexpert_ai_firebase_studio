@@ -587,7 +587,7 @@ async function main() {
         const endDate = faker.date.future({ refDate: startDate });
         const initialPrice = new Decimal(faker.number.int({ min: 10000, max: 100000 }));
         
-        const stageResult = await services.auctionStage.create({
+        const stageResult = await services.auctionStage.createAuctionStage({
             auction: { connect: { id: auction.id } },
             name: '1ª Praça',
             startDate,
