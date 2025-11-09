@@ -9,6 +9,14 @@ export class UserWinRepository {
     this.prisma = prisma;
   }
 
+  async create(data: Prisma.UserWinCreateInput) {
+    return this.prisma.userWin.create({ data });
+  }
+
+  async findFirst(args: Prisma.UserWinFindFirstArgs) {
+    return this.prisma.userWin.findFirst(args);
+  }
+
   async findByIdWithDetails(winId: string): Promise<any | null> {
     return this.prisma.userWin.findUnique({
       where: { id: winId },

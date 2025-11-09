@@ -13,6 +13,9 @@ export class JudicialProcessRepository {
         branch: { select: { name: true } },
         seller: { select: { name: true } },
         parties: true,
+        _count: {
+          select: { lots: true },
+        },
       },
       orderBy: { processNumber: 'desc' }
     });

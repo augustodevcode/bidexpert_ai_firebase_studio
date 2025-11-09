@@ -175,7 +175,7 @@ export type DirectSaleOffer = Omit<PmDirectSaleOffer, 'id' | 'tenantId' | 'selle
     category?: string;
 };
 export type UserLotMaxBid = Omit<PmUserLotMaxBid, 'id' | 'userId' | 'lotId' | 'maxAmount'> & { id: string; userId: string; lotId: string; maxAmount: number; };
-export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { id: string; tenantId: string; courtId?: string | null; districtId?: string | null; branchId?: string | null; sellerId?: string | null; parties: ProcessParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string };
+export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { id: string; tenantId: string; courtId?: string | null; districtId?: string | null; branchId?: string | null; sellerId?: string | null; parties: ProcessParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string, lotCount?: number };
 export type Court = Omit<PmCourt, 'id'> & { id: string };
 export type JudicialDistrict = Omit<PmJudicialDistrict, 'id' | 'courtId' | 'stateId'> & { id: string; courtId?: string | null; stateId?: string | null; courtName?: string; stateUf?: string };
 export type JudicialBranch = Omit<PmJudicialBranch, 'id' | 'districtId'> & { id: string; districtId?: string | null; districtName?: string; stateUf?: string };

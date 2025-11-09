@@ -169,7 +169,7 @@ export default function LoteamentoPage() {
                       <Label htmlFor="process-select">1. Selecione um Processo Judicial</Label>
                       <Select value={selectedProcessId} onValueChange={setSelectedProcessId} disabled={isLoading}>
                           <SelectTrigger id="process-select"><SelectValue placeholder={isLoading ? "Carregando..." : "Selecione..."} /></SelectTrigger>
-                          <SelectContent>{processes.map(p => (<SelectItem key={p.id} value={p.id}>{p.processNumber}</SelectItem>))}</SelectContent>
+                          <SelectContent>{processes.map(p => (<SelectItem key={p.id} value={p.id}>{p.processNumber} ({p.lotCount ?? 0} lotes)</SelectItem>))}</SelectContent>
                       </Select>
                   </div>
                    <div className="space-y-2">

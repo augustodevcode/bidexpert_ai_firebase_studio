@@ -8,25 +8,24 @@
  */
 import { UserWinRepository } from '@/repositories/user-win.repository';
 import type { UserWin } from '@/types';
-import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 
 export class UserWinService {
   private repository: UserWinRepository;
-  private prisma;
 
   constructor() {
     this.repository = new UserWinRepository();
-    this.prisma = prisma;
   }
 
-  async create(data: Prisma.UserWinCreateInput): Promise<UserWin> {
-    const win = await this.prisma.userWin.create({ data });
+  async create(data: Omit<Prisma.UserWinCreateInput, 'tenantId'>): Promise<UserWin> {
+    // Remove explicitamente o tenantId se estiver presente
+    const { tenantId, ...winData } = data as any;
+    const win = await this.repository.create(winData);
     return { ...win, winningBidAmount: Number(win.winningBidAmount) } as UserWin;
   }
 
   async findFirst(args: Prisma.UserWinFindFirstArgs): Promise<UserWin | null> {
-    const win = await this.prisma.userWin.findFirst(args);
+    const win = await this.repository.findFirst(args);
     return win ? { ...win, winningBidAmount: Number(win.winningBidAmount) } as UserWin : null;
   }
 
