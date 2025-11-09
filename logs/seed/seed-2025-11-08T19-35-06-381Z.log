@@ -1,0 +1,7 @@
+{"level":"INFO","operation":"Iniciando processo de seed estendido v4...","timestamp":"2025-11-08T19:35:34.645Z"}
+{"level":"INFO","operation":"Criando tenant principal...","timestamp":"2025-11-08T19:35:36.643Z"}
+{"level":"INFO","operation":"Criando roles essenciais...","timestamp":"2025-11-08T19:35:37.839Z"}
+{"level":"INFO","operation":"Criando estados...","timestamp":"2025-11-08T19:35:38.780Z"}
+{"level":"INFO","operation":"Criando categorias...","timestamp":"2025-11-08T19:35:39.555Z"}
+{"level":"INFO","operation":"Criando subcategorias...","timestamp":"2025-11-08T19:35:40.068Z"}
+{"level":"INFO","operation":"Processo de seed concluído com sucesso!","timestamp":"2025-11-08T19:35:41.329Z"}

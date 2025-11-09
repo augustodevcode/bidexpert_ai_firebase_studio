@@ -4,30 +4,50 @@
  * Cria dados básicos para teste, respeitando o schema do Prisma
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { hash } from 'bcryptjs';
 
-const prisma = new PrismaClient();
+import { TenantService } from '../src/services/tenant.service';
+import { RoleService } from '../src/services/role.service';
+import { UserService } from '../src/services/user.service';
+import { AuctioneerService } from '../src/services/auctioneer.service';
+import { SellerService } from '../src/services/seller.service';
+import { AuctionService } from '../src/services/auction.service';
+import { CategoryService } from '../src/services/category.service';
+import { AssetService } from '../src/services/asset.service';
+import { LotService } from '../src/services/lot.service';
+import { BidService } from '../src/services/bid.service';
+import { PlatformSettingsService } from '../src/services/platform-settings.service';
+
+const services = {
+    tenant: new TenantService(),
+    role: new RoleService(),
+    user: new UserService(),
+    auctioneer: new AuctioneerService(),
+    seller: new SellerService(),
+    auction: new AuctionService(),
+    category: new CategoryService(),
+    asset: new AssetService(),
+    lot: new LotService(),
+    bid: new BidService(),
+    platformSettings: new PlatformSettingsService(),
+};
 
 async function main() {
   console.log('🚀 Iniciando seed simplificado...');
 
   // 1. Criar Tenant (Inquilino)
   console.log('\n1. Criando tenant...');
-  const tenant = await prisma.tenant.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
+  const { tenant } = await services.tenant.createTenant({
       name: 'Leilões Brasil',
       subdomain: 'leiloes-brasil',
-      settings: {
-        create: {
-          siteName: 'Leilões Brasil',
-          siteDescription: 'Plataforma de leilões online',
-          primaryColor: '#2563eb',
-          logoUrl: 'https://via.placeholder.com/150x50?text=Leilões+Brasil',
-          isSetupComplete: true
-        }
+  });
+
+  // 1.1 Criar configurações da plataforma
+  await services.platformSettings.createOrUpdateSettings(tenant.id.toString(), {
+      siteTitle: 'Leilões Brasil',
+      siteTagline: 'Plataforma de leilões online',
+      isSetupComplete: true,
       }
     },
     include: {
@@ -38,22 +58,22 @@ async function main() {
 
   // 2. Criar Funções (Roles)
   console.log('\n2. Criando funções...');
-  const roles = [
-    { 
-      name: 'ADMIN', 
-      nameNormalized: 'admin',
+  const rolesData = [
+    {
+      name: 'Administrator',
+      nameNormalized: 'ADMINISTRATOR',
       description: 'Administrador do sistema',
-      permissions: ['*']
+      permissions: ['manage_all']
     },
-    { 
-      name: 'BIDDER',
-      nameNormalized: 'bidder',
+    {
+      name: 'Bidder',
+      nameNormalized: 'BIDDER',
       description: 'Arrematante',
       permissions: ['bid:create', 'bid:read']
     },
-    { 
-      name: 'AUCTIONEER',
-      nameNormalized: 'auctioneer',
+    {
+      name: 'Auctioneer',
+      nameNormalized: 'AUCTIONEER',
       description: 'Leiloeiro',
       permissions: ['auction:create', 'auction:update', 'lot:create', 'lot:update']
     },
@@ -65,49 +85,32 @@ async function main() {
     }
   ];
 
-  const createdRoles = [];
-  for (const role of roles) {
-    const created = await prisma.role.upsert({
-      where: { name: role.name },
-      update: {},
-      create: role
+  const createdRoles = {};
+  for (const role of rolesData) {
+    const roleResult = await services.role.createRole({
+      name: role.name,
+      nameNormalized: role.nameNormalized,
+      description: role.description,
+      permissions: role.permissions,
     });
-    createdRoles.push(created);
-    console.log(`✅ Função criada: ${created.name}`);
-  }
-
-  // 3. Criar Usuário Admin
+    if (roleResult.success && roleResult.roleId) {
+      createdRoles[role.nameNormalized] = await services.role.getRoleById(roleResult.roleId);
+    }  // 3. Criar Usuário Admin
   console.log('\n3. Criando usuário administrador...');
   const adminRole = createdRoles.find(r => r.name === 'ADMIN');
   if (!adminRole) throw new Error('Função de administrador não encontrada');
 
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@bidexpert.com.br' },
-    update: {},
-    create: {
-      email: 'admin@bidexpert.com.br',
-      password: await hash('admin123', 10),
-      fullName: 'Administrador do Sistema',
-      cpf: '00000000000',
-      phone: '+5511999999999',
-      isActive: true,
-      emailVerified: new Date(),
-      roles: {
-        create: [{
-          role: {
-            connect: { id: adminRole.id }
-          },
-          assignedBy: 'system'
-        }]
-      },
-      tenant: {
-        connect: { id: tenant.id }
-      }
-    },
-    include: {
-      roles: true
-    }
+    const adminUserResult = await services.user.createUser({
+    email: 'admin@example.com',
+    fullName: 'Administrador',
+    password: 'admin123',
+    habilitationStatus: 'HABILITADO',
+    accountType: 'LEGAL',
+    roleIds: [String(createdRoles['ADMINISTRATOR'].id)],
+    tenantId: tenant.id.toString(),
   });
+  if (!adminUserResult.success || !adminUserResult.userId) throw new Error(adminUserResult.message);
+  const adminUser = await services.user.getUserById(adminUserResult.userId.toString());
   console.log(`✅ Usuário admin criado: ${admin.email}`);
 
   // 4. Criar Leiloeiro
@@ -115,47 +118,45 @@ async function main() {
   const auctioneerRole = createdRoles.find(r => r.name === 'AUCTIONEER');
   if (!auctioneerRole) throw new Error('Função de leiloeiro não encontrada');
 
-  const auctioneer = await prisma.auctioneer.create({
-    data: {
-      name: 'Leiloeiro Oficial',
-      description: 'Leiloeiro oficial do sistema',
-      cpfCnpj: '12345678000199',
-      email: 'leiloeiro@bidexpert.com.br',
-      phone: '+5511988888888',
-      address: 'Rua dos Leilões, 123',
-      city: 'São Paulo',
-      state: 'SP',
-      zipCode: '01311000',
-      commissionRate: 5.0,
-      isActive: true,
-      tenant: {
-        connect: { id: tenant.id }
-      }
-    }
+    const auctioneerResult = await services.auctioneer.createAuctioneer(tenant.id.toString(), {
+    name: 'Leiloeiro Oficial',
+    registrationNumber: 'JUCESP-123',
+    userId: adminUser.id.toString(),
+    city: 'São Paulo',
+    state: 'SP',
+    address: 'Av. Paulista, 1000',
+    zipCode: '01310-100',
+    phone: '(11) 99999-9999',
+    email: 'leiloeiro@example.com',
+    description: 'Leiloeiro oficial com mais de 10 anos de experiência',
+    logoUrl: 'https://via.placeholder.com/150x150?text=Leiloeiro',
+    logoMediaId: null,
+    dataAiHintLogo: null,
   });
+  if (!auctioneerResult.success || !auctioneerResult.auctioneerId) throw new Error(auctioneerResult.message);
+  const auctioneer = await services.auctioneer.getAuctioneerById(tenant.id.toString(), auctioneerResult.auctioneerId);
   console.log(`✅ Leiloeiro criado: ${auctioneer.name}`);
 
   // 5. Criar Comitente
   console.log('\n5. Criando comitente...');
-  const seller = await prisma.seller.create({
-    data: {
-      name: 'Comitente Exemplo',
-      cpfCnpj: '12345678000100',
-      email: 'comitente@exemplo.com',
-      phone: '+5511977777777',
-      address: 'Av. Paulista, 1000',
-      city: 'São Paulo',
-      state: 'SP',
-      zipCode: '01310100',
-      contactPerson: 'João da Silva',
-      contactPhone: '+5511966666666',
-      contactEmail: 'joao@exemplo.com',
-      isActive: true,
-      tenant: {
-        connect: { id: tenant.id }
-      }
-    }
+    const sellerResult = await services.seller.createSeller(tenant.id.toString(), {
+    name: 'Comitente Vendedor',
+    isJudicial: false,
+    city: 'São Paulo',
+    state: 'SP',
+    address: 'Rua do Comércio, 500',
+    zipCode: '04538-132',
+    contactName: 'João Silva',
+    phone: '(11) 98888-8888',
+    email: 'comitente@example.com',
+    description: 'Empresa especializada em venda de ativos',
+    website: 'www.example.com',
+    logoUrl: 'https://via.placeholder.com/150x150?text=Comitente',
+    logoMediaId: null,
+    dataAiHintLogo: null,
   });
+  if (!sellerResult.success || !sellerResult.sellerId) throw new Error(sellerResult.message);
+  const seller = await services.seller.getSellerById(tenant.id.toString(), sellerResult.sellerId);
   console.log(`✅ Comitente criado: ${seller.name}`);
 
   // 6. Criar Leilão
@@ -166,33 +167,20 @@ async function main() {
   const endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + 30); // 30 dias de duração
 
-  const auction = await prisma.auction.create({
-    data: {
-      title: 'Leilão de Imóveis e Veículos',
-      description: 'Excelentes oportunidades em imóveis e veículos',
-      startDate,
-      endDate,
-      auctioneerId: auctioneer.id,
-      sellerId: seller.id,
-      type: 'ONLINE',
-      status: 'DRAFT' as const,
-      terms: 'Termos e condições do leilão...',
-      incrementTable: [
-        { minValue: 0, maxValue: 1000, increment: 50 },
-        { minValue: 1001, maxValue: 5000, increment: 100 },
-        { minValue: 5001, maxValue: 10000, increment: 200 },
-        { minValue: 10001, maxValue: 50000, increment: 500 },
-        { minValue: 50001, maxValue: 100000, increment: 1000 },
-        { minValue: 100001, maxValue: 500000, increment: 5000 },
-        { minValue: 500001, maxValue: 1000000, increment: 10000 },
-        { minValue: 1000001, maxValue: 5000000, increment: 50000 },
-        { minValue: 5000001, maxValue: 10000000, increment: 100000 },
-        { minValue: 10000001, maxValue: 1000000000, increment: 1000000 }
-      ],
-      isActive: true,
-      tenant: { connect: { id: tenant.id } }
-    }
+  const auctionResult = await services.auction.createAuction(tenant.id.toString(), {
+    title: 'Leilão de Imóveis e Veículos',
+    auctionType: 'EXTRAJUDICIAL',
+    status: 'EM_BREVE',
+    auctioneerId: auctioneer.id.toString(),
+    sellerId: seller.id.toString(),
+    auctionDate: startDate,
+    endDate: endDate,
+    softCloseEnabled: true,
+    description: 'Excelentes oportunidades em imóveis e veículos',
+    termsAndConditions: 'Termos e condições do leilão...',
   });
+  if (!auctionResult.success || !auctionResult.auctionId) throw new Error(auctionResult.message);
+  const auction = await services.auction.getAuctionById(tenant.id.toString(), auctionResult.auctionId);
   console.log(`✅ Leilão criado: ${auction.title}`);
 
   // 7. Criar Categorias de Lotes

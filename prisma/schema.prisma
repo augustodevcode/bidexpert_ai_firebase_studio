@@ -457,13 +457,14 @@ model Auction {
 }
 
 model AuctionStage {
-  id           BigInt        @id @default(autoincrement())
+  id           BigInt            @id @default(autoincrement())
   name         String
-  startDate    DateTime      @db.DateTime
-  endDate      DateTime      @db.DateTime
+  startDate    DateTime          @db.DateTime
+  endDate      DateTime          @db.DateTime
   auctionId    BigInt
-  auction      Auction       @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  initialPrice Decimal?      @db.Decimal(15, 2)
+  auction      Auction           @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  initialPrice Decimal?          @db.Decimal(15, 2)
+  status       AuctionStageStatus @default(AGUARDANDO_INICIO)
   lotPrices    LotStagePrice[]
 
   @@index([auctionId])
@@ -1286,6 +1287,19 @@ model DocumentTemplate {
 // -----------------------------
 // Enums
 // -----------------------------
+
+enum AuctionStageStatus {
+  RASCUNHO
+  AGENDADO
+  EM_ANDAMENTO
+  SUSPENSO
+  CONCLUIDO
+  CANCELADO
+  AGUARDANDO_INICIO
+  ABERTO
+  FECHADO
+}
+
 enum AssetStatus {
   CADASTRO
   DISPONIVEL

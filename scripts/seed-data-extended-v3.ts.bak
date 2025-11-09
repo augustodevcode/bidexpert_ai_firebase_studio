@@ -31,7 +31,6 @@ import { AuctionHabilitationService } from '../src/services/auction-habilitation
 import { BidService } from '../src/services/bid.service';
 import { UserWinService } from '../src/services/user-win.service';
 import { InstallmentPaymentService } from '../src/services/installment-payment.service';
-import { PaymentMethodService } from '../src/services/payment-method.service';
 import { DocumentTypeService } from '../src/services/document-type.service';
 import { UserDocumentService } from '../src/services/user-document.service';
 import { MediaItemService } from '../src/services/media-item.service';
@@ -94,7 +93,6 @@ const services = {
     bid: new BidService(),
     userWin: new UserWinService(),
     installmentPayment: new InstallmentPaymentService(),
-    paymentMethod: new PaymentMethodService(),
     documentType: new DocumentTypeService(),
     userDocument: new UserDocumentService(),
     mediaItem: new MediaItemService(),
@@ -158,70 +156,51 @@ const Constants = {
 async function cleanDatabase() {
     console.log("Cleaning database...");
     try {
-        // Desativar verificação de chaves estrangeiras temporariamente (MySQL)
-        await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 0;`;
-        
-        // Lista manual das tabelas na ordem correta de exclusão
-        const tablesToDelete = [
-            'InstallmentPayment',
-            'Bid',
-            'UserWin',
-            'UserLotMaxBid',
-            'LotQuestion',
-            'Review',
-            'Notification',
-            'AuctionHabilitation',
-            'AuctionStage',
-            'DirectSaleOffer',
-            'Lot',
-            'Auction',
-            'Asset',
-            'JudicialProcess',
-            'UserDocument',
-            'UsersOnRoles',
-            'User',
-            'Seller',
-            'Auctioneer',
-            'Report',
-            'Role',
-            'Subcategory',
-            'LotCategory',
-            'VehicleModel',
-            'VehicleMake',
-            'Court',
-            'City',
-            'State',
-            'DocumentType',
-            'MediaItem',
-            'Subscriber',
-            'Tenant'
-        ];
-        
-        // Excluir tabelas na ordem correta
-        for (const tableName of tablesToDelete) {
-            try {
-                // Usando template literals com crase para escapar nomes de tabela
-                await prisma.$executeRawUnsafe(`DELETE FROM \`${tableName}\`;`);
-                console.log(`Tabela limpa: ${tableName}`);
-            } catch (error) {
-                console.warn(`Erro ao limpar tabela ${tableName}:`, error);
-            }
-        }
-        
-        // Reativar verificação de chaves estrangeiras (MySQL)
-        await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 1;`;
+        // Delete data in the correct order to avoid foreign key constraints
+        await services.bid.deleteAll();
+        await services.userWin.deleteAll();
+        await services.installmentPayment.deleteAll();
+        await services.userLotMaxBid.deleteAll();
+        await services.lot.deleteAll();
+        await services.auctionHabilitation.deleteAll();
+        await services.auctionStage.deleteAll();
+        await services.notification.deleteAll();
+        await services.review.deleteAll();
+        await services.lotQuestion.deleteAll();
+        await services.directSaleOffer.deleteAll();
+        await services.auction.deleteAll();
+        await services.asset.deleteAll();
+        await services.judicialProcess.deleteAll();
+        await services.seller.deleteAll();
+        await services.auctioneer.deleteAll();
+        await services.report.deleteAll();
+        await services.userDocument.deleteAll();
+        await services.user.deleteAll();
+        await services.role.deleteAll();
+        await services.subcategory.deleteAll();
+        await services.category.deleteAll();
+        await services.vehicleModel.deleteAll();
+        await services.vehicleMake.deleteAll();
+        await services.documentType.deleteAll();
+        await services.mediaItem.deleteAll();
+        await services.subscriber.deleteAll();
         
         console.log("Database cleaned successfully");
     } catch (error) {
         console.error("Error cleaning database:", error);
-        // Garantir que as chaves estrangeiras sejam reativadas em caso de erro
-        try {
-            await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 1;`;
-        } catch (e) {
-            console.error("Failed to re-enable foreign key checks:", e);
-        }
         throw error;
     }
+            // @ts-ignore
+            if (prisma[modelName] && typeof prisma[modelName].deleteMany === 'function') {
+                 // @ts-ignore
+                await prisma[modelName].deleteMany({});
+            }
+        } catch (error: any) {
+            console.warn(`Could not clean ${modelName}:`, (error as Error).message);
+        }
+    }
+
+    console.log("Database cleaned.");
 }
 
 async function main() {
@@ -247,52 +226,20 @@ async function main() {
     }
   });
 
-  console.log("Usando tenantId fixo = 1");
-  const tenantId = '1';
-  
-  // Garantir que o tenant com ID 1 existe
-  try {
-    await services.tenant.getTenantById(tenantId);
-    console.log(`Usando tenant existente com ID: ${tenantId}`);
-  } catch (error) {
-    console.log(`Criando tenant com ID: ${tenantId}`);
-    const tenantResult = await services.tenant.createTenant({
-      id: BigInt(tenantId),
-      name: 'Tenant Principal',
-      subdomain: 'main',
-    });
-    
-    if (!tenantResult.success || !tenantResult.tenant) {
-      throw new Error(`Falha ao criar tenant: ${tenantResult.message}`);
-    }
-    
-    console.log("Tenant criado com sucesso com ID:", tenantId);
-  }
+  const { tenant: landlordTenant } = await services.tenant.createTenant({
+    name: 'Landlord',
+    subdomain: 'www',
+  });
+  const tenantId = landlordTenant.id.toString();
 
   await services.platformSettings.getSettings(tenantId);
 
   const createdStates: { [key: string]: any } = {};
-  console.log("Criando estados brasileiros...");
   for (const state of brazilianStates) {
-    console.log(`Criando estado: ${state.name} (${state.uf})`);
     const newStateResult = await services.state.createState({ ...state });
-    console.log("Resultado da criação:", newStateResult);
-    
-    if (!newStateResult.success || !newStateResult.stateId) {
-      console.error(`Falha ao criar estado ${state.uf}:`, newStateResult.message);
-      throw new Error(newStateResult.message);
-    }
-    
+    if (!newStateResult.success || !newStateResult.stateId) throw new Error(newStateResult.message);
     const newState = await services.state.getStateById(newStateResult.stateId);
-    console.log(`Estado criado:`, newState);
-    
-    if (!newState) {
-      console.error(`Estado ${state.uf} criado mas não encontrado no banco de dados`);
-      throw new Error(`Falha ao recuperar estado ${state.uf} após criação`);
-    }
-    
     createdStates[state.uf] = newState;
-    console.log(`Estado ${state.uf} adicionado ao dicionário`);
   }
   console.log("Foundational data seeded.");
 
@@ -438,7 +385,7 @@ async function main() {
   for(let i = 0; i < auctioneerUsers.length; i++) {
       const user = auctioneerUsers[i];
       if (!user) continue;
-      const result = await services.auctioneer.createAuctioneer(tenantId, {
+      const result = await services.auctioneer.createAuctioneer(tenantId.toString(), {
         name: `Leiloeiro Oficial ${i + 1}`,
         registrationNumber: `JUCESP-${faker.string.numeric(5)}`,
         userId: user.id.toString(),
@@ -446,7 +393,7 @@ async function main() {
         description: 'Leiloeiro com anos de experiência.', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
       });
       if(!result.success || !result.auctioneerId) throw new Error(result.message);
-      auctioneers.push(await services.auctioneer.getAuctioneerById(tenantId, result.auctioneerId));
+      auctioneers.push(await services.auctioneer.getAuctioneerById(tenantId.toString(), result.auctioneerId));
   }
 
   console.log("Creating sellers...");
@@ -454,7 +401,7 @@ async function main() {
   for(let i = 0; i < sellerUsers.length; i++) {
       const user = sellerUsers[i];
       if (!user) continue;
-      const result = await services.seller.createSeller(tenantId, {
+      const result = await services.seller.createSeller(tenantId.toString(), {
         name: `Vendedor Particular ${i + 1}`,
         isJudicial: false,
         userId: user.id.toString(),
@@ -462,13 +409,13 @@ async function main() {
         state: 'SP', description: 'Vendedor de ativos diversos.', logoUrl: null, logoMediaId: null, dataAiHintLogo: null,
       });
       if(!result.success || !result.sellerId) throw new Error(result.message);
-      sellers.push(await services.seller.getSellerById(tenantId, result.sellerId));
+      sellers.push(await services.seller.getSellerById(tenantId.toString(), result.sellerId));
   }
 
   for (let i = 0; i < Math.min(3, branches.length); i++) {
     const branch = branches[i];
     if (branch) {
-      const judicialSellerResult = await services.seller.createSeller(tenantId, {
+      const judicialSellerResult = await services.seller.createSeller(tenantId.toString(), {
         name: branch.name,
         isJudicial: true,
         judicialBranchId: branch.id,
@@ -480,7 +427,7 @@ async function main() {
         dataAiHintLogo: null,
       });
       if (judicialSellerResult.success && judicialSellerResult.sellerId) {
-        const judicialSeller = await services.seller.getSellerById(tenantId, judicialSellerResult.sellerId);
+        const judicialSeller = await services.seller.getSellerById(tenantId.toString(), judicialSellerResult.sellerId);
         if (judicialSeller) sellers.push(judicialSeller);
       }
     }
@@ -543,7 +490,7 @@ async function main() {
     
     if (court && district && branch) {
       const processNumber = `${faker.string.numeric(7)}-${faker.string.numeric(2)}.${faker.string.numeric(4)}.${faker.string.numeric(1)}.${faker.string.numeric(2)}.${faker.string.numeric(4)}`;
-      const processResult = await services.judicialProcess.createJudicialProcess(tenantId, {
+      const processResult = await services.judicialProcess.createJudicialProcess(tenantId.toString(), {
         processNumber,
         isElectronic: true,
         courtId: court.id,
@@ -564,7 +511,7 @@ async function main() {
         ],
       } as JudicialProcessFormData);
       if (processResult.success && processResult.processId) {
-        const process = await services.judicialProcess.getJudicialProcessById(tenantId, processResult.processId);
+        const process = await services.judicialProcess.getJudicialProcessById(tenantId.toString(), processResult.processId);
         if (process) judicialProcesses.push(process);
       }
     }
@@ -638,12 +585,12 @@ async function main() {
           assetData.title = `Eletrônico: ${faker.commerce.productName()}`;
       }
 
-      const assetResult = await services.asset.createAsset(tenantId, assetData as AssetFormData);
+      const assetResult = await services.asset.createAsset(tenantId.toString(), assetData as AssetFormData);
       if (!assetResult.success || !assetResult.assetId) {
           console.warn(`Failed to create asset: ${assetResult.message}`);
           continue;
       }
-      assets.push(await services.asset.getAssetById(tenantId, assetResult.assetId));
+      assets.push(await services.asset.getAssetById(tenantId.toString(), assetResult.assetId));
   }
   console.log(`${assets.length} assets created.`);
 
@@ -657,18 +604,12 @@ async function main() {
       const seller = faker.helpers.arrayElement(sellers.filter(Boolean));
       if (!auctioneer || !seller) continue;
 
-      // Garantir que a maioria dos leilões estejam ativos (80% de chance)
-      const status = faker.helpers.weightedArrayElement<AuctionStatus>([
-        { value: 'ABERTO_PARA_LANCES', weight: 0.6 },
-        { value: 'EM_BREVE', weight: 0.2 },
-        { value: 'FINALIZADO', weight: 0.1 },
-        { value: 'CANCELADO', weight: 0.1 }
-      ]);
+      const status = faker.helpers.arrayElement<AuctionStatus>(['ABERTO_PARA_LANCES', 'EM_BREVE', 'FINALIZADO', 'CANCELADO']);
 
       const isJudicial = i % 3 === 0 && judicialProcesses.length > 0;
       const judicialProcess = isJudicial ? faker.helpers.arrayElement(judicialProcesses) : null;
       
-      const auctionResult = await services.auction.createAuction(tenantId, {
+      const auctionResult = await services.auction.createAuction(tenantId.toString(), {
           title: `Grande Leilão de ${seller.name} - #${i + 1}`,
           auctionType: isJudicial ? 'JUDICIAL' : 'EXTRAJUDICIAL',
           status: status,
@@ -682,7 +623,7 @@ async function main() {
           console.warn(`Failed to create auction: ${auctionResult.message}`);
           continue;
       }
-      const auction = await services.auction.getAuctionById(tenantId, auctionResult.auctionId);
+      const auction = await services.auction.getAuctionById(tenantId.toString(), auctionResult.auctionId);
       if (auction) {
         auctions.push(auction);
       } else {
@@ -714,33 +655,18 @@ async function main() {
           const asset = availableAssets.pop();
           if (!asset) continue;
 
-          // Definir status do lote (40% EM_BREVE, 60% ABERTO_PARA_LANCES)
-          const lotStatus = faker.helpers.weightedArrayElement([
-            { value: 'EM_BREVE', weight: 0.4 },
-            { value: 'ABERTO_PARA_LANCES', weight: 0.6 }
-          ]);
-          
-          // 30% de chance de ser destaque
-          const isFeatured = faker.datatype.boolean({ probability: 0.3 });
-          
           const lotResult = await services.lot.createLot({
               auctionId: auction.id,
               title: `Lote ${j + 1} - ${asset.title}`,
               number: `${j + 1}`.padStart(3, '0'),
               price: asset.evaluationValue as number,
-              initialPrice: asset.evaluationValue as number, // Definir o preço inicial
-              status: lotStatus,
-              isFeatured: isFeatured,
               assetIds: [asset.id.toString()],
               type: 'EXTRAJUDICIAL',
           }, tenantId);
 
           if (lotResult.success && lotResult.lotId) {
               try {
-                  // Atualizar o status do ativo para refletir que está em um lote
-                  await services.asset.updateAsset(asset.id.toString(), { 
-                    status: 'LOTEADO'  // Apenas atualiza o status, sem o lotId que não é suportado
-                  });
+                  await services.asset.updateAsset(asset.id.toString(), { status: AssetStatus.LOTEADO });
 
                   // Adicionar lotes vencidos e pagamentos para alguns lotes
                   if (faker.datatype.boolean({ probability: 0.3 })) {
@@ -756,7 +682,7 @@ async function main() {
                               winDate,
                               winningBidAmount: winningBid,
                               paymentStatus: PaymentStatus.PENDENTE,
-                              tenantId: 1n
+                              tenantId: BigInt(tenantId)
                           });
 
                           if (userWin) {
@@ -780,7 +706,7 @@ async function main() {
           }
       }
   }
-  const createdAuctions = await services.auction.getAuctions(1);
+  const createdAuctions = await services.auction.getAuctions(tenantId.toString());
   console.log(`${createdAuctions?.length || 0} auctions created with lots.`);
 
   console.log("Creating auction habilitations...");
@@ -916,105 +842,59 @@ async function main() {
           }
       }
   }
+  console.log("Bidding and win simulation complete.");
+
+  // Criar configurações de gatilhos mentais
+  console.log("Creating mental trigger settings...");
+  const triggers = [
+    { name: 'Escassez', message: 'Apenas {X} unidades disponíveis!' },
+    { name: 'Urgência', message: 'Oferta por tempo limitado!' },
+    { name: 'Prova Social', message: 'Mais de {X} pessoas interessadas!' },
+    { name: 'Autoridade', message: 'Recomendado por especialistas' },
+    { name: 'Reciprocidade', message: 'Garanta seu desconto exclusivo' }
+  ];
+
+  for (const trigger of triggers) {
+    try {
+      await services.mentalTriggerSettings.createMentalTriggerSettings({
+          tenantId: tenantId,
+          title: trigger.name,
+          subtitle: trigger.message,
+          isEnabled: true,
+          minActivations: faker.number.int({ min: 5, max: 20 }),
+          maxUses: faker.number.int({ min: 50, max: 200 }),
+          order: triggers.indexOf(trigger)
+      });
+    } catch (error: any) {
+      console.warn(`Failed to create mental trigger: ${error.message}`);
+    }
+  }
+  console.log("Mental triggers created.");
 
   console.log("Creating direct sale offers...");
-  const offerStatuses: Array<'ACTIVE' | 'PENDING_APPROVAL' | 'SOLD' | 'EXPIRED'> = [
-    'ACTIVE', 'PENDING_APPROVAL', 'SOLD', 'EXPIRED'
-  ];
-  
-  // Obter categorias para usar nas ofertas
-  const categories = await prisma.lotCategory.findMany({
-    take: 5,
-    orderBy: { name: 'asc' }
-  });
-
-  // Obter vendedores ativos
-  const activeSellers = sellers.filter(s => s && s.isActive);
-  
-  if (activeSellers.length === 0) {
-    console.warn("Nenhum vendedor ativo encontrado. Pulando criação de ofertas de venda direta.");
-    return;
-  }
-
-  for (let i = 0; i < Math.min(Constants.DIRECT_SALE_OFFERS_COUNT, 20); i++) {
+  for (let i = 0; i < Constants.DIRECT_SALE_OFFERS_COUNT; i++) {
     const asset = faker.helpers.arrayElement(assets.filter(a => a?.status === 'DISPONIVEL'));
-    const seller = faker.helpers.arrayElement(activeSellers);
-    const category = faker.helpers.arrayElement(categories);
-    
-    if (asset && seller && category) {
+    const seller = faker.helpers.arrayElement(sellers.filter(Boolean));
+    if (asset && seller) {
       try {
-        const basePrice = asset.evaluationValue ? Number(asset.evaluationValue) : faker.number.float({ min: 1000, max: 100000, precision: 2 });
-        const status = faker.helpers.arrayElement(offerStatuses);
-        const offerType = faker.helpers.arrayElement(['BUY_NOW', 'ACCEPTS_PROPOSALS']);
-        
-        // Garantir que temos pelo menos uma imagem
-        const imageUrls = asset.images?.length > 0 
-          ? asset.images 
-          : [faker.image.urlLoremFlickr({ category: 'product' })];
-        
-        const offerData = {
-          title: `Oferta Especial - ${asset.title || `Item ${i + 1}`}`,
-          description: faker.lorem.paragraphs(3, '\n\n'),
-          offerType,
-          price: offerType === 'BUY_NOW' ? basePrice : null,
-          minimumOfferPrice: offerType === 'ACCEPTS_PROPOSALS' ? basePrice * 0.8 : null, // 20% abaixo do valor base
-          status,
-          locationCity: asset.city || faker.location.city(),
-          locationState: asset.state || faker.location.state({ abbreviated: true }),
-          imageUrl: imageUrls[0],
-          galleryImageUrls: imageUrls.slice(0, 3),
-          expiresAt: faker.date.between({ from: new Date(), to: faker.date.future({ years: 1 }) }),
-          categoryId: category.id.toString(),
+        const basePrice = asset.evaluationValue as number;
+        await services.directSaleOffer.createDirectSaleOffer(tenantId.toString(), {
+          assetId: asset.id.toString(),
           sellerId: seller.id.toString(),
-          // Campos adicionais para melhor visualização
-          dataAiHint: faker.helpers.arrayElement([
-            'bem-conservado',
-            'pouco-uso',
-            'semi-novo',
-            'novo-de-tag',
-            'exposicao',
-            'estoque'
-          ])
-        };
+          price: basePrice,
+          discountedPrice: basePrice * 0.9, // 10% de desconto
+          minimumDownPayment: basePrice * 0.2, // 20% de entrada
+          maxInstallments: 12,
+          status: 'ATIVO',
+          validUntil: faker.date.future(),
+          description: faker.lorem.paragraph(),
+          isHighlighted: faker.datatype.boolean({ probability: 0.3 }),
+        });
 
-        // Criar a oferta
-        const result = await services.directSaleOffer.createDirectSaleOffer(tenantId.toString(), offerData);
-        
-        if (result.success) {
-          console.log(`✅ Oferta criada: ${offerData.title} (ID: ${result.offerId})`);
-          
-          // Atualizar status do ativo se a oferta estiver ativa
-          if (status === 'ACTIVE' || status === 'SOLD') {
-            try {
-              await services.asset.updateAsset(asset.id.toString(), { 
-                status: status === 'SOLD' ? 'VENDIDO' : 'EM_NEGOCIACAO' 
-              });
-            } catch (updateError) {
-              console.warn(`⚠️ Não foi possível atualizar o status do ativo ${asset.id}:`, updateError.message);
-            }
-          }
-          
-          // Adicionar algumas visualizações aleatórias
-          if (faker.datatype.boolean({ probability: 0.7 })) { // 70% de chance de ter visualizações
-            const viewCount = faker.number.int({ min: 1, max: 50 });
-            try {
-              await prisma.directSaleOffer.update({
-                where: { id: BigInt(result.offerId!) },
-                data: { views: viewCount }
-              });
-              console.log(`   - Adicionadas ${viewCount} visualizações`);
-            } catch (viewError) {
-              console.warn(`⚠️ Erro ao adicionar visualizações:`, viewError.message);
-            }
-          }
-        } else {
-          console.warn(`❌ Falha ao criar oferta: ${result.message}`);
-        }
+        // Atualizar status do ativo para VENDA_DIRETA
+        await services.asset.updateAsset(asset.id.toString(), { status: 'VENDIDO' });
       } catch (error: any) {
-        console.error(`❌ Erro ao criar oferta de venda direta: ${error.message}`);
-        if (error.stack) {
-          console.error(error.stack);
-        }
+        console.warn(`Failed to create direct sale offer: ${error.message}`);
       }
     }
   }
@@ -1055,215 +935,6 @@ async function main() {
   }
   console.log("Subscribers created.");
 
-  // Adicionar estágios de leilão para cada leilão
-  console.log("Criando estágios de leilão...");
-  for (const auction of auctions) {
-    if (!auction) continue; // Pular se o leilão for nulo
-    
-    try {
-      const auctionId = auction.id.toString();
-      
-      // Verificar se já existem estágios para este leilão
-      const existingStages = await prisma.auctionStage.findMany({
-        where: { auctionId: BigInt(auctionId) }
-      });
-      
-      if (existingStages.length === 0) {
-        const now = Date.now();
-        const oneWeek = 7 * 24 * 60 * 60 * 1000; // 1 semana em milissegundos
-        
-        const auctionStages = [
-          {
-            name: 'Fase de Lances',
-            startDate: new Date(now),
-            endDate: new Date(now + oneWeek),
-            initialPrice: 0,
-            auction: { connect: { id: BigInt(auctionId) } },
-            status: 'ABERTO' as const
-          },
-          {
-            name: 'Fase de Julgamento',
-            startDate: new Date(now + oneWeek),
-            endDate: new Date(now + (2 * oneWeek)),
-            initialPrice: 0,
-            auction: { connect: { id: BigInt(auctionId) } },
-            status: 'AGUARDANDO_INICIO' as const
-          },
-          {
-            name: 'Fase de Pagamento',
-            startDate: new Date(now + (2 * oneWeek)),
-            endDate: new Date(now + (3 * oneWeek)),
-            initialPrice: 0,
-            auction: { connect: { id: BigInt(auctionId) } },
-            status: 'AGUARDANDO_INICIO' as const
-          }
-        ];
-
-        for (const stageData of auctionStages) {
-          await prisma.auctionStage.create({ 
-            data: stageData 
-          });
-        }
-        console.log(`Estágios criados para o leilão ${auctionId}`);
-      } else {
-        console.log(`Leilão ${auctionId} já possui ${existingStages.length} estágios`);
-      }
-    } catch (error: any) {
-      console.warn(`Erro ao criar estágios para o leilão ${auction.id}: ${error.message}`);
-    }
-  }
-  console.log("Estágios de leilão processados com sucesso!");
-
-  // Processar pagamentos parcelados para arremates
-  console.log("Criando métodos de pagamento para os compradores...");
-  
-  // Criar métodos de pagamento para cada comprador
-  for (const bidder of bidderUsers) {
-    if (!bidder) continue;
-    
-    try {
-      // Criar um cartão de crédito como método de pagamento padrão
-      await services.paymentMethod.createPaymentMethod({
-        bidder: { connect: { id: BigInt(bidder.id) } },
-        type: 'CREDIT_CARD',
-        isDefault: true,
-        cardLast4: String(faker.number.int({ min: 1000, max: 9999 })),
-        cardBrand: faker.helpers.arrayElement(['VISA', 'MASTERCARD', 'ELO', 'AMEX']),
-        cardToken: `tok_${faker.string.alphanumeric(16)}`,
-        isActive: true,
-        expiresAt: faker.date.future({ years: 3 }),
-      });
-      
-      // Adicionar um segundo método de pagamento (PIX) para alguns compradores
-      if (Math.random() > 0.5) {
-        await services.paymentMethod.createPaymentMethod({
-          bidder: { connect: { id: BigInt(bidder.id) } },
-          type: 'PIX',
-          isDefault: false,
-          pixKey: faker.finance.ethereumAddress(),
-          pixKeyType: faker.helpers.arrayElement(['CPF', 'EMAIL', 'PHONE', 'RANDOM']),
-          isActive: true,
-        });
-      }
-      
-      // Adicionar um terceiro método de pagamento (BOLETO) para alguns compradores
-      if (Math.random() > 0.7) {
-        await services.paymentMethod.createPaymentMethod({
-          bidder: { connect: { id: BigInt(bidder.id) } },
-          type: 'BOLETO',
-          isDefault: false,
-          isActive: true,
-        });
-      }
-      
-      console.log(`Métodos de pagamento criados para o comprador ${bidder.id}`);
-    } catch (error: any) {
-      console.warn(`Erro ao criar métodos de pagamento para o comprador ${bidder.id}: ${error.message}`);
-    }
-  }
-  
-  console.log("Processando pagamentos parcelados...");
-  
-  // Primeiro, obter todos os arremates
-  const allUserWins = await prisma.userWin.findMany({
-    include: {
-      lot: true,
-      user: true,
-      installmentPayment: true
-    }
-  });
-
-  // Filtrar apenas arremates sem parcelas
-  const userWins = allUserWins.filter(win => {
-    return !win.installmentPayment || win.installmentPayment.length === 0;
-  });
-
-  console.log(`Encontrados ${userWins.length} arremates sem parcelas`);
-
-  for (const win of userWins) {
-    try {
-      // Garantir que temos os dados necessários
-      if (!win.id || !win.winningBidAmount) {
-        console.warn(`Arremate inválido: ${JSON.stringify(win)}`);
-        continue;
-      }
-
-      const numInstallments = faker.number.int({ min: 1, max: 12 });
-      
-      // Converter o valor para número, lidando com diferentes tipos
-      let winningBidAmount: number;
-      if (win.winningBidAmount instanceof Prisma.Decimal) {
-        winningBidAmount = win.winningBidAmount.toNumber();
-      } else if (typeof win.winningBidAmount === 'bigint') {
-        winningBidAmount = Number(win.winningBidAmount);
-      } else {
-        winningBidAmount = Number(win.winningBidAmount);
-      }
-      
-      // Garantir que temos um valor válido
-      if (isNaN(winningBidAmount) || winningBidAmount <= 0) {
-        console.warn(`Valor de lance vencedor inválido para arremate ${win.id}: ${win.winningBidAmount}`);
-        continue;
-      }
-      
-      console.log(`Criando ${numInstallments} parcelas para o arremate ${win.id} (Valor: ${winningBidAmount})`);
-      
-      // Calcular valor das parcelas com juros
-      const interestRate = 0.015; // 1.5% ao mês
-      const totalWithInterest = winningBidAmount * (1 + (interestRate * numInstallments));
-      const installmentAmount = totalWithInterest / numInstallments;
-      
-      // Criar parcelas
-      const now = new Date();
-      
-      for (let i = 1; i <= numInstallments; i++) {
-        try {
-          const dueDate = new Date(now);
-          dueDate.setMonth(now.getMonth() + i);
-          
-          const paymentData = {
-            userWinId: win.id,
-            installmentNumber: i,
-            totalInstallments: numInstallments,
-            amount: new Prisma.Decimal(installmentAmount.toFixed(2)),
-            dueDate: dueDate,
-            status: 'PENDENTE' as const,
-            paymentDate: null as Date | null,
-            createdAt: now,
-            updatedAt: now
-          };
-          
-          // Criar cada parcela individualmente para melhor controle
-          const createdPayment = await prisma.installmentPayment.create({
-            data: paymentData
-          });
-          
-          console.log(`Criada parcela ${i}/${numInstallments} para o arremate ${win.id}`);
-          
-          // 70% de chance de marcar como paga
-          if (faker.datatype.boolean(0.7)) {
-            await prisma.installmentPayment.update({
-              where: { id: createdPayment.id },
-              data: { 
-                status: 'PAGO' as const,
-                paymentDate: new Date()
-              }
-            });
-            console.log(`Parcela ${i} marcada como PAGA`);
-          }
-        } catch (paymentError: any) {
-          console.error(`Erro ao criar parcela ${i} para arremate ${win.id}:`, paymentError.message);
-        }
-      }
-    } catch (error: any) {
-      console.warn(`Erro ao processar pagamentos para arremate ${win.id}: ${error.message}`);
-      if (error.stack) {
-        console.error(error.stack);
-      }
-    }
-  }
-  console.log("Processamento de pagamentos concluído!");
-
   console.log("--- SEED SCRIPT V3.0 FINISHED SUCCESSFULLY ---");
   console.log(`
 📊 RESUMO DO SEED:`);
@@ -1283,77 +954,6 @@ async function main() {
   console.log(`✅ ${auctions.length} Leilões`);
   console.log(`✅ ${bidderUsers.length} Arrematantes`);
   console.log(`✅ ${documentTypes.length} Tipos de Documento`);
-
-  // Criar configurações de mental triggers
-  await createMentalTriggerSettings(tenantId);
-}
-
-/**
- * Cria as configurações de mental triggers para o tenant
- * @param tenantId ID do tenant
- */
-async function createMentalTriggerSettings(tenantId: string) {
-  console.log("\nCriando configurações de mental triggers...");
-  
-  try {
-    // Primeiro, obter ou criar as configurações da plataforma para o tenant
-    const platformSettings = await prisma.platformSettings.upsert({
-      where: { tenantId: BigInt(tenantId) },
-      update: {},
-      create: {
-        tenantId: BigInt(tenantId),
-        isSetupComplete: true,
-        // Apenas campos que existem no modelo PlatformSettings
-      }
-    });
-    
-    console.log(`✅ Configurações da plataforma obtidas/criadas para o tenant ${tenantId}`);
-    
-    // Verificar se já existem configurações de mental triggers para este tenant
-    const existingSettings = await prisma.mentalTriggerSettings.findUnique({
-      where: { platformSettingsId: platformSettings.id }
-    });
-    
-    if (existingSettings) {
-      console.log("✅ Configurações de mental triggers já existem, atualizando...");
-      
-      // Atualizar as configurações existentes
-      await prisma.mentalTriggerSettings.update({
-        where: { id: existingSettings.id },
-        data: {
-          showDiscountBadge: true,
-          showPopularityBadge: true,
-          popularityViewThreshold: 100,
-          showHotBidBadge: true,
-          hotBidThreshold: 10,
-          showExclusiveBadge: true,
-        }
-      });
-      
-      console.log("✅ Configurações de mental triggers atualizadas com sucesso");
-    } else {
-      console.log("✅ Criando novas configurações de mental triggers...");
-      
-      // Criar novas configurações
-      await prisma.mentalTriggerSettings.create({
-        data: {
-          platformSettingsId: platformSettings.id,
-          showDiscountBadge: true,
-          showPopularityBadge: true,
-          popularityViewThreshold: 100,
-          showHotBidBadge: true,
-          hotBidThreshold: 10,
-          showExclusiveBadge: true,
-        }
-      });
-      
-      console.log("✅ Configurações de mental triggers criadas com sucesso");
-    }
-    
-  } catch (error) {
-    console.error("Erro ao configurar mental triggers:", error);
-    throw error;
-  }
 }
 
 main()

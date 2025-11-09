@@ -1,0 +1,289 @@
+import { faker } from '@faker-js/faker';
+import { seedLogger } from './seed-logger';
+import { SeedValidator, SeedValidationConfig } from './seed-validator';
+import { TransactionManager } from './transaction-manager';
+import { createConnectId, createConnectIds } from './types';
+import { AssetStatus, PaymentStatus, Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
+import { createServiceExtensions } from './service-extensions';
+
+// Import services individually to avoid path issues
+import { TenantService } from '../src/services/tenant.service';
+import { PlatformSettingsService } from '../src/services/platform-settings.service';
+import { MentalTriggerSettingsService } from '../src/services/mental-trigger-settings.service';
+import { UserService } from '../src/services/user.service';
+import { RoleService } from '../src/services/role.service';
+import { StateService } from '../src/services/state.service';
+import { CityService } from '../src/services/city.service';
+import { CourtService } from '../src/services/court.service';
+import { JudicialDistrictService } from '../src/services/judicial-district.service';
+import { JudicialBranchService } from '../src/services/judicial-branch.service';
+import { SellerService } from '../src/services/seller.service';
+import { AuctioneerService } from '../src/services/auctioneer.service';
+import { CategoryService } from '../src/services/category.service';
+import { SubcategoryService } from '../src/services/subcategory.service';
+import { JudicialProcessService } from '../src/services/judicial-process.service';
+import { AssetService } from '../src/services/asset.service';
+import { AuctionService } from '../src/services/auction.service';
+import { AuctionStageService } from '../src/services/auction-stage.service';
+import { LotService } from '../src/services/lot.service';
+import { AuctionHabilitationService } from '../src/services/auction-habilitation.service';
+import { BidService } from '../src/services/bid.service';
+import { UserWinService } from '../src/services/user-win.service';
+import { InstallmentPaymentService } from '../src/services/installment-payment.service';
+import { DocumentTypeService } from '../src/services/document-type.service';
+import { UserDocumentService } from '../src/services/user-document.service';
+import { MediaItemService } from '../src/services/media-item.service';
+import { DirectSaleOfferService } from '../src/services/direct-sale-offer.service';
+import { LotQuestionService } from '../src/services/lot-question.service';
+import { ReviewService } from '../src/services/review.service';
+import { NotificationService } from '../src/services/notification.service';
+import { UserLotMaxBidService } from '../src/services/user-lot-max-bid.service';
+import { VehicleMakeService } from '../src/services/vehicle-make.service';
+import { VehicleModelService } from '../src/services/vehicle-model.service';
+import { ContactMessageService } from '../src/services/contact-message.service';
+import { DataSourceService } from '../src/services/data-source.service';
+import { DocumentTemplateService } from '../src/services/document-template.service';
+import { ReportService } from '../src/services/report.service';
+import { SubscriberService } from '../src/services/subscriber.service';
+
+import type { 
+    Role, 
+    AssetFormData, 
+    AuctionStatus, 
+    LotStatus, 
+    Auction, 
+    Lot, 
+    JudicialDistrict, 
+    JudicialBranch, 
+    Court, 
+    CityInfo as City, 
+    JudicialProcessFormData, 
+    UserWin, 
+    DocumentType, 
+    VehicleMake, 
+    VehicleModel, 
+    MediaItem 
+} from '../src/types';
+
+import { prisma } from '../src/lib/prisma';
+
+// Initialize all services
+const services = {
+    tenant: new TenantService(),
+    platformSettings: new PlatformSettingsService(),
+    mentalTriggerSettings: new MentalTriggerSettingsService(),
+    user: new UserService(),
+    role: new RoleService(),
+    state: new StateService(),
+    city: new CityService(),
+    court: new CourtService(),
+    judicialDistrict: new JudicialDistrictService(),
+    judicialBranch: new JudicialBranchService(),
+    seller: new SellerService(),
+    auctioneer: new AuctioneerService(),
+    category: new CategoryService(),
+    subcategory: new SubcategoryService(),
+    judicialProcess: new JudicialProcessService(),
+    asset: new AssetService(),
+    auction: new AuctionService(),
+    auctionStage: new AuctionStageService(),
+    lot: new LotService(),
+    habilitation: new AuctionHabilitationService(),
+    bid: new BidService(),
+    userWin: new UserWinService(),
+    installmentPayment: new InstallmentPaymentService(),
+    documentType: new DocumentTypeService(),
+    userDocument: new UserDocumentService(),
+    mediaItem: new MediaItemService(),
+    directSaleOffer: new DirectSaleOfferService(),
+    lotQuestion: new LotQuestionService(),
+    review: new ReviewService(),
+    notification: new NotificationService(),
+    userLotMaxBid: new UserLotMaxBidService(),
+    vehicleMake: new VehicleMakeService(),
+    vehicleModel: new VehicleModelService(),
+    contactMessage: new ContactMessageService(),
+    dataSource: new DataSourceService(),
+    documentTemplate: new DocumentTemplateService(prisma),
+    report: new ReportService(),
+    subscriber: new SubscriberService(),
+};
+
+const essentialRoles = [
+  { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total a todas as funcionalidades.', permissions: ['manage_all'] },
+  { name: 'Consignor', nameNormalized: 'CONSIGNOR', description: 'Pode gerenciar próprios leilões e lotes.', permissions: [] },
+  { name: 'Auction Analyst', nameNormalized: 'AUCTION_ANALYST', description: 'Analisa e aprova habilitações de usuários.', permissions: [] },
+  { name: 'Bidder', nameNormalized: 'BIDDER', description: 'Usuário habilitado para dar lances.', permissions: [] },
+  { name: 'User', nameNormalized: 'USER', description: 'Usuário padrão com acesso de visualização.', permissions: [] },
+  { name: 'Tenant Admin', nameNormalized: 'TENANT_ADMIN', description: 'Administrador de um tenant específico.', permissions: [] },
+  { name: 'Financial', nameNormalized: 'FINANCIAL', description: 'Gerencia pagamentos e faturamento.', permissions: [] },
+  { name: 'Auctioneer', nameNormalized: 'AUCTIONEER', description: 'Leiloeiro responsável por conduzir leilões.', permissions: [] },
+];
+
+const brazilianStates = [
+  { name: 'Acre', uf: 'AC' }, { name: 'Alagoas', uf: 'AL' }, { name: 'Amapá', uf: 'AP' },
+  { name: 'Amazonas', uf: 'AM' }, { name: 'Bahia', uf: 'BA' }, { name: 'Ceará', uf: 'CE' },
+  { name: 'Distrito Federal', uf: 'DF' }, { name: 'Espírito Santo', uf: 'ES' }, { name: 'Goiás', uf: 'GO' },
+  { name: 'Maranhão', uf: 'MA' }, { name: 'Mato Grosso', uf: 'MT' }, { name: 'Mato Grosso do Sul', uf: 'MS' },
+  { name: 'Minas Gerais', uf: 'MG' }, { name: 'Pará', uf: 'PA' }, { name: 'Paraíba', uf: 'PB' },
+  { name: 'Paraná', uf: 'PR' }, { name: 'Pernambuco', uf: 'PE' }, { name: 'Piauí', uf: 'PI' },
+  { name: 'Rio de Janeiro', uf: 'RJ' }, { name: 'Rio Grande do Norte', uf: 'RN' },
+  { name: 'Rio Grande do Sul', uf: 'RS' }, { name: 'Rondônia', uf: 'RO' }, { name: 'Roraima', uf: 'RR' },
+  { name: 'Santa Catarina', uf: 'SC' }, { name: 'São Paulo', uf: 'SP' }, { name: 'Sergipe', uf: 'SE' },
+  { name: 'Tocantins', uf: 'TO' }
+];
+
+const Constants = {
+    USER_COUNT: 25,
+    AUCTION_COUNT: 15,
+    ASSET_COUNT: 100,
+    LOTS_PER_AUCTION_MAX: 10,
+    BIDS_PER_LOT_MAX: 15,
+    COURT_COUNT: 5,
+    JUDICIAL_DISTRICT_COUNT: 10,
+    JUDICIAL_BRANCH_COUNT: 15,
+    JUDICIAL_PROCESS_COUNT: 8,
+    CITY_COUNT: 10,
+    VEHICLE_MAKE_COUNT: 10,
+    VEHICLE_MODEL_COUNT: 30,
+    MEDIA_ITEM_COUNT: 50,
+    MENTAL_TRIGGERS_COUNT: 5,
+    INSTALLMENTS_PER_WIN: 12,
+    DIRECT_SALE_OFFERS_COUNT: 10,
+};
+
+async function cleanDatabase() {
+    console.log("Limpando banco de dados...");
+    
+    const cleanupOrder = [
+        { service: services.bid, name: 'bids' },
+        { service: services.userWin, name: 'user wins' },
+        { service: services.installmentPayment, name: 'installment payments' },
+        { service: services.userLotMaxBid, name: 'user lot max bids' },
+        { service: services.lot, name: 'lots' },
+        { service: services.habilitation, name: 'auction habilitations' },
+        { service: services.auctionStage, name: 'auction stages' },
+        { service: services.notification, name: 'notifications' },
+        { service: services.review, name: 'reviews' },
+        { service: services.lotQuestion, name: 'lot questions' },
+        { service: services.directSaleOffer, name: 'direct sale offers' },
+        { service: services.auction, name: 'auctions' },
+        { service: services.asset, name: 'assets' },
+        { service: services.judicialProcess, name: 'judicial processes' },
+        { service: services.seller, name: 'sellers' },
+        { service: services.auctioneer, name: 'auctioneers' },
+        { service: services.report, name: 'reports' },
+        { service: services.userDocument, name: 'user documents' },
+        { service: services.user, name: 'users' },
+        { service: services.role, name: 'roles' },
+        { service: services.subcategory, name: 'subcategories' },
+        { service: services.category, name: 'categories' },
+        { service: services.vehicleModel, name: 'vehicle models' },
+        { service: services.vehicleMake, name: 'vehicle makes' },
+        { service: services.documentType, name: 'document types' },
+        { service: services.mediaItem, name: 'media items' },
+        { service: services.subscriber, name: 'subscribers' }
+    ];
+
+    for (const { service, name } of cleanupOrder) {
+        try {
+            if (typeof service?.deleteAll === 'function') {
+                await service.deleteAll();
+                console.log(`✓ ${name} limpo`);
+            } else {
+                console.log(`⚠ Ignorando limpeza de ${name} - método deleteAll não disponível`);
+            }
+        } catch (error) {
+            console.warn(`❌ Erro ao limpar ${name}:`, error);
+        }
+    }
+}
+
+async function createMainTenant() {
+    seedLogger.info("Criando tenant principal...");
+    
+    try {
+        const mainTenant = await services.tenant.create({
+            name: 'BidExpert Main',
+            subdomain: 'main'
+        });
+
+        if (!mainTenant) {
+            throw new Error("Falha ao criar tenant principal");
+        }
+
+        // Configurando platform settings usando o serviço
+        const platformSettings = await services.platformSettings.createSettings(mainTenant.id);
+        
+        // Configurando mental trigger settings usando o serviço
+        await services.mentalTriggerSettings.createSettings({
+            platformSettingsId: platformSettings.id,
+            showDiscountBadge: true,
+            showPopularityBadge: true,
+            popularityViewThreshold: 500,
+            showHotBidBadge: true,
+            hotBidThreshold: 10,
+            showExclusiveBadge: true
+        });
+
+        return mainTenant;
+    } catch (error) {
+        console.error("Erro ao criar tenant principal:", error);
+        throw error;
+    }
+}
+
+async function createRoles() {
+    seedLogger.info("Criando roles essenciais...");
+    
+    for (const role of essentialRoles) {
+        try {
+            await services.role.create(role);
+        } catch (error) {
+            console.error("Erro ao criar role:", role.name, error);
+            throw error;
+        }
+    }
+}
+
+async function createStates() {
+    seedLogger.info("Criando estados...");
+    
+    for (const state of brazilianStates) {
+        try {
+            await services.state.create(state);
+        } catch (error) {
+            console.error("Erro ao criar estado:", state.name, error);
+            throw error;
+        }
+    }
+}
+
+async function main() {
+    try {
+        seedLogger.info("Iniciando processo de seed estendido v3...");
+
+        await cleanDatabase();
+        
+        const tenant = await createMainTenant();
+        if (!tenant) {
+            throw new Error("Falha ao criar tenant principal");
+        }
+
+        const tenantId = tenant.id.toString();
+
+        await createRoles();
+        await createStates();
+
+        // TODO: Adicionar criação de outros dados usando os serviços
+
+        seedLogger.info("Processo de seed concluído com sucesso!");
+    } catch (error) {
+        console.error("Erro durante o processo de seed:", error);
+        process.exit(1);
+    }
+}
+
+// Execute o script
+main();
