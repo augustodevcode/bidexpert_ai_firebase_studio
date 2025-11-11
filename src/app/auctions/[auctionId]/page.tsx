@@ -7,7 +7,7 @@
  * de cliente `AuctionDetailsClient`, garantindo um carregamento inicial rápido (SSR/SSG).
  */
 import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
-import AuctionDetailsClient from './auction-details-client';
+import AuctionDetailsClientV2 from './auction-details-client-v2';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
@@ -97,7 +97,7 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
 
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 
-        <AuctionDetailsClient 
+        <AuctionDetailsClientV2
           auction={auction} 
           auctioneer={auctioneer || null}
           platformSettings={platformSettings!}

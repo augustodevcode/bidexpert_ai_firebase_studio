@@ -235,8 +235,29 @@ export class LotService {
 
   async getBidHistory(lotId: string): Promise<BidInfo[]> {
     try {
+      // lotId pode ser publicId (UUID string) ou id numérico
+      // Primeiro tenta encontrar o lote pelo publicId
+      let numericLotId: bigint;
+      
+      // Se for um número, converte direto
+      if (/^\d+$/.test(lotId)) {
+        numericLotId = BigInt(lotId);
+      } else {
+        // Caso contrário, busca o lote pelo publicId
+        const lot = await this.prisma.lot.findUnique({
+          where: { publicId: lotId }
+        });
+        
+        if (!lot) {
+          console.warn(`Lote com publicId ${lotId} não encontrado`);
+          return [];
+        }
+        
+        numericLotId = lot.id;
+      }
+
       const bids = await this.prisma.bid.findMany({
-        where: { lotId: BigInt(lotId) },
+        where: { lotId: numericLotId },
         orderBy: { amount: 'desc' },
         take: 50
       });

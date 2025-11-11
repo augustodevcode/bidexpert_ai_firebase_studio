@@ -126,6 +126,18 @@ export async function getSellerDetailsForLotPage(sellerIdOrPublicIdOrSlug?: stri
     }
 }
 
+export async function getLotDetailsForV2(lotIdOrPublicId: string): Promise<{
+  lot: Lot;
+  auction: Auction;
+  seller: SellerProfileInfo | null;
+  auctioneer: AuctioneerProfileInfo | null;
+  bids: BidInfo[];
+  questions: LotQuestion[];
+  reviews: Review[];
+} | null> {
+  return lotService.getLotDetailsForV2(lotIdOrPublicId);
+}
+
 export async function generateWinningBidTermAction(lotId: string): Promise<{ success: boolean; message: string; pdfBase64?: string; fileName?: string; }> {
     const lot = await lotService.getLotById(lotId);
     if (!lot || !lot.winnerId || !lot.auction) {

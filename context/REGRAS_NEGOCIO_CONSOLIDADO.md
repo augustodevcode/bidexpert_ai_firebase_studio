@@ -3,6 +3,7 @@
 
 **Data:** 27 de Outubro de 2025  
 **Status:** ✅ Conflitos Resolvidos - Versão Oficial
+**Próximos passos:** caso haja novas implementações, atualize esse documento com as orientações do usuário
 
 ---
 
@@ -36,7 +37,7 @@
 ## ARQUITETURA
 
 ### Stack Tecnológica
-- **Frontend:** Next.js 14, React 18, ShadCN/UI, Tailwind CSS
+- **Frontend:** Next.js última versão stable, React última versão stable, ShadCN/UI, Tailwind CSS
 - **Backend:** Node.js, Prisma ORM, MySQL
 - **Auth:** NextAuth.js (JWT/OAuth2)
 - **AI:** Genkit
@@ -44,13 +45,15 @@
 
 ### Padrão Arquitetural
 ```
-Controller (Server Action) → Service → Repository → Prisma ORM → MySQL
+Controller (Server Action) → Service → Repository → ZOD → Prisma ORM → MySQL
 ```
 
 **✅ PADRÃO OFICIAL:** Acesso direto ao Prisma via Services/Repositories
 - ❌ NÃO usar Database Adapter Pattern
 - ✅ Prisma Client diretamente nos Repositories
 - ✅ Lógica de negócio nos Services
+- ✅ Sempre usar ZOD regras de validação acima da camada do prisma;
+- ✅ scripts de seed usam Actions ou Services para massa de dados na aplicação (nunca usar prisma diretamente);
 
 ### Multi-Tenancy
 - **Identificação:** Por subdomínio (`leiloeiro-x.bidexpert.com`)
@@ -74,7 +77,8 @@ Controller (Server Action) → Service → Repository → Prisma ORM → MySQL
 
 ### RN-003: Validação de Formulários
 ✅ Campos obrigatórios com asterisco vermelho (`*`)  
-✅ Botão submissão desabilitado enquanto inválido  
+✅ Botão submissão desabilitado enquanto inválido
+✅ Botão de validador de regras do formulário para o usuário verificar o que está pendente de preencher (navegar para o primeiro item do form que está pendente)
 ✅ Toast de feedback após submissão (nunca falhar silenciosamente)
 
 ### RN-004: Endereçamento Unificado
@@ -95,7 +99,7 @@ Controller (Server Action) → Service → Repository → Prisma ORM → MySQL
 
 ### RN-007: Cronômetro (Countdown)
 ✅ Componente `LotCountdown` reutilizável  
-⚠️ NÃO exibir por padrão em todos os lotes  
+⚠️ NÃO exibir por padrão em todos os lotes, apenas nos que estivem com intervalo de dias menor do que configurado em Settings (se não tiver o campo em settings para configurar essa regra, crie o campo e atualize o codebase) 
 ✅ Controlado por prop `showCountdown`  
 ✅ Apenas em: Carousel "Super Oportunidades" e Modal de pré-visualização
 
