@@ -9,7 +9,7 @@
 import { TenantRepository } from '@/repositories/tenant.repository';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma, Tenant } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 interface CreateTenantData {
   name: string;

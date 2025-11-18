@@ -16,6 +16,25 @@ O projeto segue uma arquitetura MVC com uma camada de serviço e repositório pa
 -   `tests/ui`: Testes de interface do usuário com Playwright.
 -   `.windsurf/rules`: Regras e diretrizes para o agente de IA do Windsurf.
 -   `.windsurf/global_rules.md`: Regras globais aplicáveis a todos os projetos.
+-   `context/AI_PROJECT_RULES.md`: **[MANDATORY]** Regras críticas para assistentes de IA.
+-   `context/GEMINI.md`: Diretrizes específicas para Gemini AI.
+-   `context/instructions.md`: Instruções de workflow para IA.
+
+## ⚠️ CRITICAL: AI Project Rules
+
+**TODOS os assistentes de IA devem ler e seguir** `context/AI_PROJECT_RULES.md` antes de fazer qualquer mudança no código.
+
+### Regras Obrigatórias
+1. **Multi-tenant Security**: Todas as queries devem filtrar por `tenantId`
+2. **Lazy Compilation vs Pre-Build**: E2E tests DEVEM usar `npm run build && npm start`, NUNCA `npm run dev`
+3. **File Headers**: Todos os arquivos `.ts/.tsx` devem ter docblock explicando propósito
+4. **Non-Regression**: Deleções requerem autorização explícita do usuário
+5. **Design System**: Use apenas semantic tokens, nenhum hardcoded color
+6. **Testing**: Pré-build obrigatório antes de executar E2E tests
+7. **Prisma**: Acesso única através de `getDatabaseAdapter()`
+8. **Environment**: `.env` NUNCA pode ser deletado
+
+[📖 Ler regras completas aqui](./context/AI_PROJECT_RULES.md)
 
 ## Regras de Desenvolvimento com Windsurf
 

@@ -9,7 +9,7 @@
  */
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MapPin, Loader2, AlertCircle, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ const MapSearchComponent = dynamic(() => import('@/components/map-search-compone
     loading: () => <Skeleton className="w-full h-full rounded-lg" />,
 });
 
-export default function MapSearchPage() {
+function MapSearchPageContent() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
 
@@ -79,8 +79,8 @@ export default function MapSearchPage() {
         try {
             const [settings, auctions, lots] = await Promise.all([
                 getPlatformSettings(),
-                getAuctions(),
-                getLots()
+                getAuctions(true),
+                getLots(undefined, true)
             ]);
             setPlatformSettings(settings);
             setAllAuctions(auctions);
@@ -226,4 +226,20 @@ export default function MapSearchPage() {
         </div>
     </div>
   );
+}
+
+function MapSearchFallback() {
+    return (
+        <div className="flex h-[calc(100vh-var(--header-height,160px)-1rem)] items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+    );
+}
+
+export default function MapSearchPage() {
+    return (
+        <Suspense fallback={<MapSearchFallback />}>
+            <MapSearchPageContent />
+        </Suspense>
+    );
 }

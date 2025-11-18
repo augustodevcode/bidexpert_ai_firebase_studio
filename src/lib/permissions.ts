@@ -157,6 +157,10 @@ export const predefinedPermissions = [
   { id: 'conduct_auctions', label: 'Leiloeiro: Conduzir Leilões (Auditório)', group: 'Leiloeiro'},
   { id: 'financial:view', label: 'Financeiro: Ver Painel', group: 'Financeiro' },
   { id: 'financial:manage', label: 'Financeiro: Gerenciar Pagamentos', group: 'Financeiro' },
+  // Lawyer Portal
+  { id: 'lawyer_dashboard:view', label: 'Advogado: Ver Painel', group: 'Advogado' },
+  { id: 'lawyer_cases:view', label: 'Advogado: Ver Casos', group: 'Advogado' },
+  { id: 'lawyer_documents:manage', label: 'Advogado: Gerenciar Documentos', group: 'Advogado' },
   // Generic Admin / All Access
   { id: 'manage_all', label: 'Acesso Total (Administrador)', group: 'Geral'},
   // Tenant-specific Admin

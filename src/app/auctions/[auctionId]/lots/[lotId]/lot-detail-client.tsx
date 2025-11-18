@@ -500,7 +500,13 @@ export default function LotDetailClientContent({
               <h2 className="text-2xl font-bold mb-6 font-headline text-center">Outros Lotes Deste Leilão</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {relatedLots.map((relatedLot) => (
-                    <BidExpertCard key={relatedLot.id} item={relatedLot} type="lot" platformSettings={platformSettings} />
+                    <BidExpertCard
+                      key={relatedLot.id}
+                      item={relatedLot}
+                      type="lot"
+                      platformSettings={platformSettings}
+                      parentAuction={auction}
+                    />
                 ))}
               </div>
             </section>

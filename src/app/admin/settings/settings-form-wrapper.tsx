@@ -30,6 +30,12 @@ export default function SettingsFormWrapper({ title, description, children }: Se
   const form = useForm<PlatformSettingsFormValues>({
     resolver: zodResolver(platformSettingsFormSchema),
     mode: 'onChange',
+    defaultValues: {
+      blockchainEnabled: false,
+      lawyerMonetizationModel: 'SUBSCRIPTION',
+      softCloseEnabled: false,
+      softCloseMinutes: 5,
+    },
   });
 
   useEffect(() => {
@@ -40,6 +46,10 @@ export default function SettingsFormWrapper({ title, description, children }: Se
       if (fetchedSettings) {
         form.reset({
           ...fetchedSettings,
+          blockchainEnabled: fetchedSettings.blockchainEnabled ?? false,
+          lawyerMonetizationModel: fetchedSettings.lawyerMonetizationModel ?? 'SUBSCRIPTION',
+          softCloseEnabled: fetchedSettings.softCloseEnabled ?? false,
+          softCloseMinutes: fetchedSettings.softCloseMinutes ?? 5,
           themes: fetchedSettings.themes || undefined,
           mapSettings: fetchedSettings.mapSettings || undefined,
           biddingSettings: fetchedSettings.biddingSettings || undefined,

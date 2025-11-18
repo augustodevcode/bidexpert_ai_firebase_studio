@@ -120,6 +120,7 @@ const essentialRoles = [
   { name: 'User', nameNormalized: 'USER', description: 'Usuário padrão com acesso de visualização.', permissions: [] },
   { name: 'Tenant Admin', nameNormalized: 'TENANT_ADMIN', description: 'Administrador de um tenant específico.', permissions: [] },
   { name: 'Financial', nameNormalized: 'FINANCIAL', description: 'Gerencia pagamentos e faturamento.', permissions: [] },
+  { name: 'Lawyer', nameNormalized: 'LAWYER', description: 'Acesso ao portal jurídico e gestão de casos.', permissions: ['lawyer_dashboard:view', 'lawyer_cases:view', 'lawyer_documents:manage'] },
   { name: 'Auctioneer', nameNormalized: 'AUCTIONEER', description: 'Leiloeiro responsável por conduzir leilões.', permissions: [] },
 ];
 
@@ -153,6 +154,18 @@ const Constants = {
     MENTAL_TRIGGERS_COUNT: 5,
     INSTALLMENTS_PER_WIN: 12,
     DIRECT_SALE_OFFERS_COUNT: 10,
+};
+
+const LawyerSeedConfig = {
+  user: {
+    email: 'advogado@bidexpert.com.br',
+    password: 'Test@12345',
+    fullName: 'Ana Paula Souza',
+    cpf: '12345678901',
+    phone: '+55 11 98877-6655',
+  },
+  deterministicProcessNumber: '5001234-56.2025.8.26.0100',
+  deterministicAssetTitle: 'Apartamento Duplex 320m² – Jardins',
 };
 
 async function cleanDatabase() {
@@ -336,6 +349,34 @@ async function main() {
         if (!userResult.success || !userResult.userId) throw new Error(userResult.message);
         sellerUsers.push(await services.user.getUserById(userResult.userId.toString()));
     }
+
+
+  const lawyerUsers: any[] = [];
+  const lawyerRole = createdRoles['LAWYER'];
+  if (!lawyerRole) {
+    throw new Error('Perfil LAWYER não foi criado corretamente.');
+  }
+
+  const primaryLawyerResult = await services.user.createUser({
+    email: LawyerSeedConfig.user.email,
+    fullName: LawyerSeedConfig.user.fullName,
+    password: LawyerSeedConfig.user.password,
+    habilitationStatus: 'HABILITADO',
+    accountType: 'LEGAL',
+    roleIds: [String(lawyerRole.id)],
+    tenantId: tenantId,
+    cpf: LawyerSeedConfig.user.cpf,
+    cellPhone: LawyerSeedConfig.user.phone,
+  });
+
+  if (!primaryLawyerResult.success || !primaryLawyerResult.userId) {
+    throw new Error(primaryLawyerResult.message);
+  }
+
+  const primaryLawyerProfile = await services.user.getUserById(primaryLawyerResult.userId.toString());
+  if (primaryLawyerProfile) {
+    lawyerUsers.push(primaryLawyerProfile);
+  }
 
 
   const bidderUsers: any[] = [];
@@ -561,6 +602,22 @@ async function main() {
               documentNumber: faker.string.numeric(14),
               partyType: 'REU',
             },
+            ...(lawyerUsers.length > 0
+              ? (() => {
+                  const assignedLawyer = faker.helpers.arrayElement(lawyerUsers);
+                  if (!assignedLawyer) return [] as any[];
+                  const partyType = faker.datatype.boolean({ probability: 0.6 }) ? 'ADVOGADO_AUTOR' : 'ADVOGADO_REU';
+                  const lawyerName = assignedLawyer.fullName || LawyerSeedConfig.user.fullName;
+                  const lawyerCpf = assignedLawyer.cpf || LawyerSeedConfig.user.cpf;
+                  return [
+                    {
+                      name: lawyerName,
+                      documentNumber: lawyerCpf,
+                      partyType,
+                    },
+                  ];
+                })()
+              : []),
         ],
       } as JudicialProcessFormData);
       if (processResult.success && processResult.processId) {
@@ -570,6 +627,126 @@ async function main() {
     }
   }
   console.log(`${judicialProcesses.length} judicial processes created.`);
+
+
+  if (lawyerUsers.length > 0 && courts.length > 0 && districts.length > 0 && branches.length > 0) {
+    console.log('Creating deterministic lawyer case...');
+    try {
+      const primaryLawyer = lawyerUsers[0];
+      const deterministicProcessResult = await services.judicialProcess.createJudicialProcess(tenantId, {
+        processNumber: LawyerSeedConfig.deterministicProcessNumber,
+        isElectronic: true,
+        courtId: courts[0].id,
+        districtId: districts[0].id,
+        branchId: branches[0].id,
+        parties: [
+          {
+            name: 'Condomínio Jardim Paulista',
+            documentNumber: faker.string.numeric(14),
+            partyType: 'AUTOR',
+          },
+          {
+            name: 'Carlos Menezes',
+            documentNumber: faker.string.numeric(11),
+            partyType: 'REU',
+          },
+          {
+            name: primaryLawyer.fullName || LawyerSeedConfig.user.fullName,
+            documentNumber: primaryLawyer.cpf || LawyerSeedConfig.user.cpf,
+            partyType: 'ADVOGADO_AUTOR',
+          },
+        ],
+      } as JudicialProcessFormData);
+
+      if (deterministicProcessResult.success && deterministicProcessResult.processId) {
+        const deterministicProcess = await services.judicialProcess.getJudicialProcessById(tenantId, deterministicProcessResult.processId);
+        if (deterministicProcess) {
+          judicialProcesses.push(deterministicProcess);
+
+          const judicialSeller = sellers.find((s: any) => s?.isJudicial) || sellers[0];
+
+          const deterministicAssetResult = await services.asset.createAsset(tenantId, {
+            title: LawyerSeedConfig.deterministicAssetTitle,
+            description: 'Apartamento duplex com 3 suítes, 2 vagas de garagem e vista panorâmica.',
+            categoryId: catImoveis.id,
+            evaluationValue: 1250000,
+            sellerId: judicialSeller?.id,
+            locationCity: 'São Paulo',
+            locationState: 'SP',
+            status: 'DISPONIVEL',
+            judicialProcessId: deterministicProcess.id?.toString?.() ?? deterministicProcess.id,
+          } as AssetFormData);
+
+          let deterministicAssetId: string | null = null;
+          if (deterministicAssetResult.success && deterministicAssetResult.assetId) {
+            const deterministicAsset = await services.asset.getAssetById(tenantId, deterministicAssetResult.assetId);
+            deterministicAssetId = deterministicAsset?.id?.toString() ?? null;
+          }
+
+          const auctionDate = new Date();
+          auctionDate.setDate(auctionDate.getDate() + 3);
+
+          const auctioneerForDeterministic = auctioneers[0]?.id?.toString() || auctioneers[1]?.id?.toString();
+          const deterministicAuctionResult = await services.auction.createAuction(tenantId, {
+            title: 'Leilão Judicial - Condomínio Paulista',
+            auctionType: 'JUDICIAL',
+            status: 'ABERTO_PARA_LANCES',
+            auctioneerId: auctioneerForDeterministic,
+            sellerId: judicialSeller?.id?.toString() || sellers[0]?.id?.toString(),
+            auctionDate,
+            judicialProcessId: deterministicProcess.id,
+            softCloseEnabled: true,
+          });
+
+          if (deterministicAuctionResult.success && deterministicAuctionResult.auctionId) {
+            const deterministicAuction = await services.auction.getAuctionById(tenantId, deterministicAuctionResult.auctionId);
+            if (deterministicAuction) {
+              await services.auctionStage.createAuctionStage({
+                auction: { connect: { id: BigInt(deterministicAuction.id) } },
+                name: '1ª Praça',
+                startDate: auctionDate,
+                endDate: new Date(auctionDate.getTime() + 2 * 24 * 60 * 60 * 1000),
+                initialPrice: new Decimal(1100000),
+              });
+
+              const lotAssetIds = deterministicAssetId ? [deterministicAssetId] : [];
+              const deterministicLotResult = await services.lot.createLot({
+                auctionId: deterministicAuction.id,
+                title: LawyerSeedConfig.deterministicAssetTitle,
+                number: '101',
+                price: 1100000,
+                initialPrice: 1100000,
+                status: 'ABERTO_PARA_LANCES',
+                isFeatured: true,
+                type: 'JUDICIAL',
+                assetIds: lotAssetIds,
+              }, tenantId);
+
+              if (deterministicLotResult.success && deterministicLotResult.lotId && deterministicProcess?.id) {
+                try {
+                  await prisma.lot.update({
+                    where: { id: BigInt(deterministicLotResult.lotId) },
+                    data: {
+                      judicialProcesses: {
+                        connect: { id: BigInt(deterministicProcess.id) },
+                      },
+                      status: 'ABERTO_PARA_LANCES',
+                    },
+                  });
+                } catch (updateError: any) {
+                  console.warn('Failed to bind deterministic lot to judicial process:', updateError?.message || updateError);
+                }
+              } else if (!deterministicLotResult.success) {
+                console.warn('Failed to create deterministic lawyer lot:', deterministicLotResult.message);
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create deterministic lawyer case:', error);
+    }
+  }
 
 
   console.log("Creating media items...");
@@ -844,6 +1021,21 @@ async function main() {
     }
   }
   console.log("User documents created.");
+
+  if (lawyerUsers.length > 0 && documentTypes.length > 0) {
+    try {
+      const lawyerDocType = documentTypes.find(dt => dt.name === 'RG') || documentTypes[0];
+      await services.userDocument.createUserDocument({
+        user: { connect: { id: BigInt(lawyerUsers[0].id) } },
+        documentType: { connect: { id: BigInt(lawyerDocType.id) } },
+        status: 'PENDING_ANALYSIS',
+        fileUrl: 'https://storage.googleapis.com/bidexpert-demo/juridico/oab-certificado.pdf',
+        fileName: 'certificado_oab.pdf'
+      });
+    } catch (error: any) {
+      console.warn('Failed to create lawyer pending document:', error.message || error);
+    }
+  }
 
   console.log("Simulating bids, wins, and user interactions...");
   const openAuctions = (await services.auction.getAuctions(tenantId.toString()))?.filter(a => a.status === 'ABERTO_PARA_LANCES') || [];

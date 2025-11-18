@@ -1,6 +1,6 @@
 
 // src/repositories/lot.repository.ts
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import type { Lot, LotFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 

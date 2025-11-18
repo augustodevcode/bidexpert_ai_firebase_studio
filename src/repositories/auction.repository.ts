@@ -1,5 +1,5 @@
 // src/repositories/auction.repository.ts
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import type { Auction } from '@/types';
 import type { Prisma } from '@prisma/client';
 

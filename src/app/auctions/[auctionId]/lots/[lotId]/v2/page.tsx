@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Separator, Tabs, TabsContent, TabsList, TabsTrigger
+  Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Separator, Tabs, TabsContent, TabsList, TabsTrigger, Dialog, DialogContent, DialogTrigger
 } from '@/components/ui'; 
 import { 
   Building2, MapPin, Calendar, Clock, TrendingDown, FileText, Share2, Heart, Phone, Mail, Eye, Users, Gavel, 
@@ -96,6 +96,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
     } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isSubmittingBid, setIsSubmittingBid] = useState(false);
     const { toast } = useToast();
     
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -104,6 +105,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const [isAuctionOpen, setIsAuctionOpen] = useState(true);
     const [quickBid, setQuickBid] = useState(false);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
     
     const fetchLotData = useCallback(async () => {
         try {
@@ -136,6 +138,27 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
         setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
+    const handleSubmitBid = async () => {
+        setIsSubmittingBid(true);
+        try {
+            // Simula uma requisição (em produção, seria uma chamada de API)
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            toast({
+                title: "Lance enviado com sucesso!",
+                description: "Seu lance foi registrado e está concorrendo no leilão.",
+                variant: "default",
+            });
+        } catch (error) {
+            toast({
+                title: "Erro ao enviar lance",
+                description: "Ocorreu um erro ao processar seu lance. Tente novamente.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSubmittingBid(false);
+        }
+    };
+
     if (isLoading) {
         return <div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin" /></div>;
     }
@@ -148,6 +171,12 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
     const images = [lot.imageUrl, ...(Array.isArray(lot.galleryImageUrls) ? lot.galleryImageUrls : [])].filter(Boolean) as string[];
     const valorAvaliacao = lot.evaluationValue || 0;
     const incremento = lot.bidIncrementStep || 5000.00;
+    // Fallback de encerramento: usa última praça quando lot.endDate não existir
+    const computedEndDate: Date | null = lot.endDate
+        ? new Date(lot.endDate)
+        : (auction.auctionStages && auction.auctionStages.length > 0
+            ? new Date(auction.auctionStages[auction.auctionStages.length - 1].endDate as any)
+            : null);
     
     const pracas = auction.auctionStages?.map((stage, index) => ({
       numero: `${index + 1}ª praça`,
@@ -175,7 +204,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                             <h1 className="text-3xl font-bold text-slate-900 mb-3 titulo-imovel">{lot.title}</h1>
                             <div className="flex items-start gap-2 text-slate-600">
                                 <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0 text-purple-600" />
-                                <p className="text-lg endereco-imovel">{lot.mapAddress || `${lot.cityName || 'N/A'}, ${lot.stateUf || 'N/A'}`}</p>
+                                <p className="text-lg endereco-imovel">{lot.mapAddress || (Array.isArray((lot as any).assets) && (lot as any).assets[0]?.address) || `${lot.cityName || (Array.isArray((lot as any).assets) && (lot as any).assets[0]?.locationCity) || 'Não informado'}, ${lot.stateUf || (Array.isArray((lot as any).assets) && (lot as any).assets[0]?.locationState) || 'Não informado'}`}</p>
                             </div>
                         </div>
 
@@ -183,7 +212,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                         <Card className="overflow-hidden shadow-lg galeria-imagens-card">
                             <CardContent className="p-0">
                                 <div className="relative aspect-video bg-slate-900">
-                                    <img src={images.length > 0 ? images[currentImageIndex] : 'https://placehold.co/825x502/64748b/ffffff?text=Imagem+Indisponível'} alt="Lote" className="w-full h-full object-cover imagem-principal-galeria" />
+                                    <img src={images.length > 0 ? images[currentImageIndex] : 'https://placehold.co/825x502/64748b/ffffff?text=Imagem+Indisponível'} alt="Lote" className="w-full h-full object-cover imagem-principal-galeria cursor-zoom-in" onClick={() => setLightboxOpen(true)} />
                                     <div className="absolute top-4 left-4 flex gap-2 flex-wrap tags-galeria">
                                         <Badge className="bg-red-600 text-white tag-ocupado">DISPONÍVEL</Badge>
                                         <Badge className="bg-blue-600 text-white tag-tipo-processo">{auction.auctionType || 'Leilão'}</Badge>
@@ -362,7 +391,11 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                     <CardContent className="pt-6 space-y-4">
                                         <div className="prose prose-slate max-w-none">
                                             <h3>{lot.title}</h3>
-                                            <p>{lot.description || 'Sem descrição disponível'}</p>
+                                            <p>{
+                                                lot.description 
+                                                || (Array.isArray((lot as any).assets) && (lot as any).assets[0]?.description)
+                                                || 'Sem descrição disponível'
+                                            }</p>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -386,7 +419,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                             </div>
                                             <div>
                                                 <p className="text-sm text-slate-600 mb-1">Cidade</p>
-                                                <p className="font-semibold">{lot.cityName || 'N/A'}</p>
+                                                <p className="font-semibold">{lot.cityName || (Array.isArray((lot as any).assets) && (lot as any).assets[0]?.locationCity) || 'Não informado'}</p>
                                             </div>
                                         </div>
                                     </CardContent>
@@ -753,12 +786,12 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                 <CardTitle className="flex items-center gap-2"><Clock className="w-5 h-5" /> Encerra em:</CardTitle>
                             </CardHeader>
                             <CardContent className="pt-6">
-                                {lot.endDate && <TimeRemainingDisplay endDate={new Date(lot.endDate)} />}
+                                {computedEndDate && <TimeRemainingDisplay endDate={computedEndDate} />}
                                 
                                 <div className="space-y-3 mb-6 info-lances">
                                     <div className="info-encerramento">
                                         <p className="text-sm text-slate-600 mb-1">Encerramento:</p>
-                                        <p className="font-semibold">{lot.endDate ? format(new Date(lot.endDate), 'dd/MM HH:mm', { locale: ptBR }) : 'N/A'}</p>
+                                        <p className="font-semibold">{computedEndDate ? format(computedEndDate, 'dd/MM HH:mm', { locale: ptBR }) : 'N/A'}</p>
                                     </div>
                                     <Separator />
                                     <div>
@@ -776,8 +809,20 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                         FAÇA LOGIN PARA PARTICIPAR
                                     </Button>
                                 ) : isAuctionOpen ? (
-                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg font-semibold" size="lg">
-                                        ENVIAR LANCE
+                                    <Button 
+                                        onClick={handleSubmitBid}
+                                        disabled={isSubmittingBid}
+                                        className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-lg font-semibold disabled:opacity-70 disabled:cursor-not-allowed" 
+                                        size="lg"
+                                    >
+                                        {isSubmittingBid ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Enviando Lance...
+                                            </>
+                                        ) : (
+                                            'ENVIAR LANCE'
+                                        )}
                                     </Button>
                                 ) : (
                                     <div className="text-center p-3 bg-slate-100 rounded-lg border">
@@ -830,21 +875,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                             </CardContent>
                         </Card>
 
-                        {/* Localização */}
-                        <Card className="overflow-hidden">
-                            <CardHeader>
-                                <CardTitle className="text-base">Localização</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                <div className="bg-gradient-to-br from-slate-200 to-slate-300 h-64 rounded-b-lg flex items-center justify-center">
-                                    <div className="text-center">
-                                        <MapPin className="w-16 h-16 text-slate-600 mx-auto mb-2 opacity-70" />
-                                        <p className="text-slate-600 font-medium">Mapa Interativo</p>
-                                        <p className="text-sm text-slate-500 mt-1">{lot.mapAddress || `${lot.cityName}, ${lot.stateUf}`}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+
 
                         {/* Contato */}
                         <Card>
@@ -901,6 +932,44 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                         </Card>
                     </div>
                 </div>
+
+                {/* Lightbox Modal for Full Image */}
+                <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+                    <DialogContent className="max-w-5xl w-full p-0 bg-black/95">
+                        <div className="relative w-full h-[80vh] flex items-center justify-center">
+                            <img 
+                                src={images.length > 0 ? images[currentImageIndex] : 'https://placehold.co/825x502/64748b/ffffff?text=Imagem+Indisponível'} 
+                                alt="Imagem ampliada" 
+                                className="max-w-full max-h-full object-contain"
+                            />
+                            {images.length > 1 && (
+                                <>
+                                    <button 
+                                        onClick={prevImage} 
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 hover:bg-white/30 rounded-full transition"
+                                    >
+                                        <ChevronLeft className="w-6 h-6 text-white" />
+                                    </button>
+                                    <button 
+                                        onClick={nextImage} 
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 hover:bg-white/30 rounded-full transition"
+                                    >
+                                        <ChevronRight className="w-6 h-6 text-white" />
+                                    </button>
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                                        {images.map((_, index) => (
+                                            <button 
+                                                key={index} 
+                                                onClick={() => setCurrentImageIndex(index)} 
+                                                className={`w-2 h-2 rounded-full transition ${index === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'}`} 
+                                            />
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );

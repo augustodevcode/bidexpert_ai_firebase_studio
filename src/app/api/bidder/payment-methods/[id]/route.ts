@@ -5,6 +5,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bidderService } from '@/services/bidder.service';
 import { getSession } from '@/server/lib/session';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 export async function PUT(
   request: NextRequest,
@@ -13,10 +16,39 @@ export async function PUT(
   try {
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.userId || !session?.tenantId) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
+      );
+    }
+
+    // ✅ SECURITY FIX: Validate that payment method belongs to user's tenant
+    const paymentMethod = await prisma.paymentMethod.findUnique({
+      where: { id: BigInt(params.id) },
+      include: {
+        bidder: {
+          include: {
+            user: {
+              select: { id: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (!paymentMethod) {
+      return NextResponse.json(
+        { success: false, error: 'Método de pagamento não encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Verify payment method belongs to the user
+    if (paymentMethod.bidder.user.id.toString() !== session.userId) {
+      return NextResponse.json(
+        { success: false, error: 'Acesso negado' },
+        { status: 403 }
       );
     }
 
@@ -48,10 +80,39 @@ export async function DELETE(
   try {
     const session = await getSession();
 
-    if (!session?.userId) {
+    if (!session?.userId || !session?.tenantId) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
+      );
+    }
+
+    // ✅ SECURITY FIX: Validate that payment method belongs to user's tenant
+    const paymentMethod = await prisma.paymentMethod.findUnique({
+      where: { id: BigInt(params.id) },
+      include: {
+        bidder: {
+          include: {
+            user: {
+              select: { id: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (!paymentMethod) {
+      return NextResponse.json(
+        { success: false, error: 'Método de pagamento não encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Verify payment method belongs to the user
+    if (paymentMethod.bidder.user.id.toString() !== session.userId) {
+      return NextResponse.json(
+        { success: false, error: 'Acesso negado' },
+        { status: 403 }
       );
     }
 

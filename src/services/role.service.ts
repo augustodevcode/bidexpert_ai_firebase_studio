@@ -85,7 +85,7 @@ export class RoleService {
 
   async deleteAllNonEssentialRoles(): Promise<{ success: boolean; message: string; }> {
     try {
-      const essentialRoles = ['ADMIN', 'USER', 'BIDDER', 'SELLER_ADMIN', 'AUCTIONEER_ADMIN'];
+      const essentialRoles = ['ADMIN', 'USER', 'BIDDER', 'SELLER_ADMIN', 'AUCTIONEER_ADMIN', 'LAWYER'];
       const roles = await this.repository.findAll();
       for (const role of roles) {
         if (!essentialRoles.includes(role.nameNormalized)) {

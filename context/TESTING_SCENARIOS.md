@@ -2,6 +2,82 @@
 
 Este documento descreve os cenários de teste para garantir a qualidade, integridade e o funcionamento correto de todas as funcionalidades da plataforma BidExpert. Os testes são escritos em formato BDD (Behavior-Driven Development) para clareza.
 
+## Módulo 0: Administração - Impersonação de Usuários
+
+### 0.1. Impersonação de Advogados (Lawyer Dashboard)
+
+**Cenário 0.1.1: Admin acessa painel do advogado e vê seletor de impersonação**
+- **Dado** que um usuário com perfil "Admin" está logado.
+- **Quando** ele navega para `/lawyer/dashboard`.
+- **Então** ele deve ver o seletor de impersonação com o atributo `data-ai-id="lawyer-impersonation-selector"`.
+- **E** o seletor deve exibir a opção "Meu próprio painel" selecionada por padrão.
+- **E** o seletor deve listar todos os advogados disponíveis para impersonação.
+- **E** cada opção de advogado deve mostrar nome, email e contagem de casos ativos.
+
+**Cenário 0.1.2: Admin seleciona um advogado para impersonar**
+- **Dado** que um Admin está na página `/lawyer/dashboard` e vê o seletor de impersonação.
+- **Quando** ele clica no seletor com `data-ai-id="lawyer-select-trigger"`.
+- **E** seleciona um advogado específico da lista (ex: `data-ai-id="lawyer-option-{lawyerId}"`).
+- **Então** o dashboard deve atualizar e exibir os dados do advogado selecionado.
+- **E** as métricas devem refletir os casos do advogado impersonado (ex: `data-ai-id="lawyer-metric-total-cases"`).
+- **E** deve aparecer um indicador visual de que o admin está em modo impersonação.
+
+**Cenário 0.1.3: Admin retorna ao próprio painel**
+- **Dado** que um Admin está impersonando um advogado no `/lawyer/dashboard`.
+- **Quando** ele abre o seletor e escolhe a opção "Meu próprio painel" (`data-ai-id="lawyer-option-self"`).
+- **Então** o dashboard deve atualizar e exibir os dados do próprio admin.
+- **E** o indicador de impersonação deve desaparecer.
+- **E** as métricas devem refletir os casos do admin (se aplicável).
+
+**Cenário 0.1.4: Dashboard carrega métricas corretas ao impersonar**
+- **Dado** que um Admin selecionou um advogado específico no seletor de impersonação.
+- **Quando** o dashboard carrega os dados.
+- **Então** a métrica "Total de Casos" (`data-ai-id="lawyer-metric-total-cases"`) deve exibir a contagem correta de processos judiciais do advogado.
+- **E** a métrica "Casos Ativos" (`data-ai-id="lawyer-metric-active-cases"`) deve exibir apenas casos com status ativo.
+- **E** a métrica "Casos Encerrados" deve exibir casos finalizados.
+- **E** a métrica "Documentos Pendentes" deve refletir documentos não enviados ou em análise.
+
+**Cenário 0.1.5: Usuário não-admin não vê seletor de impersonação**
+- **Dado** que um usuário com perfil "Lawyer" (sem permissão admin) está logado.
+- **Quando** ele navega para `/lawyer/dashboard`.
+- **Então** o seletor de impersonação **NÃO** deve aparecer na página.
+- **E** ele deve ver apenas seu próprio dashboard sem opções de visualizar outros usuários.
+
+**Cenário 0.1.6: Tentativa de impersonação sem permissões (validação server-side)**
+- **Dado** que um usuário não-admin tenta chamar diretamente a action `getLawyerDashboardOverviewAction` com um `impersonateUserId` diferente do seu próprio ID.
+- **Quando** a action é executada no servidor.
+- **Então** a action deve retornar um erro de permissão.
+- **E** nenhum dado do advogado alvo deve ser retornado.
+- **Critério de Aceite**: A validação deve ocorrer no serviço `AdminImpersonationService.canImpersonate()`.
+
+### 0.2. Segurança e Auditoria de Impersonação
+
+**Cenário 0.2.1: Impersonação registra log de auditoria**
+- **Dado** que um Admin impersona um advogado.
+- **Quando** a impersonação é ativada.
+- **Então** um registro de auditoria deve ser criado com: timestamp, adminUserId, targetUserId, action ("impersonate_start").
+- **Quando** o admin retorna ao próprio painel.
+- **Então** outro registro de auditoria deve ser criado com action ("impersonate_end").
+- **Critério de Aceite**: Logs devem ser persistidos e consultáveis para compliance. *(Pendente de implementação)*
+
+**Cenário 0.2.2: Sessão de impersonação expira após timeout**
+- **Dado** que um Admin impersona um advogado.
+- **E** a configuração de timeout de sessão está definida para 30 minutos.
+- **Quando** 30 minutos se passam sem atividade.
+- **Então** o sistema deve automaticamente retornar o admin ao próprio painel.
+- **E** uma notificação deve informar "Sessão de visualização expirada".
+- **Critério de Aceite**: Timeout deve ser configurável em `PlatformSettings`. *(Pendente de implementação)*
+
+**Cenário 0.2.3: Cache de métricas é invalidado ao trocar de usuário**
+- **Dado** que um Admin está visualizando o dashboard do "Advogado A".
+- **Quando** ele troca para impersonar o "Advogado B".
+- **Então** o sistema deve invalidar o cache de métricas do "Advogado A".
+- **E** carregar novos dados do "Advogado B" do banco de dados.
+- **E** não deve exibir métricas obsoletas ou misturadas.
+- **Critério de Aceite**: Cache invalidation deve ser imediata e confiável. *(Pendente de otimização)*
+
+---
+
 ## Módulo 1: Administração - Gerenciamento de Entidades (CRUD)
 
 ### 1.1. Gerenciamento de Usuários
@@ -923,11 +999,32 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Quando** o usuário edita novamente o leilão e seleciona "Imagem Customizada", escolhendo uma nova imagem da biblioteca.
 - **Então** a imagem principal do leilão deve ser atualizada para a nova imagem, ignorando a imagem do lote.
 
+---
 
-##
-- Prompt:
+## 📋 Informações do Documento
 
-Atualize o script de seed extended para que corretamente insira dadoa em todas as tabelas que existem no banco de dados. Porém não utilize insert direto, o script deve fazer chamadas dos métodos que são usados pela UI (que capturam dos valores dos imputs (campos) de tela e inserem no banco de dados passando por toda a validação de regras que tem nos actions, services, zod e prisma.  Aqui estão todas as tabelas "CREATE TABLE `_AuctionToCourt` (
+**Mantido por:** Equipe de Desenvolvimento BidExpert  
+**Última atualização:** 16/11/2025  
+**Versão:** 2.1  
+**Changelog:**
+- Adicionado Módulo 0: Administração - Impersonação de Usuários
+- 6 novos cenários cobrindo impersonação de advogados
+- 3 cenários de segurança e auditoria
+- Validação server-side e client-side
+- Testes para admins e não-admins
+
+---
+
+## 📝 Anexo: Schema MySQL Completo
+
+O schema completo do banco de dados MySQL é mantido em `prisma/schema.prisma`.  
+A representação SQL abaixo é para referência e troubleshooting:
+
+---
+
+## - Prompt (para contexto de geração de seed data):
+
+Atualize o script de seed extended para que corretamente insira dados em todas as tabelas que existem no banco de dados. Porém não utilize insert direto, o script deve fazer chamadas dos métodos que são usados pela UI (que capturam dos valores dos inputs (campos) de tela e inserem no banco de dados passando por toda a validação de regras que tem nos actions, services, zod e prisma.  Aqui estão todas as tabelas "CREATE TABLE `_AuctionToCourt` (
   `A` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
   `B` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
   UNIQUE KEY `_AuctionToCourt_AB_unique` (`A`,`B`),

@@ -42,7 +42,7 @@ export default async function HomePage() {
   ] = await Promise.all([
       getPlatformSettings(),
       getAuctions(true, 10), // Limitar para 10 leilões
-      getLots(undefined, undefined, 12, true), // Public call
+    getLots(undefined, true, 12), // Public call
       getLotCategories(),
       getSellers(true),
   ]);

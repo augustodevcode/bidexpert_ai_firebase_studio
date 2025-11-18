@@ -3,7 +3,7 @@
 
 import { Suspense } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Settings as SettingsIcon, Database, Palette, Wrench, MapPin as MapIcon, Zap, ArrowUpDown, CreditCard, Bell, Bot } from 'lucide-react';
+import { Settings as SettingsIcon, Database, Palette, Wrench, MapPin as MapIcon, Zap, ArrowUpDown, CreditCard, Bell, Bot, Zap as LightningIcon } from 'lucide-react';
 import Link from 'next/link';
 
 interface SettingCardProps {
@@ -41,6 +41,7 @@ function AdminSettingsPageContent() {
         { title: "Gateway de Pagamento", description: "Defina o provedor e comissões.", icon: CreditCard, link: "/admin/settings/payment", dataAiId: "settings-card-payment" },
         { title: "Notificações", description: "Controle os e-mails de notificação.", icon: Bell, link: "/admin/settings/notifications", dataAiId: "settings-card-notifications" },
         { title: "Gatilhos Mentais & Badges", description: "Ajuste os gatilhos de marketing e visibilidade.", icon: Bot, link: "/admin/settings/triggers", dataAiId: "settings-card-triggers" },
+        { title: "Tempo Real & Blockchain", description: "Habilite soft-close, blockchain e monetização de advogados.", icon: LightningIcon, link: "/admin/settings/realtime", dataAiId: "settings-card-realtime" },
         { title: "Dados de Exemplo", description: "Popule o banco de dados para demonstração.", icon: Database, link: "/admin/settings/seeding", dataAiId: "settings-card-seeding" },
     ];
 

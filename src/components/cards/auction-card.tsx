@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction } from '@/types';
 import { Heart, Share2, Eye, X, Facebook, MessageSquareText, Mail, Clock, Users, Star, ListChecks } from 'lucide-react';
-import { isPast, differenceInDays } from 'date-fns';
+import { isPast, differenceInDays, format, isValid } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import AuctionPreviewModal from '../auction-preview-modal';
 import { isValidImageUrl, getAuctionStatusText, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -102,6 +103,38 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
 
 
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
+  const stagesDisplay = React.useMemo(() => {
+    const stages = auction.auctionStages ?? [];
+    if (!stages.length) {
+      return [];
+    }
+
+    return stages
+      .map(stage => {
+        const startDate = stage.startDate ? new Date(stage.startDate) : null;
+        const endDate = stage.endDate ? new Date(stage.endDate) : null;
+
+        const formattedStart = startDate && isValid(startDate)
+          ? format(startDate, 'dd/MM HH:mm', { locale: ptBR })
+          : null;
+        const formattedEnd = endDate && isValid(endDate)
+          ? format(endDate, 'dd/MM HH:mm', { locale: ptBR })
+          : null;
+
+        return {
+          id: stage.id,
+          name: stage.name || undefined,
+          formattedStart,
+          formattedEnd,
+          startDate,
+        };
+      })
+      .sort((a, b) => {
+        const aTime = a.startDate?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const bTime = b.startDate?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      });
+  }, [auction.auctionStages]);
   
   const getStatusDisplay = () => {
     if (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') {
@@ -212,6 +245,26 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                 <div title={`${auction.visits || 0} Visitas`}><Eye className="mx-auto h-4 w-4 mb-0.5" /><span className="font-semibold text-foreground">{auction.visits || 0}</span></div>
                 <div title={`${auction.totalHabilitatedUsers || 0} Habilitados`}><Users className="mx-auto h-4 w-4 mb-0.5" /><span className="font-semibold text-foreground">{auction.totalHabilitatedUsers || 0}</span></div>
             </div>
+
+            {stagesDisplay.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1" data-ai-id="auction-card-stages">
+                {stagesDisplay.map(stage => (
+                  <Badge
+                    key={stage.id}
+                    variant="outline"
+                    className="rounded-full border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary"
+                  >
+                    <span>{stage.name ?? 'Praça'}</span>
+                    {(stage.formattedStart || stage.formattedEnd) && (
+                      <span className="ml-1 text-[0.7rem] font-normal text-primary/80">
+                        {stage.formattedStart ?? 'Sem data'}
+                        {stage.formattedEnd ? ` → ${stage.formattedEnd}` : ''}
+                      </span>
+                    )}
+                  </Badge>
+                ))}
+              </div>
+            )}
             
             {auction.auctionStages && auction.auctionStages.length > 0 && (
                 <div className="pt-2" data-ai-id="auction-card-timeline">

@@ -217,26 +217,26 @@ export default function BidExpertFilter({
 
 
   return (
-    <aside className="w-full md:w-72 lg:w-80 space-y-6">
+    <aside className="w-full md:w-72 lg:w-80 space-y-6" data-ai-id="bidexpert-filter-container">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold flex items-center">
+        <h2 className="text-xl font-semibold flex items-center" data-ai-id="bidexpert-filter-title">
           <Filter className="mr-2 h-5 w-5 text-primary" /> Filtros
         </h2>
-        <Button variant="ghost" size="sm" onClick={handleResetFilters} className="text-xs text-muted-foreground hover:text-primary">
+        <Button variant="ghost" size="sm" onClick={handleResetFilters} className="text-xs text-muted-foreground hover:text-primary" data-ai-id="bidexpert-filter-reset-btn">
           <RefreshCw className="mr-1 h-3 w-3" /> Limpar
         </Button>
       </div>
 
-      <Accordion type="multiple" defaultValue={['categories', 'price', 'status', 'makes', 'praça']} className="w-full">
+      <Accordion type="multiple" defaultValue={['categories', 'price', 'status', 'makes', 'praça']} className="w-full" data-ai-id="bidexpert-filter-accordion">
         
         {filterContext === 'auctions' && (
-            <AccordionItem value="modality">
+            <AccordionItem value="modality" data-ai-id="filter-modality-section">
             <AccordionTrigger className="text-md font-medium">Modalidade do Leilão</AccordionTrigger>
             <AccordionContent>
-                <RadioGroup value={selectedModality} onValueChange={setSelectedModality} className="space-y-1">
+                <RadioGroup value={selectedModality} onValueChange={setSelectedModality} className="space-y-1" data-ai-id="filter-modality-group">
                 {modalities.map(modal => (
-                    <div key={modal.value} className="flex items-center space-x-2">
-                    <RadioGroupItem value={modal.value} id={`mod-${modal.value}`} />
+                    <div key={modal.value} className="flex items-center space-x-2" data-ai-id={`filter-modality-${modal.value}`}>
+                    <RadioGroupItem value={modal.value} id={`mod-${modal.value}`} data-ai-id={`filter-modality-${modal.value}-radio`} />
                     <Label htmlFor={`mod-${modal.value}`} className="text-sm font-normal cursor-pointer">{modal.label}</Label>
                     </div>
                 ))}
@@ -246,13 +246,13 @@ export default function BidExpertFilter({
         )}
 
         {filterContext === 'directSales' && (
-            <AccordionItem value="offerType">
+            <AccordionItem value="offerType" data-ai-id="filter-offertype-section">
             <AccordionTrigger className="text-md font-medium">Tipo de Oferta</AccordionTrigger>
             <AccordionContent>
-                <RadioGroup value={selectedOfferType} onValueChange={(value) => setSelectedOfferType(value as DirectSaleOfferType | 'ALL')} className="space-y-1">
+                <RadioGroup value={selectedOfferType} onValueChange={(value) => setSelectedOfferType(value as DirectSaleOfferType | 'ALL')} className="space-y-1" data-ai-id="filter-offertype-group">
                 {offerTypes.map(type => (
-                    <div key={type.value} className="flex items-center space-x-2">
-                    <RadioGroupItem value={type.value} id={`offerType-${type.value}`} />
+                    <div key={type.value} className="flex items-center space-x-2" data-ai-id={`filter-offertype-${type.value}`}>
+                    <RadioGroupItem value={type.value} id={`offerType-${type.value}`} data-ai-id={`filter-offertype-${type.value}-radio`} />
                     <Label htmlFor={`offerType-${type.value}`} className="text-sm font-normal cursor-pointer">{type.label}</Label>
                     </div>
                 ))}
@@ -262,19 +262,19 @@ export default function BidExpertFilter({
         )}
         
         {categories.length > 0 && (
-            <AccordionItem value="categories" disabled={disableCategoryFilter}>
+            <AccordionItem value="categories" disabled={disableCategoryFilter} data-ai-id="filter-category-section">
             <AccordionTrigger className="text-md font-medium" disabled={disableCategoryFilter}>
                 Categorias {disableCategoryFilter && <span className="text-xs text-muted-foreground ml-1">(Atual)</span>}
             </AccordionTrigger>
             <AccordionContent>
-                <RadioGroup value={selectedCategorySlug} onValueChange={handleCategoryChange} className="space-y-1 max-h-60 overflow-y-auto pr-2">
-                    <div key="TODAS" className="flex items-center space-x-2">
-                        <RadioGroupItem value="TODAS" id="cat-slug-TODAS" />
+                <RadioGroup value={selectedCategorySlug} onValueChange={handleCategoryChange} className="space-y-1 max-h-60 overflow-y-auto pr-2" data-ai-id="filter-category-group">
+                    <div key="TODAS" className="flex items-center space-x-2" data-ai-id="filter-category-all">
+                        <RadioGroupItem value="TODAS" id="cat-slug-TODAS" data-ai-id="filter-category-all-radio" />
                         <Label htmlFor="cat-slug-TODAS" className="text-sm font-normal cursor-pointer">Todas as Categorias</Label>
                     </div>
                     {categories.map(category => (
-                        <div key={category.id} className="flex items-center space-x-2">
-                            <RadioGroupItem value={category.slug} id={`cat-slug-${category.slug}`} />
+                        <div key={category.id} className="flex items-center space-x-2" data-ai-id={`filter-category-${category.slug}`}>
+                            <RadioGroupItem value={category.slug} id={`cat-slug-${category.slug}`} data-ai-id={`filter-category-${category.slug}-radio`} />
                             <Label htmlFor={`cat-slug-${category.slug}`} className="text-sm font-normal cursor-pointer">{category.name}</Label>
                         </div>
                     ))}
@@ -284,13 +284,13 @@ export default function BidExpertFilter({
         )}
 
         {filterContext === 'auctions' || filterContext === 'tomada_de_precos' ? (
-          <AccordionItem value="praça">
+          <AccordionItem value="praça" data-ai-id="filter-praca-section">
             <AccordionTrigger className="text-md font-medium">Praças</AccordionTrigger>
             <AccordionContent>
-              <RadioGroup value={selectedPraça} onValueChange={(value) => setSelectedPraça(value as 'todas' | 'unica' | 'multiplas')} className="space-y-1">
+              <RadioGroup value={selectedPraça} onValueChange={(value) => setSelectedPraça(value as 'todas' | 'unica' | 'multiplas')} className="space-y-1" data-ai-id="filter-praca-group">
                 {praçaOptions.map(option => (
-                  <div key={option.value} className="flex items-center space-x-2">
-                    <RadioGroupItem value={option.value} id={`praça-${option.value}`} />
+                  <div key={option.value} className="flex items-center space-x-2" data-ai-id={`filter-praca-${option.value}`}>
+                    <RadioGroupItem value={option.value} id={`praça-${option.value}`} data-ai-id={`filter-praca-${option.value}-radio`} />
                     <Label htmlFor={`praça-${option.value}`} className="text-sm font-normal cursor-pointer">{option.label}</Label>
                   </div>
                 ))}
@@ -299,7 +299,7 @@ export default function BidExpertFilter({
           </AccordionItem>
         ) : null}
 
-        <AccordionItem value="price">
+        <AccordionItem value="price" data-ai-id="filter-price-section">
           <AccordionTrigger className="text-md font-medium">Faixa de Preço</AccordionTrigger>
           <AccordionContent className="pt-2 space-y-3">
             <Slider
@@ -308,21 +308,22 @@ export default function BidExpertFilter({
               step={1000}
               value={priceRange}
               onValueChange={(value) => setPriceRange(value as [number, number])}
+              data-ai-id="filter-price-slider"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>R$ {priceRange[0].toLocaleString('pt-BR')}</span>
-              <span>R$ {priceRange[1].toLocaleString('pt-BR')}</span>
+            <div className="flex justify-between text-xs text-muted-foreground" data-ai-id="filter-price-display">
+              <span data-ai-id="filter-price-min-display">R$ {priceRange[0].toLocaleString('pt-BR')}</span>
+              <span data-ai-id="filter-price-max-display">R$ {priceRange[1].toLocaleString('pt-BR')}</span>
             </div>
           </AccordionContent>
         </AccordionItem>
 
         {filterContext === 'lots' && makes && makes.length > 0 && (
-            <AccordionItem value="makes">
+            <AccordionItem value="makes" data-ai-id="filter-makes-section">
             <AccordionTrigger className="text-md font-medium">Marca</AccordionTrigger>
             <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
                 {makes.map(make => (
-                <div key={make.id} className="flex items-center space-x-2">
-                    <Checkbox id={`make-${make.id}`} checked={selectedMakes.includes(make.name)} onCheckedChange={() => handleMakeChange(make.name)} />
+                <div key={make.id} className="flex items-center space-x-2" data-ai-id={`filter-makes-${make.id}`}>
+                    <Checkbox id={`make-${make.id}`} checked={selectedMakes.includes(make.name)} onCheckedChange={() => handleMakeChange(make.name)} data-ai-id={`filter-makes-${make.id}-checkbox`} />
                     <Label htmlFor={`make-${make.id}`} className="text-sm font-normal cursor-pointer">{make.name}</Label>
                 </div>
                 ))}
@@ -331,12 +332,12 @@ export default function BidExpertFilter({
         )}
         
         {filterContext === 'lots' && models && models.length > 0 && (
-            <AccordionItem value="models">
+            <AccordionItem value="models" data-ai-id="filter-models-section">
             <AccordionTrigger className="text-md font-medium">Modelo</AccordionTrigger>
             <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
                 {models.map(model => (
-                <div key={model.id} className="flex items-center space-x-2">
-                    <Checkbox id={`model-${model.id}`} checked={selectedModels.includes(model.name)} onCheckedChange={() => handleModelChange(model.name)} />
+                <div key={model.id} className="flex items-center space-x-2" data-ai-id={`filter-models-${model.id}`}>
+                    <Checkbox id={`model-${model.id}`} checked={selectedModels.includes(model.name)} onCheckedChange={() => handleModelChange(model.name)} data-ai-id={`filter-models-${model.id}-checkbox`} />
                     <Label htmlFor={`model-${model.id}`} className="text-sm font-normal cursor-pointer">{model.name}</Label>
                 </div>
                 ))}
@@ -346,15 +347,16 @@ export default function BidExpertFilter({
 
 
         {locations.length > 0 && (
-            <AccordionItem value="locations">
+            <AccordionItem value="locations" data-ai-id="filter-locations-section">
             <AccordionTrigger className="text-md font-medium">Localizações</AccordionTrigger>
             <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
                 {locations.map(location => (
-                <div key={location} className="flex items-center space-x-2">
+                <div key={location} className="flex items-center space-x-2" data-ai-id={`filter-locations-${location}`}>
                     <Checkbox 
                         id={`loc-${location}`} 
                         checked={selectedLocations.includes(location)}
                         onCheckedChange={() => handleLocationChange(location)}
+                        data-ai-id={`filter-locations-${location}-checkbox`}
                      />
                     <Label htmlFor={`loc-${location}`} className="text-sm font-normal cursor-pointer">{location}</Label>
                 </div>
@@ -364,15 +366,16 @@ export default function BidExpertFilter({
         )}
         
         {sellers.length > 0 && (
-            <AccordionItem value="sellers">
+            <AccordionItem value="sellers" data-ai-id="filter-sellers-section">
             <AccordionTrigger className="text-md font-medium">Comitentes/Vendedores</AccordionTrigger>
             <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
                 {sellers.map(seller => (
-                <div key={seller} className="flex items-center space-x-2">
+                <div key={seller} className="flex items-center space-x-2" data-ai-id={`filter-sellers-${seller}`}>
                     <Checkbox 
                         id={`sel-${seller}`} 
                         checked={selectedSellers.includes(seller)}
                         onCheckedChange={() => handleSellerChange(seller)}
+                        data-ai-id={`filter-sellers-${seller}-checkbox`}
                     />
                     <Label htmlFor={`sel-${seller}`} className="text-sm font-normal cursor-pointer">{seller}</Label>
                 </div>
@@ -382,34 +385,34 @@ export default function BidExpertFilter({
         )}
 
         {(filterContext === 'auctions' || filterContext === 'tomada_de_precos') && (
-            <AccordionItem value="dates">
+            <AccordionItem value="dates" data-ai-id="filter-dates-section">
             <AccordionTrigger className="text-md font-medium">Período do Leilão</AccordionTrigger>
             <AccordionContent className="space-y-3 pt-1">
-                <div>
+                <div data-ai-id="filter-startdate-group">
                 <Label htmlFor="start-date" className="text-xs text-muted-foreground">Data de Início</Label>
                 <Popover>
                     <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
+                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9" data-ai-id="filter-startdate-picker-trigger">
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
                     </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus data-ai-id="filter-startdate-calendar" />
                     </PopoverContent>
                 </Popover>
                 </div>
-                <div>
+                <div data-ai-id="filter-enddate-group">
                 <Label htmlFor="end-date" className="text-xs text-muted-foreground">Data de Término</Label>
                 <Popover>
                     <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
+                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9" data-ai-id="filter-enddate-picker-trigger">
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {endDate ? format(endDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
                     </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus data-ai-id="filter-enddate-calendar" />
                     </PopoverContent>
                 </Popover>
                 </div>
@@ -417,15 +420,16 @@ export default function BidExpertFilter({
             </AccordionItem>
         )}
         
-        <AccordionItem value="status">
+        <AccordionItem value="status" data-ai-id="filter-status-section">
             <AccordionTrigger className="text-md font-medium">Status</AccordionTrigger>
             <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
                  {statuses.map(statusItem => (
-                    <div key={statusItem.value} className="flex items-center space-x-2">
+                    <div key={statusItem.value} className="flex items-center space-x-2" data-ai-id={`filter-status-${statusItem.value}`}>
                         <Checkbox 
                           id={`status-${statusItem.value}`}
                           checked={selectedStatus.includes(statusItem.value)}
                           onCheckedChange={() => handleStatusChange(statusItem.value)}
+                          data-ai-id={`filter-status-${statusItem.value}-checkbox`}
                         />
                         <Label htmlFor={`status-${statusItem.value}`} className="text-sm font-normal cursor-pointer">
                             {statusItem.label}
@@ -437,7 +441,7 @@ export default function BidExpertFilter({
 
       </Accordion>
 
-      <Button className="w-full" onClick={applyFilters}>Aplicar Filtros</Button>
+      <Button className="w-full" onClick={applyFilters} data-ai-id="bidexpert-filter-apply-btn">Aplicar Filtros</Button>
     </aside>
   );
 }

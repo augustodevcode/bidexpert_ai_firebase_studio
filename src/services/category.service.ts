@@ -9,7 +9,7 @@
 import { CategoryRepository } from '@/repositories/category.repository';
 import type { LotCategory } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
-import { prisma } from '@/lib/prisma'; // Import prisma directly
+import prisma from '@/lib/prisma'; // Import prisma directly
 import type { Prisma } from '@prisma/client';
 
 export class CategoryService {
@@ -19,13 +19,35 @@ export class CategoryService {
     this.categoryRepository = new CategoryRepository();
   }
 
+  private static cachedCategories: LotCategory[] | null = null;
+  private static categoriesPromise: Promise<LotCategory[]> | null = null;
+
   async getCategories(): Promise<LotCategory[]> {
-    const categories = await this.categoryRepository.findAll();
-    return categories.map(c => ({
-      ...c, 
-      id: c.id.toString(), // Keep BigInt as is
-      _count: { lots: c._count.lots }
-    }));
+    if (CategoryService.cachedCategories) {
+      return CategoryService.cachedCategories;
+    }
+
+    if (!CategoryService.categoriesPromise) {
+      CategoryService.categoriesPromise = this.categoryRepository.findAll()
+        .then(categories => categories.map(c => ({
+          ...c,
+          id: c.id.toString(),
+          _count: { lots: c._count.lots }
+        })))
+        .then(mapped => {
+          CategoryService.cachedCategories = mapped;
+          return mapped;
+        })
+        .catch(error => {
+          CategoryService.categoriesPromise = null;
+          throw error;
+        })
+        .finally(() => {
+          CategoryService.categoriesPromise = null;
+        });
+    }
+
+    return CategoryService.categoriesPromise;
   }
 
   async getCategoryById(id: bigint): Promise<LotCategory | null> {

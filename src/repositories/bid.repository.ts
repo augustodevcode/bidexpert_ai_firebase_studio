@@ -1,5 +1,5 @@
 // src/repositories/bid.repository.ts
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import type { Prisma, Bid } from '@prisma/client';
 
 export class BidRepository {

@@ -815,9 +815,13 @@ model PlatformSettings {
   faviconUrl                 String?
   isSetupComplete            Boolean                     @default(false)
   crudFormMode               String?                     @default("modal") // 'modal' or 'sheet'
+  blockchainEnabled          Boolean                     @default(false)
+  lawyerMonetizationModel    String                      @default("SUBSCRIPTION")
+  softCloseEnabled           Boolean                     @default(false)
+  softCloseMinutes           Int?                        @default(5)
   themes                     ThemeSettings[]
   mapSettings                MapSettings?
-  biddingSettings            BiddingSettings?
+  biddingSettings            BiddingSettings? @relation("PlatformSettingsBiddingSettings")
   paymentGatewaySettings     PaymentGatewaySettings?
   notificationSettings       NotificationSettings?
   mentalTriggerSettings      MentalTriggerSettings?
@@ -871,7 +875,7 @@ model MapSettings {
 
 model BiddingSettings {
   id                  String   @id @default(cuid())
-  platformSettings    PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings    PlatformSettings @relation("PlatformSettingsBiddingSettings", fields: [platformSettingsId], references: [id])
   platformSettingsId  String   @unique
   instantBiddingEnabled           Boolean  @default(true)
   getBidInfoInstantly             Boolean  @default(true)

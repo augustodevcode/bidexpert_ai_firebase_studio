@@ -8,9 +8,10 @@
 
 import { getSession } from '@/server/lib/session';
 import { headers } from 'next/headers';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+let cachedDefaultTenantId: string | null = null;
+let ensureDefaultTenantPromise: Promise<string> | null = null;
 
 /**
  * Garante que um tenant padrão (landlord) exista no banco de dados e retorna seu ID.
@@ -19,41 +20,55 @@ const prisma = new PrismaClient();
  * @returns {Promise<string>} O ID do tenant padrão.
  */
 async function ensureDefaultTenant(): Promise<string> {
-    const defaultTenantName = "Bid Expert"; // Nome do tenant padrão
+    if (cachedDefaultTenantId) {
+        return cachedDefaultTenantId;
+    }
 
-    // Tenta encontrar o primeiro tenant criado (considerado o landlord)
-    let tenant = await prisma.tenant.findFirst({
-        orderBy: {
-            createdAt: 'asc',
-        },
-    });
+    if (!ensureDefaultTenantPromise) {
+        ensureDefaultTenantPromise = (async () => {
+            const defaultTenantName = "Bid Expert"; // Nome do tenant padrão
 
-    // Se nenhum tenant existir, cria um
-    if (!tenant) {
-        console.log(`Nenhum tenant encontrado. Criando tenant padrão: "${defaultTenantName}"`);
-        try {
-            tenant = await prisma.tenant.create({
-                data: {
-                    name: defaultTenantName,
-                    // Opcional: defina um subdomínio/domínio se for previsível
-                    subdomain: 'www', 
+            let tenant = await prisma.tenant.findFirst({
+                orderBy: {
+                    createdAt: 'asc',
                 },
-            });
-            console.log(`Tenant padrão criado com sucesso. ID: ${tenant.id}`);
-        } catch (error) {
-            console.error("Erro ao criar o tenant padrão:", error);
-            // Em caso de race condition (outro processo criou o tenant no meio tempo), tenta buscar novamente.
-            tenant = await prisma.tenant.findFirst({
-                orderBy: { createdAt: 'asc' },
             });
 
             if (!tenant) {
-                throw new Error("Não foi possível criar ou encontrar um tenant padrão após a falha inicial.");
+                console.log(`Nenhum tenant encontrado. Criando tenant padrão: "${defaultTenantName}"`);
+                try {
+                    tenant = await prisma.tenant.create({
+                        data: {
+                            name: defaultTenantName,
+                            subdomain: 'www',
+                        },
+                    });
+                    console.log(`Tenant padrão criado com sucesso. ID: ${tenant.id}`);
+                } catch (error) {
+                    console.error("Erro ao criar o tenant padrão:", error);
+                    tenant = await prisma.tenant.findFirst({
+                        orderBy: { createdAt: 'asc' },
+                    });
+
+                    if (!tenant) {
+                        throw new Error("Não foi possível criar ou encontrar um tenant padrão após a falha inicial.");
+                    }
+                }
             }
-        }
+
+            cachedDefaultTenantId = tenant.id;
+            return tenant.id;
+        })()
+        .catch((error) => {
+            ensureDefaultTenantPromise = null;
+            throw error;
+        })
+        .finally(() => {
+            ensureDefaultTenantPromise = null;
+        });
     }
-    
-    return tenant.id;
+
+    return ensureDefaultTenantPromise;
 }
 
 
@@ -68,6 +83,15 @@ async function ensureDefaultTenant(): Promise<string> {
  * @throws {Error} Se o tenant não for identificado em um contexto não-público.
  */
 export async function getTenantIdFromRequest(isPublicCall = false): Promise<string> {
+    if (isPublicCall) {
+        try {
+            return await ensureDefaultTenant();
+        } catch (error) {
+            console.error("Falha crítica ao garantir a existência do tenant padrão em chamada pública:", error);
+            throw new Error("Falha ao inicializar o tenant principal do sistema.");
+        }
+    }
+
     const session = await getSession();
     if (session?.tenantId) {
         // Retorna o ID do tenant da sessão do usuário autenticado
@@ -82,25 +106,11 @@ export async function getTenantIdFromRequest(isPublicCall = false): Promise<stri
         return tenantIdFromHeader;
     }
 
-    // Para chamadas públicas ou em ambiente de desenvolvimento, usamos o tenant padrão (landlord).
-    // A função ensureDefaultTenant garante que ele exista antes de retorná-lo.
-    if (isPublicCall) {
-        try {
-            const tenantId = await ensureDefaultTenant();
-            return tenantId;
-        } catch (error) {
-            console.error("Falha crítica ao garantir a existência do tenant padrão:", error);
-            // Em caso de falha crítica na inicialização do tenant, é mais seguro interromper.
-            throw new Error("Falha ao inicializar o tenant principal do sistema.");
-        }
-    }
-    
     // Fallback de segurança para chamadas internas não-públicas.
     // Isso indica um possível problema de lógica, pois o tenant deveria ser resolvido antes.
     console.warn("[getTenantIdFromRequest] Aviso: Tenant ID não encontrado para chamada interna. Recorrendo ao tenant padrão.");
     try {
-        const tenantId = await ensureDefaultTenant();
-        return tenantId;
+        return await ensureDefaultTenant();
     } catch (error) {
         console.error("Falha crítica ao garantir a existência do tenant padrão como fallback:", error);
         throw new Error("Falha ao inicializar o tenant principal do sistema.");

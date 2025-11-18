@@ -204,11 +204,21 @@ export default function AuctionDetailsClientV2({
   };
 
   const renderGridItem = (lot: Lot) => (
-    <BidExpertCard item={lot} type="lot" platformSettings={platformSettings!} />
+    <BidExpertCard
+      item={lot}
+      type="lot"
+      platformSettings={platformSettings!}
+      parentAuction={auction}
+    />
   );
 
   const renderListItem = (lot: Lot) => (
-    <BidExpertListItem item={lot} type="lot" platformSettings={platformSettings!} />
+    <BidExpertListItem
+      item={lot}
+      type="lot"
+      platformSettings={platformSettings!}
+      parentAuction={auction}
+    />
   );
 
   // Get location from lot or use a generic location string

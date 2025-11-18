@@ -55,7 +55,7 @@ async function testBigIntConversion() {
       fullName: 'Test User',
       habilitationStatus: 'HABILITADO',
       accountType: 'PHYSICAL',
-      roleIds: [roleResult.roleId],
+      roleIds: [roleResult.roleId.toString()],
       tenantId: tenantResult.tenant.id
     });
     

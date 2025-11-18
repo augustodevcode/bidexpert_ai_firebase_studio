@@ -19,7 +19,8 @@ import {
     Settings,
     Briefcase as ConsignorIcon,
     ShieldCheck,
-    Menu
+    Menu,
+    Scale
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -60,6 +61,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
     const pathname = usePathname();
     const { userProfileWithPermissions } = useAuth();
     
+    const canSeeLawyerDashboard = hasAnyPermission(userProfileWithPermissions, ['lawyer_dashboard:view', 'manage_all']);
     const canSeeConsignorDashboard = hasAnyPermission(userProfileWithPermissions, ['consignor_dashboard:view', 'manage_all']);
     const canSeeAdminDashboard = hasPermission(userProfileWithPermissions, 'manage_all');
 
@@ -75,7 +77,11 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 <nav className="p-2 space-y-1">
                 {mainNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                 
-                {(canSeeConsignorDashboard || canSeeAdminDashboard) && <Separator className="my-2"/>}
+                {(canSeeLawyerDashboard || canSeeConsignorDashboard || canSeeAdminDashboard) && <Separator className="my-2"/>}
+
+                {canSeeLawyerDashboard && (
+                  <NavButton item={{href: '/lawyer/dashboard', title: 'Painel Advogado', icon: Scale}} pathname={pathname} onLinkClick={onLinkClick} />
+                )}
                 
                 {canSeeConsignorDashboard && (
                     <NavButton item={{href: '/consignor-dashboard/overview', title: 'Painel Comitente', icon: ConsignorIcon}} pathname={pathname} onLinkClick={onLinkClick} />

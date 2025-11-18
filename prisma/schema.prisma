@@ -934,7 +934,7 @@ model PlatformSettings {
   themes                          ThemeSettings[]
   platformPublicIdMasks           IdMasks?
   mapSettings                     MapSettings?
-  biddingSettings                 BiddingSettings?
+  biddingSettings                 BiddingSettings?        @relation("PlatformSettingsBiddingSettings")
   paymentGatewaySettings          PaymentGatewaySettings?
   notificationSettings            NotificationSettings?
   mentalTriggerSettings           MentalTriggerSettings?
@@ -1007,7 +1007,7 @@ model MapSettings {
 model BiddingSettings {
   id                              BigInt            @id @default(autoincrement())
   platformSettingsId              BigInt            @unique
-  platformSettings                PlatformSettings  @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
+  platformSettings                PlatformSettings  @relation("PlatformSettingsBiddingSettings", fields: [platformSettingsId], references: [id], onDelete: Cascade)
   instantBiddingEnabled           Boolean?          @default(true)
   getBidInfoInstantly             Boolean?          @default(true)
   biddingInfoCheckIntervalSeconds Int?              @default(1)

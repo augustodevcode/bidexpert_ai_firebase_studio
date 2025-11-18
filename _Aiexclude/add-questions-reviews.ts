@@ -50,7 +50,7 @@ async function main() {
   const soldLotsNoReviews = await prisma.lot.findMany({
     where: {
       status: 'VENDIDO',
-      auctionId: { not: null },
+      auctionId: { not: undefined },
     },
     take: 20,
   });

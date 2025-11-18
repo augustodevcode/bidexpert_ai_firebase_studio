@@ -194,8 +194,22 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   };
   
 
-  const renderGridItem = (lot: Lot) => <BidExpertCard item={lot} type="lot" auction={auction} platformSettings={platformSettings!} />;
-  const renderListItem = (lot: Lot) => <BidExpertListItem item={lot} type="lot" auction={auction} platformSettings={platformSettings!} />;
+  const renderGridItem = (lot: Lot) => (
+    <BidExpertCard
+      item={lot}
+      type="lot"
+      platformSettings={platformSettings!}
+      parentAuction={auction}
+    />
+  );
+  const renderListItem = (lot: Lot) => (
+    <BidExpertListItem
+      item={lot}
+      type="lot"
+      platformSettings={platformSettings!}
+      parentAuction={auction}
+    />
+  );
   
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 

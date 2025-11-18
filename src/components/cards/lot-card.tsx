@@ -22,6 +22,7 @@ import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Skeleton } from '../ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import LotCountdown from '../lot-countdown';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 
 
 interface LotCardProps {
@@ -60,6 +61,30 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const activeLotPrices = React.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
   
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction?.auctionType);
+  const AuctionTypeIcon = auctionTypeDisplay?.icon;
+  const timelineReferenceDate = React.useMemo(() => {
+    if (!auction) {
+      return null;
+    }
+    if (auction.auctionDate) {
+      try {
+        return new Date(auction.auctionDate as string);
+      } catch {
+        return null;
+      }
+    }
+
+    const firstStageWithDate = auction.auctionStages?.find(stage => stage.startDate);
+    if (firstStageWithDate?.startDate) {
+      try {
+        return new Date(firstStageWithDate.startDate as string);
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  }, [auction]);
 
   React.useEffect(() => {
     setIsFavorite(isLotFavoriteInStorage(lot.id.toString()));
@@ -209,6 +234,28 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             <MapPin className="h-3 w-3 mr-1" />
             <span>{displayLocation}</span>
           </div>
+          {auction && (
+            <div className="space-y-1.5 text-xs" data-ai-id="lot-card-auction-info">
+              <div className="flex items-center justify-between gap-2 text-muted-foreground">
+                <span className="truncate" title={auction.title}>Leilão: <span className="text-foreground font-medium">{auction.title}</span></span>
+                {AuctionTypeIcon && (
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap text-foreground">
+                    <AuctionTypeIcon className="h-3.5 w-3.5 text-primary" />
+                    {auctionTypeDisplay.label}
+                  </span>
+                )}
+              </div>
+              {auction.auctionStages && auction.auctionStages.length > 0 && timelineReferenceDate && (
+                <div className="rounded-md bg-muted/40 px-2 py-1.5">
+                  <BidExpertAuctionStagesTimeline
+                    auctionOverallStartDate={timelineReferenceDate}
+                    stages={auction.auctionStages}
+                    variant="compact"
+                  />
+                </div>
+              )}
+            </div>
+          )}
           {showCountdownOnThisCard && effectiveLotEndDate && (
             <LotCountdown endDate={effectiveLotEndDate} status={lot.status as any} variant="card"/>
           )}

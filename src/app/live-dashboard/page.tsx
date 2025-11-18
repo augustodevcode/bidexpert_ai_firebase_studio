@@ -9,8 +9,8 @@ import { isPast } from 'date-fns';
 
 async function getLiveDashboardData(): Promise<{ allOpenLots: Lot[] }> {
   const [allAuctions, allLots] = await Promise.all([
-    getAuctions(),
-    getLots()
+    getAuctions(true),
+    getLots(undefined, true)
   ]);
 
   const openAuctions = allAuctions.filter(a => a.status === 'ABERTO_PARA_LANCES' || a.status === 'ABERTO');

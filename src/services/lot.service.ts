@@ -5,12 +5,10 @@ import { AuctionRepository } from '@/repositories/auction.repository';
 import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion, LotStatus, Auction, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { v4 as uuidv4 } from 'uuid';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { nowInSaoPaulo, convertSaoPauloToUtc } from '@/lib/timezone';
 import { AssetService } from './asset.service';
-
-// Inicializa o cliente Prisma
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 const NON_PUBLIC_LOT_STATUSES: LotStatus[] = ['RASCUNHO', 'CANCELADO'];
 const NON_PUBLIC_AUCTION_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
@@ -19,13 +17,12 @@ const NON_PUBLIC_AUCTION_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PRE
 export class LotService {
   private repository: LotRepository;
   private auctionRepository: AuctionRepository;
-  private prisma: PrismaClient;
+  private prisma = prisma;
   private assetService: AssetService;
 
   constructor() {
     this.repository = new LotRepository();
     this.auctionRepository = new AuctionRepository();
-    this.prisma = prisma;
     this.assetService = new AssetService();
   }
 
@@ -83,10 +80,14 @@ export class LotService {
           OR: [{ id: /^\d+$/.test(lotId) ? BigInt(lotId) : -1n }, { publicId: lotId }],
         },
         include: {
-          auction: { include: { seller: true, auctioneer: true, stages: true } },
+          auction: { include: { seller: true, auctioneer: true, stages: true, lots: true } },
+          assets: { include: { asset: true } },
           bids: { orderBy: { timestamp: 'desc' }, take: 20 },
           questions: { orderBy: { createdAt: 'desc' } },
           reviews: { orderBy: { createdAt: 'desc' } },
+          category: true,
+          subcategory: true,
+          seller: true,
         },
       });
 
@@ -96,19 +97,80 @@ export class LotService {
 
       // Reusing the mapping logic
       const mappedLot = this.mapLotWithDetails(lot);
-      const mappedAuction = this.mapLotWithDetails(lot.auction as any); // Re-use might need casting
+      
+      // Map the auction properly with type casting
+      const mappedAuction: Auction = {
+        ...(lot.auction as any),
+        id: lot.auction.id.toString(),
+        totalLots: lot.auction.lots?.length ?? 0,
+        sellerId: lot.auction.sellerId?.toString() ?? null,
+        auctioneerId: lot.auction.auctioneerId?.toString() ?? null,
+        categoryId: lot.auction.categoryId?.toString() ?? null,
+        judicialProcessId: lot.auction.judicialProcessId?.toString() ?? null,
+        tenantId: lot.auction.tenantId.toString(),
+        seller: lot.auction.seller ? { ...lot.auction.seller, id: lot.auction.seller.id.toString(), tenantId: lot.auction.seller.tenantId.toString() } : null,
+        auctioneer: lot.auction.auctioneer ? { ...lot.auction.auctioneer, id: lot.auction.auctioneer.id.toString(), tenantId: lot.auction.auctioneer.tenantId.toString() } : null,
+        auctionStages: (lot.auction.stages || []).map((stage: any) => ({
+          ...stage,
+          id: stage.id.toString(),
+          auctionId: stage.auctionId.toString(),
+          initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
+        })),
+      } as any as Auction;
 
       // Perform necessary type conversions for related data
-      const bids = lot.bids.map(b => ({ ...b, id: b.id.toString(), amount: Number(b.amount) })) as BidInfo[];
-      const questions = lot.questions.map(q => ({ ...q, id: q.id.toString() })) as LotQuestion[];
-      const reviews = lot.reviews.map(r => ({ ...r, id: r.id.toString() })) as Review[];
+      const bids = lot.bids.map((b: any) => ({ 
+        id: b.id.toString(), 
+        amount: Number(b.amount),
+        auctionId: b.auctionId.toString(),
+        lotId: b.lotId.toString(),
+        bidderId: b.bidderId.toString(),
+        tenantId: b.tenantId.toString(),
+      })) as any as BidInfo[];
+      
+      const questions = lot.questions.map((q: any) => ({ 
+        ...q,
+        id: q.id.toString(),
+        lotId: q.lotId.toString(),
+        auctionId: q.auctionId.toString(),
+        userId: q.userId.toString(),
+        answeredByUserId: q.answeredByUserId?.toString() ?? null,
+      })) as any as LotQuestion[];
+      
+      const reviews = lot.reviews.map((r: any) => ({ 
+        ...r,
+        id: r.id.toString(),
+        lotId: r.lotId.toString(),
+        auctionId: r.auctionId.toString(),
+        userId: r.userId.toString(),
+      })) as any as Review[];
 
+      // Fallback e normalização adicionais para a V2
+      const lotOut: Lot = {
+        ...mappedLot,
+        evaluationValue: (
+          mappedLot?.evaluationValue ??
+          ((Array.isArray((mappedLot as any).assets) && (mappedLot as any).assets.length > 0)
+            ? Number((mappedLot as any).assets[0]?.evaluationValue ?? 0) || null
+            : mappedLot?.evaluationValue ?? null)
+        ),
+      };
 
       return {
-        lot: mappedLot,
+        lot: lotOut,
         auction: mappedAuction,
-        seller: lot.auction.seller ? { ...lot.auction.seller, id: lot.auction.seller.id.toString() } : null,
-        auctioneer: lot.auction.auctioneer ? { ...lot.auction.auctioneer, id: lot.auction.auctioneer.id.toString() } : null,
+        seller: lot.auction.seller ? { 
+          ...lot.auction.seller, 
+          id: lot.auction.seller.id.toString(), 
+          tenantId: lot.auction.seller.tenantId.toString(),
+          userId: lot.auction.seller.userId?.toString() ?? null,
+        } as any as SellerProfileInfo : null,
+        auctioneer: lot.auction.auctioneer ? { 
+          ...lot.auction.auctioneer, 
+          id: lot.auction.auctioneer.id.toString(), 
+          tenantId: lot.auction.auctioneer.tenantId.toString(),
+          userId: lot.auction.auctioneer.userId?.toString() ?? null,
+        } as any as AuctioneerProfileInfo : null,
         bids,
         questions,
         reviews,
@@ -154,10 +216,10 @@ export class LotService {
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
-  async findLotById(id: string): Promise<Lot | null> {
+  async findLotById(id: string, tenantId?: string): Promise<Lot | null> {
     if (!id) return null;
   
-    const whereClause: Prisma.LotWhereFirstInput = {
+    const whereClause: Prisma.LotWhereInput = {
         OR: [
             { publicId: id },
         ],
@@ -165,6 +227,11 @@ export class LotService {
   
     if (/^\d+$/.test(id)) {
         (whereClause.OR as any[]).push({ id: BigInt(id) });
+    }
+
+    // ✅ SECURITY FIX: Add tenantId validation if provided
+    if (tenantId) {
+        (whereClause as any).tenantId = BigInt(tenantId);
     }
     
     const lot = await this.prisma.lot.findFirst({
@@ -179,13 +246,18 @@ export class LotService {
     });
     
     if (!lot) return null;
+
+    // ✅ SECURITY FIX: Validate tenantId match even if not provided in filter
+    if (tenantId && lot.tenantId.toString() !== tenantId) {
+        return null; // Lot doesn't belong to this tenant
+    }
     
     return this.mapLotWithDetails(lot);
   }
   
 
   async getLotById(id: string, tenantId?: string, isPublicCall = false): Promise<Lot | null> {
-    const lot = await this.findLotById(id);
+    const lot = await this.findLotById(id, tenantId);
     if (!lot) return null;
     
     // Se for uma chamada pública, verificar se o lote e o leilão estão públicos

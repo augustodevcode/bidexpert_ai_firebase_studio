@@ -302,3 +302,43 @@ Since the codebase is a template, you should not assume they have set up anythin
 - Make sure to update the index page.
 - WRITE FILES AS FAST AS POSSIBLE. Use search and replace tools instead of rewriting entire files (for example for the tailwind config and index.css). Don't search for the entire file content, search for the snippets you need to change. If you need to change a lot in the file, rewrite it.
 - Keep the explanations very, very short!
+
+---
+
+## CRITICAL PROJECT DIRECTIVE: Lazy Compilation vs Pre-Build in Next.js
+
+**RULE:** When running E2E tests or starting the server for test/production environments, ALWAYS use **pre-compilation** instead of lazy compilation in dev mode.
+
+### The Problem
+- **Dev Mode (`npm run dev`)**: Just-In-Time compilation per page request
+- **Compilation time**: 20-30 seconds per page
+- **E2E test result**: Timeout after 2.4 seconds → connection refused
+- **Root cause**: Lazy compilation blocks requests while compiling
+
+### The Solution
+```bash
+# For E2E tests or test environments
+npm run build    # Pre-compile everything (run once)
+npm start        # Start in production mode (no lazy compilation)
+
+# OR use the automated script
+node .vscode/run-e2e-tests.js
+```
+
+### Performance Comparison
+| Metric | Dev Mode | Production Mode |
+|--------|----------|-----------------|
+| Per-page compilation | 20-30s | <100ms |
+| Test timeout | 2.4s | 30s |
+| Test success rate | 40% (6/15) | 100% (15/15) |
+| Consistency | Unreliable | Reliable |
+
+### When to Use Each
+- **`npm run dev`**: Local development with hot-reload
+- **`npm run build && npm start`**: E2E tests, CI/CD, staging, production
+- **`node .vscode/run-e2e-tests.js`**: Automated E2E test execution
+
+### Reference Documentation
+See `PROBLEMA-E-SOLUCAO-FINAL.md` for complete technical analysis, performance comparison, and detailed usage examples.
+
+````

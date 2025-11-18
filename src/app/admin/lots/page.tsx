@@ -87,8 +87,24 @@ export default function AdminLotsPage() {
     setRefetchTrigger(c => c + 1);
   }, []);
 
-  const renderGridItem = (item: Lot) => <BidExpertCard item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const renderListItem = (item: Lot) => <BidExpertListItem item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderGridItem = (item: Lot) => (
+    <BidExpertCard
+      item={item}
+      type="lot"
+      parentAuction={auctions.find(a => a.id === item.auctionId)}
+      platformSettings={platformSettings!}
+      onUpdate={onUpdate}
+    />
+  );
+  const renderListItem = (item: Lot) => (
+    <BidExpertListItem
+      item={item}
+      type="lot"
+      parentAuction={auctions.find(a => a.id === item.auctionId)}
+      platformSettings={platformSettings!}
+      onUpdate={onUpdate}
+    />
+  );
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   const facetedFilterOptions = useMemo(() => {

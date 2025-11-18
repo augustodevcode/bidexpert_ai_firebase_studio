@@ -1,8 +1,8 @@
 # 📋 REGRAS DE NEGÓCIO E ESPECIFICAÇÕES - BIDEXPERT
 ## Documento Consolidado e Oficial
 
-**Data:** 27 de Outubro de 2025  
-**Status:** ✅ Conflitos Resolvidos - Versão Oficial
+**Data:** 16 de Novembro de 2025  
+**Status:** ✅ Atualizado com Implementações de Outubro/Novembro
 **Próximos passos:** caso haja novas implementações, atualize esse documento com as orientações do usuário
 
 ---
@@ -250,6 +250,33 @@ Proibir mix de `cuid()` em novos docs/código
 - Persistir filtros/ordenação na URL  
 - Restaurar estado ao voltar à lista  
 - Limpar filtros com um clique
+
+### RN-023: Impersonação Administrativa Segura
+🔐 **Objetivo**: Permitir que administradores visualizem dashboards de outros perfis sem comprometer segurança.
+
+**Regras de Segurança**:  
+✅ Validação de permissões **server-side** obrigatória  
+✅ Apenas usuários com roles `admin` ou `manage_all` podem impersonar  
+✅ NUNCA aceitar `targetUserId` do client sem validação  
+✅ Logging de todas ações de impersonação para auditoria  
+✅ Indicador visual claro quando admin está em modo impersonação  
+✅ Sessões de impersonação com tempo limite configurável  
+
+**Implementação**:  
+- Serviço: `AdminImpersonationService` com métodos `canImpersonate()`, `isAdmin()`, `getImpersonatableUsers()`  
+- Actions: Parâmetro opcional `impersonateUserId` nas actions de dashboard  
+- UI: Componente `*-impersonation-selector.tsx` renderizado apenas para admins  
+- Testes: Suite Playwright cobrindo fluxos autorizados e não autorizados  
+
+**Perfis Suportados**:  
+- Lawyer Dashboard (implementado)  
+- Seller Dashboard (planejado)  
+- Bidder Dashboard (planejado)
+
+**Próximos Passos**:  
+- [ ] Wire audit trail para registrar histórico de impersonações  
+- [ ] Implementar sessão com expiração automática (timeout configurável)  
+- [ ] Adicionar notificação ao usuário impersonado (opcional/configurável)
 
 ---
 
@@ -589,6 +616,23 @@ interface CrudFormContainerProps {
 
 ## 📝 HISTÓRICO DE RESOLUÇÕES
 
+**Data:** 16 de Novembro de 2025
+
+**Implementações de Outubro/Novembro:**
+1. ✅ **Lawyer Dashboard - Serialização BigInt**: Corrigidos 25 erros TypeScript relacionados a serialização de dados e tipos do Prisma
+2. ✅ **Admin Impersonation Service**: Sistema completo de impersonação administrativa com validações server-side
+3. ✅ **Playwright Test Suite**: 6 cenários E2E cobrindo impersonação (admin e não-admin)
+4. ✅ **Documentação Técnica**: 4 novos arquivos de documentação criados (implementação, feature guide, testes)
+
+**Trabalhos Pendentes (Backlog Atualizado):**
+- [ ] Audit trail para sessões de impersonação (logging e histórico)
+- [ ] Expiration automática de sessões de impersonação (timeout configurável)
+- [ ] Cache invalidation para dashboard metrics ao trocar de usuário impersonado
+- [ ] Performance optimization: lazy loading de métricas pesadas no dashboard
+- [ ] Extensão da impersonação para Seller e Bidder dashboards
+
+---
+
 **Data:** 27 de Outubro de 2025
 
 **Conflitos Resolvidos:**
@@ -678,4 +722,5 @@ O frontend utiliza `localStorage` para persistir certas preferências e históri
 ---
 
 **Documento mantido por:** Equipe de Desenvolvimento BidExpert  
-**Última atualização:** 27/10/2025
+**Última atualização:** 16/11/2025  
+**Changelog**: Ver histórico de resoluções acima para atualizações recentes

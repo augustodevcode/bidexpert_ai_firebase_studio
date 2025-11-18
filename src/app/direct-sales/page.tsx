@@ -1,7 +1,7 @@
 // src/app/direct-sales/page.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | '
 };
 
 
-export default function DirectSalesPage() {
+function DirectSalesPageContent() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
   
@@ -88,7 +88,7 @@ export default function DirectSalesPage() {
         const [categories, offers, sellers, settings] = await Promise.all([
           getCategories(),
           getDirectSaleOffers(),
-          getSellers(),
+          getSellers(true),
           getPlatformSettings(),
         ]);
         
@@ -281,5 +281,21 @@ export default function DirectSalesPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+function DirectSalesPageFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    </div>
+  );
+}
+
+export default function DirectSalesPage() {
+  return (
+    <Suspense fallback={<DirectSalesPageFallback />}>
+      <DirectSalesPageContent />
+    </Suspense>
   );
 }

@@ -3,6 +3,8 @@ import { z } from 'zod';
 // Define the schema for our feature flags
 export const featureFlagsSchema = z.object({
   useNewAdminSidebar: z.boolean().default(false),
+  blockchainEnabled: z.boolean().default(false),
+  lawyerMonetizationModel: z.enum(['SUBSCRIPTION', 'PAY_PER_USE', 'REVENUE_SHARE']).default('PAY_PER_USE'),
 });
 
 export type FeatureFlags = z.infer<typeof featureFlagsSchema>;
@@ -12,9 +14,11 @@ class FeatureFlagService {
 
   constructor() {
     // For now, we'll use a hardcoded configuration.
-    // This can be replaced with a fetch from a remote service.
+    // This can be replaced with a fetch from a remote service or PlatformSettings.
     const localConfig = {
-      useNewAdminSidebar: true, // Let's enable it for this MVP
+      useNewAdminSidebar: true,
+      blockchainEnabled: process.env.BLOCKCHAIN_ENABLED === 'true',
+      lawyerMonetizationModel: (process.env.LAWYER_MONETIZATION_MODEL as any) || 'PAY_PER_USE',
     };
 
     try {

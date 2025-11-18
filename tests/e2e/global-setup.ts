@@ -1,0 +1,110 @@
+import { chromium, FullConfig, Page } from '@playwright/test';
+import path from 'node:path';
+import fs from 'node:fs';
+
+const DEBUG_DIR = path.resolve(process.cwd(), 'tests/e2e/.debug');
+
+function ensureDebugDir() {
+  if (!fs.existsSync(DEBUG_DIR)) {
+    fs.mkdirSync(DEBUG_DIR, { recursive: true });
+  }
+}
+
+async function captureDebugArtifacts(page: Page, name: string) {
+  try {
+    ensureDebugDir();
+    await page.screenshot({ path: path.join(DEBUG_DIR, `${name}.png`), fullPage: true });
+  } catch (err) {
+    console.warn('[global-setup] Não foi possível salvar screenshot de debug:', err);
+  }
+}
+
+async function globalSetup(config: FullConfig) {
+  const baseURL = config.projects?.[0]?.use?.baseURL || process.env.BASE_URL || 'http://localhost:9002';
+  const browser = await chromium.launch();
+  
+  console.log('🔐 Iniciando autenticação global para testes...');
+  
+  try {
+    // 1. Autenticar como ADMIN
+    const adminPage = await browser.newPage();
+    await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await adminPage.waitForTimeout(5000);
+
+    const adminEmailInput = adminPage.locator('[data-ai-id="auth-login-email-input"]');
+    const adminPasswordInput = adminPage.locator('[data-ai-id="auth-login-password-input"]');
+    const adminSubmitButton = adminPage.locator('[data-ai-id="auth-login-submit-button"]');
+    
+    await adminEmailInput.fill('admin@bidexpert.com.br');
+    await adminPasswordInput.fill('Admin@123');
+    await adminSubmitButton.click();
+
+    await adminPage.waitForURL(/\/admin|\/dashboard|\/$/i, { timeout: 60000 });
+    await adminPage.waitForTimeout(2000);
+
+    const adminCookies = await adminPage.context().cookies();
+    const adminSessionCookie = adminCookies.find(c => c.name === 'session' || c.name === 'next-auth.session-token');
+    
+    if (!adminSessionCookie) {
+      console.warn('⚠️  Session cookie não encontrado, tentando senha alternativa Admin123...');
+      await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded' });
+      await adminPage.waitForTimeout(5000);
+      await adminEmailInput.fill('admin@bidexpert.com.br');
+      await adminPasswordInput.fill('Admin123');
+      await adminSubmitButton.click();
+      await adminPage.waitForURL(/\/admin|\/dashboard|\/$/i, { timeout: 60000 });
+      await adminPage.waitForTimeout(2000);
+    }
+
+    await adminPage.context().storageState({ path: './tests/e2e/.auth/admin.json' });
+    console.log('✅ Autenticação ADMIN concluída');
+    await adminPage.close();
+
+    // 2. Autenticar como ADVOGADO
+    const lawyerPage = await browser.newPage();
+    await lawyerPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await lawyerPage.waitForTimeout(5000);
+
+    const lawyerEmailInput = lawyerPage.locator('[data-ai-id="auth-login-email-input"]');
+    const lawyerPasswordInput = lawyerPage.locator('[data-ai-id="auth-login-password-input"]');
+    const lawyerSubmitButton = lawyerPage.locator('[data-ai-id="auth-login-submit-button"]');
+    
+    await lawyerEmailInput.fill('advogado@bidexpert.com.br');
+    await lawyerPasswordInput.fill('Test@12345');
+    await lawyerSubmitButton.click();
+
+    try {
+      await lawyerPage.waitForLoadState('networkidle', { timeout: 60000 });
+    } catch (error) {
+      console.warn('[global-setup] Lawyer login não atingiu networkidle em 60s, seguindo para validação manual.');
+    }
+
+    // Força navegação para o dashboard do advogado para validar sessão, independente do redirect padrão.
+    await lawyerPage.goto(`${baseURL}/lawyer/dashboard`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+    try {
+      await lawyerPage.waitForSelector('[data-ai-id="lawyer-dashboard-page"]', { timeout: 60000 });
+    } catch (error) {
+      console.error('[global-setup] Falha ao carregar painel do advogado. URL atual:', lawyerPage.url());
+      await captureDebugArtifacts(lawyerPage, `lawyer-login-error-${Date.now()}`);
+      throw error;
+    }
+
+    console.log('✅ Painel do advogado acessado em', lawyerPage.url());
+    await lawyerPage.waitForTimeout(1000);
+
+    await lawyerPage.context().storageState({ path: './tests/e2e/.auth/lawyer.json' });
+    console.log('✅ Autenticação ADVOGADO concluída');
+    await lawyerPage.close();
+
+    console.log('✅ Todas autenticações concluídas');
+    
+  } catch (error) {
+    console.error('❌ Erro na autenticação global:', error);
+    throw error;
+  } finally {
+    await browser.close();
+  }
+}
+
+export default globalSetup;

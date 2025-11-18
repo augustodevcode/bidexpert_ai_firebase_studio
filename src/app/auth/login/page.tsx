@@ -16,11 +16,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn, Loader2 } from 'lucide-react';
-import { useState, type FormEvent, useEffect } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { login } from '@/app/auth/actions';
 import { useAuth } from '@/contexts/auth-context';
-import type { UserProfileWithPermissions, Tenant } from '@/types';
+import type { UserProfileWithPermissions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -35,9 +35,14 @@ const loginFormSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
+type TenantOption = {
+    id: string;
+    name: string;
+    slug?: string | null;
+};
 
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -45,8 +50,11 @@ export default function LoginPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userWithMultipleTenants, setUserWithMultipleTenants] = useState<UserProfileWithPermissions | null>(null);
-  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+    const [userWithMultipleTenants, setUserWithMultipleTenants] = useState<UserProfileWithPermissions | null>(null);
+    const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+    const [availableTenants, setAvailableTenants] = useState<TenantOption[]>([]);
+    const [isFetchingTenants, setIsFetchingTenants] = useState<boolean>(true);
+    const [tenantsError, setTenantsError] = useState<string | null>(null);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -56,22 +64,58 @@ export default function LoginPage() {
     },
   });
 
-  useEffect(() => {
-    if (userWithMultipleTenants?.tenants && userWithMultipleTenants.tenants.length > 0) {
-      const defaultTenantId = userWithMultipleTenants.tenants[0].id;
-      setSelectedTenantId(defaultTenantId);
-      form.setValue('tenantId', defaultTenantId);
-    }
-  }, [userWithMultipleTenants, form]);
+    const fetchTenants = useCallback(async () => {
+        try {
+            setIsFetchingTenants(true);
+            setTenantsError(null);
+            const response = await fetch('/api/public/tenants', { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error('Não foi possível carregar os espaços de trabalho.');
+            }
+            const data = await response.json();
+            setAvailableTenants(data.tenants || []);
+        } catch (fetchError: unknown) {
+            const message = fetchError instanceof Error ? fetchError.message : 'Falha ao carregar os espaços de trabalho.';
+            setTenantsError(message);
+        } finally {
+            setIsFetchingTenants(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchTenants();
+    }, [fetchTenants]);
+
+    const tenantOptions = userWithMultipleTenants?.tenants || availableTenants;
+
+    useEffect(() => {
+        if (tenantOptions.length === 0) {
+            return;
+        }
+
+        const currentTenantId = selectedTenantId;
+        const tenantExists = currentTenantId && tenantOptions.some((tenant) => tenant.id === currentTenantId);
+
+        if (!tenantExists) {
+            const defaultTenantId = tenantOptions[0].id;
+            setSelectedTenantId(defaultTenantId);
+            form.setValue('tenantId', defaultTenantId);
+        }
+    }, [tenantOptions, form, selectedTenantId]);
 
   const handleLogin = async (values: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
-    
-    // Se um tenant foi selecionado no passo de multi-tenant, use-o
-    if (selectedTenantId) {
+
+        if (!selectedTenantId) {
+            const validationMessage = 'Selecione um espaço de trabalho antes de continuar.';
+            setError(validationMessage);
+            toast({ title: 'Selecione o Espaço de Trabalho', description: validationMessage, variant: 'destructive' });
+            setIsLoading(false);
+            return;
+        }
+
         values.tenantId = selectedTenantId;
-    }
     
     try {
         const result = await login(values);
@@ -100,8 +144,8 @@ export default function LoginPage() {
             setError(result.message);
             toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
         }
-    } catch (e: any) {
-        const errorMessage = e.message || 'Ocorreu um erro inesperado.';
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro inesperado.';
         setError(errorMessage);
         toast({ title: "Erro no Login", description: errorMessage, variant: "destructive" });
     } finally {
@@ -117,76 +161,143 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold font-headline">Bem-vindo de Volta!</CardTitle>
           <CardDescription>Insira suas credenciais para acessar sua conta.</CardDescription>
         </CardHeader>
-        <Form {...form}>
-            <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin)}>
-            <CardContent className="space-y-4">
-                {userWithMultipleTenants ? (
-                    <div className="space-y-2">
-                        <Label htmlFor="tenant-select">Selecione o Espaço de Trabalho</Label>
-                        <Select onValueChange={setSelectedTenantId} defaultValue={selectedTenantId || undefined}>
-                            <SelectTrigger id="tenant-select">
-                                <SelectValue placeholder="Escolha um tenant..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {userWithMultipleTenants.tenants.map((tenant) => (
-                                    <SelectItem key={tenant.id} value={tenant.id}>
-                                        {tenant.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                ) : (
-                    <>
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <Label htmlFor="email">Email</Label>
-                                    <FormControl>
-                                        <Input id="email" type="email" placeholder="seu@email.com" required disabled={isLoading} {...field} data-ai-id="auth-login-email-input" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
+                <Form {...form}>
+                    <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin)}>
+                        <CardContent className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="tenantId"
+                                render={() => (
+                                    <FormItem>
+                                        <Label htmlFor="tenant-select" className="flex items-center justify-between text-sm font-medium">
+                                            Espaço de Trabalho
+                                            {isFetchingTenants && <span className="text-xs text-muted-foreground">Carregando...</span>}
+                                        </Label>
+                                        <FormControl>
+                                            <Select
+                                                value={selectedTenantId || undefined}
+                                                onValueChange={(value) => {
+                                                    setSelectedTenantId(value);
+                                                    form.setValue('tenantId', value);
+                                                }}
+                                                disabled={isLoading || isFetchingTenants || tenantOptions.length === 0}
+                                            >
+                                                <SelectTrigger id="tenant-select" data-testid="tenant-select" data-ai-id="auth-login-tenant-select">
+                                                    <SelectValue placeholder={isFetchingTenants ? 'Carregando espaços...' : 'Selecione um tenant'} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {tenantOptions.map((tenant) => (
+                                                        <SelectItem
+                                                            key={tenant.id}
+                                                            value={tenant.id}
+                                                            data-testid={`tenant-option-${tenant.slug || tenant.id}`}
+                                                        >
+                                                            {tenant.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        {userWithMultipleTenants ? (
+                                            <p className="text-xs text-muted-foreground">Escolha em qual espaço de trabalho deseja entrar.</p>
+                                        ) : (
+                                            <p className="text-xs text-muted-foreground">Selecione o tenant com o qual deseja autenticar.</p>
+                                        )}
+                                        {tenantsError && <p className="text-xs text-destructive">{tenantsError}</p>}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {!userWithMultipleTenants && (
+                                <>
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <Label htmlFor="email">Email</Label>
+                                                <FormControl>
+                                                    <Input
+                                                        id="email"
+                                                        type="email"
+                                                        placeholder="seu@email.com"
+                                                        required
+                                                        disabled={isLoading}
+                                                        {...field}
+                                                        data-ai-id="auth-login-email-input"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="password"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <Label htmlFor="password">Senha</Label>
+                                                <FormControl>
+                                                    <Input
+                                                        id="password"
+                                                        type="password"
+                                                        required
+                                                        disabled={isLoading}
+                                                        {...field}
+                                                        data-ai-id="auth-login-password-input"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </>
                             )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <Label htmlFor="password">Senha</Label>
-                                    <FormControl>
-                                        <Input id="password" type="password" required disabled={isLoading} {...field} data-ai-id="auth-login-password-input" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </>
-                )}
-                {error && <p className="text-sm text-destructive text-center">{error}</p>}
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-                <Button type="submit" className="w-full" disabled={isLoading} data-ai-id="auth-login-submit-button">
-                {isLoading ? <Loader2 className="animate-spin" /> : (userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login')}
-                </Button>
-            </CardFooter>
-            </form>
-        </Form>
-         <div className="text-center text-sm pb-6 px-6">
-              <Link href="/auth/forgot-password" className="text-primary hover:underline">
-                Esqueceu a senha?
-              </Link>
-              <p className="text-muted-foreground mt-4">
-                Não tem uma conta?{' '}
-                <Link href="/auth/register" className="font-medium text-primary hover:underline">
-                  Registre-se
-                </Link>
-              </p>
-          </div>
+
+                            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+                        </CardContent>
+                        <CardFooter className="flex flex-col space-y-4">
+                            <Button type="submit" className="w-full" disabled={isLoading} data-ai-id="auth-login-submit-button">
+                                {isLoading ? <Loader2 className="animate-spin" /> : userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login'}
+                            </Button>
+                        </CardFooter>
+                    </form>
+                </Form>
+                <div className="text-center text-sm pb-6 px-6">
+                    <Link href="/auth/forgot-password" className="text-primary hover:underline">
+                        Esqueceu a senha?
+                    </Link>
+                    <p className="text-muted-foreground mt-4">
+                        Não tem uma conta?{' '}
+                        <Link href="/auth/register" className="font-medium text-primary hover:underline">
+                            Registre-se
+                        </Link>
+                    </p>
+                </div>
       </Card>
     </div>
   );
+}
+
+function LoginPageFallback() {
+    return (
+        <div data-ai-id="auth-login-page-loading" className="flex items-center justify-center min-h-[calc(100vh-20rem)] py-12">
+            <Card className="w-full max-w-md shadow-xl">
+                <CardHeader className="text-center">
+                    <LogIn className="mx-auto h-12 w-12 text-primary mb-2" />
+                    <CardTitle className="text-2xl font-bold font-headline">Carregando...</CardTitle>
+                    <CardDescription>Preparando a página de login.</CardDescription>
+                </CardHeader>
+            </Card>
+        </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<LoginPageFallback />}>
+            <LoginPageContent />
+        </Suspense>
+    );
 }

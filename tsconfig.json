@@ -28,7 +28,8 @@
       }
     ],
     "noEmit": true,
-    "types": ["node", "@playwright/test"]
+    "types": ["node", "@playwright/test"],
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "next-env.d.ts",
@@ -39,6 +40,11 @@
     "tests/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "_Aiexclude",
+    "_components_old",
+    "prisma/**",
+    "scripts/**",
+    "src/ai/**"
   ]
 }

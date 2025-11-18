@@ -48,7 +48,12 @@ export function ThemeToggle({ variant = 'icon' }: { variant?: 'icon' | 'full' })
         <TooltipTrigger asChild>
           <ForwardedDropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                aria-label="Alternar tema de cores (claro/escuro/sistema)"
+              >
                 <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark-scale-100" />
                 <span className="sr-only">Alternar tema</span>
@@ -56,19 +61,21 @@ export function ThemeToggle({ variant = 'icon' }: { variant?: 'icon' | 'full' })
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setTheme('light')}>
+                <Sun className="h-4 w-4 mr-2" />
                 Claro
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme('dark')}>
+                <Moon className="h-4 w-4 mr-2" />
                 Escuro
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme('system')}>
-                Sistema
+                Tema do Sistema
               </DropdownMenuItem>
             </DropdownMenuContent>
           </ForwardedDropdownMenu>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Alternar tema (Light/Dark)</p>
+          <p>Alternar tema entre claro, escuro ou sistema</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

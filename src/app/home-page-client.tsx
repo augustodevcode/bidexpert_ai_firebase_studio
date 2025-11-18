@@ -40,11 +40,12 @@ export default function HomePageClient({
     );
   }
 
-  const activeLotStatuses = ['ABERTO_PARA_LANCES', 'EM_BREVE'];
+  const activeLotStatuses = ['ABERTO_PARA_LANCES'];
+  const closingSoonLotStatuses = ['ABERTO_PARA_LANCES'];
   const activeAuctionStatuses = ['ABERTO_PARA_LANCES', 'EM_BREVE', 'ABERTO'];
 
   const featuredLots = allLots.filter(l => l.isFeatured && activeLotStatuses.includes(l.status)).sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8);
-  const recentActiveLots = allLots.filter(l => activeLotStatuses.includes(l.status)).slice(0,8);
+  const recentActiveLots = allLots.filter(l => activeLotStatuses.includes(l.status)).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()).slice(0, 8);
   const lotsToDisplay = featuredLots.length > 0 ? featuredLots : recentActiveLots;
   const lotsTitle = featuredLots.length > 0 ? "Lotes em Destaque" : "Lotes Recentes";
 

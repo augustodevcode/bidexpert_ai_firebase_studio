@@ -1,0 +1,359 @@
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     ARQUITETURA DE TESTES 5 GAPS                             ║
+║                      Playwright E2E Testing Suite                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CAMADA 1: INICIALIZAÇÃO                                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  Terminal 1: npm run dev:9005
+  ├─ Prisma migrations
+  ├─ Seed database
+  ├─ API em http://localhost:9005
+  └─ WebSocket pronto
+
+  Terminal 2: npm run db:push && npm run db:seed:v3
+  ├─ Push schema Prisma
+  ├─ Gerar Prisma Client
+  ├─ Seed com dados de teste v3
+  └─ Pronto para testes
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CAMADA 2: DADOS DE TESTE (Seed V3)                                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  📊 Tenants:
+  ├─ tenant-001 (Premium)
+  ├─ tenant-002 (Standard)
+  └─ tenant-003 (Test)
+
+  👤 Usuários:
+  ├─ 2 Admins
+  ├─ 3 Leiloeiros
+  ├─ 5 Compradores
+  └─ 5 Analistas
+
+  📦 Dados:
+  ├─ 5+ Leilões (mix de status)
+  ├─ 50+ Lotes (categorias variadas)
+  └─ 200+ Lances (para soft close)
+
+  ⚙️ Flags Padrão:
+  ├─ blockchainEnabled: false
+  ├─ softCloseEnabled: true
+  ├─ pwaEnabled: true
+  └─ automaticBidsEnabled: true
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CAMADA 3: SUÍTE DE TESTES (5-gaps-complete.spec.ts)                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  describe('5 GAPS Integration Tests', () => {
+
+    describe('GAP A: Timestamps + Audit Logs', () => {
+      ✅ A1: Create auction → audit log criado
+      ✅ A2: Update status → timestamp atualizado
+      ✅ A3: Filter by user → logs do usuário
+      ✅ A4: Soft delete → log com timestamp
+
+      Endpoints testados:
+      POST /api/admin/auctions              (criar com timestamp)
+      PATCH /api/admin/auctions/:id         (atualizar)
+      GET /api/admin/audit-logs             (listar logs)
+      DELETE /api/admin/auctions/:id        (soft delete)
+    })
+
+    describe('GAP B: WebSocket + Soft Close', () => {
+      ✅ B1: Load soft close config → enabled
+      ✅ B2: Toggle soft close → mudar estado
+      ✅ B3: Near end time → estender automaticamente
+      ✅ B4: Emit WebSocket event → broadcast
+
+      Endpoints testados:
+      GET /api/admin/feature-flags          (carregar config)
+      POST /api/admin/feature-flags         (salvar config)
+      WS /ws/auctions/:id                  (conectar WebSocket)
+      POST /api/auctions/:id/extend-time    (estender)
+    })
+
+    describe('GAP C: Blockchain + Lawyer Monetization', () => {
+      ✅ C1: Load blockchain toggle → feature flag
+      ✅ C2: Toggle blockchain → habilitar/desabilitar
+      ✅ C3: Load lawyer model → PAY_PER_USE
+      ✅ C4: Validate business rules → sem conflicts
+      ✅ C5: Display in API → incluir em response
+
+      Endpoints testados:
+      GET /api/admin/feature-flags          (blockchain config)
+      POST /api/admin/feature-flags         (update config)
+      GET /api/admin/monetization           (lawyer model)
+      POST /api/admin/monetization          (update model)
+    })
+
+    describe('GAP D: PWA + Responsive', () => {
+      ✅ D1: Check manifest.json → completo
+      ✅ D2: Check viewport meta → correto
+      ✅ D3: Render mobile 375px → sem quebra
+      ✅ D4: Render tablet 768px → sem quebra
+      ✅ D5: Check service worker → registered
+
+      Assets testados:
+      /public/manifest.json                 (PWA manifest)
+      /public/service-worker.js             (SW registration)
+      pages layout                           (responsive)
+      CSS media queries                      (breakpoints)
+    })
+
+    describe('GAP E: POCs Mock FIPE/Cartórios/Tribunais', () => {
+      ✅ E1: Query FIPE mock → retorna dados
+      ✅ E2: Query Cartório mock → retorna matrícula
+      ✅ E3: Query Tribunal mock → retorna processo
+      ✅ E4: Batch query → múltiplas chamadas
+      ✅ E5: Error handling → gracefully
+      ✅ E6: Integration API call → sucesso
+
+      Endpoints testados:
+      POST /api/integrations/fipe           (mock FIPE)
+      POST /api/integrations/cartorio       (mock Cartório)
+      POST /api/integrations/tribunal       (mock Tribunal)
+      POST /api/integrations/batch          (batch)
+    })
+
+    describe('Integração: Múltiplos Gaps', () => {
+      ✅ INT1: Audit + Soft Close juntos
+      ✅ INT2: PWA + Blockchain separados
+      ✅ INT3: Responsivo + Integrações mock
+    })
+
+    describe('Performance', () => {
+      ✅ PERF1: Page load < 3s
+      ✅ PERF2: Admin settings < 2s
+      ✅ PERF3: Memory leak check
+    })
+  })
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CAMADA 4: EXECUÇÃO E RESULTADOS                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  🎯 Fluxo de Execução:
+  
+  1. Setup Browser & Context
+     ├─ Instanciar browser
+     ├─ Criar context com cookies
+     └─ Navegar até base URL
+
+  2. Authenticate
+     ├─ Fazer login
+     ├─ Guardar session
+     └─ Verificar roles
+
+  3. Executar Testes
+     ├─ GAP A: 4 testes  (~1-2 min)
+     ├─ GAP B: 4 testes  (~1-2 min)
+     ├─ GAP C: 5 testes  (~1-2 min)
+     ├─ GAP D: 5 testes  (~1-2 min)
+     ├─ GAP E: 6 testes  (~2-3 min)
+     ├─ Integração: 3 testes (~1 min)
+     └─ Performance: 3 testes (~1 min)
+
+  4. Gerar Relatório
+     ├─ Criar HTML report
+     ├─ Screenshots de falhas
+     ├─ Vídeos (opcional)
+     └─ Coverage metrics
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CAMADA 5: RELATÓRIO FINAL                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  📊 Saída Esperada:
+
+  ════════════════════════════════════════════════════════════════
+  running 30 tests
+  
+  ✅ GAP A: Timestamps + Audit Logs
+     ✅ A1 - Create auction with timestamp
+     ✅ A2 - Update timestamp on change
+     ✅ A3 - Filter audit logs by user
+     ✅ A4 - Record soft delete with timestamp
+     Duration: 45s
+  
+  ✅ GAP B: WebSocket + Soft Close
+     ✅ B1 - Load soft close configuration
+     ✅ B2 - Toggle soft close enabled
+     ✅ B3 - Extend time near end
+     ✅ B4 - Emit WebSocket event
+     Duration: 52s
+  
+  ✅ GAP C: Blockchain + Lawyer Monetization
+     ✅ C1 - Load blockchain toggle
+     ✅ C2 - Toggle blockchain feature
+     ✅ C3 - Load lawyer monetization model
+     ✅ C4 - Validate business rules
+     ✅ C5 - Display feature flags in API
+     Duration: 58s
+  
+  ✅ GAP D: PWA + Responsive Design
+     ✅ D1 - Check manifest.json content
+     ✅ D2 - Check viewport meta tag
+     ✅ D3 - Render correctly on mobile
+     ✅ D4 - Render correctly on tablet
+     ✅ D5 - Check service worker registration
+     Duration: 47s
+  
+  ✅ GAP E: POCs Mock FIPE/Cartórios/Tribunais
+     ✅ E1 - Query FIPE mock successfully
+     ✅ E2 - Query Cartório mock successfully
+     ✅ E3 - Query Tribunal mock successfully
+     ✅ E4 - Batch query multiple integrations
+     ✅ E5 - Handle errors gracefully
+     ✅ E6 - Call integration API
+     Duration: 1m 04s
+  
+  ✅ Integração: Múltiplos Gaps
+     ✅ INT1 - Audit + Soft Close together
+     ✅ INT2 - PWA + Blockchain separate
+     ✅ INT3 - Responsive + Integrations
+     Duration: 38s
+  
+  ✅ Performance
+     ✅ PERF1 - Load page in < 3s
+     ✅ PERF2 - Admin settings in < 2s
+     ✅ PERF3 - No memory leaks
+     Duration: 41s
+  
+  ════════════════════════════════════════════════════════════════
+  Total: 30 tests
+  ✅ Passed: 30
+  ❌ Failed: 0
+  ⏭️  Skipped: 0
+  ⏱️  Duration: 12m 45s
+  
+  📈 Coverage:
+  ├─ Statements: 96%
+  ├─ Branches: 94%
+  ├─ Functions: 97%
+  └─ Lines: 96%
+  ════════════════════════════════════════════════════════════════
+
+  ✨ View full report:
+  → npx playwright show-report
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ANATOMIA DE UM TESTE (Exemplo)                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  test('A1 - Create auction with timestamp', async ({ page, browser }) => {
+    
+    // 1. Setup
+    const context = await browser.newContext()
+    const testPage = await context.newPage()
+    
+    // 2. Navigate & Login
+    await testPage.goto('http://localhost:9005/admin')
+    await testPage.fill('input[type="email"]', 'admin@test.local')
+    await testPage.fill('input[type="password"]', 'Test@12345')
+    await testPage.click('button[type="submit"]')
+    await testPage.waitForURL('**/dashboard')
+    
+    // 3. Navigate to creation form
+    await testPage.click('text="Novo Leilão"')
+    await testPage.waitForURL('**/auctions/new')
+    
+    // 4. Fill form
+    await testPage.fill('input[name="title"]', 'Test Auction')
+    await testPage.fill('textarea[name="description"]', 'Test Description')
+    await testPage.click('button[type="submit"]')
+    
+    // 5. Verify creation
+    await testPage.waitForURL('**/auctions/*')
+    const createdAt = await testPage.textContent('[data-test-id="created-at"]')
+    expect(createdAt).toBeTruthy()
+    
+    // 6. Verify API audit log
+    const response = await testPage.request.get('/api/admin/audit-logs?limit=1')
+    const logs = await response.json()
+    expect(logs[0].action).toBe('AUCTION_CREATED')
+    expect(logs[0].timestamp).toBeTruthy()
+    
+    // 7. Cleanup
+    await context.close()
+  })
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ESTRUTURA DE DIRETÓRIOS                                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  tests/
+  ├── e2e/
+  │   ├── 5-gaps-complete.spec.ts           (30 testes)
+  │   ├── fixtures/
+  │   │   ├── auth.ts                       (login fixture)
+  │   │   ├── page-helpers.ts               (page helpers)
+  │   │   └── test-data.ts                  (mock data)
+  │   └── utils/
+  │       ├── api-client.ts                 (API calls)
+  │       ├── websocket-helper.ts           (WS connection)
+  │       └── performance.ts                (perf utils)
+  │
+  ├── unit/                                  (para testes unitários)
+  └── integration/                           (para testes de integração)
+
+  playwright-report/
+  ├── index.html                             (relatório principal)
+  ├── results.json                           (dados dos testes)
+  └── traces/                                (traces de debug)
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ FLUXO DE ERRO (Se algo falhar)                                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  ❌ Teste falha
+  ├─ Screenshot salvo em playwright-report/
+  ├─ Vídeo gravado (se habilitado)
+  ├─ Trace salvo (se habilitado)
+  ├─ Logs do browser disponíveis
+  └─ Stack trace no console
+
+  Para debugar:
+  $ npm run test:e2e tests/e2e/5-gaps-complete.spec.ts -- --debug
+  $ npx playwright show-report
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ WORKFLOW COMPLETO                                                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  Developer writes code
+         ↓
+  Commit to git
+         ↓
+  npm run db:push              (Push schema)
+         ↓
+  npm run db:seed:v3           (Seed test data)
+         ↓
+  npm run dev:9005             (Start server)
+         ↓
+  npm run test:e2e             (Run tests)
+         ↓
+  ✅ All 30 tests pass?
+         ├─ YES → Proceed to production ✨
+         └─ NO → Debug & fix → Rerun tests
+
+```
+
+---
+
+**Status:** ✅ PRONTO PARA EXECUTAR  
+**Data:** 14 Nov 2025  
+**Versão:** 1.0.0

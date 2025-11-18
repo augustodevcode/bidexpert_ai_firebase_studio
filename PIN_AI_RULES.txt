@@ -1,0 +1,309 @@
+```
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                    🤖 AI RULES PIN - LEIA ISTO TODA SESSÃO                    ║
+║                                                                                ║
+║  Status: ✅ ATIVO | Versão: 1.0 | Última Atualização: 11/11/2025            ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+═════════════════════════════════════════════════════════════════════════════════
+
+🎯 2 REGRAS CRÍTICAS QUE VOCÊ DEVE SABER AGORA
+
+═════════════════════════════════════════════════════════════════════════════════
+
+┌─ REGRA 1: MULTI-TENANT SECURITY ─────────────────────────────────────────────┐
+│                                                                               │
+│  STATUS: ✅ Implementado & Validado (25/25 testes passando)                 │
+│  RISCO:  🔴 CRÍTICO                                                          │
+│                                                                               │
+│  REQUISITO OBRIGATÓRIO:                                                      │
+│    ✅ TODAS as queries DEVEM filtrar por tenantId                           │
+│    ✅ VALIDAR ownership antes de permitir access                           │
+│    ✅ Cross-tenant access = 403 Forbidden obrigatório                      │
+│                                                                               │
+│  EXEMPLO:                                                                    │
+│    ❌ ERRADO:  db.lot.findUnique({ where: { id } })                         │
+│    ✅ CORRETO: db.lot.findUnique({ where: { id, tenantId } })             │
+│                                                                               │
+│  Documentação: AUDITORIA_MULTITENANT_EXECUTADA.md                          │
+│                context/AI_PROJECT_RULES.md (RULE 1)                         │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ REGRA 2: LAZY COMPILATION vs PRÉ-BUILD ────────────────────────────────────┐
+│                                                                               │
+│  STATUS: ✅ Implementado após Session 5                                     │
+│  RISCO:  🔴 CRÍTICO - BLOQUEIA TODOS E2E TESTS                             │
+│                                                                               │
+│  O PROBLEMA:                                                                 │
+│    npm run dev = Compilação LAZY (Just-In-Time)                            │
+│    Cada página: 20-30 segundos para compilar                               │
+│    Testes: timeout após 2.4 segundos                                        │
+│    RESULTADO: ❌ Connection Refused (página não carrega a tempo)            │
+│                                                                               │
+│  A SOLUÇÃO (obrigatória para testes & deploy):                             │
+│                                                                               │
+│    ✅ OPÇÃO 1: AUTOMÁTICA (RECOMENDADA)                                     │
+│       node .vscode/run-e2e-tests.js                                         │
+│       └─ Faz tudo: build → server → health-check → tests                   │
+│                                                                               │
+│    ✅ OPÇÃO 2: MANUAL                                                       │
+│       npm run build      # (~60s, pré-compila TUDO)                         │
+│       npm start          # (~5s, production mode)                           │
+│       npx playwright test # Agora funciona!                                 │
+│                                                                               │
+│    ❌ OPÇÃO 3 (ERRADO - NÃO USE):                                          │
+│       npm run dev + npx playwright test                                     │
+│       └─ Causa lazy compilation & testes falhando!                         │
+│                                                                               │
+│  QUANDO USAR CADA MODO:                                                      │
+│    • npm run dev                 = Desenvolvimento LOCAL (hot-reload)        │
+│    • npm run build && npm start  = E2E tests, staging, produção            │
+│    • node .vscode/run-e2e-tests.js = CI/CD automation                      │
+│                                                                               │
+│  PERFORMANCE COMPARISON:                                                     │
+│    Dev (lazy)          Prod (pre-build)                                     │
+│    ─────────────────── ────────────────────                                │
+│    20-30s/página       <100ms/página        ✅ 300x MAIS RÁPIDO             │
+│    timeout 2.4s        timeout 30s          ✅ 12x MAIS TEMPO               │
+│    6/15 testes ❌      15/15 testes ✅      ✅ 100% SUCESSO                 │
+│                                                                               │
+│  Documentação: PROBLEMA-E-SOLUCAO-FINAL.md                                 │
+│                SOLUCAO-LAZY-COMPILATION.md                                  │
+│                context/AI_PROJECT_RULES.md (RULE 2)                         │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+═════════════════════════════════════════════════════════════════════════════════
+
+📚 6 OUTRAS REGRAS IMPORTANTES
+
+═════════════════════════════════════════════════════════════════════════════════
+
+┌─ REGRA 3: FILE HEADERS ──────────────────────────────────────────────────────┐
+│ Todo arquivo .ts/.tsx deve começar com docblock explicando propósito        │
+│ Exemplo:                                                                     │
+│   /**                                                                        │
+│    * LotService                                                             │
+│    * Handles lot-related business logic                                    │
+│    * Security: All queries filter by tenantId                             │
+│    */                                                                        │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ REGRA 4: NON-REGRESSION & HUMAN AUTH ──────────────────────────────────────┐
+│ Qualquer deleção/refactoring = autorização explícita do usuário            │
+│ 1. Declare intenção claramente                                              │
+│ 2. Forneça justificativa                                                    │
+│ 3. Solicite confirmação do usuário                                          │
+│ 4. Só proceda após aprovação                                                │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ REGRA 5: DESIGN SYSTEM ────────────────────────────────────────────────────┐
+│ Use APENAS semantic tokens (nunca hardcoded colors)                         │
+│ ❌ ERRADO:  className="text-white bg-black"                                │
+│ ✅ CORRETO: className="text-primary bg-background"                         │
+│ Define em: index.css e tailwind.config.ts                                  │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ REGRA 6: TESTING STRATEGY ─────────────────────────────────────────────────┐
+│ Unit tests (Jest) + E2E tests (Playwright)                                  │
+│ 🔴 IMPORTANTE: PRÉ-BUILD OBRIGATÓRIO antes de E2E (veja REGRA 2)           │
+│ Status: 25/25 unit tests ✅ | 15/15 E2E tests (com pre-build) ✅            │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ REGRA 7: PRISMA INTEGRITY ─────────────────────────────────────────────────┐
+│ 🔴 TODAS as queries via getDatabaseAdapter()                              │
+│ ❌ PROIBIDO: acesso direto ao Prisma client em app logic                   │
+│ Schema: prisma/schema.prisma (arquivo único)                               │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─ REGRA 8: ENVIRONMENT VARIABLES ────────────────────────────────────────────┐
+│ 🔴 NUNCA deletar .env                                                      │
+│ ✅ PERMITIDO: estender conteúdo existente                                  │
+│ ❌ PROIBIDO: remover conteúdo existente                                    │
+│ Documentar: listar todas as required vars                                   │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+═════════════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST ANTES DE QUALQUER MUDANÇA
+
+═════════════════════════════════════════════════════════════════════════════════
+
+Para Data/Queries:
+  [ ] Todas as queries filtram por tenantId?
+  [ ] Validação de ownership presente?
+  [ ] Cross-tenant access retorna 403?
+  [ ] Sem direct Prisma access?
+
+Para E2E Tests:
+  [ ] Usando npm run build && npm start? (NÃO dev mode)
+  [ ] OU usando node .vscode/run-e2e-tests.js?
+  [ ] Build completa antes dos testes?
+  [ ] .next/ directory existe e tem arquivos?
+  [ ] Testes passam com pre-build?
+
+Para Código Novo:
+  [ ] Arquivo tem docblock?
+  [ ] Usa design system (semantic tokens)?
+  [ ] Segue multi-tenant architecture?
+  [ ] Tem testes apropriados?
+  [ ] Sem hardcoded colors/styles?
+  [ ] Docstring em funções públicas?
+
+Para Deletions/Refactoring:
+  [ ] Solicitei autorização explícita do usuário?
+  [ ] Forneci justificativa clara?
+  [ ] Aguardei confirmação?
+  [ ] Documentei mudanças?
+
+═════════════════════════════════════════════════════════════════════════════════
+
+📖 ARQUIVOS PARA LER (EM ORDEM DE PRIORIDADE)
+
+═════════════════════════════════════════════════════════════════════════════════
+
+🔴 OBRIGATÓRIO (PRIMEIRA SESSÃO):
+  1. AI_RULES_PIN.md ............................ 5 minutos (VOCÊ ESTÁ AQUI!)
+  2. context/AI_PROJECT_RULES.md ............... 30-40 minutos (COMPLETO)
+  3. PROBLEMA-E-SOLUCAO-FINAL.md .............. 15 minutos
+  4. AUDITORIA_MULTITENANT_EXECUTADA.md ....... 20 minutos
+
+📚 DOCUMENTAÇÃO TÉCNICA:
+  5. SOLUCAO-LAZY-COMPILATION.md .............. 20 minutos
+  6. FASE1-FIXES-IMPLEMENTED.md ............... 15 minutos
+
+📖 DIRETRIZES DE IA:
+  7. context/GEMINI.md ......................... 15 minutos (opcional)
+  8. context/instructions.md ................... 20 minutos (referência)
+
+═════════════════════════════════════════════════════════════════════════════════
+
+🎓 LEARNING PATH (RECOMENDADO)
+
+═════════════════════════════════════════════════════════════════════════════════
+
+PRIMEIRA SESSÃO (Total: ~70 minutos):
+  1. Ler este arquivo (5 min) ← VOCÊ ESTÁ AQUI
+  2. Ler context/AI_PROJECT_RULES.md (30 min)
+  3. Ler PROBLEMA-E-SOLUCAO-FINAL.md (15 min)
+  4. Ler AUDITORIA_MULTITENANT_EXECUTADA.md (20 min)
+  → Resultado: Conhecer as 2 regras críticas & 6 outras regras
+
+PRÓXIMAS SESSÕES:
+  1. Revisar este arquivo (2 min)
+  2. Consultar context/AI_PROJECT_RULES.md conforme necessário
+  3. Usar AI_RULES_CHECKLIST.md antes de implementar
+  → Resultado: Seguir todas as 8 regras consistentemente
+
+═════════════════════════════════════════════════════════════════════════════════
+
+❓ FAQ RÁPIDO
+
+═════════════════════════════════════════════════════════════════════════════════
+
+P: Qual arquivo ler primeiro?
+R: Este arquivo! (AI_RULES_PIN.md) - 5 minutos
+
+P: Qual é o documento oficial com TODAS as regras?
+R: context/AI_PROJECT_RULES.md - A FONTE DE VERDADE
+
+P: Por que Lazy Compilation é tão importante?
+R: Porque causa TODOS os E2E tests falharem (9/15 tests), bloqueando CI/CD
+
+P: Por que tenantId é tão importante?
+R: Evita cross-tenant access, a vulnerabilidade de segurança mais crítica
+
+P: Posso usar "npm run dev" para E2E tests?
+R: ❌ NÃO! Use "npm run build && npm start" ou "node .vscode/run-e2e-tests.js"
+
+P: O que fazer quando tiver dúvida?
+R: Consulte context/AI_PROJECT_RULES.md (a FONTE DE VERDADE)
+
+P: Preciso ler TUDO na primeira sessão?
+R: SIM! Especialmente RULE 1 (security) e RULE 2 (performance)
+
+═════════════════════════════════════════════════════════════════════════════════
+
+📊 STATUS DAS REGRAS
+
+═════════════════════════════════════════════════════════════════════════════════
+
+Regra                        Status    Risco   Validação
+─────────────────────────────────────────────────────────────
+1. Multi-tenant Security     ✅        🔴      25/25 testes
+2. Lazy Compilation Fix      ✅        🔴      Scripts ready
+3. File Headers             ✅        🟡      Code review
+4. Non-Regression           ✅        🟡      User auth
+5. Design System            ✅        🟡      Code review
+6. Testing Strategy         ✅        🟡      15/15 testes
+7. Prisma Integrity         ✅        🔴      Code review
+8. Environment              ✅        🔴      Validation
+
+═════════════════════════════════════════════════════════════════════════════════
+
+🎯 RESUMO FINAL
+
+═════════════════════════════════════════════════════════════════════════════════
+
+Estas são as REGRAS OBRIGATÓRIAS que protegem:
+  🔐 Segurança (multi-tenant isolation)
+  ⚡ Performance (lazy compilation fix)
+  🎨 Qualidade de código (design system, headers)
+  🧪 Testes (E2E com pre-build)
+  💾 Dados (Prisma integrity)
+
+Elas foram:
+  ✅ IMPLEMENTADAS
+  ✅ VALIDADAS (com testes & auditorias)
+  ✅ DOCUMENTADAS (9 arquivos diferentes)
+  ✅ ENFORCED (no code review & CI/CD)
+
+Seu papel:
+  ✅ Ler estas regras (PRIMEIRO)
+  ✅ Entender as 2 críticas (security & performance)
+  ✅ Seguir TODAS em cada mudança de código
+  ✅ Usar AI_RULES_CHECKLIST.md antes de implementar
+
+═════════════════════════════════════════════════════════════════════════════════
+
+🔗 LINKS RÁPIDOS
+
+═════════════════════════════════════════════════════════════════════════════════
+
+📍 Documentos Principais:
+   • AI_RULES_CHECKLIST.md ............. Checklist visual antes de implementar
+   • context/AI_PROJECT_RULES.md ....... Documentação completa (FONTE DE VERDADE)
+   • INDICE_REGRAS_AI.md ............... Índice com learning path completo
+
+📍 Para Lazy Compilation:
+   • PROBLEMA-E-SOLUCAO-FINAL.md ...... Análise técnica completa
+   • SOLUCAO-LAZY-COMPILATION.md ...... Detalhes de implementação
+   • Scripts: .vscode/run-e2e-tests.js ⭐ USE ESTE
+
+📍 Para Multi-Tenant Security:
+   • AUDITORIA_MULTITENANT_EXECUTADA.md
+   • FASE1-FIXES-IMPLEMENTED.md
+   • FASE1-CONCLUSAO.md
+
+═════════════════════════════════════════════════════════════════════════════════
+
+✨ PIN THIS IN EVERY NEW CHAT SESSION ✨
+
+═════════════════════════════════════════════════════════════════════════════════
+
+Antes de fazer QUALQUER mudança:
+
+  1. Leia AI_RULES_PIN.md (este arquivo - 5 min)
+  2. Consulte context/AI_PROJECT_RULES.md se não tiver certeza
+  3. Use AI_RULES_CHECKLIST.md antes de codificar
+  4. Siga as 8 regras em TUDO o que fizer
+
+═════════════════════════════════════════════════════════════════════════════════
+
+Versão: 1.0 | Status: ✅ ATIVO | Data: 11/11/2025 | Responsável: QA & Security Team
+
+🎯 REGRAS DOCUMENTADAS, CONSOLIDADAS E PRONTAS PARA SEREM SEGUIDAS EM TODAS AS SESSÕES
+
+═════════════════════════════════════════════════════════════════════════════════
+```

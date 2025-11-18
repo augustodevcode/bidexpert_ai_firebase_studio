@@ -59,8 +59,33 @@ export class InstallmentPaymentService {
    * Atualiza o status de uma parcela específica.
    * @param paymentId - O ID da parcela.
    * @param status - O novo status do pagamento.
+   * @param tenantId - (Optional) O ID do tenant para validação de segurança multi-tenant.
    */
-  async updatePaymentStatus(paymentId: bigint, status: PaymentStatus): Promise<void> {
+  async updatePaymentStatus(paymentId: bigint, status: PaymentStatus, tenantId?: string): Promise<void> {
+    // ✅ SECURITY FIX: Validate tenantId if provided
+    if (tenantId) {
+      const payment = await this.prisma.installmentPayment.findUnique({
+        where: { id: paymentId },
+        include: {
+          userWin: {
+            include: {
+              lot: {
+                select: { tenantId: true }
+              }
+            }
+          }
+        }
+      });
+
+      if (!payment) {
+        throw new Error('Pagamento não encontrado');
+      }
+
+      if (payment.userWin.lot.tenantId.toString() !== tenantId) {
+        throw new Error('Forbidden: Payment does not belong to this tenant');
+      }
+    }
+
     await this.prisma.installmentPayment.update({
       where: { id: paymentId },
       data: { status, paymentDate: status === 'PAGO' ? nowInSaoPaulo() : null },

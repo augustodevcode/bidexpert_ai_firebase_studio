@@ -1,12 +1,12 @@
 // src/repositories/user.repository.ts
-import { prisma as basePrisma } from '@/lib/prisma'; // Usa a instância base para modelos globais
+import prisma from '@/lib/prisma'; // Usa a instância base para modelos globais
 import type { Prisma, User } from '@prisma/client';
 import type { EditableUserProfileData } from '@/types';
 
 export class UserRepository {
 
   async findAll() {
-    return basePrisma.user.findMany({
+    return prisma.user.findMany({
       include: {
         roles: {
           include: {
@@ -25,7 +25,7 @@ export class UserRepository {
 
   async findById(id: bigint) {
     if (!id) return null;
-    return basePrisma.user.findUnique({
+    return prisma.user.findUnique({
       where: {
         id,
       },
@@ -46,7 +46,7 @@ export class UserRepository {
 
   async findByEmail(email: string) {
     if (!email) return null;
-    return basePrisma.user.findUnique({
+    return prisma.user.findUnique({
       where: {
         email,
       },
@@ -66,11 +66,11 @@ export class UserRepository {
   }
 
   async create(data: Prisma.UserCreateInput): Promise<User> {
-    return basePrisma.user.create({ data });
+    return prisma.user.create({ data });
   }
 
   async update(userId: bigint, data: Partial<EditableUserProfileData>): Promise<User> {
-    return basePrisma.user.update({
+    return prisma.user.update({
       where: {
         id: userId,
       },
@@ -81,11 +81,11 @@ export class UserRepository {
   async updateUserRoles(userId: bigint, tenantIds: bigint[], roleIds: bigint[]) {
     if (!userId) return;
 
-    // A lógica de roles é global, não por tenant, então usamos basePrisma
-    await basePrisma.usersOnRoles.deleteMany({ where: { userId }});
+    // A lógica de roles é global, não por tenant, então usamos a instância compartilhada do Prisma
+    await prisma.usersOnRoles.deleteMany({ where: { userId }});
 
     if (roleIds.length > 0) {
-      await basePrisma.usersOnRoles.createMany({
+      await prisma.usersOnRoles.createMany({
         data: roleIds.map(roleId => ({
           userId,
           roleId,
@@ -96,7 +96,7 @@ export class UserRepository {
   }
 
   async delete(id: bigint): Promise<void> {
-    await basePrisma.user.delete({
+    await prisma.user.delete({
       where: {
         id,
       },

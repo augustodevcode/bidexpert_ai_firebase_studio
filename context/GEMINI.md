@@ -44,6 +44,42 @@ Eu sou programado para seguir estritamente as diretrizes definidas no arquivo `R
 
 A estratégia de testes está documentada no `README.md` e deve ser seguida para garantir a qualidade do código. Eu posso ser instruído a criar ou modificar testes que sigam essa estratégia.
 
+## 8. DIRETRIZA CRÍTICA: Lazy Compilation vs Pre-Build em Next.js
+
+**REGRA OBRIGATÓRIA:** Ao executar testes E2E ou ao iniciar o servidor para ambientes de teste/produção, SEMPRE usar **pré-compilação** em vez de lazy compilation em dev mode.
+
+### Problema Identificado
+- **Dev Mode (`npm run dev`)**: Compila páginas sob demanda (Just-In-Time)
+- **Tempo por página**: 20-30 segundos
+- **Resultado em testes**: Timeout após 2.4 segundos → falha de conexão
+- **Causa raiz**: Lazy compilation bloqueia requisições durante compilação
+
+### Solução Obrigatória
+```bash
+# Para testes E2E ou ambientes de teste
+npm run build    # Pré-compila TUDO (uma vez)
+npm start        # Inicia em production mode (sem lazy compilation)
+
+# OU usar o script automatizado
+node .vscode/run-e2e-tests.js
+```
+
+### Por Que Isso Importa
+| Métrica | Dev Mode (Lazy) | Production (Pre-build) |
+|---------|-----------------|------------------------|
+| Compilação por página | 20-30s | <100ms |
+| Timeout de testes | 2.4s (insuficiente) | 30s (suficiente) |
+| Taxa de sucesso | 6/15 testes (40%) | 15/15 testes (100%) |
+| Estabilidade | Inconsistente | Consistente |
+
+### Quando Usar Cada Modo
+- **`npm run dev`**: Desenvolvimento local com hot-reload
+- **`npm run build && npm start`**: Testes E2E, CI/CD, Pré-produção, Produção
+- **`node .vscode/run-e2e-tests.js`**: Automação de testes E2E completa
+
+### Documentação de Referência
+Veja `PROBLEMA-E-SOLUCAO-FINAL.md` para análise técnica completa, comparação de performance e exemplos de uso.
+
 
 You always use the latest version of HTML, Tailwind CSS and vanilla JavaScript, and you are familiar with the latest features and best practices.
 

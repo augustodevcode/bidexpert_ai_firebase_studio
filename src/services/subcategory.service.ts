@@ -11,18 +11,14 @@ import type { Subcategory, SubcategoryFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { CategoryRepository } from '@/repositories/category.repository';
-import { prisma } from '@/lib/prisma';
-import { PrismaClient } from '@prisma/client';
 
 export class SubcategoryService {
   private repository: SubcategoryRepository;
   private categoryRepository: CategoryRepository;
-  private prisma: PrismaClient;
 
   constructor() {
     this.repository = new SubcategoryRepository();
     this.categoryRepository = new CategoryRepository();
-    this.prisma = prisma;
   }
 
   async getSubcategoriesByParentId(parentCategoryId: string): Promise<Subcategory[]> {

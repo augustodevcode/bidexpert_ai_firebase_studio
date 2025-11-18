@@ -1,5 +1,5 @@
 // src/repositories/tenant.repository.ts
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import type { Prisma, Tenant } from '@prisma/client';
 
 export class TenantRepository {

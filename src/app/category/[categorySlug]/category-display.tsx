@@ -209,12 +209,12 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
 
   const renderGridItem = (item: Lot) => {
     const parentAuction = allAuctions.find(a => a.id === item.auctionId);
-    return <BidExpertCard item={item} type="lot" auction={parentAuction} platformSettings={platformSettings!} />;
+    return <BidExpertCard item={item} type="lot" parentAuction={parentAuction} platformSettings={platformSettings!} />;
   };
 
   const renderListItem = (item: Lot) => {
     const parentAuction = allAuctions.find(a => a.id === item.auctionId);
-    return <BidExpertListItem item={item} type="lot" auction={parentAuction} platformSettings={platformSettings!} />;
+    return <BidExpertListItem item={item} type="lot" parentAuction={parentAuction} platformSettings={platformSettings!} />;
   };
 
   if (isLoading || !platformSettings) {

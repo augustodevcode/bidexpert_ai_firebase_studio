@@ -102,6 +102,12 @@ export const platformSettingsFormSchema = z.object({
   siteTagline: z.string().max(200, { message: "O tagline não pode exceder 200 caracteres."}).optional().nullable(),
   logoUrl: z.string().url("URL do logo inválida.").optional().or(z.literal('')),
   crudFormMode: z.enum(['modal', 'sheet']).optional().default('modal'),
+
+  // Realtime & Blockchain
+  blockchainEnabled: z.boolean().default(false),
+  lawyerMonetizationModel: z.enum(['SUBSCRIPTION', 'PAY_PER_USE', 'REVENUE_SHARE']).default('SUBSCRIPTION'),
+  softCloseEnabled: z.boolean().default(false),
+  softCloseMinutes: z.coerce.number().int().min(1).max(60).default(5),
   
   // Relations
   themes: z.array(ThemeSettingsSchema).optional(),

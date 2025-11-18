@@ -30,9 +30,18 @@ const config = {
       },
     ],
   },
+  // PWA e responsividade: habilitar viewport automático
+  swcMinify: true,
+  compress: true,
+  productionBrowserSourceMaps: false,
+  // Node.js runtime para WebSocket (realtime bids)
+  experimental: {
+    serverComponentsExternalPackages: ['ws'],
+  },
 };
 
 // A lógica original foi alterada para sempre habilitar os checks.
 console.log(`[next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.`);
 
 export default config;
+

@@ -399,6 +399,44 @@ export class BidderService {
     };
   }
 
+  /**
+   * Atualiza método de pagamento
+   */
+  async updatePaymentMethod(methodId: string, data: any): Promise<ApiResponse<PaymentMethod>> {
+    try {
+      const id = BigInt(methodId);
+      const updated = await this.bidderRepository.updatePaymentMethod(id, data);
+      return {
+        success: true,
+        data: this.mapPaymentMethod(updated)
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro ao atualizar método de pagamento'
+      };
+    }
+  }
+
+  /**
+   * Deleta método de pagamento
+   */
+  async deletePaymentMethod(methodId: string): Promise<ApiResponse<null>> {
+    try {
+      const id = BigInt(methodId);
+      await this.bidderRepository.deletePaymentMethod(id);
+      return {
+        success: true,
+        data: null
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro ao deletar método de pagamento'
+      };
+    }
+  }
+
   private mapPaymentMethod(method: any): PaymentMethod {
     return {
       id: method.id,
