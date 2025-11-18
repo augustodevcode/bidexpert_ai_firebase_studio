@@ -1,7 +1,9 @@
 // test-platform-service.js - Testar o PlatformSettingsService
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { PrismaClient } = require('@prisma/client');
 
 // Simular o contexto de tenant
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const tenantContext = {
   run: (context, callback) => {
     console.log(`🏢 Executando no contexto do tenant: ${context.tenantId}`);

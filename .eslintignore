@@ -1,0 +1,56 @@
+# Development scripts and tools
+.vscode/
+.idx/
+.windsurf/
+
+# AI and code exploration
+_Aiexclude/
+.gemini/
+.qoder/
+
+# Build and generated files
+.next/
+dist/
+build/
+out/
+node_modules/
+.turbo/
+
+# Test and coverage
+coverage/
+test-results/
+playwright-report/
+test-build/
+tests/
+
+# E2E test files
+**/*.spec.ts
+**/*.test.ts
+
+# Environment and logs
+*.log
+logs/
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.idea/
+.vscode/
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Data and seed scripts (non-production)
+scripts/
+seed.sql
+seed-data-*.ts
+*.sql
