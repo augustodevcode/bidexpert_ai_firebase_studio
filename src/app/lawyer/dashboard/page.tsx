@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import { getLawyerDashboardOverviewAction } from './actions';
 import { LawyerImpersonationSelector } from './lawyer-impersonation-selector';
+import { ImpersonationBanner } from '@/components/admin/impersonation-banner';
 import type {
   LawyerDashboardOverview,
   LawyerCaseStatus,
@@ -133,6 +134,7 @@ export default function LawyerDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [impersonatedLawyerId, setImpersonatedLawyerId] = useState<string | null>(null);
+  const [impersonatedLawyerName, setImpersonatedLawyerName] = useState<string | null>(null);
 
   const hasAccess = useMemo(
     () => hasAnyPermission(userProfileWithPermissions, ['lawyer_dashboard:view', 'manage_all']),
@@ -148,34 +150,21 @@ export default function LawyerDashboardPage() {
     async function fetchData(userId: string, impersonateId?: string) {
       try {
         setIsLoading(true);
-        const data = await getLawyerDashboardOverviewAction(userId, impersonateId ?? undefined);
+        const data = await getLawyerDashboardOverviewAction(userId, impersonateId);
         setOverview(hydrateOverview(data));
         setError(null);
       } catch (err) {
-        console.error('[LawyerDashboardPage] Failed to load overview', err);
-        setError('Não foi possível carregar o painel do advogado no momento.');
-        setOverview(emptyOverview);
+        console.error('Error fetching lawyer dashboard:', err);
+        setError('Não foi possível carregar os dados do painel.');
       } finally {
         setIsLoading(false);
       }
     }
 
-    if (!authLoading) {
-      if (!userProfileWithPermissions?.id) {
-        setIsLoading(false);
-        setError('Você precisa estar autenticado para acessar o painel.');
-        return;
-      }
-
-      if (!hasAccess) {
-        setIsLoading(false);
-        setError('Você não tem permissão para visualizar o painel do advogado.');
-        return;
-      }
-
+    if (!authLoading && hasAccess && userProfileWithPermissions?.id) {
       fetchData(userProfileWithPermissions.id.toString(), impersonatedLawyerId ?? undefined);
     }
-  }, [authLoading, hasAccess, userProfileWithPermissions?.id, impersonatedLawyerId]);
+  }, [authLoading, hasAccess, userProfileWithPermissions, impersonatedLawyerId]);
 
   const metrics = useMemo(
     () => [
@@ -240,6 +229,17 @@ export default function LawyerDashboardPage() {
       data-ai-id="lawyer-dashboard-page"
       data-testid="lawyer-dashboard-root"
     >
+      {impersonatedLawyerId && impersonatedLawyerName && (
+        <ImpersonationBanner
+          impersonatedName={impersonatedLawyerName}
+          onExit={() => {
+            setImpersonatedLawyerId(null);
+            setImpersonatedLawyerName(null);
+          }}
+          className="-mx-6 -mt-6 mb-6"
+        />
+      )}
+
       <div className="space-y-1">
         <h1
           className="text-3xl font-bold tracking-tight"
@@ -257,6 +257,7 @@ export default function LawyerDashboardPage() {
           currentUserId={userProfileWithPermissions.id.toString()}
           selectedLawyerId={impersonatedLawyerId}
           onLawyerChange={setImpersonatedLawyerId}
+          onLawyerSelected={(lawyer) => setImpersonatedLawyerName(lawyer?.fullName || lawyer?.email || null)}
         />
       )}
 

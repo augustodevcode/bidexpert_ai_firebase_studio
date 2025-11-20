@@ -1,0 +1,1016 @@
+
+> bid-expert@0.1.0 build
+> npx prisma generate && next build --debug
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+Ô£ö Generated Prisma Client (v6.19.0) to .\node_modules\@prisma\client in 871ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+  Ôû▓ Next.js 14.2.3
+  - Environments: .env
+
+   Creating an optimized production build ...
+ ÔÜá Compiled with warnings
+
+./node_modules/handlebars/lib/index.js
+require.extensions is not supported by webpack. Use a loader instead.
+
+Import trace for requested module:
+./node_modules/handlebars/lib/index.js
+./src/ai/flows/generate-document-flow.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
+
+./node_modules/handlebars/lib/index.js
+require.extensions is not supported by webpack. Use a loader instead.
+
+Import trace for requested module:
+./node_modules/handlebars/lib/index.js
+./src/ai/flows/generate-document-flow.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
+
+./node_modules/handlebars/lib/index.js
+require.extensions is not supported by webpack. Use a loader instead.
+
+Import trace for requested module:
+./node_modules/handlebars/lib/index.js
+./src/ai/flows/generate-document-flow.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
+
+./node_modules/require-in-the-middle/index.js
+Critical dependency: require function is used in a way in which dependencies cannot be statically extracted
+
+Import trace for requested module:
+./node_modules/require-in-the-middle/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@opentelemetry/sdk-node/build/src/sdk.js
+./node_modules/@opentelemetry/sdk-node/build/src/index.js
+./node_modules/@genkit-ai/core/lib/tracing/node-telemetry-provider.js
+./node_modules/@genkit-ai/core/lib/node.js
+./node_modules/genkit/lib/common.js
+./node_modules/genkit/lib/index.mjs
+./src/ai/genkit.ts
+./src/ai/flows/extract-process-data-flow.ts
+
+ ÔÜá Compiled with warnings
+
+./src/lib/tenant-context.ts
+A Node.js module is loaded ('async_hooks' at line 2) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+./src/lib/tenant-context.ts
+
+ Ô£ô Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+[layout.tsx] LOG: RootLayout component is rendering/executing.
+   Generating static pages (0/129) ...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+   Generating static pages (32/129) 
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+Static generation failed due to dynamic usage on /admin/categories/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/cities/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/cities/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/courts/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /, reason: searchParams.homeVariant
+    at l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\chunks\8948.js:1:56358)
+    at Object.get (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\chunks\7126.js:2102:6761)
+    at j (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\app\page.js:21:4946)
+Static generation failed due to dynamic usage on /admin/courts/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/assets/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/document-templates/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/document-templates, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/direct-sales/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+   Generating static pages (64/129) 
+Static generation failed due to dynamic usage on /admin/import/cnj, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/categories/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/auctions/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/judicial-branches/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/judicial-districts, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/judicial-districts/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/judicial-districts/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/judicial-branches/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/auctioneers/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/auctions/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/media/upload, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/lotting, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/qa, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/reports/audit, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/roles, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/judicial-processes/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/roles/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/judicial-processes, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/sellers/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/bidding, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/general, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/sellers/edit, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/increments, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/reports, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/sellers, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/maps, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/report-builder, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/notifications, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/seeding, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/realtime, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/lots/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/payment, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+   Generating static pages (96/129) 
+Static generation failed due to dynamic usage on /admin/settings/themes, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/states, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/states/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/subcategories, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings/triggers, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/lots/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/vehicle-makes, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/users/analysis, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/users/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/subcategories/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/states/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/vehicle-makes/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/vehicle-models/new, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/vehicle-models, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/assets, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/wizard, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/bidder-impersonation, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/categories, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/contact-messages, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/cities, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/auctioneers, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/auctions, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/courts, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/habilitations, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/direct-sales, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/media, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/settings, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/lots, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/judicial-branches, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/tenants, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/dashboard, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /admin/users, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async r3 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:16009)
+Static generation failed due to dynamic usage on /dashboard, reason: Dynamic server usage: Page with `dynamic = "force-dynamic"` won't be rendered statically.
+    at rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:7872)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9489
+    at async Promise.all (index 0)
+    at async rW (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:16:9297)
+ Ô£ô Generating static pages (129/129)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+
+Redirects
+Ôöî source: /:path+/
+Ôö£ destination: /:path+
+Ôöö permanent: true
+
+
+Route (app)                                       Size     First Load JS
+Ôöî ãÆ /                                             15.5 kB         208 kB
+Ôö£ Ôùï /_not-found                                   879 B          88.8 kB
+Ôö£ Ôùï /about                                        301 B          93.4 kB
+Ôö£ ãÆ /admin/assets                                 5.7 kB          271 kB
+Ôö£ ãÆ /admin/assets/[assetId]/edit                  6.3 kB          227 kB
+Ôö£ ãÆ /admin/assets/new                             6.26 kB         227 kB
+Ôö£ ãÆ /admin/auctioneers                            1.93 kB         270 kB
+Ôö£ ãÆ /admin/auctioneers/[auctioneerId]/edit        1.91 kB         270 kB
+Ôö£ ãÆ /admin/auctioneers/analysis                   7.52 kB         289 kB
+Ôö£ ãÆ /admin/auctions                               6.45 kB         236 kB
+Ôö£ ãÆ /admin/auctions/[auctionId]/edit              22.8 kB         360 kB
+Ôö£ ãÆ /admin/auctions/analysis                      8.47 kB         293 kB
+Ôö£ ãÆ /admin/auctions/new                           9.63 kB         281 kB
+Ôö£ ãÆ /admin/bidder-impersonation                   8.25 kB         133 kB
+Ôö£ ãÆ /admin/categories                             3.77 kB         185 kB
+Ôö£ ãÆ /admin/categories/[categoryId]/edit           170 B           157 kB
+Ôö£ ãÆ /admin/categories/analysis                    4.42 kB         289 kB
+Ôö£ ãÆ /admin/categories/new                         171 B           157 kB
+Ôö£ ãÆ /admin/cities                                 7.82 kB         189 kB
+Ôö£ ãÆ /admin/cities/[cityId]/edit                   185 B           204 kB
+Ôö£ ãÆ /admin/cities/analysis                        6.09 kB         291 kB
+Ôö£ ãÆ /admin/cities/new                             185 B           204 kB
+Ôö£ ãÆ /admin/contact-messages                       6.44 kB         174 kB
+Ôö£ ãÆ /admin/courts                                 1.7 kB          220 kB
+Ôö£ ãÆ /admin/courts/[courtId]/edit                  1.64 kB         220 kB
+Ôö£ ãÆ /admin/courts/analysis                        4.43 kB         289 kB
+Ôö£ ãÆ /admin/courts/new                             869 B           204 kB
+Ôö£ ãÆ /admin/dashboard                              6.99 kB         221 kB
+Ôö£ ãÆ /admin/direct-sales                           1.33 kB         191 kB
+Ôö£ ãÆ /admin/direct-sales/[offerId]/edit            242 B           243 kB
+Ôö£ ãÆ /admin/direct-sales/new                       242 B           243 kB
+Ôö£ ãÆ /admin/document-templates                     6.16 kB         188 kB
+Ôö£ ãÆ /admin/document-templates/[templateId]/edit   166 B           155 kB
+Ôö£ ãÆ /admin/document-templates/new                 166 B           155 kB
+Ôö£ ãÆ /admin/habilitations                          8.89 kB         190 kB
+Ôö£ ãÆ /admin/habilitations/[userId]                 10.6 kB         124 kB
+Ôö£ ãÆ /admin/import/cnj                             8.17 kB         183 kB
+Ôö£ ãÆ /admin/judicial-branches                      1.82 kB         220 kB
+Ôö£ ãÆ /admin/judicial-branches/[branchId]/edit      1.73 kB         220 kB
+Ôö£ ãÆ /admin/judicial-branches/analysis             4.47 kB         289 kB
+Ôö£ ãÆ /admin/judicial-branches/new                  869 B           204 kB
+Ôö£ ãÆ /admin/judicial-districts                     1.8 kB          220 kB
+Ôö£ ãÆ /admin/judicial-districts/[districtId]/edit   1.69 kB         220 kB
+Ôö£ ãÆ /admin/judicial-districts/analysis            4.42 kB         289 kB
+Ôö£ ãÆ /admin/judicial-districts/new                 869 B           204 kB
+Ôö£ ãÆ /admin/judicial-processes                     12.8 kB         250 kB
+Ôö£ ãÆ /admin/judicial-processes/[processId]/edit    6.24 kB         236 kB
+Ôö£ ãÆ /admin/judicial-processes/new                 5.58 kB         235 kB
+Ôö£ ãÆ /admin/lots                                   6.59 kB         236 kB
+Ôö£ ãÆ /admin/lots/[lotId]/edit                      3.62 kB         251 kB
+Ôö£ ãÆ /admin/lots/analysis                          7.7 kB          292 kB
+Ôö£ ãÆ /admin/lots/new                               244 B           247 kB
+Ôö£ ãÆ /admin/lotting                                11.7 kB         223 kB
+Ôö£ ãÆ /admin/media                                  7.78 kB         194 kB
+Ôö£ ãÆ /admin/media/upload                           7.58 kB         110 kB
+Ôö£ ãÆ /admin/qa                                     9.14 kB         104 kB
+Ôö£ ãÆ /admin/report-builder                         22.6 kB         266 kB
+Ôö£ ãÆ /admin/reports                                5.55 kB         219 kB
+Ôö£ ãÆ /admin/reports/audit                          11.8 kB         115 kB
+Ôö£ ãÆ /admin/roles                                  8.35 kB         190 kB
+Ôö£ ãÆ /admin/roles/[roleId]/edit                    160 B           135 kB
+Ôö£ ãÆ /admin/roles/new                              160 B           135 kB
+Ôö£ ãÆ /admin/sellers                                8.65 kB         273 kB
+Ôö£ ãÆ /admin/sellers/analysis                       4.25 kB         289 kB
+Ôö£ ãÆ /admin/sellers/edit                           10.4 kB         336 kB
+Ôö£ ãÆ /admin/settings                               3.13 kB         105 kB
+Ôö£ ãÆ /admin/settings/bidding                       2.66 kB         130 kB
+Ôö£ ãÆ /admin/settings/general                       5.61 kB         134 kB
+Ôö£ ãÆ /admin/settings/increments                    2.97 kB         127 kB
+Ôö£ ãÆ /admin/settings/maps                          2.36 kB         156 kB
+Ôö£ ãÆ /admin/settings/notifications                 2.53 kB         130 kB
+Ôö£ ãÆ /admin/settings/payment                       2.44 kB         156 kB
+Ôö£ ãÆ /admin/settings/realtime                      4.15 kB         128 kB
+Ôö£ ãÆ /admin/settings/seeding                       2.98 kB         127 kB
+Ôö£ ãÆ /admin/settings/themes                        3.22 kB         127 kB
+Ôö£ ãÆ /admin/settings/triggers                      2.77 kB         130 kB
+Ôö£ ãÆ /admin/states                                 10.7 kB         217 kB
+Ôö£ ãÆ /admin/states/[stateId]/edit                  152 B           125 kB
+Ôö£ ãÆ /admin/states/analysis                        4.61 kB         282 kB
+Ôö£ ãÆ /admin/states/new                             152 B           125 kB
+Ôö£ ãÆ /admin/subcategories                          4.03 kB         179 kB
+Ôö£ ãÆ /admin/subcategories/[subcategoryId]/edit     195 B           220 kB
+Ôö£ ãÆ /admin/subcategories/new                      195 B           220 kB
+Ôö£ ãÆ /admin/tenants                                3.84 kB         185 kB
+Ôö£ ãÆ /admin/users                                  10.7 kB         265 kB
+Ôö£ ãÆ /admin/users/[userId]/edit                    3.53 kB         175 kB
+Ôö£ ãÆ /admin/users/analysis                         7.66 kB         299 kB
+Ôö£ ãÆ /admin/users/new                              6.79 kB         130 kB
+Ôö£ ãÆ /admin/vehicle-makes                          7.98 kB         190 kB
+Ôö£ ãÆ /admin/vehicle-makes/[makeId]/edit            151 B           125 kB
+Ôö£ ãÆ /admin/vehicle-makes/new                      152 B           125 kB
+Ôö£ ãÆ /admin/vehicle-models                         7.98 kB         190 kB
+Ôö£ ãÆ /admin/vehicle-models/[modelId]/edit          185 B           203 kB
+Ôö£ ãÆ /admin/vehicle-models/new                     185 B           203 kB
+Ôö£ ãÆ /admin/wizard                                 68 kB           336 kB
+Ôö£ ãÆ /api/[[...slug]]                              0 B                0 B
+Ôö£ ãÆ /api/admin/audit-logs                         0 B                0 B
+Ôö£ ãÆ /api/admin/blockchain-config                  0 B                0 B
+Ôö£ ãÆ /api/admin/feature-flags                      0 B                0 B
+Ôö£ Ôùï /api/admin/logs/app                           0 B                0 B
+Ôö£ ãÆ /api/auth/[...nextauth]                       0 B                0 B
+Ôö£ ãÆ /api/bidder/dashboard                         0 B                0 B
+Ôö£ ãÆ /api/bidder/notifications                     0 B                0 B
+Ôö£ ãÆ /api/bidder/notifications/mark-read           0 B                0 B
+Ôö£ ãÆ /api/bidder/participation-history             0 B                0 B
+Ôö£ ãÆ /api/bidder/payment-methods                   0 B                0 B
+Ôö£ ãÆ /api/bidder/payment-methods/[id]              0 B                0 B
+Ôö£ ãÆ /api/bidder/payment-methods/[id]/set-default  0 B                0 B
+Ôö£ ãÆ /api/bidder/profile                           0 B                0 B
+Ôö£ ãÆ /api/bidder/won-lots                          0 B                0 B
+Ôö£ ãÆ /api/bidder/won-lots/[id]/boleto              0 B                0 B
+Ôö£ ãÆ /api/bidder/won-lots/[id]/pay                 0 B                0 B
+Ôö£ ãÆ /api/integrations/cartorio                    0 B                0 B
+Ôö£ ãÆ /api/integrations/fipe                        0 B                0 B
+Ôö£ ãÆ /api/integrations/tribunal                    0 B                0 B
+Ôö£ Ôùï /api/public/tenants                           0 B                0 B
+Ôö£ ãÆ /api/reporting/[[...slug]]                    0 B                0 B
+Ôö£ Ôùï /api/system/db/metrics                        0 B                0 B
+Ôö£ ãÆ /api/upload                                   0 B                0 B
+Ôö£ ãÆ /api/upload/document                          0 B                0 B
+Ôö£ ãÆ /api/v1/tenant/create                         0 B                0 B
+Ôö£ Ôùï /auction-safety-tips                          181 B          94.9 kB
+Ôö£ Ôùï /auctioneers                                  6.5 kB          116 kB
+Ôö£ ãÆ /auctioneers/[auctioneerSlug]                 10.9 kB         208 kB
+Ôö£ Ôùï /auctions                                     243 B           237 kB
+Ôö£ ãÆ /auctions/[auctionId]                         9.08 kB         239 kB
+Ôö£ ãÆ /auctions/[auctionId]/live                    12.8 kB         209 kB
+Ôö£ ãÆ /auctions/[auctionId]/lots/[lotId]            6.24 kB         325 kB
+Ôö£ ãÆ /auctions/[auctionId]/lots/[lotId]/v2         3.9 kB          282 kB
+Ôö£ Ôùï /auth/forgot-password                         4.7 kB          107 kB
+Ôö£ Ôùï /auth/login                                   6.71 kB         163 kB
+Ôö£ Ôùï /auth/register                                13.4 kB         186 kB
+Ôö£ ãÆ /auth/reset-password/[token]                  5.25 kB         107 kB
+Ôö£ ÔùÅ /category/[categorySlug]                      5.73 kB         235 kB
+Ôö£   Ôö£ /category/eletronicos
+Ôö£   Ôö£ /category/imoveis
+Ôö£   Ôöö /category/veiculos
+Ôö£ ãÆ /checkout/[winId]                             10.2 kB         172 kB
+Ôö£ Ôùï /consignor-dashboard/auctions                 2.67 kB         193 kB
+Ôö£ Ôùï /consignor-dashboard/direct-sales             3.13 kB         193 kB
+Ôö£ Ôùï /consignor-dashboard/direct-sales/new         1.35 kB         244 kB
+Ôö£ Ôùï /consignor-dashboard/financial                9.05 kB         184 kB
+Ôö£ Ôùï /consignor-dashboard/lots                     2.67 kB         193 kB
+Ôö£ Ôùï /consignor-dashboard/overview                 7.13 kB         246 kB
+Ôö£ Ôùï /consignor-dashboard/reports                  3.81 kB         206 kB
+Ôö£ Ôùï /consignor-dashboard/settings                 15.9 kB         232 kB
+Ôö£ Ôùï /contact                                      5.14 kB         100 kB
+Ôö£ ãÆ /dashboard                                    15.5 kB         151 kB
+Ôö£ Ôùï /dashboard/bids                               8.06 kB         147 kB
+Ôö£ Ôùï /dashboard/documents                          12.7 kB         125 kB
+Ôö£ Ôùï /dashboard/favorites                          5.18 kB         190 kB
+Ôö£ Ôùï /dashboard/history                            5.36 kB         190 kB
+Ôö£ Ôùï /dashboard/notifications                      4.35 kB         107 kB
+Ôö£ Ôùï /dashboard/overview                           4.48 kB         120 kB
+Ôö£ Ôùï /dashboard/reports                            4.69 kB         203 kB
+Ôö£ Ôùï /dashboard/wins                               12.4 kB         157 kB
+Ôö£ Ôùï /direct-sales                                 6.34 kB         185 kB
+Ôö£ ãÆ /direct-sales/[offerId]                       12.5 kB         127 kB
+Ôö£ Ôùï /faq                                          5.42 kB         102 kB
+Ôö£ Ôùï /lawyer/dashboard                             10.8 kB         147 kB
+Ôö£ Ôùï /live-dashboard                               190 B           116 kB
+Ôö£ ãÆ /lots/[lotId]                                 152 B          88.1 kB
+Ôö£ Ôùï /map-search                                   7.46 kB         136 kB
+Ôö£ Ôùï /privacy                                      2.85 kB         106 kB
+Ôö£ Ôùï /profile                                      11.6 kB         137 kB
+Ôö£ Ôùï /profile/edit                                 2.78 kB         182 kB
+Ôö£ Ôùï /search                                       244 B           237 kB
+Ôö£ Ôùï /sell-with-us                                 181 B          94.9 kB
+Ôö£ Ôùï /sellers                                      9.64 kB         119 kB
+Ôö£ ãÆ /sellers/[sellerId]                           4.85 kB         234 kB
+Ôö£ Ôùï /setup                                        8.22 kB         104 kB
+Ôöö Ôùï /terms                                        2.66 kB         106 kB
++ First Load JS shared by all                     87.9 kB
+  Ôö£ chunks/7023-862cd84e52e35d7c.js               31.6 kB
+  Ôö£ chunks/fd9d1056-c7666423fddb3357.js           53.6 kB
+  Ôöö other shared chunks (total)                   2.68 kB
+
+
+ãÆ Middleware                                      35.9 kB
+
+Ôùï  (Static)   prerendered as static content
+ÔùÅ  (SSG)      prerendered as static HTML (uses getStaticProps)
+ãÆ  (Dynamic)  server-rendered on demand
+

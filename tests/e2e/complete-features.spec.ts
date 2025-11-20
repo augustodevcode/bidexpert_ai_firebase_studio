@@ -8,7 +8,7 @@
 
 import { test, expect, Page } from '@playwright/test';
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:9002';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:9005';
 const TIMEOUT = 30000;
 
 // ============================================================================
@@ -22,9 +22,9 @@ const testUser = {
 };
 
 const testAdmin = {
-  email: 'admin@bidexpert.com',
-  password: 'Admin@12345',
-  name: 'Admin User'
+  email: 'admin@bidexpert.com.br',
+  password: 'Admin@123',
+  name: 'Administrador'
 };
 
 async function loginUser(page: Page, email: string, password: string) {
@@ -378,7 +378,7 @@ test.describe('Responsive Design & PWA', () => {
     
     // Check layout is mobile-optimized
     const mainContent = page.locator('main');
-    const width = await mainContent.evaluate(el => el.offsetWidth);
+    const width = await mainContent.evaluate(el => (el instanceof HTMLElement ? el.offsetWidth : 0));
     expect(width).toBeLessThanOrEqual(320);
   });
 

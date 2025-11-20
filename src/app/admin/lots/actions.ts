@@ -25,6 +25,7 @@ export async function getLots(auctionId?: string, isPublicCall: boolean = false,
 
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {
   const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : await getTenantIdFromRequest(false);
+  console.log(`[Action getLot] ID: ${id}, Public: ${isPublicCall}, Tenant: ${tenantId}`);
   return lotService.getLotById(id, tenantId, isPublicCall);
 }
 

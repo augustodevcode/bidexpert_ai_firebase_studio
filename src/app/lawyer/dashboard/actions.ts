@@ -3,7 +3,7 @@
 import { lawyerDashboardService } from '@/services/lawyer-dashboard.service';
 import { adminImpersonationService } from '@/services/admin-impersonation.service';
 import type { LawyerDashboardOverview } from '@/types/lawyer-dashboard';
-import { auth } from '@/lib/auth';
+import { getCurrentUser } from '@/app/auth/actions';
 
 export async function getLawyerDashboardOverviewAction(
   userId: string,
@@ -33,16 +33,16 @@ export async function getLawyerDashboardOverviewAction(
 }
 
 export async function getImpersonatableLawyersAction() {
-  const session = await auth();
+  const user = await getCurrentUser();
   
-  if (!session?.user?.id) {
+  if (!user?.id) {
     throw new Error('Usuário não autenticado.');
   }
 
-  const isAdmin = await adminImpersonationService.isAdmin(session.user.id);
+  const isAdmin = await adminImpersonationService.isAdmin(user.id);
   if (!isAdmin) {
     throw new Error('Acesso negado. Apenas administradores podem acessar este recurso.');
   }
 
-  return adminImpersonationService.getImpersonatableLawyers(session.user.id);
+  return adminImpersonationService.getImpersonatableLawyers(user.id);
 }

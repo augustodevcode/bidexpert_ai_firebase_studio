@@ -1,6 +1,8 @@
 // src/app/admin/tenants/page.tsx
 'use client';
 
+
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

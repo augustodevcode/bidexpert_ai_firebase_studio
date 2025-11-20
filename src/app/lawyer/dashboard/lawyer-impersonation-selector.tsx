@@ -26,12 +26,14 @@ interface LawyerImpersonationSelectorProps {
   currentUserId: string;
   selectedLawyerId: string | null;
   onLawyerChange: (lawyerId: string | null) => void;
+  onLawyerSelected?: (lawyer: LawyerOption | null) => void;
 }
 
 export function LawyerImpersonationSelector({
   currentUserId,
   selectedLawyerId,
   onLawyerChange,
+  onLawyerSelected,
 }: LawyerImpersonationSelectorProps) {
   const [lawyers, setLawyers] = useState<LawyerOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,7 +80,7 @@ export function LawyerImpersonationSelector({
   }
 
   return (
-    <Card className="border-primary/20 bg-primary/5" data-testid="lawyer-impersonation-selector">
+    <Card className="border-primary/20 bg-primary/5" data-testid="lawyer-impersonation-selector" data-ai-id="lawyer-impersonation-selector">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-primary" />
@@ -99,16 +101,19 @@ export function LawyerImpersonationSelector({
           onValueChange={(value) => {
             if (value === currentUserId) {
               onLawyerChange(null);
+              onLawyerSelected?.(null);
             } else {
               onLawyerChange(value);
+              const selected = lawyers.find(l => l.id === value);
+              onLawyerSelected?.(selected || null);
             }
           }}
         >
-          <SelectTrigger className="w-full" data-testid="lawyer-select-trigger">
+          <SelectTrigger className="w-full" data-testid="lawyer-select-trigger" data-ai-id="lawyer-select-trigger">
             <SelectValue placeholder="Selecione um advogado" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={currentUserId} data-testid="lawyer-option-self">
+            <SelectItem value={currentUserId} data-testid="lawyer-option-self" data-ai-id="lawyer-option-self">
               <div className="flex items-center gap-2">
                 <UserCircle className="h-4 w-4" />
                 <span className="font-medium">Meu próprio painel</span>
@@ -119,6 +124,7 @@ export function LawyerImpersonationSelector({
                 key={lawyer.id}
                 value={lawyer.id}
                 data-testid={`lawyer-option-${lawyer.id}`}
+                data-ai-id={`lawyer-option-${lawyer.id}`}
               >
                 <div className="flex items-center justify-between gap-3 w-full">
                   <div className="flex flex-col">

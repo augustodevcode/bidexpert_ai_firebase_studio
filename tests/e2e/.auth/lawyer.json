@@ -2,10 +2,10 @@
   "cookies": [
     {
       "name": "session",
-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxNDgiLCJlbWFpbCI6ImFkdm9nYWRvQGJpZGV4cGVydC5jb20uYnIiLCJ0ZW5hbnRJZCI6IjEiLCJyb2xlTmFtZXMiOlsiTGF3eWVyIl0sInBlcm1pc3Npb25zIjpbImxhd3llcl9kYXNoYm9hcmQ6dmlldyIsImxhd3llcl9jYXNlczp2aWV3IiwibGF3eWVyX2RvY3VtZW50czptYW5hZ2UiXSwic2VsbGVySWQiOm51bGwsImF1Y3Rpb25lZXJJZCI6bnVsbCwiaWF0IjoxNzYzNDA1NDE0LCJleHAiOjE3NjQwMTAyMTR9.NI1tiNUBaF74lFfeZH8It53k1RJVgbXc5_Oej3rn5Ts",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIzMSIsImVtYWlsIjoiYWR2b2dhZG9AYmlkZXhwZXJ0LmNvbS5iciIsInRlbmFudElkIjoiMTEiLCJyb2xlTmFtZXMiOlsiQ09NUFJBRE9SIiwiQURWT0dBRE8iXSwicGVybWlzc2lvbnMiOltdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NjM2MjI0NTQsImV4cCI6MTc2NDIyNzI1NH0.BpDk_NtYk9Cg7QBWlL836f7Dx3FqjQajBJ_8fYQfht0",
       "domain": "localhost",
       "path": "/",
-      "expires": 1764010214.123841,
+      "expires": 1764227254.72217,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
@@ -13,7 +13,7 @@
   ],
   "origins": [
     {
-      "origin": "http://localhost:9002",
+      "origin": "http://localhost:9005",
       "localStorage": [
         {
           "name": "bidexpert-widget-preferences",

@@ -6,9 +6,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { bidderService } from '@/services/bidder.service';
 import { getSession } from '@/server/lib/session';
 
+
+
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getSession();
 
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.userId;
-    const profile = await bidderService.getOrCreateBidderProfile(userId);
+    const profile = await bidderService.getOrCreateBidderProfile(BigInt(userId));
 
     return NextResponse.json({
       success: true,
@@ -52,7 +54,7 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const userId = session.userId;
-    const result = await bidderService.updateBidderProfile(userId, body);
+    const result = await bidderService.updateBidderProfile(BigInt(userId), body);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });

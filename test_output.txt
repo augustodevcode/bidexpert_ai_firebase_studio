@@ -1,0 +1,56 @@
+
+> bid-expert@0.1.0 test:e2e
+> playwright test --config=playwright.config.local.ts
+
+­ƒöÉ Iniciando autentica├º├úo global para testes...
+ÔØî Erro na autentica├º├úo global: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:9002/auth/login
+Call log:
+  - navigating to "http://localhost:9002/auth/login", waiting until "domcontentloaded"
+
+    at globalSetup (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\tests\e2e\global-setup.ts:31:21) {
+  name: 'Error'
+}
+Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:9002/auth/login
+Call log:
+[2m  - navigating to "http://localhost:9002/auth/login", waiting until "domcontentloaded"[22m
+
+
+   at global-setup.ts:31
+
+  29 |     // 1. Autenticar como ADMIN
+  30 |     const adminPage = await browser.newPage();
+> 31 |     await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+     |                     ^
+  32 |     await adminPage.waitForTimeout(5000);
+  33 |
+  34 |     const adminEmailInput = adminPage.locator('[data-ai-id="auth-login-email-input"]');
+    at globalSetup (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\tests\e2e\global-setup.ts:31:21)
+
+­ƒÄ¡ Playwright Test Report - Iniciando execu├º├úo dos testes
+­ƒôà Data/Hora: 18/11/2025, 01:39:07
+­ƒôü Diret├│rio de testes: undefined
+­ƒöº Configura├º├úo: chromium
+ÔÅ▒´©Å  Timeout global: undefinedms
+­ƒæÑ Workers: 1
+­ƒöä Retries: undefined
+ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+
+
+================================================================================
+­ƒÅü RESUMO FINAL DOS TESTES
+================================================================================
+­ƒôè Total de testes: 0
+Ô£à Passou: 0
+ÔØî Falhou: 0
+ÔÅ¡´©Å Pulado: 0
+ÔÅ░ Timeout: 0
+ÔÅ▒´©Å  Dura├º├úo total: 0s
+­ƒôê Taxa de sucesso: 0%
+
+­ƒôä Relat├│rio detalhado salvo em: test-results/plaintext-report.txt
+­ƒîÉ Relat├│rio HTML dispon├¡vel em: playwright-report/index.html
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m

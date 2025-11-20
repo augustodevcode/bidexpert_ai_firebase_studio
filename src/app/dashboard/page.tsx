@@ -9,8 +9,9 @@ import { auth } from '@/lib/auth';
 import { bidderService } from '@/services/bidder.service';
 import { BidderDashboard } from '@/components/dashboard/bidder/bidder-dashboard';
 
+
+
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export default async function DashboardPage() {
   const session = await auth();

@@ -1,6 +1,8 @@
 // src/app/admin/settings/page.tsx
 'use client';
 
+
+
 import { Suspense } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Settings as SettingsIcon, Database, Palette, Wrench, MapPin as MapIcon, Zap, ArrowUpDown, CreditCard, Bell, Bot, Zap as LightningIcon } from 'lucide-react';

@@ -2,13 +2,15 @@
 /**
  * @fileoverview API para obter overview do dashboard do arrematante
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { bidderService } from '@/services/bidder.service';
 import { getSession } from '@/server/lib/session';
 
+
+
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getSession();
 
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.userId;
-    const overview = await bidderService.getBidderDashboardOverview(userId);
+    const overview = await bidderService.getBidderDashboardOverview(BigInt(userId));
 
     return NextResponse.json({
       success: true,

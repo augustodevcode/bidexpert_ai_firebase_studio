@@ -12,24 +12,67 @@ async function seedTestData() {
   console.log('🌱 Starting test data seed...');
 
   try {
-    // Clear existing test data
+    // Clear existing test data in the correct order
     console.log('🧹 Clearing existing test data...');
+    await prisma.installmentPayment.deleteMany({});
+    await prisma.userWin.deleteMany({});
+    await prisma.userLotMaxBid.deleteMany({});
     await prisma.bid.deleteMany({});
-    await prisma.lot.deleteMany({});
-    await prisma.auction.deleteMany({});
+    await prisma.assetsOnLots.deleteMany({});
+    await prisma.lotStagePrice.deleteMany({});
+    await prisma.lotQuestion.deleteMany({});
+    await prisma.review.deleteMany({});
+    await prisma.notification.deleteMany({});
+    await prisma.assetMedia.deleteMany({});
+    await prisma.judicialParty.deleteMany({});
+    await prisma.usersOnRoles.deleteMany({});
+    await prisma.usersOnTenants.deleteMany({});
     await prisma.auctionHabilitation.deleteMany({});
+    await prisma.lot.deleteMany({});
+    await prisma.auctionStage.deleteMany({});
+    await prisma.auction.deleteMany({});
+    await prisma.asset.deleteMany({});
+    await prisma.judicialProcess.deleteMany({});
+    await prisma.seller.deleteMany({});
+    await prisma.auctioneer.deleteMany({});
+    await prisma.userDocument.deleteMany({});
     await prisma.user.deleteMany({});
+    await prisma.role.deleteMany({});
+    await prisma.subcategory.deleteMany({});
     await prisma.lotCategory.deleteMany({});
+    await prisma.directSaleOffer.deleteMany({});
+    await prisma.platformSettings.deleteMany({});
+    await prisma.subscriber.deleteMany({});
+    await prisma.court.deleteMany({});
+    await prisma.judicialDistrict.deleteMany({});
+    await prisma.judicialBranch.deleteMany({});
+    await prisma.city.deleteMany({});
+    await prisma.state.deleteMany({});
     await prisma.tenant.deleteMany({});
 
     // Create tenant
     console.log('📍 Creating tenant...');
     const tenant = await prisma.tenant.create({
       data: {
-        id: BigInt(1),
         name: 'Test Tenant',
         subdomain: 'test',
-        status: 'ACTIVE',
+      },
+    });
+
+    // Create roles
+    console.log('🎭 Creating roles...');
+    const adminRole = await prisma.role.create({
+      data: { name: 'ADMIN', nameNormalized: 'admin', description: 'Administrator' },
+    });
+    const bidderRole = await prisma.role.create({
+      data: { name: 'BIDDER', nameNormalized: 'bidder', description: 'Bidder' },
+    });
+    const lawyerRole = await prisma.role.create({
+      data: { 
+        name: 'LAWYER', 
+        nameNormalized: 'lawyer', 
+        description: 'Lawyer',
+        permissions: ['lawyer_dashboard:view']
       },
     });
 
@@ -44,7 +87,7 @@ async function seedTestData() {
         password: hashedPasswordAdmin,
         fullName: 'Admin User',
         cpf: '00000000001',
-        habilitationStatus: 'APPROVED',
+        habilitationStatus: 'HABILITADO',
         accountType: 'PHYSICAL',
       },
     });
@@ -55,7 +98,7 @@ async function seedTestData() {
         password: hashedPasswordBidder,
         fullName: 'Test Bidder',
         cpf: '00000000002',
-        habilitationStatus: 'APPROVED',
+        habilitationStatus: 'HABILITADO',
         accountType: 'PHYSICAL',
       },
     });
@@ -66,31 +109,52 @@ async function seedTestData() {
         password: hashedPasswordBidder,
         fullName: 'Test Bidder 2',
         cpf: '00000000003',
-        habilitationStatus: 'APPROVED',
+        habilitationStatus: 'HABILITADO',
         accountType: 'PHYSICAL',
       },
     });
+
+    const lawyer = await prisma.user.create({
+      data: {
+        email: 'advogado@bidexpert.com.br',
+        password: hashedPasswordBidder,
+        fullName: 'Advogado Teste',
+        cpf: '00000000004',
+        habilitationStatus: 'HABILITADO',
+        accountType: 'PHYSICAL',
+      },
+    });
+
+    // Assign roles
+    await prisma.usersOnRoles.create({ data: { userId: admin.id, roleId: adminRole.id, assignedBy: 'system' } });
+    await prisma.usersOnRoles.create({ data: { userId: bidder1.id, roleId: bidderRole.id, assignedBy: 'system' } });
+    await prisma.usersOnRoles.create({ data: { userId: bidder2.id, roleId: bidderRole.id, assignedBy: 'system' } });
+    await prisma.usersOnRoles.create({ data: { userId: lawyer.id, roleId: lawyerRole.id, assignedBy: 'system' } });
+
+    // Assign users to tenant
+    console.log('🔗 Assigning users to tenant...');
+    await prisma.usersOnTenants.create({ data: { userId: admin.id, tenantId: tenant.id, assignedBy: 'system' } });
+    await prisma.usersOnTenants.create({ data: { userId: bidder1.id, tenantId: tenant.id, assignedBy: 'system' } });
+    await prisma.usersOnTenants.create({ data: { userId: bidder2.id, tenantId: tenant.id, assignedBy: 'system' } });
+    await prisma.usersOnTenants.create({ data: { userId: lawyer.id, tenantId: tenant.id, assignedBy: 'system' } });
 
     // Create categories
     console.log('📂 Creating categories...');
     const categories = await Promise.all([
       prisma.lotCategory.create({
         data: {
-          tenantId: BigInt(1),
           name: 'Imóveis',
           slug: 'imoveis',
         },
       }),
       prisma.lotCategory.create({
         data: {
-          tenantId: BigInt(1),
           name: 'Veículos',
           slug: 'veiculos',
         },
       }),
       prisma.lotCategory.create({
         data: {
-          tenantId: BigInt(1),
           name: 'Máquinas',
           slug: 'maquinas',
         },
@@ -104,19 +168,31 @@ async function seedTestData() {
 
     const auction1 = await prisma.auction.create({
       data: {
-        tenantId: BigInt(1),
-        id: BigInt(1),
-        name: 'Test Auction 1',
-        description: 'Test auction for e2e testing',
-        status: 'ACTIVE',
-        startDate: now,
+        tenantId: tenant.id,
+        title: 'Leilão de Teste 1',
+        description: 'Leilão de teste para testes e2e',
+        status: 'ABERTO_PARA_LANCES',
+        auctionDate: now,
         endDate: auctionEndTime,
-        startingBid: 5000,
-        minimumIncrement: 100,
-        websocketEnabled: true,
+        auctionType: 'JUDICIAL',
+        auctionMethod: 'STANDARD',
+        participation: 'ONLINE',
         softCloseEnabled: true,
         softCloseMinutes: 5,
-        blockchainEnabled: false,
+      },
+    });
+
+    const auction2 = await prisma.auction.create({
+      data: {
+        tenantId: tenant.id,
+        title: 'Leilão de Teste 2 (Em Breve)',
+        description: 'Leilão futuro para testes e2e',
+        status: 'EM_BREVE',
+        auctionDate: new Date(now.getTime() + 24 * 60 * 60 * 1000), // Tomorrow
+        endDate: new Date(now.getTime() + 26 * 60 * 60 * 1000),
+        auctionType: 'EXTRAJUDICIAL',
+        auctionMethod: 'STANDARD',
+        participation: 'ONLINE',
       },
     });
 
@@ -124,140 +200,48 @@ async function seedTestData() {
     console.log('🎯 Creating lots...');
     const lot1 = await prisma.lot.create({
       data: {
-        tenantId: BigInt(1),
-        id: BigInt(1),
+        tenantId: tenant.id,
         auctionId: auction1.id,
         categoryId: categories[0].id,
         title: 'Apartamento com 3 quartos - São Paulo',
         description:
           'Apartamento bem localizado, prédio novo com todas as comodidades.',
-        startingBid: 250000,
-        currentBid: 250000,
-        status: 'ACTIVE',
-        order: 1,
-        minimumIncrement: 5000,
-        webSocketEnabled: true,
+        price: 250000,
+        initialPrice: 250000,
+        status: 'ABERTO_PARA_LANCES',
+        type: 'IMOVEL',
       },
     });
 
     const lot2 = await prisma.lot.create({
       data: {
-        tenantId: BigInt(1),
-        id: BigInt(2),
+        tenantId: tenant.id,
         auctionId: auction1.id,
         categoryId: categories[1].id,
-        title: 'Carro 2020 - Corolla',
-        description: 'Carro em excelente estado, baixa quilometragem.',
-        startingBid: 50000,
-        currentBid: 50000,
-        status: 'ACTIVE',
-        order: 2,
-        minimumIncrement: 1000,
-        webSocketEnabled: true,
+        title: 'Carro Esportivo 2023',
+        description: 'Carro com baixa quilometragem, único dono.',
+        price: 150000,
+        initialPrice: 150000,
+        status: 'ABERTO_PARA_LANCES',
+        type: 'VEICULO',
       },
     });
 
-    // Habilitate users for auction
-    console.log('✅ Habilitating users...');
-    await prisma.auctionHabilitation.create({
+    const lot3 = await prisma.lot.create({
       data: {
-        tenantId: BigInt(1),
-        auctionId: auction1.id,
-        userId: bidder1.id,
-        status: 'APPROVED',
-        approvedAt: now,
+        tenantId: tenant.id,
+        auctionId: auction2.id,
+        categoryId: categories[2].id,
+        title: 'Trator Agrícola',
+        description: 'Trator em bom estado, pronto para o trabalho.',
+        price: 80000,
+        initialPrice: 80000,
+        status: 'EM_BREVE',
+        type: 'MAQUINARIO',
       },
     });
 
-    await prisma.auctionHabilitation.create({
-      data: {
-        tenantId: BigInt(1),
-        auctionId: auction1.id,
-        userId: bidder2.id,
-        status: 'APPROVED',
-        approvedAt: now,
-      },
-    });
-
-    // Create bids
-    console.log('💰 Creating bids...');
-    const bid1 = await prisma.bid.create({
-      data: {
-        tenantId: BigInt(1),
-        id: BigInt(1),
-        auctionId: auction1.id,
-        lotId: lot1.id,
-        userId: bidder1.id,
-        amount: 250000,
-        status: 'ACCEPTED',
-        timestamp: new Date(now.getTime() - 30 * 60 * 1000), // 30 min ago
-        isAutoBid: false,
-        webSocketSent: true,
-        blockchainRecorded: false,
-      },
-    });
-
-    const bid2 = await prisma.bid.create({
-      data: {
-        tenantId: BigInt(1),
-        id: BigInt(2),
-        auctionId: auction1.id,
-        lotId: lot1.id,
-        userId: bidder2.id,
-        amount: 260000,
-        status: 'ACCEPTED',
-        timestamp: new Date(now.getTime() - 15 * 60 * 1000), // 15 min ago
-        isAutoBid: false,
-        webSocketSent: true,
-        blockchainRecorded: false,
-      },
-    });
-
-    // Update lot current bid
-    await prisma.lot.update({
-      where: { id: lot1.id },
-      data: { currentBid: 260000 },
-    });
-
-    // Create bids for lot 2
-    const bid3 = await prisma.bid.create({
-      data: {
-        tenantId: BigInt(1),
-        id: BigInt(3),
-        auctionId: auction1.id,
-        lotId: lot2.id,
-        userId: bidder1.id,
-        amount: 50000,
-        status: 'ACCEPTED',
-        timestamp: new Date(now.getTime() - 45 * 60 * 1000),
-        isAutoBid: false,
-        webSocketSent: true,
-        blockchainRecorded: false,
-      },
-    });
-
-    const bid4 = await prisma.bid.create({
-      data: {
-        tenantId: BigInt(1),
-        id: BigInt(4),
-        auctionId: auction1.id,
-        lotId: lot2.id,
-        userId: bidder2.id,
-        amount: 55000,
-        status: 'ACCEPTED',
-        timestamp: new Date(now.getTime() - 20 * 60 * 1000),
-        isAutoBid: false,
-        webSocketSent: true,
-        blockchainRecorded: false,
-      },
-    });
-
-    await prisma.lot.update({
-      where: { id: lot2.id },
-      data: { currentBid: 55000 },
-    });
-
-    console.log('✨ Test data seeded successfully!');
+    console.log('✅ Test data seeded successfully!');
     console.log('');
     console.log('Test Users:');
     console.log(`  Admin: admin@bidexpert.com / Admin@12345`);

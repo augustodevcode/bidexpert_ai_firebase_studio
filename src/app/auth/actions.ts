@@ -122,7 +122,7 @@ export async function login(values: { email: string, password?: string, tenantId
         }
     }
     
-    const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId === tenantId);
+    const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId.toString() === tenantId);
     // Permite que super admins ou usuários sem tenant loguem no tenant '1' (Landlord)
     if (!userBelongsToFinalTenant) {
         const isAdmin = userProfileWithPerms.permissions.includes('manage_all');

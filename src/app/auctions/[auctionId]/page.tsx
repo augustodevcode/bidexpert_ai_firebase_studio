@@ -17,8 +17,6 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 
-export const dynamic = 'force-dynamic';
-
 async function getAuctionPageData(id: string): Promise<{ 
   auction?: Auction; 
   auctioneer?: AuctioneerProfileInfo | null;

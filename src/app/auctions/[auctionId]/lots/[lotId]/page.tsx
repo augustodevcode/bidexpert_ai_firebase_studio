@@ -21,8 +21,6 @@ import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { notFound } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
   lot: Lot | null,
   auction: Auction | null,
@@ -56,6 +54,8 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
+    if (auctionFromDb) console.log('Auction ID:', auctionFromDb.id, 'Tenant:', auctionFromDb.tenantId);
+    if (lotFromDb) console.log('Lot ID:', lotFromDb.id, 'AuctionId:', lotFromDb.auctionId, 'Tenant:', lotFromDb.tenantId);
     // @ts-ignore
     return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null };
   }

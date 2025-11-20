@@ -3,6 +3,7 @@
  * @fileoverview Página de visualização como arrematante para administradores.
  * Permite que administradores vejam o dashboard como se fossem um arrematante específico.
  */
+
 import { redirect } from 'next/navigation';
 import { BidderImpersonationDashboard } from '@/components/admin/bidder-impersonation/bidder-impersonation-dashboard';
 import { getCurrentUser } from '@/app/auth/actions';

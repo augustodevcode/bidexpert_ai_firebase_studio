@@ -56,8 +56,8 @@ async function ensureDefaultTenant(): Promise<string> {
                 }
             }
 
-            cachedDefaultTenantId = tenant.id;
-            return tenant.id;
+            cachedDefaultTenantId = tenant.id.toString();
+            return tenant.id.toString();
         })()
         .catch((error) => {
             ensureDefaultTenantPromise = null;

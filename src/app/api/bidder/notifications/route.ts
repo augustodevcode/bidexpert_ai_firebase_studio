@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { bidderService } from '@/services/bidder.service';
 import { getSession } from '@/server/lib/session';
 
+
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const type = searchParams.get('type')?.split(',') as any;
+    const type = searchParams.get('type')?.split(',');
     const isRead = searchParams.get('isRead');
     const search = searchParams.get('search');
 

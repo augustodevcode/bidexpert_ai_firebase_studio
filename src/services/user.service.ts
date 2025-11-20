@@ -246,11 +246,15 @@ export class UserService {
             });
         }
       }
-    } else if (user.documents && user.documents.length > 0 && user.habilitationStatus === 'PENDING_DOCUMENTS') {
-      await basePrisma.user.update({
-        where: { id: BigInt(userId) },
-        data: { habilitationStatus: 'PENDING_ANALYSIS' }
-      });
+    } else if (user.documents && user.documents.length > 0) {
+      // If there are documents, but not all approved, and status is not REJECTED_DOCUMENTS, set to PENDING_ANALYSIS
+      // This ensures that after uploading, the user appears in the admin list
+      if (user.habilitationStatus !== 'REJECTED_DOCUMENTS' && user.habilitationStatus !== 'PENDING_ANALYSIS') {
+          await basePrisma.user.update({
+            where: { id: BigInt(userId) },
+            data: { habilitationStatus: 'PENDING_ANALYSIS' }
+          });
+      }
     }
   }
 }

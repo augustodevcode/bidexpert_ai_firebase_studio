@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const shouldStartWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER !== '1';
 
+const baseURL = process.env.BASE_URL || 'http://localhost:9005';
+
 export default defineConfig({
 	testDir: './tests/e2e',
 	timeout: 120_000, // 2 minutos por teste devido à compilação do Next.js
@@ -12,7 +14,7 @@ export default defineConfig({
 	globalSetup: './tests/e2e/global-setup.ts',
 	reporter: [ ['list'], ['./playwright-custom-reporter.js', { outputFile: 'test-results/plaintext-report.txt' }], ['html', { open: 'never' }] ],
 	use: {
-		baseURL: process.env.BASE_URL || 'http://localhost:9002',
+		baseURL,
 		trace: 'retain-on-failure',
 		screenshot: 'only-on-failure',
 		video: 'retain-on-failure',
@@ -29,10 +31,13 @@ export default defineConfig({
 		},
 	],
 	webServer: shouldStartWebServer ? {
-		command: 'npm run dev',
-		url: 'http://localhost:9002',
+		command: 'npm run start -- -p 9005',
+		url: baseURL,
 		reuseExistingServer: true,
-		timeout: 120000,
+		timeout: 240000, // Increased timeout for build
+		env: {
+			BASE_URL: baseURL,
+		}
 	} : undefined,
 });
 

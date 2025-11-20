@@ -38,6 +38,18 @@ const config = {
   experimental: {
     serverComponentsExternalPackages: ['ws'],
   },
+  // Webpack configuration to suppress handlebars and require-in-the-middle warnings
+  webpack: (config, { isServer }) => {
+    // Suppress specific warnings for dependencies that use require.extensions
+    if (config.ignoreWarnings === undefined) {
+      config.ignoreWarnings = [];
+    }
+    config.ignoreWarnings.push(
+      /require\.extensions is not supported by webpack/,
+      /Critical dependency: require function is used/
+    );
+    return config;
+  },
 };
 
 // A lógica original foi alterada para sempre habilitar os checks.

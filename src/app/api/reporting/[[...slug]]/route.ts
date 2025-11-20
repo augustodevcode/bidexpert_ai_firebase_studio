@@ -42,4 +42,3 @@ export async function GET(request: Request) {
 }
 
 // Adicione outros métodos HTTP conforme necessário (POST, PUT, DELETE, etc.)
-export const dynamic = 'force-dynamic';

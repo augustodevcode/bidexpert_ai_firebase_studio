@@ -889,11 +889,13 @@ async function main() {
         },
       });
 
-      // Criar Auctioneer record
+      // Criar Auctioneer record com slug único
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substring(2, 8);
       const auctioneerRecord = await prisma.auctioneer.create({
         data: {
-          publicId: `auctn-${Date.now()}-${Math.random()}`,
-          slug: `leiloeiro-${email.split('@')[0]}`,
+          publicId: `auctn-${timestamp}-${randomSuffix}`,
+          slug: `leiloeiro-${email.split('@')[0].replace(/\./g, '-')}-${randomSuffix}`,
           name: email.split('@')[0].replace(/\./g, ' ').toUpperCase(),
           tenantId: tenants[0].id,
           userId: auctioneer.id,

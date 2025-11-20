@@ -1,6 +1,3 @@
-// src/components/layout/command-palette.tsx
-'use client';
-
 import * as React from 'react';
 import {
   CommandDialog,
@@ -14,8 +11,10 @@ import {
 import { useRouter } from 'next/navigation';
 import { 
     LayoutDashboard, Gavel, ListChecks, Package, Users, Landmark, Scale, 
-    Building, MapPin, FileText, PlusCircle, Settings, ShieldCheck, FileSpreadsheet, Briefcase, ServerCrash 
+    Building, MapPin, FileText, PlusCircle, Settings, ShieldCheck, FileSpreadsheet, Briefcase, ServerCrash,
+    Loader2
 } from 'lucide-react';
+import { globalSearch, type SearchResultItem } from '@/app/actions/global-search';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -57,6 +56,9 @@ const settingsCommands: CommandItemProps[] = [
 
 export default function CommandPalette({ isOpen, onOpenChange }: CommandPaletteProps) {
   const router = useRouter();
+  const [query, setQuery] = React.useState('');
+  const [searchResults, setSearchResults] = React.useState<SearchResultItem[]>([]);
+  const [isSearching, setIsSearching] = React.useState(false);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -69,6 +71,27 @@ export default function CommandPalette({ isOpen, onOpenChange }: CommandPaletteP
     return () => document.removeEventListener('keydown', down);
   }, [isOpen, onOpenChange]);
 
+  React.useEffect(() => {
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await globalSearch(query);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Search failed:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [query]);
+
   const runCommand = (href: string) => {
     onOpenChange(false);
     router.push(href);
@@ -76,10 +99,44 @@ export default function CommandPalette({ isOpen, onOpenChange }: CommandPaletteP
 
   return (
     <CommandDialog open={isOpen} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Digite um comando ou busque uma página..." />
+      <CommandInput 
+        placeholder="Digite um comando ou busque uma página..." 
+        onValueChange={setQuery}
+      />
       <CommandList>
-        <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+        <CommandEmpty>
+            {isSearching ? (
+                <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Buscando...
+                </div>
+            ) : (
+                "Nenhum resultado encontrado."
+            )}
+        </CommandEmpty>
         
+        {searchResults.length > 0 && (
+            <CommandGroup heading="Resultados da Busca">
+                {searchResults.map((result) => (
+                    <CommandItem 
+                        key={`${result.type}-${result.id}`} 
+                        onSelect={() => runCommand(result.url)} 
+                        value={`${result.title}-${result.id}`}
+                    >
+                        {result.type === 'auction' && <Gavel className="mr-2 h-4 w-4" />}
+                        {result.type === 'lot' && <ListChecks className="mr-2 h-4 w-4" />}
+                        {result.type === 'user' && <Users className="mr-2 h-4 w-4" />}
+                        <div className="flex flex-col">
+                            <span>{result.title}</span>
+                            {result.subtitle && <span className="text-xs text-muted-foreground">{result.subtitle}</span>}
+                        </div>
+                    </CommandItem>
+                ))}
+            </CommandGroup>
+        )}
+        
+        {searchResults.length > 0 && <CommandSeparator />}
+
         <CommandGroup heading="Navegação Principal">
           {mainNavCommands.map(({ href, label, icon: Icon }) => (
             <CommandItem key={href} onSelect={() => runCommand(href)} data-ai-id={`cmd-nav-${label.toLowerCase()}`}>

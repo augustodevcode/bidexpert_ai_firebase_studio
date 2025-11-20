@@ -42,8 +42,9 @@ import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import TwoColumnMegaMenu from './two-column-mega-menu';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions';
 import { ThemeToggle } from './theme-toggle'; // Importado
+
+const HOME_VARIANT_STORAGE_KEY = 'bidexpert.homeVariantPreference';
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
 export const HistoryListItem = forwardRef<
@@ -104,10 +105,40 @@ export default function Header({
   const siteLogoUrl = platformSettings?.logoUrl;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [homeVariant, setHomeVariant] = useState<'classic' | 'beta'>('classic');
   
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    const paramVariant = searchParamsHook.get('homeVariant');
+    if (paramVariant === 'beta') {
+      setHomeVariant('beta');
+      window.localStorage.setItem(HOME_VARIANT_STORAGE_KEY, 'beta');
+      return;
+    }
+
+    const storedVariant = window.localStorage.getItem(HOME_VARIANT_STORAGE_KEY);
+    if (storedVariant === 'beta') {
+      setHomeVariant('beta');
+      if (pathname === '/' && paramVariant !== 'beta') {
+        router.replace('/?homeVariant=beta');
+      }
+    } else {
+      setHomeVariant('classic');
+    }
+  }, [isClient, pathname, router, searchParamsHook]);
+
+  const handleHomeVariantChange = useCallback((value: 'classic' | 'beta') => {
+    const normalized = value === 'beta' ? 'beta' : 'classic';
+    setHomeVariant(normalized);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(HOME_VARIANT_STORAGE_KEY, normalized);
+    }
+    router.push(normalized === 'beta' ? '/?homeVariant=beta' : '/');
+  }, [router]);
 
   useEffect(() => {
     if (!isClient) return;
@@ -514,7 +545,7 @@ export default function Header({
                         ))}
                          <li className="p-2 border-t border-border">
                           <Button variant="link" className="w-full text-sm text-primary" onClick={handleSearchSubmit}>
-                            Ver todos os resultados para "{searchTerm}"
+                            Ver todos os resultados para &ldquo;{searchTerm}&rdquo;
                           </Button>
                         </li>
                       </ul>
@@ -525,6 +556,32 @@ export default function Header({
             </form>
            </div>
           <div className="flex items-center space-x-0.5 sm:space-x-1">
+            <div className="sm:hidden mr-2">
+              <Button
+                type="button"
+                variant={homeVariant === 'beta' ? 'default' : 'outline'}
+                size="sm"
+                className="text-[11px] uppercase tracking-wide"
+                onClick={() => handleHomeVariantChange(homeVariant === 'beta' ? 'classic' : 'beta')}
+              >
+                {homeVariant === 'beta' ? 'Beta ativa' : 'Testar Beta'}
+              </Button>
+            </div>
+            <div className="hidden sm:flex flex-col mr-3 min-w-[160px]">
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Home</span>
+              <Select
+                value={homeVariant}
+                onValueChange={(value) => handleHomeVariantChange(value as 'classic' | 'beta')}
+              >
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Experiência" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="classic">Clássica</SelectItem>
+                  <SelectItem value="beta">Beta (Radar)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <TooltipProvider>
               <ThemeToggle />
             </TooltipProvider>

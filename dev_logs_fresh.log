@@ -1,0 +1,10 @@
+
+> bid-expert@0.1.0 dev
+> npx prisma generate && next dev --port 9002 --hostname 0.0.0.0
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Error: 
+EPERM: operation not permitted, rename 'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\.prisma\client\query_engine-windows.dll.node.tmp27192' -> 'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\.prisma\client\query_engine-windows.dll.node'
+
+

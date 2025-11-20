@@ -1,7 +1,8 @@
 // src/app/page.tsx
+
 import { Suspense } from 'react';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import type { Auction, Lot, LotCategory, SellerProfileInfo, PlatformSettings } from '@/types';
+import type { Lot } from '@/types';
 import { getLotCategories } from './admin/categories/actions';
 import { getSellers } from './admin/sellers/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
@@ -10,6 +11,8 @@ import HomePageClient from './home-page-client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { prisma } from '@/lib/prisma';
 import { isPast } from 'date-fns';
+
+export const dynamic = 'force-dynamic';
 
 function HomePageSkeleton() {
     return (
@@ -31,7 +34,17 @@ function HomePageSkeleton() {
     );
 }
 
-export default async function HomePage() {
+type HomeSearchParams = {
+    homeVariant?: string;
+};
+
+const toOptionalString = (value: unknown): string | null => {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') return value.toString();
+    return null;
+};
+
+export default async function HomePage({ searchParams }: { searchParams?: HomeSearchParams }) {
   // Otimização: Buscar apenas um subconjunto de dados para a página inicial
   const [
       settings,
@@ -68,12 +81,13 @@ export default async function HomePage() {
   });
 
   // Mapear para adicionar a data da última etapa ao lote, filtrar e converter tipos
-  const closingSoonLots = closingSoonLotsWithStages
-    .map(lot => {
+    const closingSoonLots = closingSoonLotsWithStages
+        .map(lot => {
       // **FIX**: If lot.auction is null, we can't process this lot. Skip it.
       if (!lot.auction) {
         return null;
       }
+            const lotRecord = lot as Record<string, unknown>;
       
       const lastStage = lot.auction?.stages?.[0];
       const relevantEndDate = lastStage?.endDate || lot.endDate;
@@ -95,8 +109,8 @@ export default async function HomePage() {
           stateId: lot.stateId?.toString() || null,
           winnerId: lot.winnerId?.toString() || null,
           tenantId: lot.tenantId.toString(), // Convert tenantId to string
-          originalLotId: 'original_lot_id' in lot ? (lot as any).original_lot_id?.toString() : null,
-          inheritedMediaFromAssetId: 'inheritedMediaFromAssetId' in lot ? (lot as any).inheritedMediaFromAssetId?.toString() : null,
+          originalLotId: 'original_lot_id' in lot ? toOptionalString(lotRecord['original_lot_id']) : null,
+          inheritedMediaFromAssetId: 'inheritedMediaFromAssetId' in lot ? toOptionalString(lotRecord['inheritedMediaFromAssetId']) : null,
           price: Number(lot.price),
           initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
           secondInitialPrice: 'secondInitialPrice' in lot && lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
@@ -148,7 +162,10 @@ export default async function HomePage() {
     .slice(0, 8); // Pega os 8 primeiros após o filtro
     
 
-  return (
+    const variantParam = (searchParams?.homeVariant || '').toLowerCase();
+    const variant = variantParam === 'beta' ? 'beta' : 'classic';
+
+    return (
     <Suspense fallback={<HomePageSkeleton />}>
         <HomePageClient
             platformSettings={settings}
@@ -156,7 +173,8 @@ export default async function HomePage() {
             allLots={lotsData}
             categories={categoriesData}
             sellers={sellersData}
-            closingSoonLots={closingSoonLots}
+                        closingSoonLots={closingSoonLots}
+                        variant={variant}
         />
     </Suspense>
   );
