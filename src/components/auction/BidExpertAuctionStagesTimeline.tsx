@@ -1,13 +1,10 @@
-
 // src/components/auction/BidExpertAuctionStagesTimeline.tsx
 'use client';
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { Step, Stepper, StepLabel, StepIconProps } from '@/components/ui/stepper';
-import { Check, Loader2, AlertCircle } from 'lucide-react';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { isPast, format, isValid, isFuture } from 'date-fns';
+import { Check, Loader2, AlertCircle, Clock } from 'lucide-react';
+import { isPast, format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { AuctionStage } from '@/types';
 
@@ -17,22 +14,6 @@ interface BidExpertAuctionStagesTimelineProps {
   className?: string;
   auctionOverallStartDate: Date; 
 }
-
-const CustomStepIcon = (props: StepIconProps & { status: 'completed' | 'active' | 'upcoming' }) => {
-    const { active, completed, error, icon, status } = props;
-
-    if (status === 'completed') {
-        return <Check className="h-4 w-4" />;
-    }
-    if (status === 'active') {
-        return <Loader2 className="h-4 w-4 animate-spin" />;
-    }
-    if (error) {
-        return <AlertCircle className="h-4 w-4" />;
-    }
-    return <div className="h-2.5 w-2.5 rounded-full bg-current" />;
-};
-
 
 export default function BidExpertAuctionStagesTimeline({
   stages,
@@ -46,13 +27,9 @@ export default function BidExpertAuctionStagesTimeline({
     setIsClient(true);
   }, []);
 
-  const now = new Date();
-
   if (!isClient || !stages || stages.length === 0) {
-    return <div className="h-10 w-full animate-pulse rounded-md bg-muted" />;
+    return <div className="h-24 w-full animate-pulse rounded-md bg-muted/20" />;
   }
-
-  let activeStep = -1;
 
   const steps = stages.map((stage, index) => {
     const startDate = stage.startDate ? new Date(stage.startDate) : null;
@@ -74,59 +51,93 @@ export default function BidExpertAuctionStagesTimeline({
     };
   });
 
-  const activeStageIndex = steps.findIndex(s => s.status === 'active');
-  const firstUpcomingIndex = steps.findIndex(s => s.status === 'upcoming');
+  let activeStep = steps.findIndex(s => s.status === 'active');
+  if (activeStep === -1) {
+    const firstUpcoming = steps.findIndex(s => s.status === 'upcoming');
+    activeStep = firstUpcoming === -1 ? steps.length - 1 : firstUpcoming - 1;
+  }
 
-  if (activeStageIndex !== -1) {
-    activeStep = activeStageIndex;
-  } else if (firstUpcomingIndex !== -1) {
-    activeStep = firstUpcomingIndex;
-  } else {
-    activeStep = steps.length - 1;
-  }
-  
-  if (variant === 'compact') {
-      return (
-        <div className={cn("w-full", className)} data-ai-id="auction-card-timeline">
-             <Stepper activeStep={activeStep}>
-                {steps.map((step, index) => (
-                     <TooltipProvider key={index}>
-                         <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Step>
-                                    <StepLabel StepIconComponent={(props) => <CustomStepIcon {...props} status={step.status} />} />
-                                </Step>
-                             </TooltipTrigger>
-                            <TooltipContent>
-                                <p className="font-semibold">{step.label}</p>
-                                {step.endDate && <p className="text-xs">Fim: {format(step.endDate, 'dd/MM HH:mm')}</p>}
-                            </TooltipContent>
-                         </Tooltip>
-                    </TooltipProvider>
-                ))}
-             </Stepper>
-        </div>
-      );
-  }
+  const totalSteps = steps.length;
+  const progress = totalSteps > 1 ? Math.max(0, (activeStep / (totalSteps - 1)) * 100) : 0;
 
   return (
-    <div className={cn("w-full", className)}>
-      <Stepper orientation="vertical" activeStep={activeStep}>
-        {steps.map((step, index) => (
-          <Step key={step.label}>
-            <StepLabel StepIconComponent={(props) => <CustomStepIcon {...props} status={step.status} />}>
-                <div className="flex flex-col text-left">
-                    <span className="font-semibold">{step.label}</span>
-                    <span className="text-xs text-muted-foreground">
-                        {step.startDate ? format(step.startDate, 'dd/MM/yy HH:mm', { locale: ptBR }) : 'A definir'}
-                        {' - '}
-                        {step.endDate ? format(step.endDate, 'dd/MM/yy HH:mm', { locale: ptBR }) : ''}
-                    </span>
-                </div>
-            </StepLabel>
-          </Step>
-        ))}
-      </Stepper>
+    <div className={cn("relative flex flex-col md:items-center md:mt-8 w-full", className)} data-ai-id="auction-card-timeline">
+      {/* Desktop Horizontal Line (Background) */}
+      <div 
+        data-orientation="horizontal" 
+        role="none" 
+        className="absolute -top-8 left-0 hidden h-px w-full bg-border md:block" 
+      />
+      
+      {/* Desktop Progress Line (Foreground) */}
+      <div 
+        className="absolute -top-[32px] left-0 hidden h-0.5 bg-primary transition-all duration-500 md:block" 
+        style={{ width: `${progress}%` }}
+      />
+
+      <div 
+        className="grid gap-6" 
+        style={{ 
+          gridTemplateColumns: `repeat(${totalSteps}, minmax(0, 1fr))` 
+        }}
+      >
+        {steps.map((step, index) => {
+          const isCompleted = index <= activeStep;
+          const isActive = step.status === 'active';
+          const isLast = index === totalSteps - 1;
+          
+          return (
+            <div key={index} className="relative space-y-2">
+              {/* Mobile Vertical Line (Background) */}
+              {!isLast && (
+                <div 
+                  data-orientation="vertical" 
+                  role="none" 
+                  className="absolute left-0 top-6 block h-full w-px bg-border md:hidden" 
+                />
+              )}
+              
+              {/* Dot/Icon */}
+              <div className={cn(
+                "absolute -left-[11px] top-0 z-10 mb-5 flex size-6 items-center justify-center rounded-full border-2 transition-colors duration-300 md:-top-[42px] md:left-0",
+                isActive 
+                  ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                  : isCompleted 
+                    ? "border-primary bg-background text-primary" 
+                    : "border-muted bg-background text-muted-foreground"
+              )}>
+                {step.status === 'completed' ? (
+                  <Check className="size-3" strokeWidth={3} />
+                ) : step.status === 'active' ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <div className={cn("size-1.5 rounded-full bg-current")} />
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="pl-7 md:pl-0 md:pt-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {step.startDate ? format(step.startDate, "d MMM, yyyy", { locale: ptBR }) : 'A definir'}
+                </p>
+                <h2 className={cn(
+                  "text-sm font-bold tracking-tight mt-0.5",
+                  isActive ? "text-primary" : "text-foreground"
+                )}>
+                  {step.label}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {step.status === 'active' 
+                    ? 'Em andamento' 
+                    : step.status === 'completed' 
+                      ? 'Encerrado' 
+                      : 'Aguardando início'}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

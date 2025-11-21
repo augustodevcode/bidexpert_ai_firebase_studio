@@ -41,6 +41,7 @@ export class JudicialProcessService {
       sellerName: p.seller?.name,
       parties: p.parties.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
       lotCount: p._count?.lots ?? 0,
+      assetCount: p._count?.assets ?? 0,
     }));
   }
 

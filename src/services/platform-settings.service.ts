@@ -7,14 +7,53 @@ import { withAudit } from '@/lib/audit'; // Importa a função de auditoria
 import { Prisma, type PlatformSettings as PrismaPlatformSettings, type Tenant } from '@prisma/client';
 import type { PlatformSettings } from '@/types';
 import { prisma } from '@/lib/prisma';
+import {
+    defaultFeatureFlags,
+    defaultBlockchainConfig,
+    validateFeatureFlags,
+    type FeatureFlags,
+    type BlockchainConfig,
+} from '@/lib/feature-flags';
 
 type TenantCacheKey = string;
 
 export class PlatformSettingsService {
+    private static instance: PlatformSettingsService | null = null;
     private static ensuredTenants = new Set<TenantCacheKey>();
     private static ensureTenantPromises = new Map<TenantCacheKey, Promise<bigint>>();
     private static settingsCache = new Map<TenantCacheKey, PlatformSettings>();
     private static settingsPromises = new Map<TenantCacheKey, Promise<PlatformSettings>>();
+    private static featureFlagsCache = new Map<TenantCacheKey, FeatureFlags>();
+    private static blockchainConfigCache = new Map<TenantCacheKey, BlockchainConfig>();
+
+    private static getInstance(): PlatformSettingsService {
+        if (!PlatformSettingsService.instance) {
+            PlatformSettingsService.instance = new PlatformSettingsService();
+        }
+        return PlatformSettingsService.instance;
+    }
+
+    private static async ensureSettingsPrepared(tenantId: string | bigint | number): Promise<{ cacheKey: TenantCacheKey; tenantIdBigInt: bigint; }> {
+        const tenantIdBigInt = BigInt(tenantId);
+        const cacheKey = tenantIdBigInt.toString();
+        const service = PlatformSettingsService.getInstance();
+
+        // Garantimos que as configurações existam antes de manipular feature flags
+        await service.getSettings(tenantIdBigInt);
+
+        return { cacheKey, tenantIdBigInt };
+    }
+
+    private static normalizeBlockchainConfig(config?: Partial<BlockchainConfig>): BlockchainConfig {
+        return {
+            ...defaultBlockchainConfig,
+            ...(config ?? {}),
+        };
+    }
+
+    private static cloneFeatureFlags(flags: FeatureFlags): FeatureFlags {
+        return { ...flags };
+    }
 
     /**
      * Garante que um tenant exista no banco de dados.
@@ -175,6 +214,49 @@ export class PlatformSettingsService {
             console.error(`[PlatformSettingsService] Error getting settings for tenant ${String(tenantId)}:`, error);
             throw new Error(`Falha ao carregar configurações: ${error.message}`);
         }
+    }
+
+    static async getFeatureFlags(tenantId: string | bigint | number): Promise<FeatureFlags> {
+        const { cacheKey } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
+        const cached = PlatformSettingsService.featureFlagsCache.get(cacheKey);
+        if (cached) {
+            return PlatformSettingsService.cloneFeatureFlags(cached);
+        }
+
+        const defaults = PlatformSettingsService.cloneFeatureFlags(defaultFeatureFlags);
+        PlatformSettingsService.featureFlagsCache.set(cacheKey, defaults);
+        return PlatformSettingsService.cloneFeatureFlags(defaults);
+    }
+
+    static async updateFeatureFlags(tenantId: string | bigint | number, flags: Partial<FeatureFlags>): Promise<FeatureFlags> {
+        const { cacheKey } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
+        const current = PlatformSettingsService.featureFlagsCache.get(cacheKey) ?? PlatformSettingsService.cloneFeatureFlags(defaultFeatureFlags);
+        const merged = validateFeatureFlags({ ...current, ...flags });
+        PlatformSettingsService.featureFlagsCache.set(cacheKey, merged);
+        return PlatformSettingsService.cloneFeatureFlags(merged);
+    }
+
+    static async getBlockchainConfig(tenantId: string | bigint | number): Promise<BlockchainConfig> {
+        const { cacheKey } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
+        const cached = PlatformSettingsService.blockchainConfigCache.get(cacheKey);
+        if (cached) {
+            return { ...cached };
+        }
+
+        const defaults = PlatformSettingsService.normalizeBlockchainConfig();
+        PlatformSettingsService.blockchainConfigCache.set(cacheKey, defaults);
+        return { ...defaults };
+    }
+
+    static async updateBlockchainConfig(
+        tenantId: string | bigint | number,
+        config: Partial<BlockchainConfig>,
+    ): Promise<BlockchainConfig> {
+        const { cacheKey } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
+        const current = PlatformSettingsService.blockchainConfigCache.get(cacheKey) ?? PlatformSettingsService.normalizeBlockchainConfig();
+        const merged = PlatformSettingsService.normalizeBlockchainConfig({ ...current, ...config });
+        PlatformSettingsService.blockchainConfigCache.set(cacheKey, merged);
+        return { ...merged };
     }
     
     /**

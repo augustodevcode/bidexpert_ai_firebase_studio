@@ -1099,6 +1099,18 @@ model PasswordResetToken {
   @@unique([email, token])
 }
 
+model CounterState {
+  id           BigInt   @id @default(autoincrement())
+  tenantId     BigInt
+  entityType   String   // 'auction', 'lot', 'asset', 'auctioneer', 'seller', 'user', 'category', 'subcategory'
+  currentValue Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, entityType], name: "tenantId_entityType")
+  @@index([tenantId])
+}
+
 model VehicleMake {
   id     BigInt         @id @default(autoincrement())
   name   String         @unique

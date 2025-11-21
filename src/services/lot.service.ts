@@ -9,297 +9,162 @@ import {
   BidInfo, 
   UserLotMaxBid 
 } from '@/types/lot';
+import { LotQuestionService } from '@/services/lot-question.service';
+import { ReviewService } from '@/services/review.service';
+import { SellerService } from '@/services/seller.service';
+import { AuctioneerService } from '@/services/auctioneer.service';
+import { generatePublicId } from '@/lib/public-id-generator';
 
-const NON_PUBLIC_LOT_STATUSES: LotStatus[] = ['RASCUNHO', 'EM_ANALISE', 'REPROVADO', 'SUSPENSO'];
-const NON_PUBLIC_AUCTION_STATUSES = ['RASCUNHO', 'EM_PREPARACAO', 'EM_ANALISE', 'REPROVADO', 'SUSPENSO', 'CANCELADO'];
+const NON_PUBLIC_LOT_STATUSES: LotStatus[] = ['RASCUNHO', 'CANCELADO', 'RETIRADO'];
+const NON_PUBLIC_AUCTION_STATUSES = ['RASCUNHO', 'EM_PREPARACAO', 'SUSPENSO', 'CANCELADO'];
 
 export class LotService {
   private prisma: PrismaClient;
-  private repository: any; // Using any to bypass strict typing for now, ideally should be LotRepository
+  private repository: any; 
   private auctionRepository: any;
+  private lotQuestionService: LotQuestionService;
+  private reviewService: ReviewService;
+  private sellerService: SellerService;
+  private auctioneerService: AuctioneerService;
 
   constructor() {
     this.prisma = prisma;
-    // Mock repositories for now as we are using direct prisma calls mostly
-    this.repository = {
-      findAll: async (tenantId: string | undefined, where: any, limit?: number) => {
-        const query: any = { where };
-        if (tenantId) query.where.tenantId = BigInt(tenantId);
-        if (limit) query.take = limit;
-        query.include = {
-          auction: true,
-          assets: { include: { asset: true } },
-          category: true,
-          subcategory: true,
-          seller: true,
-          bids: { orderBy: { amount: 'desc' }, take: 1 }
-        };
-        return this.prisma.lot.findMany(query);
-      },
-      findByIds: async (ids: bigint[]) => {
-        return this.prisma.lot.findMany({
-          where: { id: { in: ids } },
-          include: {
-            auction: true,
-            assets: { include: { asset: true } },
-            category: true,
-            subcategory: true,
-            seller: true,
-            bids: { orderBy: { amount: 'desc' }, take: 1 }
-          }
-        });
-      },
-      findById: async (id: string) => {
-        return this.prisma.lot.findUnique({
-          where: { id: BigInt(id) },
-          include: {
-            auction: true,
-            assets: { include: { asset: true } },
-            category: true,
-            subcategory: true,
-            seller: true,
-            bids: { orderBy: { amount: 'desc' }, take: 1 }
-          }
-        });
-      }
-    };
-    this.auctionRepository = {
-      findById: async (tenantId: string, id: string) => {
-        return this.prisma.auction.findUnique({
-          where: { id: BigInt(id), tenantId: BigInt(tenantId) }
-        });
-      }
-    };
+    this.repository = {};
+    this.auctionRepository = {};
+    this.lotQuestionService = new LotQuestionService();
+    this.reviewService = new ReviewService();
+    this.sellerService = new SellerService();
+    this.auctioneerService = new AuctioneerService();
   }
 
   private mapLotWithDetails(lot: any): Lot {
-    if (!lot) return lot;
-    
-    const assets = lot.assets || [];
-    
     return {
       ...lot,
       id: lot.id.toString(),
       auctionId: lot.auctionId.toString(),
-      categoryId: lot.categoryId?.toString() || null,
-      subcategoryId: lot.subcategoryId?.toString() || null,
-      sellerId: lot.sellerId?.toString() || null,
-      winnerId: lot.winnerId?.toString() || null,
-      tenantId: lot.tenantId?.toString(),
-      price: lot.price ? Number(lot.price) : 0,
+      tenantId: lot.tenantId.toString(),
+      categoryId: lot.categoryId?.toString(),
+      subcategoryId: lot.subcategoryId?.toString(),
+      sellerId: lot.sellerId?.toString(),
+      auctioneerId: lot.auctioneerId?.toString(),
+      cityId: lot.cityId?.toString(),
+      stateId: lot.stateId?.toString(),
+      winnerId: lot.winnerId?.toString(),
+      originalLotId: lot.originalLotId?.toString(),
+      inheritedMediaFromAssetId: lot.inheritedMediaFromAssetId?.toString(),
+      price: Number(lot.price),
       initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
       secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
       bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
       evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
       latitude: lot.latitude ? Number(lot.latitude) : null,
       longitude: lot.longitude ? Number(lot.longitude) : null,
-      assets: assets.map((asset: any) => ({
-        ...asset,
-        id: asset.id.toString(),
-        evaluationValue: asset.evaluationValue ? Number(asset.evaluationValue) : null,
+      lotPrices: lot.lotPrices?.map((lp: any) => ({
+        ...lp,
+        id: lp.id.toString(),
+        lotId: lp.lotId.toString(),
+        auctionStageId: lp.auctionStageId.toString(),
+        initialBid: Number(lp.initialBid)
       })),
-      assetIds: assets.map((a: any) => a.id.toString()),
-      auctionName: lot.auction?.title,
-      categoryName: lot.category?.name,
-      subcategoryName: lot.subcategory?.name,
-      sellerName: lot.seller?.name,
-      winningBidId: lot.winningBidId?.toString(),
-      winningBidderId: lot.winningBidderId?.toString(),
-      originalLotId: 'original_lot_id' in lot ? (lot as any).original_lot_id?.toString() : null,
-      inheritedMediaFromAssetId: 'inheritedMediaFromAssetId' in lot ? (lot as any).inheritedMediaFromAssetId?.toString() : null,
+      auction: lot.auction ? {
+        ...lot.auction,
+        id: lot.auction.id.toString(),
+        tenantId: lot.auction.tenantId.toString(),
+        auctionStages: lot.auction.stages?.map((s: any) => ({
+            ...s,
+            id: s.id.toString(),
+            auctionId: s.auctionId.toString()
+        }))
+      } : undefined,
+      assets: lot.assets?.map((a: any) => ({
+          ...a.asset,
+          id: a.asset.id.toString(),
+          tenantId: a.asset.tenantId.toString()
+      })),
+      // UI Fields mapping
+      totalArea: lot.assets?.reduce((acc: number, curr: any) => acc + (Number(curr.asset.totalArea) || 0), 0) || null,
+      type: lot.type || (lot.assets?.[0]?.asset?.categoryId ? 'IMOVEL' : 'OUTRO'),
+      occupancyStatus: lot.occupancyStatus || lot.assets?.[0]?.asset?.occupancyStatus || null
     } as Lot;
   }
 
-  async getLotDetailsForV2(lotId: string): Promise<{
-    lot: Lot;
-    auction: Auction;
-    seller: SellerProfileInfo | null;
-    auctioneer: AuctioneerProfileInfo | null;
-    bids: BidInfo[];
-    questions: LotQuestion[];
-    reviews: Review[];
-  } | null> {
-    try {
-      const lot = await this.prisma.lot.findFirst({
-        where: {
-          OR: [{ id: /^\d+$/.test(lotId) ? BigInt(lotId) : -1n }, { publicId: lotId }],
-        },
-        include: {
-          auction: { include: { seller: true, auctioneer: true, stages: true, lots: true } },
-          assets: { include: { asset: true } },
-          bids: { orderBy: { timestamp: 'desc' }, take: 20 },
-          questions: { orderBy: { createdAt: 'desc' } },
-          reviews: { orderBy: { createdAt: 'desc' } },
-          category: true,
-          subcategory: true,
-          seller: true,
-        },
-      });
+  async findLotById(id: string, tenantId?: string): Promise<Lot | null> {
+      try {
+        let whereClause: Prisma.LotWhereUniqueInput;
+        
+        if (/^\d+$/.test(id)) {
+            whereClause = { id: BigInt(id) };
+        } else {
+            whereClause = { publicId: id };
+        }
 
-      if (!lot || !lot.auction) {
-        return null;
+        const lot = await this.prisma.lot.findUnique({
+            where: whereClause,
+            include: {
+                auction: {
+                    include: {
+                        stages: { orderBy: { id: 'asc' } }
+                    }
+                },
+                lotPrices: true,
+                assets: {
+                    include: {
+                        asset: true
+                    }
+                }
+            }
+        });
+
+        if (!lot) return null;
+
+        if (tenantId && lot.tenantId.toString() !== String(tenantId)) {
+            return null;
+        }
+
+        return this.mapLotWithDetails(lot);
+      } catch (error) {
+          console.error('Error in findLotById:', error);
+          return null;
       }
-
-      // Reusing the mapping logic
-      const mappedLot = this.mapLotWithDetails(lot);
-      
-      // Map the auction properly with type casting
-      const mappedAuction: Auction = {
-        ...(lot.auction as any),
-        id: lot.auction.id.toString(),
-        totalLots: lot.auction.lots?.length ?? 0,
-        sellerId: lot.auction.sellerId?.toString() ?? null,
-        auctioneerId: lot.auction.auctioneerId?.toString() ?? null,
-        categoryId: lot.auction.categoryId?.toString() ?? null,
-        judicialProcessId: lot.auction.judicialProcessId?.toString() ?? null,
-        tenantId: lot.auction.tenantId.toString(),
-        seller: lot.auction.seller ? { ...lot.auction.seller, id: lot.auction.seller.id.toString(), tenantId: lot.auction.seller.tenantId.toString() } : null,
-        auctioneer: lot.auction.auctioneer ? { ...lot.auction.auctioneer, id: lot.auction.auctioneer.id.toString(), tenantId: lot.auction.auctioneer.tenantId.toString() } : null,
-        auctionStages: (lot.auction.stages || []).map((stage: any) => ({
-          ...stage,
-          id: stage.id.toString(),
-          auctionId: stage.auctionId.toString(),
-          initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
-        })),
-      } as any as Auction;
-
-      // Perform necessary type conversions for related data
-      const bids = lot.bids.map((b: any) => ({ 
-        id: b.id.toString(), 
-        amount: Number(b.amount),
-        auctionId: b.auctionId.toString(),
-        lotId: b.lotId.toString(),
-        bidderId: b.bidderId.toString(),
-        tenantId: b.tenantId.toString(),
-      })) as any as BidInfo[];
-      
-      const questions = lot.questions.map((q: any) => ({ 
-        ...q,
-        id: q.id.toString(),
-        lotId: q.lotId.toString(),
-        auctionId: q.auctionId.toString(),
-        userId: q.userId.toString(),
-        answeredByUserId: q.answeredByUserId?.toString() ?? null,
-      })) as any as LotQuestion[];
-      
-      const reviews = lot.reviews.map((r: any) => ({ 
-        ...r,
-        id: r.id.toString(),
-        lotId: r.lotId.toString(),
-        auctionId: r.auctionId.toString(),
-        userId: r.userId.toString(),
-      })) as any as Review[];
-
-      // Fallback e normalização adicionais para a V2
-      const lotOut: Lot = {
-        ...mappedLot,
-        evaluationValue: (
-          mappedLot?.evaluationValue ??
-          ((Array.isArray((mappedLot as any).assets) && (mappedLot as any).assets.length > 0)
-            ? Number((mappedLot as any).assets[0]?.evaluationValue ?? 0) || null
-            : mappedLot?.evaluationValue ?? null)
-        ),
-      };
-
-      return {
-        lot: lotOut,
-        auction: mappedAuction,
-        seller: lot.auction.seller ? { 
-          ...lot.auction.seller, 
-          id: lot.auction.seller.id.toString(), 
-          tenantId: lot.auction.seller.tenantId.toString(),
-          userId: lot.auction.seller.userId?.toString() ?? null,
-        } as any as SellerProfileInfo : null,
-        auctioneer: lot.auction.auctioneer ? { 
-          ...lot.auction.auctioneer, 
-          id: lot.auction.auctioneer.id.toString(), 
-          tenantId: lot.auction.auctioneer.tenantId.toString(),
-          userId: lot.auction.auctioneer.userId?.toString() ?? null,
-        } as any as AuctioneerProfileInfo : null,
-        bids,
-        questions,
-        reviews,
-      };
-    } catch (error) {
-      console.error(`Error fetching detailed data for lot V2 (ID: ${lotId}):`, error);
-      return null;
-    }
   }
 
   async getLots(auctionId?: string, tenantId?: string, limit?: number, isPublicCall = false): Promise<Lot[]> {
-    const where: Prisma.LotWhereInput = {};
-    if (auctionId) {
-      where.auctionId = BigInt(auctionId);
+    try {
+        const where: any = {};
+        if (auctionId) where.auctionId = BigInt(auctionId);
+        if (tenantId) where.tenantId = BigInt(tenantId);
+        
+        if (isPublicCall) {
+            where.status = { notIn: NON_PUBLIC_LOT_STATUSES };
+            where.auction = {
+                status: { notIn: NON_PUBLIC_AUCTION_STATUSES }
+            };
+        }
+
+        const lots = await this.prisma.lot.findMany({
+            where,
+            include: {
+                auction: {
+                    include: {
+                        stages: { orderBy: { id: 'asc' } }
+                    }
+                },
+                lotPrices: true,
+                assets: {
+                    include: {
+                        asset: true
+                    }
+                }
+            },
+            take: limit,
+            orderBy: { createdAt: 'desc' }
+        });
+
+        return lots.map(lot => this.mapLotWithDetails(lot));
+    } catch (error) {
+        console.error('Error in getLots:', error);
+        return [];
     }
-    
-    const lotsFromRepo = await this.repository.findAll(tenantId, where, limit);
-
-    const lots = lotsFromRepo.map((lot: any) => this.mapLotWithDetails(lot));
-
-    if (isPublicCall) {
-        return lots.filter((lot: any) => 
-            lot &&
-            !NON_PUBLIC_LOT_STATUSES.includes(lot.status) &&
-            lot.auction && !NON_PUBLIC_AUCTION_STATUSES.includes(lot.auction.status)
-        );
-    }
-    return lots.filter(Boolean);
-  }
-
-  async getLotsByIds(ids: string[], isPublicCall = false): Promise<Lot[]> {
-    const idsAsBigInt = ids.map(id => BigInt(id));
-    const lots = await this.repository.findByIds(idsAsBigInt);
-    if (isPublicCall) {
-      return lots.filter((lot: any) => 
-        lot &&
-        !NON_PUBLIC_LOT_STATUSES.includes(lot.status) &&
-        lot.auction && !['RASCUNHO', 'EM_PREPARACAO'].includes(lot.auction.status)
-      ).map((lot: any) => this.mapLotWithDetails(lot));
-    }
-    return lots.map((lot: any) => this.mapLotWithDetails(lot));
-  }
-
-  async findLotById(id: string, tenantId?: string): Promise<Lot | null> {
-    console.log(`[LotService.findLotById] Searching for ID: ${id}, Tenant: ${tenantId}`);
-    if (!id) return null;
-  
-    const whereClause: Prisma.LotWhereInput = {
-        OR: [
-            { publicId: id },
-            { slug: id },
-        ],
-    };
-  
-    if (/^\d+$/.test(id)) {
-        (whereClause.OR as any[]).push({ id: BigInt(id) });
-    }
-
-    if (tenantId) {
-        (whereClause as any).tenantId = BigInt(tenantId);
-    }
-    
-    const lot = await this.prisma.lot.findFirst({
-        where: whereClause,
-        include: {
-            assets: { include: { asset: true } },
-            auction: true,
-            seller: { select: { name: true } },
-            category: { select: { name: true } },
-            subcategory: { select: { name: true } },
-        },
-    });
-    
-    console.log(`[LotService.findLotById] Found lot: ${!!lot}`);
-    if (lot) console.log(`[LotService.findLotById] Lot Tenant: ${lot.tenantId}, Status: ${lot.status}`);
-
-    if (!lot) return null;
-
-    if (tenantId && lot.tenantId.toString() !== String(tenantId)) {
-        console.warn(`[LotService.findLotById] Tenant mismatch. Expected: ${tenantId}, Found: ${lot.tenantId}`);
-        return null;
-    }
-    
-    return this.mapLotWithDetails(lot);
   }
 
   async getLotById(id: string, tenantId?: string, isPublicCall = false): Promise<Lot | null> {
@@ -321,7 +186,7 @@ export class LotService {
       return null;
     }
     
-    return this.mapLotWithDetails(lot);
+    return lot; 
   }
 
   async getUserMaxBid(lotId: string, userId: string): Promise<UserLotMaxBid | null> {
@@ -389,7 +254,7 @@ export class LotService {
 
   async placeBid(lotId: string, userId: string, amount: number, bidderDisplay?: string): Promise<{ success: boolean; message: string; currentBid?: number }> {
     try {
-      const lot = await this.repository.findById(lotId);
+      const lot = await this.prisma.lot.findUnique({ where: { id: BigInt(lotId) } });
       if (!lot) {
         return { success: false, message: 'Lote não encontrado.' };
       }
@@ -405,7 +270,7 @@ export class LotService {
         };
       }
 
-      const auction = await this.auctionRepository.findById(lot.tenantId.toString(), lot.auctionId.toString());
+      const auction = await this.prisma.auction.findUnique({ where: { id: lot.auctionId } });
       if (!auction || auction.status !== 'ABERTO_PARA_LANCES') {
         return { success: false, message: 'Este leilão não está mais ativo.' };
       }
@@ -464,6 +329,82 @@ export class LotService {
     }
   }
 
+  async createLot(data: Partial<LotFormData>, tenantId: string): Promise<{ success: boolean; message: string; lotId?: string }> {
+    try {
+      const { 
+        assetIds = [],
+        ...cleanData 
+      } = data as any;
+
+      if (!cleanData.auctionId) return { success: false, message: 'Leilão é obrigatório' };
+
+      // Gera o publicId usando a máscara configurada
+      const publicId = await generatePublicId(tenantId, 'lot');
+
+      const createData: any = {
+          ...cleanData,
+          publicId,
+          tenantId: BigInt(tenantId),
+          auctionId: BigInt(cleanData.auctionId),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+      };
+
+      if (cleanData.categoryId) createData.category = { connect: { id: BigInt(cleanData.categoryId) } };
+      if (cleanData.subcategoryId) createData.subcategory = { connect: { id: BigInt(cleanData.subcategoryId) } };
+      if (cleanData.sellerId) createData.seller = { connect: { id: BigInt(cleanData.sellerId) } };
+
+      const lot = await this.prisma.lot.create({
+        data: createData
+      });
+
+      const lotId = lot.id;
+
+      if (Array.isArray(assetIds) && assetIds.length > 0) {
+         await this.prisma.assetsOnLots.createMany({
+            data: assetIds.map((assetId: string) => ({
+              lotId,
+              assetId: BigInt(assetId),
+              tenantId: BigInt(tenantId),
+              assignedBy: 'SYSTEM'
+            }))
+         });
+      }
+
+      return { success: true, message: 'Lote criado com sucesso', lotId: lotId.toString() };
+    } catch (error) {
+      console.error('Erro ao criar lote:', error);
+      return { success: false, message: 'Erro ao criar lote' };
+    }
+  }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+      try {
+          const lots = await this.prisma.lot.findMany({
+              where: {
+                  id: { in: ids.map(id => BigInt(id)) }
+              },
+              include: {
+                auction: {
+                    include: {
+                        stages: { orderBy: { id: 'asc' } }
+                    }
+                },
+                lotPrices: true,
+                assets: {
+                    include: {
+                        asset: true
+                    }
+                }
+            }
+          });
+          return lots.map(lot => this.mapLotWithDetails(lot));
+      } catch (error) {
+          console.error('Error in getLotsByIds:', error);
+          return [];
+      }
+  }
+
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const lotId = BigInt(id);
@@ -511,7 +452,8 @@ export class LotService {
               data: assetIdsBigInt.map(assetId => ({
                 lotId,
                 assetId,
-                tenantId: BigInt(cleanData.tenantId || 1) // Fallback tenantId if not provided
+                tenantId: BigInt(cleanData.tenantId || 1),
+                assignedBy: 'SYSTEM'
               }))
             });
           }
@@ -537,20 +479,308 @@ export class LotService {
     }
   }
 
-  async finalizeLot(lotId: string, winnerId: string, winningBidId: string): Promise<void> {
+  async finalizeLot(lotId: string, winnerId?: string, winningBidId?: string): Promise<{ success: boolean; message: string }> {
     try {
+      const data: any = {
+          status: 'ARREMATADO',
+          updatedAt: new Date()
+      };
+
+      if (winnerId) data.winnerId = BigInt(winnerId);
+      if (winningBidId) data.winningBidId = BigInt(winningBidId);
+
       await this.prisma.lot.update({
         where: { id: BigInt(lotId) },
-        data: {
-          status: 'ARREMATADO',
-          winnerId: BigInt(winnerId),
-          winningBidId: BigInt(winningBidId),
-          updatedAt: new Date()
-        }
+        data
       });
+      
+      return { success: true, message: 'Lote finalizado com sucesso' };
     } catch (error) {
       console.error('Erro ao finalizar lote:', error);
-      throw error;
+      return { success: false, message: 'Erro ao finalizar lote' };
+    }
+  }
+
+  async placeMaxBid(lotId: string, userId: string, maxAmount: number): Promise<{ success: boolean; message: string }> {
+    try {
+      let numericLotId: bigint;
+      if (/^\d+$/.test(lotId)) {
+        numericLotId = BigInt(lotId);
+      } else {
+        const lot = await this.prisma.lot.findUnique({ where: { publicId: lotId } });
+        if (!lot) {
+          return { success: false, message: 'Lote não encontrado' };
+        }
+        numericLotId = lot.id;
+      }
+
+      await this.prisma.userLotMaxBid.upsert({
+        where: {
+          userId_lotId: {
+            userId: BigInt(userId),
+            lotId: numericLotId
+          }
+        },
+        create: {
+          userId: BigInt(userId),
+          lotId: numericLotId,
+          maxAmount: new Prisma.Decimal(maxAmount),
+          isActive: true
+        },
+        update: {
+          maxAmount: new Prisma.Decimal(maxAmount),
+          isActive: true
+        }
+      });
+
+      return { success: true, message: 'Lance máximo configurado com sucesso' };
+    } catch (error) {
+      console.error('Erro ao configurar lance máximo:', error);
+      return { success: false, message: 'Erro ao configurar lance máximo' };
+    }
+  }
+
+  async getActiveUserMaxBid(lotIdOrPublicId: string, userId: string): Promise<UserLotMaxBid | null> {
+    try {
+      let numericLotId: bigint;
+      if (/^\d+$/.test(lotIdOrPublicId)) {
+        numericLotId = BigInt(lotIdOrPublicId);
+      } else {
+        const lot = await this.prisma.lot.findUnique({ where: { publicId: lotIdOrPublicId } });
+        if (!lot) return null;
+        numericLotId = lot.id;
+      }
+
+      const maxBid = await this.prisma.userLotMaxBid.findUnique({
+        where: {
+          userId_lotId: {
+            userId: BigInt(userId),
+            lotId: numericLotId
+          }
+        }
+      });
+
+      if (!maxBid || !maxBid.isActive) return null;
+
+      return {
+        id: maxBid.id.toString(),
+        userId: maxBid.userId.toString(),
+        lotId: maxBid.lotId.toString(),
+        maxAmount: Number(maxBid.maxAmount),
+        isActive: maxBid.isActive,
+        createdAt: maxBid.createdAt
+      } as UserLotMaxBid;
+    } catch (error) {
+      console.error('Erro ao buscar lance máximo ativo:', error);
+      return null;
+    }
+  }
+
+  async getReviews(lotIdOrPublicId: string): Promise<Review[]> {
+    try {
+      let numericLotId: string;
+      if (/^\d+$/.test(lotIdOrPublicId)) {
+        numericLotId = lotIdOrPublicId;
+      } else {
+        const lot = await this.prisma.lot.findUnique({ where: { publicId: lotIdOrPublicId } });
+        if (!lot) return [];
+        numericLotId = lot.id.toString();
+      }
+
+      const reviews = await this.reviewService.findByLotId(numericLotId);
+      return reviews.map((review: any) => ({
+        id: review.id.toString(),
+        lotId: review.lotId.toString(),
+        userId: review.userId.toString(),
+        auctionId: review.auctionId.toString(),
+        rating: review.rating,
+        comment: review.comment,
+        userDisplayName: review.userDisplayName,
+        createdAt: review.createdAt
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar avaliações:', error);
+      return [];
+    }
+  }
+
+  async createReview(
+    lotIdOrPublicId: string,
+    userId: string,
+    userDisplayName: string,
+    rating: number,
+    comment: string
+  ): Promise<{ success: boolean; message: string; reviewId?: string }> {
+    try {
+      let numericLotId: string;
+      let auctionId: string;
+      
+      if (/^\d+$/.test(lotIdOrPublicId)) {
+        numericLotId = lotIdOrPublicId;
+        const lot = await this.prisma.lot.findUnique({ where: { id: BigInt(lotIdOrPublicId) } });
+        if (!lot) return { success: false, message: 'Lote não encontrado' };
+        auctionId = lot.auctionId.toString();
+      } else {
+        const lot = await this.prisma.lot.findUnique({ where: { publicId: lotIdOrPublicId } });
+        if (!lot) return { success: false, message: 'Lote não encontrado' };
+        numericLotId = lot.id.toString();
+        auctionId = lot.auctionId.toString();
+      }
+
+      const review = await this.reviewService.create({
+        lotId: numericLotId,
+        userId,
+        auctionId,
+        rating,
+        comment,
+        userDisplayName
+      });
+
+      return { 
+        success: true, 
+        message: 'Avaliação criada com sucesso',
+        reviewId: review.id.toString()
+      };
+    } catch (error) {
+      console.error('Erro ao criar avaliação:', error);
+      return { success: false, message: 'Erro ao criar avaliação' };
+    }
+  }
+
+  async getQuestions(lotIdOrPublicId: string): Promise<LotQuestion[]> {
+    try {
+      let numericLotId: string;
+      if (/^\d+$/.test(lotIdOrPublicId)) {
+        numericLotId = lotIdOrPublicId;
+      } else {
+        const lot = await this.prisma.lot.findUnique({ where: { publicId: lotIdOrPublicId } });
+        if (!lot) return [];
+        numericLotId = lot.id.toString();
+      }
+
+      const questions = await this.lotQuestionService.findByLotId(numericLotId);
+      return questions.map((question: any) => ({
+        id: question.id.toString(),
+        lotId: question.lotId.toString(),
+        userId: question.userId.toString(),
+        auctionId: question.auctionId.toString(),
+        question: question.question,
+        answer: question.answer,
+        userDisplayName: question.userDisplayName,
+        answeredByUserId: question.answeredByUserId?.toString(),
+        answeredByUserDisplayName: question.answeredByUserDisplayName,
+        answeredAt: question.answeredAt,
+        createdAt: question.createdAt
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar perguntas:', error);
+      return [];
+    }
+  }
+
+  async createQuestion(
+    lotIdOrPublicId: string,
+    userId: string,
+    userDisplayName: string,
+    questionText: string
+  ): Promise<{ success: boolean; message: string; questionId?: string }> {
+    try {
+      let numericLotId: bigint;
+      let auctionId: bigint;
+      
+      if (/^\d+$/.test(lotIdOrPublicId)) {
+        numericLotId = BigInt(lotIdOrPublicId);
+        const lot = await this.prisma.lot.findUnique({ where: { id: numericLotId } });
+        if (!lot) return { success: false, message: 'Lote não encontrado' };
+        auctionId = lot.auctionId;
+      } else {
+        const lot = await this.prisma.lot.findUnique({ where: { publicId: lotIdOrPublicId } });
+        if (!lot) return { success: false, message: 'Lote não encontrado' };
+        numericLotId = lot.id;
+        auctionId = lot.auctionId;
+      }
+
+      const question = await this.lotQuestionService.create({
+        lotId: numericLotId,
+        userId: BigInt(userId),
+        auctionId,
+        question: questionText,
+        userDisplayName
+      });
+
+      return { 
+        success: true, 
+        message: 'Pergunta criada com sucesso',
+        questionId: question.id.toString()
+      };
+    } catch (error) {
+      console.error('Erro ao criar pergunta:', error);
+      return { success: false, message: 'Erro ao criar pergunta' };
+    }
+  }
+
+  async answerQuestion(
+    questionId: string,
+    answerText: string,
+    answeredByUserId: string,
+    answeredByUserDisplayName: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      await this.lotQuestionService.addAnswer(
+        questionId,
+        answerText,
+        answeredByUserId,
+        answeredByUserDisplayName
+      );
+
+      return { success: true, message: 'Resposta adicionada com sucesso' };
+    } catch (error) {
+      console.error('Erro ao adicionar resposta:', error);
+      return { success: false, message: 'Erro ao adicionar resposta' };
+    }
+  }
+
+  async getLotDetailsForV2(lotIdOrPublicId: string): Promise<{
+    lot: Lot;
+    auction: any;
+    seller: SellerProfileInfo | null;
+    auctioneer: AuctioneerProfileInfo | null;
+    bids: BidInfo[];
+    questions: LotQuestion[];
+    reviews: Review[];
+  } | null> {
+    try {
+      const lot = await this.getLotById(lotIdOrPublicId, undefined, true);
+      if (!lot) return null;
+
+      const [bids, questions, reviews] = await Promise.all([
+        this.getBidHistory(lotIdOrPublicId),
+        this.getQuestions(lotIdOrPublicId),
+        this.getReviews(lotIdOrPublicId)
+      ]);
+
+      let seller: SellerProfileInfo | null = null;
+      if (lot.auction?.sellerId) {
+        seller = await this.sellerService.getSellerById('1', lot.auction.sellerId);
+      }
+
+      let auctioneer: AuctioneerProfileInfo | null = null;
+      if (lot.auction?.auctioneerId) {
+        auctioneer = await this.auctioneerService.getAuctioneerById('1', lot.auction.auctioneerId);
+      }
+
+      return {
+        lot,
+        auction: lot.auction,
+        seller,
+        auctioneer,
+        bids,
+        questions,
+        reviews
+      };
+    } catch (error) {
+      console.error('Erro ao buscar detalhes do lote:', error);
+      return null;
     }
   }
 }

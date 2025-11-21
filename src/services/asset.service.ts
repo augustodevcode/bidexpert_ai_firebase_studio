@@ -10,8 +10,8 @@
 import { AssetRepository } from '@/repositories/asset.repository';
 import type { Asset, AssetFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
+import { generatePublicId } from '@/lib/public-id-generator';
 
 export class AssetService {
   private repository: AssetRepository;
@@ -91,9 +91,12 @@ export class AssetService {
     try {
       const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, ...assetData } = data;
 
+      // Gera o publicId usando a máscara configurada
+      const publicId = await generatePublicId(tenantId, 'asset');
+
       const dataToCreate: Prisma.AssetCreateInput = {
         ...(assetData as any),
-        publicId: `ASSET-${uuidv4()}`,
+        publicId,
         tenant: { connect: { id: BigInt(tenantId) } },
       };
       

@@ -64,6 +64,7 @@ async function clearDatabase() {
   await prisma.participationHistory.deleteMany();
   await prisma.contactMessage.deleteMany();
   await prisma.documentTemplate.deleteMany();
+  await prisma.counterState.deleteMany();
 
   console.log('Database cleared.');
 }
@@ -770,6 +771,69 @@ async function main() {
     });
     console.log(`Created Notification for ${bidderUser.email}`);
   }
+
+  // Criação de Configurações da Plataforma com Máscaras Padrão
+  console.log('Creating Platform Settings with default ID masks...');
+  
+  const platformSettings = await prisma.platformSettings.upsert({
+    where: { tenantId: lordlandTenant.id },
+    update: {},
+    create: {
+      tenantId: lordlandTenant.id,
+      siteTitle: 'BidExpert - Plataforma de Leilões',
+      siteTagline: 'A melhor plataforma para leilões judiciais e extrajudiciais',
+      isSetupComplete: true,
+      crudFormMode: 'modal',
+      searchItemsPerPage: 12,
+      searchLoadMoreCount: 12,
+      showCountdownOnLotDetail: true,
+      showCountdownOnCards: true,
+      showRelatedLotsOnLotDetail: true,
+      relatedLotsCount: 5,
+      defaultListItemsPerPage: 10,
+    },
+  });
+  console.log(`Created/Updated Platform Settings for ${lordlandTenant.name}`);
+
+  // Criação de Máscaras de PublicId Padrão
+  await prisma.idMasks.upsert({
+    where: { platformSettingsId: platformSettings.id },
+    update: {},
+    create: {
+      platformSettingsId: platformSettings.id,
+      auctionCodeMask: 'AUC-{YYYY}-{####}',
+      lotCodeMask: 'LOTE-{YY}{MM}-{#####}',
+      sellerCodeMask: 'COM-{YYYY}-{###}',
+      auctioneerCodeMask: 'LEILOE-{YYYY}-{###}',
+      userCodeMask: 'USER-{######}',
+      assetCodeMask: 'ASSET-{YYYY}-{#####}',
+      categoryCodeMask: 'CAT-{###}',
+      subcategoryCodeMask: 'SUBCAT-{####}',
+    },
+  });
+  console.log('Created default ID masks');
+
+  // Inicialização dos Contadores
+  console.log('Initializing counters...');
+  const entityTypes = ['auction', 'lot', 'asset', 'auctioneer', 'seller', 'user', 'category', 'subcategory'];
+  
+  for (const entityType of entityTypes) {
+    await prisma.counterState.upsert({
+      where: {
+        tenantId_entityType: {
+          tenantId: lordlandTenant.id,
+          entityType,
+        },
+      },
+      update: {},
+      create: {
+        tenantId: lordlandTenant.id,
+        entityType,
+        currentValue: 0,
+      },
+    });
+  }
+  console.log('Counters initialized');
 
   console.log('Database seeding completed!');
 }

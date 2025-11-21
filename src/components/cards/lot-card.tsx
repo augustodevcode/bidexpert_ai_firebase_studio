@@ -12,7 +12,7 @@ import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag
 import { isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
-import LotPreviewModal from '@/components/lot-preview-modal';
+import LotPreviewModalV2 from '@/components/lot-preview-modal-v2';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl, getActiveStage, getLotPriceForStage, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
@@ -31,10 +31,11 @@ interface LotCardProps {
   platformSettings: PlatformSettings;
   badgeVisibilityConfig?: BadgeVisibilitySettings;
   onUpdate?: () => void;
-  showCountdown?: boolean; // New prop to control countdown visibility
+  showCountdown?: boolean;
 }
 
 function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate, showCountdown = false }: LotCardProps) {
+  console.log('LotCard debug:', { lotId: lot.id, auctionStages: auction?.auctionStages, lotPrices: lot.lotPrices });
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
   const [isViewed, setIsViewed] = React.useState(false);
@@ -152,13 +153,12 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     }
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
-  
   const imageUrlToDisplay = lot.imageUrl;
   const lotNumber = lot.number || String(lot.id).replace(/\D/g, '').padStart(3, '0');
 
   return (
     <>
-      <Card data-ai-id={`lot-card-${lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
+      <Card data-ai-id={`lot-card-${lot.id}`} data-testid="lot-card" className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group relative">
         <div className="relative">
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">
@@ -191,18 +191,18 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 </Badge>
             ))}
           </div>
-          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center items-center gap-2">
+          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center items-center gap-2 pointer-events-none">
               <TooltipProvider>
                  <Tooltip>
-                    <TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger>
+                    <TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background pointer-events-auto" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger>
                     <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
                 </Tooltip>
                  <Tooltip>
-                    <TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar"><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger>
+                    <TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background pointer-events-auto" onClick={handlePreviewOpen} aria-label="Pré-visualizar"><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger>
                     <TooltipContent><p>Pré-visualizar</p></TooltipContent>
                 </Tooltip>
                 <DropdownMenu>
-                    <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background"><Share2 className="h-4 w-4 text-muted-foreground" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background pointer-events-auto"><Share2 className="h-4 w-4 text-muted-foreground" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></Tooltip>
                     <DropdownMenuContent align="end" className="w-48">
                          <DropdownMenuItem asChild><a href={getSocialLink('x', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
                          <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
@@ -210,12 +210,120 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                          <DropdownMenuItem asChild><a href={getSocialLink('email', lotFullUrl, lot.title)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                {hasEditPermission && <EntityEditMenu entityType="lot" entityId={lot.id.toString()} publicId={lot.publicId} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate} />}
+                {hasEditPermission && <div className="pointer-events-auto"><EntityEditMenu entityType="lot" entityId={lot.id.toString()} publicId={lot.publicId} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate} /></div>}
               </TooltipProvider>
           </div>
         </div>
-        <CardContent className="p-3 flex-grow space-y-3">
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
+        <CardContent className="p-3 flex-grow space-y-2">
+          {/* Praças Header */}
+          {auction?.auctionStages && auction.auctionStages.length > 0 && (
+            <div className="flex items-center gap-2 text-xs font-medium text-orange-600 mb-1">
+              <Clock className="h-3.5 w-3.5" />
+              <span>
+                {auction.auctionStages.length} praça{auction.auctionStages.length !== 1 ? 's' : ''}
+                {auction.auctionStages[0]?.startDate && (
+                  <>
+                    {' | '}
+                    {new Date(auction.auctionStages[0].startDate).toLocaleDateString('pt-BR', { 
+                      day: '2-digit', 
+                      month: '2-digit' 
+                    })} - {new Date(auction.auctionStages[0].startDate).toLocaleTimeString('pt-BR', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </>
+                )}
+              </span>
+            </div>
+          )}
+
+          <Link href={lotDetailUrl}>
+            <h3 data-ai-id="lot-card-title" className="text-base font-bold text-zinc-900 dark:text-white hover:text-primary transition-colors leading-tight line-clamp-2">
+              Lote {lotNumber}
+            </h3>
+            <p className="text-sm text-muted-foreground line-clamp-2 mt-1 font-normal">
+              {lot.title}
+            </p>
+          </Link>
+
+          <div className="flex items-center text-xs text-muted-foreground" data-ai-id="lot-card-location">
+            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+            <span className="truncate">{displayLocation}</span>
+          </div>
+
+          {/* Property Details (Area, Status) */}
+          {(lot.type === 'IMOVEL' || lot.type === 'imovel') && (
+            <div className="flex items-center gap-3 text-xs text-muted-foreground my-1">
+              {lot.totalArea && (
+                <div className="flex items-center gap-1" title="Área Total">
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21h18M5 21V7l8-4 8 4v14M5 10a2 2 0 0 0 2-2M19 10a2 2 0 0 1-2-2" />
+                  </svg>
+                  <span>{Number(lot.totalArea).toLocaleString('pt-BR')}m²</span>
+                </div>
+              )}
+              {lot.occupancyStatus && (
+                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${lot.occupancyStatus === 'OCUPADO' ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                  {lot.occupancyStatus === 'OCUPADO' ? 'Ocupado' : 'Desocupado'}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Auction Stages (Praças) List */}
+          {auction?.auctionStages && auction.auctionStages.length > 0 && (
+            <div className="space-y-1.5 mt-2 border-t pt-2">
+              {auction.auctionStages.slice(0, 2).map((stage, index) => {
+                // Try to find specific price for this stage
+                const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
+                // Fallback logic for price
+                const stagePriceValue = stagePrice?.initialBid || (index === 0 ? lot.initialPrice : lot.secondInitialPrice) || stage.initialPrice;
+                
+                const discount = lot.evaluationValue && stagePriceValue 
+                  ? Math.round(((Number(lot.evaluationValue) - Number(stagePriceValue)) / Number(lot.evaluationValue)) * 100)
+                  : 0;
+                
+                const isFirstStage = index === 0;
+                
+                return (
+                  <div 
+                    key={stage.id.toString()} 
+                    className={`flex items-center justify-between text-xs py-1 px-1.5 rounded ${
+                      isFirstStage ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800' : 'bg-muted/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${isFirstStage ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
+                      <div className="flex flex-col">
+                        <span className="font-medium leading-none">{index + 1}ª praça</span>
+                        <span className="text-[10px] text-muted-foreground leading-none mt-0.5">
+                          {stage.startDate && new Date(stage.startDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                           {' - '}
+                          {stage.startDate && new Date(stage.startDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className={`font-bold ${isFirstStage ? 'text-zinc-900 dark:text-zinc-100' : 'text-muted-foreground'}`}>
+                        {stagePriceValue ? new Intl.NumberFormat('pt-BR', { 
+                          style: 'currency', 
+                          currency: 'BRL' 
+                        }).format(Number(stagePriceValue)) : 'R$ --'}
+                      </span>
+                      {discount > 0 && (
+                        <span className="text-[10px] text-green-600 font-medium flex items-center">
+                          <TrendingUp className="h-2.5 w-2.5 mr-0.5 rotate-180" /> {discount}% OFF
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Footer Info */}
+          <div className="flex justify-between items-center text-xs text-muted-foreground mt-1 pt-1">
              <div className="flex items-center gap-1" data-ai-id="lot-card-category">
                 <Tag className="h-3 w-3" />
                 <span>{lot.type}</span>
@@ -225,37 +333,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 <span>{lot.bidsCount || 0} Lances</span>
             </div>
           </div>
-          <Link href={lotDetailUrl}>
-            <h3 data-ai-id="lot-card-title" className="text-base font-bold text-zinc-900 dark:text-white hover:text-primary transition-colors leading-tight min-h-[2.5em] line-clamp-2">
-              Lote {lotNumber} - {lot.title}
-            </h3>
-          </Link>
-          <div className="flex items-center text-xs text-muted-foreground" data-ai-id="lot-card-location">
-            <MapPin className="h-3 w-3 mr-1" />
-            <span>{displayLocation}</span>
-          </div>
-          {auction && (
-            <div className="space-y-1.5 text-xs" data-ai-id="lot-card-auction-info">
-              <div className="flex items-center justify-between gap-2 text-muted-foreground">
-                <span className="truncate" title={auction.title}>Leilão: <span className="text-foreground font-medium">{auction.title}</span></span>
-                {AuctionTypeIcon && (
-                  <span className="inline-flex items-center gap-1 whitespace-nowrap text-foreground">
-                    <AuctionTypeIcon className="h-3.5 w-3.5 text-primary" />
-                    {auctionTypeDisplay.label}
-                  </span>
-                )}
-              </div>
-              {auction.auctionStages && auction.auctionStages.length > 0 && timelineReferenceDate && (
-                <div className="rounded-md bg-muted/40 px-2 py-1.5">
-                  <BidExpertAuctionStagesTimeline
-                    auctionOverallStartDate={timelineReferenceDate}
-                    stages={auction.auctionStages}
-                    variant="compact"
-                  />
-                </div>
-              )}
-            </div>
-          )}
+
           {showCountdownOnThisCard && effectiveLotEndDate && (
             <LotCountdown endDate={effectiveLotEndDate} status={lot.status as any} variant="card"/>
           )}
@@ -270,7 +348,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
         </CardFooter>
       </Card>
       {isPreviewModalOpen && (
-        <LotPreviewModal
+        <LotPreviewModalV2
             lot={lot}
             auction={auction}
             platformSettings={platformSettings}

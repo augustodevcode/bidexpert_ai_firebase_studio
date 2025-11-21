@@ -11,11 +11,11 @@ import { AuctionRepository } from '@/repositories/auction.repository'; // Import
 import type { SellerFormData, SellerProfileInfo, Lot, Auction } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
+import { generatePublicId } from '@/lib/public-id-generator';
 
 export interface SellerDashboardData {
   totalRevenue: number;
@@ -96,11 +96,14 @@ export class SellerService {
   
         const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
   
+        // Gera o publicId usando a máscara configurada
+        const publicId = await generatePublicId(tenantId, 'seller');
+
         const dataToCreate: Prisma.SellerCreateInput = {
           ...(sellerData as any),
           address: fullAddress,
           slug: slugify(data.name),
-          publicId: `COM-${uuidv4()}`,
+          publicId,
           tenant: { connect: { id: BigInt(tenantId) } },
         };
   

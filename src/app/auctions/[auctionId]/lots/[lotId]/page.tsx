@@ -62,9 +62,23 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 
   // Verify that the lot actually belongs to the auction requested in the URL.
   if (lotFromDb.auctionId !== auctionFromDb.id) {
-    console.warn(`[getLotPageData] Mismatch: Lot '${lotFromDb.id}' belongs to auction '${lotFromDb.auctionId}', not '${auctionFromDb.id}'. Returning not found.`);
-    // @ts-ignore
-    return { lot: null, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null };
+    console.warn(`[getLotPageData] Mismatch: Lot '${lotFromDb.id}' belongs to auction '${lotFromDb.auctionId}', not '${auctionFromDb.id}'.`);
+    console.log('Debug Info:', {
+        urlAuctionId: currentAuctionId,
+        urlLotId: currentLotId,
+        auctionDbId: auctionFromDb.id,
+        auctionDbPublicId: auctionFromDb.publicId,
+        lotDbId: lotFromDb.id,
+        lotDbAuctionId: lotFromDb.auctionId
+    });
+    
+    // TENTATIVA DE RECUPERAÇÃO: Se o ID do leilão no banco bater com o ID da URL (caso seja ID interno), permitir.
+    if (lotFromDb.auctionId === currentAuctionId) {
+         console.log('[getLotPageData] Recuperação: O auctionId do lote bate com o ID da URL. Permitindo acesso.');
+    } else {
+         // @ts-ignore
+         return { lot: null, auction: null, platformSettings, allCategories, allSellers, auctioneer: null };
+    }
   }
   
   // Enrich lot with its assets
@@ -110,27 +124,6 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 export default async function LotDetailPage({ params, searchParams }: { params: { auctionId: string, lotId: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
   const version = searchParams?.v === '1' ? 'v1' : 'v2'; // Default to v2
 
-  if (!params.auctionId || !params.lotId) {
-    notFound();
-  }
-
-  const { lot, auction, ...rest } = await getLotPageData(params.auctionId, params.lotId);
-
-  if (!lot || !auction) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <h1 className="text-2xl font-bold">Lote ou Leilão Não Encontrado</h1>
-          <p className="text-muted-foreground">O item que você está procurando não existe ou não pôde ser carregado.</p>
-          <Button asChild className="mt-4">
-            <Link href={auction ? `/auctions/${auction.publicId || auction.id}` : '/'}>
-              {auction ? 'Voltar para o Leilão' : 'Voltar para Home'}
-            </Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8">

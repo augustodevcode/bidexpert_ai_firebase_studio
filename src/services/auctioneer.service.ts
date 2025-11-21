@@ -9,11 +9,11 @@ import { AuctioneerRepository } from '@/repositories/auctioneer.repository';
 import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
+import { generatePublicId } from '@/lib/public-id-generator';
 
 export interface AuctioneerDashboardData {
   totalRevenue: number;
@@ -71,11 +71,14 @@ export class AuctioneerService {
 
       const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
 
+      // Gera o publicId usando a máscara configurada
+      const publicId = await generatePublicId(tenantId, 'auctioneer');
+
       const dataToCreate: Prisma.AuctioneerCreateInput = {
         ...(auctioneerData as any),
         address: fullAddress,
         slug: slugify(data.name),
-        publicId: `LEILOE-${uuidv4()}`,
+        publicId,
         tenant: { connect: { id: BigInt(tenantId) } },
       };
 

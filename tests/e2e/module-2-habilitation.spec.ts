@@ -28,8 +28,34 @@ async function loginUser(page: Page, email: string, password: string) {
 test.describe('Module 2: User Habilitation Flow', () => {
 
   test('Full Habilitation Flow: Login -> Upload Docs -> Admin Approve', async ({ page }) => {
-    // 1. Login with pre-created user
-    await loginUser(page, 'agent_v3@example.com', 'Password123!');
+    // 1. Register new user
+    const userEmail = `user-${Date.now()}@test.com`;
+    const userPass = 'Password123!';
+    
+    await page.goto(`${BASE_URL}/auth/register`, { waitUntil: 'networkidle' });
+    
+    // Check if registration page loaded
+    await expect(page.locator('[data-ai-id="auth-register-name-input"]')).toBeVisible();
+    
+    await page.fill('[data-ai-id="auth-register-name-input"]', 'New User Test');
+    await page.fill('[data-ai-id="auth-register-email-input"]', userEmail);
+    await page.fill('[data-ai-id="auth-register-password-input"]', userPass);
+    // Check if confirm password exists, if so fill it
+    if (await page.locator('[data-ai-id="auth-register-confirm-password-input"]').isVisible()) {
+        await page.fill('[data-ai-id="auth-register-confirm-password-input"]', userPass);
+    }
+    
+    await page.click('[data-ai-id="auth-register-submit-button"]');
+    
+    // Wait for redirect to login or dashboard
+    // If it goes to login, we need to login. If dashboard, we are good.
+    await page.waitForLoadState('networkidle');
+    
+    if (page.url().includes('/auth/login')) {
+        await loginUser(page, userEmail, userPass);
+    } else {
+        await page.waitForURL(/dashboard/, { timeout: 30000 });
+    }
     
     // 2. Go to Documents page
     await page.goto(`${BASE_URL}/dashboard/documents`, { waitUntil: 'networkidle' });
@@ -71,15 +97,15 @@ test.describe('Module 2: User Habilitation Flow', () => {
     await page.goto(`${BASE_URL}/admin/habilitations`, { waitUntil: 'networkidle' });
 
     // Find the user request
-    const userRow = page.locator(`tr:has-text("Agent V3")`);
     // If list is long, might need search
     const searchInput = page.locator('input[placeholder="Buscar..."], input[type="search"]');
     if (await searchInput.isVisible()) {
-        await searchInput.fill('agent_v3@example.com');
+        await searchInput.fill(userEmail);
         await page.keyboard.press('Enter');
         await page.waitForTimeout(1000); // Wait for search
     }
 
+    const userRow = page.locator(`tr`).filter({ hasText: userEmail }).first();
     await expect(userRow).toBeVisible();
     
     // Click approve/details
@@ -105,7 +131,7 @@ test.describe('Module 2: User Habilitation Flow', () => {
     await page.goto(`${BASE_URL}/api/auth/signout`);
 
     // 5. User check
-    await loginUser(page, 'agent_v3@example.com', 'Password123!');
+    await loginUser(page, userEmail, userPass);
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
     
     // Verify user sees "Habilitado" status

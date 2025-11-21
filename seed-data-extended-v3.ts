@@ -67,20 +67,37 @@ async function main() {
     // 3. CRIAR ROLES SE NÃO EXISTIREM
     console.log('🎯 Configurando roles...');
     const roleNames = ['LEILOEIRO', 'COMPRADOR', 'ADMIN', 'ADVOGADO', 'VENDEDOR', 'AVALIADOR'];
+    const rolePermissions: Record<string, string[]> = {
+      ADMIN: ['manage_all'],
+      LEILOEIRO: ['conduct_auctions', 'auctions:manage_assigned', 'lots:manage_assigned'],
+      ADVOGADO: ['lawyer_dashboard:view', 'lawyer_cases:view', 'lawyer_documents:manage'],
+      COMPRADOR: ['place_bids', 'view_auctions', 'view_lots'],
+      VENDEDOR: ['consignor_dashboard:view', 'auctions:manage_own', 'lots:manage_own'],
+      AVALIADOR: ['documents:generate_report']
+    };
     const roles: any = {};
     
     for (const roleName of roleNames) {
       let role = await prisma.role.findUnique({
         where: { name: roleName },
       });
+      
+      const permissions = rolePermissions[roleName] || [];
+      
       if (!role) {
         role = await prisma.role.create({
           data: {
             name: roleName,
             nameNormalized: roleName.toUpperCase(),
             description: `Role ${roleName}`,
-            permissions: [],
+            permissions: permissions,
           },
+        });
+      } else {
+        // Update permissions if role exists
+        role = await prisma.role.update({
+          where: { id: role.id },
+          data: { permissions: permissions },
         });
       }
       roles[roleName] = role;

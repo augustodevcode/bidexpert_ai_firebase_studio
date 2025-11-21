@@ -1,4 +1,3 @@
-// src/repositories/auction.repository.ts
 import prisma from '@/lib/prisma';
 import type { Auction } from '@/types';
 import type { Prisma } from '@prisma/client';
@@ -17,16 +16,20 @@ export class AuctionRepository {
       take: limit,
       include: {
         _count: { select: { lots: true } },
-        seller: true, // Corrected from 'Seller'
+        seller: true,
         stages: true,
       },
     });
   }
 
   async findById(tenantId: string | undefined, id: string): Promise<any | null> {
-    const whereClause: Prisma.AuctionWhereInput = {
-        ...(tenantId && { tenantId: BigInt(tenantId) }),
-    };
+    const whereClause: Prisma.AuctionWhereInput = {};
+
+    // Only filter by tenantId if explicitly provided (for admin/internal calls)
+    // For public calls, tenantId will be undefined and we search across all tenants
+    if (tenantId) {
+        whereClause.tenantId = BigInt(tenantId);
+    }
 
     const isNumericId = /^\d+$/.test(id);
 
@@ -35,13 +38,14 @@ export class AuctionRepository {
     } else {
         whereClause.id = BigInt(id);
     }
+
     
     return this.prisma.auction.findFirst({
       where: whereClause,
       include: {
         lots: { include: { assets: { include: { asset: true } } } }, 
         auctioneer: true,
-        seller: true, // Corrected from 'Seller'
+        seller: true,
         stages: true,
       },
     });
@@ -62,7 +66,7 @@ export class AuctionRepository {
       },
       include: { 
           _count: { select: { lots: true } },
-          seller: true, // Corrected from 'Seller'
+          seller: true,
           stages: true,
       }
     });
@@ -95,13 +99,13 @@ export class AuctionRepository {
           OR: [
             { slug: auctioneerSlug },
             { publicId: auctioneerSlug },
-             ...(isNumericId ? [{ id: BigInt(auctioneerSlug) }] : []),
+            ...(isNumericId ? [{ id: BigInt(auctioneerSlug) }] : []),
           ],
         },
       },
       include: {
         _count: { select: { lots: true } },
-        seller: true, // Corrected from 'Seller'
+        seller: true,
         stages: true,
       },
       orderBy: { auctionDate: 'desc' },
@@ -113,7 +117,7 @@ export class AuctionRepository {
     return this.prisma.auction.findMany({
         where: {
             tenantId: BigInt(tenantId),
-            seller: { // Corrected from 'Seller'
+            seller: {
                 OR: [
                     { slug: sellerSlugOrPublicId }, 
                     { publicId: sellerSlugOrPublicId },
@@ -123,7 +127,7 @@ export class AuctionRepository {
         },
         include: { 
             _count: { select: { lots: true } },
-            seller: true, // Corrected from 'Seller'
+            seller: true,
             stages: true,
         }
     });

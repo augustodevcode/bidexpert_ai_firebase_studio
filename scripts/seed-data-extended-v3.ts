@@ -49,8 +49,9 @@ import { ReportService } from '../src/services/report.service';
 import { SubscriberService } from '../src/services/subscriber.service';
 
 import type { 
-    Role, 
-    AssetFormData, 
+  Role, 
+  Asset, 
+  AssetFormData, 
     AuctionStatus, 
     LotStatus, 
     Auction, 
@@ -167,6 +168,50 @@ const LawyerSeedConfig = {
   deterministicProcessNumber: '5001234-56.2025.8.26.0100',
   deterministicAssetTitle: 'Apartamento Duplex 320m² – Jardins',
 };
+
+function aggregateAssetValue(assets: Asset[]): number {
+  const computed = assets.reduce((sum, asset) => {
+    const rawValue = typeof asset.evaluationValue === 'number'
+      ? asset.evaluationValue
+      : Number(asset.evaluationValue ?? 0);
+    return sum + (rawValue || 0);
+  }, 0);
+  return computed > 0 ? computed : faker.number.int({ min: 80000, max: 350000 });
+}
+
+function pickAssetsFromProcessPool(pool: Asset[]): Asset[] {
+  if (!pool?.length) return [];
+  if (pool.length === 1) return [pool.shift()!];
+
+  const selectionSize = faker.helpers.weightedArrayElement([
+    { value: 1, weight: 0.45 },
+    { value: Math.min(2, pool.length), weight: 0.35 },
+    { value: Math.min(3, pool.length), weight: 0.2 },
+  ]);
+
+  const selection: Asset[] = [];
+  for (let i = 0; i < selectionSize; i++) {
+    const picked = pool.shift();
+    if (!picked) break;
+    selection.push(picked);
+  }
+  return selection;
+}
+
+async function linkLotToJudicialProcess(lotId: string | bigint, processId: string | bigint) {
+  try {
+    await prisma.lot.update({
+      where: { id: BigInt(lotId) },
+      data: {
+        judicialProcesses: {
+          connect: { id: BigInt(processId) },
+        },
+      },
+    });
+  } catch (error) {
+    console.warn('Failed to link lot to judicial process:', error);
+  }
+}
 
 async function cleanDatabase() {
     console.log("Cleaning database...");
@@ -769,7 +814,85 @@ async function main() {
   console.log(`${mediaItems.length} media items created.`);
 
   console.log("Creating assets...");
-  const assets: any[] = [];
+  const assets: Asset[] = [];
+  const assetsByProcessId: Record<string, Asset[]> = {};
+
+  if (judicialProcesses.length > 0) {
+    console.log('  Creating dedicated assets tied to judicial processes (wizard scenarios).');
+    const processAssetTemplates = [
+      {
+        key: 'residential_cluster',
+        categoryId: catImoveis.id,
+        minAssets: 3,
+        maxAssets: 4,
+        description: 'Residencial premium vinculado ao processo para simular agrupamento de lotes (contexto: TESTING_SCENARIOS.md 8.1.3).',
+        titleFactory: (cityName: string) => `Apartamento penhorado em ${cityName}`,
+      },
+      {
+        key: 'vehicle_fleet',
+        categoryId: catVeiculos.id,
+        minAssets: 2,
+        maxAssets: 3,
+        description: 'Frota de veículos apreendidos prontos para individualização em lotes.',
+        titleFactory: (_cityName: string) => `Veículo apreendido ${faker.vehicle.manufacturer()} ${faker.vehicle.model()}`,
+      },
+      {
+        key: 'industrial_line',
+        categoryId: catEletronicos.id,
+        minAssets: 2,
+        maxAssets: 3,
+        description: 'Linha de equipamentos industriais destinados à venda judicial.',
+        titleFactory: (_cityName: string) => `Equipamento industrial ${faker.commerce.productName()}`,
+      },
+    ];
+
+    const judicialFallbackSeller = sellers.find((s: any) => s?.isJudicial) || sellers[0];
+
+    for (let index = 0; index < judicialProcesses.length; index++) {
+      const process = judicialProcesses[index];
+      if (!process) continue;
+      const template = processAssetTemplates[index % processAssetTemplates.length];
+      const city = faker.helpers.arrayElement(cities.filter(Boolean));
+      const stateForCity = city ? Object.values(createdStates).find((s: any) => s.id === city.stateId) : null;
+      const sellerId = process.sellerId || judicialFallbackSeller?.id?.toString();
+      if (!sellerId) continue;
+
+      const assetCount = faker.number.int({ min: template.minAssets, max: template.maxAssets });
+      for (let assetIndex = 0; assetIndex < assetCount; assetIndex++) {
+        const mediaItem = faker.helpers.arrayElement(mediaItems.filter(Boolean));
+        const title = template.titleFactory(city?.name || faker.location.city());
+        const processAssetResult = await services.asset.createAsset(tenantId, {
+          title,
+          description: `${template.description} Processo ${process.processNumber}.`,
+          categoryId: template.categoryId,
+          evaluationValue: faker.number.int({ min: 150000, max: 900000 }),
+          sellerId,
+          judicialProcessId: process.id,
+          locationCity: city?.name,
+          locationState: stateForCity?.uf,
+          status: 'DISPONIVEL',
+          imageUrl: mediaItem?.urlOriginal || null,
+          imageMediaId: mediaItem?.id || null,
+          dataAiHint: `Processo ${process.processNumber} • ${template.key}`,
+        } as AssetFormData);
+
+        if (processAssetResult.success && processAssetResult.assetId) {
+          const processAsset = await services.asset.getAssetById(tenantId, processAssetResult.assetId);
+          if (processAsset) {
+            assets.push(processAsset);
+            if (!assetsByProcessId[process.id]) {
+              assetsByProcessId[process.id] = [];
+            }
+            assetsByProcessId[process.id].push(processAsset);
+          }
+        }
+      }
+    }
+
+    const totalProcessAssets = Object.values(assetsByProcessId).reduce((sum, list) => sum + list.length, 0);
+    console.log(`  ${totalProcessAssets} assets vinculados a ${Object.keys(assetsByProcessId).length} processos judiciais.`);
+  }
+
   for (let i = 0; i < Constants.ASSET_COUNT; i++) {
       const category = faker.helpers.arrayElement([catImoveis, catVeiculos, catEletronicos]);
       const seller = faker.helpers.arrayElement(sellers.filter(Boolean));
@@ -820,14 +943,21 @@ async function main() {
           console.warn(`Failed to create asset: ${assetResult.message}`);
           continue;
       }
-      assets.push(await services.asset.getAssetById(tenantId, assetResult.assetId));
+      const createdAsset = await services.asset.getAssetById(tenantId, assetResult.assetId);
+      if (createdAsset) {
+          assets.push(createdAsset);
+      }
   }
   console.log(`${assets.length} assets created.`);
 
 
   console.log("Creating auctions and lots...");
   const auctions: (Auction | null)[] = [];
-  let availableAssets = faker.helpers.shuffle(assets.filter(a => a?.status === 'DISPONIVEL'));
+  const generalAssetPool = faker.helpers.shuffle(assets.filter(a => a?.status === 'DISPONIVEL' && !a?.judicialProcessId));
+  const processAssetPools: Record<string, Asset[]> = {};
+  Object.entries(assetsByProcessId).forEach(([processId, assetList]) => {
+    processAssetPools[processId] = [...assetList];
+  });
 
   for (let i = 0; i < Constants.AUCTION_COUNT; i++) {
       const auctioneer = faker.helpers.arrayElement(auctioneers.filter(Boolean));
@@ -844,7 +974,6 @@ async function main() {
 
       const isJudicial = i % 3 === 0 && judicialProcesses.length > 0;
       const judicialProcess = isJudicial ? faker.helpers.arrayElement(judicialProcesses) : null;
-      
       const auctionResult = await services.auction.createAuction(tenantId, {
           title: `Grande Leilão de ${seller.name} - #${i + 1}`,
           auctionType: isJudicial ? 'JUDICIAL' : 'EXTRAJUDICIAL',
@@ -886,47 +1015,72 @@ async function main() {
 
       const numLots = faker.number.int({ min: 1, max: Constants.LOTS_PER_AUCTION_MAX });
       for (let j = 0; j < numLots; j++) {
-          if (availableAssets.length === 0) continue;
+          let selectedAssets: Asset[] = [];
+          let linkedProcessId: string | null = null;
 
-          const asset = availableAssets.pop();
-          if (!asset) continue;
+          if (judicialProcess?.id) {
+            const pool = processAssetPools[judicialProcess.id];
+            if (pool && pool.length) {
+              selectedAssets = pickAssetsFromProcessPool(pool);
+              if (selectedAssets.length) {
+                linkedProcessId = judicialProcess.id;
+              }
+            }
+          }
 
-          // Definir status do lote (40% EM_BREVE, 60% ABERTO_PARA_LANCES)
+          if (selectedAssets.length === 0) {
+            const fallbackAsset = generalAssetPool.pop();
+            if (fallbackAsset) {
+              selectedAssets = [fallbackAsset];
+            } else {
+              continue;
+            }
+          }
+
           const lotStatus = faker.helpers.weightedArrayElement([
             { value: 'EM_BREVE', weight: 0.4 },
             { value: 'ABERTO_PARA_LANCES', weight: 0.6 }
           ]);
-          
-          // 30% de chance de ser destaque
           const isFeatured = faker.datatype.boolean({ probability: 0.3 });
-          
+          const lotValue = aggregateAssetValue(selectedAssets);
+          const lotInitialPrice = Math.max(5000, Math.round(lotValue * (selectedAssets.length > 1 ? 0.7 : 0.8)));
+          const baseTitle = linkedProcessId
+            ? `Processo ${linkedProcessId.slice(-4)} - ${selectedAssets.length} bem(ns)`
+            : selectedAssets[0].title;
+          const lotTitle = linkedProcessId
+            ? `${baseTitle}${selectedAssets.length > 1 ? ' (Agrupado)' : ''}`
+            : `Lote ${j + 1} - ${baseTitle}`;
+
           const lotResult = await services.lot.createLot({
               auctionId: auction.id,
-              title: `Lote ${j + 1} - ${asset.title}`,
+              title: lotTitle,
               number: `${j + 1}`.padStart(3, '0'),
-              price: asset.evaluationValue as number,
-              initialPrice: asset.evaluationValue as number, // Definir o preço inicial
+              price: lotValue,
+              initialPrice: lotInitialPrice,
               status: lotStatus,
-              isFeatured: isFeatured,
-              assetIds: [asset.id.toString()],
-              type: 'EXTRAJUDICIAL',
+              isFeatured,
+              assetIds: selectedAssets.map(assetItem => assetItem.id.toString()),
+              type: linkedProcessId ? 'JUDICIAL' : 'EXTRAJUDICIAL',
           }, tenantId);
 
           if (lotResult.success && lotResult.lotId) {
               try {
-                  // Atualizar o status do ativo para refletir que está em um lote
-                  await services.asset.updateAsset(asset.id.toString(), { 
-                    status: 'LOTEADO'  // Apenas atualiza o status, sem o lotId que não é suportado
-                  });
+                  if (linkedProcessId) {
+                    await linkLotToJudicialProcess(lotResult.lotId, linkedProcessId);
+                  }
 
-                  // Adicionar lotes vencidos e pagamentos para alguns lotes
+                  for (const assetItem of selectedAssets) {
+                    await services.asset.updateAsset(assetItem.id.toString(), {
+                      status: 'LOTEADO',
+                    });
+                  }
+
                   if (faker.datatype.boolean({ probability: 0.3 })) {
                       const winningBidder = faker.helpers.arrayElement(bidderUsers.filter(u => u?.habilitationStatus === 'HABILITADO'));
                       if (winningBidder) {
-                          // Criar registro de vitória com dados mínimos primeiro
-                          // Criar registro de vitória usando o serviço
                           const winDate = faker.date.past();
-                          const winningBid = new Decimal(asset.evaluationValue);
+                          const multiplier = faker.number.int({ min: 90, max: 115 }) / 100;
+                          const winningBid = new Decimal(Math.round(lotValue * multiplier));
                           const userWin = await services.userWin.create({
                               lotId: BigInt(lotResult.lotId),
                               userId: BigInt(winningBidder.id),
@@ -949,11 +1103,15 @@ async function main() {
                       }
                   }
               } catch (error: any) {
-                  console.warn(`Failed to update asset ${asset.id} status: ${error.message}`);
+                  console.warn(`Failed to finalize lot ${lotResult.lotId}: ${error.message}`);
               }
           } else {
               console.warn(`Failed to create lot: ${lotResult.message}`);
-              availableAssets.push(asset);
+              if (linkedProcessId && processAssetPools[linkedProcessId]) {
+                processAssetPools[linkedProcessId].push(...selectedAssets);
+              } else {
+                generalAssetPool.push(...selectedAssets);
+              }
           }
       }
   }

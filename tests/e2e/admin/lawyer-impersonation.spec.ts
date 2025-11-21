@@ -6,8 +6,8 @@
 import { test, expect, Page } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:9002';
-const ADMIN_EMAIL = 'admin@bidexpert.com.br';
-const ADMIN_PASSWORD = 'Admin@12345';
+const ADMIN_EMAIL = 'test.leiloeiro@bidexpert.com';
+const ADMIN_PASSWORD = 'Test@12345';
 
 async function loginAsAdmin(page: Page) {
   await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60_000 });

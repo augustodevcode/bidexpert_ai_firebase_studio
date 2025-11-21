@@ -8,7 +8,7 @@
 import { prisma } from '@/lib/prisma';
 import { LotService } from './lot.service';
 import type { Lot } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
+import { generatePublicId } from '@/lib/public-id-generator';
 
 export class RelistService {
   private lotService: LotService;
@@ -36,9 +36,12 @@ export class RelistService {
       
       const { id, publicId, status, auction, auctionId, createdAt, updatedAt, bidsCount, views, winnerId, winningBidTermUrl, originalLotId: oldOriginalId, ...restOfLotData } = originalLot;
 
+      // Gera novo publicId usando a máscara configurada
+      const newPublicId = await generatePublicId(originalLot.tenantId, 'lot');
+
       const newLotData: Partial<Lot> = {
           ...restOfLotData,
-          publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`, // Generate new public ID
+          publicId: newPublicId,
           status: 'EM_BREVE',
           auctionId: newAuctionId,
           originalLotId: originalLot.id,

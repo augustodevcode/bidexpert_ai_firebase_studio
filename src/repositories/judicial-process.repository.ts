@@ -14,7 +14,7 @@ export class JudicialProcessRepository {
         seller: { select: { name: true } },
         parties: true,
         _count: {
-          select: { lots: true },
+          select: { lots: true, assets: true },
         },
       },
       orderBy: { processNumber: 'desc' }

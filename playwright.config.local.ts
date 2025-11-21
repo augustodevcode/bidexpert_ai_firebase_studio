@@ -31,7 +31,7 @@ export default defineConfig({
 		},
 	],
 	webServer: shouldStartWebServer ? {
-		command: 'npm run start -- -p 9005',
+		command: 'npm run dev:9005',
 		url: baseURL,
 		reuseExistingServer: true,
 		timeout: 240000, // Increased timeout for build

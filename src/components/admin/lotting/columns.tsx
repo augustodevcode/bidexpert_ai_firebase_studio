@@ -3,14 +3,14 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Bem } from '@/types';
+import type { Asset } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 
-export const createColumns = ({ onOpenDetails }: { onOpenDetails?: (bem: Bem) => void }): ColumnDef<Bem>[] => [
+export const createColumns = ({ onOpenDetails }: { onOpenDetails?: (asset: Asset) => void }): ColumnDef<Asset>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -57,8 +57,20 @@ export const createColumns = ({ onOpenDetails }: { onOpenDetails?: (bem: Bem) =>
     ),
   },
   {
+    accessorKey: 'status',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+    cell: ({ row }) => (
+      <Badge variant="outline">{row.getValue('status')}</Badge>
+    )
+  },
+  {
     accessorKey: "categoryName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Categoria" />,
+  },
+  {
+    accessorKey: 'judicialProcessNumber',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Processo" />,
+    cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.getValue('judicialProcessNumber') || '–'}</span>
   },
   {
     accessorKey: "evaluationValue",
@@ -68,4 +80,9 @@ export const createColumns = ({ onOpenDetails }: { onOpenDetails?: (bem: Bem) =>
       return <div className="text-right font-medium">{value ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'N/A'}</div>;
     },
   },
+  {
+    accessorKey: 'lotInfo',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Lote vinculado" />,
+    cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.getValue('lotInfo') || 'Disponível'}</span>
+  }
 ];

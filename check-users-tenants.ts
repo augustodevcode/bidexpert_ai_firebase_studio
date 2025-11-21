@@ -1,27 +1,18 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function check() {
-  const users = await prisma.user.findMany({
-    include: {
-      tenants: true,
-    },
-  });
-
-  console.log('Users and Tenants:');
-  users.forEach(u => {
-    console.log(`User: ${u.email} (ID: ${u.id})`);
-    u.tenants.forEach(t => {
-      console.log(`  - Tenant ID: ${t.tenantId}`);
-    });
-  });
-  
-  const tenants = await prisma.tenant.findMany();
-  console.log('Tenants:');
-  tenants.forEach(t => {
-      console.log(`Tenant: ${t.name} (ID: ${t.id})`);
-  });
+  const email = 'advogado@bidexpert.com.br';
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (user) {
+      console.log(`User found: ${user.email}`);
+      const isMatch = await bcrypt.compare('password123', user.password || '');
+      console.log(`Password 'password123' match: ${isMatch}`);
+  } else {
+      console.log('User not found');
+  }
 }
 
 check()

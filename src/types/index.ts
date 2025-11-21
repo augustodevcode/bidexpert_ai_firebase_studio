@@ -48,6 +48,7 @@ import type {
     VehicleModel as PmVehicleModel,
     AuctionHabilitation,
     InstallmentPayment,
+    LotStagePrice,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -126,23 +127,6 @@ export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'city
   isFeaturedOnMarketplace?: boolean;
   additionalTriggers?: string[];
   dataAiHint?: string;
-  autoRelistSettings?: any;
-};
-
-export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId' | 'sellerId' | 'auctioneerId' | 'cityId' | 'stateId' | 'winnerId' | 'tenantId' | 'originalLotId' | 'price' | 'initialPrice' | 'secondInitialPrice' | 'latitude' | 'longitude' | 'bidIncrementStep' | 'evaluationValue' | 'inheritedMediaFromAssetId'> & {
-  id: string;
-  auctionId: string;
-  categoryId?: string | null;
-  subcategoryId?: string | null;
-  sellerId?: string | null;
-  auctioneerId?: string | null;
-  cityId?: string | null;
-  stateId?: string | null;
-  winnerId?: string | null;
-  tenantId: string;
-  originalLotId?: string | null;
-  inheritedMediaFromAssetId?: string | null;
-  assets?: Asset[];
   auction?: Auction;
   auctionName?: string | null;
   categoryName?: string;
@@ -155,12 +139,13 @@ export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId
   bidIncrementStep: number | null;
   latitude?: number | null;
   longitude?: number | null;
+  lotPrices?: LotStagePrice[];
   stageDetails?: LotStageDetails[];
+  totalArea?: number | null;
+  occupancyStatus?: string | null;
+  type?: string | null;
 };
 
-export type BidInfo = Omit<PmBid, 'id' | 'auctionId' | 'lotId' | 'bidderId' | 'tenantId' | 'amount'> & { id: string; auctionId: string; lotId: string; bidderId: string; tenantId: string; amount: number; };
-export type UserWin = Omit<PmUserWin, 'id' | 'lotId' | 'userId' | 'winningBidAmount'> & { id: string; lotId: string; userId: string; winningBidAmount: number; lot: Lot };
-export type Review = Omit<PmReview, 'id' | 'lotId' | 'auctionId' | 'userId'> & { id: string; lotId: string; auctionId: string; userId: string; };
 export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId' | 'answeredByUserId'> & { id: string; lotId: string; auctionId: string; userId: string; answeredByUserId?: string | null };
 export type UserDocument = Omit<PmUserDocument, 'id' | 'userId' | 'documentTypeId'> & { id: string; userId: string; documentTypeId: string; documentType: DocumentType };
 export type DocumentType = Omit<PmDocumentType, 'id'> & { id: string };
@@ -175,7 +160,7 @@ export type DirectSaleOffer = Omit<PmDirectSaleOffer, 'id' | 'tenantId' | 'selle
     category?: string;
 };
 export type UserLotMaxBid = Omit<PmUserLotMaxBid, 'id' | 'userId' | 'lotId' | 'maxAmount'> & { id: string; userId: string; lotId: string; maxAmount: number; };
-export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { id: string; tenantId: string; courtId?: string | null; districtId?: string | null; branchId?: string | null; sellerId?: string | null; parties: ProcessParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string, lotCount?: number };
+export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { id: string; tenantId: string; courtId?: string | null; districtId?: string | null; branchId?: string | null; sellerId?: string | null; parties: ProcessParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string, lotCount?: number, assetCount?: number };
 export type Court = Omit<PmCourt, 'id'> & { id: string };
 export type JudicialDistrict = Omit<PmJudicialDistrict, 'id' | 'courtId' | 'stateId'> & { id: string; courtId?: string | null; stateId?: string | null; courtName?: string; stateUf?: string };
 export type JudicialBranch = Omit<PmJudicialBranch, 'id' | 'districtId'> & { id: string; districtId?: string | null; districtName?: string; stateUf?: string };

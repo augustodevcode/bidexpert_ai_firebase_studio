@@ -10,9 +10,9 @@ import type { Auction, AuctionFormData, LotCategory } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { PrismaClientValidationError } from '@prisma/client/runtime/library';
-import { v4 as uuidv4 } from 'uuid';
 import { nowInSaoPaulo } from '@/lib/timezone';
 import { prisma } from '@/lib/prisma';
+import { generatePublicId } from '@/lib/public-id-generator';
 
 // Status que NUNCA devem ser visíveis publicamente
 const NON_PUBLIC_STATUSES: Auction['status'][] = ['RASCUNHO', 'EM_PREPARACAO'];
@@ -65,6 +65,8 @@ export class AuctionService {
                 id: stage.id.toString(),
                 auctionId: stage.auctionId.toString(),
                 initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
+                startDate: stage.startDate,
+                endDate: stage.endDate,
             })),
             lots: (a.lots || []).map((lot: any) => ({
                 ...lot,
@@ -111,7 +113,8 @@ export class AuctionService {
    * @returns {Promise<Auction | null>} O leilão encontrado ou null.
    */
   async getAuctionById(tenantId: string | undefined, id: string, isPublicCall = false): Promise<Auction | null> {
-    const auction = await this.auctionRepository.findById(tenantId, id);
+    // For public calls, pass undefined to allow cross-tenant lookup
+    const auction = await this.auctionRepository.findById(isPublicCall ? undefined : tenantId, id);
     if (!auction) return null;
 
     if (isPublicCall && NON_PUBLIC_STATUSES.includes(auction.status)) {
@@ -187,11 +190,14 @@ export class AuctionService {
       }
       
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
+        // Gera o publicId usando a máscara configurada
+        const publicId = await generatePublicId(tenantId, 'auction');
+        
         const createdAuction = await tx.auction.create({
           data: {
             ...(restOfData as any),
             imageUrl: finalImageUrl,
-            publicId: `AUC-${uuidv4()}`,
+            publicId,
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,

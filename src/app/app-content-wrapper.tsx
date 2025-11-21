@@ -36,7 +36,7 @@ export function AppContentWrapper({
   }
 
   // Determine if the current path is a special dashboard/admin layout
-  const isDashboardLayout = pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/consignor-dashboard');
+  const isDashboardLayout = pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/consignor-dashboard') || pathname.startsWith('/lawyer');
 
   if (isDashboardLayout) {
     return (

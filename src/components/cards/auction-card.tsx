@@ -11,7 +11,7 @@ import type { Auction } from '@/types';
 import { Heart, Share2, Eye, X, Facebook, MessageSquareText, Mail, Clock, Users, Star, ListChecks } from 'lucide-react';
 import { isPast, differenceInDays, format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AuctionPreviewModal from '../auction-preview-modal';
+import AuctionPreviewModalV2 from '../auction-preview-modal-v2';
 import { isValidImageUrl, getAuctionStatusText, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -163,7 +163,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   return (
     <TooltipProvider>
       <>
-        <Card data-ai-id={`auction-card-${auction.id}`} className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
+        <Card data-ai-id={`auction-card-${auction.id}`} data-testid="auction-card" className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
           <div className="relative">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
               <div className="aspect-video relative bg-muted">
@@ -289,7 +289,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
           </CardFooter>
         </Card>
         {isPreviewModalOpen && (
-          <AuctionPreviewModal
+          <AuctionPreviewModalV2
             auction={auction}
             isOpen={isPreviewModalOpen}
             onClose={() => setIsPreviewModalOpen(false)}
