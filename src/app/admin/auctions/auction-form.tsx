@@ -122,7 +122,7 @@ const renderAccordionContent = (
               <FormMessage />
             </FormItem>
           )} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <FormField control={form.control} name="status" render={({ field }) => (
               <FormItem>
                 <FormLabel>Status<span className="text-destructive">*</span></FormLabel>
@@ -162,7 +162,7 @@ const renderAccordionContent = (
       );
     case 'participantes':
       return (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField control={form.control} name="auctioneerId" render={({ field }) => (
             <FormItem>
               <FormLabel>Leiloeiro<span className="text-destructive">*</span></FormLabel>
@@ -449,6 +449,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       auctionMethod: initialData?.auctionMethod ?? '',
       participation: initialData?.participation ?? '',
       status: initialData?.status ?? '',
+      softCloseEnabled: initialData?.softCloseEnabled ?? false,
+      softCloseMinutes: initialData?.softCloseMinutes ?? 0,
       auctionStages: initialData?.auctionStages?.length 
         ? initialData.auctionStages.map((s) => ({ ...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate) })) 
         : [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
@@ -549,13 +551,13 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                       initialCategories,
                       initialAuctioneers,
                       initialSellers,
-                      initialJudicialProcesses,
+                      initialJudicialProcesses || [],
                       allCities,
                       initialStates,
                       isSubmitting,
                       watchedAuctionMethod,
                       watchedImageMediaId,
-                      displayImageUrl,
+                      displayImageUrl ?? null,
                       setIsMediaDialogOpen,
                       handleAddStageWithDefaults,
                       remove
@@ -571,13 +573,13 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                       initialCategories,
                       initialAuctioneers,
                       initialSellers,
-                      initialJudicialProcesses,
+                      initialJudicialProcesses || [],
                       allCities,
                       initialStates,
                       isSubmitting,
                       watchedAuctionMethod,
                       watchedImageMediaId,
-                      displayImageUrl,
+                      displayImageUrl ?? null,
                       setIsMediaDialogOpen,
                       handleAddStageWithDefaults,
                       remove
@@ -593,13 +595,13 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                       initialCategories,
                       initialAuctioneers,
                       initialSellers,
-                      initialJudicialProcesses,
+                      initialJudicialProcesses || [],
                       allCities,
                       initialStates,
                       isSubmitting,
                       watchedAuctionMethod,
                       watchedImageMediaId,
-                      displayImageUrl,
+                      displayImageUrl ?? null,
                       setIsMediaDialogOpen,
                       handleAddStageWithDefaults,
                       remove
@@ -610,13 +612,13 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                       initialCategories,
                       initialAuctioneers,
                       initialSellers,
-                      initialJudicialProcesses,
+                      initialJudicialProcesses || [],
                       allCities,
                       initialStates,
                       isSubmitting,
                       watchedAuctionMethod,
                       watchedImageMediaId,
-                      displayImageUrl,
+                      displayImageUrl ?? null,
                       setIsMediaDialogOpen,
                       handleAddStageWithDefaults,
                       remove
@@ -632,13 +634,13 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                       initialCategories,
                       initialAuctioneers,
                       initialSellers,
-                      initialJudicialProcesses,
+                      initialJudicialProcesses || [],
                       allCities,
                       initialStates,
                       isSubmitting,
                       watchedAuctionMethod,
                       watchedImageMediaId,
-                      displayImageUrl,
+                      displayImageUrl ?? null,
                       setIsMediaDialogOpen,
                       handleAddStageWithDefaults,
                       remove
@@ -654,13 +656,13 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                       initialCategories,
                       initialAuctioneers,
                       initialSellers,
-                      initialJudicialProcesses,
+                      initialJudicialProcesses || [],
                       allCities,
                       initialStates,
                       isSubmitting,
                       watchedAuctionMethod,
                       watchedImageMediaId,
-                      displayImageUrl,
+                      displayImageUrl ?? null,
                       setIsMediaDialogOpen,
                       handleAddStageWithDefaults,
                       remove
@@ -676,13 +678,13 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                       initialCategories,
                       initialAuctioneers,
                       initialSellers,
-                      initialJudicialProcesses,
+                      initialJudicialProcesses || [],
                       allCities,
                       initialStates,
                       isSubmitting,
                       watchedAuctionMethod,
                       watchedImageMediaId,
-                      displayImageUrl,
+                      displayImageUrl ?? null,
                       setIsMediaDialogOpen,
                       handleAddStageWithDefaults,
                       remove

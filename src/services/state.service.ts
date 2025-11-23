@@ -21,12 +21,18 @@ export class StateService {
     const states = await this.repository.findAllWithCityCount();
     return states.map(s => ({
       ...s,
+      id: s.id.toString(),
       cityCount: s._count.cities,
     }));
   }
 
   async getStateById(id: string): Promise<StateInfo | null> {
-    return this.repository.findById(id);
+    const state = await this.repository.findById(id);
+    if (!state) return null;
+    return {
+      ...state,
+      id: state.id.toString(),
+    };
   }
 
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }> {

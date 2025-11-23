@@ -3,8 +3,7 @@
 'use client';
 
 import { Suspense, useState, useEffect, useMemo, useCallback } from 'react';
-import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
+import { ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -459,12 +458,6 @@ function SearchPageContent() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-primary">Home</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="text-foreground font-medium">Busca</span>
-      </div>
-      
       <Card className="shadow-lg p-6 bg-secondary/30">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold font-headline">Busca Avançada</h1>

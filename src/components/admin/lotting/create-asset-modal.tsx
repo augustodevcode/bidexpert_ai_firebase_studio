@@ -9,13 +9,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import AssetForm from '@/app/admin/assets/asset-form';
+import { AssetFormV2 } from '@/app/admin/assets/asset-form-v2';
 import type { AssetFormData } from '@/app/admin/assets/asset-form-schema';
 import { createAsset } from '@/app/admin/assets/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
-import type { LotCategory, SellerProfileInfo, JudicialProcess } from '@/types';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
+import type { LotCategory, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -37,6 +39,8 @@ export default function CreateAssetModal({
   const [categories, setCategories] = React.useState<LotCategory[]>([]);
   const [sellers, setSellers] = React.useState<SellerProfileInfo[]>([]);
   const [processes, setProcesses] = React.useState<JudicialProcess[]>([]);
+  const [states, setStates] = React.useState<StateInfo[]>([]);
+  const [cities, setCities] = React.useState<CityInfo[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const { toast } = useToast();
   
@@ -45,14 +49,18 @@ export default function CreateAssetModal({
       const fetchData = async () => {
         setIsLoading(true);
         try {
-          const [cats, sells, procs] = await Promise.all([
+          const [cats, sells, procs, sts, cts] = await Promise.all([
             getLotCategories(),
             getSellers(),
             getJudicialProcesses(),
+            getStates(),
+            getCities(),
           ]);
           setCategories(cats);
           setSellers(sells);
           setProcesses(procs);
+          setStates(sts);
+          setCities(cts);
         } catch (error) {
           console.error("Failed to load data for Asset Modal", error);
           toast({ title: 'Erro', description: 'Não foi possível carregar os dados para criar um novo bem.', variant: 'destructive' });
@@ -80,7 +88,7 @@ export default function CreateAssetModal({
                 <Loader2 className="h-8 w-8 animate-spin" />
             </div>
         ) : (
-            <AssetForm
+            <AssetFormV2
               initialData={{ 
                 sellerId: initialSellerId, 
                 judicialProcessId: initialJudicialProcessId,
@@ -89,12 +97,13 @@ export default function CreateAssetModal({
               categories={categories}
               sellers={sellers}
               processes={processes}
+              allStates={states}
+              allCities={cities}
               onSubmitAction={handleCreateAsset}
               onSuccess={() => onAssetCreated()}
               onCancel={onClose}
-              formTitle="Cadastrar Novo Bem"
-              formDescription="Cadastre um bem que ficará imediatamente disponível para loteamento."
-              submitButtonText="Criar e Adicionar"
+              title="Cadastrar Novo Bem"
+              description="Cadastre um bem que ficará imediatamente disponível para loteamento."
             />
         )}
       </DialogContent>

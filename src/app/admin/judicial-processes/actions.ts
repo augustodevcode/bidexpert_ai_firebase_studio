@@ -12,13 +12,15 @@ import type { JudicialProcess, JudicialProcessFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { JudicialProcessService } from '@/services/judicial-process.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const judicialProcessService = new JudicialProcessService();
 
 
 export async function getJudicialProcesses(tenantId?: string): Promise<JudicialProcess[]> {
     const id = tenantId || await getTenantIdFromRequest();
-    return judicialProcessService.getJudicialProcesses(id);
+    const result = await judicialProcessService.getJudicialProcesses(id);
+    return sanitizeResponse(result);
 }
 
 export async function getJudicialProcess(id: string): Promise<JudicialProcess | null> {

@@ -51,14 +51,29 @@ export default function CourtForm({
   const form = useForm<CourtFormValues>({
     resolver: zodResolver(courtFormSchema),
     mode: 'onChange',
-    defaultValues: initialData || {},
+    defaultValues: initialData ? {
+      name: initialData.name,
+      stateUf: initialData.stateUf,
+      website: initialData.website || '',
+    } : {
+      name: '',
+      stateUf: '',
+      website: '',
+    },
   });
-  
-  React.useEffect(() => {
-    form.reset(initialData || {});
-  }, [initialData, form]);
+
 
   const { formState } = form;
+
+  React.useEffect(() => {
+    console.log('[CourtForm Debug]', {
+      isValid: formState.isValid,
+      isDirty: formState.isDirty,
+      hasInitialData: !!initialData,
+      buttonDisabled: isSubmitting || !formState.isValid,
+      errors: formState.errors
+    });
+  }, [formState.isValid, formState.isDirty, formState.errors, initialData, isSubmitting]);
 
   const handleRefetchStates = React.useCallback(async () => {
     setIsFetchingStates(true);
@@ -137,7 +152,7 @@ export default function CourtForm({
         />
         <div className="flex justify-end gap-2 pt-4">
             {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
-            <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+            <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
                 Salvar
             </Button>

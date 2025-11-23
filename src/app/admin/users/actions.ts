@@ -63,13 +63,27 @@ export async function updateUserProfile(userId: string, data: EditableUserProfil
 
 
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
+  console.log('[updateUserRoles] Action chamada');
+  console.log('[updateUserRoles] userId:', userId);
+  console.log('[updateUserRoles] roleIds recebidos:', roleIds);
+  
   const idAsBigInt = BigInt(userId);
   const roleIdsAsBigInt = roleIds.map(id => BigInt(id));
+  
+  console.log('[updateUserRoles] roleIds convertidos para BigInt:', roleIdsAsBigInt.map(id => id.toString()));
+  console.log('[updateUserRoles] Chamando userService.updateUserRoles...');
+  
   const result = await userService.updateUserRoles(idAsBigInt, roleIdsAsBigInt);
-   if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/users');
-        revalidatePath(`/admin/users/${userId}/edit`);
-    }
+  
+  console.log('[updateUserRoles] Resultado do serviço:', result);
+  
+  if (result.success && process.env.NODE_ENV !== 'test') {
+    console.log('[updateUserRoles] Revalidando paths...');
+    revalidatePath('/admin/users');
+    revalidatePath(`/admin/users/${userId}/edit`);
+  }
+  
+  console.log('[updateUserRoles] Retornando resultado');
   return result;
 }
 

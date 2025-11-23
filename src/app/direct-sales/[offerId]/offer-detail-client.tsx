@@ -10,14 +10,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, Tag, MapPin, DollarSign, ShoppingCart, Edit, MessageSquare, UserCircle, CalendarDays, Clock, AlertCircle, Loader2, CheckCircle, Info, ImageOff } from 'lucide-react';
+import { Tag, MapPin, DollarSign, ShoppingCart, Edit, MessageSquare, UserCircle, CalendarDays, Clock, AlertCircle, Loader2, CheckCircle, Info, ImageOff } from 'lucide-react';
 import type { DirectSaleOffer } from '@/types';
 import { getLotStatusColor, getAuctionStatusText, slugify } from '@/lib/ui-helpers';
 import { format } from 'date-fns';
@@ -102,14 +101,6 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
 
   return (
     <div className="space-y-8" data-ai-id="offer-details-page-container">
-      <div className="flex items-center text-sm text-muted-foreground" data-ai-id="offer-details-breadcrumbs">
-        <Link href="/" className="hover:text-primary">Home</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <Link href="/direct-sales" className="hover:text-primary">Venda Direta</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="text-foreground font-medium truncate max-w-xs sm:max-w-md">{offer.title}</span>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6" data-ai-id="offer-details-main-content">
           <Card className="shadow-lg">

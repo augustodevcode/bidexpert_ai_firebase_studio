@@ -9,11 +9,31 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Auction, AuctionFormData } from '@/types';
+import type {
+    Auction,
+    AuctionFormData,
+    AuctionPreparationAssetSummary,
+    AuctionPreparationBid,
+    AuctionPreparationData,
+    AuctionPreparationHabilitation,
+    AuctionPreparationWin,
+} from '@/types';
 import { AuctionService } from '@/services/auction.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 const auctionService = new AuctionService();
+
+const decimalToNumber = (value?: Prisma.Decimal | number | bigint | null): number => {
+    if (value === null || value === undefined) return 0;
+    if (typeof value === 'number') return value;
+    if (typeof value === 'bigint') return Number(value);
+    if (typeof (value as Prisma.Decimal)?.toNumber === 'function') {
+        return (value as Prisma.Decimal).toNumber();
+    }
+    return Number(value);
+};
 
 export async function getAuctions(isPublicCall: boolean = false, limit?: number): Promise<Auction[]> {
     const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
@@ -23,6 +43,136 @@ export async function getAuctions(isPublicCall: boolean = false, limit?: number)
 export async function getAuction(id: string, isPublicCall: boolean = false): Promise<Auction | null> {
     const tenantId = await getTenantIdFromRequest(isPublicCall);
     return auctionService.getAuctionById(tenantId, id, isPublicCall);
+}
+
+export async function getAuctionById(id: bigint, isPublicCall: boolean = false): Promise<Auction | null> {
+    const tenantId = await getTenantIdFromRequest(isPublicCall);
+    return auctionService.getAuctionById(tenantId, id.toString(), isPublicCall);
+}
+
+export async function getAuctionPreparationData(auctionIdentifier: string): Promise<AuctionPreparationData | null> {
+    const tenantId = await getTenantIdFromRequest(false);
+    const auction = await auctionService.getAuctionById(tenantId, auctionIdentifier, false);
+    if (!auction) return null;
+
+    const numericAuctionId = BigInt(auction.id);
+    const numericTenantId = BigInt(tenantId);
+
+    const assetWhere: Prisma.AssetWhereInput = {
+        tenantId: numericTenantId,
+        status: { in: ['DISPONIVEL', 'LOTEADO'] },
+    };
+
+    if (auction.sellerId || auction.judicialProcessId) {
+        assetWhere.OR = [];
+        if (auction.sellerId) {
+            assetWhere.OR.push({ sellerId: BigInt(auction.sellerId) });
+        }
+        if (auction.judicialProcessId) {
+            assetWhere.OR.push({ judicialProcessId: BigInt(auction.judicialProcessId) });
+        }
+    }
+
+    assetWhere.lots = {
+        none: {
+            lot: {
+                auctionId: numericAuctionId,
+            },
+        },
+    };
+
+    const [rawAssets, rawHabilitations, rawBids, rawWins] = await Promise.all([
+        prisma.asset.findMany({
+            where: assetWhere,
+            include: {
+                category: true,
+                seller: true,
+                judicialProcess: true,
+            },
+            orderBy: { updatedAt: 'desc' },
+            take: 50,
+        }),
+        prisma.auctionHabilitation.findMany({
+            where: { auctionId: numericAuctionId },
+            include: { user: true },
+            orderBy: { habilitatedAt: 'desc' },
+        }),
+        prisma.bid.findMany({
+            where: { auctionId: numericAuctionId },
+            include: { bidder: true, lot: true },
+            orderBy: { timestamp: 'desc' },
+        }),
+        prisma.userWin.findMany({
+            where: { lot: { auctionId: numericAuctionId } },
+            include: { user: true, lot: true, installmentPayment: true },
+            orderBy: { winDate: 'desc' },
+        }),
+    ]);
+
+    const availableAssets: AuctionPreparationAssetSummary[] = rawAssets.map((asset) => ({
+        id: asset.id.toString(),
+        title: asset.title,
+        categoryName: asset.category?.name ?? undefined,
+        evaluationValue: decimalToNumber(asset.evaluationValue),
+        status: asset.status,
+        sellerName: asset.seller?.name ?? null,
+        judicialProcessNumber: asset.judicialProcess?.processNumber ?? null,
+        source: asset.judicialProcessId ? 'PROCESS' : 'CONSIGNOR',
+        locationLabel: asset.locationCity
+            ? asset.locationState
+                ? `${asset.locationCity}/${asset.locationState}`
+                : asset.locationCity
+            : asset.locationState ?? null,
+        createdAt: asset.createdAt ? asset.createdAt.toISOString() : undefined,
+    }));
+
+    const habilitations: AuctionPreparationHabilitation[] = rawHabilitations.map((hab) => ({
+        userId: hab.userId.toString(),
+        userName: hab.user?.fullName ?? 'Usuário',
+        documentNumber: hab.user?.cpf ?? hab.user?.cnpj ?? null,
+        email: hab.user?.email ?? undefined,
+        phone: hab.user?.cellPhone ?? hab.user?.homePhone ?? undefined,
+        status: 'APPROVED',
+        createdAt: hab.habilitatedAt ? hab.habilitatedAt.toISOString() : new Date().toISOString(),
+    }));
+
+    const bids: AuctionPreparationBid[] = rawBids.map((bid) => ({
+        id: bid.id.toString(),
+        lotId: bid.lotId.toString(),
+        lotTitle: bid.lot?.title ?? `Lote ${bid.lotId}`,
+        lotNumber: bid.lot?.number ?? undefined,
+        bidderId: bid.bidderId.toString(),
+        bidderName: bid.bidder?.fullName ?? 'Participante',
+        amount: decimalToNumber(bid.amount),
+        timestamp: bid.timestamp.toISOString(),
+    }));
+
+    const userWins: AuctionPreparationWin[] = rawWins.map((win) => ({
+        id: win.id.toString(),
+        lotId: win.lotId.toString(),
+        lotTitle: win.lot?.title ?? `Lote ${win.lotId}`,
+        lotNumber: win.lot?.number ?? undefined,
+        userId: win.userId.toString(),
+        userName: win.user?.fullName ?? 'Arrematante',
+        value: decimalToNumber(win.winningBidAmount),
+        paymentStatus: win.paymentStatus,
+        winDate: win.winDate ? win.winDate.toISOString() : new Date().toISOString(),
+        installments: (win.installmentPayment || []).map((installment) => ({
+            id: installment.id.toString(),
+            amount: decimalToNumber(installment.amount),
+            dueDate: installment.dueDate.toISOString(),
+            paymentDate: installment.paymentDate ? installment.paymentDate.toISOString() : null,
+            status: installment.status,
+        })),
+    }));
+
+    return {
+        auction,
+        availableAssets,
+        habilitations,
+        bids,
+        userWins,
+    };
 }
 
 export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {

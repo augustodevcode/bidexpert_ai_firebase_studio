@@ -117,7 +117,20 @@ export class AuctioneerService {
       const dataToUpdate: Partial<Prisma.AuctioneerUpdateInput> = { ...restOfData };
       
       if (data.name) {
-        dataToUpdate.slug = slugify(data.name);
+        const newSlug = slugify(data.name);
+        const currentAuctioneer = await this.auctioneerRepository.findById(tenantId, id);
+        
+        if (currentAuctioneer && currentAuctioneer.slug !== newSlug) {
+           dataToUpdate.slug = newSlug;
+        } else {
+           // If slug is same, don't update it to avoid potential conflicts
+           if (currentAuctioneer && currentAuctioneer.slug === newSlug) {
+             // Ensure slug is NOT in dataToUpdate if it hasn't changed
+             // (It wasn't added yet, but just to be safe and explicit about the logic flow)
+           } else {
+             dataToUpdate.slug = newSlug;
+           }
+        }
       }
       
       const addressPartsToUpdate = [
@@ -147,6 +160,10 @@ export class AuctioneerService {
       await this.auctioneerRepository.update(tenantId, id, dataToUpdate);
       return { success: true, message: 'Leiloeiro atualizado com sucesso.' };
     } catch (error: any) {
+       if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
+          console.warn(`[AuctioneerService] Tentativa de duplicidade ao atualizar leiloeiro ${id}: ${error.meta?.target}`);
+          return { success: false, message: 'Já existe um leiloeiro com este nome (slug em uso).' };
+       }
        console.error(`Error in AuctioneerService.updateAuctioneer for id ${id}:`, error);
       return { success: false, message: `Falha ao atualizar leiloeiro: ${error.message}` };
     }

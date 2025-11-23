@@ -50,19 +50,61 @@ export class SellerService {
   }
 
   async getSellers(tenantId: string, limit?: number): Promise<SellerProfileInfo[]> {
-    return this.sellerRepository.findAll(tenantId, limit);
+    const sellers = await this.sellerRepository.findAll(tenantId, limit);
+    
+    return sellers.map(s => {
+        // Explicitly remove potential relations that might cause serialization issues
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { lots, auctions, judicialProcesses, assets, ...rest } = s as any;
+        
+        return {
+            ...rest,
+            id: s.id.toString(),
+            tenantId: s.tenantId.toString(),
+            userId: s.userId?.toString(),
+            judicialBranchId: s.judicialBranchId?.toString(),
+            logoMediaId: s.logoMediaId?.toString(),
+        };
+    });
   }
 
   async getSellerById(tenantId: string, id: string): Promise<SellerProfileInfo | null> {
-    return this.sellerRepository.findById(tenantId, id);
+    const seller = await this.sellerRepository.findById(tenantId, id);
+    if (!seller) return null;
+    return {
+      ...seller,
+      id: seller.id.toString(),
+      tenantId: seller.tenantId.toString(),
+      userId: seller.userId?.toString(),
+      judicialBranchId: seller.judicialBranchId?.toString(),
+      logoMediaId: seller.logoMediaId?.toString(),
+    };
   }
   
   async findByName(tenantId: string, name: string): Promise<SellerProfileInfo | null> {
-    return this.sellerRepository.findByName(tenantId, name);
+    const seller = await this.sellerRepository.findByName(tenantId, name);
+    if (!seller) return null;
+    return {
+      ...seller,
+      id: seller.id.toString(),
+      tenantId: seller.tenantId.toString(),
+      userId: seller.userId?.toString(),
+      judicialBranchId: seller.judicialBranchId?.toString(),
+      logoMediaId: seller.logoMediaId?.toString(),
+    };
   }
 
   async getSellerBySlug(tenantId: string, slugOrId: string): Promise<SellerProfileInfo | null> {
-      return this.sellerRepository.findBySlug(tenantId, slugOrId);
+      const seller = await this.sellerRepository.findBySlug(tenantId, slugOrId);
+      if (!seller) return null;
+      return {
+        ...seller,
+        id: seller.id.toString(),
+        tenantId: seller.tenantId.toString(),
+        userId: seller.userId?.toString(),
+        judicialBranchId: seller.judicialBranchId?.toString(),
+        logoMediaId: seller.logoMediaId?.toString(),
+      };
   }
   
   async getLotsBySellerSlug(tenantId: string, sellerSlugOrId: string): Promise<Lot[]> {
@@ -143,7 +185,19 @@ export class SellerService {
       const dataToUpdate: Partial<Prisma.SellerUpdateInput> = { ...restOfData };
 
       if (data.name) {
-        dataToUpdate.slug = slugify(data.name);
+        const newSlug = slugify(data.name);
+        const currentSeller = await this.sellerRepository.findById(tenantId, id);
+
+        if (currentSeller && currentSeller.slug !== newSlug) {
+           dataToUpdate.slug = newSlug;
+        } else {
+           // If slug is same, don't update it
+           if (currentSeller && currentSeller.slug === newSlug) {
+             // Do nothing, slug is not added to dataToUpdate
+           } else {
+             dataToUpdate.slug = newSlug;
+           }
+        }
       }
       
       const addressPartsToUpdate = [
@@ -173,6 +227,10 @@ export class SellerService {
       await this.sellerRepository.update(tenantId, id, dataToUpdate);
       return { success: true, message: 'Comitente atualizado com sucesso.' };
     } catch (error: any) {
+       if (error.code === 'P2002' && (error.meta?.target?.includes('slug') || error.meta?.target?.includes('name'))) {
+          console.warn(`[SellerService] Tentativa de duplicidade ao atualizar comitente ${id}: ${error.meta?.target}`);
+          return { success: false, message: 'Já existe um comitente com este nome (slug ou nome em uso).' };
+       }
        console.error(`Error in SellerService.updateSeller for id ${id}:`, error);
       return { success: false, message: `Falha ao atualizar comitente: ${error.message}` };
     }

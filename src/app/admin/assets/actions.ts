@@ -12,6 +12,7 @@ import { revalidatePath } from 'next/cache';
 import type { Asset, AssetFormData } from '@/types';
 import { AssetService } from '@/services/asset.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const assetService = new AssetService();
 
@@ -21,8 +22,10 @@ const assetService = new AssetService();
  * @returns {Promise<Asset[]>} Uma lista de ativos.
  */
 export async function getAssets(filter?: { judicialProcessId?: string, sellerId?: string, status?: string }): Promise<Asset[]> {
+    console.log('getAssets called');
     const tenantId = await getTenantIdFromRequest();
-    return assetService.getAssets({ ...filter, tenantId });
+    const result = await assetService.getAssets({ ...filter, tenantId });
+    return sanitizeResponse(result);
 }
 
 /**
@@ -32,7 +35,8 @@ export async function getAssets(filter?: { judicialProcessId?: string, sellerId?
  */
 export async function getAsset(id: string): Promise<Asset | null> {
     const tenantId = await getTenantIdFromRequest();
-    return assetService.getAssetById(tenantId, id);
+    const result = await assetService.getAssetById(tenantId, id);
+    return sanitizeResponse(result);
 }
 
 /**
@@ -41,8 +45,10 @@ export async function getAsset(id: string): Promise<Asset | null> {
  * @returns {Promise<{ success: boolean; message: string; assetId?: string; }>} O resultado da operação.
  */
 export async function createAsset(data: AssetFormData): Promise<{ success: boolean; message: string; assetId?: string; }> {
+    console.log('createAsset called with data:', JSON.stringify(data)); // Debug
     const tenantId = await getTenantIdFromRequest();
     const result = await assetService.createAsset(tenantId, data);
+    console.log('createAsset result:', JSON.stringify(result)); // Debug
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/assets');
     }

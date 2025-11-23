@@ -20,23 +20,37 @@ export default function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className={cn("mb-6 text-sm text-muted-foreground", className)}>
-      <ol className="flex items-center space-x-1.5">
-        {items.map((item, index) => (
-          <li key={index} className="flex items-center">
-            {item.href ? (
-              <Link href={item.href} className="hover:text-primary transition-colors">
-                {item.label}
-              </Link>
-            ) : (
-              <span className="font-medium text-foreground">{item.label}</span>
+    <ol className={cn("flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground", className)}>
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        const content = item.href && !isLast ? (
+          <Link
+            href={item.href}
+            className="hover:text-foreground text-muted-foreground transition-colors font-medium whitespace-nowrap"
+          >
+            {item.label}
+          </Link>
+        ) : (
+          <span
+            className={cn(
+              "font-semibold text-foreground whitespace-nowrap",
+              isLast ? "" : "text-muted-foreground"
             )}
-            {index < items.length - 1 && (
-              <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground/70" />
+            aria-current={isLast ? "page" : undefined}
+          >
+            {item.label}
+          </span>
+        );
+
+        return (
+          <li key={index} className="flex items-center whitespace-nowrap">
+            {content}
+            {!isLast && (
+              <ChevronRight className="h-3.5 w-3.5 mx-1 text-muted-foreground/60" aria-hidden="true" />
             )}
           </li>
-        ))}
-      </ol>
-    </nav>
+        );
+      })}
+    </ol>
   );
 }

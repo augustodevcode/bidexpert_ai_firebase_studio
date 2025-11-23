@@ -1,4 +1,3 @@
-
 // src/services/user.service.ts
 /**
  * @fileoverview Este arquivo contém a classe UserService, que encapsula a
@@ -73,6 +72,13 @@ export class UserService {
         return null;
     }
     const user = await this.userRepository.findById(BigInt(id));
+    // DEBUG: Check for lots in user
+    if ((user as any)?.lotsWon) {
+        console.error('UserService.getUserById: FOUND LOTS WON IN USER RESPONSE!', (user as any).lotsWon);
+    }
+    if ((user as any)?.bids) {
+        console.error('UserService.getUserById: FOUND BIDS IN USER RESPONSE!', (user as any).bids);
+    }
     return this.formatUser(user);
   }
   
@@ -135,16 +141,43 @@ export class UserService {
   }
   
   async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string }> {
+    console.log('[UserService.updateUserRoles] Iniciando atualização de perfis');
+    console.log('[UserService.updateUserRoles] userId:', userId);
+    console.log('[UserService.updateUserRoles] roleIds:', roleIds.map(id => id.toString()));
+    
     try {
       const user = await this.userRepository.findById(BigInt(userId));
-      if(!user) return { success: false, message: 'Usuário não encontrado.'};
+      
+      if(!user) {
+        console.error('[UserService.updateUserRoles] Usuário não encontrado');
+        return { success: false, message: 'Usuário não encontrado.'};
+      }
+
+      console.log('[UserService.updateUserRoles] Usuário encontrado:', {
+        id: user.id.toString(),
+        email: user.email,
+        currentRoles: user.roles?.map((r: any) => ({ id: r.roleId.toString(), name: r.role.name }))
+      });
 
       const tenantIds = user.tenants?.map((t: any) => t.tenantId) || [];
+      console.log('[UserService.updateUserRoles] tenantIds do usuário:', tenantIds.map(id => id.toString()));
 
-      await this.userRepository.updateUserRoles(BigInt(userId), tenantIds, roleIds.map(id => BigInt(id)));
+      const roleIdsAsBigInt = roleIds.map(id => BigInt(id));
+      console.log('[UserService.updateUserRoles] Chamando repository.updateUserRoles...');
+      
+      await this.userRepository.updateUserRoles(BigInt(userId), tenantIds, roleIdsAsBigInt);
+      
+      console.log('[UserService.updateUserRoles] Perfis atualizados com sucesso no repositório');
+      
+      // Verificar se realmente atualizou
+      const updatedUser = await this.userRepository.findById(BigInt(userId));
+      console.log('[UserService.updateUserRoles] Perfis após atualização:', 
+        updatedUser?.roles?.map((r: any) => ({ id: r.roleId.toString(), name: r.role.name }))
+      );
+      
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
     } catch (error: any) {
-      console.error(`Error in UserService.updateUserRoles for userId ${userId}:`, error);
+      console.error(`[UserService.updateUserRoles] Erro ao atualizar perfis para userId ${userId}:`, error);
       return { success: false, message: `Falha ao atualizar perfis: ${error.message}` };
     }
   }

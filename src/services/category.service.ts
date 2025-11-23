@@ -32,6 +32,9 @@ export class CategoryService {
         .then(categories => categories.map(c => ({
           ...c,
           id: c.id.toString(),
+          logoMediaId: c.logoMediaId?.toString(),
+          coverImageMediaId: c.coverImageMediaId?.toString(),
+          megaMenuImageMediaId: c.megaMenuImageMediaId?.toString(),
           _count: { lots: c._count.lots }
         })))
         .then(mapped => {

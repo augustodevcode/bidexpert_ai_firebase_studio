@@ -79,6 +79,9 @@ export class JudicialBranchService {
       return { success: true, message: 'Vara atualizada com sucesso.' };
     } catch (error: any) {
       console.error(`Error in JudicialBranchService.update for id ${id}:`, error);
+      if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
+        return { success: false, message: 'Já existe uma vara com este nome.' };
+      }
       return { success: false, message: `Falha ao atualizar vara: ${error.message}` };
     }
   }

@@ -56,7 +56,28 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   const form = useForm<AuctioneerFormValues>({
     resolver: zodResolver(auctioneerFormSchema),
     mode: 'onChange',
-    defaultValues: initialData || {},
+    defaultValues: initialData ? {
+      name: initialData.name || '',
+      registrationNumber: initialData.registrationNumber || '',
+      contactName: initialData.contactName || '',
+      email: initialData.email || '',
+      phone: initialData.phone || '',
+      website: initialData.website || '',
+      logoUrl: initialData.logoUrl || '',
+      logoMediaId: initialData.logoMediaId || '',
+      dataAiHintLogo: initialData.dataAiHintLogo || '',
+      description: initialData.description || '',
+      userId: initialData.userId?.toString() || '',
+      street: initialData.street || '',
+      number: initialData.number || '',
+      complement: initialData.complement || '',
+      neighborhood: initialData.neighborhood || '',
+      cityId: initialData.cityId?.toString() || '',
+      stateId: initialData.stateId?.toString() || '',
+      zipCode: initialData.zipCode || '',
+      latitude: initialData.latitude || null,
+      longitude: initialData.longitude || null,
+    } : {},
   });
 
   React.useImperativeHandle(ref, () => ({
@@ -64,9 +85,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
     formState: form.formState,
   }));
   
-  React.useEffect(() => {
-    form.reset(initialData || {});
-  }, [initialData, form]);
+
   
   async function onSubmit(values: AuctioneerFormValues) {
     setIsSubmitting(true);
@@ -119,8 +138,12 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
               <AccordionItem value="contact">
                 <AccordionTrigger className="text-md font-semibold">Contato e Mídia</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <div className="grid md:grid-cols-2 gap-6"><FormField control={form.control} name="contactName" render={({ field }) => (<FormItem><FormLabel>Nome do Contato</FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)}/><FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email de Contato</FormLabel><FormControl><Input type="email" placeholder="contato@leiloeiro.com" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)}/></div>
-                  <div className="grid md:grid-cols-2 gap-6"><FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone Principal</FormLabel><FormControl><Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)}/><FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website</FormLabel><FormControl><Input type="url" placeholder="https://www.leiloeiro.com" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)}/></div>
+                  <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <FormField control={form.control} name="contactName" render={({ field }) => (<FormItem><FormLabel>Nome do Contato</FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email de Contato</FormLabel><FormControl><Input type="email" placeholder="contato@leiloeiro.com" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone Principal</FormLabel><FormControl><Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website</FormLabel><FormControl><Input type="url" placeholder="https://www.leiloeiro.com" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)}/>
+                  </div>
                   <FormItem>
                     <FormLabel>Logo do Leiloeiro</FormLabel>
                     <div className="flex items-center gap-4">
@@ -139,7 +162,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
             </Accordion>
             <div className="flex justify-end gap-2 pt-4">
                 {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
-                <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+                <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
                     Salvar
                 </Button>

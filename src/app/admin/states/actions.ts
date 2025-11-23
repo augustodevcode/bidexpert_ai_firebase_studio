@@ -11,11 +11,13 @@
 import { revalidatePath } from 'next/cache';
 import { StateService } from '@/services/state.service';
 import type { StateInfo, StateFormData } from '@/types';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const stateService = new StateService();
 
 export async function getStates(): Promise<StateInfo[]> {
-  return stateService.getStates();
+  const result = await stateService.getStates();
+  return sanitizeResponse(result);
 }
 
 export async function getState(id: string): Promise<StateInfo | null> {

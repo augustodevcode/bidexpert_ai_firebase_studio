@@ -7,6 +7,8 @@ import { PlatformSettingsService } from '@/services/platform-settings.service';
 import { runFullSeedAction as seedAction } from './actions-old'; 
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
+import { sanitizeResponse } from '@/lib/serialization-helper';
+
 const settingsService = new PlatformSettingsService();
 
 export async function getPlatformSettings(): Promise<PlatformSettings | null> {
@@ -14,7 +16,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings | null> {
   try {
     const tenantId = await getTenantIdFromRequest(true); // Allow public fallback to '1'
     const settings = await settingsService.getSettings(tenantId);
-    return settings as PlatformSettings;
+    return sanitizeResponse(settings) as PlatformSettings;
   } catch (error: any) {
     console.error("[getPlatformSettings Action] Error fetching or creating settings:", error);
     const errorMessage = error.name + ': ' + error.message;

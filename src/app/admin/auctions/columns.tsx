@@ -9,7 +9,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Trash2, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader, ClientOnlyDate } from '@/components/ui/data-table-column-header';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 
-export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: string) => void, onEdit: (auction: Auction) => void }): ColumnDef<Auction>[] => [
+export const createColumns = ({ handleDelete, onOpenDashboard }: { handleDelete: (id: string) => void; onOpenDashboard: (auction: Auction) => void; }): ColumnDef<Auction>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -43,7 +43,7 @@ export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: str
     header: ({ column }) => <DataTableColumnHeader column={column} title="Título" />,
     cell: ({ row }) => (
       <div className="font-medium">
-        <button onClick={() => onEdit(row.original)} className="hover:text-primary text-left">
+        <button onClick={() => onOpenDashboard(row.original)} className="hover:text-primary text-left">
           {row.getValue("title")}
         </button>
         <p className="text-xs text-muted-foreground">ID: {row.original.publicId || row.original.id}</p>
@@ -90,10 +90,16 @@ export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: str
               <span className="sr-only">Visualizar Leilão</span>
             </Link>
           </Button>
-           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(auction)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenDashboard(auction)}>
+            <LayoutDashboard className="h-4 w-4" />
+            <span className="sr-only">Preparar Leilão</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+            <Link href={`/admin/auctions/${auction.publicId || auction.id}/edit`}>
               <Pencil className="h-4 w-4" />
-               <span className="sr-only">Editar</span>
-            </Button>
+              <span className="sr-only">Editar</span>
+            </Link>
+          </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(auction.id)} disabled={!canDelete} title={!canDelete ? "Apenas leilões em Rascunho ou Cancelado podem ser excluídos" : "Excluir Leilão"}>
             <Trash2 className="h-4 w-4 text-destructive" />
             <span className="sr-only">Excluir</span>

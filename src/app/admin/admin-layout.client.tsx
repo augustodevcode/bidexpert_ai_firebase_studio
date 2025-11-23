@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { hasPermission } from '@/lib/permissions';
@@ -20,8 +20,12 @@ interface AdminLayoutClientProps {
 export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   const { userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isWidgetConfigModalOpen, setIsWidgetConfigModalOpen] = useState(false);
+  
+  // Check if current page should be full-width
+  const isFullWidth = pathname?.includes('/auction-control-center');
 
   if (loading) {
     return (
@@ -85,7 +89,7 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
               onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
             />
             <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
-              <div className="mx-auto max-w-7xl">
+              <div className="w-full">
                 {children}
                 <DevInfoIndicator />
               </div>

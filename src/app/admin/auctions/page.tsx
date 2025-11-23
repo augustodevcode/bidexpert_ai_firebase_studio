@@ -79,9 +79,9 @@ export default function AdminAuctionsPage() {
     setRefetchTrigger(c => c + 1);
   }, []);
 
-  const handleEditClick = (auction: Auction) => {
-    // A edição agora é feita navegando para a página de edição
-    router.push(`/admin/auctions/${auction.id}/edit`);
+  const handleOpenDashboard = (auction: Auction) => {
+    const identifier = auction.publicId || auction.id;
+    router.push(`/admin/auctions/${identifier}/auction-control-center`);
   };
 
   const handleDelete = useCallback(
@@ -111,7 +111,7 @@ export default function AdminAuctionsPage() {
 
   const renderGridItem = (item: Auction) => <BidExpertCard item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Auction) => <BidExpertListItem item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
+  const columns = useMemo(() => createColumns({ handleDelete, onOpenDashboard: handleOpenDashboard }), [handleDelete, handleOpenDashboard]);
 
   const facetedFilterOptions = useMemo(() => {
       const statusOptions = [...new Set(auctions.map(a => a.status))].map(status => ({ value: status!, label: getAuctionStatusText(status) }));

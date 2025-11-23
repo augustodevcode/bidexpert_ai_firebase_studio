@@ -199,7 +199,7 @@ export default function BidExpertSearchResultsFrame<TItem extends {id: string}>(
         <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
       ) : (items.length > 0 || (viewMode === 'table' && dataTableColumns)) ? ( // A tabela deve sempre ser renderizada para que seus próprios estados internos funcionem
         <>
-            {viewMode === 'grid' && renderGridItem && <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">{paginatedItems.map((item, index) => <div key={item.id}>{renderGridItem(item, index)}</div>)}</div>}
+            {viewMode === 'grid' && renderGridItem && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">{paginatedItems.map((item, index) => <div key={item.id}>{renderGridItem(item, index)}</div>)}</div>}
             {viewMode === 'list' && renderListItem && <div className="space-y-4">{paginatedItems.map((item, index) => <div key={item.id}>{renderListItem(item, index)}</div>)}</div>}
             {dataTableColumns && (
                 <div className={viewMode === 'table' ? 'block' : 'hidden'}>

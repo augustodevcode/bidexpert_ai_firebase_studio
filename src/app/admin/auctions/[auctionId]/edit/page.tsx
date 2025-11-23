@@ -15,7 +15,7 @@ import { notFound, useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb, TrendingUp, BarChart3, Bot, Sparkles } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb, TrendingUp, BarChart3, Bot, Sparkles, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -245,6 +245,7 @@ export default function EditAuctionPage() {
   if (isLoading || !auction || !platformSettings) {
     return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
+  const controlCenterUrl = `/admin/auctions/${auction.publicId || auction.id}/auction-control-center`;
   
   const aiSuggestionButton = (
     <TooltipProvider>
@@ -259,6 +260,16 @@ export default function EditAuctionPage() {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+  const headerActions = (
+    <div className="flex flex-wrap gap-2 justify-end">
+      <Button asChild variant="secondary" size="sm">
+        <Link href={controlCenterUrl}>
+          <LayoutDashboard className="mr-2 h-4 w-4" /> Central do Leilão
+        </Link>
+      </Button>
+      {aiSuggestionButton}
+    </div>
   );
 
   return (
@@ -276,7 +287,7 @@ export default function EditAuctionPage() {
           onCancel={() => setIsViewMode(true)}
           onSave={handleSave}
           onDelete={handleDelete}
-          headerActions={aiSuggestionButton}
+          headerActions={headerActions}
         >
             <AuctionForm
                 formRef={formRef}

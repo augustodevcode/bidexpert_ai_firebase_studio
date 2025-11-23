@@ -1,6 +1,7 @@
-import { PrismaClient, Lot, Auction, Bid, LotStatus, Prisma } from '@prisma/client';
+import { PrismaClient, Lot as PmLot, Auction as PmAuction, Bid, LotStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { 
+import type { 
+  Lot,
   LotFormData, 
   LotQuestion, 
   Review, 
@@ -8,12 +9,11 @@ import {
   AuctioneerProfileInfo, 
   BidInfo, 
   UserLotMaxBid 
-} from '@/types/lot';
+} from '@/types';
 import { LotQuestionService } from '@/services/lot-question.service';
 import { ReviewService } from '@/services/review.service';
 import { SellerService } from '@/services/seller.service';
 import { AuctioneerService } from '@/services/auctioneer.service';
-import { generatePublicId } from '@/lib/public-id-generator';
 
 const NON_PUBLIC_LOT_STATUSES: LotStatus[] = ['RASCUNHO', 'CANCELADO', 'RETIRADO'];
 const NON_PUBLIC_AUCTION_STATUSES = ['RASCUNHO', 'EM_PREPARACAO', 'SUSPENSO', 'CANCELADO'];

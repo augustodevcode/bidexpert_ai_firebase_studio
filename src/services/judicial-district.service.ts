@@ -64,21 +64,26 @@ export class JudicialDistrictService {
 
   async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const dataToUpdate: Prisma.JudicialDistrictUpdateInput = { ...data };
+      const { courtId, stateId, ...rest } = data;
+      const dataToUpdate: Prisma.JudicialDistrictUpdateInput = { ...rest };
+      
       if (data.name) {
         dataToUpdate.slug = slugify(data.name);
       }
-      if (data.courtId) {
-          dataToUpdate.court = { connect: { id: BigInt(data.courtId) } };
+      if (courtId) {
+          dataToUpdate.court = { connect: { id: BigInt(courtId) } };
       }
-      if (data.stateId) {
-          dataToUpdate.state = { connect: { id: BigInt(data.stateId) } };
+      if (stateId) {
+          dataToUpdate.state = { connect: { id: BigInt(stateId) } };
       }
       
       await this.repository.update(id, dataToUpdate);
       return { success: true, message: 'Comarca atualizada com sucesso.' };
     } catch (error: any) {
       console.error(`Error in JudicialDistrictService.update for id ${id}:`, error);
+      if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
+        return { success: false, message: 'Já existe uma comarca com este nome.' };
+      }
       return { success: false, message: `Falha ao atualizar comarca: ${error.message}` };
     }
   }

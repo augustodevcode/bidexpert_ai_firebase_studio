@@ -67,13 +67,14 @@ export type Subcategory = Omit<PmSubcategory, 'id' | 'parentCategoryId'> & { id:
 export type AuctioneerProfileInfo = Omit<PmAuctioneer, 'id' | 'userId' | 'tenantId'> & { id: string; userId?: string | null; tenantId: string; auctionsConductedCount?: number; memberSince?: Date; rating?: number };
 export type SellerProfileInfo = Omit<PmSeller, 'id' | 'userId' | 'judicialBranchId' | 'tenantId'> & { id: string; userId?: string | null; judicialBranchId?: string | null; tenantId: string; activeLotsCount?: number; memberSince?: Date; auctionsFacilitatedCount?: number; rating?: number };
 
-export type Asset = Omit<PmAsset, 'id' | 'categoryId' | 'subcategoryId' | 'judicialProcessId' | 'sellerId' | 'tenantId' | 'evaluationValue' | 'latitude' | 'longitude' | 'totalArea' | 'builtArea' | 'year' | 'modelYear' | 'mileage' | 'numberOfDoors' | 'pieceCount' | 'bedrooms' | 'suites' | 'bathrooms' | 'parkingSpaces' | 'hoursUsed'> & { 
+export type Asset = Omit<PmAsset, 'id' | 'categoryId' | 'subcategoryId' | 'judicialProcessId' | 'sellerId' | 'tenantId' | 'evaluationValue' | 'latitude' | 'longitude' | 'totalArea' | 'builtArea' | 'year' | 'modelYear' | 'mileage' | 'numberOfDoors' | 'pieceCount' | 'bedrooms' | 'suites' | 'bathrooms' | 'parkingSpaces' | 'hoursUsed' | 'imageMediaId'> & { 
   id: string;
   categoryId?: string | null;
   subcategoryId?: string | null;
   judicialProcessId?: string | null;
   sellerId?: string | null;
   tenantId: string;
+  imageMediaId?: string | null;
   categoryName?: string;
   subcategoryName?: string | null;
   judicialProcessNumber?: string | null;
@@ -127,6 +128,21 @@ export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'city
   isFeaturedOnMarketplace?: boolean;
   additionalTriggers?: string[];
   dataAiHint?: string;
+};
+
+export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId' | 'sellerId' | 'auctioneerId' | 'cityId' | 'stateId' | 'winnerId' | 'originalLotId' | 'inheritedMediaFromAssetId' | 'tenantId' | 'price' | 'initialPrice' | 'secondInitialPrice' | 'bidIncrementStep' | 'evaluationValue' | 'latitude' | 'longitude'> & {
+  id: string;
+  auctionId: string;
+  categoryId?: string | null;
+  subcategoryId?: string | null;
+  sellerId?: string | null;
+  auctioneerId?: string | null;
+  cityId?: string | null;
+  stateId?: string | null;
+  winnerId?: string | null;
+  originalLotId?: string | null;
+  inheritedMediaFromAssetId?: string | null;
+  tenantId: string;
   auction?: Auction;
   auctionName?: string | null;
   categoryName?: string;
@@ -144,6 +160,24 @@ export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'city
   totalArea?: number | null;
   occupancyStatus?: string | null;
   type?: string | null;
+  assets?: Asset[];
+  galleryImageUrls?: string[];
+};
+
+export type Review = Omit<PmReview, 'id' | 'lotId' | 'auctionId' | 'userId'> & { 
+  id: string; 
+  lotId: string; 
+  auctionId: string; 
+  userId: string; 
+};
+
+export type BidInfo = Omit<PmBid, 'id' | 'lotId' | 'auctionId' | 'bidderId' | 'tenantId' | 'amount'> & { 
+  id: string; 
+  lotId: string; 
+  auctionId: string; 
+  bidderId: string; 
+  tenantId: string; 
+  amount: number; 
 };
 
 export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId' | 'answeredByUserId'> & { id: string; lotId: string; auctionId: string; userId: string; answeredByUserId?: string | null };
@@ -369,6 +403,71 @@ export type WizardData = {
     selectedAssets?: Asset[];
     createdLots?: Lot[];
 };
+
+export type AssetSourceType = 'PROCESS' | 'CONSIGNOR';
+
+export interface AuctionPreparationAssetSummary {
+  id: string;
+  title: string;
+  categoryName?: string;
+  evaluationValue?: number | null;
+  status: string;
+  sellerName?: string | null;
+  judicialProcessNumber?: string | null;
+  source: AssetSourceType;
+  locationLabel?: string | null;
+  createdAt?: string;
+}
+
+export interface AuctionPreparationHabilitation {
+  userId: string;
+  userName: string;
+  documentNumber?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  status: 'APPROVED' | 'PENDING' | 'REJECTED';
+  createdAt: string;
+}
+
+export interface AuctionPreparationBid {
+  id: string;
+  lotId: string;
+  lotTitle: string;
+  lotNumber?: string | null;
+  bidderId: string;
+  bidderName: string;
+  amount: number;
+  timestamp: string;
+}
+
+export interface AuctionPreparationInstallment {
+  id: string;
+  amount: number;
+  dueDate: string;
+  paymentDate?: string | null;
+  status: string;
+}
+
+export interface AuctionPreparationWin {
+  id: string;
+  lotId: string;
+  lotTitle: string;
+  lotNumber?: string | null;
+  userId: string;
+  userName: string;
+  value: number;
+  paymentStatus: string;
+  winDate: string;
+  installments: AuctionPreparationInstallment[];
+}
+
+export interface AuctionPreparationData {
+  auction: Auction;
+  availableAssets: AuctionPreparationAssetSummary[];
+  habilitations: AuctionPreparationHabilitation[];
+  bids: AuctionPreparationBid[];
+  userWins: AuctionPreparationWin[];
+}
 
     
 

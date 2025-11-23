@@ -1,5 +1,14 @@
 const { spawn } = require('child_process');
-const { run_preview } = require('@qoder/ide-api');
+
+let run_preview;
+try {
+  ({ run_preview } = require('@qoder/ide-api'));
+} catch (error) {
+  console.warn('[start-preview] @qoder/ide-api não encontrado; use a pré-visualização manualmente.');
+  run_preview = ({ name, url }) => {
+    console.log(`Preview de "${name}" não pôde ser iniciado automaticamente. Acesse ${url} na aba Preview do VS Code.`);
+  };
+}
 
 // Start the development server
 const devServer = spawn('npm', ['run', 'dev'], {

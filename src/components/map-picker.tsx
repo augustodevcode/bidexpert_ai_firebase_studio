@@ -84,14 +84,14 @@ export default function MapPicker({ latitude, longitude, zipCode, control, setVa
       if (result.success && result.data) {
           setValue('street', result.data.logradouro, { shouldDirty: true });
           
-          const foundState = allStates.find(s => s.uf === result.data?.uf);
+            const foundState = allStates.find(s => s.uf === result.data?.uf);
           if (foundState) {
-              setValue('stateId', foundState.id, { shouldDirty: true });
+              setValue('stateId', foundState.id?.toString() ?? '', { shouldDirty: true });
           }
           
-          const foundCity = allCities.find(c => c.name === result.data?.localidade && c.stateUf === result.data?.uf);
+            const foundCity = allCities.find(c => c.name === result.data?.localidade && c.stateUf === result.data?.uf);
           if (foundCity) {
-              setValue('cityId', foundCity.id, { shouldDirty: true });
+              setValue('cityId', foundCity.id?.toString() ?? '', { shouldDirty: true });
           }
 
           toast({ title: 'Endereço encontrado!', description: `${result.data.logradouro}, ${result.data.localidade} - ${result.data.uf}` });

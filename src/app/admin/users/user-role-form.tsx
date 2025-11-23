@@ -42,16 +42,42 @@ export default function UserRoleForm({
 
   const form = useForm<UserRoleFormValues>({
     resolver: zodResolver(userRoleFormSchema),
+    mode: 'onChange',
     defaultValues: {
       roleIds: user?.roles?.map(r => r.id) || [],
     },
   });
 
+  // Watch the roleIds field to enable/disable the button
+  const roleIds = form.watch('roleIds');
+  const hasSelectedRoles = roleIds && roleIds.length > 0;
+
+  // Log para debug
+  React.useEffect(() => {
+    console.log('[UserRoleForm] Estado atual do formulário:', {
+      roleIds,
+      hasSelectedRoles,
+      isValid: form.formState.isValid,
+      isDirty: form.formState.isDirty,
+      errors: form.formState.errors
+    });
+  }, [roleIds, hasSelectedRoles, form.formState.isValid, form.formState.isDirty, form.formState.errors]);
+
   async function onSubmit(values: UserRoleFormValues) {
+    console.log('[UserRoleForm] Iniciando submissão do formulário de perfis');
+    console.log('[UserRoleForm] Usuário ID:', user.id);
+    console.log('[UserRoleForm] Perfis selecionados:', values.roleIds);
+    console.log('[UserRoleForm] Perfis anteriores:', user?.roles?.map(r => ({ id: r.id, name: r.name })));
+    
     setIsSubmitting(true);
     try {
+      console.log('[UserRoleForm] Chamando onSubmitAction...');
       const result = await onSubmitAction(user.id, values.roleIds || []);
+      
+      console.log('[UserRoleForm] Resultado da submissão:', result);
+      
       if (result.success) {
+        console.log('[UserRoleForm] Perfis atualizados com sucesso');
         toast({
           title: 'Sucesso!',
           description: result.message,
@@ -59,6 +85,7 @@ export default function UserRoleForm({
         router.push('/admin/users');
         router.refresh();
       } else {
+        console.error('[UserRoleForm] Falha ao atualizar perfis:', result.message);
         toast({
           title: 'Erro',
           description: result.message,
@@ -66,14 +93,15 @@ export default function UserRoleForm({
         });
       }
     } catch (error) {
+      console.error('[UserRoleForm] Erro inesperado ao processar submissão:', error);
       toast({
         title: 'Erro Inesperado',
         description: 'Ocorreu um erro ao processar sua solicitação.',
         variant: 'destructive',
       });
-      console.error("Unexpected error in user role form:", error);
     } finally {
       setIsSubmitting(false);
+      console.log('[UserRoleForm] Submissão finalizada');
     }
   }
 
@@ -149,7 +177,7 @@ export default function UserRoleForm({
             <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+            <Button type="submit" disabled={isSubmitting || !hasSelectedRoles}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Salvar Perfis
             </Button>

@@ -3,7 +3,7 @@
 
 import { Suspense, useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
+import { ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -220,12 +220,6 @@ function DirectSalesPageContent() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-primary">Home</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="text-foreground font-medium">Venda Direta</span>
-      </div>
-
       <Card className="shadow-lg p-6 bg-secondary/30">
         <div className="text-center mb-6">
           <ShoppingCart className="h-12 w-12 mx-auto text-primary mb-3" />

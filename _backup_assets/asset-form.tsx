@@ -84,7 +84,31 @@ const AssetForm = React.forwardRef<any, AssetFormProps>(({
   const form = useForm<AssetFormData>({
     resolver: zodResolver(assetFormSchema),
     mode: 'onChange',
-    defaultValues: initialData || {},
+    defaultValues: initialData ? {
+      title: initialData.title || '',
+      description: initialData.description || '',
+      properties: initialData.properties || '',
+      status: initialData.status || 'CADASTRO',
+      categoryId: initialData.categoryId?.toString() || '',
+      subcategoryId: initialData.subcategoryId?.toString() || '',
+      judicialProcessId: initialData.judicialProcessId?.toString() || '',
+      sellerId: initialData.sellerId?.toString() || '',
+      evaluationValue: initialData.evaluationValue || null,
+      imageUrl: initialData.imageUrl || '',
+      imageMediaId: initialData.imageMediaId || '',
+      galleryImageUrls: initialData.galleryImageUrls || [],
+      mediaItemIds: initialData.mediaItemIds || [],
+      dataAiHint: initialData.dataAiHint || '',
+      street: initialData.street || '',
+      number: initialData.number || '',
+      complement: initialData.complement || '',
+      neighborhood: initialData.neighborhood || '',
+      cityId: initialData.cityId?.toString() || '',
+      stateId: initialData.stateId?.toString() || '',
+      zipCode: initialData.zipCode || '',
+      latitude: initialData.latitude || null,
+      longitude: initialData.longitude || null,
+    } : {},
   });
   
   React.useImperativeHandle(ref, () => ({
@@ -98,9 +122,7 @@ const AssetForm = React.forwardRef<any, AssetFormProps>(({
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const galleryUrls = useWatch({ control: form.control, name: 'galleryImageUrls' });
   
-  React.useEffect(() => {
-    form.reset(initialData || {});
-  }, [initialData, form]);
+
 
   const handleRefetch = React.useCallback(async (entity: 'categories' | 'processes' | 'sellers') => {
     setIsSubmitting(true);
@@ -253,7 +275,7 @@ const AssetForm = React.forwardRef<any, AssetFormProps>(({
             </div>
              <div className="flex justify-end gap-2 p-6 border-t">
               {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
-              <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {initialData ? "Salvar Alterações" : "Criar Ativo"}
               </Button>

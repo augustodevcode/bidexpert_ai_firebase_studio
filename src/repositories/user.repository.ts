@@ -79,20 +79,35 @@ export class UserRepository {
   }
 
   async updateUserRoles(userId: bigint, tenantIds: bigint[], roleIds: bigint[]) {
-    if (!userId) return;
+    console.log('[UserRepository.updateUserRoles] Iniciando atualização de perfis');
+    console.log('[UserRepository.updateUserRoles] userId:', userId.toString());
+    console.log('[UserRepository.updateUserRoles] roleIds:', roleIds.map(id => id.toString()));
+    
+    if (!userId) {
+      console.error('[UserRepository.updateUserRoles] userId não fornecido');
+      return;
+    }
 
     // A lógica de roles é global, não por tenant, então usamos a instância compartilhada do Prisma
-    await prisma.usersOnRoles.deleteMany({ where: { userId }});
+    console.log('[UserRepository.updateUserRoles] Deletando perfis existentes...');
+    const deleteResult = await prisma.usersOnRoles.deleteMany({ where: { userId }});
+    console.log('[UserRepository.updateUserRoles] Perfis deletados:', deleteResult.count);
 
     if (roleIds.length > 0) {
-      await prisma.usersOnRoles.createMany({
+      console.log('[UserRepository.updateUserRoles] Criando novos perfis...');
+      const createResult = await prisma.usersOnRoles.createMany({
         data: roleIds.map(roleId => ({
           userId,
           roleId,
           assignedBy: 'admin-panel',
         })),
       });
+      console.log('[UserRepository.updateUserRoles] Perfis criados:', createResult.count);
+    } else {
+      console.log('[UserRepository.updateUserRoles] Nenhum perfil para criar (array vazio)');
     }
+    
+    console.log('[UserRepository.updateUserRoles] Atualização concluída');
   }
 
   async delete(id: bigint): Promise<void> {

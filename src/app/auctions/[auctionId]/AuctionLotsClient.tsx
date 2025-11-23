@@ -2,12 +2,11 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  ChevronRight, FileText, Heart, Eye
+    FileText, Heart, Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -35,11 +34,7 @@ export default function AuctionLotsClient({ auction, platformSettings }: Auction
                 <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                         <div className="flex-grow">
-                            <div className="flex items-center text-sm text-muted-foreground mb-2">
-                                <Link href="/" className="hover:text-primary">Home</Link>
-                                <ChevronRight className="h-4 w-4 mx-1" />
-                                <span>Leilão {auction.id}</span>
-                            </div>
+                            <p className="text-sm text-muted-foreground mb-2 font-semibold">Leilão {auction.id}</p>
                             <div className="mb-3 space-y-0.5">
                                 <p className="text-xs text-muted-foreground">
                                     Data: {format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Lotes: {auction.totalLots} | Status: <span className="font-semibold text-primary">{auction.status}</span>

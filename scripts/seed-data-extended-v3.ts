@@ -6,6 +6,9 @@ import { createConnectId, createConnectIds } from './types';
 import { AssetStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { createServiceExtensions } from './service-extensions';
+import { enrichAssetLocations } from './seed-asset-location';
+import { attachMediaGalleryToAssets, seedMediaItems } from './seed-asset-media';
+import { seedAssetCategories } from './seed-asset-categories';
 
 // Import services individually to avoid path issues
 import { TenantService } from '../src/services/tenant.service';
@@ -60,6 +63,7 @@ import type {
     JudicialBranch, 
     Court, 
     CityInfo as City, 
+    StateInfo, 
     JudicialProcessFormData, 
     UserWin, 
     DocumentType, 
@@ -329,7 +333,7 @@ async function main() {
 
   await services.platformSettings.getSettings(tenantId);
 
-  const createdStates: { [key: string]: any } = {};
+  const createdStates: Record<string, StateInfo> = {};
   console.log("Criando estados brasileiros...");
   for (const state of brazilianStates) {
     console.log(`Criando estado: ${state.name} (${state.uf})`);
@@ -573,23 +577,8 @@ async function main() {
   }
   console.log(`${sellers.length} sellers created.`);
 
-  const catImoveisResult = await services.category.createCategory({ name: 'Imóveis', description: 'Imóveis em geral' });
-  if(!catImoveisResult.success || !catImoveisResult.category) throw new Error(catImoveisResult.message);
-  const catImoveis = catImoveisResult.category;
-
-  const catVeiculosResult = await services.category.createCategory({ name: 'Veículos', description: 'Veículos automotores' });
-  if(!catVeiculosResult.success || !catVeiculosResult.category) throw new Error(catVeiculosResult.message);
-  const catVeiculos = catVeiculosResult.category;
-
-  const catEletronicosResult = await services.category.createCategory({ name: 'Eletrônicos', description: 'Equipamentos eletrônicos' });
-  if(!catEletronicosResult.success || !catEletronicosResult.category) throw new Error(catEletronicosResult.message);
-  const catEletronicos = catEletronicosResult.category;
-
-  await services.subcategory.createSubcategory({ name: 'Apartamentos', parentCategoryId: catImoveis.id, description: 'Apartamentos', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
-  await services.subcategory.createSubcategory({ name: 'Casas', parentCategoryId: catImoveis.id, description: 'Casas', displayOrder: 1, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
-  await services.subcategory.createSubcategory({ name: 'Carros', parentCategoryId: catVeiculos.id, description: 'Carros', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
-  await services.subcategory.createSubcategory({ name: 'Motos', parentCategoryId: catVeiculos.id, description: 'Motos', displayOrder: 1, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
-  await services.subcategory.createSubcategory({ name: 'Celulares', parentCategoryId: catEletronicos.id, description: 'Celulares', displayOrder: 0, iconUrl: '', iconMediaId: null, dataAiHintIcon: '' });
+  const seededCategories = await seedAssetCategories(services.category, services.subcategory);
+  const { imoveis: catImoveis, veiculos: catVeiculos, eletronicos: catEletronicos } = seededCategories;
   console.log("Categories and subcategories created.");
 
   console.log("Creating vehicle makes and models...");
@@ -795,22 +784,7 @@ async function main() {
 
 
   console.log("Creating media items...");
-  const mediaItems: any[] = [];
-  if (adminUser) {
-    for (let i = 0; i < Constants.MEDIA_ITEM_COUNT; i++) {
-      const mediaResult = await services.mediaItem.createMediaItem({
-        userId: adminUser.id.toString(),
-        fileName: `image-${i + 1}.jpg`,
-        storagePath: `images/image-${i + 1}.jpg`,
-        sizeBytes: faker.number.int({ min: 100000, max: 5000000 }),
-        urlOriginal: `https://picsum.photos/seed/${i}/800/600`,
-        mimeType: 'image/jpeg',
-      });
-      if (mediaResult.success && mediaResult.mediaItem) {
-        mediaItems.push(mediaResult.mediaItem);
-      }
-    }
-  }
+  const mediaItems = await seedMediaItems(services.mediaItem, adminUser?.id, Constants.MEDIA_ITEM_COUNT);
   console.log(`${mediaItems.length} media items created.`);
 
   console.log("Creating assets...");
@@ -949,6 +923,18 @@ async function main() {
       }
   }
   console.log(`${assets.length} assets created.`);
+
+  const statesById = Object.values(createdStates).reduce((map, state) => {
+    if (state) {
+      map[state.id] = state;
+    }
+    return map;
+  }, {} as Record<string, StateInfo>);
+  const enrichedCount = await enrichAssetLocations(services.asset, assets, cities, statesById, seededCategories);
+  console.log(`Location metadata refreshed for ${enrichedCount} assets.`);
+
+  const galleryEntries = await attachMediaGalleryToAssets(assets, mediaItems);
+  console.log(`${galleryEntries} asset-media links created.`);
 
 
   console.log("Creating auctions and lots...");

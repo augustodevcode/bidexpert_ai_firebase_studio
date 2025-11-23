@@ -13,13 +13,15 @@ import { revalidatePath } from 'next/cache';
 import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { SellerService } from '@/services/seller.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const sellerService = new SellerService();
 
 
 export async function getSellers(isPublicCall: boolean = false, limit?: number): Promise<SellerProfileInfo[]> {
     const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-    return sellerService.getSellers(tenantIdToUse, limit);
+    const result = await sellerService.getSellers(tenantIdToUse, limit);
+    return sanitizeResponse(result);
 }
 
 export async function getSeller(id: string): Promise<SellerProfileInfo | null> {

@@ -20,7 +20,7 @@ import type { Lot, LotCategory, PlatformSettings, SellerProfileInfo, Auction } f
 import { slugify } from '@/lib/ui-helpers';
 import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronRight, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame'; 
 import dynamic from 'next/dynamic';
@@ -244,14 +244,6 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
 
   return (
     <div className="space-y-8">
-       <div className="flex items-center text-sm text-muted-foreground mb-2">
-        <Link href="/" className="hover:text-primary">Home</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <Link href="/search?type=lots&tab=categories" className="hover:text-primary">Categorias</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="text-foreground font-medium">{currentCategory.name}</span>
-      </div>
-      
       <Card className="shadow-lg overflow-hidden">
         <div className="relative h-48 md:h-64 w-full">
           <Image 

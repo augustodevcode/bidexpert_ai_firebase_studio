@@ -11,11 +11,13 @@
 import { revalidatePath } from 'next/cache';
 import type { LotCategory } from '@/types';
 import { CategoryService } from '@/services/category.service';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const categoryService = new CategoryService();
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  return categoryService.getCategories();
+  const result = await categoryService.getCategories();
+  return sanitizeResponse(result);
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {

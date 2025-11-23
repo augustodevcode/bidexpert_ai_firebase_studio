@@ -22,7 +22,7 @@ import { createAsset as createAssetAction } from '@/app/admin/assets/actions';
 import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
-import AssetForm from '@/app/admin/assets/asset-form';
+import { AssetFormV2 } from '@/app/admin/assets/asset-form-v2';
 
 
 const allSteps = [
@@ -136,7 +136,7 @@ function WizardContent({
     
     if (wizardMode === 'asset') {
       return (
-        <AssetForm
+        <AssetFormV2
           initialData={{
             judicialProcessId: wizardData.auctionType === 'JUDICIAL' ? wizardData.judicialProcess?.id?.toString() : undefined,
             sellerId: wizardData.auctionType !== 'JUDICIAL' ? wizardData.auctionDetails?.sellerId?.toString() : undefined,

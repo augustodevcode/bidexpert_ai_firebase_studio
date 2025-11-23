@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Pencil, Image as ImageIcon, TextCursorInput, Star, Trash2, ExternalLink } from 'lucide-react';
+import { Pencil, Image as ImageIcon, TextCursorInput, Star, Trash2, ExternalLink, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
 import { useToast } from '@/hooks/use-toast';
@@ -107,7 +107,11 @@ export default function EntityEditMenu({
   };
 
 
-  const adminEditUrl = `/admin/${entityType}s/${publicId || entityId}/edit`;
+  const identifier = publicId || entityId;
+  const adminEditUrl = `/admin/${entityType}s/${identifier}/edit`;
+  const controlCenterUrl = entityType === 'auction'
+    ? `/admin/auctions/${identifier}/auction-control-center`
+    : null;
 
   return (
     <>
@@ -138,6 +142,15 @@ export default function EntityEditMenu({
             <span>{isFeatured ? 'Remover Destaque' : 'Destacar no Marketplace'}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          {controlCenterUrl && (
+            <DropdownMenuItem asChild>
+              <Link href={controlCenterUrl}>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>Central do Leilão</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {controlCenterUrl && <DropdownMenuSeparator />}
           <DropdownMenuItem asChild>
             <Link href={adminEditUrl}>
               <ExternalLink className="mr-2 h-4 w-4" />

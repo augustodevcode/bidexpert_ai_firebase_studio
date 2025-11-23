@@ -37,9 +37,9 @@ export default function AddressGroup({ form, allCities = [], allStates = [] }: A
 
   const filteredCities = React.useMemo(() => {
     if (!selectedStateId) {
-      return []; // Return empty if no state is selected, forcing user to select a state first.
+      return [];
     }
-    return cities.filter(city => city.stateId === selectedStateId);
+    return cities.filter(city => String(city.stateId) === String(selectedStateId));
   }, [selectedStateId, cities]);
 
   // Effect to reset city when state changes
@@ -47,7 +47,7 @@ export default function AddressGroup({ form, allCities = [], allStates = [] }: A
     // When the filtered cities update (because the state changed),
     // check if the currently selected city is still valid.
     const currentCityId = form.getValues('cityId');
-    if (currentCityId && !filteredCities.some(city => city.id === currentCityId)) {
+    if (currentCityId && !filteredCities.some(city => String(city.id) === String(currentCityId))) {
       form.setValue('cityId', null, { shouldValidate: true });
     }
   }, [filteredCities, form]);
@@ -147,7 +147,7 @@ export default function AddressGroup({ form, allCities = [], allStates = [] }: A
                 entityName="state"
                 value={field.value}
                 onChange={field.onChange}
-                options={states.map(s => ({ value: s.id, label: s.name }))}
+                options={states.map(s => ({ value: String(s.id), label: s.name }))}
                 placeholder="Selecione o estado"
                 searchPlaceholder="Buscar estado..."
                 emptyStateMessage="Nenhum estado."
@@ -168,7 +168,7 @@ export default function AddressGroup({ form, allCities = [], allStates = [] }: A
                 entityName="city"
                 value={field.value}
                 onChange={field.onChange}
-                options={filteredCities.map(c => ({ value: c.id, label: c.name }))}
+                options={filteredCities.map(c => ({ value: String(c.id), label: c.name }))}
                 placeholder={!selectedStateId ? "Selecione um estado primeiro" : "Selecione a cidade"}
                 searchPlaceholder="Buscar cidade..."
                 emptyStateMessage="Nenhuma cidade encontrada para este estado."

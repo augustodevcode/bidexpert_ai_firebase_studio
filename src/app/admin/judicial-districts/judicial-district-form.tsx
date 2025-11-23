@@ -51,14 +51,31 @@ export default function JudicialDistrictForm({
   const form = useForm<JudicialDistrictFormValues>({
     resolver: zodResolver(judicialDistrictFormSchema),
     mode: 'onChange',
-    defaultValues: initialData || {},
+    defaultValues: initialData ? {
+      name: initialData.name,
+      courtId: initialData.courtId?.toString() || '',
+      stateId: initialData.stateId?.toString() || '',
+      zipCode: initialData.zipCode || '',
+    } : {
+      name: '',
+      courtId: '',
+      stateId: '',
+      zipCode: '',
+    },
   });
-  
-  React.useEffect(() => {
-    form.reset(initialData || {});
-  }, [initialData, form]);
+
 
   const { formState } = form;
+
+  React.useEffect(() => {
+    console.log('[DistrictForm Debug]', {
+      isValid: formState.isValid,
+      isDirty: formState.isDirty,
+      hasInitialData: !!initialData,
+      buttonDisabled: isSubmitting || !formState.isValid,
+      errors: formState.errors
+    });
+  }, [formState.isValid, formState.isDirty, formState.errors, initialData, isSubmitting]);
 
   const handleRefetch = React.useCallback(async (entity: 'courts' | 'states') => {
     if (entity === 'courts') {
@@ -146,7 +163,7 @@ export default function JudicialDistrictForm({
             </div>
             <div className="flex justify-end gap-2 pt-4">
                 {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
-                <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+                <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Salvar
                 </Button>

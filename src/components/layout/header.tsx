@@ -375,6 +375,7 @@ export default function Header({
   ];
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full shadow-md print:hidden" data-ai-id="header">
       {/* Promotion Bar */}
       <div className="bg-primary/80 text-primary-foreground text-xs sm:text-sm">
@@ -658,10 +659,10 @@ export default function Header({
         </div>
       </div>
 
-      {/* Breadcrumbs Bar */}
-      {pathname !== '/' && (
-        <DynamicBreadcrumbs />
-      )}
     </header>
+    {pathname !== '/' && (
+      <DynamicBreadcrumbs />
+    )}
+    </>
   );
 }

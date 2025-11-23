@@ -2,8 +2,6 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
 import type { BreadcrumbItem } from '@/components/ui/breadcrumbs';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useMemo } from 'react';
@@ -191,10 +189,15 @@ export default function DynamicBreadcrumbs() {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs h-10 flex items-center border-b">
+    <div className="bg-muted/40 text-muted-foreground border-b border-border/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
       <div className="container mx-auto px-4">
-        <Breadcrumbs items={items} />
+        <nav
+          aria-label="Breadcrumb"
+          className="flex h-11 items-center overflow-x-auto text-[13px] sm:text-sm"
+        >
+          <Breadcrumbs items={items} className="flex-nowrap" />
+        </nav>
       </div>
-    </nav>
+    </div>
   );
 }

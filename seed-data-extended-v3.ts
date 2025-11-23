@@ -21,48 +21,39 @@ const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Iniciando seed de dados estendidos V3...\n');
+  console.log('⚠️  MODO: Adicionar dados sem apagar existentes\n');
 
   try {
-    // 1. LIMPAR DADOS EXISTENTES
-    console.log('🧹 Limpando dados antigos...');
-    try {
-      // Limpar tudo em uma transação para evitar conflitos de foreign key
-      await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=0');
-      await prisma.user.deleteMany({});
-      await prisma.tenant.deleteMany({});
-      await prisma.role.deleteMany({});
-      await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=1');
-    } catch (cleanupError) {
-      console.log('⚠️  Aviso: Erro ao limpar dados, continuando...');
-    }
-    console.log('✅ Limpeza concluída\n');
+    // 1. PULAR LIMPEZA - Manter dados existentes
+    console.log('✅ Pulando limpeza - Mantendo dados existentes\n');
 
-    // 2. CRIAR TENANTS
-    console.log('📦 Criando tenants...');
-    const tenants = await Promise.all([
-      prisma.tenant.create({
+    // 2. USAR TENANT PADRÃO (ID 1) - NÃO CRIAR NOVOS TENANTS
+    console.log('📦 Usando tenant padrão (ID 1)...');
+    const timestamp = Date.now();
+    
+    // Buscar o tenant padrão existente
+    let defaultTenant = await prisma.tenant.findFirst({
+      where: { id: 1 }
+    });
+    
+    if (!defaultTenant) {
+      // Se não existir, criar o tenant padrão
+      defaultTenant = await prisma.tenant.create({
         data: {
-          name: 'Leiloeiro Premium',
-          subdomain: 'premium-test',
-          domain: 'premium.test.local',
+          id: 1,
+          name: 'BidExpert Tenant',
+          subdomain: 'default',
+          domain: 'localhost',
         },
-      }),
-      prisma.tenant.create({
-        data: {
-          name: 'Leiloeiro Standard',
-          subdomain: 'standard-test',
-          domain: 'standard.test.local',
-        },
-      }),
-      prisma.tenant.create({
-        data: {
-          name: 'Leiloeiro Test',
-          subdomain: 'test-test',
-          domain: 'test.test.local',
-        },
-      }),
-    ]);
-    console.log(`✅ ${tenants.length} tenants criados\n`);
+      });
+      console.log('✅ Tenant padrão criado');
+    } else {
+      console.log('✅ Tenant padrão encontrado');
+    }
+    
+    // Array com apenas o tenant padrão (para compatibilidade com o resto do código)
+    const tenants = [defaultTenant];
+    console.log(`✅ Usando tenant ID ${defaultTenant.id}\n`);
 
     // 3. CRIAR ROLES SE NÃO EXISTIREM
     console.log('🎯 Configurando roles...');
@@ -107,14 +98,15 @@ async function main() {
     // 4. CRIAR USUÁRIOS COM MÚLTIPLOS ROLES
     console.log('👥 Criando usuários com múltiplos roles...');
     const senhaHash = await bcrypt.hash('Test@12345', 10);
+    const uniqueSuffix = timestamp;
 
     // Usuário 1: Leiloeiro (Admin)
     const leiloeiroUser = await prisma.user.create({
       data: {
-        email: 'test.leiloeiro@bidexpert.com',
+        email: `test.leiloeiro.${uniqueSuffix}@bidexpert.com`,
         password: senhaHash,
-        fullName: 'Leiloeiro Test Premium',
-        cpf: '11122233344',
+        fullName: `Leiloeiro Test Premium ${uniqueSuffix}`,
+        cpf: `111${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
       },
@@ -147,10 +139,10 @@ async function main() {
     // Usuário 2: Comprador
     const compradorUser = await prisma.user.create({
       data: {
-        email: 'test.comprador@bidexpert.com',
+        email: `test.comprador.${uniqueSuffix}@bidexpert.com`,
         password: senhaHash,
-        fullName: 'Comprador Test',
-        cpf: '55566677788',
+        fullName: `Comprador Test ${uniqueSuffix}`,
+        cpf: `555${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
       },
@@ -167,10 +159,10 @@ async function main() {
     // Usuário 3: Advogado
     const advogadoUser = await prisma.user.create({
       data: {
-        email: 'advogado@bidexpert.com.br',
+        email: `advogado.${uniqueSuffix}@bidexpert.com.br`,
         password: senhaHash,
-        fullName: 'Dr. Advogado Test',
-        cpf: '99988877766',
+        fullName: `Dr. Advogado Test ${uniqueSuffix}`,
+        cpf: `999${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
       },
@@ -196,10 +188,10 @@ async function main() {
     // Usuário 4: Vendedor
     const vendedorUser = await prisma.user.create({
       data: {
-        email: 'test.vendedor@bidexpert.com',
+        email: `test.vendedor.${uniqueSuffix}@bidexpert.com`,
         password: senhaHash,
-        fullName: 'Vendedor Test',
-        cpf: '44455566677',
+        fullName: `Vendedor Test ${uniqueSuffix}`,
+        cpf: `444${uniqueSuffix}`.substring(0, 11),
         accountType: 'LEGAL',
         habilitationStatus: 'HABILITADO',
       },
@@ -225,10 +217,10 @@ async function main() {
     // Usuário 5: Avaliador
     const avaliadorUser = await prisma.user.create({
       data: {
-        email: 'test.avaliador@bidexpert.com',
+        email: `test.avaliador.${uniqueSuffix}@bidexpert.com`,
         password: senhaHash,
-        fullName: 'Avaliador Test',
-        cpf: '77788899900',
+        fullName: `Avaliador Test ${uniqueSuffix}`,
+        cpf: `777${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
       },
@@ -331,7 +323,7 @@ async function main() {
 
     // 5. CRIAR AUCTIONS (LEILÕES)
     console.log('🔨 Criando auctions...');
-    const timestamp = Date.now();
+    // Reusing timestamp from above
     
     const auctions = await Promise.all([
       // Leilão 1: Judicial - Imóveis (com processo judicial)
@@ -393,7 +385,7 @@ async function main() {
           status: 'ABERTO_PARA_LANCES',
           auctionDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
           endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
-          tenantId: tenants[1].id,
+          tenantId: tenants[0].id,
           auctionType: 'TOMADA_DE_PRECOS',
           auctionMethod: 'STANDARD',
           participation: 'PRESENCIAL',
@@ -622,7 +614,7 @@ async function main() {
         data: {
           publicId: `lot-${timestamp}-8`,
           auctionId: auctions[3].id,
-          tenantId: tenants[1].id,
+          tenantId: tenants[0].id,
           number: 'L001',
           title: 'Lote de 50 Cadeiras Gamer',
           description: 'Lote contendo 50 cadeiras gamer de qualidade premium, novas.',
@@ -749,7 +741,7 @@ async function main() {
           lotId: lots[7].id,
           auctionId: auctions[3].id,
           bidderId: compradorUser.id,
-          tenantId: tenants[1].id,
+          tenantId: tenants[0].id,
           amount: new Prisma.Decimal('21000.00'),
           bidderDisplay: 'Comprador Test',
         },
@@ -814,50 +806,6 @@ async function main() {
       }),
     ]);
     console.log(`✅ ${habilitacoes.length} habilitações criadas\n`);
-
-    console.log('\n✨ SEED CONCLUÍDO COM SUCESSO!\n');
-    console.log('📊 RESUMO:');
-    console.log(`   • Tenants: ${tenants.length}`);
-    console.log(`   • Roles: ${Object.keys(roles).length}`);
-    console.log(`   • Usuários: 5`);
-    console.log(`   • Auctions: ${auctions.length}`);
-    console.log(`   • Lots: ${lots.length}`);
-    console.log(`   • Bids: ${bids.length}`);
-    console.log(`   • Habilitações: ${habilitacoes.length}`);
-    console.log(`   • Tribunais: 1 (Tribunal de Justiça de SP)`);
-    console.log(`   • Comarcas: 1 (Comarca de São Paulo)`);
-    console.log(`   • Varas Judiciais: 1 (Vara Cível da Capital)`);
-    console.log(`   • Vendedores Judiciais: 1`);
-    console.log(`   • Processos Judiciais: 3 (com partes e advogados)`);
-    
-    console.log('\n🔐 CREDENCIAIS DE TESTE:');
-    console.log('\n   1️⃣  LEILOEIRO (ADMIN):');
-    console.log('   Email: test.leiloeiro@bidexpert.com');
-    console.log('   Senha: Test@12345');
-    console.log('   Roles: LEILOEIRO, COMPRADOR, ADMIN');
-    
-    console.log('\n   2️⃣  COMPRADOR:');
-    console.log('   Email: test.comprador@bidexpert.com');
-    console.log('   Senha: Test@12345');
-    console.log('   Roles: COMPRADOR');
-    
-    console.log('\n   3️⃣  ADVOGADO (com painel completo):');
-    console.log('   Email: advogado@bidexpert.com.br');
-    console.log('   Senha: Test@12345');
-    console.log('   Roles: ADVOGADO, COMPRADOR');
-    console.log('   • 3 Processos Judiciais vinculados');
-    console.log('   • Acesso completo ao painel do advogado');
-    console.log('   • Visualização de partes e dados processuais');
-    
-    console.log('\n   4️⃣  VENDEDOR:');
-    console.log('   Email: test.vendedor@bidexpert.com');
-    console.log('   Senha: Test@12345');
-    console.log('   Roles: VENDEDOR, COMPRADOR');
-    
-    console.log('\n   5️⃣  AVALIADOR:');
-    console.log('   Email: test.avaliador@bidexpert.com');
-    console.log('   Senha: Test@12345');
-    console.log('   Roles: AVALIADOR');
     
     // 7. CRIAR DADOS ADICIONAIS PARA TENANT 1 - ESTRUTURA EXPANDIDA
     console.log('\n📍 Criando dados expandidos para tenant 1...');
@@ -871,21 +819,22 @@ async function main() {
 
     // 7.1 CRIAR MAIS LEILOEIROS
     console.log('👨‍💼 Criando leiloeiros adicionais...');
-    const auctioneerEmails = [
-      'leiloeiro.sp.01@bidexpert.com',
-      'leiloeiro.rj.01@bidexpert.com',
-      'leiloeiro.mg.01@bidexpert.com',
+    const auctioneerEmailPrefixes = [
+      'leiloeiro.sp.01',
+      'leiloeiro.rj.01',
+      'leiloeiro.mg.01',
     ];
 
     const additionalAuctioneers = [];
-    for (const email of auctioneerEmails) {
+    for (const emailPrefix of auctioneerEmailPrefixes) {
+      const email = `${emailPrefix}.${uniqueSuffix}@bidexpert.com`;
       const senhaHash = await bcrypt.hash('Test@12345', 10);
       const auctioneer = await prisma.user.create({
         data: {
           email,
           password: senhaHash,
-          fullName: email.split('@')[0].replace(/\./g, ' ').toUpperCase(),
-          cpf: Math.floor(Math.random() * 100000000000).toString().padStart(11, '0'),
+          fullName: emailPrefix.split('.').join(' ').toUpperCase(),
+          cpf: `${Math.floor(Math.random() * 100000000000)}`.padStart(11, '0'),
           accountType: 'PHYSICAL',
           habilitationStatus: 'HABILITADO',
         },
@@ -907,11 +856,11 @@ async function main() {
       });
 
       // Criar Auctioneer record com slug único
-      const timestamp = Date.now();
+      const auctioneerTimestamp = Date.now();
       const randomSuffix = Math.random().toString(36).substring(2, 8);
       const auctioneerRecord = await prisma.auctioneer.create({
         data: {
-          publicId: `auctn-${timestamp}-${randomSuffix}`,
+          publicId: `auctn-${auctioneerTimestamp}-${randomSuffix}`,
           slug: `leiloeiro-${email.split('@')[0].replace(/\./g, '-')}-${randomSuffix}`,
           name: email.split('@')[0].replace(/\./g, ' ').toUpperCase(),
           tenantId: tenants[0].id,
@@ -1170,6 +1119,265 @@ async function main() {
     }
 
     console.log(`✅ ${additionalProcesses.length} processos judiciais adicionais criados\n`);
+
+    // 7.7 CRIAR ASSETS (BENS) VINCULADOS AOS PROCESSOS JUDICIAIS
+    console.log('🏛️  Criando assets (bens) vinculados aos processos judiciais...');
+    
+    // Helper: Gerar dados realistas de assets
+    const assetTypes = {
+      IMOVEL: [
+        { title: 'Sala Comercial', description: 'Sala comercial bem localizada, com infraestrutura completa' },
+        { title: 'Apartamento Residencial', description: 'Apartamento de 2 quartos, com garagem e área de lazer' },
+        { title: 'Casa Térrea', description: 'Casa térrea com 3 quartos, quintal e churrasqueira' },
+        { title: 'Galpão Industrial', description: 'Galpão com pé direito alto, ideal para logística e armazenagem' },
+        { title: 'Terreno Urbano', description: 'Terreno plano em área urbana, pronto para construção' },
+      ],
+      VEICULO: [
+        { title: 'Automóvel Sedan', description: 'Veículo sedan em bom estado de conservação' },
+        { title: 'Caminhonete Pick-up', description: 'Caminhonete para trabalho e transporte de cargas' },
+        { title: 'Motocicleta', description: 'Motocicleta em excelente estado, baixa quilometragem' },
+      ],
+      MAQUINARIO: [
+        { title: 'Torno Mecânico', description: 'Torno mecânico industrial em perfeito funcionamento' },
+        { title: 'Empilhadeira', description: 'Empilhadeira elétrica, capacidade 2 toneladas' },
+      ],
+      MOBILIARIO: [
+        { title: 'Conjunto de Mesas e Cadeiras', description: 'Mobiliário de escritório em bom estado' },
+        { title: 'Equipamentos de TI', description: 'Computadores, monitores e periféricos' },
+      ],
+    };
+
+    const statusOptions: ('DISPONIVEL' | 'CADASTRO' | 'LOTEADO')[] = ['DISPONIVEL', 'CADASTRO', 'LOTEADO'];
+    
+    // Criar assets para os 3 processos iniciais
+    const processesWithAssets = [
+      { process: judicialProcess1, count: 2, types: ['IMOVEL', 'IMOVEL'] },
+      { process: judicialProcess2, count: 3, types: ['IMOVEL', 'VEICULO', 'MOBILIARIO'] },
+      { process: judicialProcess3, count: 2, types: ['IMOVEL', 'MAQUINARIO'] },
+    ];
+
+    const createdAssets = [];
+    for (const { process, count, types } of processesWithAssets) {
+      for (let i = 0; i < count; i++) {
+        const type = types[i] as keyof typeof assetTypes;
+        const assetTemplates = assetTypes[type];
+        const template = assetTemplates[Math.floor(Math.random() * assetTemplates.length)];
+        
+        const asset = await prisma.asset.create({
+          data: {
+            publicId: `asset-${judicialTimestamp}-${process.id}-${i}`,
+            title: template.title,
+            description: `${template.description}. Bem penhorado no processo ${process.processNumber}`,
+            status: statusOptions[Math.floor(Math.random() * statusOptions.length)],
+            judicialProcessId: process.id,
+            sellerId: process.sellerId || seller.id,
+            evaluationValue: new Prisma.Decimal((50000 + Math.random() * 500000).toFixed(2)),
+            tenantId: tenants[0].id,
+            dataAiHint: type,
+          },
+        });
+        
+        createdAssets.push(asset);
+      }
+    }
+
+    // Criar assets para os processos adicionais
+    for (const processId of additionalProcesses) {
+      const processIdBigInt = typeof processId === 'string' ? BigInt(processId) : processId;
+      const process = await prisma.judicialProcess.findUnique({
+        where: { id: processIdBigInt },
+      });
+
+      if (!process) continue;
+
+      // Cada processo adicional terá 1-3 assets
+      const assetCount = 1 + Math.floor(Math.random() * 3);
+      const availableTypes = Object.keys(assetTypes) as (keyof typeof assetTypes)[];
+      
+      for (let i = 0; i < assetCount; i++) {
+        const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+        const assetTemplates = assetTypes[type];
+        const template = assetTemplates[Math.floor(Math.random() * assetTemplates.length)];
+        
+        const asset = await prisma.asset.create({
+          data: {
+            publicId: `asset-${judicialTimestamp}-${processIdBigInt}-${i}`,
+            title: template.title,
+            description: `${template.description}. Bem vinculado ao processo judicial ${process.processNumber}`,
+            status: statusOptions[Math.floor(Math.random() * statusOptions.length)],
+            judicialProcessId: processIdBigInt,
+            sellerId: process.sellerId || seller.id,
+            evaluationValue: new Prisma.Decimal((30000 + Math.random() * 400000).toFixed(2)),
+            tenantId: tenants[0].id,
+            dataAiHint: type,
+          },
+        });
+        
+        createdAssets.push(asset);
+      }
+    }
+
+    console.log(`✅ ${createdAssets.length} assets (bens) criados e vinculados aos processos judiciais\n`);
+
+    // 7.8 VINCULAR ALGUNS ASSETS AOS LOTES (AssetsOnLots)
+    console.log('🔗 Vinculando assets aos lotes existentes...');
+    
+    // Pegar alguns assets LOTEADOS para vincular aos lotes do leilão judicial
+    const loteadoAssets = createdAssets.filter(a => a.status === 'LOTEADO').slice(0, 3);
+    const judicialLots = lots.filter(lot => lot.auctionId === auctions[0].id).slice(0, 3);
+    
+    let linkedAssets = 0;
+    for (let i = 0; i < Math.min(loteadoAssets.length, judicialLots.length); i++) {
+      try {
+        await prisma.assetsOnLots.create({
+          data: {
+            assetId: loteadoAssets[i].id,
+            lotId: judicialLots[i].id,
+            assignedBy: 'system',
+          },
+        });
+        linkedAssets++;
+      } catch (e) {
+        console.log(`⚠️  Erro ao vincular asset ao lote: ${(e as any).message}`);
+      }
+    }
+    
+    // Se não há assets LOTEADOS suficientes, vincular DISPONIVEL também
+    if (linkedAssets < 3) {
+      const disponivelAssets = createdAssets.filter(a => a.status === 'DISPONIVEL').slice(0, 3 - linkedAssets);
+      for (let i = 0; i < Math.min(disponivelAssets.length, judicialLots.length - linkedAssets); i++) {
+        try {
+          await prisma.assetsOnLots.create({
+            data: {
+              assetId: disponivelAssets[i].id,
+              lotId: judicialLots[linkedAssets + i].id,
+              assignedBy: 'system',
+            },
+          });
+          
+          // Atualizar o status do asset para LOTEADO
+          await prisma.asset.update({
+            where: { id: disponivelAssets[i].id },
+            data: { status: 'LOTEADO' },
+          });
+          
+          linkedAssets++;
+        } catch (e) {
+          console.log(`⚠️  Erro ao vincular asset ao lote: ${(e as any).message}`);
+        }
+      }
+    }
+
+    console.log(`✅ ${linkedAssets} assets vinculados aos lotes\n`);
+
+    // CRIAR DADOS ADICIONAIS PARA PÁGINA DE PREPARAÇÃO DO LEILÃO
+    console.log('🎨 Criando dados para página de preparação do leilão...');
+    
+    // Garantir que temos um leilão com vários lotes para testar
+    const preparationAuction = auctions[0]; // Usar o primeiro leilão
+    
+    // Criar habilitações para o leilão
+    console.log('   Criando habilitações...');
+    const habilitationsForPrep = [];
+    for (let i = 0; i < 5; i++) {
+      try {
+        const habilitation = await prisma.auctionHabilitation.create({
+          data: {
+            userId: usuarios[1].id, // Usar comprador
+            auctionId: preparationAuction.id,
+            status: i < 2 ? 'APPROVED' : i < 4 ? 'PENDING' : 'REJECTED',
+            requestDate: new Date(),
+            tenantId: defaultTenant.id,
+          },
+        });
+        habilitationsForPrep.push(habilitation);
+      } catch (e) {
+        // Pode já existir, continuar
+      }
+    }
+    console.log(`   ✅ ${habilitationsForPrep.length} habilitações criadas`);
+    
+    // Criar alguns lances para o leilão (para estatísticas do pregão)
+    console.log('   Criando lances para estatísticas...');
+    let bidsForPrep = 0;
+    for (const lot of lots.slice(0, 3)) {
+      try {
+        await prisma.bid.create({
+          data: {
+            userId: usuarios[1].id,
+            lotId: lot.id,
+            amount: new Prisma.Decimal(lot.startPrice).mul(1.1).toNumber(),
+            bidTime: new Date(),
+            isAutoBid: false,
+            tenantId: defaultTenant.id,
+          },
+        });
+        bidsForPrep++;
+      } catch (e) {
+        // Lance pode já existir
+      }
+    }
+    console.log(`   ✅ ${bidsForPrep} lances adicionais criados`);
+    
+    console.log('✅ Dados para página de preparação criados\n');
+
+    // RESUMO FINAL ATUALIZADO
+    console.log('\n✨ SEED CONCLUÍDO COM SUCESSO!\n');
+    console.log('📊 RESUMO COMPLETO:');
+    console.log(`   • Tenants: ${tenants.length}`);
+    console.log(`   • Roles: ${Object.keys(roles).length}`);
+    console.log(`   • Usuários: 8 (5 principais + 3 leiloeiros)`);
+    console.log(`   • Auctions: ${auctions.length + additionalAuctions.length}`);
+    console.log(`   • Lots: ${lots.length + lotsCreated}`);
+    console.log(`   • Bids: ${bids.length}`);
+    console.log(`   • Habilitações: ${habilitacoes.length}`);
+    console.log(`   • Tribunais: 1 (Tribunal de Justiça)`);
+    console.log(`   • Comarcas: ${1 + additionalDistricts.length}`);
+    console.log(`   • Varas Judiciais: ${1 + additionalBranches.length}`);
+    console.log(`   • Vendedores Judiciais: ${1 + additionalSellers.length}`);
+    console.log(`   • Processos Judiciais: ${3 + additionalProcesses.length} (todos com partes e advogados)`);
+    console.log(`   • Assets (Bens): ${createdAssets.length} (todos vinculados a processos)`);
+    console.log(`   • Assets vinculados a Lotes: ${linkedAssets}`);
+    
+    console.log('\n🔐 CREDENCIAIS DE TESTE:');
+    console.log('\n   1️⃣  LEILOEIRO (ADMIN):');
+    console.log('   Email: test.leiloeiro@bidexpert.com');
+    console.log('   Senha: Test@12345');
+    console.log('   Roles: LEILOEIRO, COMPRADOR, ADMIN');
+    
+    console.log('\n   2️⃣  COMPRADOR:');
+    console.log('   Email: test.comprador@bidexpert.com');
+    console.log('   Senha: Test@12345');
+    console.log('   Roles: COMPRADOR');
+    
+    console.log('\n   3️⃣  ADVOGADO (com painel completo):');
+    console.log('   Email: advogado@bidexpert.com.br');
+    console.log('   Senha: Test@12345');
+    console.log('   Roles: ADVOGADO, COMPRADOR');
+    console.log(`   • ${3 + additionalProcesses.length} Processos Judiciais vinculados`);
+    console.log(`   • ${createdAssets.length} Bens (Assets) vinculados aos processos`);
+    console.log('   • Acesso completo ao painel do advogado');
+    console.log('   • Visualização de partes e dados processuais');
+    
+    console.log('\n   4️⃣  VENDEDOR:');
+    console.log('   Email: test.vendedor@bidexpert.com');
+    console.log('   Senha: Test@12345');
+    console.log('   Roles: VENDEDOR, COMPRADOR');
+    
+    console.log('\n   5️⃣  AVALIADOR:');
+    console.log('   Email: test.avaliador@bidexpert.com');
+    console.log('   Senha: Test@12345');
+    console.log('   Roles: AVALIADOR');
+    
+    console.log('\n📋 ESTRUTURA DE DADOS:');
+    console.log('   • Todos os processos judiciais possuem bens (assets) vinculados');
+    console.log('   • Bens com status LOTEADO foram vinculados aos lotes do leilão judicial');
+    console.log('   • Cada processo possui de 1 a 3 bens registrados');
+    console.log('   • Assets incluem: imóveis, veículos, maquinários e mobiliários');
+    console.log('   • Todos os assets possuem valor de avaliação');
+    console.log('   • Status dos assets: CADASTRO, DISPONIVEL, LOTEADO');
+    console.log('\n');
+
 
   } catch (error) {
     console.error('❌ Erro durante seed:', error);

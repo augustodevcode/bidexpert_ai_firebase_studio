@@ -12,11 +12,13 @@ import { prisma } from '@/lib/prisma';
 import type { CityInfo, CityFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { CityService } from '@/services/city.service';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const cityService = new CityService();
 
 export async function getCities(stateIdFilter?: string): Promise<CityInfo[]> {
-    return cityService.getCities(stateIdFilter);
+    const result = await cityService.getCities(stateIdFilter);
+    return sanitizeResponse(result);
 }
 
 export async function getCity(id: string): Promise<CityInfo | null> {

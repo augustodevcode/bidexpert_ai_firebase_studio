@@ -33,16 +33,49 @@ export class AssetService {
     return assets.map(asset => {
         const primaryLot = asset.lots?.[0]?.lot;
         const lotInfo = primaryLot ? `Lote ${primaryLot.number || primaryLot.id.toString().substring(0,4)}: ${primaryLot.title}` : null;
+        
+        // Destructure lots out to avoid sending it if it contains Decimals
+        const { lots, ...assetWithoutLots } = asset;
+
         return {
-            ...asset,
+            ...assetWithoutLots,
+            id: asset.id.toString(),
+            tenantId: asset.tenantId.toString(),
+            categoryId: asset.categoryId?.toString(),
+            subcategoryId: asset.subcategoryId?.toString(),
+            judicialProcessId: asset.judicialProcessId?.toString(),
+            sellerId: asset.sellerId?.toString(),
+            imageMediaId: asset.imageMediaId?.toString(),
             evaluationValue: asset.evaluationValue ? Number(asset.evaluationValue) : null,
             latitude: asset.latitude ? Number(asset.latitude) : null,
             longitude: asset.longitude ? Number(asset.longitude) : null,
+            totalArea: asset.totalArea ? Number(asset.totalArea) : null,
+            builtArea: asset.builtArea ? Number(asset.builtArea) : null,
             categoryName: asset.category?.name,
             subcategoryName: asset.subcategory?.name,
             judicialProcessNumber: asset.judicialProcess?.processNumber,
             sellerName: asset.seller?.name,
             lotInfo: lotInfo,
+            lots: asset.lots ? asset.lots.map((l: any) => ({
+                ...l,
+                lot: l.lot ? {
+                    ...l.lot,
+                    id: l.lot.id.toString(),
+                    price: l.lot.price ? Number(l.lot.price) : null,
+                    initialPrice: l.lot.initialPrice ? Number(l.lot.initialPrice) : null,
+                    secondInitialPrice: l.lot.secondInitialPrice ? Number(l.lot.secondInitialPrice) : null,
+                    bidIncrementStep: l.lot.bidIncrementStep ? Number(l.lot.bidIncrementStep) : null,
+                    auctionId: l.lot.auctionId?.toString(),
+                    categoryId: l.lot.categoryId?.toString(),
+                    subcategoryId: l.lot.subcategoryId?.toString(),
+                    sellerId: l.lot.sellerId?.toString(),
+                    auctioneerId: l.lot.auctioneerId?.toString(),
+                    cityId: l.lot.cityId?.toString(),
+                    stateId: l.lot.stateId?.toString(),
+                    tenantId: l.lot.tenantId?.toString(),
+                    original_lot_id: l.lot.original_lot_id?.toString(),
+                } : null
+            })) : [],
         }
     });
   }
@@ -52,7 +85,7 @@ export class AssetService {
    * @param {object} filter - Filtros a serem aplicados na busca.
    * @returns {Promise<Asset[]>} Uma lista de ativos.
    */
-  async getAssets(filter?: { judicialProcessId?: string; sellerId?: string; tenantId?: string; status?: string }): Promise<Asset[]> {
+  async getAssets(filter?: { judicialProcessId?: string, sellerId?: string, tenantId?: string, status?: string }): Promise<Asset[]> {
     const assets = await this.repository.findAll(filter);
     return this.mapAssetsWithDetails(assets);
   }
@@ -64,10 +97,8 @@ export class AssetService {
    * @returns {Promise<Asset | null>} O ativo encontrado ou null.
    */
   async getAssetById(tenantId: string, id: string): Promise<Asset | null> {
-    const asset = await this.repository.findById(id.toString());
-    // Embora o repositório possa ser chamado de múltiplos tenants, o serviço impõe a regra de negócio
-    // de que a busca por ID deve respeitar o tenant atual.
-    if (!asset || asset.tenantId.toString() !== tenantId) return null;
+    const asset = await this.repository.findById(tenantId, id);
+    if (!asset) return null;
     return this.mapAssetsWithDetails([asset])[0];
   }
 
@@ -89,21 +120,52 @@ export class AssetService {
    */
   async createAsset(tenantId: string, data: AssetFormData): Promise<{ success: boolean; message: string; assetId?: string; }> {
     try {
-      const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, ...assetData } = data;
+      const { 
+        categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, 
+        street, number, complement, neighborhood, zipCode,
+        mediaItemIds,
+        ...assetData 
+      } = data;
+
+      // Construct address if not provided but components are
+      if (!assetData.address && (street || number || neighborhood)) {
+        const parts = [];
+        if (street) parts.push(street);
+        if (number) parts.push(number);
+        if (complement) parts.push(complement);
+        if (neighborhood) parts.push(neighborhood);
+        if (zipCode) parts.push(`CEP: ${zipCode}`);
+        assetData.address = parts.join(', ');
+      }
+
+      // Normaliza campos que podem vir como string vazia
+      const normalizedAssetData = { ...assetData } as Record<string, any>;
+      
+      // Remove campos vazios ou converte para null
+      Object.keys(normalizedAssetData).forEach(key => {
+        const value = normalizedAssetData[key];
+        if (value === '' || value === undefined) {
+          normalizedAssetData[key] = null;
+        }
+      });
 
       // Gera o publicId usando a máscara configurada
       const publicId = await generatePublicId(tenantId, 'asset');
 
       const dataToCreate: Prisma.AssetCreateInput = {
-        ...(assetData as any),
+        ...normalizedAssetData,
         publicId,
         tenant: { connect: { id: BigInt(tenantId) } },
+        mediaItemIds: mediaItemIds ? (mediaItemIds as any) : undefined, // Save to JSON field as well
       };
-      
+
+      // Conecta relacionamentos
       if (categoryId) dataToCreate.category = { connect: { id: BigInt(categoryId) } };
       if (subcategoryId) dataToCreate.subcategory = { connect: { id: BigInt(subcategoryId) } };
       if (judicialProcessId) dataToCreate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
       if (sellerId) dataToCreate.seller = { connect: { id: BigInt(sellerId) } };
+      
+      // Atualiza locationCity e locationState baseado nos IDs se fornecidos
       if (cityId) {
           const city = await this.prisma.city.findUnique({where: {id: BigInt(cityId)}});
           if(city) dataToCreate.locationCity = city.name;
@@ -113,8 +175,27 @@ export class AssetService {
           if(state) dataToCreate.locationState = state.uf;
       }
       
-      const newAsset = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Ativo criado com sucesso.', assetId: newAsset.id.toString() };
+      // Transactional creation
+      const newAsset = await this.prisma.$transaction(async (tx) => {
+          const asset = await tx.asset.create({ data: dataToCreate });
+
+          // Create AssetMedia records if mediaItemIds are present
+          if (mediaItemIds && Array.isArray(mediaItemIds) && mediaItemIds.length > 0) {
+              await Promise.all(mediaItemIds.map((mediaId, index) => {
+                  return tx.assetMedia.create({
+                      data: {
+                          assetId: asset.id,
+                          mediaItemId: BigInt(mediaId),
+                          displayOrder: index,
+                          isPrimary: index === 0
+                      }
+                  });
+              }));
+          }
+          return asset;
+      });
+
+      return { success: true, message: 'Ativo criado com sucesso!', assetId: newAsset.id.toString() };
     } catch (error: any) {
       console.error("Error in AssetService.createAsset:", error);
       return { success: false, message: `Falha ao criar ativo: ${error.message}` };
@@ -129,13 +210,43 @@ export class AssetService {
    */
   async updateAsset(id: string, data: Partial<AssetFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, ...assetData } = data;
-      const dataToUpdate: Prisma.AssetUpdateInput = { ...assetData };
+      const { 
+        categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, 
+        street, number, complement, neighborhood, zipCode,
+        ...assetData 
+      } = data;
+
+      // Construct address if not provided but components are
+      if (!assetData.address && (street || number || neighborhood)) {
+        const parts = [];
+        if (street) parts.push(street);
+        if (number) parts.push(number);
+        if (complement) parts.push(complement);
+        if (neighborhood) parts.push(neighborhood);
+        if (zipCode) parts.push(`CEP: ${zipCode}`);
+        assetData.address = parts.join(', ');
+      }
       
+      // Normaliza campos que podem vir como string vazia
+      const normalizedAssetData = { ...assetData } as Record<string, any>;
+      
+      // Remove campos vazios ou converte para null
+      Object.keys(normalizedAssetData).forEach(key => {
+        const value = normalizedAssetData[key];
+        if (value === '' || value === undefined) {
+          normalizedAssetData[key] = null;
+        }
+      });
+
+      const dataToUpdate: Prisma.AssetUpdateInput = { ...normalizedAssetData };
+      
+      // Conecta relacionamentos
       if (categoryId) dataToUpdate.category = { connect: { id: BigInt(categoryId) } };
       if (subcategoryId) dataToUpdate.subcategory = { connect: { id: BigInt(subcategoryId) } };
       if (judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
       if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } };
+      
+      // Atualiza locationCity e locationState baseado nos IDs se fornecidos
       if (cityId) {
           const city = await this.prisma.city.findUnique({where: {id: BigInt(cityId)}});
           if(city) dataToUpdate.locationCity = city.name;
@@ -144,7 +255,6 @@ export class AssetService {
           const state = await this.prisma.state.findUnique({where: {id: BigInt(stateId)}});
           if(state) dataToUpdate.locationState = state.uf;
       }
-
 
       await this.repository.update(BigInt(id), dataToUpdate);
       return { success: true, message: 'Ativo atualizado com sucesso.' };

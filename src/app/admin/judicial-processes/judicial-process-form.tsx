@@ -186,6 +186,15 @@ export default function JudicialProcessForm({
   const filteredDistricts = React.useMemo(() => allDistricts.filter(d => d.courtId === selectedCourtId), [selectedCourtId, allDistricts]);
   const filteredBranches = React.useMemo(() => allBranches.filter(b => b.districtId === selectedDistrictId), [selectedDistrictId, allBranches]);
 
+  React.useEffect(() => {
+    console.log('[ProcessForm Debug]', {
+      isValid: form.formState.isValid,
+      isDirty: form.formState.isDirty,
+      hasInitialData: !!initialData,
+      buttonDisabled: isSubmitting || !form.formState.isValid || (!!initialData && !form.formState.isDirty)
+    });
+  }, [form.formState.isValid, form.formState.isDirty, initialData, isSubmitting]);
+
   const handleRefetch = React.useCallback(async (entity: 'courts' | 'districts' | 'branches' | 'sellers') => {
     if (entity === 'courts') { setIsFetchingCourts(true); const data = await getCourts(); setCourts(data); setIsFetchingCourts(false); }
     if (entity === 'districts') { setIsFetchingDistricts(true); const data = await getJudicialDistricts(); setAllDistricts(data); setIsFetchingDistricts(false); }
@@ -387,7 +396,7 @@ export default function JudicialProcessForm({
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
           </CardFooter>
         </form>
       </Form>

@@ -9,6 +9,7 @@ import { CourtRepository } from '@/repositories/court.repository';
 import type { Court, CourtFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export class CourtService {
   private courtRepository: CourtRepository;
@@ -44,12 +45,30 @@ export class CourtService {
   async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const dataToUpdate: Partial<Prisma.CourtUpdateInput> = { ...data };
+      
       if (data.name) {
-        dataToUpdate.slug = slugify(data.name);
+        const newSlug = slugify(data.name);
+        // Check if the slug is actually changing
+        const currentCourt = await this.courtRepository.findById(id);
+        if (currentCourt && currentCourt.slug !== newSlug) {
+           dataToUpdate.slug = newSlug;
+        } else {
+           // If slug is same, don't update it to avoid potential (though rare) conflicts or redundant updates
+           if (currentCourt && currentCourt.slug === newSlug) {
+             delete dataToUpdate.slug;
+           } else {
+             dataToUpdate.slug = newSlug;
+           }
+        }
       }
+
       await this.courtRepository.update(id, dataToUpdate);
       return { success: true, message: 'Tribunal atualizado com sucesso.' };
     } catch (error: any) {
+      if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
+        console.warn(`[CourtService] Tentativa de duplicidade ao atualizar tribunal ${id}: ${error.meta?.target}`);
+        return { success: false, message: 'Já existe um tribunal com este nome.' };
+      }
       console.error(`Error in CourtService.updateCourt for id ${id}:`, error);
       return { success: false, message: `Falha ao atualizar tribunal: ${error.message}` };
     }

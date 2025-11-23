@@ -1,4 +1,3 @@
-
 // src/services/judicial-process.service.ts
 /**
  * @fileoverview Este arquivo contém a classe JudicialProcessService, que
@@ -27,22 +26,31 @@ export class JudicialProcessService {
 
   async getJudicialProcesses(tenantId: string): Promise<JudicialProcess[]> {
     const processes = await this.repository.findAll(tenantId);
-    return processes.map(p => ({
-      ...p,
-      id: p.id.toString(),
-      tenantId: p.tenantId.toString(),
-      courtId: p.courtId?.toString(),
-      districtId: p.districtId?.toString(),
-      branchId: p.branchId?.toString(),
-      sellerId: p.sellerId?.toString(),
-      courtName: p.court?.name,
-      districtName: p.district?.name,
-      branchName: p.branch?.name,
-      sellerName: p.seller?.name,
-      parties: p.parties.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
-      lotCount: p._count?.lots ?? 0,
-      assetCount: p._count?.assets ?? 0,
-    }));
+    // DEBUG: Check for lots in processes
+    if (processes.length > 0 && (processes[0] as any).lots) {
+        console.error('JudicialProcessService.getJudicialProcesses: FOUND LOTS IN PROCESS RESPONSE!', (processes[0] as any).lots);
+    }
+    return processes.map(p => {
+        // Explicitly remove potential relations that might cause serialization issues
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { lots, assets, ...rest } = p as any;
+        return {
+            ...rest,
+            id: p.id.toString(),
+            tenantId: p.tenantId.toString(),
+            courtId: p.courtId?.toString(),
+            districtId: p.districtId?.toString(),
+            branchId: p.branchId?.toString(),
+            sellerId: p.sellerId?.toString(),
+            courtName: p.court?.name,
+            districtName: p.district?.name,
+            branchName: p.branch?.name,
+            sellerName: p.seller?.name,
+            parties: p.parties.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
+            lotCount: p._count?.lots ?? 0,
+            assetCount: p._count?.assets ?? 0,
+        };
+    });
   }
 
   async getJudicialProcessById(tenantId: string, id: string): Promise<JudicialProcess | null> {
