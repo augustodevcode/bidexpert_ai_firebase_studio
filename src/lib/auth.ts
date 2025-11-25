@@ -38,6 +38,22 @@ const config = {
   pages: {
     signIn: '/login',
   },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.roles = (user as any).roles;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).id = token.id as string;
+        (session.user as any).roles = token.roles as string[];
+      }
+      return session;
+    }
+  }
 };
 
 export const { auth, handlers, signIn, signOut } = NextAuth(config);

@@ -40,8 +40,8 @@ async function validateMultiTenantIntegrity() {
       'AuctionHabilitation',
       'Review',
       'LotQuestion',
-      'WonLot',
-      'ParticipationHistory'
+      'won_lots',
+      'participation_history'
     ];
     
     for (const table of tablesWithTenantId) {

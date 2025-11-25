@@ -93,3 +93,4 @@
 {"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":466,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-11-20T16:35:20.211Z"}
 {"action":"create","durationMs":185,"error":"\nInvalid `prisma.platformSettings.create()` invocation:\n\n\nUnique constraint failed on the constraint: `PlatformSettings_tenantId_key`","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-11-20T16:35:20.258Z"}
 {"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":944,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-11-20T16:46:55.858Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":691,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-11-25T03:58:39.992Z"}
