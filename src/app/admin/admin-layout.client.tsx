@@ -12,6 +12,7 @@ import AdminSidebar from '@/components/layout/admin-sidebar';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
 import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 import { ThemeProvider } from '@/components/theme-provider';
+import AdminQueryMonitor from '@/components/support/admin-query-monitor';
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
@@ -88,12 +89,13 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
               onSearchClick={() => setCommandPaletteOpen(true)}
               onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
             />
-            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto pb-24">
               <div className="w-full">
                 {children}
                 <DevInfoIndicator />
               </div>
             </main>
+            <AdminQueryMonitor />
           </div>
         </div>
         <WidgetConfigurationModal

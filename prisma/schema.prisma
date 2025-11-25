@@ -74,6 +74,12 @@ model User {
   bidderProfile      BidderProfile?
   auditLogs          AuditLog[]
   formSubmissions    FormSubmission[]
+  itsmTickets        ITSM_Ticket[]
+  itsmAssignedTickets ITSM_Ticket[]     @relation("ITSM_AssignedTickets")
+  itsmMessages       ITSM_Message[]
+  itsmAttachments    ITSM_Attachment[]
+  itsmChatLogs       ITSM_ChatLog[]
+  itsmQueryLogs      ITSM_QueryLog[]
 }
 
 model Role {
@@ -958,6 +964,7 @@ model PlatformSettings {
   relatedLotsCount           Int?                    @default(5)
   defaultUrgencyTimerHours   Int?
   defaultListItemsPerPage    Int?                    @default(10)
+  auditTrailConfig           Json?                   // Audit trail configuration
   updatedAt                  DateTime?               @updatedAt
 }
 
@@ -1625,4 +1632,169 @@ model FormSubmission {
   @@index([userId])
   @@index([status])
   @@map("form_submissions")
+}
+
+// ============================================
+// ITSM-AI SUPPORT SYSTEM
+// ============================================
+
+// Enum para status de ticket
+enum ITSM_TicketStatus {
+  ABERTO
+  EM_ANDAMENTO
+  AGUARDANDO_USUARIO
+  RESOLVIDO
+  FECHADO
+  CANCELADO
+}
+
+// Enum para prioridade de ticket
+enum ITSM_Priority {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+// Enum para categoria de ticket
+enum ITSM_Category {
+  TECNICO
+  FUNCIONAL
+  DUVIDA
+  SUGESTAO
+  BUG
+  OUTRO
+}
+
+// Modelo de Ticket de Suporte
+model ITSM_Ticket {
+  id        BigInt             @id @default(autoincrement())
+  publicId  String             @unique
+  userId    BigInt
+  user      User               @relation(fields: [userId], references: [id])
+  
+  title       String
+  description String             @db.Text
+  status      ITSM_TicketStatus  @default(ABERTO)
+  priority    ITSM_Priority      @default(MEDIA)
+  category    ITSM_Category      @default(OUTRO)
+  
+  // Dados do Usuário (capturados no momento da abertura)
+  userSnapshot Json? // { email, fullName, role, tenantId, etc }
+  
+  // Dados Técnicos
+  userAgent     String? @db.Text
+  browserInfo   String? @db.Text
+  screenSize    String?
+  pageUrl       String? @db.Text
+  errorLogs     Json? // Array de logs de erro
+  
+  // Atribuição
+  assignedToUserId BigInt?
+  assignedToUser   User?   @relation("ITSM_AssignedTickets", fields: [assignedToUserId], references: [id])
+  
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resolvedAt DateTime?
+  closedAt   DateTime?
+  
+  // Relacionamentos
+  messages    ITSM_Message[]
+  attachments ITSM_Attachment[]
+  chatLogs    ITSM_ChatLog[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedToUserId])
+  @@map("itsm_tickets")
+}
+
+// Modelo de Mensagens do Ticket
+model ITSM_Message {
+  id       BigInt @id @default(autoincrement())
+  ticketId BigInt
+  ticket   ITSM_Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  userId  BigInt
+  user    User   @relation(fields: [userId], references: [id])
+  
+  message   String   @db.Text
+  isInternal Boolean @default(false) // Se true, visível apenas para equipe de suporte
+  
+  createdAt DateTime @default(now())
+  
+  @@index([ticketId])
+  @@index([userId])
+  @@map("itsm_messages")
+}
+
+// Modelo de Anexos
+model ITSM_Attachment {
+  id       BigInt @id @default(autoincrement())
+  ticketId BigInt
+  ticket   ITSM_Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  fileName    String
+  fileUrl     String @db.Text
+  fileSize    Int?
+  mimeType    String?
+  uploadedBy  BigInt
+  uploadedByUser User @relation(fields: [uploadedBy], references: [id])
+  
+  createdAt DateTime @default(now())
+  
+  @@index([ticketId])
+  @@map("itsm_attachments")
+}
+
+// Modelo de Log de Chat AI
+model ITSM_ChatLog {
+  id       BigInt @id @default(autoincrement())
+  ticketId BigInt?
+  ticket   ITSM_Ticket? @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  
+  userId BigInt
+  user   User   @relation(fields: [userId], references: [id])
+  
+  // Conversa completa
+  messages Json // Array de { role: 'user'|'assistant', content: string, timestamp: DateTime }
+  
+  // Metadados
+  sessionId    String?
+  context      Json? // Contexto da página, URL, etc
+  wasHelpful   Boolean?
+  ticketCreated Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@map("itsm_chat_logs")
+}
+
+// Modelo de Queries SQL (para monitoramento)
+model ITSM_QueryLog {
+  id BigInt @id @default(autoincrement())
+  
+  query        String   @db.Text
+  duration     Int // em milissegundos
+  success      Boolean
+  errorMessage String?  @db.Text
+  
+  userId   BigInt?
+  user     User?   @relation(fields: [userId], references: [id])
+  
+  endpoint  String?
+  method    String?
+  ipAddress String?
+  
+  timestamp DateTime @default(now())
+  
+  @@index([timestamp])
+  @@index([userId])
+  @@index([success])
+  @@map("itsm_query_logs")
 }

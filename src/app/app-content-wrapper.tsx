@@ -18,6 +18,7 @@ import { Loader2 } from 'lucide-react';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import SubscriptionForm from '@/components/subscription-form'; 
 import { ThemeProvider } from '@/components/theme-provider';
+import FloatingSupportButtons from '@/components/support/floating-support-buttons';
 
 export function AppContentWrapper({ 
   children, 
@@ -69,6 +70,7 @@ export function AppContentWrapper({
         </main>
         <SubscriptionForm />
         <Footer />
+        <FloatingSupportButtons />
       </div>
     </>
   );

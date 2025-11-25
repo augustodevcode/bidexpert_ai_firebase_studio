@@ -41,6 +41,7 @@ import { isValidImageUrl } from '@/lib/ui-helpers';
 import { getCities } from '../cities/actions';
 import AddressGroup from '@/components/address-group';
 import { getLotCategories } from '../categories/actions';
+import { ChangeHistoryTab } from '@/components/audit/change-history-tab';
 
 const auctionStatusOptions = [
   'RASCUNHO',
@@ -691,6 +692,17 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                     )}
                   </AccordionContent>
                 </AccordionItem>
+                {initialData?.id && (
+                  <AccordionItem value="historico">
+                    <AccordionTrigger>Histórico de Alterações</AccordionTrigger>
+                    <AccordionContent className="p-4">
+                      <ChangeHistoryTab
+                        entityType="Auction"
+                        entityId={String(initialData.id)}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
               </Accordion>
               {!isWizardMode && (
                 <div className="flex justify-end pt-4">
