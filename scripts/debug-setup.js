@@ -1,59 +1,40 @@
-// scripts/debug-setup.js
-// Debug script to check platform settings and setup status
-
+// debug-setup.js - Script para verificar o estado do setup no banco de dados
 const { PrismaClient } = require('@prisma/client');
 
 async function debugSetup() {
   const prisma = new PrismaClient();
-
+  
   try {
-    console.log('🔍 Checking platform settings...');
-
-    // Check if PlatformSettings table exists and has data
-    const platformSettings = await prisma.platformSettings.findFirst();
-
-    if (!platformSettings) {
-      console.log('❌ No PlatformSettings found in database');
-      console.log('💡 Run: npm run db:push && npm run db:seed');
-      return;
-    }
-
-    console.log('✅ PlatformSettings found:', {
-      id: platformSettings.id,
-      isSetupComplete: platformSettings.isSetupComplete,
-      createdAt: platformSettings.createdAt,
-      updatedAt: platformSettings.updatedAt,
-    });
-
-    // Check specific field
-    if (platformSettings.isSetupComplete === true) {
-      console.log('✅ isSetupComplete is true - setup should work');
-    } else if (platformSettings.isSetupComplete === false) {
-      console.log('❌ isSetupComplete is false - will redirect to setup');
-      console.log('💡 Update manually or run seed script');
+    console.log('🔍 Verificando estado do setup no banco de dados...\n');
+    
+    // Verificar se existe algum registro de platformSettings
+    const settings = await prisma.platformSettings.findMany();
+    
+    console.log('📊 Registros de platformSettings encontrados:', settings.length);
+    
+    if (settings.length > 0) {
+      settings.forEach((setting, index) => {
+        console.log(`\n📋 Registro ${index + 1}:`);
+        console.log(`   ID: ${setting.id}`);
+        console.log(`   isSetupComplete: ${setting.isSetupComplete}`);
+        console.log(`   siteTitle: ${setting.siteTitle}`);
+        console.log(`   tenantId: ${setting.tenantId || 'null'}`);
+      });
     } else {
-      console.log('❓ isSetupComplete is undefined/null - database schema issue');
-      console.log('💡 Run: npx prisma db push');
+      console.log('❌ Nenhum registro de platformSettings encontrado!');
     }
-
-    // Check if there are users
-    const userCount = await prisma.user.count();
-    console.log(`👥 Total users in database: ${userCount}`);
-
-    // Check if there are tenants
-    const tenantCount = await prisma.tenant.count();
-    console.log(`🏢 Total tenants in database: ${tenantCount}`);
-
-    // Check if there are auctions
-    const auctionCount = await prisma.auction.count();
-    console.log(`🏛️ Total auctions in database: ${auctionCount}`);
-
+    
+    // Verificar tenants
+    console.log('\n🏢 Verificando tenants...');
+    const tenants = await prisma.tenant.findMany();
+    console.log(`📊 Tenants encontrados: ${tenants.length}`);
+    
+    tenants.forEach((tenant, index) => {
+      console.log(`   Tenant ${index + 1}: ${tenant.name} (ID: ${tenant.id})`);
+    });
+    
   } catch (error) {
-    console.error('❌ Error checking setup:', error);
-    console.log('💡 Possible solutions:');
-    console.log('   1. Run: npx prisma db push');
-    console.log('   2. Run: npm run db:seed');
-    console.log('   3. Check .env file for database connection');
+    console.error('❌ Erro ao verificar setup:', error);
   } finally {
     await prisma.$disconnect();
   }
