@@ -168,7 +168,12 @@ function runPlaywrightTests() {
     const tests = spawn('npx', [
       'playwright',
       'test',
-      'tests/e2e/qa-comprehensive-validation.spec.ts',
+      'e2e/multi-tenant-isolation.spec.ts',
+      'itsm/itsm-admin-tickets.spec.ts',
+      'e2e/admin/asset-form-v2.spec.ts',
+      'e2e/admin/auctions-crud.spec.ts',
+      'e2e/admin/lots-crud.spec.ts',
+      '--config=playwright.config.local.ts',
       '--headed',
       '--reporter=html,list'
     ], {

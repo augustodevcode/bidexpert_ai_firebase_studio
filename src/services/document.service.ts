@@ -34,8 +34,8 @@ export class DocumentService {
   ): Promise<{ success: boolean; message: string }> {
     try {
       await this.repository.upsertUserDocument({
-        userId,
-        documentTypeId,
+        userId: BigInt(userId),
+        documentTypeId: BigInt(documentTypeId),
         fileUrl,
         fileName,
         status: 'PENDING_ANALYSIS',

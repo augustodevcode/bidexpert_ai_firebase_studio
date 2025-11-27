@@ -8,8 +8,12 @@ export class UserLotMaxBidRepository {
   }
 
   async upsert(data: Prisma.UserLotMaxBidCreateInput): Promise<UserLotMaxBid> {
+    // Extract user/lot IDs from connect objects for unique constraint
+    const userId = (data.user as { connect: { id: bigint } }).connect.id;
+    const lotId = (data.lot as { connect: { id: bigint } }).connect.id;
+    
     return prisma.userLotMaxBid.upsert({
-      where: { userId_lotId: { userId: data.userId, lotId: data.lotId } },
+      where: { userId_lotId: { userId, lotId } },
       update: data,
       create: data,
     });

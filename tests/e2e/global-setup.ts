@@ -56,12 +56,38 @@ async function globalSetup(config: FullConfig) {
     await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await adminPage.waitForTimeout(5000);
 
+    // Wait for tenant selector to be populated
+    await adminPage.waitForSelector('[data-ai-id="auth-login-tenant-select"]', { timeout: 30000 });
+    
+    // Select "Tenant Principal" (ID: 1) which is where admin@bidexpert.com.br belongs
+    try {
+      const tenantSelector = adminPage.locator('[data-ai-id="auth-login-tenant-select"]');
+      await tenantSelector.click();
+      await adminPage.waitForTimeout(1000);
+      
+      // Look for tenant option with value "1" or containing "Principal"
+      const tenantOption = adminPage.locator('[role="option"]').filter({ hasText: /Tenant Principal|LANDLORD|Principal/i }).first();
+      
+      // Fallback: if not found, try selecting by value="1"
+      if (await tenantOption.count() > 0) {
+        await tenantOption.click();
+      } else {
+        // Try last option (usually Tenant Principal is last in the list)
+        const lastOption = adminPage.locator('[role="option"]').last();
+        await lastOption.click();
+      }
+      
+      await adminPage.waitForTimeout(1000);
+    } catch (e) {
+      console.log('⚠️  Tenant selector interaction failed, continuing anyway:', e);
+    }
+
     const adminEmailInput = adminPage.locator('[data-ai-id="auth-login-email-input"]');
     const adminPasswordInput = adminPage.locator('[data-ai-id="auth-login-password-input"]');
     const adminSubmitButton = adminPage.locator('[data-ai-id="auth-login-submit-button"]');
     
-    await adminEmailInput.fill('admin@bidexpert.com.br');
-    await adminPasswordInput.fill('Admin@123');
+    await adminEmailInput.fill('admin@bidexpert.com');
+    await adminPasswordInput.fill('Test@12345');
     await adminSubmitButton.click();
 
     try {
@@ -82,8 +108,8 @@ async function globalSetup(config: FullConfig) {
       console.warn('⚠️  Session cookie não encontrado, tentando senha alternativa Admin123...');
       await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded' });
       await adminPage.waitForTimeout(5000);
-      await adminEmailInput.fill('admin@bidexpert.com.br');
-      await adminPasswordInput.fill('Admin@123');
+      await adminEmailInput.fill('admin@bidexpert.com');
+      await adminPasswordInput.fill('Test@12345');
       await adminSubmitButton.click();
       await adminPage.waitForURL(/\/admin|\/dashboard|\/$/i, { timeout: 60000 });
       await adminPage.waitForTimeout(2000);
@@ -102,7 +128,7 @@ async function globalSetup(config: FullConfig) {
     const lawyerPasswordInput = lawyerPage.locator('[data-ai-id="auth-login-password-input"]');
     const lawyerSubmitButton = lawyerPage.locator('[data-ai-id="auth-login-submit-button"]');
     
-    await lawyerEmailInput.fill('advogado@bidexpert.com.br');
+    await lawyerEmailInput.fill('advogado@bidexpert.com');
     await lawyerPasswordInput.fill('Test@12345');
     await lawyerSubmitButton.click();
 

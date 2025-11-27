@@ -6,6 +6,7 @@
  * como impedir a exclusão de uma marca que ainda possui modelos vinculados.
  */
 import { VehicleMakeRepository } from '@/repositories/vehicle-make.repository';
+import { prisma } from '@/lib/prisma';
 import type { VehicleMake, VehicleMakeFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';

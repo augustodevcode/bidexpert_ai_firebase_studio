@@ -45,7 +45,7 @@ test.describe('ITSM - Detecção de Bugs e Integração', () => {
     await page.waitForTimeout(2000);
     
     // Script não deve ser executado (sem alert)
-    const alerts = await page.evaluate(() => window.alerts || []);
+    const alerts = await page.evaluate(() => (window as any).alerts || []);
     expect(alerts).toBeUndefined();
     
     // Texto deve aparecer escapado

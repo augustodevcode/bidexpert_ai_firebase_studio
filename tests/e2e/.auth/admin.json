@@ -2,10 +2,10 @@
   "cookies": [
     {
       "name": "session",
-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiI3MSIsImVtYWlsIjoiYWRtaW5AYmlkZXhwZXJ0LmNvbS5iciIsInRlbmFudElkIjoiMSIsInJvbGVOYW1lcyI6WyJMRUlMT0VJUk8iLCJBRE1JTiJdLCJwZXJtaXNzaW9ucyI6WyJjb25kdWN0X2F1Y3Rpb25zIiwiYXVjdGlvbnM6bWFuYWdlX2Fzc2lnbmVkIiwibG90czptYW5hZ2VfYXNzaWduZWQiLCJtYW5hZ2VfYWxsIiwidXNlcnM6bWFuYWdlIiwicm9sZXM6bWFuYWdlIiwic2V0dGluZ3M6bWFuYWdlIiwiYXVjdGlvbnM6bWFuYWdlX2FsbCIsImxvdHM6bWFuYWdlX2FsbCIsInJlcG9ydHM6dmlld19hbGwiLCJmaW5hbmNpYWw6bWFuYWdlIiwidGVuYW50Om1hbmFnZSJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NjM4Nzc4MjMsImV4cCI6MTc2NDQ4MjYyM30.Uis8YVeOCox2ZrHTGwD45z0titx4KXxbGBrnUfM-B8k",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIiwiTEVJTE9FSVJPIiwiQ09NUFJBRE9SIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiLCJjb25kdWN0X2F1Y3Rpb25zIiwiYXVjdGlvbnM6bWFuYWdlX2Fzc2lnbmVkIiwibG90czptYW5hZ2VfYXNzaWduZWQiLCJwbGFjZV9iaWRzIiwidmlld19hdWN0aW9ucyIsInZpZXdfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NjQxODUxMTgsImV4cCI6MTc2NDc4OTkxOH0.wweiLxY58Tdqc64kVGyneqnq4HVhZzBw8MPDjXDhtQo",
       "domain": "localhost",
       "path": "/",
-      "expires": 1764482623.160873,
+      "expires": 1764789918.372974,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"

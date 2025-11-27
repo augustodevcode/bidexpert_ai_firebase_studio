@@ -8,7 +8,7 @@
  */
 import { RoleRepository } from '@/repositories/role.repository';
 import type { Role, RoleFormData } from '@/types';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 export class RoleService {
@@ -42,7 +42,7 @@ export class RoleService {
       };
 
       const newRole = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Perfil criado com sucesso.', roleId: newRole.id };
+      return { success: true, message: 'Perfil criado com sucesso.', roleId: BigInt(newRole.id) };
     } catch (error: any) {
       console.error("Error in RoleService.createRole:", error);
       return { success: false, message: `Falha ao criar perfil: ${error.message}` };

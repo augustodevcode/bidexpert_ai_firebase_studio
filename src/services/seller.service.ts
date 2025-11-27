@@ -280,7 +280,7 @@ export class SellerService {
 
     if (!sellerData) return null;
 
-    const totalRevenue = sellerData.lots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
+    const totalRevenue = sellerData.lots.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
     const lotsSoldCount = sellerData.lots.length;
     const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
     const salesRate = sellerData._count.lots > 0 ? (lotsSoldCount / sellerData._count.lots) * 100 : 0;
@@ -293,7 +293,7 @@ export class SellerService {
       salesByMonthMap.set(monthKey, 0);
     }
 
-    sellerData.lots.forEach(lot => {
+    sellerData.lots.forEach((lot: any) => {
       const monthKey = formatInSaoPaulo(lot.updatedAt, 'MMM/yy'); // Use timezone-aware function
       if (salesByMonthMap.has(monthKey)) {
         salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price ? Number(lot.price) : 0));

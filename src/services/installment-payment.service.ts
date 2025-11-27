@@ -39,11 +39,12 @@ export class InstallmentPaymentService {
       const dueDate = convertSaoPauloToUtc(add(nowInSaoPaulo(), { months: i }));
       payments.push({
         userWinId: userWinIdAsBigInt,
-        installmentNumber: i,
-        totalInstallments: totalInstallments,
+        installmentNumber: i + 1,
+        totalInstallments,
         amount: installmentAmount,
         dueDate: dueDate,
         status: 'PENDENTE',
+        tenantId: BigInt(userWin.tenantId),
       });
     }
 

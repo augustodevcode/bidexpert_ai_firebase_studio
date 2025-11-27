@@ -6,6 +6,7 @@
  * associado a uma marca e validando dados antes da persistência.
  */
 import { VehicleModelRepository } from '@/repositories/vehicle-model.repository';
+import { prisma } from '@/lib/prisma';
 import type { VehicleModel, VehicleModelFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
@@ -42,7 +43,7 @@ export class VehicleModelService {
       const dataToUpsert: Prisma.VehicleModelCreateInput = { 
         ...restOfData,
         slug,
-        make: { connect: { id: makeId } },
+        make: { connect: { id: BigInt(makeId) } },
       };
       
       const newModel = await prisma.vehicleModel.upsert({
@@ -67,7 +68,7 @@ export class VehicleModelService {
         dataToUpdate.slug = slugify(data.name);
       }
       if (data.makeId) {
-        dataToUpdate.make = { connect: { id: data.makeId } };
+        dataToUpdate.make = { connect: { id: BigInt(data.makeId) } };
       }
       await this.repository.update(id, dataToUpdate);
       return { success: true, message: 'Modelo atualizado com sucesso.' };

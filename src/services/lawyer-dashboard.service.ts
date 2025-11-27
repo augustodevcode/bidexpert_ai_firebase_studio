@@ -17,6 +17,7 @@ import type {
   LawyerTaskSummary,
   LawyerTaskStatus,
   LawyerDocumentSummary,
+  LawyerDocumentStatus,
 } from '@/types/lawyer-dashboard';
 
 const platformSettingsService = new PlatformSettingsService();

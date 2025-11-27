@@ -153,7 +153,7 @@ test.describe('User Role Update', () => {
     await roleFormCardAfter.scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     
-    const selectedRolesAfter = [];
+    const selectedRolesAfter: string[] = [];
     const allCheckboxesAfter = roleFormCardAfter.locator('input[type="checkbox"]');
     const checkboxCountAfter = await allCheckboxesAfter.count();
     
@@ -162,7 +162,9 @@ test.describe('User Role Update', () => {
       const isChecked = await checkbox.isChecked();
       if (isChecked) {
         const label = await checkbox.locator('..').locator('..').locator('label').textContent();
-        selectedRolesAfter.push(label?.trim());
+        if (label) {
+          selectedRolesAfter.push(label.trim());
+        }
       }
     }
     

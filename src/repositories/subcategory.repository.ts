@@ -27,7 +27,7 @@ export class SubcategoryRepository {
   }
 
   async upsert(data: Prisma.SubcategoryCreateInput): Promise<Subcategory> {
-    const parentId = (data.parentCategory?.connect?.id) as string;
+    const parentId = (data.parentCategory?.connect?.id) as bigint;
     return prisma.subcategory.upsert({
       where: { name_parentCategoryId: { name: data.name, parentCategoryId: parentId } },
       update: data,

@@ -10,6 +10,7 @@
         "dev:with-seed": "npx prisma db push && npx tsx --env-file=.env scripts/seed-db.ts && npx next dev --port 9002 --hostname 0.0.0.0",
         "build": "npx prisma generate && next build --debug",
         "build:local": "prisma generate && next build",
+        "typecheck": "tsc --noEmit",
         "start": "next start",
         "postinstall": "npx prisma generate",
         "lint": "eslint . --max-warnings=0",

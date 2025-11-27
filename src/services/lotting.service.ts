@@ -91,12 +91,12 @@ export class LottingService {
       take: 12
     });
 
-    return lots.map(lot => ({
+    return lots.map((lot: any) => ({
       id: lot.id.toString(),
       title: lot.title,
       status: lot.status as LotStatus,
       assetCount: lot.assets.length,
-      valuation: lot.assets.reduce((acc, curr) => acc + Number(curr.asset.evaluationValue || 0), 0),
+      valuation: lot.assets.reduce((acc: number, curr: any) => acc + Number(curr.asset.evaluationValue || 0), 0),
       number: lot.number,
       auctionTitle: lot.auction?.title ?? null,
       auctionId: lot.auction?.id ? lot.auction.id.toString() : null,

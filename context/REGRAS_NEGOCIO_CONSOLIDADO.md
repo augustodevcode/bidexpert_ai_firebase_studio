@@ -1,13 +1,13 @@
-# 📋 REGRAS DE NEGÓCIO E ESPECIFICAÇÕES - BIDEXPERT
+# REGRAS DE NEGÓCIO E ESPECIFICAÇÕES - BIDEXPERT
 ## Documento Consolidado e Oficial
 
-**Data:** 16 de Novembro de 2025  
-**Status:** ✅ Atualizado com Implementações de Outubro/Novembro
+**Data:** 16 de Dezembro de 2025  
+**Status:** ✅ Atualizado com implementações de Dezembro/2025  
 **Próximos passos:** caso haja novas implementações, atualize esse documento com as orientações do usuário
 
 ---
 
-## 📑 ÍNDICE RÁPIDO
+## ÍNDICE RÁPIDO
 1. [Visão Geral](#visão-geral)
 2. [Arquitetura](#arquitetura)
 3. [Regras de Negócio Críticas](#regras-de-negócio-críticas)
@@ -71,7 +71,7 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ Usuário NUNCA acessa dados de outro tenant
 
 ### RN-002: Componentes Universais
-✅ OBRIGATÓRIO usar `UniversalCard` e `UniversalListItem`  
+✅ OBRIGATÓRIO usar `BidExpertCard` e `BidExpertListItem`  
 ❌ NÃO importar diretamente `AuctionCard` ou `LotCard`  
 ✅ Garante consistência visual
 
@@ -99,12 +99,11 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 
 ### RN-007: Cronômetro (Countdown)
 ✅ Componente `LotCountdown` reutilizável  
-⚠️ NÃO exibir por padrão em todos os lotes, apenas nos que estivem com intervalo de dias menor do que configurado em Settings (se não tiver o campo em settings para configurar essa regra, crie o campo e atualize o codebase) 
-✅ Controlado por prop `showCountdown`  
-✅ Apenas em: Carousel "Super Oportunidades" e Modal de pré-visualização
+✅ Controlado por configurações `showCountdownOnCards` e `showCountdownOnLotDetail`  
+✅ Apenas em: Cards quando habilitado, detalhes de lote quando configurado
 
 ### RN-008: Timeline de Etapas
-✅ OBRIGATÓRIO usar `AuctionStagesTimeline.tsx`  
+✅ OBRIGATÓRIO usar `BidExpertAuctionStagesTimeline`  
 ✅ Integrado em `AuctionCard` e `AuctionListItem`  
 ✅ Busca última etapa do leilão para countdown
 
@@ -192,7 +191,7 @@ Com base na análise de código e documentação, foram identificados pontos que
 
 ### RN-015: Configuração Global de Edição (Modal/Sheet)
 🎛️ **Configuração**:  
-- `PlatformSettings.crudEditMode`: `modal` | `sheet` (padrão: `modal`)  
+- `PlatformSettings.crudFormMode`: `modal` | `sheet` (padrão: `modal`)  
 - **Mobile-first**:  
   - `< 768px`: Sempre usar `sheet`  
   - `≥ 768px`: Respeitar configuração do usuário  
@@ -202,6 +201,8 @@ Com base na análise de código e documentação, foram identificados pontos que
 - Sheets devem ocupar 100% da largura em mobile  
 - Modais devem ter largura máxima de `90vw` e altura máxima de `90vh`  
 - Scroll interno quando conteúdo for maior que a viewport
+
+✅ **Status**: Implementado via `CrudFormContainer.tsx` e campo `crudFormMode` no schema
 
 ### RN-016: Setup Gate Obrigatório
 Bloquear acesso a rotas protegidas quando `isSetupComplete=false`  
@@ -316,13 +317,13 @@ Deve ser configurada em `src/app/globals.css` como variável `--primary`
 
 ## COMPONENTES PRINCIPAIS
 
-### 1. UniversalCard / UniversalListItem
-**Localização:** `src/components/universal-card.tsx`
+### 1. BidExpertCard / BidExpertListItem
+**Localização:** `src/components/BidExpertCard.tsx`
 
 **Uso:**
 ```tsx
-<UniversalCard type="auction" data={auctionData} showCountdown={true} />
-<UniversalCard type="lot" data={lotData} showCountdown={false} />
+<BidExpertCard item={auctionData} type="auction" platformSettings={settings} />
+<BidExpertCard item={lotData} type="lot" platformSettings={settings} parentAuction={auction} />
 ```
 
 **Regra:** Páginas interagem APENAS com componentes universais
@@ -359,8 +360,8 @@ Deve ser configurada em `src/app/globals.css` como variável `--primary`
 
 **Regra:** OBRIGATÓRIO em todos formulários com endereço
 
-### 5. AuctionStagesTimeline
-**Localização:** `src/components/auction/auction-stages-timeline.tsx`
+### 5. BidExpertAuctionStagesTimeline
+**Localização:** `src/components/auction/BidExpertAuctionStagesTimeline.tsx`
 
 **Características:**
 - Timeline visual de etapas/praças
@@ -408,100 +409,52 @@ Deve ser configurada em `src/app/globals.css` como variável `--primary`
 
 ### 🔧 Bidder Dashboard (Parcialmente Implementado)
 
-**Status:** ⚠️ Em desenvolvimento - Requer finalização
-
-**Modelos Prisma a Criar/Revisar:**
-```prisma
-model BidderProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  // ... campos adicionais
-}
-
-model WonLot {
-  id        String   @id @default(cuid())
-  lotId     String
-  userId    String
-  status    WonLotStatus
-  // ... campos adicionais
-}
-
-model BidderNotification {
-  id        String   @id @default(cuid())
-  userId    String
-  type      NotificationType
-  // ... campos adicionais
-}
-
-model PaymentMethod {
-  id        String   @id @default(cuid())
-  userId    String
-  type      PaymentMethodType
-  // ... campos adicionais
-}
-
-model ParticipationHistory {
-  id        String   @id @default(cuid())
-  userId    String
-  auctionId String
-  // ... campos adicionais
-}
-```
-
-**APIs a Implementar:**
-- `GET /api/bidder/dashboard` - Overview do dashboard
-- `GET /api/bidder/won-lots` - Lotes arrematados (CRUD completo)
-- `POST /api/bidder/won-lots/{id}/pay` - Realizar pagamento
-- `GET /api/bidder/won-lots/{id}/boleto` - Gerar boleto
-- `GET /api/bidder/payment-methods` - Métodos de pagamento (CRUD)
-- `POST /api/bidder/payment-methods` - Adicionar método
-- `GET /api/bidder/notifications` - Notificações (CRUD)
-- `GET /api/bidder/participation-history` - Histórico
-- `GET /api/bidder/profile` - Perfil do bidder
-- `PUT /api/bidder/profile` - Atualizar perfil
+**Status:** ⚠️ Em desenvolvimento - Estrutura básica implementada
 
 **Componentes React:**
-- `BidderDashboard` - Dashboard principal responsivo
-- `WonLotsSection` - Lotes arrematados
-- `PaymentsSection` - Pagamentos e métodos
-- `DocumentsSection` - Documentos e análise
-- `NotificationsSection` - Centro de notificações
-- `HistorySection` - Histórico de participações
-- `ProfileSection` - Perfil e configurações
+- ✅ `BidderDashboard` - Dashboard principal responsivo
+- ✅ `WonLotsSection` - Lotes arrematados
+- ✅ `PaymentsSection` - Pagamentos e métodos
+- ✅ `DocumentsSection` - Documentos e análise
+- ✅ `NotificationsSection` - Centro de notificações
+- ✅ `HistorySection` - Histórico de participações
+- ✅ `ProfileSection` - Perfil e configurações
 
 **Hooks Customizados:**
-- `useBidderDashboard()` - Overview e dados principais
-- `useWonLots()` - Lotes arrematados com filtros
-- `usePaymentMethods()` - Gestão de pagamentos
-- `useNotifications()` - Sistema de notificações
-- `useParticipationHistory()` - Histórico detalhado
-- `useBidderProfile()` - Perfil do usuário
+- ✅ `useBidderDashboard()` - Overview e dados principais
+- ✅ `useWonLots()` - Lotes arrematados com filtros
+- ✅ `usePaymentMethods()` - Gestão de pagamentos
+- ✅ `useNotifications()` - Sistema de notificações
+- ✅ `useParticipationHistory()` - Histórico detalhado
+- ✅ `useBidderProfile()` - Perfil do usuário
 
 **Próximos Passos:**
-1. Adicionar modelos ao `schema.prisma`
-2. Executar `npx prisma db push`
-3. Implementar repositories
-4. Implementar services
-5. Criar server actions
-6. Desenvolver componentes React
-7. Criar hooks customizados
-8. Testes E2E
+1. [ ] Finalizar APIs: `GET/POST /api/bidder/*` para lotes vencidos, pagamentos, notificações, histórico, perfil
+2. [ ] Implementar repositories e services com BigInt
+3. [ ] Adicionar dados essenciais com skeletons/spinners
+4. [ ] Criar testes E2E
 
 ---
 
 ### 🔧 Sistema CRUD Configurável (Modal/Sheet)
 
-**Status:** ⚠️ Planejado - A Implementar
+**Status:** ✅ Implementado - Parcialmente
 
 **Objetivo:** Permitir que o administrador escolha entre Modal e Sheet para edição CRUD
 
-**Requisitos:**
+**Implementações Concluídas:**
+- ✅ Campo `crudFormMode` adicionado ao `PlatformSettings`
+- ✅ Componente `CrudFormContainer` criado e funcional
+- ✅ Responsividade automática (mobile sempre sheet)
+- ✅ Configuração via banco de dados
+
+**Requisitos Pendentes:**
 
 1. **Configuração em PlatformSettings:**
 ```prisma
 model PlatformSettings {
   // ... campos existentes
-  crudEditMode  String @default("modal") // "modal" | "sheet"
+  crudFormMode  String @default("modal") // "modal" | "sheet"
 }
 ```
 
@@ -532,11 +485,11 @@ interface CrudFormContainerProps {
 - Feedback com Toast
 
 **Próximos Passos:**
-1. Adicionar campo `crudEditMode` ao PlatformSettings
-2. Criar componente `CrudFormContainer`
-3. Refatorar páginas de listagem
-4. Adicionar toggle em `/admin/settings`
-5. Criar testes E2E (`tests/ui-e2e/crud-modes.spec.ts`)
+1. ✅ Adicionar campo `crudFormMode` ao PlatformSettings (já implementado)
+2. ✅ Criar componente `CrudFormContainer` (já implementado)
+3. [ ] Refatorar páginas de listagem
+4. [ ] Adicionar toggle em `/admin/settings`
+5. [ ] Criar testes E2E (`tests/ui-e2e/crud-modes.spec.ts`)
 
 ---
 
@@ -623,6 +576,10 @@ interface CrudFormContainerProps {
 2. ✅ **Admin Impersonation Service**: Sistema completo de impersonação administrativa com validações server-side
 3. ✅ **Playwright Test Suite**: 6 cenários E2E cobrindo impersonação (admin e não-admin)
 4. ✅ **Documentação Técnica**: 4 novos arquivos de documentação criados (implementação, feature guide, testes)
+5. ✅ **Componentes Universais**: Implementado `BidExpertCard` e `BidExpertListItem` como padrão oficial
+6. ✅ **Sistema CRUD Configurável**: Implementado `CrudFormContainer` com campo `crudFormMode` no schema
+7. ✅ **Configurações de Countdown**: Campos `showCountdownOnCards` e `showCountdownOnLotDetail` implementados
+8. ✅ **Componentes de Dashboard Bidder**: Estrutura básica implementada com seções principais
 
 **Trabalhos Pendentes (Backlog Atualizado):**
 - [ ] Audit trail para sessões de impersonação (logging e histórico)
@@ -722,5 +679,5 @@ O frontend utiliza `localStorage` para persistir certas preferências e históri
 ---
 
 **Documento mantido por:** Equipe de Desenvolvimento BidExpert  
-**Última atualização:** 16/11/2025  
+**Última atualização:** 16/12/2025  
 **Changelog**: Ver histórico de resoluções acima para atualizações recentes

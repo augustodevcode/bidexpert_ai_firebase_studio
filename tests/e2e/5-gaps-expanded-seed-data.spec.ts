@@ -150,7 +150,7 @@ test.describe('Expanded Seed Data: Estrutura Judicial', () => {
     
     if (await comarcaSelect.count() > 0) {
       // Selecionar Rio de Janeiro
-      await comarcaSelect.selectOption(/Rio de Janeiro|RJ/i);
+      await comarcaSelect.selectOption('Rio de Janeiro');
       await page.waitForTimeout(500);
 
       // Verificar que aparece RJ

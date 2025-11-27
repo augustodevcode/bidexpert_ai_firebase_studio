@@ -19,7 +19,7 @@ export class StateService {
 
   async getStates(): Promise<StateInfo[]> {
     const states = await this.repository.findAllWithCityCount();
-    return states.map(s => ({
+    return states.map((s: any) => ({
       ...s,
       id: s.id.toString(),
       cityCount: s._count.cities,

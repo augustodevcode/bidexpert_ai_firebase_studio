@@ -5,7 +5,7 @@ const shouldStartWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER !== '1';
 const baseURL = process.env.BASE_URL || 'http://localhost:9005';
 
 export default defineConfig({
-	testDir: './tests/e2e',
+	testDir: './tests',
 	timeout: 120_000, // 2 minutos por teste devido à compilação do Next.js
 	expect: { timeout: 15_000 },
 	fullyParallel: false,

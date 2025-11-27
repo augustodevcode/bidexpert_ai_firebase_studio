@@ -171,6 +171,16 @@ export type Review = Omit<PmReview, 'id' | 'lotId' | 'auctionId' | 'userId'> & {
   userId: string; 
 };
 
+export type UserWin = Omit<PmUserWin, 'id' | 'lotId' | 'userId' | 'tenantId' | 'value'> & {
+  id: string;
+  lotId: string;
+  userId: string;
+  tenantId: string;
+  value: number;
+  lot?: Lot;
+  user?: User;
+};
+
 export type BidInfo = Omit<PmBid, 'id' | 'lotId' | 'auctionId' | 'bidderId' | 'tenantId' | 'amount'> & { 
   id: string; 
   lotId: string; 
@@ -183,6 +193,15 @@ export type BidInfo = Omit<PmBid, 'id' | 'lotId' | 'auctionId' | 'bidderId' | 't
 export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId' | 'answeredByUserId'> & { id: string; lotId: string; auctionId: string; userId: string; answeredByUserId?: string | null };
 export type UserDocument = Omit<PmUserDocument, 'id' | 'userId' | 'documentTypeId'> & { id: string; userId: string; documentTypeId: string; documentType: DocumentType };
 export type DocumentType = Omit<PmDocumentType, 'id'> & { id: string };
+export type DocumentTemplate = {
+  id: string;
+  name: string;
+  description?: string | null;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+export type DocumentTemplateFormData = Omit<DocumentTemplate, 'id' | 'createdAt' | 'updatedAt'>;
 export type DirectSaleOffer = Omit<PmDirectSaleOffer, 'id' | 'tenantId' | 'sellerId' | 'categoryId' | 'price' | 'minimumOfferPrice'> & {
     id: string;
     tenantId: string;
@@ -192,6 +211,9 @@ export type DirectSaleOffer = Omit<PmDirectSaleOffer, 'id' | 'tenantId' | 'selle
     minimumOfferPrice?: number | null;
     galleryImageUrls?: string[] | null;
     category?: string;
+};
+export type DirectSaleOfferFormData = Omit<DirectSaleOffer, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'category' | 'tenantId'> & {
+  tenantId?: string | null;
 };
 export type UserLotMaxBid = Omit<PmUserLotMaxBid, 'id' | 'userId' | 'lotId' | 'maxAmount'> & { id: string; userId: string; lotId: string; maxAmount: number; };
 export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { id: string; tenantId: string; courtId?: string | null; districtId?: string | null; branchId?: string | null; sellerId?: string | null; parties: ProcessParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string, lotCount?: number, assetCount?: number };
@@ -221,6 +243,7 @@ export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO' | 'CANCELADO' | 'ATRASADO';
 export type AccountType = 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
 export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
+export type LawyerDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
 export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'RELISTADO' | 'CANCELADO' | 'RETIRADO';
 export type AssetStatus = 'CADASTRO' | 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO' | 'INATIVADO';
@@ -380,8 +403,34 @@ export interface ConsignorDashboardStats {
     salesData: { name: string; sales: number }[];
 }
 
-export type SellerFormData = Partial<Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating' | 'tenantId' | 'cityId' | 'stateId'>> & { name: string; isJudicial?: boolean; userId?: string | null; tenantId?: string; cityId?: string | null; stateId?: string | null; judicialBranchId?: string | null; };
-export type AuctioneerFormData = Partial<Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating' | 'tenantId' | 'cityId' | 'stateId'>> & { name: string; userId?: string | null; tenantId?: string; cityId?: string | null; stateId?: string | null; };
+export type SellerFormData = Partial<Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating' | 'tenantId' | 'cityId' | 'stateId'>> & { 
+  name: string; 
+  isJudicial?: boolean; 
+  userId?: string | null; 
+  tenantId?: string; 
+  cityId?: string | null; 
+  stateId?: string | null; 
+  judicialBranchId?: string | null;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+export type AuctioneerFormData = Partial<Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating' | 'tenantId' | 'cityId' | 'stateId'>> & { 
+  name: string; 
+  userId?: string | null; 
+  tenantId?: string; 
+  cityId?: string | null; 
+  stateId?: string | null;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+};
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'category' | 'sellerName' | 'auctioneerName' | 'categoryName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl' | 'tenantId'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
 export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls' | 'tenantId'> & { type: string, assetIds?: string[], inheritedMediaFromAssetId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null, mediaItemIds?: string[], galleryImageUrls?: string[] };
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;
@@ -391,7 +440,16 @@ export type CourtFormData = Omit<Court, 'id' | 'slug' | 'createdAt' | 'updatedAt
 export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf' | 'createdAt' | 'updatedAt'>;
 export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf' | 'createdAt' | 'updatedAt'>;
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName' | 'sellerName' | 'tenantId'>;
-export type AssetFormData = Partial<Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'tenantId' | 'lotInfo' | 'lots' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName'>> & { title: string; };
+export type AssetFormData = Partial<Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'tenantId' | 'lotInfo' | 'lots' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName'>> & { 
+  title: string;
+  cityId?: string | null;
+  stateId?: string | null;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  zipCode?: string;
+};
 export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'parentCategoryName' | 'itemCount'>;
 export type VehicleMakeFormData = Omit<VehicleMake, 'id' | 'slug'>;
 export type VehicleModelFormData = Omit<VehicleModel, 'id' | 'slug' | 'makeName'>;

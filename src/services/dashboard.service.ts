@@ -56,7 +56,7 @@ export class DashboardService {
         
         const totalRevenue = totalRevenueResult._sum.price ? Number(totalRevenueResult._sum.price) : 0;
         const totalBids = bids.length;
-        const averageBidValue = totalBids > 0 ? bids.reduce((sum, bid) => sum + Number(bid.amount), 0) / totalBids : 0;
+        const averageBidValue = totalBids > 0 ? bids.reduce((sum: number, bid: any) => sum + Number(bid.amount), 0) / totalBids : 0;
         
         const salesByMonthMap = new Map<string, number>();
         const soldLotsForSales = await this.prisma.lot.findMany({ where: { status: 'VENDIDO' }, select: { price: true, updatedAt: true } });
@@ -69,7 +69,7 @@ export class DashboardService {
             salesByMonthMap.set(monthKey, 0);
         }
 
-        soldLotsForSales.forEach(lot => {
+        soldLotsForSales.forEach((lot: any) => {
             const monthKey = formatInSaoPaulo(lot.updatedAt, 'MMM/yy');
             if (salesByMonthMap.has(monthKey)) {
                 salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price ? Number(lot.price) : 0));
@@ -101,8 +101,8 @@ export class DashboardService {
             salesData,
             categoryData,
             averageBidValue,
-            auctionSuccessRate: auctionCount > 0 ? (auctionsWithLots.filter(a => a._count.lots > 0).length / auctionCount) * 100 : 0,
-            averageLotsPerAuction: auctionCount > 0 ? auctionsWithLots.reduce((sum, a) => sum + a._count.lots, 0) / auctionCount : 0,
+            auctionSuccessRate: auctionCount > 0 ? (auctionsWithLots.filter((a: any) => a._count.lots > 0).length / auctionCount) * 100 : 0,  
+            averageLotsPerAuction: auctionCount > 0 ? auctionsWithLots.reduce((sum: number, a: any) => sum + a._count.lots, 0) / auctionCount : 0,
         };
     }
 }

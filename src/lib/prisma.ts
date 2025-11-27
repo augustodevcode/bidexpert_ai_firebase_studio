@@ -37,11 +37,14 @@ function createPrismaClient() {
                 try {
                   // Avoid infinite loop - don't log the logging query itself
                   if (model !== 'ITSM_QueryLog') {
+                    // Serialize with BigInt support
                     const queryString = JSON.stringify({
                       model,
                       action: operation,
                       args,
-                    });
+                    }, (key, value) =>
+                      typeof value === 'bigint' ? value.toString() : value
+                    );
 
                     // Use raw query to avoid triggering middleware again
                     await client.$executeRaw`

@@ -63,7 +63,7 @@ export class UserService {
 
   async getUsers(): Promise<UserProfileWithPermissions[]> {
     const users = await this.userRepository.findAll();
-    return users.map(user => this.formatUser(user)).filter(Boolean) as UserProfileWithPermissions[];
+    return users.map((user: any) => this.formatUser(user)).filter(Boolean) as UserProfileWithPermissions[];
   }
 
   async getUserById(id: string): Promise<UserProfileWithPermissions | null> {
@@ -160,7 +160,7 @@ export class UserService {
       });
 
       const tenantIds = user.tenants?.map((t: any) => t.tenantId) || [];
-      console.log('[UserService.updateUserRoles] tenantIds do usuário:', tenantIds.map(id => id.toString()));
+      console.log('[UserService.updateUserRoles] tenantIds do usuário:', tenantIds.map((id: bigint) => id.toString()));
 
       const roleIdsAsBigInt = roleIds.map(id => BigInt(id));
       console.log('[UserService.updateUserRoles] Chamando repository.updateUserRoles...');
@@ -258,7 +258,7 @@ export class UserService {
     );
 
     const allRequiredDocsApproved = requiredDocTypes.every(
-      requiredDoc => submittedApprovedDocTypeIds.has(requiredDoc.id.toString())
+      (requiredDoc: any) => submittedApprovedDocTypeIds.has(requiredDoc.id.toString())
     );
 
     if (allRequiredDocsApproved) {

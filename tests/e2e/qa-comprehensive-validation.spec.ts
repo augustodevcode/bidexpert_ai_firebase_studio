@@ -110,7 +110,7 @@ test.describe('🔒 QA - PHASE 1 SECURITY VALIDATION SUITE', () => {
     // Should return 404 or show "not found" message
     const notFoundMessage = await pageA.locator('text="not found", text="não encontrado", text="404"').first();
     
-    if (notFoundMessage.isVisible()) {
+    if (await notFoundMessage.isVisible()) {
       console.log('   ✅ Cross-tenant access properly denied (404/Not Found)');
     } else {
       console.log('   ⚠ No error message visible (may be handled differently)');

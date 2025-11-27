@@ -194,6 +194,8 @@ test.describe('🔒 Cross-Tenant Security Validation', () => {
  */
 test.describe('💳 Payment Status Security', () => {
   test('should not allow marking other tenant payments as paid', async ({ page, context }) => {
+    const tenant1 = { email: 'user1@tenant1.com', password: 'test123456' };
+    
     // Login as Tenant 1
     await page.goto(`${BASE_URL}`);
     

@@ -7,14 +7,17 @@
  * no painel do usuário.
  */
 import { UserWinRepository } from '@/repositories/user-win.repository';
+import { prisma } from '@/lib/prisma';
 import type { UserWin } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 export class UserWinService {
   private repository: UserWinRepository;
+  private prisma;
 
   constructor() {
     this.repository = new UserWinRepository();
+    this.prisma = prisma;
   }
 
   async create(data: Omit<Prisma.UserWinCreateInput, 'tenantId'>): Promise<UserWin> {

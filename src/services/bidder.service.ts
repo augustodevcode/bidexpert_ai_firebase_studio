@@ -313,10 +313,10 @@ export class BidderService {
       totalLost: total - wonCount,
       winRate,
       totalSpent: participations
-        .filter(p => p.result === 'WON')
-        .reduce((sum, p) => sum.add(p.finalBid || 0), new Decimal(0)),
+        .filter((p: any) => p.result === 'WON')
+        .reduce((sum: Decimal, p: any) => sum.add(p.finalBid || 0), new Decimal(0)),
       averageBid: total > 0 ?
-        participations.filter(p => p.maxBid).reduce((sum, p) => sum.add(p.maxBid || 0), new Decimal(0)).div(total) :
+        participations.filter((p: any) => p.maxBid).reduce((sum: Decimal, p: any) => sum.add(p.maxBid || 0), new Decimal(0)).div(total) :
         new Decimal(0)
     };
 

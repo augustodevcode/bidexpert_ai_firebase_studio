@@ -21,7 +21,7 @@ export class ContactMessageService {
 
   async getContactMessages(): Promise<ContactMessage[]> {
     const messages = await this.repository.findAll();
-    return messages.map(m => ({ ...m, id: m.id.toString() }));
+    return messages.map((m: any) => ({ ...m, id: m.id.toString() }));
   }
 
   async saveMessage(data: Prisma.ContactMessageCreateInput): Promise<{ success: boolean; message: string; }> {

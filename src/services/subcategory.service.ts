@@ -39,12 +39,12 @@ export class SubcategoryService {
 
   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
     try {
-      const parentCategory = await this.categoryRepository.findById(data.parentCategoryId);
+      const parentCategory = await this.categoryRepository.findById(BigInt(data.parentCategoryId));
       if (!parentCategory) {
         return { success: false, message: 'A categoria principal selecionada não existe.' };
       }
       if (!parentCategory.hasSubcategories) {
-        await this.categoryRepository.update(parentCategory.id, { hasSubcategories: true });
+        await this.categoryRepository.update(BigInt(parentCategory.id), { hasSubcategories: true });
       }
       
       const dataToUpsert: Prisma.SubcategoryCreateInput = {
@@ -55,7 +55,7 @@ export class SubcategoryService {
         iconUrl: data.iconUrl,
         iconMediaId: data.iconMediaId,
         dataAiHintIcon: data.dataAiHintIcon,
-        parentCategory: { connect: { id: data.parentCategoryId } },
+        parentCategory: { connect: { id: BigInt(data.parentCategoryId) } },
       };
 
       const newSubcategory = await this.repository.upsert(dataToUpsert);
@@ -73,7 +73,7 @@ export class SubcategoryService {
             dataToUpdate.slug = slugify(data.name);
         }
         if (data.parentCategoryId) {
-             dataToUpdate.parentCategory = { connect: { id: data.parentCategoryId } };
+             dataToUpdate.parentCategory = { connect: { id: BigInt(data.parentCategoryId) } };
         }
       
       await this.repository.update(id, dataToUpdate);

@@ -1,5 +1,6 @@
 import { PrismaClient, Lot as PmLot, Auction as PmAuction, Bid, LotStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { generatePublicId } from '@/lib/public-id-generator';
 import type { 
   Lot,
   LotFormData, 
@@ -514,6 +515,11 @@ export class LotService {
         numericLotId = lot.id;
       }
 
+      const lot = await this.prisma.lot.findUnique({ where: { id: numericLotId }, select: { tenantId: true } });
+      if (!lot) {
+        return { success: false, message: 'Lote não encontrado' };
+      }
+
       await this.prisma.userLotMaxBid.upsert({
         where: {
           userId_lotId: {
@@ -525,7 +531,8 @@ export class LotService {
           userId: BigInt(userId),
           lotId: numericLotId,
           maxAmount: new Prisma.Decimal(maxAmount),
-          isActive: true
+          isActive: true,
+          tenantId: lot.tenantId,
         },
         update: {
           maxAmount: new Prisma.Decimal(maxAmount),
@@ -609,31 +616,29 @@ export class LotService {
     userId: string,
     userDisplayName: string,
     rating: number,
-    comment: string
+    comment: string,
+    tenantId: string
   ): Promise<{ success: boolean; message: string; reviewId?: string }> {
     try {
       let numericLotId: string;
-      let auctionId: string;
       
       if (/^\d+$/.test(lotIdOrPublicId)) {
         numericLotId = lotIdOrPublicId;
         const lot = await this.prisma.lot.findUnique({ where: { id: BigInt(lotIdOrPublicId) } });
         if (!lot) return { success: false, message: 'Lote não encontrado' };
-        auctionId = lot.auctionId.toString();
       } else {
         const lot = await this.prisma.lot.findUnique({ where: { publicId: lotIdOrPublicId } });
         if (!lot) return { success: false, message: 'Lote não encontrado' };
         numericLotId = lot.id.toString();
-        auctionId = lot.auctionId.toString();
       }
 
       const review = await this.reviewService.create({
         lotId: numericLotId,
         userId,
-        auctionId,
+        authorName: userDisplayName,
         rating,
         comment,
-        userDisplayName
+        tenantId
       });
 
       return { 
@@ -682,30 +687,28 @@ export class LotService {
     lotIdOrPublicId: string,
     userId: string,
     userDisplayName: string,
-    questionText: string
+    questionText: string,
+    tenantId: string
   ): Promise<{ success: boolean; message: string; questionId?: string }> {
     try {
       let numericLotId: bigint;
-      let auctionId: bigint;
       
       if (/^\d+$/.test(lotIdOrPublicId)) {
         numericLotId = BigInt(lotIdOrPublicId);
         const lot = await this.prisma.lot.findUnique({ where: { id: numericLotId } });
         if (!lot) return { success: false, message: 'Lote não encontrado' };
-        auctionId = lot.auctionId;
       } else {
         const lot = await this.prisma.lot.findUnique({ where: { publicId: lotIdOrPublicId } });
         if (!lot) return { success: false, message: 'Lote não encontrado' };
         numericLotId = lot.id;
-        auctionId = lot.auctionId;
       }
 
       const question = await this.lotQuestionService.create({
-        lotId: numericLotId,
-        userId: BigInt(userId),
-        auctionId,
+        lotId: numericLotId.toString(),
+        userId,
+        authorName: userDisplayName,
         question: questionText,
-        userDisplayName
+        tenantId
       });
 
       return { 

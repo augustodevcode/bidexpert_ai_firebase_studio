@@ -13,13 +13,26 @@ export class LotQuestionService {
     this.prisma = prisma;
   }
 
-  async create(data: CreateLotQuestionInput) {
-    const { lotId, userId, auctionId, ...rest } = data;
+  async create(data: CreateLotQuestionInput & { tenantId: string }) {
+    const { lotId, userId, authorName, question, tenantId } = data;
+    
+    // Buscar auction e tenant do lot
+    const lot = await this.prisma.lot.findUnique({
+      where: { id: BigInt(lotId) },
+      select: { auctionId: true }
+    });
+    
+    if (!lot || !lot.auctionId) {
+      throw new Error('Lote não encontrado ou sem leilão associado');
+    }
+    
     return this.repository.create({
-      ...rest,
-      lot: { connect: { id: lotId } },
-      user: { connect: { id: userId } },
-      auction: { connect: { id: auctionId } }
+      userDisplayName: authorName,
+      questionText: question,
+      lot: { connect: { id: BigInt(lotId) } },
+      user: { connect: { id: BigInt(userId) } },
+      auction: { connect: { id: lot.auctionId } },
+      tenant: { connect: { id: BigInt(tenantId) } }
     });
   }
 

@@ -36,7 +36,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
   test('VAL-02: Should validate title length', async ({ page }) => {
     await page.goto('/admin/assets/new');
     
-    await page.getByLabel('Título do Bem').fill('Abc');
+    await page.getByPlaceholder('Ex: Apartamento 2 quartos...').fill('Abc');
     await page.getByRole('button', { name: 'Salvar' }).first().click();
     
     await expect(page.getByText('O título do bem deve ter pelo menos 5 caracteres')).toBeVisible();
@@ -50,7 +50,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
     const title = `Asset V2 Test ${timestamp}`;
 
     // Fill Basic Info
-    await page.getByLabel('Título do Bem').fill(title);
+    await page.getByPlaceholder('Ex: Apartamento 2 quartos...').fill(title);
     await page.getByLabel('Descrição Detalhada').fill('Description for automated test asset');
     
     // Select Category (assuming at least one exists)
@@ -95,7 +95,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
     const title = `Complete Asset ${timestamp}`;
 
     // 1. Basic Info
-    await page.getByLabel('Título do Bem').fill(title);
+    await page.getByPlaceholder('Ex: Apartamento 2 quartos...').fill(title);
     await page.getByLabel('Descrição Detalhada').fill('Detailed description for complete creation test.');
     
     // Category
@@ -144,7 +144,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
     const title = `Vehicle Test ${timestamp}`;
     
     // Basic Info
-    await page.getByLabel('Título do Bem').fill(title);
+    await page.getByPlaceholder('Ex: Apartamento 2 quartos...').fill(title);
     await page.getByLabel('Descrição Detalhada').fill('Vehicle description test');
     
     // Select Category: Veículos
@@ -195,7 +195,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
     const title = `Real Estate Asset ${timestamp}`;
 
     // 1. Basic Info
-    await page.getByLabel('Título do Bem').fill(title);
+    await page.getByPlaceholder('Ex: Apartamento 2 quartos...').fill(title);
     await page.getByLabel('Descrição Detalhada').fill('A beautiful house for testing purposes.');
     
     // Select Category: Imóveis
@@ -253,7 +253,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
     await expect(page.getByRole('heading', { name: 'Novo Ativo' })).toBeVisible();
     
     // Check if form fields are present
-    await expect(page.getByLabel('Título do Bem')).toBeVisible();
+    await expect(page.getByPlaceholder('Ex: Apartamento 2 quartos...')).toBeVisible();
     
     // Close modal
     await page.getByRole('button', { name: 'Cancelar' }).first().click();
@@ -265,7 +265,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
     await page.goto('/admin/assets/new');
     const timestamp = new Date().getTime();
     const title = `Edit Test ${timestamp}`;
-    await page.getByLabel('Título do Bem').fill(title);
+    await page.getByPlaceholder('Ex: Apartamento 2 quartos...').fill(title);
     
     // Select Category
     await page.getByLabel('Categoria', { exact: true }).click();
@@ -297,7 +297,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
     // 3. Verify modal opens and form is populated
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Editar Ativo' })).toBeVisible();
-    await expect(page.getByLabel('Título do Bem')).toHaveValue(title);
+    await expect(page.getByPlaceholder('Ex: Apartamento 2 quartos...')).toHaveValue(title);
   });
 
   test('DEL-01: Should delete an asset', async ({ page }) => {
@@ -305,7 +305,7 @@ test.describe('AssetFormV2 - Smart Form Implementation', () => {
     await page.goto('/admin/assets/new');
     const timestamp = new Date().getTime();
     const title = `Delete Test ${timestamp}`;
-    await page.getByLabel('Título do Bem').fill(title);
+    await page.getByPlaceholder('Ex: Apartamento 2 quartos...').fill(title);
     
     // Select Category
     await page.getByLabel('Categoria', { exact: true }).click();
