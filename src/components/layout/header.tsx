@@ -6,9 +6,9 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react';
+import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin, Radar } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { useEffect, useState, useRef, useCallback, forwardRef, useMemo, Suspense } from 'react';
+import { useEffect, useState, useRef, useCallback, forwardRef, useMemo, Suspense, type CSSProperties } from 'react';
 import { slugify } from '@/lib/ui-helpers';
 import UserNav from './user-nav';
 import MainNav, { type NavItem } from './main-nav';
@@ -42,9 +42,9 @@ import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import TwoColumnMegaMenu from './two-column-mega-menu';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ThemeToggle } from './theme-toggle'; // Importado
+import { ThemeToggle } from './theme-toggle';
 
-const HOME_VARIANT_STORAGE_KEY = 'bidexpert.homeVariantPreference';
+type HeaderCSSVars = CSSProperties & { '--header-height'?: string };
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
 export const HistoryListItem = forwardRef<
@@ -105,40 +105,10 @@ export default function Header({
   const siteLogoUrl = platformSettings?.logoUrl;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [homeVariant, setHomeVariant] = useState<'classic' | 'beta'>('classic');
   
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  useEffect(() => {
-    if (!isClient) return;
-    const paramVariant = searchParamsHook.get('homeVariant');
-    if (paramVariant === 'beta') {
-      setHomeVariant('beta');
-      window.localStorage.setItem(HOME_VARIANT_STORAGE_KEY, 'beta');
-      return;
-    }
-
-    const storedVariant = window.localStorage.getItem(HOME_VARIANT_STORAGE_KEY);
-    if (storedVariant === 'beta') {
-      setHomeVariant('beta');
-      if (pathname === '/' && paramVariant !== 'beta') {
-        router.replace('/?homeVariant=beta');
-      }
-    } else {
-      setHomeVariant('classic');
-    }
-  }, [isClient, pathname, router, searchParamsHook]);
-
-  const handleHomeVariantChange = useCallback((value: 'classic' | 'beta') => {
-    const normalized = value === 'beta' ? 'beta' : 'classic';
-    setHomeVariant(normalized);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(HOME_VARIANT_STORAGE_KEY, normalized);
-    }
-    router.push(normalized === 'beta' ? '/?homeVariant=beta' : '/');
-  }, [router]);
 
   useEffect(() => {
     if (!isClient) return;
@@ -293,6 +263,7 @@ export default function Header({
   const allNavItemsForMobile: NavItem[] = [
     { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
     { href: '/', label: 'Início', icon: HomeIcon },
+    { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
     { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
@@ -303,6 +274,7 @@ export default function Header({
   const firstNavItem: NavItem = { label: 'Categorias de Oportunidades', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
   const centralNavItems: NavItem[] = [
     { href: '/', label: 'Início', icon: HomeIcon },
+    { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
     {
         label: 'Modalidades',
         isMegaMenu: true,
@@ -374,11 +346,17 @@ export default function Header({
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
   ];
 
+  const headerStyle = useMemo<HeaderCSSVars>(() => ({ '--header-height': '15rem' }), []);
+
   return (
     <>
-    <header className="sticky top-0 z-50 w-full shadow-md print:hidden" data-ai-id="header">
+    <header
+      className="sticky top-0 z-header w-full backdrop-blur-2xl border-b border-border/30 bg-surface/80 shadow-glow print:hidden"
+      data-ai-id="header"
+      style={headerStyle}
+    >
       {/* Promotion Bar */}
-      <div className="bg-primary/80 text-primary-foreground text-xs sm:text-sm">
+      <div className="bg-gradient-radar text-primary-foreground text-xs sm:text-sm">
         <div className="container mx-auto px-4 h-10 flex items-center justify-center sm:justify-between">
           <p className="text-center sm:text-left">
             <Percent className="inline h-4 w-4 mr-1.5" />
@@ -391,7 +369,7 @@ export default function Header({
       </div>
 
       {/* Top Bar (Informational) */}
-      <div className="bg-secondary text-secondary-foreground text-xs border-b">
+      <div className="bg-surface/40 backdrop-blur text-secondary-foreground text-xs border-b border-border/20">
         <div className="container mx-auto px-4 h-10 flex items-center justify-between">
           <div className="hidden sm:block">
             {siteTitle ? `Bem-vindo ao ${siteTitle}! Sua plataforma de leilões online.` : <Skeleton className="h-4 w-64" />}
@@ -408,7 +386,7 @@ export default function Header({
       </div>
 
       {/* Logo and Search Area */}
-      <div className="bg-background text-foreground border-b">
+      <div className="bg-surface/80 text-foreground border-b border-border/20">
         <div className="container mx-auto px-4 flex h-20 items-center justify-between">
           <div className="flex items-center">
             <div className="md:hidden mr-2">
@@ -557,32 +535,6 @@ export default function Header({
             </form>
            </div>
           <div className="flex items-center space-x-0.5 sm:space-x-1">
-            <div className="sm:hidden mr-2">
-              <Button
-                type="button"
-                variant={homeVariant === 'beta' ? 'default' : 'outline'}
-                size="sm"
-                className="text-[11px] uppercase tracking-wide"
-                onClick={() => handleHomeVariantChange(homeVariant === 'beta' ? 'classic' : 'beta')}
-              >
-                {homeVariant === 'beta' ? 'Beta ativa' : 'Testar Beta'}
-              </Button>
-            </div>
-            <div className="hidden sm:flex flex-col mr-3 min-w-[160px]">
-              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Home</span>
-              <Select
-                value={homeVariant}
-                onValueChange={(value) => handleHomeVariantChange(value as 'classic' | 'beta')}
-              >
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Experiência" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="classic">Clássica</SelectItem>
-                  <SelectItem value="beta">Beta (Radar)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <TooltipProvider>
               <ThemeToggle />
             </TooltipProvider>

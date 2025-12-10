@@ -36,7 +36,7 @@ const config = {
   productionBrowserSourceMaps: false,
   // Node.js runtime para WebSocket (realtime bids)
   experimental: {
-    serverComponentsExternalPackages: ['ws'],
+    serverComponentsExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core'],
   },
   // Webpack configuration to suppress handlebars and require-in-the-middle warnings
   webpack: (config, { isServer }) => {
@@ -46,8 +46,20 @@ const config = {
     }
     config.ignoreWarnings.push(
       /require\.extensions is not supported by webpack/,
-      /Critical dependency: require function is used/
+      /Critical dependency: require function is used/,
+      /require-in-the-middle/
     );
+    
+    // Exclude problematic modules from being parsed
+    if (!config.externals) {
+      config.externals = [];
+    }
+    
+    if (isServer) {
+      // Mark require-in-the-middle as external on server
+      config.externals = [...config.externals, 'require-in-the-middle'];
+    }
+    
     return config;
   },
 };

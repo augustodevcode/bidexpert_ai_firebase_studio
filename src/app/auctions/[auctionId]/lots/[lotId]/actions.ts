@@ -178,3 +178,7 @@ export async function generateWinningBidTermAction(lotId: string): Promise<{ suc
         return { success: false, message: `Falha ao gerar documento: ${error.message}` };
     }
 }
+
+export async function getLotDocuments(lotId: string) {
+    return lotService.getLotDocuments(lotId);
+}

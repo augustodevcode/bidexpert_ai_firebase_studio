@@ -2,14 +2,13 @@
 // API for managing audit trail configuration
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { auditConfigService } from '@/services/audit-config.service';
 
 export async function GET(request: NextRequest) {
   try {
     // Get authenticated user
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     // Get authenticated user
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },

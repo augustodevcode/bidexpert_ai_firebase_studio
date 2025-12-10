@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { LogIn, Loader2 } from 'lucide-react';
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { login } from '@/app/auth/actions';
+import { login, getDevUsers } from '@/app/auth/actions';
 import { useAuth } from '@/contexts/auth-context';
 import type { UserProfileWithPermissions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,9 +29,9 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 
 
 const loginFormSchema = z.object({
-  email: z.string().email({ message: 'Por favor, insira um email válido.' }),
-  password: z.string().min(1, { message: 'A senha é obrigatória.' }),
-  tenantId: z.string().optional(),
+    email: z.string().email({ message: 'Por favor, insira um email válido.' }),
+    password: z.string().min(1, { message: 'A senha é obrigatória.' }),
+    tenantId: z.string().optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
@@ -43,26 +43,26 @@ type TenantOption = {
 
 
 function LoginPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
-  const { loginUser } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const { toast } = useToast();
+    const { loginUser } = useAuth();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [userWithMultipleTenants, setUserWithMultipleTenants] = useState<UserProfileWithPermissions | null>(null);
     const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
     const [availableTenants, setAvailableTenants] = useState<TenantOption[]>([]);
     const [isFetchingTenants, setIsFetchingTenants] = useState<boolean>(true);
     const [tenantsError, setTenantsError] = useState<string | null>(null);
-  
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginFormSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
+
+    const form = useForm<LoginFormValues>({
+        resolver: zodResolver(loginFormSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+        },
+    });
 
     const fetchTenants = useCallback(async () => {
         try {
@@ -103,9 +103,9 @@ function LoginPageContent() {
         }
     }, [tenantOptions, form, selectedTenantId]);
 
-  const handleLogin = async (values: LoginFormValues) => {
-    setIsLoading(true);
-    setError(null);
+    const handleLogin = async (values: LoginFormValues) => {
+        setIsLoading(true);
+        setError(null);
 
         if (!selectedTenantId) {
             const validationMessage = 'Selecione um espaço de trabalho antes de continuar.';
@@ -116,51 +116,58 @@ function LoginPageContent() {
         }
 
         values.tenantId = selectedTenantId;
-    
-    try {
-        const result = await login(values);
-        
-        if (result.success && result.user && result.user.tenants && result.user.tenants.length > 1 && !selectedTenantId) {
-            toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
-            setUserWithMultipleTenants(result.user);
-            form.setValue('password', '[already_validated]'); // Placeholder para não reenviar senha
-        } else if (result.success && result.user) {
-            const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
-            
-            const finalTenantId = selectedTenantId || (result.user.tenants && result.user.tenants.length > 0 ? result.user.tenants[0].id : '1');
 
-            loginUser(result.user, finalTenantId);
+        try {
+            const result = await login(values);
 
-            toast({
-                title: "Login bem-sucedido!",
-                description: "Redirecionando para o seu painel...",
-            });
+            if (result.success && result.user && result.user.tenants && result.user.tenants.length > 1 && !selectedTenantId) {
+                toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
+                setUserWithMultipleTenants(result.user);
+                form.setValue('password', '[already_validated]'); // Placeholder para não reenviar senha
+            } else if (result.success && result.user) {
+                const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
 
-            setTimeout(() => {
-                router.push(redirectUrl);
-            }, 300);
-            
-        } else {
-            setError(result.message);
-            toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
+                const finalTenantId = selectedTenantId || (result.user.tenants && result.user.tenants.length > 0 ? result.user.tenants[0].id : '1');
+
+                loginUser(result.user, finalTenantId);
+
+                toast({
+                    title: "Login bem-sucedido!",
+                    description: "Redirecionando para o seu painel...",
+                });
+
+                setTimeout(() => {
+                    router.push(redirectUrl);
+                }, 300);
+
+            } else {
+                setError(result.message);
+                toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
+            }
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro inesperado.';
+            setError(errorMessage);
+            toast({ title: "Erro no Login", description: errorMessage, variant: "destructive" });
+        } finally {
+            setIsLoading(false);
         }
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro inesperado.';
-        setError(errorMessage);
-        toast({ title: "Erro no Login", description: errorMessage, variant: "destructive" });
-    } finally {
-        setIsLoading(false);
-    }
-  };
+    };
 
-  return (
-    <div data-ai-id="auth-login-page-container" className="flex items-center justify-center min-h-[calc(100vh-20rem)] py-12">
-      <Card data-ai-id="auth-login-card" className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <LogIn className="mx-auto h-12 w-12 text-primary mb-2" />
-          <CardTitle className="text-2xl font-bold font-headline">Bem-vindo de Volta!</CardTitle>
-          <CardDescription>Insira suas credenciais para acessar sua conta.</CardDescription>
-        </CardHeader>
+    return (
+        <div data-ai-id="auth-login-page-container" className="flex items-center justify-center min-h-[calc(100vh-20rem)] py-12">
+            <Card data-ai-id="auth-login-card" className="w-full max-w-md shadow-xl">
+                <CardHeader className="text-center">
+                    <LogIn className="mx-auto h-12 w-12 text-primary mb-2" />
+                    <CardTitle className="text-2xl font-bold font-headline">Bem-vindo de Volta!</CardTitle>
+                    <CardDescription>Insira suas credenciais para acessar sua conta.</CardDescription>
+                </CardHeader>
+
+                {/* DEV ONLY: User Selector */}
+                <DevUserSelector onSelect={(u) => {
+                    form.setValue('email', u.email);
+                    form.setValue('password', u.passwordHint);
+                }} />
+
                 <Form {...form}>
                     <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin)}>
                         <CardContent className="space-y-4">
@@ -275,9 +282,42 @@ function LoginPageContent() {
                         </Link>
                     </p>
                 </div>
-      </Card>
-    </div>
-  );
+            </Card>
+        </div>
+    );
+}
+
+function DevUserSelector({ onSelect }: { onSelect: (u: any) => void }) {
+    const [users, setUsers] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Check if we are in development mode (client-side check usually relies on env vars exposed to client or just try calling the action)
+        // Since getDevUsers checks NODE_ENV on server, it will return empty array if not dev.
+        getDevUsers().then(setUsers);
+    }, []);
+
+    if (users.length === 0) return null;
+
+    return (
+        <div className="px-6 pb-4">
+            <Label className="text-xs text-muted-foreground mb-1 block">Dev: Auto-login (Ambiente de Teste)</Label>
+            <Select onValueChange={(email) => {
+                const u = users.find(user => user.email === email);
+                if (u) onSelect(u);
+            }}>
+                <SelectTrigger className="h-8 text-xs bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 border-dashed">
+                    <SelectValue placeholder="Selecione um usuário de teste..." />
+                </SelectTrigger>
+                <SelectContent>
+                    {users.map(u => (
+                        <SelectItem key={u.email} value={u.email} className="text-xs">
+                            <span className="font-medium">{u.roleName}</span>: {u.email}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+    );
 }
 
 function LoginPageFallback() {

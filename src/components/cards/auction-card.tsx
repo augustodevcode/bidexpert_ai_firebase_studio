@@ -9,15 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction } from '@/types';
 import { Heart, Share2, Eye, X, Facebook, MessageSquareText, Mail, Clock, Users, Star, ListChecks } from 'lucide-react';
-import { isPast, differenceInDays, format, isValid } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { isPast, differenceInDays } from 'date-fns';
 import AuctionPreviewModalV2 from '../auction-preview-modal-v2';
 import { isValidImageUrl, getAuctionStatusText, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from '../entity-edit-menu';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import ConsignorLogoBadge from '../consignor-logo-badge';
 
 
 interface AuctionCardProps {
@@ -103,38 +102,6 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
 
 
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
-  const stagesDisplay = React.useMemo(() => {
-    const stages = auction.auctionStages ?? [];
-    if (!stages.length) {
-      return [];
-    }
-
-    return stages
-      .map(stage => {
-        const startDate = stage.startDate ? new Date(stage.startDate) : null;
-        const endDate = stage.endDate ? new Date(stage.endDate) : null;
-
-        const formattedStart = startDate && isValid(startDate)
-          ? format(startDate, 'dd/MM HH:mm', { locale: ptBR })
-          : null;
-        const formattedEnd = endDate && isValid(endDate)
-          ? format(endDate, 'dd/MM HH:mm', { locale: ptBR })
-          : null;
-
-        return {
-          id: stage.id,
-          name: stage.name || undefined,
-          formattedStart,
-          formattedEnd,
-          startDate,
-        };
-      })
-      .sort((a, b) => {
-        const aTime = a.startDate?.getTime() ?? Number.MAX_SAFE_INTEGER;
-        const bTime = b.startDate?.getTime() ?? Number.MAX_SAFE_INTEGER;
-        return aTime - bTime;
-      });
-  }, [auction.auctionStages]);
   
   const getStatusDisplay = () => {
     if (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') {
@@ -193,21 +160,14 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                     </Badge>
                 ))}
             </div>
-             {sellerLogoUrl && (
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 z-10">
-                            <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'} />
-                                <AvatarFallback>{consignorInitial}</AvatarFallback>
-                            </Avatar>
-                        </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Comitente: {sellerName}</p>
-                    </TooltipContent>
-                </Tooltip>
-            )}
+            <ConsignorLogoBadge
+              href={sellerSlug ? `/sellers/${sellerSlug}` : undefined}
+              logoUrl={sellerLogoUrl}
+              fallbackInitial={consignorInitial}
+              name={sellerName}
+              dataAiHint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'}
+              anchorClassName="absolute bottom-2 right-2"
+            />
             <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center items-center gap-2">
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={openPreviewModal} aria-label="Pré-visualizar"><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
@@ -246,25 +206,6 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                 <div title={`${auction.totalHabilitatedUsers || 0} Habilitados`}><Users className="mx-auto h-4 w-4 mb-0.5" /><span className="font-semibold text-foreground">{auction.totalHabilitatedUsers || 0}</span></div>
             </div>
 
-            {stagesDisplay.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1" data-ai-id="auction-card-stages">
-                {stagesDisplay.map(stage => (
-                  <Badge
-                    key={stage.id}
-                    variant="outline"
-                    className="rounded-full border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary"
-                  >
-                    <span>{stage.name ?? 'Praça'}</span>
-                    {(stage.formattedStart || stage.formattedEnd) && (
-                      <span className="ml-1 text-[0.7rem] font-normal text-primary/80">
-                        {stage.formattedStart ?? 'Sem data'}
-                        {stage.formattedEnd ? ` → ${stage.formattedEnd}` : ''}
-                      </span>
-                    )}
-                  </Badge>
-                ))}
-              </div>
-            )}
             
             {auction.auctionStages && auction.auctionStages.length > 0 && (
                 <div className="pt-2" data-ai-id="auction-card-timeline">

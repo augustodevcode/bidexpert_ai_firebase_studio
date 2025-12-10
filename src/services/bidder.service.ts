@@ -87,22 +87,30 @@ export class BidderService {
       orderBy: { createdAt: 'desc' }
     });
 
+    // Buscar habilitações e lances máximos ativos
+    const [auctionHabilitations, activeMaxBids] = await Promise.all([
+      this.getUserAuctionHabilitations(userId),
+      this.getUserActiveMaxBids(userId)
+    ]);
+
     return {
       wonLotsCount: wonLots.length,
-      totalSpent: wonLots.reduce((sum, lot) => sum.add(lot.finalBid), new Decimal(0)),
-      pendingPayments: wonLots.filter(lot => lot.paymentStatus === 'PENDENTE').length,
-      overduePayments: wonLots.filter(lot => lot.paymentStatus === 'ATRASADO').length,
+      totalSpent: wonLots.reduce((sum: Decimal, lot: any) => sum.add(lot.finalBid), new Decimal(0)),
+      pendingPayments: wonLots.filter((lot: any) => lot.paymentStatus === 'PENDENTE').length,
+      overduePayments: wonLots.filter((lot: any) => lot.paymentStatus === 'ATRASADO').length,
       documentsPending: profile.documentStatus === 'PENDING' ? 1 : 0,
-      unreadNotifications: recentNotifications.filter(n => !n.isRead).length,
+      unreadNotifications: recentNotifications.filter((n: any) => !n.isRead).length,
       recentWonLots: wonLots.map(this.mapWonLot),
       recentNotifications: recentNotifications.map(this.mapBidderNotification),
       paymentSummary: {
         totalPending: wonLots
-          .filter(lot => lot.paymentStatus === 'PENDENTE')
-          .reduce((sum, lot) => sum.add(lot.totalAmount), new Decimal(0)),
+          .filter((lot: any) => lot.paymentStatus === 'PENDENTE')
+          .reduce((sum: Decimal, lot: any) => sum.add(lot.totalAmount), new Decimal(0)),
         totalOverdue: new Decimal(0),
-        nextDueDate: wonLots.find(lot => lot.dueDate)?.dueDate
-      }
+        nextDueDate: wonLots.find((lot: any) => lot.dueDate)?.dueDate
+      },
+      auctionHabilitations,
+      activeMaxBids
     };
   }
 
@@ -434,6 +442,100 @@ export class BidderService {
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao deletar método de pagamento'
       };
+    }
+  }
+
+  /**
+   * Obtém habilitações em leilões do usuário
+   */
+  async getUserAuctionHabilitations(userId: bigint): Promise<any[]> {
+    try {
+      const { prisma } = await import('@/lib/prisma');
+      
+      const habilitations = await prisma.userAuctionHabilitation.findMany({
+        where: { 
+          userId: userId,
+          status: 'HABILITADO'
+        },
+        include: {
+          auction: {
+            select: {
+              id: true,
+              publicId: true,
+              title: true,
+              auctionDate: true,
+              status: true
+            }
+          }
+        },
+        orderBy: { habilitatedAt: 'desc' }
+      });
+
+      return habilitations.map(h => ({
+        id: h.id.toString(),
+        auctionId: h.auctionId.toString(),
+        auctionPublicId: h.auction?.publicId,
+        auctionTitle: h.auction?.title || 'Leilão',
+        auctionDate: h.auction?.auctionDate,
+        auctionStatus: h.auction?.status || 'DESCONHECIDO',
+        habilitatedAt: h.habilitatedAt,
+        isActive: h.status === 'HABILITADO'
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar habilitações do usuário:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtém lances máximos ativos do usuário
+   */
+  async getUserActiveMaxBids(userId: bigint): Promise<any[]> {
+    try {
+      const { prisma } = await import('@/lib/prisma');
+      
+      const maxBids = await prisma.userLotMaxBid.findMany({
+        where: { 
+          userId: userId,
+          isActive: true
+        },
+        include: {
+          lot: {
+            select: {
+              id: true,
+              publicId: true,
+              title: true,
+              price: true,
+              status: true,
+              auction: {
+                select: {
+                  id: true,
+                  title: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      return maxBids.map(mb => ({
+        id: mb.id.toString(),
+        lotId: mb.lotId.toString(),
+        lotPublicId: mb.lot?.publicId,
+        lotTitle: mb.lot?.title || 'Lote',
+        auctionId: mb.lot?.auction?.id.toString(),
+        auctionTitle: mb.lot?.auction?.title || 'Leilão',
+        maxAmount: Number(mb.maxAmount),
+        currentBid: mb.lot?.price ? Number(mb.lot.price) : null,
+        isActive: mb.isActive,
+        lotStatus: mb.lot?.status || 'DESCONHECIDO',
+        createdAt: mb.createdAt,
+        updatedAt: mb.updatedAt
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar lances máximos do usuário:', error);
+      return [];
     }
   }
 

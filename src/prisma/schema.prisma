@@ -305,6 +305,10 @@ model Auction {
   allowMultipleBidsPerUser    Boolean               @default(true)
   onlineUrl                   String?
   address                     String?
+  street                      String?
+  number                      String?
+  complement                  String?
+  neighborhood                String?
   city                        String?
   state                       String?
   zipCode                     String?
@@ -779,14 +783,14 @@ enum DirectSaleOfferType {
 
 
 model AuctionStage {
-  id           String    @id @default(cuid())
-  name         String
-  startDate    DateTime
-  endDate      DateTime
-  initialPrice Decimal?  @db.Decimal(12, 2)
-  auction      Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  auctionId    String
-  lotPrices    LotStagePrice[]
+  id              String    @id @default(cuid())
+  name            String
+  startDate       DateTime
+  endDate         DateTime
+  discountPercent Decimal   @default(100) @db.Decimal(5, 2) // Percentual da praça (ex: 100%, 60%, 50%)
+  auction         Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auctionId       String
+  lotPrices       LotStagePrice[]
 
   @@index([auctionId])
 }

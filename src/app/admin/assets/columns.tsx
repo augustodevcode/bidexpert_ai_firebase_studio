@@ -71,13 +71,32 @@ export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: str
   {
     accessorKey: "lotInfo",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Lote Vinculado" />,
-    cell: ({ row }) => row.original.lotInfo ? <span className="text-xs text-muted-foreground">{row.original.lotInfo}</span> : <span className="text-xs text-muted-foreground">-</span>,
+    cell: ({ row }) => {
+      const lotInfo = row.original.lotInfo;
+      if (!lotInfo) return <span className="text-xs text-muted-foreground">-</span>;
+      // Assumindo que lotInfo contém o ID do lote ou informações para link
+      const lotId = row.original.lotId || lotInfo; // Preciso verificar se há lotId
+      return (
+        <Link href={`/admin/lots/${lotId}/edit`} className="text-xs hover:text-primary truncate">
+          {lotInfo}
+        </Link>
+      );
+    },
     enableGrouping: true,
   },
   {
     accessorKey: "judicialProcessNumber",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Processo Judicial" />,
-    cell: ({ row }) => row.original.judicialProcessNumber || '-',
+    cell: ({ row }) => {
+      const processNumber = row.original.judicialProcessNumber;
+      const processId = row.original.judicialProcessId;
+      if (!processNumber) return '-';
+      return (
+        <Link href={`/admin/judicial-processes/${processId}/edit`} className="hover:text-primary">
+          {processNumber}
+        </Link>
+      );
+    },
     enableGrouping: true,
   },
   {

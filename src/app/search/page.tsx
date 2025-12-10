@@ -126,78 +126,55 @@ function SearchPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
 
+  // Fetch ALL data on mount to ensure counts are accurate and data is available
   useEffect(() => {
-    async function fetchSharedData() {
+    async function fetchAllData() {
       setIsFilterDataLoading(true);
+      setIsLoading(true);
       try {
-        const [categories, offers, sellers, settings] = await Promise.all([
+        // Fetch all data in parallel for performance
+        const [categories, offers, sellers, settings, auctions, lots] = await Promise.all([
           getCategories(),
           getDirectSaleOffers(),
           getSellers(true),
           getPlatformSettings(),
+          getAuctions(true),
+          getLots(undefined, true),
         ]);
         
+        // Set all data states
         setAllDirectSales(offers);
         setAllCategoriesForFilter(categories);
         setPlatformSettings(settings as PlatformSettings);
+        setAllAuctions(auctions);
+        setAllLots(lots);
 
+        // Build locations from all data sources
         const locations = new Set<string>();
         offers.forEach(offer => {
           if (offer.locationCity && offer.locationState) locations.add(`${offer.locationCity} - ${offer.locationState}`);
           else if (offer.locationCity) locations.add(offer.locationCity);
           else if (offer.locationState) locations.add(offer.locationState);
         });
+        auctions.forEach(item => {
+          if ('city' in item && 'state' in item && item.city && item.state) locations.add(`${item.city} - ${item.state}`);
+        });
+        lots.forEach(item => {
+          if (item.cityName && item.stateUf) locations.add(`${item.cityName} - ${item.stateUf}`);
+        });
         setUniqueLocationsForFilter(Array.from(locations).sort());
         
         setUniqueSellersForFilter(sellers.map(s => s.name).sort());
 
       } catch (error) {
-        console.error("Error fetching shared filter data:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setIsFilterDataLoading(false);
         setIsLoading(false);
       }
     }
-    fetchSharedData();
+    fetchAllData();
   }, []);
-  
-  useEffect(() => {
-    async function fetchContentData() {
-      setIsLoading(true);
-      let locations = new Set<string>();
-
-      try {
-        switch (currentSearchType) {
-          case 'auctions':
-          case 'tomada_de_precos':
-            const auctions = await getAuctions(true);
-            setAllAuctions(auctions);
-            auctions.forEach(item => {
-                if ('city' in item && 'state' in item && item.city && item.state) locations.add(`${item.city} - ${item.state}`);
-            });
-            break;
-          case 'lots':
-            const lots = await getLots(undefined, true);
-            setAllLots(lots);
-            lots.forEach(item => {
-                if (item.cityName && item.stateUf) locations.add(`${item.cityName} - ${item.stateUf}`);
-            });
-            break;
-          case 'direct_sale':
-            // Already fetched in shared data
-            break;
-        }
-        if (uniqueLocationsForFilter.length === 0 && locations.size > 0) {
-            setUniqueLocationsForFilter(Array.from(locations).sort());
-        }
-      } catch (error) {
-        console.error(`Error fetching data for tab ${currentSearchType}:`, error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchContentData();
-  }, [currentSearchType, uniqueLocationsForFilter.length]);
 
 
   useEffect(() => {
@@ -482,12 +459,12 @@ function SearchPageContent() {
         </form>
       </Card>
       
-      <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
+      <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full" data-ai-id="search-tabs">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2">
-            <TabsTrigger value="auctions">Leilões ({currentSearchType === 'auctions' ? filteredAndSortedItems.length : allAuctions.filter(a=> a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>
-            <TabsTrigger value="lots">Lotes ({currentSearchType === 'lots' ? filteredAndSortedItems.length : allLots.length})</TabsTrigger>
-            <TabsTrigger value="direct_sale">Venda Direta ({currentSearchType === 'direct_sale' ? filteredAndSortedItems.length : allDirectSales.length})</TabsTrigger>
-            <TabsTrigger value="tomada_de_precos">Tomada de Preços ({currentSearchType === 'tomada_de_precos' ? filteredAndSortedItems.length : allAuctions.filter(a => a.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
+            <TabsTrigger value="auctions" data-ai-id="tab-auctions">Leilões ({allAuctions.filter(a=> a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>
+            <TabsTrigger value="lots" data-ai-id="tab-lots">Lotes ({allLots.length})</TabsTrigger>
+            <TabsTrigger value="direct_sale" data-ai-id="tab-direct-sale">Venda Direta ({allDirectSales.length})</TabsTrigger>
+            <TabsTrigger value="tomada_de_precos" data-ai-id="tab-tomada-precos">Tomada de Preços ({allAuctions.filter(a => a.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
         </TabsList>
       </Tabs>
       

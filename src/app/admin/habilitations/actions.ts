@@ -58,10 +58,33 @@ export async function habilitateUserAction(userId: string): Promise<{ success: b
  */
 export async function habilitateForAuctionAction(userId: string, auctionId: string): Promise<{ success: boolean; message: string }> {
     try {
+        // Convert string IDs to BigInt for Prisma
+        const userIdBigInt = BigInt(userId);
+        const auctionIdBigInt = BigInt(auctionId);
+
+        // Fetch the auction to get its tenantId (required field)
+        const auction = await prisma.auction.findUnique({
+            where: { id: auctionIdBigInt },
+            select: { tenantId: true }
+        });
+
+        if (!auction) {
+            return { success: false, message: 'Leilão não encontrado.' };
+        }
+
         await prisma.auctionHabilitation.upsert({
-            where: { userId_auctionId: { userId, auctionId }},
+            where: { 
+                userId_auctionId: { 
+                    userId: userIdBigInt, 
+                    auctionId: auctionIdBigInt 
+                }
+            },
             update: {},
-            create: { userId, auctionId }
+            create: { 
+                userId: userIdBigInt, 
+                auctionId: auctionIdBigInt,
+                tenantId: auction.tenantId
+            }
         });
         if (process.env.NODE_ENV !== 'test') {
             revalidatePath(`/auctions/${auctionId}`);
@@ -84,11 +107,15 @@ export async function checkHabilitationForAuctionAction(userId: string, auctionI
     return false;
   }
   try {
+    // Convert string IDs to BigInt for Prisma
+    const userIdBigInt = BigInt(userId);
+    const auctionIdBigInt = BigInt(auctionId);
+
     const habilitation = await prisma.auctionHabilitation.findUnique({
       where: {
         userId_auctionId: {
-          userId,
-          auctionId,
+          userId: userIdBigInt,
+          auctionId: auctionIdBigInt,
         },
       },
     });

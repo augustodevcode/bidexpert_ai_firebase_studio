@@ -29,6 +29,7 @@ export default function MapSettingsPage() {
                   <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                   <SelectContent>
                     <SelectItem value="openstreetmap">OpenStreetMap (Gratuito)</SelectItem>
+                    <SelectItem value="openmap">OpenMap (Humanitarian Tiles)</SelectItem>
                     <SelectItem value="google">Google Maps</SelectItem>
                     <SelectItem value="staticImage">Imagem Estática (Fallback)</SelectItem>
                   </SelectContent>

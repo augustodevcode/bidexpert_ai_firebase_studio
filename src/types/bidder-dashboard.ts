@@ -145,6 +145,34 @@ export interface ParticipationHistory {
   createdAt: Date;
 }
 
+// Interface para habilitação em leilão
+export interface AuctionHabilitation {
+  id: string;
+  auctionId: string;
+  auctionPublicId?: string;
+  auctionTitle: string;
+  auctionDate?: Date | null;
+  auctionStatus: string;
+  habilitatedAt: Date;
+  isActive: boolean;
+}
+
+// Interface para lance máximo configurado
+export interface ActiveMaxBid {
+  id: string;
+  lotId: string;
+  lotPublicId?: string;
+  lotTitle: string;
+  auctionId: string;
+  auctionTitle: string;
+  maxAmount: number;
+  currentBid?: number | null;
+  isActive: boolean;
+  lotStatus: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
 // -----------------------------
 // Dashboard Overview Types
 // -----------------------------
@@ -162,6 +190,9 @@ export interface BidderDashboardOverview {
     totalOverdue: Decimal;
     nextDueDate?: Date | null;
   };
+  // Novas propriedades para habilitações e lances máximos
+  auctionHabilitations?: AuctionHabilitation[];
+  activeMaxBids?: ActiveMaxBid[];
 }
 
 // -----------------------------

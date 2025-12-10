@@ -18,10 +18,10 @@ const lotService = new LotService();
 const assetService = new AssetService();
 
 
-export async function getLots(auctionId?: string, isPublicCall: boolean = false, limit?: number): Promise<Lot[]> {
+export async function getLots(filter?: { auctionId?: string; judicialProcessId?: string }, isPublicCall: boolean = false, limit?: number): Promise<Lot[]> {
   const tenantId = await getTenantIdFromRequest(isPublicCall);
-  console.log(`[Action getLots] Tenant: ${tenantId}, Auction: ${auctionId}`);
-  return lotService.getLots(auctionId, tenantId, limit, isPublicCall);
+  console.log(`[Action getLots] Tenant: ${tenantId}, Filter:`, filter);
+  return lotService.getLots(filter, tenantId, limit, isPublicCall);
 }
 
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {

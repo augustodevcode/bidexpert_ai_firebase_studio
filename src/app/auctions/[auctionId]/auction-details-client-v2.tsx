@@ -34,7 +34,7 @@ import type { ActiveFilters } from '@/components/BidExpertFilter';
 import SidebarFiltersSkeleton from '@/components/BidExpertFilterSkeleton';
 import HeroSection from './components/hero-section';
 import AuctionStatsCard from './components/auction-stats-card';
-import BidExpertAuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 
 const SidebarFilter = dynamic(() => import('@/components/BidExpertFilter'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -291,6 +291,7 @@ export default function AuctionDetailsClientV2({
                       auctionOverallStartDate={auction.auctionDate instanceof Date ? auction.auctionDate : new Date(auction.auctionDate || new Date())}
                       stages={auction.auctionStages || []}
                       variant="extended"
+                      auction={auction}
                     />
                   </CardContent>
                 </Card>

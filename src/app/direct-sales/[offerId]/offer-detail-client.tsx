@@ -10,13 +10,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Tag, MapPin, DollarSign, ShoppingCart, Edit, MessageSquare, UserCircle, CalendarDays, Clock, AlertCircle, Loader2, CheckCircle, Info, ImageOff } from 'lucide-react';
+import { Tag, MapPin, DollarSign, ShoppingCart, Edit, MessageSquare, UserCircle, CalendarDays, Clock, AlertCircle, Loader2, CheckCircle, Info, ImageOff, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { DirectSaleOffer } from '@/types';
 import { getLotStatusColor, getAuctionStatusText, slugify } from '@/lib/ui-helpers';
 import { format } from 'date-fns';
@@ -123,7 +124,7 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
                 )}
                  {galleryImages.length > 1 && (
                   <>
-                    <Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronRight className="h-5 w-5" /></Button>
+                    <Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button>
                     <Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button>
                   </>
                 )}

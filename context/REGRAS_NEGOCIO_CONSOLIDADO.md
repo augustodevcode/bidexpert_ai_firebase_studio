@@ -252,7 +252,31 @@ Proibir mix de `cuid()` em novos docs/código
 - Restaurar estado ao voltar à lista  
 - Limpar filtros com um clique
 
-### RN-023: Impersonação Administrativa Segura
+### RN-023: Links Cruzados entre Entidades
+✅ **Navegação Hierárquica**: Permitir navegação entre entidades relacionadas através de links diretos nas tabelas CRUD  
+✅ **Relações Suportadas**:  
+- **Auction → Lot**: Coluna "Lotes" na tabela de leilões com link para `/admin/lots?auctionId={auctionId}`  
+- **Lot → Asset**: Coluna "Ativo Vinculado" na tabela de lotes com link para `/admin/assets?lotId={lotId}`  
+- **JudicialProcess → Lot**: Coluna "Lotes" na tabela de processos judiciais com link para `/admin/lots?judicialProcessId={judicialProcessId}`  
+- **JudicialProcess → Asset**: Coluna "Ativos" na tabela de processos judiciais com link para `/admin/assets?judicialProcessId={judicialProcessId}`  
+- **Asset → JudicialProcess**: Coluna "Processo Judicial" na tabela de ativos com link para `/admin/judicial-processes/{judicialProcessId}`  
+- **Asset → Lot**: Coluna "Lote Vinculado" na tabela de ativos com link para `/admin/lots/{lotId}`  
+  
+🔧 **Implementação Técnica**:  
+- **Componente Link**: Usar `Next.js Link` para navegação client-side  
+- **Parâmetros de Query**: Passar IDs via query string (`?auctionId=`, `?judicialProcessId=`)  
+- **Filtragem Automática**: Páginas de destino aplicam filtros automaticamente baseado nos parâmetros  
+- **Contadores**: Exibir quantidade total de registros relacionados (ex: "3 Lotes", "5 Ativos")  
+- **Isolamento Multi-Tenant**: Todos os filtros respeitam isolamento por `tenantId`  
+  
+🎯 **UX Guidelines**:  
+- **Visual**: Links destacados com ícone de seta ou texto azul sublinhado  
+- **Responsivo**: Funcionar em desktop e mobile  
+- **Performance**: Lazy loading de contadores quando necessário  
+- **Feedback**: Loading states durante navegação  
+- **Consistência**: Mesmo padrão visual em todas as tabelas CRUD  
+
+### RN-024: Impersonação Administrativa Segura
 🔐 **Objetivo**: Permitir que administradores visualizem dashboards de outros perfis sem comprometer segurança.
 
 **Regras de Segurança**:  
@@ -675,6 +699,25 @@ Para o público geral, certos dados são omitidos para não expor informações 
 O frontend utiliza `localStorage` para persistir certas preferências e históricos do usuário.
 - **Favoritos (`favorite-store.ts`):** Usuários podem marcar lotes como favoritos, e a lista de IDs é salva localmente.
 - **Vistos Recentemente (`recently-viewed-store.ts`):** O sistema armazena os IDs dos últimos 10 lotes visitados por um período de 3 dias.
+
+### RN-PRACA-001: Percentual da Praça para Cálculo de Lance Mínimo
+Cada praça (etapa) do leilão define um percentual de desconto que será aplicado ao valor inicial dos lotes para determinar o lance mínimo.
+- **Campo:** `AuctionStage.discountPercent` (Decimal 5,2, default 100)
+- **Valores Padrão Sugeridos:**
+  - Praça 1: 100% (valor integral)
+  - Praça 2: 60% (desconto de 40%)
+  - Praça 3 em diante: 50% (desconto de 50%)
+- **Lógica de Cálculo do Lance Mínimo:**
+  1. **Sem lances anteriores:** `Lance Mínimo = Valor Inicial do Lote × (Percentual da Praça / 100)`
+  2. **Com lances anteriores:** `Lance Mínimo = Último Lance + Incremento do Lote`
+- **Implementação:**
+  - Função `calculateMinimumBid()` em `src/lib/ui-helpers.ts`
+  - Função `getLotInitialPriceForStage()` em `src/lib/ui-helpers.ts`
+- **Exemplo Prático:**
+  - Lote com valor inicial de R$ 100.000 e incremento de R$ 1.000
+  - Praça 1 (100%): Lance mínimo inicial = R$ 100.000
+  - Praça 2 (60%): Lance mínimo inicial = R$ 60.000
+  - Se houver um lance de R$ 65.000, o próximo lance mínimo = R$ 66.000 (lance + incremento)
 
 ---
 

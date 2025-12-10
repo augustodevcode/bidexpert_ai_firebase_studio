@@ -190,6 +190,7 @@ export default function AdminJudicialProcessesPage() {
                   facetedFilterColumns={facetedFilterOptions}
                   onDeleteSelected={handleDeleteSelected as any}
                   sortOptions={[{ value: 'processNumber', label: 'Nº do Processo' }]}
+                  dataTestId="judicial-processes-table"
               />
           </CardContent>
         </Card>

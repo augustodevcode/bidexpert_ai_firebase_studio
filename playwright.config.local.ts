@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const shouldStartWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER !== '1';
 
-const baseURL = process.env.BASE_URL || 'http://localhost:9005';
+const baseURL = process.env.BASE_URL || 'http://localhost:9002';
 
 export default defineConfig({
 	testDir: './tests',
@@ -31,7 +31,7 @@ export default defineConfig({
 		},
 	],
 	webServer: shouldStartWebServer ? {
-		command: 'npm run dev:9005',
+		command: 'npm run dev',
 		url: baseURL,
 		reuseExistingServer: true,
 		timeout: 240000, // Increased timeout for build

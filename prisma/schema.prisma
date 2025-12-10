@@ -148,6 +148,7 @@ model Tenant {
   reviews                Review[]
   lotQuestions           LotQuestion[]
   mediaItems             MediaItem[]
+  lotDocuments           LotDocument[]
   bidderProfiles         BidderProfile[]
   wonLots                WonLot[]
   bidderNotifications    BidderNotification[]
@@ -170,42 +171,48 @@ model UsersOnTenants {
 }
 
 model Lot {
-  id                     BigInt               @id @default(autoincrement())
-  publicId               String?              @unique
-  auctionId              BigInt
-  number                 String?
-  title                  String
-  description            String?              @db.Text
-  slug                   String?
-  price                  Decimal              @db.Decimal(15, 2)
-  initialPrice           Decimal?             @db.Decimal(15, 2)
-  secondInitialPrice     Decimal?             @db.Decimal(15, 2)
-  bidIncrementStep       Decimal?             @db.Decimal(10, 2)
-  status                 LotStatus            @default(EM_BREVE)
-  bidsCount              Int?                 @default(0)
-  views                  Int?                 @default(0)
-  isFeatured             Boolean?             @default(false)
-  isExclusive            Boolean?             @default(false)
-  discountPercentage     Int?
-  additionalTriggers     Json?
-  imageUrl               String?              @db.Text
-  imageMediaId           BigInt?
-  galleryImageUrls       Json?
-  mediaItemIds           Json?
-  stageDetails           Json?
-  lotPrices              LotStagePrice[]
-  type                   String
-  condition              String?
-  dataAiHint             String?
-  winnerId               BigInt?
-  winner                 User?                @relation("LotsWon", fields: [winnerId], references: [id], onDelete: SetNull)
-  winningBidTermUrl      String?
-  allowInstallmentBids   Boolean?             @default(false)
-  isRelisted             Boolean              @default(false)
-  relistCount            Int                  @default(0)
-  original_lot_id        BigInt?              @unique
-  originalLot            Lot?                 @relation("RelistedLot", fields: [original_lot_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  relistedLot            Lot?                 @relation("RelistedLot")
+  id                   BigInt          @id @default(autoincrement())
+  publicId             String?         @unique
+  auctionId            BigInt
+  number               String?
+  title                String
+  description          String?         @db.Text
+  slug                 String?
+  price                Decimal         @db.Decimal(15, 2)
+  initialPrice         Decimal?        @db.Decimal(15, 2)
+  secondInitialPrice   Decimal?        @db.Decimal(15, 2)
+  bidIncrementStep     Decimal?        @db.Decimal(10, 2)
+  status               LotStatus       @default(EM_BREVE)
+  bidsCount            Int?            @default(0)
+  views                Int?            @default(0)
+  isFeatured           Boolean?        @default(false)
+  isExclusive          Boolean?        @default(false)
+  discountPercentage   Int?
+  additionalTriggers   Json?
+  imageUrl             String?         @db.Text
+  imageMediaId         BigInt?
+  galleryImageUrls     Json?
+  mediaItemIds         Json?
+  stageDetails         Json?
+  lotPrices            LotStagePrice[]
+  type                 String
+  condition            String?
+  dataAiHint           String?
+  winnerId             BigInt?
+  winner               User?           @relation("LotsWon", fields: [winnerId], references: [id], onDelete: SetNull)
+  winningBidTermUrl    String?
+  allowInstallmentBids Boolean?        @default(false)
+  isRelisted           Boolean         @default(false)
+  relistCount          Int             @default(0)
+  original_lot_id      BigInt?         @unique
+  originalLot          Lot?            @relation("RelistedLot", fields: [original_lot_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relistedLot          Lot?            @relation("RelistedLot")
+
+  // Campos para caução/depósito
+  requiresDepositGuarantee Boolean? @default(false)
+  depositGuaranteeAmount   Decimal? @db.Decimal(15, 2)
+  depositGuaranteeInfo     String?  @db.Text
+
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
   endDate                DateTime?
@@ -240,6 +247,7 @@ model Lot {
   payments               InstallmentPayment[] @relation("InstallmentPaymentToLot")
   judicialProcesses      JudicialProcess[]
   Notification           Notification[]
+  documents              LotDocument[]
 
   @@unique([auctionId, number])
 }
@@ -437,6 +445,10 @@ model Auction {
   participation            AuctionParticipation? @default(ONLINE)
   onlineUrl                String?               @db.VarChar(500)
   address                  String?
+  street                   String?               @db.VarChar(255)
+  number                   String?               @db.VarChar(20)
+  complement               String?               @db.VarChar(100)
+  neighborhood             String?               @db.VarChar(100)
   zipCode                  String?               @db.VarChar(10)
   latitude                 Decimal?              @db.Decimal(10, 8)
   longitude                Decimal?              @db.Decimal(11, 8)
@@ -495,17 +507,17 @@ model Auction {
 }
 
 model AuctionStage {
-  id           BigInt             @id @default(autoincrement())
-  name         String
-  startDate    DateTime           @db.DateTime
-  endDate      DateTime           @db.DateTime
-  auctionId    BigInt
-  auction      Auction            @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  initialPrice Decimal?           @db.Decimal(15, 2)
-  status       AuctionStageStatus @default(AGUARDANDO_INICIO)
-  tenantId     BigInt
-  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  lotPrices    LotStagePrice[]
+  id              BigInt             @id @default(autoincrement())
+  name            String
+  startDate       DateTime           @db.DateTime
+  endDate         DateTime           @db.DateTime
+  auctionId       BigInt
+  auction         Auction            @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  discountPercent Decimal            @default(100) @db.Decimal(5, 2) // Percentual da praça (ex: 100%, 60%, 50%)
+  status          AuctionStageStatus @default(AGUARDANDO_INICIO)
+  tenantId        BigInt
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lotPrices       LotStagePrice[]
 
   @@index([auctionId])
   @@index([tenantId])
@@ -785,6 +797,7 @@ model UserLotMaxBid {
   maxAmount Decimal  @db.Decimal(15, 2)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
   tenantId  BigInt
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -1007,14 +1020,22 @@ model MediaItem {
 }
 
 model PlatformSettings {
-  id                         BigInt                  @id @default(autoincrement())
-  tenantId                   BigInt                  @unique
-  tenant                     Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  siteTitle                  String?
-  siteTagline                String?
-  logoUrl                    String?
-  faviconUrl                 String?
-  isSetupComplete            Boolean                 @default(false)
+  id              BigInt  @id @default(autoincrement())
+  tenantId        BigInt  @unique
+  tenant          Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  siteTitle       String?
+  siteTagline     String?
+  logoUrl         String?
+  faviconUrl      String?
+  isSetupComplete Boolean @default(false)
+
+  // Dados de contato da plataforma
+  supportPhone         String?
+  supportWhatsApp      String?
+  supportEmail         String?
+  supportAddress       String?
+  supportBusinessHours String?
+
   themes                     ThemeSettings[]
   platformPublicIdMasks      IdMasks?
   mapSettings                MapSettings?
@@ -1387,6 +1408,27 @@ model ContactMessage {
   createdAt DateTime @default(now())
 }
 
+model LotDocument {
+  id           BigInt   @id @default(autoincrement())
+  lotId        BigInt
+  lot          Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  fileName     String
+  title        String
+  description  String?  @db.Text
+  fileUrl      String   @db.Text
+  fileSize     BigInt? // tamanho em bytes
+  mimeType     String?
+  displayOrder Int      @default(0)
+  isPublic     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenantId     BigInt
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+  @@index([tenantId])
+}
+
 model DocumentTemplate {
   id        BigInt               @id @default(autoincrement())
   name      String               @unique
@@ -1721,6 +1763,186 @@ model FormSubmission {
   @@index([userId])
   @@index([status])
   @@map("form_submissions")
+}
+
+// ============================================
+// VISITOR TRACKING SYSTEM
+// Sistema de rastreamento de visitantes e eventos
+// Similar ao modelo usado por Booking.com
+// ============================================
+
+// Enum para tipos de eventos de tracking
+enum VisitorEventType {
+  PAGE_VIEW           // Visualização de página
+  LOT_VIEW            // Visualização de lote
+  AUCTION_VIEW        // Visualização de leilão
+  SEARCH              // Busca realizada
+  FILTER_APPLIED      // Filtro aplicado
+  BID_CLICK           // Clique em dar lance
+  SHARE_CLICK         // Clique em compartilhar
+  FAVORITE_ADD        // Adicionou aos favoritos
+  FAVORITE_REMOVE     // Removeu dos favoritos
+  DOCUMENT_DOWNLOAD   // Download de documento
+  IMAGE_VIEW          // Visualização de imagem em galeria
+  VIDEO_PLAY          // Reprodução de vídeo
+  CONTACT_CLICK       // Clique em contato
+  HABILITATION_START  // Início de habilitação
+}
+
+// Modelo de Visitante Único
+// Armazena identificadores únicos dos visitantes (cookies)
+model Visitor {
+  id              BigInt   @id @default(autoincrement())
+  visitorId       String   @unique // UUID único armazenado no cookie
+  
+  // Dados opcionais do usuário logado
+  userId          BigInt?
+  
+  // Primeiro acesso
+  firstVisitAt    DateTime @default(now())
+  lastVisitAt     DateTime @default(now())
+  
+  // Metadados do primeiro acesso
+  firstUserAgent  String?  @db.Text
+  firstIpAddress  String?  @db.Text
+  firstReferrer   String?  @db.Text
+  
+  // Localização geográfica (baseada em IP)
+  country         String?
+  region          String?
+  city            String?
+  
+  // Dispositivo
+  deviceType      String?  // mobile, tablet, desktop
+  browser         String?
+  os              String?
+  
+  // Estatísticas agregadas
+  totalVisits     Int      @default(1)
+  totalPageViews  Int      @default(0)
+  totalEvents     Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relações
+  sessions        VisitorSession[]
+  events          VisitorEvent[]
+  
+  @@index([userId])
+  @@index([lastVisitAt])
+  @@index([country])
+  @@map("visitors")
+}
+
+// Modelo de Sessão do Visitante
+// Agrupa eventos de uma visita específica
+model VisitorSession {
+  id              BigInt   @id @default(autoincrement())
+  sessionId       String   @unique // UUID único da sessão
+  visitorId       BigInt
+  
+  // Timestamps da sessão
+  startedAt       DateTime @default(now())
+  endedAt         DateTime?
+  lastActivityAt  DateTime @default(now())
+  
+  // Metadados da sessão
+  userAgent       String?  @db.Text
+  ipAddress       String?  @db.Text
+  referrer        String?  @db.Text
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  
+  // Estatísticas da sessão
+  pageViews       Int      @default(0)
+  eventsCount     Int      @default(0)
+  duration        Int?     // em segundos
+  
+  // Relações
+  visitor         Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  events          VisitorEvent[]
+  
+  @@index([visitorId])
+  @@index([startedAt])
+  @@index([sessionId])
+  @@map("visitor_sessions")
+}
+
+// Modelo de Eventos do Visitante (Event Sourcing)
+// Registra cada interação do usuário
+model VisitorEvent {
+  id              BigInt           @id @default(autoincrement())
+  eventId         String           @unique // UUID único do evento
+  visitorId       BigInt
+  sessionId       BigInt
+  
+  // Tipo do evento
+  eventType       VisitorEventType
+  
+  // Entidade relacionada (opcional)
+  entityType      String?          // "Lot", "Auction", "Asset"
+  entityId        BigInt?          // ID da entidade
+  entityPublicId  String?          // PublicId da entidade (para facilitar buscas)
+  
+  // Dados adicionais do evento
+  metadata        Json?            // Dados específicos do evento
+  
+  // URL onde o evento ocorreu
+  pageUrl         String?          @db.Text
+  
+  // Timestamp preciso do evento
+  timestamp       DateTime         @default(now())
+  
+  // Relações
+  visitor         Visitor          @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  session         VisitorSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@index([visitorId])
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([entityType, entityId])
+  @@index([entityPublicId])
+  @@index([timestamp])
+  @@map("visitor_events")
+}
+
+// Modelo de Métricas Agregadas por Entidade
+// Armazena contadores agregados para exibição rápida
+model EntityViewMetrics {
+  id              BigInt   @id @default(autoincrement())
+  
+  // Entidade
+  entityType      String   // "Lot", "Auction"
+  entityId        BigInt
+  entityPublicId  String?
+  tenantId        BigInt?
+  
+  // Contadores de visualização
+  totalViews      Int      @default(0)  // Total de visualizações (todas as vezes)
+  uniqueViews     Int      @default(0)  // Visitantes únicos
+  
+  // Contadores por período (atualizados por job)
+  viewsLast24h    Int      @default(0)
+  viewsLast7d     Int      @default(0)
+  viewsLast30d    Int      @default(0)
+  
+  // Outras métricas
+  sharesCount     Int      @default(0)
+  favoritesCount  Int      @default(0)
+  
+  // Timestamps
+  lastViewedAt    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([entityType, entityId])
+  @@index([entityPublicId])
+  @@index([tenantId])
+  @@index([totalViews])
+  @@index([viewsLast24h])
+  @@map("entity_view_metrics")
 }
 
 // ============================================

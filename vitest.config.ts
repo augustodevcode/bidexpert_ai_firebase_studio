@@ -1,23 +1,43 @@
 import { defineConfig } from 'vitest/config'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import react from '@vitejs/plugin-react'
+import { playwright } from '@vitest/browser-playwright'
+import * as customCommands from './tests/visual/commands'
 
 export default defineConfig({
   plugins: [
     tsconfigPaths(),
     react()
   ],
+  optimizeDeps: {
+    include: [
+      'vitest-browser-react',
+      'next/link',
+      'next/image',
+      '@testing-library/react',
+      '@testing-library/jest-dom/matchers'
+    ]
+  },
   test: {
     environment: 'node',
     globals: true,
-    include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'tests/visual/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+    ],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
       '**/cypress/**',
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
-      '**/tests/ui/**'
+      '**/tests/e2e/**',
+      '**/tests/ui-e2e/**',
+      '**/tests/itsm/**',
+      '**/tests/ui/**',
+      '**/analisar/**'
     ],
     coverage: {
       reporter: ['text', 'json', 'html'],
@@ -26,7 +46,29 @@ export default defineConfig({
         'test/'
       ]
     },
-    testTimeout: 20000,
-    setupFiles: ['./vitest.setup.ts']
+    reporters: ['default'],
+    testTimeout: 30000,
+    setupFiles: ['./vitest.setup.ts'],
+    browser: {
+      enabled: true,
+      headless: true,
+      provider: playwright(),
+      instances: [
+        {
+          browser: 'chromium',
+          viewport: { width: 1280, height: 720 }
+        }
+      ],
+      commands: customCommands,
+      expect: {
+        toMatchScreenshot: {
+          comparatorName: 'pixelmatch',
+          comparatorOptions: {
+            threshold: 0.2,
+            allowedMismatchedPixelRatio: 0.01,
+          },
+        },
+      },
+    },
   }
 })

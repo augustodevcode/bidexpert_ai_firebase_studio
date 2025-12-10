@@ -198,7 +198,75 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** o status do lote deve mudar para "VENDIDO".
 - **E** o ID do usuário deve ser registrado como `winnerId` no lote.
 - **E** um registro deve ser criado na tabela `UserWin` para este usuário e lote.
+
+---
+
+## Módulo 9: Mapas e Geolocalização
+
+### 9.1. Exibição de mapas nos detalhes
+
+**Cenário 9.1.1: Mapa respeita provedores configurados**
+- **Dado** que o administrador definiu o provedor padrão como "OpenMap" em `/admin/settings/maps`.
+- **Quando** um visitante abre a página `/auctions/{auctionId}/lots/{lotId}` ou o modal de mapa do lote.
+- **Então** o componente deve carregar os tiles do provedor configurado.
+- **E** deve exibir um botão externo que abre o Google Maps com as coordenadas resolvidas ou com o endereço informado.
+
+**Cenário 9.1.2: Fallback de endereço para coordenadas**
+- **Dado** que um lote (ou leilão/ativo) não possui latitude/longitude.
+- **Quando** a página é carregada.
+- **Então** o sistema deve tentar resolver o endereço completo (`mapAddress`).
+- **E** se não houver endereço, deve usar o CEP e, em último caso, cidade + estado.
+- **E** deve exibir um placeholder informativo apenas se nenhuma coordernada puder ser resolvida.
+
+**Cenário 9.1.3: Endereço genérico complementado automaticamente**
+- **Dado** que um lote possui apenas um `mapAddress` textual curto (ex: "Endereço Central") mas traz cidade/estado/CEP em outros campos.
+- **Quando** a geocodificação é disparada.
+- **Então** o sistema deve concatenar automaticamente o CEP e a combinação cidade/estado ao `mapAddress` antes de chamar o provedor.
+- **E** o mapa deve ser renderizado caso o provedor retorne coordenadas válidas.
+
+### 9.2. Busca por mapa
+
+**Cenário 9.2.1: Resultados no mapa usam fallback geocoding**
+- **Dado** que o usuário acessa `/map-search`.
+- **Quando** os lotes ou leilões da área não possuem coordenadas salvas.
+- **Então** o componente deve geocodificar até 25 itens por lote usando o mesmo fallback (endereço → CEP → cidade).
+- **E** deve exibir um aviso "Resolvendo endereços…" enquanto a conversão está em andamento.
+- **E** assim que as coordenadas forem resolvidas, os marcadores devem ser exibidos e o ajuste automático de bounds deve considerar os novos pontos.
 - **E** o item deve aparecer na página "Meus Arremates" do usuário.
+
+**Cenário 9.2.2: Lista lateral filtra automaticamente pela área visível**
+- **Dado** que o usuário está na página `/map-search` e vê a lista com `data-ai-id="map-search-list"`.
+- **Quando** ele arrasta ou dá zoom no mapa.
+- **Então** os IDs visíveis devem ser atualizados pelo map overlay e refletidos no contador `data-ai-id="map-search-count"`.
+- **E** a lista lateral deve exibir apenas os itens cujo ID esteja dentro da área atual.
+- **E** o botão com `data-ai-id="map-reset-filter"` deve limpar o filtro e disparar um novo ajuste de bounds quando clicado.
+
+**Cenário 9.2.3: Alternância de dataset mantém mapa e lista sincronizados**
+- **Dado** que o usuário vê as abas com `data-ai-id="map-dataset-toggle-{dataset}"`.
+- **Quando** ele alterna de "Lotes em Leilão" para "Venda Direta".
+- **Então** o mapa deve re-renderizar com marcadores do novo dataset e recentrar com ajuste automático.
+- **E** a lista deve renderizar cada item usando `BidExpertListItem` com o tipo correspondente (lot, direct_sale ou auction).
+- **E** o formulário de busca `data-ai-id="map-search-input"` deve aplicar o mesmo termo em todos os datasets selecionados.
+
+**Cenário 9.2.4: Tomada de Preços usa layout de leilão sem erros**
+- **Dado** que o usuário selecionou a aba `data-ai-id="map-dataset-toggle-tomada_de_precos"`.
+- **Quando** existem leilões do tipo `TOMADA_DE_PRECOS` retornados pela API.
+- **Então** a coluna lateral deve renderizar cada resultado com `AuctionListItem`, incluindo o selo "Tomada de Preços" e o menu contextual sem lançar erros de runtime.
+- **E** os popups do mapa devem usar `BidExpertListItem` com `type="auction"`, mantendo o mesmo layout e evitando o erro "Element type is invalid" reportado anteriormente.
+
+**Cenário 9.2.5: Lista lateral usa cards compactos dedicados a mapas**
+- **Dado** que o usuário acessa `/map-search` em qualquer dataset.
+- **Quando** os resultados são carregados dentro de `data-ai-id="map-search-list"`.
+- **Então** cada wrapper `data-ai-id="map-search-list-item"` deve conter um `data-density="compact"` indicando o layout reduzido do `BidExpertListItem`.
+- **E** imagens, títulos e botões devem caber na largura do painel sem overflow vertical ou barras horizontais.
+- **E** a timeline (`data-testid="timeline"`) só deve aparecer quando a densidade for "default", garantindo que o modo compacto permaneça enxuto.
+
+**Cenário 9.2.6: Modo tela cheia e sincronização com cache inteligente**
+- **Dado** que o usuário vê os botões "Recentrar mapa" e "Tela cheia" no canto superior direito do mapa.
+- **Quando** ele clica em "Tela cheia".
+- **Então** um diálogo deve ocupar 90% da viewport, exibindo novamente o mapa com o botão "Fechar tela cheia".
+- **E** ao clicar em "Recentrar mapa", o mapa deve recalcular os bounds e disparar um novo `fitBoundsSignal`.
+- **E** o painel lateral deve mostrar um selo "Cache" enquanto reutiliza datasets de `sessionStorage` e atualizar o texto `lastUpdatedLabel` após a sincronização manual via botão com ícone `RefreshCcw`.
 
 **Cenário 3.1.4: Checkout de um lote arrematado**
 - **Dado** que um usuário arrematou um lote e seu pagamento está "PENDENTE".

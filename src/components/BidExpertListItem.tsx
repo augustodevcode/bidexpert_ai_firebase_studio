@@ -24,14 +24,23 @@ interface BidExpertListItemProps {
   platformSettings: PlatformSettings;
   parentAuction?: Auction;
   onUpdate?: () => void;
+  density?: 'default' | 'compact';
 }
 
-export default function BidExpertListItem({ item, type, platformSettings, parentAuction, onUpdate }: BidExpertListItemProps) {
+export default function BidExpertListItem({ item, type, platformSettings, parentAuction, onUpdate, density = 'default' }: BidExpertListItemProps) {
   switch (type) {
     case 'auction':
-      return <AuctionListItem auction={item as Auction} onUpdate={onUpdate} />;
+      return <AuctionListItem auction={item as Auction} onUpdate={onUpdate} density={density} />;
     case 'lot':
-      return <LotListItem lot={item as Lot} auction={parentAuction} platformSettings={platformSettings} onUpdate={onUpdate} />;
+      return (
+        <LotListItem
+          lot={item as Lot}
+          auction={parentAuction}
+          platformSettings={platformSettings}
+          onUpdate={onUpdate}
+          density={density}
+        />
+      );
     case 'seller':
         return <SellerListItem seller={item as SellerProfileInfo} onUpdate={onUpdate} />;
     case 'auctioneer':
@@ -41,7 +50,7 @@ export default function BidExpertListItem({ item, type, platformSettings, parent
     case 'user':
         return <UserListItem user={item as UserProfileWithPermissions} onUpdate={onUpdate} />;
     case 'direct_sale':
-        return <DirectSaleOfferListItem offer={item as DirectSaleOffer} />;
+        return <DirectSaleOfferListItem offer={item as DirectSaleOffer} density={density} />;
     default:
       console.warn(`Tipo de item de lista desconhecido: ${type}`);
       return null;

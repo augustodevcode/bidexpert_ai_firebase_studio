@@ -72,8 +72,17 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
  */
 export async function getAuctionDashboardDataAction(auctionId: string): Promise<AuctionDashboardData | null> {
     try {
-        const auction = await prisma.auction.findUnique({
-            where: { id: auctionId },
+        const isNumericId = /^\d+$/.test(auctionId);
+        const whereClause: any = {};
+
+        if (isNumericId) {
+            whereClause.id = BigInt(auctionId);
+        } else {
+            whereClause.publicId = auctionId;
+        }
+
+        const auction = await prisma.auction.findFirst({
+            where: whereClause,
             include: {
                 lots: {
                     include: {

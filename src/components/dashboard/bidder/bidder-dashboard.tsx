@@ -22,7 +22,10 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  DollarSign
+  DollarSign,
+  Zap,
+  Gavel,
+  ExternalLink
 } from 'lucide-react';
 import { BidderDashboardOverview } from '@/types/bidder-dashboard';
 import { WonLotsSection } from './won-lots-section';
@@ -31,6 +34,7 @@ import { DocumentsSection } from './documents-section';
 import { NotificationsSection } from './notifications-section';
 import { HistorySection } from './history-section';
 import { ProfileSection } from './profile-section';
+import Link from 'next/link';
 
 interface BidderDashboardProps {
   overview: BidderDashboardOverview;
@@ -114,6 +118,109 @@ export function BidderDashboard({ overview }: BidderDashboardProps) {
             <p className="text-xs text-muted-foreground">
               Não lidas
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Habilitações e Lances Automáticos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Habilitações em Leilões */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Gavel className="h-5 w-5 text-primary" />
+              Leilões Habilitados
+            </CardTitle>
+            <CardDescription>
+              Leilões onde você está habilitado para dar lances
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {overview.auctionHabilitations && overview.auctionHabilitations.length > 0 ? (
+              <div className="space-y-3">
+                {overview.auctionHabilitations.slice(0, 5).map((hab) => (
+                  <div key={hab.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{hab.auctionTitle}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant={hab.auctionStatus === 'ABERTO' || hab.auctionStatus === 'ABERTO_PARA_LANCES' ? 'default' : 'secondary'} className="text-xs">
+                          {hab.auctionStatus === 'ABERTO_PARA_LANCES' ? 'Em andamento' : 
+                           hab.auctionStatus === 'ABERTO' ? 'Aberto' :
+                           hab.auctionStatus === 'EM_BREVE' ? 'Em breve' : hab.auctionStatus}
+                        </Badge>
+                        {hab.auctionDate && (
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(hab.auctionDate).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Link href={`/auctions/${hab.auctionPublicId || hab.auctionId}`}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <Gavel className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">Você ainda não está habilitado em nenhum leilão</p>
+                <p className="text-xs mt-1">Explore os leilões e habilite-se para participar!</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Lances Automáticos Configurados */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Zap className="h-5 w-5 text-amber-500" />
+              Lances Automáticos
+            </CardTitle>
+            <CardDescription>
+              Lotes com lance máximo configurado
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {overview.activeMaxBids && overview.activeMaxBids.length > 0 ? (
+              <div className="space-y-3">
+                {overview.activeMaxBids.slice(0, 5).map((mb) => (
+                  <div key={mb.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{mb.lotTitle}</p>
+                      <p className="text-xs text-muted-foreground truncate">{mb.auctionTitle}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          Máx: R$ {mb.maxAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                        {mb.currentBid && (
+                          <span className="text-xs text-muted-foreground">
+                            Atual: R$ {mb.currentBid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
+                        <Badge variant={mb.lotStatus === 'ABERTO_PARA_LANCES' ? 'default' : 'secondary'} className="text-xs">
+                          {mb.lotStatus === 'ABERTO_PARA_LANCES' ? 'Ativo' : mb.lotStatus}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Link href={`/auctions/${mb.auctionId}/lots/${mb.lotPublicId || mb.lotId}`}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <Zap className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">Nenhum lance automático configurado</p>
+                <p className="text-xs mt-1">Configure um lance máximo nos lotes de interesse!</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

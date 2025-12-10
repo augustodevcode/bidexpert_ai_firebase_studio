@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +33,9 @@ const sortOptions = [
 ];
 
 export default function AdminLotsPage() {
+  const searchParams = useSearchParams();
+  const auctionId = searchParams.get('auctionId');
+  const judicialProcessId = searchParams.get('judicialProcessId');
   const [lots, setLots] = useState<Lot[]>([]);
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
@@ -45,7 +49,7 @@ export default function AdminLotsPage() {
     setError(null);
     try {
       const [fetchedLots, fetchedAuctions, settings] = await Promise.all([
-        getLotsAction(),
+        getLotsAction({ auctionId: auctionId || undefined, judicialProcessId: judicialProcessId || undefined }),
         getAuctions(),
         getPlatformSettings(),
       ]);
@@ -60,7 +64,7 @@ export default function AdminLotsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, auctionId, judicialProcessId]);
 
   useEffect(() => {
     fetchPageData();
@@ -138,10 +142,10 @@ export default function AdminLotsPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <Package className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Lotes
+              Gerenciar Lotes{auctionId ? ` - Leilão: ${auctions.find(a => a.id === auctionId || a.publicId === auctionId)?.title || auctionId}` : judicialProcessId ? ` - Processo: ${judicialProcessId}` : ''}
             </CardTitle>
             <CardDescription>
-              Visualize, adicione e edite os lotes da plataforma.
+              Visualize, adicione e edite os lotes da plataforma{auctionId ? ' para o leilão selecionado' : ''}.
             </CardDescription>
           </div>
           <Button asChild>
@@ -168,6 +172,7 @@ export default function AdminLotsPage() {
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='title'
         searchPlaceholder='Buscar por título...'
+        dataTestId="lots-table"
       />
     </div>
   );

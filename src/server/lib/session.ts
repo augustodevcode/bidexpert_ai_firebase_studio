@@ -37,9 +37,9 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
     if (!tenantId) {
         throw new Error('O Tenant ID é obrigatório para criar uma sessão.');
     }
-    
+
     console.log(`[Create Session] Criando sessão para usuário ${user.email} no tenant ${tenantId}`);
-    
+
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const sessionPayload = {
         userId: user.id.toString(),
@@ -50,24 +50,38 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
         sellerId: user.sellerId?.toString() || null,
         auctioneerId: user.auctioneerId?.toString() || null,
     };
-    
+
     const session = await encrypt(sessionPayload);
-    console.log('[Create Session] Token JWT gerado. Definindo cookie.');
+
+    console.log('[Create Session] Token JWT gerado. Definindo cookie com tamanho:', session.length);
+    console.log('[Create Session] NODE_ENV:', process.env.NODE_ENV);
+
+    const isProduction = process.env.NODE_ENV === 'production';
 
     cookies().set('session', session, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction,
         expires: expiresAt,
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
         sameSite: 'lax',
         path: '/',
     });
 }
 
-export async function getSession(): Promise<{ userId: string; tenantId: string; [key: string]: any } | null> {
+export async function getSession(): Promise<{ userId: string; tenantId: string;[key: string]: any } | null> {
     const cookie = cookies().get('session')?.value;
+    if (!cookie) {
+        console.log('[Get Session] Cookie "session" não encontrado.');
+        return null;
+    }
     const session = await decrypt(cookie);
-    
-    return session as { userId: string; tenantId: string; [key: string]: any } | null;
+    if (!session) {
+        console.log('[Get Session] Falha ao descriptografar sessão.');
+    } else {
+        // console.log('[Get Session] Sessão recuperada para usuário:', session.userId);
+    }
+
+    return session as { userId: string; tenantId: string;[key: string]: any } | null;
 }
 
 export async function deleteSession() {

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { JudicialProcess } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import Link from 'next/link';
 
 export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: string) => void, onEdit: (process: JudicialProcess) => void }): ColumnDef<JudicialProcess>[] => [
   {
@@ -38,10 +39,36 @@ export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: str
     accessorKey: "processNumber",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nº do Processo" />,
     cell: ({ row }) => (
-       <button onClick={() => onEdit(row.original)} className="hover:text-primary font-medium text-left">
-         {row.getValue("processNumber")}
-       </button>
+      <button onClick={() => onEdit(row.original)} className="hover:text-primary font-medium text-left">
+        {row.getValue("processNumber")}
+      </button>
     ),
+  },
+  {
+    accessorKey: "lotCount",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Lotes" />,
+    cell: ({ row }) => {
+      const lotCount = row.original.lotCount || 0;
+      const processId = row.original.publicId || row.original.id;
+      return (
+        <Link href={`/admin/lots?judicialProcessId=${processId}`} className="text-primary hover:underline">
+          {lotCount} lotes
+        </Link>
+      );
+    },
+  },
+  {
+    accessorKey: "assetCount",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Ativos" />,
+    cell: ({ row }) => {
+      const assetCount = row.original.assetCount || 0;
+      const processId = row.original.publicId || row.original.id;
+      return (
+        <Link href={`/admin/assets?judicialProcessId=${processId}`} className="text-primary hover:underline">
+          {assetCount} ativos
+        </Link>
+      );
+    },
   },
   {
     accessorKey: "courtName",

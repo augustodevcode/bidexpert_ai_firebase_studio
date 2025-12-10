@@ -31,7 +31,7 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import Image from 'next/image';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 import AuctionStagesForm from '@/components/auction/auction-stages-form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { getPlatformSettings } from '../settings/actions';
@@ -79,12 +79,12 @@ interface AuctionFormProps {
 }
 
 // Placeholder refetch functions – real implementations can be injected later
-const handleRefetchCategories = async () => {};
-const handleRefetchAuctioneers = async () => {};
-const handleRefetchSellers = async () => {};
-const handleRefetchProcesses = async () => {};
+const handleRefetchCategories = async () => { };
+const handleRefetchAuctioneers = async () => { };
+const handleRefetchSellers = async () => { };
+const handleRefetchProcesses = async () => { };
 
-const renderAccordionContent = (
+const renderSectionContent = (
   section: string,
   form: any,
   initialCategories: any[],
@@ -452,8 +452,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       status: initialData?.status ?? '',
       softCloseEnabled: initialData?.softCloseEnabled ?? false,
       softCloseMinutes: initialData?.softCloseMinutes ?? 0,
-      auctionStages: initialData?.auctionStages?.length 
-        ? initialData.auctionStages.map((s) => ({ ...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate) })) 
+      auctionStages: initialData?.auctionStages?.length
+        ? initialData.auctionStages.map((s) => ({ ...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate) }))
         : [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
     },
   });
@@ -541,169 +541,177 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       <div data-ai-id="admin-auction-form-card">
         <FormProvider {...form}>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Accordion type="multiple" defaultValue={["geral", "participantes", "prazos"]} className="w-full">
-                <AccordionItem value="geral">
-                  <AccordionTrigger>Informações Gerais</AccordionTrigger>
-                  <AccordionContent className="p-4">
-                    {renderAccordionContent(
-                      "geral",
-                      form,
-                      initialCategories,
-                      initialAuctioneers,
-                      initialSellers,
-                      initialJudicialProcesses || [],
-                      allCities,
-                      initialStates,
-                      isSubmitting,
-                      watchedAuctionMethod,
-                      watchedImageMediaId,
-                      displayImageUrl ?? null,
-                      setIsMediaDialogOpen,
-                      handleAddStageWithDefaults,
-                      remove
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="participantes">
-                  <AccordionTrigger>Participantes</AccordionTrigger>
-                  <AccordionContent className="p-4">
-                    {renderAccordionContent(
-                      "participantes",
-                      form,
-                      initialCategories,
-                      initialAuctioneers,
-                      initialSellers,
-                      initialJudicialProcesses || [],
-                      allCities,
-                      initialStates,
-                      isSubmitting,
-                      watchedAuctionMethod,
-                      watchedImageMediaId,
-                      displayImageUrl ?? null,
-                      setIsMediaDialogOpen,
-                      handleAddStageWithDefaults,
-                      remove
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="modalidade">
-                  <AccordionTrigger>Modalidade, Método e Local</AccordionTrigger>
-                  <AccordionContent className="p-4">
-                    {renderAccordionContent(
-                      "modalidade",
-                      form,
-                      initialCategories,
-                      initialAuctioneers,
-                      initialSellers,
-                      initialJudicialProcesses || [],
-                      allCities,
-                      initialStates,
-                      isSubmitting,
-                      watchedAuctionMethod,
-                      watchedImageMediaId,
-                      displayImageUrl ?? null,
-                      setIsMediaDialogOpen,
-                      handleAddStageWithDefaults,
-                      remove
-                    )}
-                    {renderAccordionContent(
-                      "localizacao",
-                      form,
-                      initialCategories,
-                      initialAuctioneers,
-                      initialSellers,
-                      initialJudicialProcesses || [],
-                      allCities,
-                      initialStates,
-                      isSubmitting,
-                      watchedAuctionMethod,
-                      watchedImageMediaId,
-                      displayImageUrl ?? null,
-                      setIsMediaDialogOpen,
-                      handleAddStageWithDefaults,
-                      remove
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="prazos">
-                  <AccordionTrigger>Datas e Prazos</AccordionTrigger>
-                  <AccordionContent className="p-4">
-                    {renderAccordionContent(
-                      "prazos",
-                      form,
-                      initialCategories,
-                      initialAuctioneers,
-                      initialSellers,
-                      initialJudicialProcesses || [],
-                      allCities,
-                      initialStates,
-                      isSubmitting,
-                      watchedAuctionMethod,
-                      watchedImageMediaId,
-                      displayImageUrl ?? null,
-                      setIsMediaDialogOpen,
-                      handleAddStageWithDefaults,
-                      remove
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="midia">
-                  <AccordionTrigger>Mídia</AccordionTrigger>
-                  <AccordionContent className="p-4">
-                    {renderAccordionContent(
-                      "midia",
-                      form,
-                      initialCategories,
-                      initialAuctioneers,
-                      initialSellers,
-                      initialJudicialProcesses || [],
-                      allCities,
-                      initialStates,
-                      isSubmitting,
-                      watchedAuctionMethod,
-                      watchedImageMediaId,
-                      displayImageUrl ?? null,
-                      setIsMediaDialogOpen,
-                      handleAddStageWithDefaults,
-                      remove
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="opcoes">
-                  <AccordionTrigger>Opções Avançadas</AccordionTrigger>
-                  <AccordionContent className="p-4">
-                    {renderAccordionContent(
-                      "opcoes",
-                      form,
-                      initialCategories,
-                      initialAuctioneers,
-                      initialSellers,
-                      initialJudicialProcesses || [],
-                      allCities,
-                      initialStates,
-                      isSubmitting,
-                      watchedAuctionMethod,
-                      watchedImageMediaId,
-                      displayImageUrl ?? null,
-                      setIsMediaDialogOpen,
-                      handleAddStageWithDefaults,
-                      remove
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-                {initialData?.id && (
-                  <AccordionItem value="historico">
-                    <AccordionTrigger>Histórico de Alterações</AccordionTrigger>
-                    <AccordionContent className="p-4">
-                      <ChangeHistoryTab
-                        entityType="Auction"
-                        entityId={String(initialData.id)}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-              </Accordion>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informações Gerais</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderSectionContent(
+                    "geral",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Participantes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderSectionContent(
+                    "participantes",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Modalidade, Método e Local</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {renderSectionContent(
+                    "modalidade",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                  {renderSectionContent(
+                    "localizacao",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Datas e Prazos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderSectionContent(
+                    "prazos",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mídia</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderSectionContent(
+                    "midia",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Opções Avançadas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderSectionContent(
+                    "opcoes",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                </CardContent>
+              </Card>
+
+
+
               {!isWizardMode && (
                 <div className="flex justify-end pt-4">
                   <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
@@ -716,6 +724,23 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
           </Form>
         </FormProvider>
       </div>
+
+      {initialData?.id && (
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Histórico de Alterações</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChangeHistoryTab
+                entityType="Auction"
+                entityId={String(initialData.id)}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
     </>
   );

@@ -162,6 +162,10 @@ export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId
   type?: string | null;
   assets?: Asset[];
   galleryImageUrls?: string[];
+  documents?: LotDocument[];
+  requiresDepositGuarantee?: boolean | null;
+  depositGuaranteeAmount?: Decimal | null;
+  depositGuaranteeInfo?: string | null;
 };
 
 export type Review = Omit<PmReview, 'id' | 'lotId' | 'auctionId' | 'userId'> & { 
@@ -191,6 +195,21 @@ export type BidInfo = Omit<PmBid, 'id' | 'lotId' | 'auctionId' | 'bidderId' | 't
 };
 
 export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId' | 'answeredByUserId'> & { id: string; lotId: string; auctionId: string; userId: string; answeredByUserId?: string | null };
+export type LotDocument = {
+  id: string;
+  lotId: string;
+  fileName: string;
+  title: string;
+  description?: string | null;
+  fileUrl: string;
+  fileSize?: bigint | null;
+  mimeType?: string | null;
+  displayOrder: number;
+  isPublic: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  tenantId: string;
+};
 export type UserDocument = Omit<PmUserDocument, 'id' | 'userId' | 'documentTypeId'> & { id: string; userId: string; documentTypeId: string; documentType: DocumentType };
 export type DocumentType = Omit<PmDocumentType, 'id'> & { id: string };
 export type DocumentTemplate = {
@@ -348,10 +367,10 @@ export interface CnjProcessSource {
     };
     assuntos?: any[]; // A estrutura detalhada pode ser adicionada se necessário
 }
-export type AuctionStage = Omit<PmAuctionStage, 'id' | 'auctionId' | 'initialPrice'> & {
+export type AuctionStage = Omit<PmAuctionStage, 'id' | 'auctionId' | 'discountPercent'> & {
     id: string;
     auctionId: string;
-    initialPrice?: number | null;
+    discountPercent?: number; // Percentual da praça (ex: 100, 60, 50)
 };
 export type LotStageDetails = { stageId: string, stageName: string, initialBid?: number | null, bidIncrement?: number | null };
 
@@ -431,7 +450,17 @@ export type AuctioneerFormData = Partial<Omit<AuctioneerProfileInfo, 'id' | 'pub
   latitude?: number | null;
   longitude?: number | null;
 };
-export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'category' | 'sellerName' | 'auctioneerName' | 'categoryName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl' | 'tenantId'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
+export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'category' | 'sellerName' | 'auctioneerName' | 'categoryName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl' | 'tenantId'> & { 
+  auctionStages: { name: string, startDate: Date, endDate: Date, discountPercent?: number }[], 
+  cityId?: string, 
+  stateId?: string, 
+  judicialProcessId?: string, 
+  tenantId?: string | null,
+  street?: string,
+  number?: string,
+  complement?: string,
+  neighborhood?: string,
+};
 export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls' | 'tenantId'> & { type: string, assetIds?: string[], inheritedMediaFromAssetId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null, mediaItemIds?: string[], galleryImageUrls?: string[] };
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;
 export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'cityCount' | 'createdAt' | 'updatedAt'>;

@@ -1,0 +1,4 @@
+{"operation":"create-test-state","duration":1721,"success":true,"timestamp":"2025-12-04T23:37:16.328Z"}
+{"operation":"create-test-city","duration":369,"success":true,"timestamp":"2025-12-04T23:37:16.703Z"}
+{"operation":"seed-test-basic-records","duration":2101,"success":true,"timestamp":"2025-12-04T23:37:16.708Z"}
+{"operation":"seed-validation","duration":592,"success":true,"details":{"expected":{"users":1,"auctions":1,"lots":1,"sellers":1,"auctioneers":1,"assets":1,"categories":1,"cities":1,"states":1},"actual":{"users":41,"auctions":32,"lots":56,"sellers":12,"auctioneers":10,"assets":29,"categories":5,"cities":2,"states":2},"failures":[]},"timestamp":"2025-12-04T23:37:17.311Z"}

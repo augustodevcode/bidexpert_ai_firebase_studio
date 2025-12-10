@@ -52,6 +52,8 @@ export class AuctionService {
             auctioneerId: a.auctioneerId?.toString() ?? null,
             categoryId: a.categoryId?.toString() ?? null,
             judicialProcessId: a.judicialProcessId?.toString() ?? null,
+            stateId: a.stateId?.toString() ?? null,
+            cityId: a.cityId?.toString() ?? null,
             tenantId: a.tenantId.toString(),
             seller: a.seller ? { ...a.seller, id: a.seller.id.toString() } : null,
             auctioneer: a.auctioneer ? { ...a.auctioneer, id: a.auctioneer.id.toString() } : null,
@@ -61,10 +63,12 @@ export class AuctionService {
             categoryName: a.category?.name,
             imageUrl: a.imageMediaId === 'INHERIT' ? featuredLot?.imageUrl : a.imageUrl,
             auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
-                ...stage,
                 id: stage.id.toString(),
+                name: stage.name,
                 auctionId: stage.auctionId.toString(),
-                initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
+                tenantId: stage.tenantId?.toString() ?? a.tenantId.toString(),
+                discountPercent: stage.discountPercent ? Number(stage.discountPercent) : 100,
+                status: stage.status,
                 startDate: stage.startDate,
                 endDate: stage.endDate,
             })),
@@ -216,9 +220,10 @@ export class AuctionService {
             data: data.auctionStages.map((stage: any) => ({
               name: stage.name,
               startDate: new Date(stage.startDate as Date),
-              endDate: new Date(stage.endDate as Date),
-              initialPrice: stage.initialPrice,
+              endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
+              discountPercent: stage.discountPercent ?? 100,
               auctionId: createdAuction.id,
+              tenantId: BigInt(tenantId),
             })),
           });
         }
@@ -294,9 +299,10 @@ export class AuctionService {
                 data: auctionStages.map(stage => ({
                     name: stage.name,
                     startDate: new Date(stage.startDate as Date),
-                    endDate: new Date(stage.endDate as Date),
-                    initialPrice: stage.initialPrice,
+                    endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
+                    discountPercent: stage.discountPercent ?? 100,
                     auctionId: internalId,
+                    tenantId: BigInt(tenantId),
                 })),
             });
         }

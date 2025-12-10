@@ -70,7 +70,15 @@ export const createColumns = ({ handleDelete, onOpenDashboard }: { handleDelete:
   {
     accessorKey: "totalLots",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Lotes" />,
-    cell: ({ row }) => <div className="text-center">{row.original.totalLots || 0}</div>
+    cell: ({ row }) => {
+      const totalLots = row.getValue("totalLots") as number || 0;
+      const auctionId = row.original.publicId || row.original.id;
+      return (
+        <Link href={`/admin/lots?auctionId=${auctionId}`} className="text-primary hover:underline">
+          {totalLots} lotes
+        </Link>
+      );
+    }
   },
   {
     accessorKey: "auctionDate",
@@ -95,7 +103,7 @@ export const createColumns = ({ handleDelete, onOpenDashboard }: { handleDelete:
             <span className="sr-only">Preparar Leilão</span>
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/auctions/${auction.publicId || auction.id}/edit`}>
+            <Link href={`/admin/auctions-v2/${auction.publicId || auction.id}`}>
               <Pencil className="h-4 w-4" />
               <span className="sr-only">Editar</span>
             </Link>

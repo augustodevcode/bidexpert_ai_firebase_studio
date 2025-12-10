@@ -78,6 +78,7 @@ interface DataTableProps<TData, TValue> {
   onDeleteSelected?: (selectedRows: TData[]) => Promise<void>;
   tableInstance?: any;
   renderChildrenAboveTable?: (table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode;
+  dataTestId?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -93,6 +94,7 @@ export function DataTable<TData, TValue>({
   onDeleteSelected,
   tableInstance,
   renderChildrenAboveTable,
+  dataTestId,
 }: DataTableProps<TData, TValue>) {
   const [uncontrolledRowSelection, setUncontrolledRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -141,7 +143,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4" data-ai-id="data-table-container">
+    <div className="space-y-4" data-ai-id="data-table-container" data-testid={dataTestId}>
       <DataTableToolbar 
         table={table}
         searchColumnId={searchColumnId}

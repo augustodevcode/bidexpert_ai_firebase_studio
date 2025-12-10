@@ -24,39 +24,39 @@ import { UserService } from '@/services/user.service';
  * @returns {UserProfileWithPermissions | null} O perfil formatado ou null se o usuário for inválido.
  */
 function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
-    if (!user) return null;
+  if (!user) return null;
 
-    const roles: Role[] = user.roles?.map((ur: any) => ({
-      ...ur.role,
-      id: ur.role.id, // ID is already a string
-    })) || [];
+  const roles: Role[] = user.roles?.map((ur: any) => ({
+    ...ur.role,
+    id: ur.role.id, // ID is already a string
+  })) || [];
 
-    const permissions = Array.from(new Set(roles.flatMap((r: any) => {
-        if (typeof r.permissions === 'string') {
-            return r.permissions.split(',');
-        }
-        if (Array.isArray(r.permissions)) {
-            return r.permissions;
-        }
-        return [];
-    })));
-    
-    const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
-        ...ut.tenant,
-        id: ut.tenant.id, // ID is already a string
-    })) || [];
+  const permissions = Array.from(new Set(roles.flatMap((r: any) => {
+    if (typeof r.permissions === 'string') {
+      return r.permissions.split(',');
+    }
+    if (Array.isArray(r.permissions)) {
+      return r.permissions;
+    }
+    return [];
+  })));
 
-    return {
-        ...user,
-        id: user.id.toString(),
-        uid: user.id.toString(),
-        roles,
-        tenants,
-        roleIds: roles.map((r: any) => r.id),
-        roleNames: roles.map((r: any) => r.name),
-        permissions,
-        roleName: roles[0]?.name,
-    };
+  const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
+    ...ut.tenant,
+    id: ut.tenant.id, // ID is already a string
+  })) || [];
+
+  return {
+    ...user,
+    id: user.id.toString(),
+    uid: user.id.toString(),
+    roles,
+    tenants,
+    roleIds: roles.map((r: any) => r.id),
+    roleNames: roles.map((r: any) => r.name),
+    permissions,
+    roleName: roles[0]?.name,
+  };
 }
 
 
@@ -79,26 +79,26 @@ export async function login(values: { email: string, password?: string, tenantId
   try {
     console.log(`[Login Action] Tentativa de login para o email: ${email}`);
     const user = await basePrisma.user.findUnique({
-        where: { email },
-        include: {
-            roles: { include: { role: true } },
-            tenants: { include: { tenant: true } }
-        }
+      where: { email },
+      include: {
+        roles: { include: { role: true } },
+        tenants: { include: { tenant: true } }
+      }
     });
 
     if (!user || !user.password) {
       console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado.`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
-    
-    if (password && password !== '[already_validated]') {
-        console.log(`[Login Action] Usuário '${email}' encontrado. Verificando a senha.`);
-        const isPasswordValid = await bcryptjs.compare(password, user.password);
 
-        if (!isPasswordValid) {
-            console.log(`[Login Action] Falha: Senha inválida para o usuário '${email}'.`);
-            return { success: false, message: 'Credenciais inválidas.' };
-        }
+    if (password && password !== '[already_validated]') {
+      console.log(`[Login Action] Usuário '${email}' encontrado. Verificando a senha.`);
+      const isPasswordValid = await bcryptjs.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        console.log(`[Login Action] Falha: Senha inválida para o usuário '${email}'.`);
+        return { success: false, message: 'Credenciais inválidas.' };
+      }
     }
 
     const userProfileWithPerms = formatUserWithPermissions(user);
@@ -108,30 +108,30 @@ export async function login(values: { email: string, password?: string, tenantId
 
     // Tenant Selection Logic
     if (!tenantId) {
-        if (user.tenants?.length === 1) {
-            tenantId = user.tenants[0].tenantId;
-        } else if (user.tenants && user.tenants.length > 1) {
-            // Se o usuário tem múltiplos tenants mas nenhum foi selecionado,
-            // retorne o usuário para que a UI possa pedir a seleção.
-            return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
-        } else {
-            // Se o usuário não tem tenants, mas existe, ele pode ser um super admin
-            // ou estamos no processo de setup. O padrão é o landlord.
-            console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord ('1').`);
-            tenantId = '1'; 
-        }
+      if (user.tenants?.length === 1) {
+        tenantId = user.tenants[0].tenantId;
+      } else if (user.tenants && user.tenants.length > 1) {
+        // Se o usuário tem múltiplos tenants mas nenhum foi selecionado,
+        // retorne o usuário para que a UI possa pedir a seleção.
+        return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
+      } else {
+        // Se o usuário não tem tenants, mas existe, ele pode ser um super admin
+        // ou estamos no processo de setup. O padrão é o landlord.
+        console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord ('1').`);
+        tenantId = '1';
+      }
     }
-    
+
     const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId.toString() === tenantId);
     // Permite que super admins ou usuários sem tenant loguem no tenant '1' (Landlord)
     if (!userBelongsToFinalTenant) {
-        const isAdmin = userProfileWithPerms.permissions.includes('manage_all');
-        if (tenantId !== '1' || (!isAdmin && user.tenants && user.tenants.length > 0)) {
-             console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
-             return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
-        }
+      const isAdmin = userProfileWithPerms.permissions.includes('manage_all');
+      if (tenantId !== '1' || (!isAdmin && user.tenants && user.tenants.length > 0)) {
+        console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
+        return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
+      }
     }
-    
+
     await createSession(userProfileWithPerms, tenantId);
 
     return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
@@ -160,13 +160,13 @@ export async function logout(): Promise<{ success: boolean; message: string }> {
  * @returns {Promise<UserProfileWithPermissions | null>} O perfil completo do usuário ou null.
  */
 export async function getCurrentUser(): Promise<UserProfileWithPermissions | null> {
-    const session = await getSessionFromCookie();
-    if (session?.userId) {
-        const userService = new UserService();
-        const user = await userService.getUserById(session.userId);
-        return user;
-    }
-    return null;
+  const session = await getSessionFromCookie();
+  if (session?.userId) {
+    const userService = new UserService();
+    const user = await userService.getUserById(session.userId);
+    return user;
+  }
+  return null;
 }
 
 /**
@@ -180,6 +180,50 @@ export async function getAdminUserForDev(): Promise<UserProfileWithPermissions |
   }
   const userService = new UserService();
   return userService.findUserByEmail('admin@bidexpert.com.br');
+}
+
+/**
+ * Fetches a list of users for development testing purposes.
+ * Includes Admins, Auctioneers, Bidders, etc.
+ * @returns {Promise<Array<{ email: string; fullName: string; roleName: string; passwordHint: string }>>}
+ */
+export async function getDevUsers(): Promise<Array<{ email: string; fullName: string; roleName: string; passwordHint: string }>> {
+  if (process.env.NODE_ENV !== 'development') {
+    return [];
+  }
+
+  try {
+    const users = await basePrisma.user.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        roles: {
+          include: {
+            role: true
+          }
+        }
+      }
+    });
+
+    return users.map(u => {
+      const roleName = u.roles.length > 0 ? u.roles[0].role.name : 'User';
+      // Determine password hint based on email or role
+      let passwordHint = 'Test@12345';
+      if (u.email === 'admin@bidexpert.com.br') {
+        passwordHint = 'Admin@123';
+      }
+
+      return {
+        email: u.email,
+        fullName: u.fullName || 'Unknown',
+        roleName: roleName,
+        passwordHint: passwordHint
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching dev users:', error);
+    return [];
+  }
 }
 
 

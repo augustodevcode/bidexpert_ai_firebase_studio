@@ -10,9 +10,11 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Open Sans', 'sans-serif'],
-        headline: ['Open Sans', 'sans-serif'],
-        code: ['monospace'],
+        sans: ['Space Grotesk', 'Sora', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        display: ['Space Grotesk', 'Sora', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        body: ['Space Grotesk', 'Sora', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        headline: ['Sora', 'Space Grotesk', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        code: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -45,6 +47,14 @@ const config: Config = {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+          foreground: 'hsl(var(--surface-foreground))',
+        },
+        panel: {
+          DEFAULT: 'hsl(var(--panel))',
+          foreground: 'hsl(var(--panel-foreground))',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -70,6 +80,22 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      backgroundImage: {
+        'gradient-hero': 'var(--gradient-hero)',
+        'gradient-map-panel': 'var(--gradient-map-panel)',
+        'gradient-radar': 'var(--gradient-radar)',
+      },
+      boxShadow: {
+        glow: 'var(--shadow-soft)',
+        haze: 'var(--shadow-haze)',
+        ambient: 'var(--shadow-ambient)',
+      },
+      dropShadow: {
+        'map-pin': '0 8px 20px hsla(var(--primary) / 0.45)',
+      },
+      zIndex: {
+        header: 'var(--header-z, 1600)',
       },
       keyframes: {
         'accordion-down': {

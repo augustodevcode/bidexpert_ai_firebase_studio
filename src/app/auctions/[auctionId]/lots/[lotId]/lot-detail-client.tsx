@@ -14,14 +14,22 @@ import React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid } from '@/types';
+import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid, LotDocument } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown, Layers, UserCircle, Scale, Bot, Pencil
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown, Layers, UserCircle, Scale, Bot, Pencil, Download, Phone, Smartphone
 } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +44,7 @@ import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdF
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage } from '@/lib/ui-helpers';
 
-import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction } from './actions';
+import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction, getLotDocuments } from './actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -264,6 +272,7 @@ export default function LotDetailClientContent({
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [lotReviews, setLotReviews] = useState<Review[]>([]);
   const [lotQuestions, setLotQuestions] = useState<LotQuestion[]>([]);
+  const [lotDocuments, setLotDocuments] = useState<LotDocument[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -271,6 +280,17 @@ export default function LotDetailClientContent({
   const [formattedAuctionEndDate, setFormattedAuctionEndDate] = useState<string | null>(null);
   const [isHabilitadoForThisAuction, setIsHabilitadoForThisAuction] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [api, setApi] = useState<CarouselApi>()
+
+  useEffect(() => {
+    if (!api) {
+      return
+    }
+ 
+    api.on("select", () => {
+      setCurrentImageIndex(api.selectedScrollSnap())
+    })
+  }, [api])
 
   useEffect(() => {
     setIsClient(true);
@@ -355,12 +375,14 @@ export default function LotDetailClientContent({
         setIsLoadingData(true);
         try {
           console.log(`[LotDetailClient] Fetching data for lot ID: ${lot.id}`);
-          const [reviews, questions] = await Promise.all([
+          const [reviews, questions, documents] = await Promise.all([
             getReviewsForLot(lot.publicId || lot.id),
             getQuestionsForLot(lot.publicId || lot.id),
+            getLotDocuments(lot.id),
           ]);
           setLotReviews(reviews);
           setLotQuestions(questions);
+          setLotDocuments(documents);
         } catch (error: any) {
           console.error("[LotDetailClient] Error fetching data:", error);
           toast({ title: "Erro", description: "Não foi possível carregar todos os dados do lote.", variant: "destructive" });
@@ -475,11 +497,180 @@ export default function LotDetailClientContent({
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               <div className="lg:col-span-2 space-y-6">
-                <Card className="shadow-lg"><CardContent className="p-4"><div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden mb-4">{gallery.length > 0 && gallery[currentImageIndex] ? <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/> : <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>}{platformSettings.showCountdownOnLotDetail !== false && (<DetailTimeRemaining effectiveEndDate={effectiveLotEndDate} effectiveStartDate={effectiveLotStartDate} lotStatus={lot.status} className="rounded-b-md" />)}{gallery.length > 1 && (<><Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button><Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button></>)}</div>{gallery.length > 1 && (<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">{gallery.map((url, index) => (<button key={index} className={`relative aspect-square bg-muted rounded-sm overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Ver imagem ${index + 1}`}><Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')}/></button>))}</div>)}{gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}<div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">{lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}<span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span></div></CardContent></Card>
-                <Card id="auction-details-section" className="shadow-lg"><CardHeader><CardTitle className="text-xl font-semibold flex items-center"><Gavel className="h-5 w-5 mr-2 text-muted-foreground" />Informações do Leilão</CardTitle></CardHeader><CardContent className="p-4 md:p-6 pt-0"><div className="flex items-start gap-4">{auctioneer?.logoUrl && (<Avatar className="h-16 w-16 border-2 border-primary/20 flex-shrink-0"><AvatarImage src={auctioneer.logoUrl} alt={auctioneerName || ''} data-ai-hint={auctioneer.dataAiHintLogo || 'logo leiloeiro'} /><AvatarFallback>{auctioneerInitial}</AvatarFallback></Avatar>)}<div className="flex-grow"><Link href={`/auctions/${auction.publicId || auction.id}`} className="hover:text-primary"><p className="font-bold text-lg text-foreground">{auction.title}</p></Link><div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-2 text-sm"><div className="flex items-center text-muted-foreground"><UserCircle className="h-4 w-4 mr-2" /><span>Leiloeiro: <span className="font-medium text-foreground">{auctioneerName}</span></span></div><div className="flex items-center text-muted-foreground"><Tag className="h-4 w-4 mr-2" /><span>Categoria: <span className="font-medium text-foreground">{auction.category?.name || 'Não informada'}</span></span></div><div className="flex items-center text-muted-foreground"><Gavel className="h-4 w-4 mr-2" /><span>Modalidade: <span className="font-medium text-foreground">{auction.auctionType || 'Não especificada'}</span></span></div><div className="flex items-center text-muted-foreground"><Info className="h-4 w-4 mr-2" /><span>Status:<Badge variant="outline" className={`ml-2 text-xs ${getAuctionStatusColor(auction.status)} border-current`}>{getAuctionStatusText(auction.status)}</Badge></span></div>{auction.endDate && (<div className="flex items-center text-muted-foreground"><CalendarDays className="h-4 w-4 mr-2" /><span>Fim: <span className="font-medium text-foreground">{formattedAuctionEndDate ? formattedAuctionEndDate : '...'}</span></span></div>)}</div></div></div></CardContent><CardFooter className="p-4 md:p-6 pt-0"><Button asChild variant="outline" size="sm"><Link href={`/auctions/${auction.publicId || auction.id}`}>Ver todos os lotes do leilão <ChevronRight className="h-4 w-4 ml-2" /></Link></Button></CardFooter></Card>
+                <Card className="shadow-lg"><CardContent className="p-4">
+                  <div className="relative w-full mb-4">
+                     {gallery.length > 0 ? (
+                        <Carousel className="w-full" setApi={setApi}>
+                          <CarouselContent>
+                            {gallery.map((url, index) => (
+                              <CarouselItem key={index}>
+                                <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden">
+                                   <Image 
+                                      src={url} 
+                                      alt={`Imagem ${index + 1} de ${lot.title}`} 
+                                      fill 
+                                      className="object-contain" 
+                                      data-ai-hint={lot.dataAiHint || "imagem principal lote"} 
+                                      priority={index === 0} 
+                                      unoptimized={url.startsWith('https://placehold.co')}
+                                   />
+                                </div>
+                              </CarouselItem>
+                            ))}
+                          </CarouselContent>
+                          {gallery.length > 1 && (
+                            <>
+                              <CarouselPrevious className="left-2" />
+                              <CarouselNext className="right-2" />
+                            </>
+                          )}
+                        </Carousel>
+                     ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground aspect-video bg-muted rounded-md">
+                           <ImageOff className="h-16 w-16 mb-2" />
+                           <span>Imagem principal não disponível</span>
+                        </div>
+                     )}
+                     {platformSettings.showCountdownOnLotDetail !== false && (<DetailTimeRemaining effectiveEndDate={effectiveLotEndDate} effectiveStartDate={effectiveLotStartDate} lotStatus={lot.status} className="rounded-b-md" />)}
+                  </div>
+
+                  {gallery.length > 1 && (
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
+                      {gallery.map((url, index) => (
+                        <button 
+                          key={index} 
+                          className={`relative aspect-square bg-muted rounded-sm overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} 
+                          onClick={() => api?.scrollTo(index)} 
+                          aria-label={`Ver imagem ${index + 1}`}
+                        >
+                          <Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')}/>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}
+                  
+                  <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
+                    {lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}
+                    <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span>
+                  </div>
+                </CardContent></Card>
+                
+                {/* Mobile Bidding Panel */}
+                <div className="block lg:hidden">
+                  <BiddingPanel 
+                    currentLot={lot} 
+                    auction={auction} 
+                    onBidSuccess={handleBidSuccess}
+                    isHabilitadoForThisAuction={isHabilitadoForThisAuction}
+                    onHabilitacaoSuccess={handleHabilitacaoSuccess}
+                    activeStage={activeStage}
+                    activeLotPrices={activeLotPrices}
+                  />
+                </div>
+
+                <Card id="auction-details-section" className="shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold flex items-center">
+                      <Gavel className="h-5 w-5 mr-2 text-muted-foreground" />
+                      Informações do Leilão
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 md:p-6 pt-0">
+                    <div className="flex items-start gap-4">
+                      {auctioneer?.logoUrl && (
+                        <Avatar className="h-16 w-16 border-2 border-primary/20 flex-shrink-0">
+                          <AvatarImage src={auctioneer.logoUrl} alt={auctioneerName || ''} data-ai-hint={auctioneer.dataAiHintLogo || 'logo leiloeiro'} />
+                          <AvatarFallback>{auctioneerInitial}</AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div className="flex-grow">
+                        <Link href={`/auctions/${auction.publicId || auction.id}`} className="hover:text-primary">
+                          <p className="font-bold text-lg text-foreground">{auction.title}</p>
+                        </Link>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-2 text-sm">
+                          <div className="flex items-center text-muted-foreground">
+                            <UserCircle className="h-4 w-4 mr-2" />
+                            <span>Leiloeiro: <span className="font-medium text-foreground">{auctioneerName}</span></span>
+                          </div>
+                          <div className="flex items-center text-muted-foreground">
+                            <Tag className="h-4 w-4 mr-2" />
+                            <span>Categoria: <span className="font-medium text-foreground">{auction.category?.name || 'Não informada'}</span></span>
+                          </div>
+                          <div className="flex items-center text-muted-foreground">
+                            <Gavel className="h-4 w-4 mr-2" />
+                            <span>Modalidade: <span className="font-medium text-foreground">{auction.auctionType || 'Não especificada'}</span></span>
+                          </div>
+                          <div className="flex items-center text-muted-foreground">
+                            <Info className="h-4 w-4 mr-2" />
+                            <span>Status:<Badge variant="outline" className={`ml-2 text-xs ${getAuctionStatusColor(auction.status)} border-current`}>{getAuctionStatusText(auction.status)}</Badge></span>
+                          </div>
+                          {auction.endDate && (
+                            <div className="flex items-center text-muted-foreground">
+                              <CalendarDays className="h-4 w-4 mr-2" />
+                              <span>Fim: <span className="font-medium text-foreground">{formattedAuctionEndDate ? formattedAuctionEndDate : '...'}</span></span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Timeline Section */}
+                    {auction?.auctionStages && auction.auctionStages.length > 0 && (
+                      <div className="mt-6 pt-6 border-t">
+                        <h3 className="text-sm font-semibold mb-4 flex items-center">
+                          <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
+                          Cronograma de Praças
+                        </h3>
+                        <div className="pt-8 pb-2 px-2">
+                           <BidExpertAuctionStagesTimeline auction={auction} lot={lot} />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="p-4 md:p-6 pt-0">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/auctions/${auction.publicId || auction.id}`}>
+                        Ver todos os lotes do leilão <ChevronRight className="h-4 w-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
                 <Card className="shadow-lg"><CardHeader><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" />Detalhes do Lote</CardTitle></CardHeader><CardContent className="p-4 md:p-6 pt-0"><Tabs defaultValue="description" className="w-full"><TabsList className="flex w-full flex-wrap gap-1 mb-4"><TabsTrigger value="description">Descrição</TabsTrigger><TabsTrigger value="specification">Especificações</TabsTrigger><TabsTrigger value="legal">{legalTabTitle}</TabsTrigger><TabsTrigger value="seller">Comitente</TabsTrigger><TabsTrigger value="reviews">Avaliações</TabsTrigger><TabsTrigger value="questions">Perguntas</TabsTrigger></TabsList><TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent><TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent><TabsContent value="legal"><Card className="shadow-none border-0"><CardHeader className="px-1 pt-0"><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}</CardTitle></CardHeader><CardContent className="px-1 space-y-2 text-sm">{showLegalProcessTab && (<>{lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}{lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}{lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}{lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}{lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}{lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}{lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}{lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outras Informações/Links de Documentos:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}<Separator className="my-3" /></>)}{auction.documentsUrl && <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>}{!auction.documentsUrl && !showLegalProcessTab && (<p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>)}{auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (<p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>)}</CardContent></Card></TabsContent><TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller?.name || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller?.name} /></TabsContent><TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent><TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent></Tabs></CardContent></Card>
+                
+                {/* Documents Section */}
+                <Card className="shadow-lg" id="documents-section">
+                    <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" />Documentos do Lote</CardTitle></CardHeader>
+                    <CardContent>
+                    {lotDocuments.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {lotDocuments.map((doc) => (
+                            <Button key={doc.id} variant="outline" className="h-auto py-3 justify-start" asChild>
+                            <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+                                <Download className="h-4 w-4 mr-2 text-primary" />
+                                <div className="flex flex-col items-start">
+                                <span className="font-medium">{doc.title}</span>
+                                {doc.description && <span className="text-xs text-muted-foreground">{doc.description}</span>}
+                                </div>
+                            </a>
+                            </Button>
+                        ))}
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground text-sm">Nenhum documento disponível para este lote.</p>
+                    )}
+                    </CardContent>
+                </Card>
+
+                {/* Map Section */}
+                <Card className="shadow-lg" id="map-section">
+                    <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><MapPin className="h-5 w-5 mr-2 text-muted-foreground" />Localização do Lote</CardTitle></CardHeader>
+                    <CardContent className="p-0 overflow-hidden rounded-b-lg">
+                        <LotMapDisplay lot={lot} platformSettings={platformSettings} onOpenMapModal={() => setIsMapModalOpen(true)} />
+                    </CardContent>
+                </Card>
               </div>
-              <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 self-start">
+              <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 self-start hidden lg:block">
                   <BiddingPanel 
                     currentLot={lot} 
                     auction={auction} 
@@ -490,7 +681,14 @@ export default function LotDetailClientContent({
                     activeLotPrices={activeLotPrices}
                   />
                   <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{!activeLotPrices?.initialBid && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
-                  <LotMapDisplay lot={lot} platformSettings={platformSettings} onOpenMapModal={() => setIsMapModalOpen(true)} />
+                  
+                  {/* Contact Info */}
+                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Phone className="h-5 w-5 mr-2 text-muted-foreground"/>Contato e Suporte</CardTitle></CardHeader><CardContent className="space-y-3 text-sm">
+                    {platformSettings.supportPhone && <div className="flex items-center"><Phone className="h-4 w-4 mr-2 text-primary"/><span>{platformSettings.supportPhone}</span></div>}
+                    {platformSettings.supportWhatsApp && <div className="flex items-center"><Smartphone className="h-4 w-4 mr-2 text-green-500"/><span>{platformSettings.supportWhatsApp}</span></div>}
+                    {platformSettings.supportEmail && <div className="flex items-center"><Mail className="h-4 w-4 mr-2 text-primary"/><span>{platformSettings.supportEmail}</span></div>}
+                    {!platformSettings.supportPhone && !platformSettings.supportWhatsApp && !platformSettings.supportEmail && <p className="text-muted-foreground">Contatos não disponíveis.</p>}
+                  </CardContent></Card>
               </div>
             </div>
           </section>

@@ -176,3 +176,40 @@ npx playwright show-report
 ---
 
 Seguir esta ordem garante que cada conjunto de testes execute em um ambiente previsível e corretamente configurado.
+
+## 🔧 Troubleshooting
+
+### Erro: MissingSecret NextAuth
+
+Se você ver erros como `[auth][error] MissingSecret: Please define a 'secret'`:
+
+1. **Verificar variáveis de ambiente**:
+```bash
+npm run auth:verify
+```
+
+2. **Gerar um novo secret**:
+```bash
+npm run auth:generate-secret
+```
+
+3. **Adicionar ao .env**: Copie o secret gerado e adicione ao arquivo `.env`:
+```env
+AUTH_SECRET="seu_secret_gerado_aqui"
+NEXTAUTH_SECRET="seu_secret_gerado_aqui"
+```
+
+4. **Reiniciar o servidor**: As variáveis de ambiente só são carregadas na inicialização:
+```bash
+# Pare o servidor (Ctrl+C)
+npm run dev
+```
+
+📖 [Documentação completa da correção](./docs/NEXTAUTH_FIX.md)
+
+### Outros Problemas Comuns
+
+- **Erro de conexão com banco de dados**: Verifique se a variável `DATABASE_URL` está correta no `.env`
+- **Prisma Client desatualizado**: Execute `npx prisma generate`
+- **Porta 9002 em uso**: Use uma porta alternativa como `npm run dev:9003`
+- **Timeouts em testes E2E**: Use `npm run build && npm start` em vez de `npm run dev`

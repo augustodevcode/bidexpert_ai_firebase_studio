@@ -24,9 +24,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ 
+export function AuthProvider({
   children,
-}: { 
+}: {
   children: ReactNode,
 }) {
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(null);
@@ -38,26 +38,26 @@ export function AuthProvider({
 
   const fetchUnreadCount = useCallback(async (userId: string) => {
     try {
-        const count = await getUnreadNotificationCountAction(userId);
-        setUnreadNotificationsCount(count);
+      const count = await getUnreadNotificationCountAction(userId);
+      setUnreadNotificationsCount(count);
     } catch (e) {
-        console.error("Failed to fetch notification count:", e);
-        setUnreadNotificationsCount(0);
+      console.error("Failed to fetch notification count:", e);
+      setUnreadNotificationsCount(0);
     }
   }, []);
-  
+
   const refetchUser = useCallback(async () => {
-     if (userProfileWithPermissions?.id) {
-       const user = await getCurrentUser();
-       setUserProfileWithPermissions(user); // Re-fetch and update user
-       if (user) {
-         await fetchUnreadCount(user.id.toString());
-       }
-     } else {
-        router.refresh(); // Fallback to full refresh if no user context
-     }
+    if (userProfileWithPermissions?.id) {
+      const user = await getCurrentUser();
+      setUserProfileWithPermissions(user); // Re-fetch and update user
+      if (user) {
+        await fetchUnreadCount(user.id.toString());
+      }
+    } else {
+      router.refresh(); // Fallback to full refresh if no user context
+    }
   }, [router, userProfileWithPermissions?.id, fetchUnreadCount]);
-  
+
   const loginUser = useCallback((user: UserProfileWithPermissions, tenantId: string) => {
     setUserProfileWithPermissions(user);
     setActiveTenantId(tenantId);
@@ -69,19 +69,10 @@ export function AuthProvider({
       setLoading(true);
       try {
         let user = await getCurrentUser();
-        
-        // **DEV-ONLY AUTO-LOGIN LOGIC**
-        if (!user && process.env.NODE_ENV === 'development') {
-          console.log('[AuthProvider] No session found in dev. Attempting admin auto-login.');
-          const adminUser = await getAdminUserForDev();
-          if (adminUser) {
-            // We don't call createSession here because that sets a cookie, which is a side-effect.
-            // We just set the state for the current session. The user will need to log in properly
-            // if they refresh after the session cookie would have expired.
-            user = adminUser;
-            toast({ title: 'Dev Auto-Login', description: `Logado como ${adminUser.email}.`});
-          }
-        }
+
+        // **DEV-ONLY AUTO-LOGIN LOGIC REMOVED**
+        // O auto-login estava forçando o usuário Admin e mascarando problemas de cookie.
+        // Agora usamos o seletor manual na tela de login.
 
         if (user) {
           setUserProfileWithPermissions(user);
@@ -105,7 +96,7 @@ export function AuthProvider({
     if (userProfileWithPermissions?.id) {
       fetchUnreadCount(userProfileWithPermissions.id.toString());
     }
-    
+
     const handleStorageChange = () => {
       if (userProfileWithPermissions?.id) {
         fetchUnreadCount(userProfileWithPermissions.id.toString());
@@ -120,18 +111,18 @@ export function AuthProvider({
 
   const logout = async () => {
     try {
-        await logoutAction();
-        setUserProfileWithPermissions(null);
-        setActiveTenantId(null);
-        setUnreadNotificationsCount(0);
-        toast({ title: "Logout realizado com sucesso." });
-        window.location.href = '/auth/login'; 
+      await logoutAction();
+      setUserProfileWithPermissions(null);
+      setActiveTenantId(null);
+      setUnreadNotificationsCount(0);
+      toast({ title: "Logout realizado com sucesso." });
+      window.location.href = '/auth/login';
     } catch (error) {
-        console.error("Logout error", error);
-        toast({ title: "Erro ao fazer logout.", variant: 'destructive'});
+      console.error("Logout error", error);
+      toast({ title: "Erro ao fazer logout.", variant: 'destructive' });
     }
   };
-  
+
   return (
     <AuthContext.Provider value={{
       userProfileWithPermissions,

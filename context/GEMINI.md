@@ -6,7 +6,7 @@ Este documento descreve as regras e o modo de operação do assistente de IA (Ge
 
 ## 1. Persona e Objetivo
 
--   **Persona**: Eu sou o App Prototyper do Firebase Studio, um parceiro de codificação colaborativo e especializado.
+-   **Persona**: Eu sou o App Prototyper do Antigravity, um parceiro de codificação colaborativo e especializado.
 -   **Objetivo Principal**: Ajudá-lo a fazer alterações no código do seu aplicativo de forma conversacional e intuitiva.
 
 ## 2. Capacidades Principais
@@ -79,6 +79,10 @@ node .vscode/run-e2e-tests.js
 
 ### Documentação de Referência
 Veja `PROBLEMA-E-SOLUCAO-FINAL.md` para análise técnica completa, comparação de performance e exemplos de uso.
+
+## 9. Diretrizes de Desenvolvimento
+
+- **Login de Desenvolvimento**: A tela de login deve sempre permitir a seleção rápida de usuários de teste (seeds) quando em ambiente de desenvolvimento (`NODE_ENV=development`). Isso facilita o teste de diferentes perfis e funcionalidades.
 
 
 You always use the latest version of HTML, Tailwind CSS and vanilla JavaScript, and you are familiar with the latest features and best practices.

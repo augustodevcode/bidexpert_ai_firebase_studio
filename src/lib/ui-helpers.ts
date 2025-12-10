@@ -298,3 +298,57 @@ export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initial
         bidIncrement: lot.bidIncrementStep,
     };
 };
+
+/**
+ * Calcula o lance mínimo para um lote com base na regra de percentual da praça.
+ * 
+ * REGRA DE NEGÓCIO (RN-PRACA-001):
+ * - Se NÃO houver lances no lote: Lance Mínimo = Valor Inicial do Lote × (Percentual da Praça / 100)
+ * - Se HOUVER lances no lote: Lance Mínimo = Último Lance + Incremento do Lote
+ * 
+ * @param lot O objeto do lote
+ * @param activeStage A praça ativa do leilão
+ * @param currentBidCount Quantidade de lances no lote
+ * @param lastBidValue Valor do último lance (se houver)
+ * @returns O valor do lance mínimo calculado
+ */
+export const calculateMinimumBid = (
+    lot: Lot,
+    activeStage: AuctionStage | null,
+    currentBidCount: number = 0,
+    lastBidValue: number | null = null
+): number => {
+    if (!lot) return 0;
+    
+    const bidIncrement = lot.bidIncrementStep ?? 100;
+    
+    // Se houver lances, o lance mínimo é o último lance + incremento
+    if (currentBidCount > 0 && lastBidValue !== null) {
+        return lastBidValue + bidIncrement;
+    }
+    
+    // Se não houver lances, aplica o percentual da praça ao valor inicial do lote
+    const initialPrice = lot.initialPrice ?? 0;
+    const discountPercent = activeStage?.discountPercent ?? 100;
+    
+    return initialPrice * (discountPercent / 100);
+};
+
+/**
+ * Obtém o valor inicial efetivo do lote para a praça atual (aplicando desconto).
+ * 
+ * @param lot O objeto do lote
+ * @param activeStage A praça ativa do leilão
+ * @returns O valor inicial com desconto da praça aplicado
+ */
+export const getLotInitialPriceForStage = (
+    lot: Lot,
+    activeStage: AuctionStage | null
+): number => {
+    if (!lot) return 0;
+    
+    const initialPrice = lot.initialPrice ?? 0;
+    const discountPercent = activeStage?.discountPercent ?? 100;
+    
+    return initialPrice * (discountPercent / 100);
+};

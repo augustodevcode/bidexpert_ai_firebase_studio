@@ -8,23 +8,24 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, MapPin, Tag, Users, Clock, Star, TrendingUp, ListChecks, Gavel } from 'lucide-react';
+import { Eye, MapPin, Tag, Gavel } from 'lucide-react';
 import { isPast, differenceInDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline'; // Corrigido aqui
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import EntityEditMenu from '../entity-edit-menu';
+import ConsignorLogoBadge from '../consignor-logo-badge';
+import { cn } from '@/lib/utils';
 
 interface LotListItemProps {
   lot: Lot;
   auction?: Auction;
   platformSettings: PlatformSettings;
   onUpdate?: () => void;
+  density?: 'default' | 'compact';
 }
 
-export default function LotListItem({ lot, auction, platformSettings, onUpdate }: LotListItemProps) {
+export default function LotListItem({ lot, auction, platformSettings, onUpdate, density = 'default' }: LotListItemProps) {
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction?.auctionType);
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'N/A';
   const sellerName = auction?.seller?.name;
@@ -59,12 +60,25 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
   const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : `https://picsum.photos/seed/${lot.id}/600/400`;
 
   const IconComponent = auctionTypeDisplay?.icon;
+  const isCompact = density === 'compact';
+  const badgeBaseClass = cn('px-1.5 py-0.5 text-xs shadow-sm', isCompact && 'px-1 text-[11px]');
 
   return (
     <TooltipProvider>
-      <Card className="w-full shadow-sm hover:shadow-md transition-shadow duration-300 rounded-lg group overflow-hidden">
-        <div className="flex flex-col md:flex-row">
-          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
+      <Card
+        data-density={density}
+        className={cn(
+          'w-full shadow-sm hover:shadow-md transition-shadow duration-300 rounded-2xl group overflow-hidden border border-border/30 bg-card/90',
+          isCompact && 'shadow-none border-border/40 bg-surface/80 rounded-xl'
+        )}
+      >
+        <div className={cn('flex flex-col md:flex-row', isCompact && 'flex-row gap-3')}>
+          <div
+            className={cn(
+              'md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted',
+              isCompact && 'w-[120px] h-[110px] aspect-square rounded-xl overflow-hidden'
+            )}
+          >
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} className="block h-full w-full">
               <Image
                 src={mainImageUrl}
@@ -74,62 +88,62 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
-             {sellerLogoUrl && (
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
-                            <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction?.seller?.dataAiHintLogo || 'logo comitente pequeno'} />
-                                <AvatarFallback>{consignorInitial}</AvatarFallback>
-                            </Avatar>
-                        </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Comitente: {sellerName}</p>
-                    </TooltipContent>
-                </Tooltip>
-            )}
+            <ConsignorLogoBadge
+              href={sellerSlug ? `/sellers/${sellerSlug}` : undefined}
+              logoUrl={sellerLogoUrl}
+              fallbackInitial={consignorInitial}
+              name={sellerName}
+              dataAiHint={auction?.seller?.dataAiHintLogo || 'logo comitente pequeno'}
+              anchorClassName="absolute top-2 left-2"
+            />
           </div>
 
-          <div className="flex flex-col flex-grow p-4">
-            <div className="flex justify-between items-start mb-1.5">
+          <div className={cn('flex flex-col flex-grow p-4', isCompact && 'p-3 text-sm gap-1')}>
+            <div className={cn('flex justify-between items-start', isCompact && 'gap-2')}>
               <div className="flex-grow min-w-0">
-                 <div className="flex items-center gap-2 mb-1">
+                 <div className="flex flex-wrap items-center gap-2 mb-1">
                      <Badge 
-                        className={`text-xs px-1.5 py-0.5 shadow-sm
-                            ${lot.status === 'ABERTO_PARA_LANCES' ? 'bg-green-600 text-white' : ''}
-                            ${lot.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
-                            ${['ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO'].includes(lot.status) ? 'bg-gray-500 text-white' : ''}
-                        `}
+                        className={cn(
+                          badgeBaseClass,
+                          lot.status === 'ABERTO_PARA_LANCES' ? 'bg-green-600 text-white' : '',
+                          lot.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : '',
+                          ['ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO'].includes(lot.status) ? 'bg-gray-500 text-white' : ''
+                        )}
                         >
                         {getAuctionStatusText(lot.status)}
                     </Badge>
                      {mentalTriggers.map(trigger => (
-                        <Badge key={trigger} variant="secondary" className="text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                        <Badge key={trigger} variant="secondary" className={cn('text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300', isCompact && 'text-[11px]') }>
                            {trigger}
                         </Badge>
                      ))}
                 </div>
                 <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
-                  <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={lot.title}>
+                  <h3 className={cn('text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2', isCompact && 'text-sm line-clamp-2')}
+                    title={lot.title}
+                  >
                     Lote {lot.number} - {lot.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`Leilão: ${auction?.title}`}>
+                <p className={cn('text-xs text-muted-foreground mt-0.5 truncate', isCompact && 'text-[11px]')}
+                  title={`Leilão: ${auction?.title}`}
+                >
                   Leilão: {auction?.title}
                 </p>
               </div>
-              <EntityEditMenu 
-                 entityType="lot" 
-                 entityId={lot.id.toString()}
-                 publicId={lot.publicId!} 
-                 currentTitle={lot.title} 
-                 isFeatured={lot.isFeatured || false}
-                 onUpdate={onUpdate}
+              {!isCompact && (
+                <EntityEditMenu 
+                  entityType="lot" 
+                  entityId={lot.id.toString()}
+                  publicId={lot.publicId!} 
+                  currentTitle={lot.title} 
+                  isFeatured={lot.isFeatured || false}
+                  onUpdate={onUpdate}
                 />
+              )}
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
+            <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2', isCompact && 'grid-cols-1 gap-y-1 text-[11px]')}>
               {IconComponent && (
                 <div className="flex items-center">
                     <IconComponent className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
@@ -144,28 +158,36 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
                 <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
                 <span className="truncate">{displayLocation}</span>
               </div>
-               <div className="flex items-center">
-                <Gavel className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                <span className="truncate">{lot.bidsCount || 0} Lances</span>
-              </div>
+              {!isCompact && (
+                <div className="flex items-center">
+                  <Gavel className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                  <span className="truncate">{lot.bidsCount || 0} Lances</span>
+                </div>
+              )}
             </div>
 
-            {auction?.auctionStages && auction.auctionStages.length > 0 && (
+            {!isCompact && auction?.auctionStages && auction.auctionStages.length > 0 && (
                 <div className="my-2 p-3 bg-muted/30 rounded-md">
                     <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} variant="compact" />
                 </div>
             )}
             
-            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
+            <div className={cn('mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed', isCompact && 'border-dashed/50 pt-2')}
+            >
               <div className="flex-shrink-0">
-                <p className="text-xs text-muted-foreground">
+                <p className={cn('text-xs text-muted-foreground', isCompact && 'text-[11px]')}>
                   {lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}
                 </p>
-                <p className="text-2xl font-bold text-primary">
+                <p className={cn('text-2xl font-bold text-primary', isCompact && 'text-xl')}>
                   R$ {(lot.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
-              <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
+              <Button
+                asChild
+                size="sm"
+                variant={isCompact ? 'mapGhost' : 'default'}
+                className="w-full md:w-auto mt-2 md:mt-0"
+              >
                 <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
                     <Eye className="mr-2 h-4 w-4" /> Ver Lote
                 </Link>

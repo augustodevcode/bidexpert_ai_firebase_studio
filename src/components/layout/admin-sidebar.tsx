@@ -58,6 +58,8 @@ const managementNavGroups = [
             { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
             { title: 'Tribunais', href: '/admin/courts', icon: Scale },
             { title: 'Importação CNJ', href: '/admin/import/cnj', icon: FileUp },
+                { title: 'Cidades', href: '/admin/cities', icon: MapPin },
+                { title: 'Estados', href: '/admin/states', icon: Map },
         ]
     },
      { 

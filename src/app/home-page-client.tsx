@@ -7,7 +7,7 @@ import TopCategories from '@/components/top-categories';
 import FilterLinkCard from '@/app/filter-link-card';
 import PromoCard from '@/app/promo-card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Rocket, GaugeCircle, Target, TrendingUp, Clock3, Layers } from 'lucide-react';
+import { ArrowRight, Rocket, GaugeCircle, Target, TrendingUp, Clock3, Layers, Settings, Bell, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import type { Auction, Lot, LotCategory, SellerProfileInfo, PlatformSettings } from '@/types';
 import { getCategoryAssets } from '@/lib/ui-helpers';
@@ -18,6 +18,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { RadarOpportunityCard, RadarCalendar, RadarPreferencesModal } from '@/components/radar';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 
 type HomeVariant = 'classic' | 'beta';
 
@@ -191,25 +194,27 @@ function HomeExperienceBeta({
   allAuctions,
   allLots,
   categories,
-  sellers,
   closingSoonLots = []
 }: HomePageClientProps & { platformSettings: PlatformSettings }) {
+  const router = useRouter();
+  const { userProfileWithPermissions } = useAuth();
+  const isLoggedIn = !!userProfileWithPermissions;
+  
   const numberFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
   const betaAuctionStatuses: Array<Auction['status']> = ['ABERTO', 'ABERTO_PARA_LANCES', 'EM_BREVE'];
   const betaLotStatuses: Array<Lot['status']> = ['ABERTO_PARA_LANCES'];
   const activeAuctions = allAuctions.filter(auction => betaAuctionStatuses.includes(auction.status));
   const highDemandLots = (closingSoonLots.length > 0 ? closingSoonLots : allLots)
     .filter(lot => betaLotStatuses.includes(lot.status))
-    .slice(0, 6);
+    .slice(0, 9);
   const pipelineAuctions = allAuctions
     .filter(auction => auction.auctionDate)
     .sort((a, b) => new Date(a.auctionDate || '').getTime() - new Date(b.auctionDate || '').getTime())
-    .slice(0, 5);
+    .slice(0, 20);
   const strategicCategories = categories
     .slice()
     .sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0))
     .slice(0, 6);
-  const trustedSellers = sellers.filter(seller => seller.logoUrl).slice(0, 4);
 
   const potentialVolume = highDemandLots.reduce((acc, lot) => acc + (lot.price || 0), 0);
   const averageDiscount = (() => {
@@ -249,43 +254,59 @@ function HomeExperienceBeta({
 
   const heroSupportCopy = platformSettings?.siteTagline || 'Aprimore suas decisões de compra com sinais de demanda em tempo real.';
 
+  const handleRequestLogin = () => {
+    router.push('/auth/login');
+  };
+
   return (
     <div className="space-y-10">
-      <section className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-8 py-10 shadow-xl">
-        <div className="flex flex-col lg:flex-row gap-10 items-start">
+      {/* Hero Section com Stats */}
+      <section className="rounded-3xl glass-panel px-6 sm:px-8 py-8 sm:py-10">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
           <div className="flex-1 space-y-4">
-            <Badge variant="secondary" className="bg-white/10 text-white uppercase tracking-wide text-xs">Homepage Beta</Badge>
-            <h1 className="text-3xl md:text-4xl font-semibold font-headline">
+            <Badge variant="secondary" className="uppercase tracking-wide text-xs">
+              Radar de Leilões
+            </Badge>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold font-headline text-foreground">
               Inteligência de mercado para decidir rápido e negociar melhor.
             </h1>
-            <p className="text-white/80 text-lg max-w-2xl">{heroSupportCopy}</p>
-            <p className="text-white/70 text-base max-w-2xl">
+            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl">{heroSupportCopy}</p>
+            <p className="text-muted-foreground/80 text-sm sm:text-base max-w-2xl">
               Monitoramos seus leilões preferidos, alertas de estoque e a agenda da semana para que você foque apenas nos lances estratégicos.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button size="lg" variant="secondary" asChild>
                 <Link href="/search?type=lots&sort=trending">Explorar oportunidades</Link>
               </Button>
-              <Button size="lg" variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20" asChild>
-                <Link href="/dashboard/overview">Ver meu painel</Link>
-              </Button>
+              <RadarPreferencesModal 
+                categories={categories} 
+                isLoggedIn={isLoggedIn}
+                onRequestLogin={handleRequestLogin}
+                trigger={
+                  <Button size="lg" variant="outline">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurar Alertas
+                  </Button>
+                }
+              />
             </div>
-            <div className="flex flex-wrap gap-4 pt-4 text-sm text-white/80">
+            <div className="flex flex-wrap gap-4 pt-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><Clock3 className="h-4 w-4" /> Atualizado em tempo real</div>
               <div className="flex items-center gap-2"><Layers className="h-4 w-4" /> Curadoria inteligente de lotes</div>
+              <div className="flex items-center gap-2"><Bell className="h-4 w-4" /> Alertas personalizados</div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 w-full lg:w-[380px]">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full lg:w-[380px]">
             {quickStats.map(stat => (
-              <Card key={stat.label} className="bg-white/10 border-white/20 text-white">
-                <CardHeader className="pb-2">
-                  <CardDescription className="text-xs text-white/70 flex items-center gap-1">
+              <Card key={stat.label} className="bg-secondary/50 border-border">
+                <CardHeader className="pb-2 p-3 sm:p-4">
+                  <CardDescription className="text-xs flex items-center gap-1">
                     <stat.icon className="h-3.5 w-3.5" /> {stat.label}
                   </CardDescription>
-                  <CardTitle className="text-2xl">{stat.value}</CardTitle>
+                  <CardTitle className="text-xl sm:text-2xl text-foreground">{stat.value}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-white/70 text-sm">{stat.helper}</p>
+                <CardContent className="p-3 sm:p-4 pt-0">
+                  <p className="text-muted-foreground text-xs sm:text-sm">{stat.helper}</p>
                 </CardContent>
               </Card>
             ))}
@@ -293,153 +314,132 @@ function HomeExperienceBeta({
         </div>
       </section>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Radar de oportunidades</CardTitle>
-                <CardDescription>Lotes com maior competição e tempo crítico</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard/favorites">Gerenciar lista</Link>
-              </Button>
+      {/* CTA para usuários não logados */}
+      {!isLoggedIn && (
+        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
+            <div className="text-center sm:text-left">
+              <h3 className="font-semibold text-lg">Configure seus alertas personalizados</h3>
+              <p className="text-muted-foreground text-sm">Crie uma conta gratuita e receba notificações sobre lotes que combinam com seu perfil.</p>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {highDemandLots.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">Nenhum lote ativo encontrado para o radar.</div>
-            )}
+            <Button asChild>
+              <Link href="/auth/register">
+                <LogIn className="h-4 w-4 mr-2" />
+                Criar conta grátis
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Radar de Oportunidades com fotos */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold font-headline">Radar de Oportunidades</h2>
+            <p className="text-muted-foreground">Lotes com maior competição e tempo crítico</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <RadarPreferencesModal 
+              categories={categories} 
+              isLoggedIn={isLoggedIn}
+              onRequestLogin={handleRequestLogin}
+            />
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/search?type=lots&sort=ending">Ver todos</Link>
+            </Button>
+          </div>
+        </div>
+        
+        {highDemandLots.length === 0 ? (
+          <div className="text-center py-12 bg-muted/30 rounded-xl">
+            <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Nenhum lote ativo encontrado para o radar.</p>
+            <Button variant="outline" size="sm" className="mt-4" asChild>
+              <Link href="/search?type=lots">Explorar todos os lotes</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {highDemandLots.map(lot => {
-              const auction = allAuctions.find(auction => auction.id === lot.auctionId);
-              const deadlineLabel = lot.endDate
-                ? formatDistanceToNowStrict(new Date(lot.endDate), { locale: ptBR, addSuffix: false })
-                : 'Sem data';
-              const totalBids = (() => {
-                const value = (lot as Record<string, unknown>)?.['bidCount'] ?? (lot as Record<string, unknown>)?.['totalBids'];
-                return typeof value === 'number' ? value : 0;
-              })();
-              const demandScore = Math.min(100, ((lot.views || 0) / 50) * 10 + totalBids * 5);
-              const priceLabel = numberFormatter.format(lot.price || 0);
+              const auction = allAuctions.find(a => a.id === lot.auctionId);
               return (
-                <div key={lot.id} className="flex flex-col md:flex-row gap-4 border rounded-xl p-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{lot.categoryName || 'Lote'}</Badge>
-                      {auction?.auctionDate && (
-                        <span className="text-xs text-muted-foreground">Leilão {format(new Date(auction.auctionDate), 'dd/MM HH:mm')}</span>
-                      )}
-                    </div>
-                    <p className="font-semibold text-lg mt-1">{lot.title}</p>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {lot.description?.slice(0, 140) || 'Detalhes completos disponíveis na página do lote.'}
-                    </p>
-                  </div>
-                  <div className="md:w-56 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Lance atual</span>
-                      <span className="font-semibold">{priceLabel}</span>
-                    </div>
-                    <Progress value={demandScore} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Score de demanda</span>
-                      <span>{Math.round(demandScore)}%</span>
-                    </div>
-                    <Badge variant="secondary" className="w-full justify-center">
-                      Encerra em {deadlineLabel}
-                    </Badge>
-                  </div>
-                </div>
+                <RadarOpportunityCard 
+                  key={lot.id} 
+                  lot={lot} 
+                  auction={auction} 
+                  platformSettings={platformSettings} 
+                />
               );
             })}
-          </CardContent>
-        </Card>
+          </div>
+        )}
+      </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Agenda da semana</CardTitle>
-            <CardDescription>Principais leilões e ações programadas</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {pipelineAuctions.length === 0 && (
-              <div className="text-muted-foreground text-sm">Nenhum evento futuro registrado.</div>
-            )}
-            {pipelineAuctions.map(event => (
-              <div key={event.id} className="rounded-xl border p-3">
-                <p className="text-xs uppercase text-muted-foreground">
-                  {event.auctionDate ? format(new Date(event.auctionDate), "EEEE',' dd 'de' MMMM", { locale: ptBR }) : 'Sem data'}
-                </p>
-                <p className="font-medium text-base">{event.name}</p>
-                <p className="text-sm text-muted-foreground line-clamp-2">{event.description || 'Acompanhe para ajustar sua estratégia.'}</p>
-                <div className="flex items-center justify-between mt-2 text-sm">
-                  <span>{event.city || 'On-line'}</span>
-                  <Button size="sm" variant="ghost" asChild>
-                    <Link href={`/auctions/${event.id}`}>Detalhes</Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Calendário Agenda estilo Outlook */}
+      <RadarCalendar auctions={pipelineAuctions} />
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Segmentos em alta</CardTitle>
-            <CardDescription>Categorias com maior liquidez nos últimos dias</CardDescription>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-4">
-            {strategicCategories.map(category => (
-              <div key={category.id} className="rounded-2xl border p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold">{category.name}</p>
-                  <Badge variant="outline">{category.itemCount || 0} lotes</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">{category.description || 'Segmento com oportunidades em destaque.'}</p>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Tendência</span>
-                  <span>{category.trendLabel || 'Estável'}</span>
-                </div>
-                <Button size="sm" className="w-full" variant="outline" asChild>
-                  <Link href={`/category/${category.slug}`}>Explorar categoria</Link>
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      {/* Segmentos em Alta */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold font-headline">Segmentos em Alta</h2>
+            <p className="text-muted-foreground">Categorias com maior liquidez nos últimos dias</p>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/search?type=lots&tab=categories">Ver todas</Link>
+          </Button>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {strategicCategories.map(category => {
+            const assets = getCategoryAssets(category.name);
+            return (
+              <Card key={category.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
+                <Link href={`/category/${category.slug}`}>
+                  <div className="relative h-32 bg-gradient-to-br from-primary/20 to-primary/5">
+                    {category.coverImageUrl && (
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity"
+                        style={{ backgroundImage: `url(${category.coverImageUrl})` }}
+                      />
+                    )}
+                    <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                      <Badge variant="secondary" className="w-fit mb-2">
+                        {category.itemCount || 0} lotes disponíveis
+                      </Badge>
+                      <h3 className="font-semibold text-lg">{category.name}</h3>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {category.description || 'Segmento com oportunidades em destaque.'}
+                    </p>
+                    <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+                      <span>Tendência</span>
+                      <Badge variant="outline" className="text-xs">
+                        {category.trendLabel || 'Estável'}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Rede de confiança</CardTitle>
-            <CardDescription>Comitentes recomendados para lotes exclusivos</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {trustedSellers.length === 0 && (
-              <p className="text-muted-foreground text-sm">Nenhum comitente com selo premium disponível.</p>
-            )}
-            {trustedSellers.map(seller => (
-              <div key={seller.id} className="border rounded-xl p-3">
-                <p className="font-medium">{seller.name}</p>
-                <p className="text-xs text-muted-foreground">{seller.city ? `${seller.city} - ${seller.state}` : 'Localidade não informada'}</p>
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                  {seller.description || 'Especialista em ativos estratégicos.'}
-                </p>
-                <Button size="sm" variant="ghost" className="px-0" asChild>
-                  <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`}>Ver perfil</Link>
-                </Button>
-              </div>
-            ))}
-            <div className="rounded-2xl bg-muted/60 p-4 text-sm">
-              <p className="font-semibold">Quer vender com protagonismo?</p>
-              <p className="text-muted-foreground">Ative o modo consignor para acompanhar propostas de liquidez.</p>
-              <Button size="sm" className="mt-3 w-full" asChild>
-                <Link href="/sell-with-us">Publicar ativo</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* CTA Final */}
+      <Card className="bg-muted/40">
+        <CardContent className="py-8 text-center">
+          <h3 className="text-xl font-semibold mb-2">Quer vender com protagonismo?</h3>
+          <p className="text-muted-foreground mb-4 max-w-xl mx-auto">
+            Ative o modo consignor para acompanhar propostas de liquidez e conecte-se com milhares de compradores qualificados.
+          </p>
+          <Button size="lg" asChild>
+            <Link href="/sell-with-us">Publicar ativo</Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

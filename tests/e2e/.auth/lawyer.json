@@ -1,25 +1,4 @@
 {
-  "cookies": [
-    {
-      "name": "session",
-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIzIiwiZW1haWwiOiJhZHZvZ2Fkb0BiaWRleHBlcnQuY29tIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFEVk9HQURPIiwiQ09NUFJBRE9SIl0sInBlcm1pc3Npb25zIjpbImxhd3llcl9kYXNoYm9hcmQ6dmlldyIsImxhd3llcl9jYXNlczp2aWV3IiwibGF3eWVyX2RvY3VtZW50czptYW5hZ2UiLCJwbGFjZV9iaWRzIiwidmlld19hdWN0aW9ucyIsInZpZXdfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NjQxODUxNDQsImV4cCI6MTc2NDc4OTk0NH0.YZMjMbqY858-zok75m_qHgPU9qJuAPE2eJRS4s-EMeM",
-      "domain": "localhost",
-      "path": "/",
-      "expires": 1764789944.022483,
-      "httpOnly": true,
-      "secure": false,
-      "sameSite": "Lax"
-    }
-  ],
-  "origins": [
-    {
-      "origin": "http://localhost:9005",
-      "localStorage": [
-        {
-          "name": "bidexpert-widget-preferences",
-          "value": "[\"totalRevenue\",\"activeAuctions\",\"lotsSoldCount\",\"newUsers\"]"
-        }
-      ]
-    }
-  ]
+  "cookies": [],
+  "origins": []
 }

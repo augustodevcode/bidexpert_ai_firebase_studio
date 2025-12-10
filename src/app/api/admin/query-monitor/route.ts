@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await auth();
     
     // Check if user is admin
     if (!session?.user?.id) {

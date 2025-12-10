@@ -10,7 +10,7 @@
 
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAssets, deleteAsset } from './actions';
@@ -34,6 +34,8 @@ const sortOptions = [
 
 export default function AdminAssetsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const judicialProcessId = searchParams.get('judicialProcessId');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +48,7 @@ export default function AdminAssetsPage() {
     setError(null);
     try {
       const [fetchedAssets, settings] = await Promise.all([
-        getAssets(),
+        getAssets(judicialProcessId ? { judicialProcessId } : undefined),
         getPlatformSettings(),
       ]);
       setAssets(fetchedAssets);
@@ -59,7 +61,7 @@ export default function AdminAssetsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, judicialProcessId]);
   
   useEffect(() => {
     fetchPageData();
@@ -132,7 +134,7 @@ export default function AdminAssetsPage() {
             <div>
               <CardTitle className="text-2xl font-bold font-headline flex items-center">
                 <Package className="h-6 w-6 mr-2 text-primary" />
-                Gerenciar Ativos (Bens)
+                Gerenciar Ativos (Bens){judicialProcessId ? ` - Processo: ${judicialProcessId}` : ''}
               </CardTitle>
               <CardDescription>
                 Cadastre e gerencie os ativos individuais que poderão ser posteriormente loteados.
@@ -160,6 +162,7 @@ export default function AdminAssetsPage() {
             searchColumnId="title"
             searchPlaceholder="Buscar por título ou ID do processo..."
             onDeleteSelected={handleDeleteSelected as any}
+            dataTestId="assets-table"
           />
       </div>
     </>

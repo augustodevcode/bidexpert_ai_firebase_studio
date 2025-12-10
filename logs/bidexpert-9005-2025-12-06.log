@@ -1,0 +1,17 @@
+
+================================================================================
+[2025-12-06T20:34:43.744Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> npx prisma generate && next dev --port 9005 --hostname 0.0.0.0
+
+[STDERR] Environment variables loaded from .env
+[STDOUT] Prisma schema loaded from prisma\schema.prisma
+[STDERR] Error: 
+EPERM: operation not permitted, rename 'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\.prisma\client\query_engine-windows.dll.node.tmp24452' -> 'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\.prisma\client\query_engine-windows.dll.node'
+
+
+
+[2025-12-06T20:34:48.413Z] Processo encerrado com código 1

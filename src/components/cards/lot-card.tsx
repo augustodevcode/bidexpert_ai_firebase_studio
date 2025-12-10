@@ -23,6 +23,7 @@ import { Skeleton } from '../ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import LotCountdown from '../lot-countdown';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
+import ConsignorLogoBadge from '../consignor-logo-badge';
 
 
 interface LotCardProps {
@@ -130,6 +131,10 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
   const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
+  const sellerName = auction?.seller?.name;
+  const sellerSlug = auction?.seller?.slug;
+  const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction?.seller?.logoUrl : undefined;
+  const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';
   
   const discountPercentage = React.useMemo(() => {
     if (activeLotPrices?.initialBid && lot.evaluationValue && activeLotPrices.initialBid < lot.evaluationValue) {
@@ -191,6 +196,14 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 </Badge>
             ))}
           </div>
+          <ConsignorLogoBadge
+            href={sellerSlug ? `/sellers/${sellerSlug}` : undefined}
+            logoUrl={sellerLogoUrl}
+            fallbackInitial={consignorInitial}
+            name={sellerName}
+            dataAiHint={auction?.seller?.dataAiHintLogo || 'logo comitente pequeno'}
+            anchorClassName="absolute bottom-2 left-2"
+          />
           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center items-center gap-2 pointer-events-none">
               <TooltipProvider>
                  <Tooltip>
@@ -215,28 +228,6 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           </div>
         </div>
         <CardContent className="p-3 flex-grow space-y-2">
-          {/* Praças Header */}
-          {auction?.auctionStages && auction.auctionStages.length > 0 && (
-            <div className="flex items-center gap-2 text-xs font-medium text-orange-600 mb-1">
-              <Clock className="h-3.5 w-3.5" />
-              <span>
-                {auction.auctionStages.length} praça{auction.auctionStages.length !== 1 ? 's' : ''}
-                {auction.auctionStages[0]?.startDate && (
-                  <>
-                    {' | '}
-                    {new Date(auction.auctionStages[0].startDate).toLocaleDateString('pt-BR', { 
-                      day: '2-digit', 
-                      month: '2-digit' 
-                    })} - {new Date(auction.auctionStages[0].startDate).toLocaleTimeString('pt-BR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </>
-                )}
-              </span>
-            </div>
-          )}
-
           <Link href={lotDetailUrl}>
             <h3 data-ai-id="lot-card-title" className="text-base font-bold text-zinc-900 dark:text-white hover:text-primary transition-colors leading-tight line-clamp-2">
               Lote {lotNumber}

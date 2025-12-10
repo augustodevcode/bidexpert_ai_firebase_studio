@@ -26,7 +26,7 @@ const ThemeSettingsSchema = z.object({
 
 // Schema para MapSettings
 const MapSettingsSchema = z.object({
-  defaultProvider: z.enum(['openstreetmap', 'google', 'staticImage']).default('openstreetmap'),
+  defaultProvider: z.enum(['openstreetmap', 'openmap', 'google', 'staticImage']).default('openstreetmap'),
   googleMapsApiKey: z.string().optional().nullable(),
 });
 

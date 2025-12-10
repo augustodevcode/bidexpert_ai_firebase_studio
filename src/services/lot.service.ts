@@ -1,3 +1,6 @@
+/**
+ * @fileoverview Domain service orchestrating tenant-safe Lot operations and projections.
+ */
 import { PrismaClient, Lot as PmLot, Auction as PmAuction, Bid, LotStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { generatePublicId } from '@/lib/public-id-generator';
@@ -36,6 +39,23 @@ export class LotService {
     this.reviewService = new ReviewService();
     this.sellerService = new SellerService();
     this.auctioneerService = new AuctioneerService();
+  }
+
+  private async resolveLotInternalId(idOrPublicId: string): Promise<bigint> {
+    if (/^\d+$/.test(idOrPublicId)) {
+      return BigInt(idOrPublicId);
+    }
+
+    const lotRecord = await this.prisma.lot.findUnique({
+      where: { publicId: idOrPublicId },
+      select: { id: true }
+    });
+
+    if (!lotRecord) {
+      throw new Error(`Lot not found for identifier ${idOrPublicId}`);
+    }
+
+    return lotRecord.id;
   }
 
   private mapLotWithDetails(lot: any): Lot {
@@ -82,6 +102,12 @@ export class LotService {
           id: a.asset.id.toString(),
           tenantId: a.asset.tenantId.toString()
       })),
+      documents: lot.documents?.map((d: any) => ({
+          ...d,
+          id: d.id.toString(),
+          lotId: d.lotId.toString(),
+          tenantId: d.tenantId.toString()
+      })),
       // UI Fields mapping
       totalArea: lot.assets?.reduce((acc: number, curr: any) => acc + (Number(curr.asset.totalArea) || 0), 0) || null,
       type: lot.type || (lot.assets?.[0]?.asset?.categoryId ? 'IMOVEL' : 'OUTRO'),
@@ -112,6 +138,9 @@ export class LotService {
                     include: {
                         asset: true
                     }
+                },
+                documents: {
+                    orderBy: { displayOrder: 'asc' }
                 }
             }
         });
@@ -129,10 +158,11 @@ export class LotService {
       }
   }
 
-  async getLots(auctionId?: string, tenantId?: string, limit?: number, isPublicCall = false): Promise<Lot[]> {
+  async getLots(filter?: { auctionId?: string; judicialProcessId?: string }, tenantId?: string, limit?: number, isPublicCall = false): Promise<Lot[]> {
     try {
         const where: any = {};
-        if (auctionId) where.auctionId = BigInt(auctionId);
+        if (filter?.auctionId) where.auctionId = BigInt(filter.auctionId);
+        if (filter?.judicialProcessId) where.judicialProcesses = { some: { id: BigInt(filter.judicialProcessId) } };
         if (tenantId) where.tenantId = BigInt(tenantId);
         
         if (isPublicCall) {
@@ -155,6 +185,9 @@ export class LotService {
                     include: {
                         asset: true
                     }
+                },
+                documents: {
+                    orderBy: { displayOrder: 'asc' }
                 }
             },
             take: limit,
@@ -188,6 +221,24 @@ export class LotService {
     }
     
     return lot; 
+  }
+
+  async getLotDocuments(lotId: string): Promise<any[]> {
+      try {
+          const documents = await this.prisma.lotDocument.findMany({
+              where: { lotId: BigInt(lotId) },
+              orderBy: { displayOrder: 'asc' }
+          });
+          return documents.map(d => ({
+              ...d,
+              id: d.id.toString(),
+              lotId: d.lotId.toString(),
+              tenantId: d.tenantId.toString()
+          }));
+      } catch (error) {
+          console.error('Error fetching lot documents:', error);
+          return [];
+      }
   }
 
   async getUserMaxBid(lotId: string, userId: string): Promise<UserLotMaxBid | null> {
@@ -253,9 +304,12 @@ export class LotService {
     }
   }
 
-  async placeBid(lotId: string, userId: string, amount: number, bidderDisplay?: string): Promise<{ success: boolean; message: string; currentBid?: number }> {
+  async placeBid(lotIdOrPublicId: string, userId: string, amount: number, bidderDisplay?: string): Promise<{ success: boolean; message: string; currentBid?: number }> {
     try {
-      const lot = await this.prisma.lot.findUnique({ where: { id: BigInt(lotId) } });
+      // Resolve publicId para o ID interno se necessário
+      const internalLotId = await this.resolveLotInternalId(lotIdOrPublicId);
+      
+      const lot = await this.prisma.lot.findUnique({ where: { id: internalLotId } });
       if (!lot) {
         return { success: false, message: 'Lote não encontrado.' };
       }
@@ -272,19 +326,21 @@ export class LotService {
       }
 
       const auction = await this.prisma.auction.findUnique({ where: { id: lot.auctionId } });
-      if (!auction || auction.status !== 'ABERTO_PARA_LANCES') {
+      // Permite lances se o leilão está ABERTO ou ABERTO_PARA_LANCES
+      const auctionAllowsBids = auction && (auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO');
+      if (!auctionAllowsBids) {
         return { success: false, message: 'Este leilão não está mais ativo.' };
       }
 
       await this.prisma.$transaction(async (tx) => {
         const bid = await tx.bid.create({
           data: {
-            lot: { connect: { id: BigInt(lotId) } },
-            auction: { connect: { id: BigInt(lot.auctionId) } },
+            lot: { connect: { id: internalLotId } },
+            auction: { connect: { id: lot.auctionId } },
             bidder: { connect: { id: BigInt(userId) } },
             amount: new Prisma.Decimal(amount),
             bidderDisplay: bidderDisplay || null,
-            tenant: { connect: { id: BigInt(lot.tenantId) } }
+            tenant: { connect: { id: lot.tenantId } }
           },
           select: {
             id: true,
@@ -295,7 +351,7 @@ export class LotService {
         });
 
         await tx.lot.update({
-          where: { id: BigInt(lotId) },
+          where: { id: internalLotId },
           data: {
             price: new Prisma.Decimal(amount),
             bidsCount: { increment: 1 },
@@ -408,14 +464,19 @@ export class LotService {
 
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }> {
     try {
-      const lotId = BigInt(id);
+      const lotId = await this.resolveLotInternalId(id);
       
       const { 
         assetIds = [],
+        auctionId,
         ...cleanData 
       } = data as any;
       
       const updateRelations: Record<string, any> = {};
+      
+      if (auctionId) {
+        updateRelations.auction = { connect: { id: BigInt(auctionId) } };
+      }
       
       if (cleanData.categoryId) {
         updateRelations.category = { connect: { id: BigInt(cleanData.categoryId) } };

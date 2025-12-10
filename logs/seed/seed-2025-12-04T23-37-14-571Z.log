@@ -1,0 +1,2 @@
+{"level":"INFO","operation":"Iniciando validação do seed","timestamp":"2025-12-04T23:37:16.714Z"}
+{"level":"INFO","operation":"Validação do seed concluída com sucesso","details":{"users":41,"auctions":32,"lots":56,"sellers":12,"auctioneers":10,"assets":29,"categories":5,"cities":2,"states":2},"timestamp":"2025-12-04T23:37:17.326Z"}

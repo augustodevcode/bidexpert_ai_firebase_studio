@@ -9,16 +9,12 @@
  */
 import type { Lot, Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import LotDetailClientContent from './lot-detail-client';
-import LotDetailPageV2 from './v2/page'; // Importando a V2
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
+import { getAuction } from '@/app/admin/auctions/actions';
 import { getLot, getLots, getAssetsByIdsAction } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { notFound } from 'next/navigation';
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
@@ -54,28 +50,14 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
-    if (auctionFromDb) console.log('Auction ID:', auctionFromDb.id, 'Tenant:', auctionFromDb.tenantId);
-    if (lotFromDb) console.log('Lot ID:', lotFromDb.id, 'AuctionId:', lotFromDb.auctionId, 'Tenant:', lotFromDb.tenantId);
     // @ts-ignore
     return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null };
   }
 
   // Verify that the lot actually belongs to the auction requested in the URL.
   if (lotFromDb.auctionId !== auctionFromDb.id) {
-    console.warn(`[getLotPageData] Mismatch: Lot '${lotFromDb.id}' belongs to auction '${lotFromDb.auctionId}', not '${auctionFromDb.id}'.`);
-    console.log('Debug Info:', {
-        urlAuctionId: currentAuctionId,
-        urlLotId: currentLotId,
-        auctionDbId: auctionFromDb.id,
-        auctionDbPublicId: auctionFromDb.publicId,
-        lotDbId: lotFromDb.id,
-        lotDbAuctionId: lotFromDb.auctionId
-    });
-    
     // TENTATIVA DE RECUPERAÇÃO: Se o ID do leilão no banco bater com o ID da URL (caso seja ID interno), permitir.
-    if (lotFromDb.auctionId === currentAuctionId) {
-         console.log('[getLotPageData] Recuperação: O auctionId do lote bate com o ID da URL. Permitindo acesso.');
-    } else {
+    if (lotFromDb.auctionId !== currentAuctionId) {
          // @ts-ignore
          return { lot: null, auction: null, platformSettings, allCategories, allSellers, auctioneer: null };
     }
@@ -107,8 +89,8 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   const auctioneer = allAuctioneers.find(a => a.id === auctionFromDb.auctioneerId) || null;
   
   return { 
-    lot: lotFromDb, 
-    auction: auctionFromDb, 
+    lot: JSON.parse(JSON.stringify(lotFromDb, (key, value) => typeof value === 'bigint' ? value.toString() : value)), 
+    auction: JSON.parse(JSON.stringify(auctionFromDb, (key, value) => typeof value === 'bigint' ? value.toString() : value)), 
     platformSettings: platformSettings!, 
     sellerName, 
     lotIndex, 
@@ -121,33 +103,40 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   };
 }
 
-export default async function LotDetailPage({ params, searchParams }: { params: { auctionId: string, lotId: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
-  const version = searchParams?.v === '1' ? 'v1' : 'v2'; // Default to v2
+export default async function LotDetailPage({ params }: { params: { auctionId: string, lotId: string } }) {
+  const { 
+    lot, 
+    auction, 
+    platformSettings, 
+    sellerName, 
+    lotIndex, 
+    previousLotId, 
+    nextLotId, 
+    totalLotsInAuction,
+    allCategories,
+    allSellers,
+    auctioneer
+  } = await getLotPageData(params.auctionId, params.lotId);
 
+  if (!lot || !auction) {
+    notFound();
+  }
 
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8">
-        <div className="mb-4 flex justify-end">
-            <Tabs defaultValue={version}>
-                <TabsList>
-                    <TabsTrigger value="v1" asChild>
-                        <Link href={`/auctions/${params.auctionId}/lots/${params.lotId}?v=1`}>V1</Link>
-                    </TabsTrigger>
-                    <TabsTrigger value="v2" asChild>
-                        <Link href={`/auctions/${params.auctionId}/lots/${params.lotId}`}>V2</Link>
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
-        </div>
-        {version === 'v1' ? (
-             <LotDetailClientContent
-                lot={lot}
-                auction={auction}
-                {...rest}
-            />
-        ) : (
-            <LotDetailPageV2 params={{ lotId: params.lotId, auctionId: params.auctionId }} />
-        )}
+         <LotDetailClientContent
+            lot={lot}
+            auction={auction}
+            platformSettings={platformSettings}
+            sellerName={sellerName}
+            lotIndex={lotIndex}
+            previousLotId={previousLotId}
+            nextLotId={nextLotId}
+            totalLotsInAuction={totalLotsInAuction}
+            allCategories={allCategories}
+            allSellers={allSellers}
+            auctioneer={auctioneer}
+        />
     </div>
   );
 }

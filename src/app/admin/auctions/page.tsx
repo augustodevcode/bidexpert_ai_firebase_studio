@@ -177,6 +177,7 @@ export default function AdminAuctionsPage() {
           searchColumnId='title'
           searchPlaceholder='Buscar por título...'
           onDeleteSelected={handleDeleteSelected as any}
+          dataTestId="auctions-table"
         />
       </div>
     </>

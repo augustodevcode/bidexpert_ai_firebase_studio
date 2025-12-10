@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { BidExpertCard } from '@/components/BidExpertCard';
+import BidExpertCard from '@/components/BidExpertCard';
 
 interface ChangeHistoryEntry {
   id: string;
