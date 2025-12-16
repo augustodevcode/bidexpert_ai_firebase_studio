@@ -56,6 +56,10 @@ export class AssetService {
             judicialProcessNumber: asset.judicialProcess?.processNumber,
             sellerName: asset.seller?.name,
             lotInfo: lotInfo,
+            occupationStatus: asset.occupationStatus || null,
+            occupationNotes: asset.occupationNotes,
+            occupationLastVerified: asset.occupationLastVerified,
+            occupationUpdatedBy: asset.occupationUpdatedBy ? asset.occupationUpdatedBy.toString() : null,
             lots: asset.lots ? asset.lots.map((l: any) => ({
                 ...l,
                 lot: l.lot ? {
@@ -96,8 +100,8 @@ export class AssetService {
    * @param {string} id - O ID do ativo.
    * @returns {Promise<Asset | null>} O ativo encontrado ou null.
    */
-  async getAssetById(tenantId: string, id: string): Promise<Asset | null> {
-    const asset = await this.repository.findById(tenantId, id);
+  async getAssetById(_tenantId: string, id: string): Promise<Asset | null> {
+    const asset = await this.repository.findById(id);
     if (!asset) return null;
     return this.mapAssetsWithDetails([asset])[0];
   }
@@ -153,6 +157,7 @@ export class AssetService {
       const publicId = await generatePublicId(tenantId, 'asset');
 
       const dataToCreate: Prisma.AssetCreateInput = {
+        title: assetData.title,
         ...normalizedAssetData,
         publicId,
         tenant: { connect: { id: BigInt(tenantId) } },
@@ -176,22 +181,24 @@ export class AssetService {
       }
       
       // Transactional creation
-      const newAsset = await this.prisma.$transaction(async (tx) => {
+        const newAsset = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
           const asset = await tx.asset.create({ data: dataToCreate });
 
           // Create AssetMedia records if mediaItemIds are present
-          if (mediaItemIds && Array.isArray(mediaItemIds) && mediaItemIds.length > 0) {
-              await Promise.all(mediaItemIds.map((mediaId, index) => {
+              if (mediaItemIds && Array.isArray(mediaItemIds) && mediaItemIds.length > 0) {
+                const safeMediaIds = mediaItemIds.filter((mediaId) => mediaId !== null && mediaId !== undefined && mediaId !== '');
+                await Promise.all((safeMediaIds as Array<string | number | bigint>).map((mediaId, index) => {
                   return tx.assetMedia.create({
-                      data: {
-                          assetId: asset.id,
-                          mediaItemId: BigInt(mediaId),
-                          displayOrder: index,
-                          isPrimary: index === 0
-                      }
+                    data: {
+                      assetId: asset.id,
+                      tenantId: BigInt(tenantId),
+                      mediaItemId: BigInt(mediaId),
+                      displayOrder: index,
+                      isPrimary: index === 0
+                    }
                   });
-              }));
-          }
+                }));
+              }
           return asset;
       });
 
@@ -256,7 +263,7 @@ export class AssetService {
           if(state) dataToUpdate.locationState = state.uf;
       }
 
-      await this.repository.update(BigInt(id), dataToUpdate);
+      await this.repository.update(id, dataToUpdate);
       return { success: true, message: 'Ativo atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AssetService.updateAsset for id ${id}:`, error);
@@ -274,7 +281,7 @@ export class AssetService {
       // Disconnect asset from any lots it is linked to.
       await this.prisma.assetsOnLots.deleteMany({ where: { assetId: BigInt(id) } });
 
-      await this.repository.delete(BigInt(id));
+      await this.repository.delete(id);
       return { success: true, message: 'Ativo excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AssetService.deleteAsset for id ${id}:`, error);

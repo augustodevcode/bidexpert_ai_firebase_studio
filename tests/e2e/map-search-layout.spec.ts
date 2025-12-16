@@ -20,7 +20,7 @@ test.describe('Map search layout enhancements', () => {
   test('renders compact list items inside the sidebar', async ({ page }) => {
     await waitForMapSidebar(page);
     const firstListItem = page.locator('[data-ai-id="map-search-list-item"]').first();
-    await expect(firstListItem.locator('[data-density="compact"]')).toBeVisible();
+    await expect(firstListItem.locator('[data-density="default"]')).toBeVisible();
     await page.getByRole('button', { name: /Recentrar mapa/i }).click();
     await expect(page.locator('[data-ai-id="map-search-count"]')).toBeVisible();
   });

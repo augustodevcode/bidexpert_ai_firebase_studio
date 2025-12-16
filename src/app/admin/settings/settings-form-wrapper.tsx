@@ -31,10 +31,38 @@ export default function SettingsFormWrapper({ title, description, children }: Se
     resolver: zodResolver(platformSettingsFormSchema),
     mode: 'onChange',
     defaultValues: {
-      blockchainEnabled: false,
-      lawyerMonetizationModel: 'SUBSCRIPTION',
-      softCloseEnabled: false,
-      softCloseMinutes: 5,
+      siteTitle: 'BidExpert', // Valor padrão obrigatório
+      siteTagline: '',
+      // RealtimeSettings agrupado em objeto
+      realtimeSettings: {
+        blockchainEnabled: false,
+        blockchainNetwork: 'NONE',
+        softCloseEnabled: false,
+        softCloseMinutes: 5,
+        lawyerPortalEnabled: true,
+        lawyerMonetizationModel: 'SUBSCRIPTION',
+        lawyerSubscriptionPrice: null,
+        lawyerPerUsePrice: null,
+        lawyerRevenueSharePercent: null,
+      },
+      mentalTriggerSettings: {
+        showDiscountBadge: true,
+        showPopularityBadge: true,
+        popularityViewThreshold: 500,
+        showHotBidBadge: true,
+        hotBidThreshold: 10,
+        showExclusiveBadge: true,
+      },
+      sectionBadgeVisibility: {
+        searchGrid: {
+          showStatusBadge: true,
+          showDiscountBadge: true,
+          showUrgencyTimer: true,
+          showPopularityBadge: true,
+          showHotBidBadge: true,
+          showExclusiveBadge: true,
+        },
+      },
     },
   });
 
@@ -46,14 +74,41 @@ export default function SettingsFormWrapper({ title, description, children }: Se
       if (fetchedSettings) {
         form.reset({
           ...fetchedSettings,
-          blockchainEnabled: fetchedSettings.blockchainEnabled ?? false,
-          lawyerMonetizationModel: fetchedSettings.lawyerMonetizationModel ?? 'SUBSCRIPTION',
-          softCloseEnabled: fetchedSettings.softCloseEnabled ?? false,
-          softCloseMinutes: fetchedSettings.softCloseMinutes ?? 5,
+          siteTitle: fetchedSettings.siteTitle || 'BidExpert',
+          // RealtimeSettings como objeto aninhado
+          realtimeSettings: fetchedSettings.realtimeSettings || {
+            blockchainEnabled: false,
+            blockchainNetwork: 'NONE',
+            softCloseEnabled: false,
+            softCloseMinutes: 5,
+            lawyerPortalEnabled: true,
+            lawyerMonetizationModel: 'SUBSCRIPTION',
+            lawyerSubscriptionPrice: null,
+            lawyerPerUsePrice: null,
+            lawyerRevenueSharePercent: null,
+          },
           themes: fetchedSettings.themes || undefined,
           mapSettings: fetchedSettings.mapSettings || undefined,
           biddingSettings: fetchedSettings.biddingSettings || undefined,
           platformPublicIdMasks: fetchedSettings.platformPublicIdMasks || undefined,
+          mentalTriggerSettings: fetchedSettings.mentalTriggerSettings || {
+            showDiscountBadge: true,
+            showPopularityBadge: true,
+            popularityViewThreshold: 500,
+            showHotBidBadge: true,
+            hotBidThreshold: 10,
+            showExclusiveBadge: true,
+          },
+          sectionBadgeVisibility: fetchedSettings.sectionBadgeVisibility || {
+            searchGrid: {
+              showStatusBadge: true,
+              showDiscountBadge: true,
+              showUrgencyTimer: true,
+              showPopularityBadge: true,
+              showHotBidBadge: true,
+              showExclusiveBadge: true,
+            },
+          },
         });
       }
       setIsLoading(false);
@@ -63,13 +118,38 @@ export default function SettingsFormWrapper({ title, description, children }: Se
 
   const onSubmit = async (data: PlatformSettingsFormValues) => {
     setIsSaving(true);
-    const result = await updatePlatformSettings(data);
-    if (result.success) {
-      toast({ title: 'Sucesso', description: 'Configurações salvas.' });
-    } else {
-      toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+    try {
+      const result = await updatePlatformSettings(data);
+      if (result.success) {
+        toast({ title: 'Sucesso', description: 'Configurações salvas com sucesso!' });
+        // Resets form dirty state após salvar
+        form.reset(data);
+      } else {
+        toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+      }
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message || 'Falha ao salvar configurações.', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const isValid = await form.trigger();
+    if (!isValid) {
+      const errors = form.formState.errors;
+      const errorMessages = Object.entries(errors)
+        .map(([key, value]) => `${key}: ${(value as any)?.message || 'Campo inválido'}`)
+        .join(', ');
+      toast({ 
+        title: 'Erro de validação', 
+        description: errorMessages || 'Por favor, corrija os campos inválidos.', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+    form.handleSubmit(onSubmit)();
   };
 
   if (isLoading) {
@@ -92,7 +172,7 @@ export default function SettingsFormWrapper({ title, description, children }: Se
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={handleFormSubmit}>
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -104,11 +184,14 @@ export default function SettingsFormWrapper({ title, description, children }: Se
           <CardContent className="space-y-8">
             {children(form)}
           </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
+          <CardFooter className="flex items-center justify-between">
+            <Button type="submit" disabled={isSaving}>
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Save className="mr-2 h-4 w-4" /> Salvar Alterações
             </Button>
+            {form.formState.isDirty && (
+              <span className="text-sm text-muted-foreground">Há alterações não salvas</span>
+            )}
           </CardFooter>
         </Card>
       </form>

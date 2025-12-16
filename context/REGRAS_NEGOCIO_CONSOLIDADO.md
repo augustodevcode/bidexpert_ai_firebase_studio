@@ -1,8 +1,8 @@
 # REGRAS DE NEGÓCIO E ESPECIFICAÇÕES - BIDEXPERT
 ## Documento Consolidado e Oficial
 
-**Data:** 16 de Dezembro de 2025  
-**Status:** ✅ Atualizado com implementações de Dezembro/2025  
+**Data:** 13 de Dezembro de 2025  
+**Status:** ✅ Atualizado com implementações de Dezembro/2025 (incluindo ParticipantCard)  
 **Próximos passos:** caso haja novas implementações, atualize esse documento com as orientações do usuário
 
 ---
@@ -85,6 +85,24 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ OBRIGATÓRIO usar `AddressGroup.tsx` em formulários com endereço  
 ✅ Campos estruturados: street, number, cityId, stateId, latitude, longitude  
 ✅ Busca CEP e mapa integrados
+
+### RN-016: Mapa e CEP no Leilão V2 (admin)
+✅ A ação `consultaCepAction` é a rotina **única** de busca e preenchimento de endereço + geocodificação; ela roda:
+- ao clicar no botão "Buscar CEP";
+- automaticamente na abertura do leilão em edição quando há CEP válido e ainda não há latitude/longitude gravadas (evita mapa sem pin).
+✅ Coordenadas existentes (inclusive BigInt/Decimal) são normalizadas para número e exibidas imediatamente com marcador e `flyTo` no mapa.
+✅ Após CEP ou clique no mapa: setar `latitude`/`longitude` no form (`react-hook-form`) com `shouldDirty` conforme contexto (manual = true; carga inicial = false).
+✅ O mapa (Leaflet) deve sempre invalidar tamanho e aplicar zoom 16 quando houver coordenadas; fallback centro Brasil e zoom 4.
+
+**Cenário BDD - Exibir pin ao abrir leilão V2**
+- **Dado** que existe um leilão V2 com `zipCode` preenchido e sem coordenadas
+- **Quando** o usuário abre a página `/admin/auctions-v2/:id` para editar
+- **Então** a action `consultaCepAction` é executada automaticamente, o endereço é preenchido, o mapa é geocodificado, e o marcador aparece na posição com zoom 16
+
+**Cenário BDD - Coordenadas já salvas**
+- **Dado** que o leilão possui `latitude` e `longitude` salvos
+- **Quando** o usuário abre a página de edição
+- **Então** o mapa mostra o marcador imediatamente e aplica `flyTo` no ponto, sem depender da busca de CEP
 
 ### RN-005: Herança de Mídia
 ✅ Lote pode herdar galeria de `Asset` vinculado  
@@ -427,7 +445,110 @@ Deve ser configurada em `src/app/globals.css` como variável `--primary`
 - Ícones específicos por categoria
 - Layout responsivo (2-8 colunas)
 
+### 9. ParticipantCard
+**Localização:** `src/components/admin/participant-card.tsx`
+
+**Propósito:** Exibição visual rica dos participantes selecionados (Leiloeiro, Comitente, Processo Judicial) no formulário de cadastro de leilões.
+
+**Props:**
+```typescript
+interface ParticipantCardProps {
+  type: 'auctioneer' | 'seller' | 'judicialProcess';
+  data: ParticipantCardData | null;
+  onRemove?: () => void;
+  className?: string;
+}
+
+interface ParticipantCardData {
+  id: string;
+  name: string;
+  logoUrl?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+  registrationNumber?: string | null;
+  // Campos específicos para processo judicial
+  processNumber?: string;
+  courtName?: string;
+  branchName?: string;
+  isElectronic?: boolean;
+}
+```
+
+**Características:**
+- ✅ **Avatar/Logo:** Circular com fallback para iniciais
+- ✅ **Badge colorido:** Identifica tipo do participante
+  - Leiloeiro: Azul/Primary
+  - Comitente: Verde
+  - Processo Judicial: Âmbar
+- ✅ **Informações exibidas:** Nome, email, telefone, localização
+- ✅ **Botão de remoção:** X no canto superior direito
+- ✅ **Layout responsivo:** Grid de 3 colunas no formulário
+- ✅ **Processo Judicial:** Ícone de documento, tribunal, vara, badge eletrônico/físico
+
+**Uso no auction-form.tsx:**
+```tsx
+{auctioneerCardData && (
+  <ParticipantCard
+    type="auctioneer"
+    data={auctioneerCardData}
+    onRemove={() => form.setValue('auctioneerId', '')}
+  />
+)}
+```
+
+**BDD - Especificação de Comportamento:**
+```gherkin
+Feature: Cards de Participantes no Cadastro de Leilões
+  Como um administrador do sistema
+  Eu quero ver cards visuais dos participantes selecionados
+  Para ter uma experiência de cadastro mais rica e informativa
+
+  Scenario: Exibir card de leiloeiro selecionado
+    Given que estou na seção "Participantes" do formulário de leilão
+    When seleciono um leiloeiro no EntitySelector
+    Then um card deve aparecer abaixo do seletor
+    And o card deve exibir o nome do leiloeiro
+    And o card deve exibir foto/avatar (ou iniciais se não houver foto)
+    And o card deve ter um badge azul com texto "Leiloeiro"
+    And o card deve mostrar email, telefone e localização (se disponíveis)
+    And o card deve ter um botão X para remover a seleção
+
+  Scenario: Exibir card de comitente selecionado
+    Given que estou na seção "Participantes" do formulário de leilão
+    When seleciono um comitente no EntitySelector
+    Then um card deve aparecer com badge verde "Comitente"
+    And o card deve exibir os dados do comitente
+
+  Scenario: Exibir card de processo judicial selecionado
+    Given que estou na seção "Participantes" do formulário de leilão
+    When seleciono um processo judicial no EntitySelector
+    Then um card deve aparecer com badge âmbar "Processo Judicial"
+    And o card deve exibir o número do processo
+    And o card deve exibir o nome do tribunal e vara
+    And o card deve ter um badge indicando se é processo eletrônico ou físico
+
+  Scenario: Remover participante pelo card
+    Given que um leiloeiro está selecionado e seu card está visível
+    When clico no botão X do card do leiloeiro
+    Then o campo auctioneerId deve ser limpo
+    And o card do leiloeiro deve desaparecer
+
+  Scenario: Layout responsivo dos cards
+    Given que leiloeiro e comitente estão selecionados
+    When visualizo em tela grande (desktop)
+    Then os cards devem aparecer lado a lado em grid de 3 colunas
+    When visualizo em tela pequena (mobile)
+    Then os cards devem empilhar verticalmente
+```
+
+**Testes:**
+- ✅ Unitários: `tests/unit/participant-card.spec.tsx` (19 testes)
+- ✅ E2E: `tests/e2e/admin/participant-cards-e2e.spec.ts`
+
 ---
+
 
 ## FUNCIONALIDADES EM DESENVOLVIMENTO
 
@@ -593,6 +714,33 @@ interface CrudFormContainerProps {
 
 ## 📝 HISTÓRICO DE RESOLUÇÕES
 
+**Data:** 13 de Dezembro de 2025
+
+**Implementações de Dezembro:**
+1. ✅ **Modelo RealtimeSettings**: Novo modelo Prisma criado para centralizar configurações de tempo real
+   - Campos: `blockchainEnabled`, `blockchainNetwork`, `softCloseEnabled`, `softCloseMinutes`
+   - Campos de monetização: `lawyerPortalEnabled`, `lawyerMonetizationModel`, `lawyerSubscriptionPrice`, `lawyerPerUsePrice`, `lawyerRevenueSharePercent`
+   - Relacionamento 1:1 com `PlatformSettings` seguindo padrão existente
+2. ✅ **Refatoração de Configurações**: Campos flat movidos para modelo separado
+   - Antes: `blockchainEnabled`, `softCloseEnabled`, etc. direto em `PlatformSettings`
+   - Depois: Agrupados em `PlatformSettings.realtimeSettings`
+3. ✅ **Schema Zod Atualizado**: `RealtimeSettingsSchema` criado com validação completa
+4. ✅ **Service Atualizado**: `platform-settings.service.ts` com lógica de upsert para `realtimeSettings`
+5. ✅ **Formulário Atualizado**: `realtime-config.tsx` usando paths aninhados (`realtimeSettings.fieldName`)
+6. ✅ **Types Atualizados**: Tipo `RealtimeSettings` exportado em `src/types/index.ts`
+7. ✅ **Documentação BDD**: Especificação Gherkin completa para `RealtimeSettings` (RN-REALTIME-001 e RN-REALTIME-002)
+
+**Problema Resolvido:**
+- ❌ Erro: `Unknown argument 'blockchainEnabled'` ao salvar configurações
+- ✅ Solução: Campos movidos para modelo `RealtimeSettings` com CRUD próprio
+
+**Próximos Passos:**
+- [ ] Executar migração Prisma: `npx prisma migrate dev --name add_realtime_settings`
+- [ ] Testar salvamento de configurações
+- [ ] Criar testes E2E para validar fluxo completo
+
+---
+
 **Data:** 16 de Novembro de 2025
 
 **Implementações de Outubro/Novembro:**
@@ -663,6 +811,230 @@ Para evitar "lances de último segundo" (sniping), o encerramento de um leilão 
 - **Configuração:** `Auction.softCloseEnabled` (booleano) e `Auction.softCloseMinutes` (inteiro).
 - **Lógica:** Se um lance é recebido nos últimos `softCloseMinutes` de um leilão, a data de encerramento do leilão é estendida por mais `softCloseMinutes` a partir do momento do lance.
 
+---
+
+### RN-REALTIME-001: Modelo RealtimeSettings - Configurações de Tempo Real & Blockchain
+
+**Status:** ✅ Implementado em Dezembro/2025
+
+#### Visão Geral
+O modelo `RealtimeSettings` centraliza todas as configurações relacionadas a funcionalidades em tempo real, blockchain e monetização do portal de advogados. Este modelo segue o padrão de relacionamento 1:1 com `PlatformSettings`, mantendo consistência com outros modelos de configuração como `BiddingSettings`, `MapSettings`, etc.
+
+#### Estrutura do Modelo Prisma
+
+```prisma
+model RealtimeSettings {
+  id                        BigInt           @id @default(autoincrement())
+  platformSettingsId        BigInt           @unique
+  
+  // Blockchain - Registro imutável de transações
+  blockchainEnabled         Boolean          @default(false)
+  blockchainNetwork         String           @default("NONE") // HYPERLEDGER, ETHEREUM, NONE
+  
+  // Soft Close (Anti-Sniping) - Default da plataforma
+  softCloseEnabled          Boolean          @default(false)
+  softCloseMinutes          Int              @default(5)
+  
+  // Portal de Advogados - Monetização
+  lawyerPortalEnabled       Boolean          @default(true)
+  lawyerMonetizationModel   String           @default("SUBSCRIPTION")
+  lawyerSubscriptionPrice   Int?             // Em centavos (ex: 19900 = R$ 199,00)
+  lawyerPerUsePrice         Int?             // Em centavos (ex: 5000 = R$ 50,00)
+  lawyerRevenueSharePercent Decimal?         @db.Decimal(5, 2)
+  
+  platformSettings          PlatformSettings @relation(...)
+}
+```
+
+#### Campos e Regras de Negócio
+
+| Campo | Tipo | Default | Descrição |
+|-------|------|---------|-----------|
+| `blockchainEnabled` | Boolean | `false` | Habilita registro imutável via Hyperledger/Ethereum |
+| `blockchainNetwork` | String | `"NONE"` | Rede blockchain: `HYPERLEDGER`, `ETHEREUM`, `NONE` |
+| `softCloseEnabled` | Boolean | `false` | Habilita extensão automática em lances de último minuto |
+| `softCloseMinutes` | Int | `5` | Minutos antes do fim para disparar extensão |
+| `lawyerPortalEnabled` | Boolean | `true` | Habilita portal de advogados |
+| `lawyerMonetizationModel` | String | `"SUBSCRIPTION"` | Modelo: `SUBSCRIPTION`, `PAY_PER_USE`, `REVENUE_SHARE` |
+| `lawyerSubscriptionPrice` | Int? | `null` | Preço mensal em centavos |
+| `lawyerPerUsePrice` | Int? | `null` | Preço por consulta em centavos |
+| `lawyerRevenueSharePercent` | Decimal? | `null` | Percentual de revenue share (ex: 2.50) |
+
+#### Herança de Soft Close (Plataforma → Leilão)
+
+O Soft Close possui dois níveis de configuração:
+
+1. **Nível Plataforma** (`RealtimeSettings.softCloseEnabled/softCloseMinutes`)
+   - Define o **default** para novos leilões
+   - Configurado em `/admin/settings/realtime`
+
+2. **Nível Leilão** (`Auction.softCloseEnabled/softCloseMinutes`)
+   - **Sobrescreve** a configuração da plataforma
+   - Configurado durante o cadastro/edição do leilão
+   - Se não especificado, herda do default da plataforma
+
+#### Arquivos Relacionados
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `prisma/schema.prisma` | Definição do modelo `RealtimeSettings` |
+| `src/app/admin/settings/settings-form-schema.ts` | Schema Zod com `RealtimeSettingsSchema` |
+| `src/app/admin/settings/realtime-config.tsx` | Formulário de configuração |
+| `src/app/admin/settings/settings-form-wrapper.tsx` | Wrapper do form com defaults |
+| `src/services/platform-settings.service.ts` | Service com lógica de upsert |
+| `src/types/index.ts` | Tipo TypeScript `RealtimeSettings` |
+
+---
+
+### RN-REALTIME-002: Especificação BDD - RealtimeSettings
+
+#### Feature: Gerenciamento de Configurações de Tempo Real
+
+```gherkin
+Feature: Configurações de Tempo Real e Blockchain
+  Como um administrador da plataforma
+  Eu quero gerenciar configurações de blockchain, soft close e monetização de advogados
+  Para que eu possa personalizar o comportamento da plataforma em tempo real
+
+  Background:
+    Given eu estou autenticado como administrador
+    And eu estou na página "/admin/settings/realtime"
+
+  @blockchain
+  Scenario: Habilitar blockchain na plataforma
+    Given blockchain está desabilitado
+    When eu marco o checkbox "Blockchain Habilitado"
+    And eu clico em "Salvar Alterações"
+    Then eu vejo a mensagem "Configurações salvas com sucesso!"
+    And o campo "realtimeSettings.blockchainEnabled" é "true" no banco de dados
+    And um alerta de atenção é exibido sobre configuração de nós Hyperledger
+
+  @blockchain
+  Scenario: Selecionar rede blockchain
+    Given blockchain está habilitado
+    When eu seleciono "ETHEREUM" no campo "Rede Blockchain"
+    And eu clico em "Salvar Alterações"
+    Then o campo "realtimeSettings.blockchainNetwork" é "ETHEREUM" no banco de dados
+
+  @soft-close
+  Scenario: Configurar soft close como default da plataforma
+    Given soft close está desabilitado
+    When eu marco o checkbox "Soft Close Habilitado"
+    And eu preencho "10" no campo "Minutos antes do fechamento"
+    And eu clico em "Salvar Alterações"
+    Then o campo "realtimeSettings.softCloseEnabled" é "true" no banco de dados
+    And o campo "realtimeSettings.softCloseMinutes" é "10" no banco de dados
+
+  @soft-close @auction-override
+  Scenario: Leilão herda configuração de soft close da plataforma
+    Given soft close está habilitado com 5 minutos na plataforma
+    When eu crio um novo leilão sem especificar soft close
+    Then o leilão é criado com "softCloseEnabled" = true
+    And o leilão é criado com "softCloseMinutes" = 5
+
+  @soft-close @auction-override
+  Scenario: Leilão sobrescreve configuração de soft close
+    Given soft close está habilitado com 5 minutos na plataforma
+    When eu crio um novo leilão com soft close de 15 minutos
+    Then o leilão é criado com "softCloseEnabled" = true
+    And o leilão é criado com "softCloseMinutes" = 15
+    And a configuração da plataforma permanece 5 minutos
+
+  @lawyer-monetization
+  Scenario Outline: Selecionar modelo de monetização de advogados
+    Given o modelo atual é "SUBSCRIPTION"
+    When eu seleciono "<modelo>" no campo "Modelo de Monetização"
+    And eu clico em "Salvar Alterações"
+    Then o campo "realtimeSettings.lawyerMonetizationModel" é "<modelo>" no banco de dados
+
+    Examples:
+      | modelo        |
+      | SUBSCRIPTION  |
+      | PAY_PER_USE   |
+      | REVENUE_SHARE |
+
+  @lawyer-monetization @subscription
+  Scenario: Configurar preço de assinatura mensal
+    Given o modelo de monetização é "SUBSCRIPTION"
+    When eu preencho "19900" no campo "Preço da Assinatura" (em centavos)
+    And eu clico em "Salvar Alterações"
+    Then o campo "realtimeSettings.lawyerSubscriptionPrice" é "19900" no banco de dados
+    And o valor exibido é "R$ 199,00"
+
+  @lawyer-monetization @pay-per-use
+  Scenario: Configurar preço por uso
+    Given o modelo de monetização é "PAY_PER_USE"
+    When eu preencho "5000" no campo "Preço por Consulta" (em centavos)
+    And eu clico em "Salvar Alterações"
+    Then o campo "realtimeSettings.lawyerPerUsePrice" é "5000" no banco de dados
+
+  @lawyer-monetization @revenue-share
+  Scenario: Configurar percentual de revenue share
+    Given o modelo de monetização é "REVENUE_SHARE"
+    When eu preencho "2.5" no campo "Percentual de Revenue Share"
+    And eu clico em "Salvar Alterações"
+    Then o campo "realtimeSettings.lawyerRevenueSharePercent" é "2.50" no banco de dados
+
+  @validation
+  Scenario: Validar soft close minutes dentro do range
+    When eu preencho "0" no campo "Minutos antes do fechamento"
+    Then eu vejo erro de validação "Valor mínimo é 1"
+    When eu preencho "61" no campo "Minutos antes do fechamento"
+    Then eu vejo erro de validação "Valor máximo é 60"
+
+  @persistence
+  Scenario: Dados persistem após recarregar a página
+    Given eu configurei blockchain habilitado e soft close com 10 minutos
+    When eu recarrego a página
+    Then o checkbox "Blockchain Habilitado" está marcado
+    And o campo "Minutos" contém "10"
+
+  @multi-tenant
+  Scenario: Configurações são isoladas por tenant
+    Given eu estou no tenant "leiloeiro-a"
+    And eu configuro soft close com 5 minutos
+    When eu mudo para o tenant "leiloeiro-b"
+    Then a configuração de soft close pode ser diferente
+    And os dados do tenant "leiloeiro-a" não são afetados
+```
+
+#### Feature: Integração Soft Close com Leilão
+
+```gherkin
+Feature: Soft Close em Leilões
+  Como um leiloeiro
+  Eu quero que lances de último minuto estendam automaticamente o prazo
+  Para evitar sniping e garantir competição justa
+
+  @soft-close @bidding
+  Scenario: Lance estende prazo do leilão (soft close ativo)
+    Given existe um leilão com soft close habilitado (5 minutos)
+    And o leilão encerra em 3 minutos
+    And o lote tem um lance atual de R$ 10.000
+    When um usuário dá um lance de R$ 11.000
+    Then o lance é registrado com sucesso
+    And o prazo do leilão é estendido em +5 minutos
+    And uma notificação é enviada sobre a extensão
+
+  @soft-close @bidding
+  Scenario: Lance não estende prazo (fora da janela de soft close)
+    Given existe um leilão com soft close habilitado (5 minutos)
+    And o leilão encerra em 10 minutos
+    When um usuário dá um lance
+    Then o lance é registrado com sucesso
+    And o prazo do leilão NÃO é estendido
+
+  @soft-close @bidding
+  Scenario: Soft close desabilitado no leilão
+    Given existe um leilão com soft close desabilitado
+    And o leilão encerra em 2 minutos
+    When um usuário dá um lance
+    Then o lance é registrado com sucesso
+    And o prazo do leilão NÃO é estendido
+```
+
+---
+
 ### RN-AD-006: Lógica de Relistagem de Lotes
 Lotes não vendidos podem ser automaticamente reinseridos em um novo leilão.
 - **Condição:** O status do lote deve ser `NAO_VENDIDO` ou `ENCERRADO` (sem lances).
@@ -721,6 +1093,1049 @@ Cada praça (etapa) do leilão define um percentual de desconto que será aplica
 
 ---
 
+### RN-SEARCH-001: Carregamento da Página de Pesquisa
+A página de pesquisa (`/search`) carrega TODOS os dados de forma antecipada para garantir uma experiência fluida ao usuário.
+- **Lógica:** Um único `useEffect` executa `Promise.all()` para buscar Leilões, Lotes e Vendas Diretas simultaneamente ao montar o componente.
+- **Motivo:** Carregamento lazy (apenas ao clicar em aba) causava contagens zeradas e dados não exibidos.
+- **Implementação:** `src/app/search/page.tsx` - função `loadInitialData()`
+
+### RN-SEARCH-002: Exibição de Contagens nas Abas
+As abas de pesquisa SEMPRE exibem a contagem total de itens, independentemente da aba ativa.
+- **Campos:** `allAuctions.length`, `allLots.length`, `allDirectSales.length`
+- **Lógica:** Contagens são calculadas após o carregamento inicial e mantidas nas abas.
+- **Exemplo:** "Leilões (40)", "Lotes (70)", "Vendas Diretas (6)"
+
+### RN-SEARCH-003: Grid de Resultados de Pesquisa
+O grid de resultados utiliza no máximo 4 cards por linha em telas grandes.
+- **Classes CSS:** `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`
+- **Componente:** `src/components/BidExpertSearchResultsFrame.tsx`
+
+### RN-SEARCH-004: Filtros Disponíveis
+Os filtros da página de pesquisa são context-aware e variam por tipo de resultado:
+- **Filtros Comuns:** Categoria, Faixa de Preço, Status, Localização (Estado/Cidade), Ordenação
+- **Filtros de Leilões:** Modalidade (Judicial/Extrajudicial), Praça (1ª, 2ª, 3ª+), Vendedor (Comitente)
+- **Atributos:** Todos os filtros possuem `data-ai-id` para testes automatizados
+
+### RN-SEARCH-005: Testes E2E da Pesquisa
+Arquivo de testes Playwright: `tests/e2e/search-page-filters.spec.ts`
+- **Cobertura:** 19 casos de teste para validação de abas, filtros, grid, busca textual, ordenação e paginação.
+- **Seletores:** Utiliza atributos `data-ai-id` para estabilidade dos testes.
+- **Execução:** `npx playwright test tests/e2e/search-page-filters.spec.ts`
+
+---
+
 **Documento mantido por:** Equipe de Desenvolvimento BidExpert  
-**Última atualização:** 16/12/2025  
+**Última atualização:** 18/12/2025  
 **Changelog**: Ver histórico de resoluções acima para atualizações recentes
+
+---
+
+## 🎯 IMPLEMENTAÇÃO DOS 8 GAPS CRÍTICOS - INVESTIDORES PROFISSIONAIS
+
+**Data de Implementação:** Dezembro 2025  
+**Objetivo:** Transformar BidExpert na plataforma #1 para investidores profissionais  
+**Metas:** +40% conversão de lances, +60% confiança do investidor
+
+### VISÃO GERAL DOS GAPS
+
+| Gap | Descrição | Categoria | Status |
+|-----|-----------|-----------|--------|
+| GAP-001 | Informações Jurídicas Completas | Imóveis | ✅ Implementado |
+| GAP-002 | Simulador de Custos de Aquisição | Universal | ✅ Implementado |
+| GAP-003 | Histórico de Lances Anonimizado | Universal | ✅ Implementado |
+| GAP-004 | Comparativo de Mercado | Universal | ✅ Implementado |
+| GAP-005 | Integração FIPE | Veículos | ✅ Implementado |
+| GAP-006 | Dashboard do Investidor | Universal | ✅ Implementado |
+| GAP-007 | Especificações Técnicas Dinâmicas | Eletr./Máquinas | ✅ Implementado |
+| GAP-008 | Informações de Semoventes | Semoventes | ✅ Implementado |
+
+---
+
+### RN-GAP-001: Informações Jurídicas Completas (Imóveis)
+
+**Objetivo:** Fornecer transparência total sobre a situação legal do imóvel para que investidores tomem decisões informadas.
+
+**Campos Exibidos:**
+- Matrícula/Registro do imóvel
+- Status de ocupação (Ocupado/Desocupado/Incerto/Posse Compartilhada)
+- Ações judiciais relacionadas (Penhora, Usucapião, Hipoteca, Despejo, etc.)
+- Riscos identificados com níveis (Crítico/Alto/Médio/Baixo)
+- Estratégias de mitigação de riscos
+- Links para consulta pública do processo
+
+**Componente:** `LotLegalInfoCard` (`src/components/lots/legal-info/lot-legal-info-card.tsx`)
+
+**Integração:** Exibido na aba "Jurídico" da seção de análise do investidor.
+
+```gherkin
+Feature: Informações Jurídicas do Imóvel
+  Como um investidor profissional
+  Eu quero ver todas as informações jurídicas do imóvel
+  Para avaliar riscos antes de dar um lance
+
+  Scenario: Exibir matrícula e registro
+    Given que estou na página de detalhes de um lote de imóvel
+    When a seção de informações jurídicas é carregada
+    Then deve exibir o número da matrícula do imóvel
+    And deve exibir o cartório de registro (se disponível)
+    And deve ter badge destacado com a matrícula
+
+  Scenario: Mostrar status de ocupação
+    Given que o lote possui informação de ocupação
+    When visualizo as informações jurídicas
+    Then deve exibir badge colorido indicando ocupação:
+      | Status | Cor | Texto |
+      | OCCUPIED | Âmbar | Ocupado |
+      | UNOCCUPIED | Verde | Desocupado |
+      | UNCERTAIN | Cinza | Não verificado |
+      | SHARED_POSSESSION | Azul | Posse compartilhada |
+
+  Scenario: Listar riscos identificados
+    Given que o lote possui riscos cadastrados
+    When visualizo a seção de riscos
+    Then cada risco deve exibir:
+      | Campo | Obrigatório |
+      | Tipo do risco | Sim |
+      | Nível (Crítico/Alto/Médio/Baixo) | Sim |
+      | Descrição | Sim |
+      | Estratégia de mitigação | Não |
+      | Verificado por especialista | Não |
+    And riscos devem ser ordenados por severidade (Crítico primeiro)
+
+  Scenario: Exibir alerta de leilão judicial
+    Given que o leilão é do tipo JUDICIAL
+    When visualizo informações jurídicas
+    Then deve aparecer alerta informativo sobre leilão judicial
+    And deve exibir dados do processo (número, comarca, vara)
+    And deve ter link para consulta pública do processo
+```
+
+---
+
+### RN-GAP-002: Simulador de Custos de Aquisição
+
+**Objetivo:** Permitir que investidores calculem o custo total de aquisição antes de dar um lance, considerando todas as taxas e impostos aplicáveis.
+
+**Componentes do Cálculo:**
+1. **ITBI (Imposto de Transmissão):** 2-4% conforme município
+2. **Registro em Cartório:** Tabela progressiva por estado
+3. **Taxa de Administração:** Taxa do leiloeiro sobre arremate
+4. **Taxa de Sucesso:** Comissão da plataforma (se aplicável)
+5. **Outras Taxas:** Certidões, laudos, despesas cartorárias
+
+**Componente:** `CostSimulator` (`src/components/lots/cost-simulator/index.tsx`)
+
+**API:** `POST /api/lots/[lotId]/cost-simulation`
+
+**Configuração:** `AuctionCostConfig` no banco de dados por leilão
+
+```gherkin
+Feature: Simulador de Custos de Aquisição
+  Como um investidor profissional
+  Eu quero simular todos os custos de aquisição de um lote
+  Para saber o valor total que vou investir
+
+  Scenario: Calcular custos para imóvel em São Paulo
+    Given que estou na página de um lote de imóvel
+    And o imóvel está localizado em São Paulo
+    And o valor do lance simulado é R$ 500.000
+    When clico em "Simular Custos"
+    Then deve exibir breakdown detalhado:
+      | Item | Percentual/Valor | Total |
+      | ITBI | 3% | R$ 15.000 |
+      | Registro em Cartório | Tabela SP | R$ 3.500 |
+      | Taxa de Administração | 5% | R$ 25.000 |
+      | Taxa de Sucesso | Variável | R$ X |
+      | Outras Taxas | Estimado | R$ 2.000 |
+    And deve exibir TOTAL ESTIMADO de aquisição
+    And deve exibir percentual do lance que são custos
+
+  Scenario: Ajustar valor do lance e recalcular
+    Given que já tenho uma simulação de custos
+    When altero o valor do lance para R$ 600.000
+    And clico em "Recalcular"
+    Then todos os valores devem ser atualizados proporcionalmente
+    And o gráfico de breakdown deve ser atualizado
+
+  Scenario: Exibir aviso sobre estimativas
+    Given que visualizo o simulador de custos
+    Then deve exibir disclaimer informando:
+      | "Valores são estimativas e podem variar" |
+      | "Consulte um advogado para cálculo exato" |
+      | "Taxas cartorárias sujeitas a alteração" |
+
+  Scenario: Comparar custo por categoria
+    Given que estou analisando um veículo
+    When visualizo a simulação de custos
+    Then NÃO deve exibir ITBI (não aplicável)
+    And deve exibir apenas: Transferência DETRAN, Taxa leilão, Despachante
+```
+
+---
+
+### RN-GAP-003: Histórico de Lances Anonimizado
+
+**Objetivo:** Fornecer transparência sobre a atividade de lances sem expor identidades de outros participantes.
+
+**Dados Exibidos:**
+- Lista cronológica de lances (mais recente primeiro)
+- Valores dos lances
+- Horário de cada lance (relativo: "há 5 minutos")
+- Participante anonimizado (ex: "Participante #1", "Participante #2")
+- Estatísticas agregadas (média, mediana, total de participantes únicos)
+
+**Componente:** `BidHistory` (`src/components/lots/bid-history/index.tsx`)
+
+**API:** `GET /api/lots/[lotId]/bid-history`
+
+**Regra de Anonimização:**
+- Cada `bidderId` recebe um identificador sequencial consistente
+- O usuário logado vê seus próprios lances destacados
+- Administradores podem ver dados completos
+
+```gherkin
+Feature: Histórico de Lances Anonimizado
+  Como um investidor profissional
+  Eu quero ver o histórico de lances de um lote
+  Para entender a dinâmica da disputa
+
+  Scenario: Visualizar histórico de lances
+    Given que estou na página de um lote com 15 lances
+    When visualizo o histórico de lances
+    Then deve exibir lista com todos os lances
+    And cada lance deve mostrar:
+      | Campo | Exemplo |
+      | Valor | R$ 50.000 |
+      | Participante | Participante #3 |
+      | Tempo | há 5 minutos |
+    And lances devem estar ordenados do mais recente ao mais antigo
+
+  Scenario: Destacar meus lances
+    Given que estou logado como investidor
+    And eu dei 3 lances neste lote
+    When visualizo o histórico
+    Then meus lances devem ter destaque visual (cor diferente)
+    And deve indicar "Você" ao invés de "Participante #X"
+
+  Scenario: Exibir estatísticas agregadas
+    Given que o lote possui histórico de lances
+    When visualizo a seção de estatísticas
+    Then deve exibir:
+      | Métrica | Descrição |
+      | Total de lances | Quantidade total de lances |
+      | Participantes únicos | Quantos investidores diferentes |
+      | Lance médio | Média aritmética dos valores |
+      | Lance mediano | Mediana dos valores |
+      | Maior incremento | Maior salto entre lances |
+
+  Scenario: Paginação do histórico
+    Given que o lote possui mais de 20 lances
+    When visualizo o histórico
+    Then deve exibir paginação com 10 lances por página
+    And deve permitir navegar entre páginas
+```
+
+---
+
+### RN-GAP-004: Comparativo de Mercado
+
+**Objetivo:** Fornecer referências de mercado para que investidores avaliem se o lance representa uma boa oportunidade.
+
+**Fontes de Comparação:**
+- Índices de mercado imobiliário (FipeZap, Secovi)
+- Preços médios por m² na região
+- Histórico de vendas similares
+- Variação de preço nos últimos 12 meses
+
+**Componente:** `MarketComparison` (`src/components/lots/market-comparison/index.tsx`)
+
+**API:** `GET /api/lots/[lotId]/market-comparison`
+
+**Score de Oportunidade:**
+- Calculado automaticamente comparando preço atual vs. média de mercado
+- Escala de 1 a 5 estrelas
+- Considera: desconto, localização, condição, tendência de mercado
+
+```gherkin
+Feature: Comparativo de Mercado
+  Como um investidor profissional
+  Eu quero comparar o preço do lote com o mercado
+  Para avaliar se é uma boa oportunidade
+
+  Scenario: Exibir comparação com mercado imobiliário
+    Given que estou analisando um lote de imóvel
+    And o imóvel tem 100m² em São Paulo - Pinheiros
+    When visualizo o comparativo de mercado
+    Then deve exibir:
+      | Dado | Exemplo |
+      | Preço médio m² região | R$ 15.000/m² |
+      | Valor de mercado estimado | R$ 1.500.000 |
+      | Preço atual do lote | R$ 900.000 |
+      | Desconto vs. mercado | 40% |
+    And deve exibir gráfico comparativo
+
+  Scenario: Calcular score de oportunidade
+    Given que o lote tem desconto de 35% sobre mercado
+    And a região tem tendência de valorização
+    And a condição do imóvel é "Bom"
+    When o sistema calcula o score
+    Then deve exibir 4 de 5 estrelas
+    And deve exibir label "Ótima Oportunidade"
+
+  Scenario: Mostrar histórico de preços da região
+    Given que visualizo o comparativo de mercado
+    When expando a seção de histórico
+    Then deve exibir gráfico de linha com:
+      | Métrica | Período |
+      | Preço médio m² | Últimos 12 meses |
+      | Tendência | Alta/Estável/Baixa |
+    And deve indicar a posição do lote atual no gráfico
+
+  Scenario: Listar propriedades similares vendidas
+    Given que existem vendas similares na região
+    When visualizo a lista de comparáveis
+    Then deve exibir até 5 propriedades similares:
+      | Campo | Obrigatório |
+      | Endereço parcial | Sim |
+      | Área | Sim |
+      | Valor vendido | Sim |
+      | Data da venda | Sim |
+      | Desconto/Ágio | Sim |
+```
+
+---
+
+### RN-GAP-005: Integração FIPE (Veículos)
+
+**Objetivo:** Fornecer avaliação precisa de veículos usando a tabela FIPE oficial, permitindo comparação direta com o valor do lance.
+
+**Dados da FIPE:**
+- Código FIPE do veículo
+- Valor FIPE atual
+- Histórico de valores (últimos 6 meses)
+- Marca, modelo, ano, combustível
+
+**Ajustes Automáticos:**
+- Quilometragem (km acima/abaixo da média)
+- Estado de conservação
+- Acessórios e opcionais
+
+**Componente:** `FipeComparison` (`src/components/lots/fipe-comparison/index.tsx`)
+
+**Serviço:** `FipeService` (`src/services/fipe.service.ts`)
+
+**API Externa:** `https://parallelum.com.br/fipe/api/v1/`
+
+**Cache:** 30 dias para valores FIPE (tabela `VehicleFipePrice`)
+
+```gherkin
+Feature: Integração com Tabela FIPE
+  Como um investidor profissional
+  Eu quero comparar o preço do veículo com a FIPE
+  Para avaliar se o lance é vantajoso
+
+  Scenario: Exibir valor FIPE do veículo
+    Given que estou analisando um lote de veículo
+    And o veículo é um "Toyota Corolla 2020 XEi 2.0"
+    When a página carrega
+    Then deve buscar automaticamente o valor FIPE
+    And deve exibir:
+      | Campo | Valor |
+      | Código FIPE | 001267-9 |
+      | Valor FIPE | R$ 98.500 |
+      | Mês/Ano referência | Dez/2025 |
+
+  Scenario: Calcular desconto sobre FIPE
+    Given que o valor FIPE do veículo é R$ 100.000
+    And o lance atual é R$ 75.000
+    When visualizo a comparação
+    Then deve exibir desconto de 25% sobre FIPE
+    And deve exibir badge "Oportunidade" (se desconto > 15%)
+    And deve exibir economia estimada de R$ 25.000
+
+  Scenario: Ajustar valor por quilometragem
+    Given que o veículo possui 80.000 km
+    And a média esperada para idade é 50.000 km
+    When o sistema calcula o valor ajustado
+    Then deve aplicar depreciação de ~6% (30.000 km excedentes)
+    And deve exibir valor FIPE ajustado
+
+  Scenario: Mostrar histórico de valores FIPE
+    Given que visualizo a comparação FIPE
+    When expando o histórico de valores
+    Then deve exibir gráfico de linha com:
+      | Período | Valor FIPE |
+      | Jul/2025 | R$ 102.000 |
+      | Ago/2025 | R$ 101.000 |
+      | Set/2025 | R$ 100.500 |
+      | Out/2025 | R$ 99.500 |
+      | Nov/2025 | R$ 99.000 |
+      | Dez/2025 | R$ 98.500 |
+    And deve indicar tendência de depreciação
+
+  Scenario: Exibir selo de oportunidade
+    Given que o desconto sobre FIPE é maior que 20%
+    And a condição do veículo é "Bom" ou melhor
+    When visualizo o card de comparação
+    Then deve exibir selo de 4-5 estrelas
+    And deve exibir mensagem "Excelente Oportunidade"
+```
+
+---
+
+### RN-GAP-006: Dashboard do Investidor
+
+**Objetivo:** Centralizar todas as ferramentas e informações relevantes para investidores profissionais em um único painel.
+
+**Funcionalidades:**
+1. **Visão Geral:** Estatísticas do perfil, lotes salvos, alertas ativos
+2. **Lotes Salvos:** Lista de favoritos com acompanhamento
+3. **Alertas Personalizados:** Configuração de notificações
+4. **Estatísticas:** Histórico de participação, taxa de sucesso
+5. **Preferências:** Configurações de categoria, faixa de preço, localização
+
+**Componente:** `InvestorDashboard` (`src/components/dashboard/investor-dashboard/index.tsx`)
+
+**API:** `GET/POST /api/investor/dashboard`
+
+**Modelos de Dados:**
+- `InvestorDashboard`: Configurações e preferências
+- `SavedLot`: Lotes salvos pelo investidor
+- `InvestorAlert`: Alertas configurados
+- `InvestorStatistics`: Métricas calculadas
+
+```gherkin
+Feature: Dashboard do Investidor
+  Como um investidor profissional
+  Eu quero ter um painel centralizado com minhas ferramentas
+  Para gerenciar meus investimentos de forma eficiente
+
+  Scenario: Visualizar visão geral
+    Given que estou logado como investidor
+    When acesso o Dashboard do Investidor
+    Then deve exibir cards de resumo:
+      | Métrica | Descrição |
+      | Lotes Salvos | Quantidade de favoritos |
+      | Alertas Ativos | Notificações configuradas |
+      | Leilões Participados | Histórico de participação |
+      | Taxa de Sucesso | Arremates / Participações |
+
+  Scenario: Gerenciar lotes salvos
+    Given que tenho lotes salvos como favoritos
+    When acesso a aba "Lotes Salvos"
+    Then deve exibir lista dos lotes com:
+      | Campo | Descrição |
+      | Imagem | Thumbnail do lote |
+      | Título | Nome do lote |
+      | Preço Atual | Lance atual ou inicial |
+      | Status | Ativo/Encerrado |
+      | Tempo Restante | Countdown se ativo |
+    And deve permitir remover lote dos favoritos
+    And deve permitir ir direto para página do lote
+
+  Scenario: Configurar alertas
+    Given que quero ser notificado sobre novas oportunidades
+    When acesso a aba "Alertas"
+    Then deve permitir criar alerta com:
+      | Campo | Opções |
+      | Categoria | Imóveis, Veículos, etc. |
+      | Faixa de Preço | Min/Max |
+      | Localização | Estado/Cidade |
+      | Desconto Mínimo | Percentual vs. mercado |
+      | Frequência | Imediato, Diário, Semanal |
+    And deve listar alertas existentes
+    And deve permitir ativar/desativar alertas
+
+  Scenario: Ver estatísticas de participação
+    Given que já participei de leilões anteriormente
+    When acesso a aba "Estatísticas"
+    Then deve exibir:
+      | Métrica | Período |
+      | Total de lances dados | Últimos 12 meses |
+      | Valor total arrematado | Histórico |
+      | Taxa de sucesso | Arremates/Participações |
+      | Economia total | Desconto vs. mercado |
+    And deve exibir gráfico de evolução mensal
+```
+
+---
+
+### RN-GAP-007: Especificações Técnicas Dinâmicas
+
+**Objetivo:** Fornecer especificações técnicas detalhadas para eletrônicos e maquinário, usando templates por categoria.
+
+**Templates por Categoria:**
+- **Smartphones:** Tela, processador, RAM, armazenamento, câmera, bateria
+- **Notebooks:** CPU, GPU, RAM, SSD, tela, bateria
+- **Tablets:** Tela, processador, RAM, armazenamento
+- **Máquinas Agrícolas:** Potência, horas de uso, última manutenção
+- **Equipamentos Industriais:** Capacidade, certificações, data de fabricação
+
+**Componentes:**
+- `DynamicSpecs` (`src/components/lots/dynamic-specs/index.tsx`)
+- `MachineryInspection` (`src/components/lots/machinery-inspection/index.tsx`)
+- `MachineryCertifications` (`src/components/lots/machinery-certifications/index.tsx`)
+
+**Modelo:** `CategorySpecTemplate` no banco de dados
+
+```gherkin
+Feature: Especificações Técnicas Dinâmicas
+  Como um investidor profissional
+  Eu quero ver especificações técnicas detalhadas
+  Para avaliar o real valor do equipamento
+
+  Scenario: Exibir specs de smartphone
+    Given que estou analisando um lote de smartphone
+    And o smartphone é um "iPhone 14 Pro"
+    When visualizo as especificações
+    Then deve exibir campos do template "smartphones":
+      | Campo | Valor |
+      | Tela | 6.1" Super Retina XDR |
+      | Processador | A16 Bionic |
+      | RAM | 6GB |
+      | Armazenamento | 256GB |
+      | Câmera | 48MP + 12MP + 12MP |
+      | Bateria | 3200mAh |
+    And campos preenchidos devem ter destaque
+    And campos não preenchidos devem aparecer como "Não informado"
+
+  Scenario: Exibir relatório de inspeção de maquinário
+    Given que estou analisando um lote de trator
+    And existe relatório de inspeção
+    When visualizo a aba "Inspeção"
+    Then deve exibir checklist técnico:
+      | Item | Status |
+      | Motor | ✅ Aprovado |
+      | Transmissão | ✅ Aprovado |
+      | Sistema Hidráulico | ⚠️ Atenção |
+      | Pneus/Esteiras | ✅ Aprovado |
+      | Cabine | ✅ Aprovado |
+    And deve exibir informações do inspetor
+    And deve exibir data da inspeção
+
+  Scenario: Exibir certificações de equipamento
+    Given que o equipamento possui certificações
+    When visualizo a aba "Certificações"
+    Then deve exibir lista de certificações:
+      | Campo | Exemplo |
+      | Tipo | ISO 9001 |
+      | Emissor | Bureau Veritas |
+      | Validade | 15/06/2026 |
+      | Status | Ativo/Expirado |
+    And certificações expiradas devem ter alerta visual
+```
+
+---
+
+### RN-GAP-008: Informações de Semoventes
+
+**Objetivo:** Fornecer informações completas sobre animais (gado, equinos, etc.) incluindo saúde, pedigree e histórico reprodutivo.
+
+**Categorias de Dados:**
+1. **Saúde:** Vacinações, exames, atestados sanitários
+2. **Pedigree:** Genealogia, registro em associação
+3. **Reprodução:** Histórico de crias, inseminações, produtividade
+
+**Componentes:**
+- `LivestockHealth` (`src/components/lots/livestock-health/index.tsx`)
+- `LivestockReproductive` (`src/components/lots/livestock-reproductive/index.tsx`)
+
+**Modelos:**
+- `LivestockHealthRecord`: Registros de saúde
+- `LivestockReproductiveHistory`: Histórico reprodutivo
+
+```gherkin
+Feature: Informações de Semoventes
+  Como um investidor profissional em pecuária
+  Eu quero ver informações completas dos animais
+  Para avaliar genética, saúde e potencial produtivo
+
+  Scenario: Visualizar histórico de vacinação
+    Given que estou analisando um lote de gado Nelore
+    When visualizo a aba "Saúde"
+    Then deve exibir calendário de vacinações:
+      | Vacina | Data | Próxima |
+      | Febre Aftosa | 15/05/2025 | 15/11/2025 |
+      | Brucelose | 10/03/2025 | - |
+      | Raiva | 20/06/2025 | 20/06/2026 |
+    And deve indicar vacinas em dia (verde)
+    And deve alertar vacinas pendentes (amarelo)
+
+  Scenario: Verificar certificados sanitários
+    Given que o animal possui certificados
+    When visualizo a seção de certificados
+    Then deve exibir:
+      | Certificado | Status |
+      | GTA (Guia de Trânsito) | ✅ Válido |
+      | Atestado de Sanidade | ✅ Válido |
+      | Exame de Brucelose | ✅ Negativo |
+    And deve ter link para download dos documentos
+
+  Scenario: Consultar pedigree
+    Given que o animal possui registro de pedigree
+    When visualizo a aba "Pedigree"
+    Then deve exibir árvore genealógica:
+      | Geração | Pai | Mãe |
+      | Pais | Touro ABC | Vaca XYZ |
+      | Avós Pat. | Avô 1 | Avó 1 |
+      | Avós Mat. | Avô 2 | Avó 2 |
+    And deve exibir número de registro na associação
+    And deve exibir DEPs (Diferenças Esperadas na Progênie) se disponível
+
+  Scenario: Ver histórico reprodutivo
+    Given que a matriz possui histórico de crias
+    When visualizo a aba "Reprodução"
+    Then deve exibir:
+      | Métrica | Valor |
+      | Total de Crias | 8 |
+      | Crias Vivas | 7 |
+      | Taxa de Fertilidade | 87.5% |
+      | Idade Primeira Cria | 24 meses |
+    And deve listar últimas crias com data e status
+```
+
+---
+
+### COMPONENTE UNIFICADO: InvestorAnalysisSection
+
+**Localização:** `src/components/lots/investor-analysis-section/index.tsx`
+
+**Propósito:** Agrupa todos os componentes de análise em uma seção única com tabs dinâmicas baseadas na categoria do lote.
+
+**Detecção Automática de Categoria:**
+- Analisa `lot.category.slug`, `lot.category.name` e campos específicos
+- Determina tabs disponíveis automaticamente
+- Mantém tabs universais (Custos, Histórico, Mercado) para todas as categorias
+
+**Integração:** Adicionado à página `lot-detail-client.tsx` após as abas de detalhes do lote.
+
+```gherkin
+Feature: Seção de Análise do Investidor
+  Como um investidor profissional
+  Eu quero ter acesso fácil a todas as ferramentas de análise
+  Para tomar decisões informadas rapidamente
+
+  Scenario: Exibir tabs corretas para imóvel
+    Given que estou na página de um lote de imóvel
+    When a seção de análise carrega
+    Then deve exibir tabs: Custos, Histórico, Mercado, Jurídico
+    And tab "FIPE" NÃO deve aparecer
+
+  Scenario: Exibir tabs corretas para veículo
+    Given que estou na página de um lote de veículo
+    When a seção de análise carrega
+    Then deve exibir tabs: Custos, Histórico, Mercado, FIPE
+    And tab "Jurídico" NÃO deve aparecer
+
+  Scenario: Exibir tabs corretas para eletrônico
+    Given que estou na página de um lote de smartphone
+    When a seção de análise carrega
+    Then deve exibir tabs: Custos, Histórico, Mercado, Especificações
+    
+  Scenario: Exibir tabs corretas para semovente
+    Given que estou na página de um lote de gado
+    When a seção de análise carrega
+    Then deve exibir tabs: Custos, Histórico, Mercado, Saúde, Reprodução
+
+  Scenario: Calcular score de oportunidade
+    Given que o lote possui dados suficientes para análise
+    When a seção de análise carrega
+    Then deve exibir badge com score de oportunidade (0-100%)
+    And deve exibir label descritivo (Alta/Moderada/Análise Recomendada)
+```
+
+---
+
+### ESTRUTURA DE ARQUIVOS
+
+```
+src/
+├── components/
+│   ├── lots/
+│   │   ├── index.ts                           # Barrel exports
+│   │   ├── investor-analysis-section/         # Seção unificada
+│   │   │   └── index.tsx
+│   │   ├── legal-info/                        # GAP-001
+│   │   │   └── lot-legal-info-card.tsx
+│   │   ├── cost-simulator/                    # GAP-002
+│   │   │   └── index.tsx
+│   │   ├── bid-history/                       # GAP-003
+│   │   │   └── index.tsx
+│   │   ├── market-comparison/                 # GAP-004
+│   │   │   └── index.tsx
+│   │   ├── fipe-comparison/                   # GAP-005
+│   │   │   └── index.tsx
+│   │   ├── vehicle-specs/                     # GAP-005
+│   │   │   └── index.tsx
+│   │   ├── dynamic-specs/                     # GAP-007
+│   │   │   └── index.tsx
+│   │   ├── machinery-inspection/              # GAP-007
+│   │   │   └── index.tsx
+│   │   ├── machinery-certifications/          # GAP-007
+│   │   │   └── index.tsx
+│   │   ├── livestock-health/                  # GAP-008
+│   │   │   └── index.tsx
+│   │   ├── livestock-reproductive/            # GAP-008
+│   │   │   └── index.tsx
+│   │   └── retail-price-comparison/           # GAP-007
+│   │       └── index.tsx
+│   └── dashboard/
+│       └── investor-dashboard/                # GAP-006
+│           └── index.tsx
+├── services/
+│   └── fipe.service.ts                        # GAP-005
+├── app/
+│   └── api/
+│       ├── lots/
+│       │   └── [lotId]/
+│       │       ├── cost-simulation/
+│       │       │   └── route.ts               # GAP-002
+│       │       ├── bid-history/
+│       │       │   └── route.ts               # GAP-003
+│       │       └── market-comparison/
+│       │           └── route.ts               # GAP-004
+│       ├── vehicles/
+│       │   └── fipe/
+│       │       └── route.ts                   # GAP-005
+│       └── investor/
+│           └── dashboard/
+│               └── route.ts                   # GAP-006
+└── prisma/
+    ├── schema.prisma                          # Modelos principais
+    └── migrations/
+        └── gaps_implementation/
+            └── migration.sql                  # Novos modelos
+```
+
+---
+
+### MODELOS DE DADOS (Prisma)
+
+```prisma
+// Configuração de custos por leilão (GAP-002)
+model AuctionCostConfig {
+  id                BigInt   @id @default(autoincrement())
+  auctionId         BigInt
+  itbiPercent       Decimal  @default(3.0) @db.Decimal(5, 2)
+  registryFeeType   String   @default("table") // "fixed" | "table" | "percent"
+  registryFeeValue  Decimal? @db.Decimal(10, 2)
+  adminFeePercent   Decimal  @default(5.0) @db.Decimal(5, 2)
+  successFeePercent Decimal  @default(0.0) @db.Decimal(5, 2)
+  otherFeesEstimate Decimal  @default(2000) @db.Decimal(10, 2)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  auction           Auction  @relation(fields: [auctionId], references: [id])
+}
+
+// Cache de preços FIPE (GAP-005)
+model VehicleFipePrice {
+  id            BigInt   @id @default(autoincrement())
+  fipeCode      String   @db.VarChar(20)
+  referenceDate DateTime
+  brand         String   @db.VarChar(100)
+  model         String   @db.VarChar(200)
+  year          Int
+  fuel          String   @db.VarChar(50)
+  price         Decimal  @db.Decimal(12, 2)
+  fetchedAt     DateTime @default(now())
+  
+  @@unique([fipeCode, referenceDate])
+  @@index([fipeCode])
+}
+
+// Dashboard do Investidor (GAP-006)
+model InvestorDashboard {
+  id                     BigInt   @id @default(autoincrement())
+  userId                 BigInt   @unique
+  preferredCategories    Json?    // string[]
+  minPriceRange          Decimal? @db.Decimal(12, 2)
+  maxPriceRange          Decimal? @db.Decimal(12, 2)
+  preferredLocations     Json?    // {stateId, cityId}[]
+  alertFrequency         String   @default("daily") // "immediate" | "daily" | "weekly"
+  emailNotifications     Boolean  @default(true)
+  pushNotifications      Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+// Lotes Salvos (GAP-006)
+model SavedLot {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt
+  lotId     BigInt
+  notes     String?  @db.Text
+  savedAt   DateTime @default(now())
+  
+  @@unique([userId, lotId])
+  @@index([userId])
+}
+
+// Alertas do Investidor (GAP-006)
+model InvestorAlert {
+  id             BigInt   @id @default(autoincrement())
+  userId         BigInt
+  name           String   @db.VarChar(100)
+  categoryIds    Json?    // BigInt[]
+  minPrice       Decimal? @db.Decimal(12, 2)
+  maxPrice       Decimal? @db.Decimal(12, 2)
+  minDiscount    Decimal? @db.Decimal(5, 2)
+  locationFilter Json?    // {stateId, cityId}[]
+  frequency      String   @default("daily")
+  isActive       Boolean  @default(true)
+  lastTriggered  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([userId])
+}
+
+// Registros de Saúde de Semoventes (GAP-008)
+model LivestockHealthRecord {
+  id                BigInt   @id @default(autoincrement())
+  lotId             BigInt
+  vaccineName       String   @db.VarChar(100)
+  vaccineDate       DateTime
+  nextDueDate       DateTime?
+  veterinarianName  String?  @db.VarChar(200)
+  veterinarianCrmv  String?  @db.VarChar(20)
+  documentUrl       String?  @db.VarChar(500)
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  
+  @@index([lotId])
+}
+
+// Histórico Reprodutivo (GAP-008)
+model LivestockReproductiveHistory {
+  id            BigInt   @id @default(autoincrement())
+  lotId         BigInt
+  eventType     String   @db.VarChar(50) // BIRTH, INSEMINATION, WEANING, etc.
+  eventDate     DateTime
+  offspringId   BigInt?
+  sireId        BigInt?
+  sireName      String?  @db.VarChar(200)
+  offspringInfo Json?
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  
+  @@index([lotId])
+}
+
+// Inspeção de Maquinário (GAP-007)
+model MachineryInspection {
+  id              BigInt   @id @default(autoincrement())
+  lotId           BigInt
+  inspectionDate  DateTime
+  inspectorName   String   @db.VarChar(200)
+  inspectorCrea   String?  @db.VarChar(20)
+  overallStatus   String   @default("pending") // pending, approved, attention, rejected
+  items           Json     // InspectionItem[]
+  recommendations String?  @db.Text
+  documentUrl     String?  @db.VarChar(500)
+  createdAt       DateTime @default(now())
+  
+  @@index([lotId])
+}
+
+// Certificações de Maquinário (GAP-007)
+model MachineryCertification {
+  id              BigInt   @id @default(autoincrement())
+  lotId           BigInt
+  certType        String   @db.VarChar(100)
+  certNumber      String?  @db.VarChar(100)
+  issuingBody     String   @db.VarChar(200)
+  issueDate       DateTime
+  expiryDate      DateTime?
+  status          String   @default("active") // active, expired, revoked
+  documentUrl     String?  @db.VarChar(500)
+  createdAt       DateTime @default(now())
+  
+  @@index([lotId])
+}
+```
+
+---
+
+### APIs IMPLEMENTADAS
+
+#### POST `/api/lots/[lotId]/cost-simulation`
+Calcula custos totais de aquisição baseado em valor de lance simulado.
+
+**Request:**
+```json
+{
+  "bidAmount": 500000,
+  "includeFinancing": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "bidAmount": 500000,
+    "breakdown": {
+      "itbi": { "label": "ITBI", "percent": 3, "value": 15000 },
+      "registry": { "label": "Registro", "value": 3500 },
+      "adminFee": { "label": "Taxa Administração", "percent": 5, "value": 25000 },
+      "successFee": { "label": "Taxa Sucesso", "percent": 0, "value": 0 },
+      "otherFees": { "label": "Outras Taxas", "value": 2000 }
+    },
+    "totalCosts": 45500,
+    "totalInvestment": 545500,
+    "costPercentage": 9.1
+  }
+}
+```
+
+#### GET `/api/lots/[lotId]/bid-history`
+Retorna histórico de lances anonimizado com estatísticas.
+
+**Query Params:**
+- `page`: Número da página (default: 1)
+- `limit`: Itens por página (default: 10)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "bids": [
+      {
+        "id": "bid_1",
+        "amount": 50000,
+        "participantId": "Participante #1",
+        "timeAgo": "há 5 minutos",
+        "isCurrentUser": false
+      }
+    ],
+    "stats": {
+      "totalBids": 15,
+      "uniqueParticipants": 8,
+      "averageBid": 45000,
+      "medianBid": 47000,
+      "largestIncrement": 5000
+    },
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 2,
+      "totalItems": 15
+    }
+  }
+}
+```
+
+#### GET `/api/lots/[lotId]/market-comparison`
+Retorna dados de comparação com mercado e score de oportunidade.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "marketPrice": {
+      "averagePricePerSqm": 15000,
+      "estimatedValue": 1500000,
+      "source": "FipeZap",
+      "referenceDate": "2025-12-01"
+    },
+    "comparison": {
+      "currentPrice": 900000,
+      "discount": 40,
+      "saving": 600000
+    },
+    "opportunityScore": 85,
+    "opportunityLabel": "Alta Oportunidade",
+    "similarSales": [...]
+  }
+}
+```
+
+#### GET `/api/vehicles/fipe`
+Busca dados da tabela FIPE.
+
+**Query Params:**
+- `brandId`: ID da marca
+- `modelId`: ID do modelo
+- `yearId`: ID do ano
+- `fipeCode`: Código FIPE direto
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "fipeCode": "001267-9",
+    "brand": "Toyota",
+    "model": "Corolla XEi 2.0 Flex",
+    "year": 2020,
+    "fuel": "Gasolina",
+    "price": 98500,
+    "referenceMonth": "dezembro/2025"
+  }
+}
+```
+
+#### GET/POST `/api/investor/dashboard`
+Gerencia dados do dashboard do investidor.
+
+**GET Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "overview": {
+      "savedLotsCount": 12,
+      "activeAlertsCount": 3,
+      "auctionsParticipated": 25,
+      "successRate": 32
+    },
+    "savedLots": [...],
+    "alerts": [...],
+    "statistics": {...},
+    "preferences": {...}
+  }
+}
+```
+
+---
+
+### TESTES RECOMENDADOS
+
+**Arquivos de Teste a Criar:**
+
+1. `tests/e2e/investor-analysis.spec.ts`
+   - Testar carregamento da seção de análise
+   - Testar navegação entre tabs
+   - Testar cálculos do simulador de custos
+
+2. `tests/e2e/fipe-integration.spec.ts`
+   - Testar busca de valores FIPE
+   - Testar cache de valores
+   - Testar comparação com lance atual
+
+3. `tests/e2e/investor-dashboard.spec.ts`
+   - Testar salvamento de lotes
+   - Testar criação de alertas
+   - Testar estatísticas
+
+4. `tests/unit/cost-simulator.spec.tsx`
+   - Testar cálculos de ITBI
+   - Testar cálculos de registro
+   - Testar totais
+
+5. `tests/unit/fipe-service.spec.ts`
+   - Testar integração com API FIPE
+   - Testar cache TTL
+   - Testar ajustes por quilometragem
+
+---
+
+**Status Final:** ✅ Implementação Completa dos 8 Gaps  
+**Próximos Passos:** 
+1. Executar migration no banco de dados
+2. Popular dados de teste
+3. Executar testes E2E
+4. Deploy em staging para validação

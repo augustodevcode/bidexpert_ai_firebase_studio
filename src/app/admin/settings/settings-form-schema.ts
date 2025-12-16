@@ -94,31 +94,47 @@ const VariableIncrementRuleSchema = z.object({
     increment: z.coerce.number(),
 });
 
+// Schema para RealtimeSettings (Tempo Real & Blockchain)
+const RealtimeSettingsSchema = z.object({
+    // Blockchain
+    blockchainEnabled: z.boolean().default(false),
+    blockchainNetwork: z.enum(['HYPERLEDGER', 'ETHEREUM', 'NONE']).default('NONE'),
+    
+    // Soft Close (Anti-Sniping) - Default da plataforma
+    softCloseEnabled: z.boolean().default(false),
+    softCloseMinutes: z.coerce.number().int().min(1).max(60).default(5),
+    
+    // Portal de Advogados
+    lawyerPortalEnabled: z.boolean().default(true),
+    lawyerMonetizationModel: z.enum(['SUBSCRIPTION', 'PAY_PER_USE', 'REVENUE_SHARE']).default('SUBSCRIPTION'),
+    lawyerSubscriptionPrice: z.coerce.number().int().min(0).optional().nullable(),
+    lawyerPerUsePrice: z.coerce.number().int().min(0).optional().nullable(),
+    lawyerRevenueSharePercent: z.coerce.number().min(0).max(100).optional().nullable(),
+});
+
 
 // Schema principal de configurações da plataforma
 export const platformSettingsFormSchema = z.object({
-  // General
-  siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}),
+  // General - siteTitle tem default para permitir edição parcial
+  siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}).default('BidExpert'),
   siteTagline: z.string().max(200, { message: "O tagline não pode exceder 200 caracteres."}).optional().nullable(),
-  logoUrl: z.string().url("URL do logo inválida.").optional().or(z.literal('')),
+  logoUrl: z.string().url("URL do logo inválida.").optional().nullable().or(z.literal('')),
   crudFormMode: z.enum(['modal', 'sheet']).optional().default('modal'),
 
-  // Realtime & Blockchain
-  blockchainEnabled: z.boolean().default(false),
-  lawyerMonetizationModel: z.enum(['SUBSCRIPTION', 'PAY_PER_USE', 'REVENUE_SHARE']).default('SUBSCRIPTION'),
-  softCloseEnabled: z.boolean().default(false),
-  softCloseMinutes: z.coerce.number().int().min(1).max(60).default(5),
+  // Realtime & Blockchain - Agora como objeto aninhado
+  realtimeSettings: RealtimeSettingsSchema.optional().nullable(),
   
-  // Relations
-  themes: z.array(ThemeSettingsSchema).optional(),
-  mapSettings: MapSettingsSchema.optional(),
-  biddingSettings: BiddingSettingsSchema.optional(),
-  platformPublicIdMasks: IdMasksSchema.optional(),
-  paymentGatewaySettings: PaymentGatewaySettingsSchema.optional(),
-  notificationSettings: NotificationSettingsSchema.optional(),
-  mentalTriggerSettings: MentalTriggerSettingsSchema.optional(),
-  sectionBadgeVisibility: SectionBadgeVisibilitySchema.optional(),
-  variableIncrementTable: z.array(VariableIncrementRuleSchema).optional(),
+  // Relations - nullable para aceitar null do banco de dados
+  themes: z.array(ThemeSettingsSchema).optional().nullable(),
+  mapSettings: MapSettingsSchema.optional().nullable(),
+  biddingSettings: BiddingSettingsSchema.optional().nullable(),
+  platformPublicIdMasks: IdMasksSchema.optional().nullable(),
+  paymentGatewaySettings: PaymentGatewaySettingsSchema.optional().nullable(),
+  notificationSettings: NotificationSettingsSchema.optional().nullable(),
+  mentalTriggerSettings: MentalTriggerSettingsSchema.optional().nullable(),
+  sectionBadgeVisibility: SectionBadgeVisibilitySchema.optional().nullable(),
+  variableIncrementTable: z.array(VariableIncrementRuleSchema).optional().nullable(),
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;
+export type RealtimeSettingsFormValues = z.infer<typeof RealtimeSettingsSchema>;

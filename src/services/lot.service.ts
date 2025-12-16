@@ -59,6 +59,7 @@ export class LotService {
   }
 
   private mapLotWithDetails(lot: any): Lot {
+    const primaryProcess = lot.judicialProcesses?.[0];
     return {
       ...lot,
       id: lot.id.toString(),
@@ -97,6 +98,22 @@ export class LotService {
             auctionId: s.auctionId.toString()
         }))
       } : undefined,
+      judicialProcesses: lot.judicialProcesses?.map((jp: any) => ({
+        ...jp,
+        id: jp.id.toString(),
+        tenantId: jp.tenantId.toString(),
+        courtId: jp.courtId?.toString(),
+        districtId: jp.districtId?.toString(),
+        branchId: jp.branchId?.toString(),
+        sellerId: jp.sellerId?.toString(),
+      })),
+      lotRisks: lot.lotRisks?.map((risk: any) => ({
+        ...risk,
+        id: risk.id.toString(),
+        lotId: risk.lotId.toString(),
+        tenantId: risk.tenantId.toString(),
+        verifiedBy: risk.verifiedBy?.toString() || null,
+      })),
       assets: lot.assets?.map((a: any) => ({
           ...a.asset,
           id: a.asset.id.toString(),
@@ -108,10 +125,15 @@ export class LotService {
           lotId: d.lotId.toString(),
           tenantId: d.tenantId.toString()
       })),
+      propertyMatricula: primaryProcess?.propertyMatricula || null,
+      propertyRegistrationNumber: lot.propertyRegistrationNumber || primaryProcess?.propertyRegistrationNumber || null,
+      actionType: primaryProcess?.actionType || null,
+      actionDescription: primaryProcess?.actionDescription || null,
+      actionCnjCode: primaryProcess?.actionCnjCode || null,
       // UI Fields mapping
       totalArea: lot.assets?.reduce((acc: number, curr: any) => acc + (Number(curr.asset.totalArea) || 0), 0) || null,
       type: lot.type || (lot.assets?.[0]?.asset?.categoryId ? 'IMOVEL' : 'OUTRO'),
-      occupancyStatus: lot.occupancyStatus || lot.assets?.[0]?.asset?.occupancyStatus || null
+      occupancyStatus: lot.occupancyStatus || lot.assets?.[0]?.asset?.occupationStatus || null
     } as Lot;
   }
 
@@ -133,12 +155,14 @@ export class LotService {
                         stages: { orderBy: { id: 'asc' } }
                     }
                 },
+                judicialProcesses: true,
                 lotPrices: true,
                 assets: {
                     include: {
                         asset: true
                     }
                 },
+                lotRisks: true,
                 documents: {
                     orderBy: { displayOrder: 'asc' }
                 }
@@ -180,12 +204,14 @@ export class LotService {
                         stages: { orderBy: { id: 'asc' } }
                     }
                 },
+                judicialProcesses: true,
                 lotPrices: true,
                 assets: {
                     include: {
                         asset: true
                     }
                 },
+                lotRisks: true,
                 documents: {
                     orderBy: { displayOrder: 'asc' }
                 }
@@ -390,6 +416,7 @@ export class LotService {
     try {
       const { 
         assetIds = [],
+        lotRisks = [],
         ...cleanData 
       } = data as any;
 
@@ -426,6 +453,23 @@ export class LotService {
               assignedBy: 'SYSTEM'
             }))
          });
+      }
+
+        if (Array.isArray(lotRisks) && lotRisks.length > 0) {
+          const prismaAny = this.prisma as unknown as Record<string, any>;
+          const lotRiskModel = prismaAny['lotRisk'] ?? prismaAny['lotRisks'];
+          await lotRiskModel.createMany({
+          data: lotRisks.map((risk: any) => ({
+            lotId,
+            tenantId: BigInt(tenantId),
+            riskType: risk.riskType,
+            riskLevel: risk.riskLevel,
+            riskDescription: risk.riskDescription,
+            mitigationStrategy: risk.mitigationStrategy || null,
+            verified: Boolean(risk.verified),
+            verifiedAt: risk.verified ? new Date() : null,
+          })),
+        });
       }
 
       return { success: true, message: 'Lote criado com sucesso', lotId: lotId.toString() };
@@ -465,10 +509,13 @@ export class LotService {
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const lotId = await this.resolveLotInternalId(id);
+      const lotRecord = await this.prisma.lot.findUnique({ where: { id: lotId }, select: { tenantId: true } });
+      const tenantForLot = lotRecord?.tenantId ?? BigInt(data.tenantId || 1);
       
       const { 
         assetIds = [],
         auctionId,
+        lotRisks,
         ...cleanData 
       } = data as any;
       
@@ -514,9 +561,29 @@ export class LotService {
               data: assetIdsBigInt.map(assetId => ({
                 lotId,
                 assetId,
-                tenantId: BigInt(cleanData.tenantId || 1),
+                tenantId: tenantForLot,
                 assignedBy: 'SYSTEM'
               }))
+            });
+          }
+        }
+
+        if (lotRisks !== undefined) {
+          const txAny = tx as unknown as Record<string, any>;
+          const lotRiskModel = txAny['lotRisk'] ?? txAny['lotRisks'];
+          await lotRiskModel.deleteMany({ where: { lotId } });
+          if (Array.isArray(lotRisks) && lotRisks.length > 0) {
+              await lotRiskModel.createMany({
+              data: lotRisks.map((risk: any) => ({
+                lotId,
+                tenantId: tenantForLot,
+                riskType: risk.riskType,
+                riskLevel: risk.riskLevel,
+                riskDescription: risk.riskDescription,
+                mitigationStrategy: risk.mitigationStrategy || null,
+                verified: Boolean(risk.verified),
+                verifiedAt: risk.verified ? new Date() : null,
+              })),
             });
           }
         }

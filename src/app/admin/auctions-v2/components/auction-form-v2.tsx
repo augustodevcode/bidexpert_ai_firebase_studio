@@ -1,11 +1,16 @@
 // src/app/admin/auctions-v2/components/auction-form-v2.tsx
+/**
+ * @fileoverview Formulário de leilão V2 com preview de mapa, vínculo à biblioteca de mídia e validações condicionais.
+ */
 'use client';
 
-import { useMemo, useTransition, useState, useEffect } from 'react';
+import { useMemo, useTransition, useState, useEffect, useRef, useCallback } from 'react';
+import type { Map as LeafletMap } from 'leaflet';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -14,10 +19,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, PlusCircle, Search, Trash2 } from 'lucide-react';
+import { Loader2, PlusCircle, Search, Trash2, Image as ImageIcon, XCircle } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
 import { consultaCepAction } from '@/lib/actions/cep';
 import { useToast } from '@/hooks/use-toast';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import type {
   Auction,
   AuctionFormData,
@@ -28,6 +34,7 @@ import type {
   JudicialProcess,
   AuctionStatus,
   AuctionStage,
+  MediaItem,
 } from '@/types';
 
 // Dynamic import for map to avoid SSR issues
@@ -62,6 +69,16 @@ const auctionStatusOptions = auctionStatusValues.map((value) => ({ value, label:
 const auctionTypeOptions = auctionTypeValues.map((value) => ({ value, label: value.replace(/_/g, ' ') }));
 const auctionMethodOptions = auctionMethodValues.map((value) => ({ value, label: value }));
 const participationOptions = participationValues.map((value) => ({ value, label: value }));
+
+const normalizeCoordinate = (value?: string | number | bigint | { toString?: () => string } | null): number | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'bigint') return Number(value);
+  const asString = typeof value === 'object' && value !== null && 'toString' in value && typeof value.toString === 'function'
+    ? value.toString()
+    : value;
+  const parsed = typeof asString === 'string' ? Number(asString) : (asString as number);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 const toDateTimeLocal = (value?: string | Date | null) => {
   if (!value) {
@@ -192,6 +209,15 @@ interface LocationMapPreviewProps {
 function LocationMapPreview({ latitude, longitude, setValue }: LocationMapPreviewProps) {
   const [isClient, setIsClient] = useState(false);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+
+  const hasCoordinates = typeof latitude === 'number' && typeof longitude === 'number' && !Number.isNaN(latitude) && !Number.isNaN(longitude);
+  const center: [number, number] = [
+    hasCoordinates ? (latitude as number) : -14.235,
+    hasCoordinates ? (longitude as number) : -51.9253,
+  ];
+  const zoom = hasCoordinates ? 16 : 4;
 
   useEffect(() => {
     setIsClient(true);
@@ -214,28 +240,44 @@ function LocationMapPreview({ latitude, longitude, setValue }: LocationMapPrevie
     });
   }, []);
 
+  useEffect(() => {
+    if (!mapRef.current) return;
+    mapRef.current.invalidateSize();
+    if (hasCoordinates) {
+      mapRef.current.flyTo(center, 16, { duration: 0.45 });
+    }
+  }, [center[0], center[1], hasCoordinates, mapReady]);
+
   if (!isClient || !leafletLoaded) {
     return <div className="h-72 w-full bg-muted animate-pulse rounded-md flex items-center justify-center text-muted-foreground">Carregando mapa...</div>;
   }
 
-  const center: [number, number] = [
-    latitude || -14.235, // Default to center of Brazil
-    longitude || -51.9253
-  ];
-  const zoom = latitude && longitude ? 15 : 4;
-
   return (
     <MapContainer 
+      ref={mapRef}
       key={`${center.join('-')}-${zoom}`} 
       center={center} 
       zoom={zoom} 
       scrollWheelZoom={true} 
       className="h-72 w-full rounded-md z-0 border border-border"
+      data-testid="auction-location-map"
+      data-has-coordinates={hasCoordinates ? 'true' : 'false'}
+      whenReady={() => {
+        const target = mapRef.current;
+        if (!target) return;
+        setMapReady(true);
+        setTimeout(() => {
+          target.invalidateSize();
+          if (hasCoordinates) {
+            target.flyTo(center, 16, { duration: 0.45 });
+          }
+        }, 80);
+      }}
       // @ts-ignore - onClick exists but not typed
       onClick={(e: any) => {
         if (e.latlng) {
-          setValue('latitude', e.latlng.lat);
-          setValue('longitude', e.latlng.lng);
+          setValue('latitude', Number(e.latlng.lat));
+          setValue('longitude', Number(e.latlng.lng));
         }
       }}
     >
@@ -244,9 +286,9 @@ function LocationMapPreview({ latitude, longitude, setValue }: LocationMapPrevie
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {latitude && longitude && (
+      {hasCoordinates && (
         // @ts-ignore
-        <Marker position={[latitude, longitude]} />
+        <Marker position={[center[0], center[1]]} />
       )}
     </MapContainer>
   );
@@ -296,8 +338,8 @@ export default function AuctionFormV2({
     auctioneerId: initialData?.auctioneerId ?? '',
     sellerId: initialData?.sellerId ?? '',
     judicialProcessId: initialData?.judicialProcessId ?? '',
-    latitude: (initialData as Record<string, unknown>)?.latitude as number ?? null,
-    longitude: (initialData as Record<string, unknown>)?.longitude as number ?? null,
+    latitude: normalizeCoordinate((initialData as Record<string, unknown>)?.latitude as number | string | null),
+    longitude: normalizeCoordinate((initialData as Record<string, unknown>)?.longitude as number | string | null),
     stateId: initialData?.stateId ?? '',
     cityId: initialData?.cityId ?? '',
     zipCode: initialData?.zipCode ?? '',
@@ -324,93 +366,130 @@ export default function AuctionFormV2({
   const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
   const watchedLatitude = useWatch({ control: form.control, name: 'latitude' });
   const watchedLongitude = useWatch({ control: form.control, name: 'longitude' });
+  const watchedImageId = useWatch({ control: form.control, name: 'imageMediaId' });
   const citiesForState = useMemo(
     () => (selectedStateId ? allCities.filter((city) => city.stateId === selectedStateId) : []),
     [selectedStateId, allCities]
   );
   const [isCepPending, startCepTransition] = useTransition();
   const { toast } = useToast();
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+  const initialImageUrl = (initialData as Record<string, unknown> | null)?.imageUrl as string | undefined;
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialImageUrl ?? null);
+  const [isAutoGeocodeDone, setIsAutoGeocodeDone] = useState(false);
 
-  const handleCepLookup = () => {
-    const currentZipCode = form.getValues('zipCode');
-    if (!currentZipCode || currentZipCode.replace(/\D/g, '').length !== 8) {
-      toast({ 
-        title: 'CEP inválido', 
-        description: 'Por favor, insira um CEP com 8 dígitos.', 
-        variant: 'destructive'
-      });
+  useEffect(() => {
+    const img = (initialData as Record<string, unknown> | null)?.imageUrl as string | undefined;
+    if (img) {
+      setImagePreviewUrl(img);
+    }
+  }, [initialData]);
+
+  const runCepAndGeocode = useCallback(async (zip: string, markDirty = true) => {
+    if (!zip || zip.replace(/\D/g, '').length !== 8) {
+      toast({ title: 'CEP inválido', description: 'Por favor, insira um CEP com 8 dígitos.', variant: 'destructive' });
       return;
     }
 
-    startCepTransition(async () => {
-      const result = await consultaCepAction(currentZipCode);
-      if (result.success && result.data) {
-        const { uf, localidade, logradouro, bairro } = result.data;
-        
-        // Set street and neighborhood from CEP lookup
-        if (logradouro) {
-          form.setValue('street', logradouro, { shouldDirty: true });
-        }
-        if (bairro) {
-          form.setValue('neighborhood', bairro, { shouldDirty: true });
-        }
-        
-        // Find and set state
-        const foundState = states.find(s => s.uf === uf);
-        if (foundState) {
-          form.setValue('stateId', foundState.id, { shouldDirty: true });
-          
-          // Find city filtering by stateId (more reliable than stateUf)
-          const normalizedLocalidade = localidade
+    const result = await consultaCepAction(zip);
+    if (result.success && result.data) {
+      const { uf, localidade, logradouro, bairro } = result.data;
+
+      if (logradouro) {
+        form.setValue('street', logradouro, { shouldDirty: markDirty });
+      }
+      if (bairro) {
+        form.setValue('neighborhood', bairro, { shouldDirty: markDirty });
+      }
+
+      const foundState = states.find((s) => s.uf === uf);
+      if (foundState) {
+        form.setValue('stateId', foundState.id, { shouldDirty: markDirty });
+
+        const normalizedLocalidade = localidade
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .trim();
+
+        const foundCity = allCities.find((c) => {
+          if (c.stateId !== foundState.id) return false;
+          const normalizedCityName = c.name
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase()
             .trim();
-          
-          const foundCity = allCities.find(c => {
-            if (c.stateId !== foundState.id) return false;
-            const normalizedCityName = c.name
-              .normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .toLowerCase()
-              .trim();
-            return normalizedCityName === normalizedLocalidade;
-          });
-          
-          if (foundCity) {
-            form.setValue('cityId', foundCity.id, { shouldDirty: true });
-          }
-        }
-
-        // Geocode the address to get coordinates for the map
-        try {
-          const query = encodeURIComponent(`${logradouro}, ${localidade}, ${uf}, Brazil`);
-          const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
-          const geoData = await geoResponse.json();
-          if (geoData && geoData.length > 0) {
-            const { lat, lon } = geoData[0];
-            form.setValue('latitude', parseFloat(lat), { shouldDirty: true });
-            form.setValue('longitude', parseFloat(lon), { shouldDirty: true });
-          }
-        } catch (geoError) {
-          console.error("Geocoding error:", geoError);
-        }
-
-        toast({ 
-          title: 'Endereço encontrado!', 
-          description: `${logradouro}, ${bairro} - ${localidade}/${uf}` 
+          return normalizedCityName === normalizedLocalidade;
         });
-      } else {
-        toast({ 
-          title: 'CEP não encontrado', 
-          description: result.message, 
-          variant: 'destructive'
-        });
+
+        if (foundCity) {
+          form.setValue('cityId', foundCity.id, { shouldDirty: markDirty });
+        }
       }
+
+      try {
+        const query = encodeURIComponent(`${logradouro}, ${localidade}, ${uf}, Brazil`);
+        const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+        const geoData = await geoResponse.json();
+        if (geoData && geoData.length > 0) {
+          const { lat, lon } = geoData[0];
+          form.setValue('latitude', parseFloat(lat), { shouldDirty: markDirty });
+          form.setValue('longitude', parseFloat(lon), { shouldDirty: markDirty });
+        }
+      } catch (geoError) {
+        console.error('Geocoding error:', geoError);
+      }
+
+      toast({ title: 'Endereço encontrado!', description: `${logradouro}, ${bairro} - ${localidade}/${uf}` });
+    } else {
+      toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive' });
+    }
+  }, [allCities, states, form, toast]);
+
+  useEffect(() => {
+    const lat = form.getValues('latitude');
+    const lon = form.getValues('longitude');
+    const zip = form.getValues('zipCode');
+
+    const hasCoords = normalizeCoordinate(lat) !== null && normalizeCoordinate(lon) !== null;
+    if (hasCoords || isAutoGeocodeDone) return;
+    if (!zip || zip.replace(/\D/g, '').length !== 8) return;
+
+    setIsAutoGeocodeDone(true);
+    startCepTransition(async () => {
+      await runCepAndGeocode(zip, false);
+    });
+  }, [form, startCepTransition, runCepAndGeocode, isAutoGeocodeDone]);
+
+  const handleCepLookup = () => {
+    const currentZipCode = cleanText(form.getValues('zipCode') ?? '');
+    if (!currentZipCode) return;
+    startCepTransition(async () => {
+      await runCepAndGeocode(currentZipCode, true);
     });
   };
 
   const handleAddStage = () => append(buildStage(fields.length));
+
+  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
+    if (!selectedItems?.length) {
+      setIsMediaDialogOpen(false);
+      return;
+    }
+    const [selected] = selectedItems;
+    if (selected?.id) {
+      form.setValue('imageMediaId', String(selected.id), { shouldDirty: true, shouldValidate: true });
+    }
+    if (selected?.urlOriginal) {
+      setImagePreviewUrl(selected.urlOriginal);
+    }
+    setIsMediaDialogOpen(false);
+  };
+
+  const handleClearMedia = () => {
+    form.setValue('imageMediaId', '', { shouldDirty: true, shouldValidate: true });
+    setImagePreviewUrl(null);
+  };
 
   const handleFormSubmit = form.handleSubmit(async (values) => {
     const imageMediaIdValue = cleanText(values.imageMediaId);
@@ -823,11 +902,63 @@ export default function AuctionFormV2({
                   name="imageMediaId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Media ID</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Opcional" {...field} />
-                      </FormControl>
-                      <FormMessage />
+                      <FormLabel>Imagem de destaque</FormLabel>
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start">
+                        <div className="relative h-28 w-full md:w-36 rounded-md border bg-muted overflow-hidden" data-testid="auction-image-preview-wrapper">
+                          {imagePreviewUrl ? (
+                            <Image
+                              src={imagePreviewUrl}
+                              alt="Pré-visualização da imagem do leilão"
+                              fill
+                              className="object-cover"
+                              data-testid="auction-image-preview"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-muted-foreground text-xs">
+                              <ImageIcon className="mr-2 h-4 w-4" />
+                              Sem imagem vinculada
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setIsMediaDialogOpen(true)}
+                              data-testid="auction-media-library-button"
+                            >
+                              <ImageIcon className="mr-2 h-4 w-4" />
+                              Vincular da biblioteca
+                            </Button>
+                            {imagePreviewUrl || watchedImageId ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleClearMedia}
+                                data-testid="auction-media-clear-button"
+                              >
+                                <XCircle className="mr-1.5 h-4 w-4" />
+                                Remover
+                              </Button>
+                            ) : null}
+                          </div>
+                          <FormControl>
+                            <Input
+                              placeholder="ID de mídia ou use a biblioteca"
+                              {...field}
+                              value={field.value ?? ''}
+                              data-testid="auction-media-id-input"
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Utilize a biblioteca de mídia para salvar a imagem de capa do leilão e manter a consistência visual.
+                          </p>
+                          <FormMessage />
+                        </div>
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -1011,6 +1142,12 @@ export default function AuctionFormV2({
           </Button>
         </div>
       </form>
+      <ChooseMediaDialog
+        isOpen={isMediaDialogOpen}
+        onOpenChange={setIsMediaDialogOpen}
+        onMediaSelect={handleMediaSelect}
+        allowMultiple={false}
+      />
     </Form>
   );
 }

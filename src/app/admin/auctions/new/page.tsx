@@ -53,7 +53,15 @@ function NewAuctionPageContent() {
   const loadInitialData = useCallback(async () => {
     setIsLoadingData(true);
     try {
-      const [auctioneers, sellers, states, cities, categories, judicialProcesses] = await Promise.all([
+      console.log('Fetching data for NewAuctionPage...');
+      const [
+        auctioneersResult,
+        sellersResult,
+        statesResult,
+        citiesResult,
+        categoriesResult,
+        judicialProcessesResult
+      ] = await Promise.allSettled([
         getAuctioneers(),
         getSellers(),
         getStates(),
@@ -61,9 +69,43 @@ function NewAuctionPageContent() {
         getLotCategories(),
         getJudicialProcesses(),
       ]);
-      setDependencies({ auctioneers, sellers, states, allCities: cities, categories, judicialProcesses });
+
+      const processResult = <T,>(result: PromiseSettledResult<T>, name: string, fallback: T): T => {
+        if (result.status === 'fulfilled') {
+          return result.value;
+        } else {
+          console.error(`Failed to fetch ${name}:`, result.reason);
+          toast({
+            title: `Erro ao carregar ${name}`,
+            description: 'Dados indisponíveis. O formulário pode estar limitado.',
+            variant: 'destructive'
+          });
+          return fallback;
+        }
+      };
+
+      const auctioneers = processResult(auctioneersResult, 'Leiloeiros', []);
+      const sellers = processResult(sellersResult, 'Comitentes', []);
+      const states = processResult(statesResult, 'Estados', []);
+      const cities = processResult(citiesResult, 'Cidades', []);
+      const categories = processResult(categoriesResult, 'Categorias', []);
+      const judicialProcesses = processResult(judicialProcessesResult, 'Processos', []);
+
+      setDependencies({
+        auctioneers,
+        sellers,
+        states,
+        allCities: cities,
+        categories,
+        judicialProcesses
+      });
     } catch (error) {
-      toast({ title: "Erro ao Carregar Dados", description: "Não foi possível carregar os dados necessários para criar um leilão.", variant: "destructive" });
+      console.error("Critical error in NewAuctionPage loadInitialData:", error);
+      toast({ title: "Erro Crítico", description: "Falha ao inicializar a página.", variant: "destructive" });
+      // Fallback to allow rendering
+      setDependencies({
+        auctioneers: [], sellers: [], states: [], allCities: [], categories: [], judicialProcesses: []
+      });
     } finally {
       setIsLoadingData(false);
     }
@@ -75,7 +117,7 @@ function NewAuctionPageContent() {
 
   const handleSave = async () => {
     if (formRef.current) {
-        await formRef.current.requestSubmit();
+      await formRef.current.requestSubmit();
     }
   };
 
@@ -86,16 +128,16 @@ function NewAuctionPageContent() {
       toast({ title: 'Sucesso!', description: 'Leilão criado com sucesso. Você será redirecionado para a edição.' });
       router.push(`/admin/auctions/${result.auctionId}/edit`);
     } else {
-      toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive'});
+      toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
     }
     setIsSubmitting(false);
     return result;
   }
-  
+
   if (isLoadingData || !dependencies) {
-      return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
+    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
   }
-  
+
   const handleAddNewEntity = (entity: 'auctioneer' | 'seller' | 'judicialProcess' | 'category') => {
     setSubform(entity);
   }
@@ -106,84 +148,84 @@ function NewAuctionPageContent() {
   }
 
   return (
-     <>
-        <FormPageLayout
-            formTitle="Novo Leilão"
-            formDescription="Preencha os detalhes para criar um novo leilão."
-            icon={Gavel}
-            isViewMode={false}
-            isSubmitting={isSubmitting}
-            isValid={formRef.current?.formState.isValid ?? false}
-            onSave={handleSave}
-            onCancel={() => router.push('/admin/auctions')}
-        >
-            <AuctionForm
-                formRef={formRef}
-                auctioneers={dependencies.auctioneers}
-                sellers={dependencies.sellers}
-                states={dependencies.states}
-                allCities={dependencies.allCities}
-                categories={dependencies.categories}
-                judicialProcesses={dependencies.judicialProcesses}
-                onSubmitAction={handleCreateAuction}
-                onAddNewEntity={handleAddNewEntity}
-                formTitle=''
-                formDescription=''
-            />
-        </FormPageLayout>
+    <>
+      <FormPageLayout
+        formTitle="Novo Leilão"
+        formDescription="Preencha os detalhes para criar um novo leilão."
+        icon={Gavel}
+        isViewMode={false}
+        isSubmitting={isSubmitting}
+        isValid={formRef.current?.formState.isValid ?? false}
+        onSave={handleSave}
+        onCancel={() => router.push('/admin/auctions')}
+      >
+        <AuctionForm
+          formRef={formRef}
+          auctioneers={dependencies.auctioneers}
+          sellers={dependencies.sellers}
+          states={dependencies.states}
+          allCities={dependencies.allCities}
+          categories={dependencies.categories}
+          judicialProcesses={dependencies.judicialProcesses}
+          onSubmitAction={handleCreateAuction}
+          onAddNewEntity={handleAddNewEntity}
+          formTitle=''
+          formDescription=''
+        />
+      </FormPageLayout>
 
-        <CrudFormContainer
-          isOpen={!!subform}
-          onClose={() => setSubform(null)}
-          title={`Novo(a) ${subform === 'auctioneer' ? 'Leiloeiro' : subform === 'seller' ? 'Comitente' : subform === 'judicialProcess' ? 'Processo Judicial' : 'Categoria'}`}
-          description="Preencha os dados abaixo. Após salvar, este registro estará disponível para seleção."
-        >
-          {subform === 'seller' && (
-              <SellerForm
-                  allStates={dependencies.states}
-                  allCities={dependencies.allCities}
-                  judicialBranches={[]} 
-                  onSubmitAction={(data) => createSeller(data)}
-                  onSuccess={handleSubformSuccess}
-                  onCancel={() => setSubform(null)}
-              />
-          )}
-           {subform === 'auctioneer' && (
-              <AuctioneerForm
-                  allStates={dependencies.states}
-                  allCities={dependencies.allCities}
-                  onSubmitAction={(data) => createAuctioneer(data)}
-                  onSuccess={handleSubformSuccess}
-                  onCancel={() => setSubform(null)}
-              />
-          )}
-           {subform === 'judicialProcess' && (
-              <JudicialProcessForm
-                  courts={[]} 
-                  allDistricts={[]}
-                  allBranches={[]}
-                  sellers={dependencies.sellers}
-                  onSubmitAction={(data) => createJudicialProcessAction(data)}
-                  onSuccess={handleSubformSuccess}
-                  onCancel={() => setSubform(null)}
-                  formTitle=""
-                  formDescription=""
-              />
-          )}
-          {subform === 'category' && (
-             <CategoryForm
-                  onSubmitAction={(data) => createLotCategory(data)}
-                  formTitle=""
-                  formDescription=""
-                  submitButtonText="Criar Categoria"
-              />
-          )}
-        </CrudFormContainer>
-     </>
+      <CrudFormContainer
+        isOpen={!!subform}
+        onClose={() => setSubform(null)}
+        title={`Novo(a) ${subform === 'auctioneer' ? 'Leiloeiro' : subform === 'seller' ? 'Comitente' : subform === 'judicialProcess' ? 'Processo Judicial' : 'Categoria'}`}
+        description="Preencha os dados abaixo. Após salvar, este registro estará disponível para seleção."
+      >
+        {subform === 'seller' && (
+          <SellerForm
+            allStates={dependencies.states}
+            allCities={dependencies.allCities}
+            judicialBranches={[]}
+            onSubmitAction={(data) => createSeller(data)}
+            onSuccess={handleSubformSuccess}
+            onCancel={() => setSubform(null)}
+          />
+        )}
+        {subform === 'auctioneer' && (
+          <AuctioneerForm
+            allStates={dependencies.states}
+            allCities={dependencies.allCities}
+            onSubmitAction={(data) => createAuctioneer(data)}
+            onSuccess={handleSubformSuccess}
+            onCancel={() => setSubform(null)}
+          />
+        )}
+        {subform === 'judicialProcess' && (
+          <JudicialProcessForm
+            courts={[]}
+            allDistricts={[]}
+            allBranches={[]}
+            sellers={dependencies.sellers}
+            onSubmitAction={(data) => createJudicialProcessAction(data)}
+            onSuccess={handleSubformSuccess}
+            onCancel={() => setSubform(null)}
+            formTitle=""
+            formDescription=""
+          />
+        )}
+        {subform === 'category' && (
+          <CategoryForm
+            onSubmitAction={(data) => createLotCategory(data)}
+            formTitle=""
+            formDescription=""
+            submitButtonText="Criar Categoria"
+          />
+        )}
+      </CrudFormContainer>
+    </>
   );
 }
 
 
 export default function NewAuctionPage() {
-    return <NewAuctionPageContent />;
+  return <NewAuctionPageContent />;
 }

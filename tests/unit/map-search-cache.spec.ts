@@ -27,9 +27,8 @@ const createSessionStorageMock = () => {
 
 describe('map-search-cache helpers', () => {
   beforeEach(() => {
-    (globalThis as any).window = {
-      sessionStorage: createSessionStorageMock(),
-    };
+    const mockStorage = createSessionStorageMock();
+    vi.stubGlobal('sessionStorage', mockStorage);
   });
 
   afterEach(() => {

@@ -89,7 +89,7 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
     { label: 'Gerenciar Loteamento', href: `#lotting`, icon: Package },
     { label: 'Ver Habilitações', href: `#habilitations`, icon: Users },
     { label: 'Configurar Marketing', href: `#marketing`, icon: ExternalLink },
-    { label: 'Editar Leilão', href: `/admin/auctions/${identifier}/edit`, icon: Pencil },
+    { label: 'Editar Leilão', href: `/admin/auctions-v2/${identifier}`, icon: Pencil },
   ];
 
   const alerts = [] as { type: 'warning' | 'info'; message: string; action?: string }[];

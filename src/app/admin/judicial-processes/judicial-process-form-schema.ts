@@ -6,11 +6,29 @@
  * e a validação de um array de partes envolvidas.
  */
 import * as z from 'zod';
-import type { ProcessPartyType } from '@/types';
+import type { JudicialActionType, ProcessPartyType } from '@/types';
 
 const partyTypes: [ProcessPartyType, ...ProcessPartyType[]] = [
   'AUTOR', 'REU', 'ADVOGADO_AUTOR', 'ADVOGADO_REU', 'JUIZ', 'ESCRIVAO', 'PERITO', 'ADMINISTRADOR_JUDICIAL', 'TERCEIRO_INTERESSADO', 'OUTRO'
 ];
+
+const actionTypes: [JudicialActionType, ...JudicialActionType[]] = [
+  'USUCAPIAO',
+  'REMOCAO',
+  'HIPOTECA',
+  'DESPEJO',
+  'PENHORA',
+  'COBRANCA',
+  'INVENTARIO',
+  'DIVORCIO',
+  'OUTROS',
+];
+
+const optionalText = (max: number) =>
+  z
+    .union([z.string().trim().max(max), z.literal(''), z.null()])
+    .optional()
+    .transform((value) => (!value ? undefined : value));
 
 export const partySchema = z.object({
   id: z.string().optional(),
@@ -31,6 +49,14 @@ export const judicialProcessFormSchema = z.object({
   branchId: z.string().min(1, { message: "A vara é obrigatória."}),
   sellerId: z.string().optional().nullable(),
   parties: z.array(partySchema).min(1, "O processo deve ter pelo menos uma parte envolvida."),
+  propertyMatricula: optionalText(80),
+  propertyRegistrationNumber: optionalText(80),
+  actionType: z
+    .union([z.enum(actionTypes), z.literal(''), z.null()])
+    .optional()
+    .transform((value) => (!value ? undefined : value)),
+  actionDescription: optionalText(240),
+  actionCnjCode: optionalText(60),
 });
 
 export type JudicialProcessFormValues = z.infer<typeof judicialProcessFormSchema>;

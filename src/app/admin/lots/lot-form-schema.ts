@@ -6,8 +6,29 @@
  */
 import * as z from 'zod';
 import { lotStatusValues } from '@/lib/zod-enums';
+import type { LotRiskLevel, LotRiskType } from '@/types';
 
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
+
+const lotRiskTypes: [LotRiskType, ...LotRiskType[]] = [
+  'OCUPACAO_IRREGULAR',
+  'PENHORA',
+  'INSCRICAO_DIVIDA',
+  'RESTRICAO_AMBIENTAL',
+  'DOENCA_ACARAJADO',
+  'OUTRO',
+];
+
+const lotRiskLevels: [LotRiskLevel, ...LotRiskLevel[]] = ['CRITICO', 'ALTO', 'MEDIO', 'BAIXO'];
+
+const lotRiskSchema = z.object({
+  id: z.string().optional(),
+  riskType: z.enum(lotRiskTypes, { required_error: 'Selecione o tipo de risco.' }),
+  riskLevel: z.enum(lotRiskLevels, { required_error: 'Selecione o nível.' }),
+  riskDescription: z.string().min(5, 'Descreva o risco de forma sucinta.').max(300),
+  mitigationStrategy: z.string().max(240, 'Mitigação muito longa.').optional().nullable(),
+  verified: z.boolean().default(false).optional(),
+});
 
 const lotStageDetailsSchema = z.object({
   stageId: z.string(),
@@ -56,6 +77,8 @@ export const lotFormSchema = z.object({
   dataAiHint: z.string().max(100).optional().nullable(),
   sellerId: z.string().optional().nullable(),
   auctioneerId: z.string().optional().nullable(),
+
+  lotRisks: z.array(lotRiskSchema).optional(),
   
   stageDetails: z.array(lotStageDetailsSchema).optional(),
   

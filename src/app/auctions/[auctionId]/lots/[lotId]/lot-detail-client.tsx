@@ -14,7 +14,7 @@ import React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid, LotDocument } from '@/types';
+import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid, LotDocument, JudicialActionType, OccupationStatus, LotRisk, LotRiskLevel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import {
@@ -68,6 +68,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import BidExpertCard from '@/components/BidExpertCard';
+import { InvestorAnalysisSection } from '@/components/lots';
 import { ptBR } from 'date-fns/locale';
 
 
@@ -251,6 +252,48 @@ function hasProcessInfo(lot: Lot): boolean {
 }
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
+
+const occupancyLabels: Record<OccupationStatus, string> = {
+  OCCUPIED: 'Ocupado',
+  UNOCCUPIED: 'Desocupado',
+  UNCERTAIN: 'Não verificado',
+  SHARED_POSSESSION: 'Posse compartilhada',
+};
+
+const occupancyStyles: Record<OccupationStatus, string> = {
+  OCCUPIED: 'bg-amber-100 text-amber-900 border-amber-300',
+  UNOCCUPIED: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+  UNCERTAIN: 'bg-slate-100 text-slate-800 border-slate-300',
+  SHARED_POSSESSION: 'bg-blue-100 text-blue-800 border-blue-300',
+};
+
+const actionTypeLabels: Partial<Record<JudicialActionType, string>> = {
+  PENHORA: 'Penhora/Execução',
+  USUCAPIAO: 'Usucapião',
+  HIPOTECA: 'Hipoteca',
+  DESPEJO: 'Despejo',
+  REMOCAO: 'Remoção',
+  COBRANCA: 'Cobrança',
+  INVENTARIO: 'Inventário',
+  DIVORCIO: 'Divórcio',
+  OUTROS: 'Outros',
+};
+
+const riskLevelStyles: Record<LotRiskLevel, string> = {
+  CRITICO: 'bg-destructive/10 text-destructive border-destructive/40',
+  ALTO: 'bg-amber-100 text-amber-900 border-amber-300',
+  MEDIO: 'bg-primary/10 text-primary border-primary/30',
+  BAIXO: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+};
+
+const riskTypeLabels: Record<string, string> = {
+  OCUPACAO_IRREGULAR: 'Ocupação irregular',
+  PENHORA: 'Penhora/Gravame',
+  INSCRICAO_DIVIDA: 'Inscrição em dívida',
+  RESTRICAO_AMBIENTAL: 'Restrição ambiental',
+  DOENCA_ACARAJADO: 'Restrição sanitária',
+  OUTRO: 'Outro',
+};
 
 export default function LotDetailClientContent({
   lot: initialLot,
@@ -446,6 +489,12 @@ export default function LotDetailClientContent({
     return auction.lots.filter(relatedLot => relatedLot.id !== lot.id).slice(0, platformSettings.relatedLotsCount || 5);
   }, [auction, lot, platformSettings.relatedLotsCount]);
 
+  const highestRisk = useMemo<LotRisk | null>(() => {
+    if (!lot?.lotRisks || lot.lotRisks.length === 0) return null;
+    const priority: LotRiskLevel[] = ['CRITICO', 'ALTO', 'MEDIO', 'BAIXO'];
+    return [...lot.lotRisks].sort((a, b) => priority.indexOf(a.riskLevel as LotRiskLevel) - priority.indexOf(b.riskLevel as LotRiskLevel))[0];
+  }, [lot?.lotRisks]);
+
   const isJudicialAuction = auction.auctionType === 'JUDICIAL';
   const currentLotHasProcessInfo = hasProcessInfo(lot);
   const showLegalProcessTab = isJudicialAuction && currentLotHasProcessInfo;
@@ -472,6 +521,28 @@ export default function LotDetailClientContent({
                 <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>{getAuctionStatusText(lot.status)}</Badge>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2" data-ai-id="lot-legal-badges">
+                  { (lot.propertyMatricula || lot.propertyRegistrationNumber) && (
+                    <Badge variant="outline" className="border-primary/40 text-primary">
+                      Matrícula {lot.propertyMatricula || lot.propertyRegistrationNumber}
+                    </Badge>
+                  )}
+                  {lot.actionType && (
+                    <Badge variant="outline" className="border-blue-400 text-blue-700">
+                      {actionTypeLabels[lot.actionType as JudicialActionType] || lot.actionType}
+                    </Badge>
+                  )}
+                  {lot.occupancyStatus && (
+                    <Badge variant="outline" className={occupancyStyles[lot.occupancyStatus as OccupationStatus]}>
+                      Ocupação: {occupancyLabels[lot.occupancyStatus as OccupationStatus]}
+                    </Badge>
+                  )}
+                  {highestRisk && (
+                    <Badge variant="outline" className={riskLevelStyles[highestRisk.riskLevel as LotRiskLevel]}>
+                      Risco {highestRisk.riskLevel} · {riskTypeLabels[highestRisk.riskType] || highestRisk.riskType}
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
@@ -636,7 +707,87 @@ export default function LotDetailClientContent({
                     </Button>
                   </CardFooter>
                 </Card>
-                <Card className="shadow-lg"><CardHeader><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" />Detalhes do Lote</CardTitle></CardHeader><CardContent className="p-4 md:p-6 pt-0"><Tabs defaultValue="description" className="w-full"><TabsList className="flex w-full flex-wrap gap-1 mb-4"><TabsTrigger value="description">Descrição</TabsTrigger><TabsTrigger value="specification">Especificações</TabsTrigger><TabsTrigger value="legal">{legalTabTitle}</TabsTrigger><TabsTrigger value="seller">Comitente</TabsTrigger><TabsTrigger value="reviews">Avaliações</TabsTrigger><TabsTrigger value="questions">Perguntas</TabsTrigger></TabsList><TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent><TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent><TabsContent value="legal"><Card className="shadow-none border-0"><CardHeader className="px-1 pt-0"><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}</CardTitle></CardHeader><CardContent className="px-1 space-y-2 text-sm">{showLegalProcessTab && (<>{lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}{lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}{lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}{lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}{lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}{lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}{lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}{lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outras Informações/Links de Documentos:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}<Separator className="my-3" /></>)}{auction.documentsUrl && <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>}{!auction.documentsUrl && !showLegalProcessTab && (<p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>)}{auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (<p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>)}</CardContent></Card></TabsContent><TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller?.name || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller?.name} /></TabsContent><TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent><TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent></Tabs></CardContent></Card>
+                <Card className="shadow-lg">
+                  <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" />Detalhes do Lote</CardTitle></CardHeader>
+                  <CardContent className="p-4 md:p-6 pt-0">
+                    <Tabs defaultValue="description" className="w-full">
+                      <TabsList className="flex w-full flex-wrap gap-1 mb-4">
+                        <TabsTrigger value="description">Descrição</TabsTrigger>
+                        <TabsTrigger value="specification">Especificações</TabsTrigger>
+                        <TabsTrigger value="legal">{legalTabTitle}</TabsTrigger>
+                        <TabsTrigger value="seller">Comitente</TabsTrigger>
+                        <TabsTrigger value="reviews">Avaliações</TabsTrigger>
+                        <TabsTrigger value="questions">Perguntas</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
+                      <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
+                      <TabsContent value="legal">
+                        <Card className="shadow-none border-0">
+                          <CardHeader className="px-1 pt-0"><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}</CardTitle></CardHeader>
+                          <CardContent className="px-1 space-y-3 text-sm">
+                            {showLegalProcessTab && (
+                              <>
+                                <div className="space-y-2">
+                                  {lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}
+                                  {lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}
+                                  {lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}
+                                  {lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}
+                                  {(lot.propertyMatricula || lot.propertyRegistrationNumber) && <p><strong className="text-foreground">Matrícula / Registro:</strong> <span className="text-muted-foreground">{lot.propertyMatricula || lot.propertyRegistrationNumber}</span></p>}
+                                  {lot.actionType && <p><strong className="text-foreground">Tipo de Ação:</strong> <span className="text-muted-foreground">{actionTypeLabels[lot.actionType as JudicialActionType] || lot.actionType}</span></p>}
+                                  {lot.actionCnjCode && <p><strong className="text-foreground">CNJ/Órgão:</strong> <span className="text-muted-foreground">{lot.actionCnjCode}</span></p>}
+                                  {lot.actionDescription && <p><strong className="text-foreground">Resumo da Ação:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.actionDescription}</span></p>}
+                                  {lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}
+                                  {lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}
+                                  {lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outras Informações/Links de Documentos:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}
+                                </div>
+                                <Separator className="my-3" />
+                              </>
+                            )}
+
+                            {lot.lotRisks && lot.lotRisks.length > 0 && (
+                              <div className="space-y-2" data-ai-id="lot-risk-list">
+                                <h4 className="text-sm font-semibold flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Riscos identificados</h4>
+                                <div className="space-y-2">
+                                  {lot.lotRisks.map((risk) => (
+                                    <div key={risk.id} className={`border rounded-md p-3 flex flex-col gap-1 ${riskLevelStyles[risk.riskLevel as LotRiskLevel]}`}>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="font-semibold">{riskTypeLabels[risk.riskType] || risk.riskType}</span>
+                                        <span className="uppercase tracking-wide text-[11px]">{risk.riskLevel}</span>
+                                      </div>
+                                      <p className="text-sm text-foreground">{risk.riskDescription}</p>
+                                      {risk.mitigationStrategy && <p className="text-xs text-muted-foreground">Mitigação: {risk.mitigationStrategy}</p>}
+                                      {risk.verified && <span className="text-[11px] text-emerald-700">Verificado</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {auction.documentsUrl && (
+                              <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>
+                            )}
+                            {!auction.documentsUrl && !showLegalProcessTab && (
+                              <p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>
+                            )}
+                            {auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (
+                              <p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                      <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller?.name || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller?.name} /></TabsContent>
+                      <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
+                      <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
+                    </Tabs>
+                  </CardContent>
+                </Card>
+                
+                {/* Investor Analysis Section - Gaps Implementation */}
+                <InvestorAnalysisSection 
+                  lot={lot}
+                  auction={auction}
+                  platformSettings={platformSettings}
+                />
                 
                 {/* Documents Section */}
                 <Card className="shadow-lg" id="documents-section">

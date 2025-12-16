@@ -20,7 +20,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { judicialProcessFormSchema, type JudicialProcessFormValues } from './judicial-process-form-schema';
-import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, MediaItem, DocumentType } from '@/types';
+import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, MediaItem, DocumentType, JudicialActionType } from '@/types';
 import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -34,6 +34,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import DataValidationModal from '@/components/ai/data-validation-modal';
 import EntitySelector from '@/components/ui/entity-selector';
+import { Textarea } from '@/components/ui/textarea';
 import { getCourts } from '../courts/actions';
 import { getJudicialDistricts } from '../judicial-districts/actions';
 import { getJudicialBranches } from '../judicial-branches/actions';
@@ -61,6 +62,18 @@ const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
     { value: 'JUIZ', label: 'Juiz(a)' }, { value: 'ESCRIVAO', label: 'Escrivão(ã)' },
     { value: 'PERITO', label: 'Perito(a)' }, { value: 'ADMINISTRADOR_JUDICIAL', label: 'Administrador Judicial' },
     { value: 'TERCEIRO_INTERESSADO', label: 'Terceiro Interessado' }, { value: 'OUTRO', label: 'Outro' },
+];
+
+const actionTypeOptions: { value: JudicialActionType; label: string }[] = [
+  { value: 'PENHORA', label: 'Penhora / Execução' },
+  { value: 'USUCAPIAO', label: 'Usucapião' },
+  { value: 'HIPOTECA', label: 'Hipoteca' },
+  { value: 'DESPEJO', label: 'Despejo' },
+  { value: 'REMOCAO', label: 'Remoção' },
+  { value: 'COBRANCA', label: 'Cobrança' },
+  { value: 'INVENTARIO', label: 'Inventário' },
+  { value: 'DIVORCIO', label: 'Divórcio' },
+  { value: 'OUTROS', label: 'Outros' },
 ];
 
 async function toDataUri(url: string): Promise<string> {
@@ -126,6 +139,11 @@ export default function JudicialProcessForm({
       branchId: initialData?.branchId || '',
       sellerId: initialData?.sellerId || null,
       parties: initialData?.parties?.map(p => ({...p, id: p.id || `temp-${Math.random()}`})) || [{ name: '', partyType: 'AUTOR' }],
+      propertyMatricula: initialData?.propertyMatricula || '',
+      propertyRegistrationNumber: initialData?.propertyRegistrationNumber || '',
+      actionType: initialData?.actionType || '',
+      actionDescription: initialData?.actionDescription || '',
+      actionCnjCode: initialData?.actionCnjCode || '',
     },
   });
 
@@ -343,6 +361,63 @@ export default function JudicialProcessForm({
             <CardContent className="space-y-6 p-6 bg-secondary/30">
               <FormField control={form.control} name="processNumber" render={({ field }) => (<FormItem><FormLabel>Número do Processo<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="isElectronic" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Processo Eletrônico</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+
+              <Separator />
+              <h3 className="text-md font-semibold text-muted-foreground pt-2">Identificação do Imóvel e Ação</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="propertyMatricula" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Matrícula do Imóvel</FormLabel>
+                    <FormControl><Input placeholder="Ex: 12345 - Cartório de Registro" {...field} /></FormControl>
+                    <FormDescription>Ajuda a rastrear a matrícula diretamente no cartório.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="propertyRegistrationNumber" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nº de Registro/Transcrição</FormLabel>
+                    <FormControl><Input placeholder="Ex: R-4-12.345" {...field} /></FormControl>
+                    <FormDescription>Referência de registro auxiliar ao número de matrícula.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="actionType" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Ação Judicial</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value ?? undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo de ação" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {actionTypeOptions.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="actionCnjCode" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CNJ/Órgão</FormLabel>
+                    <FormControl><Input placeholder="Código CNJ ou órgão responsável" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+
+              <FormField control={form.control} name="actionDescription" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Resumo da Ação</FormLabel>
+                  <FormControl><Textarea placeholder="Contexto sucinto do pedido, fase e principais riscos." {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
               
               <Separator />
               <h3 className="text-md font-semibold text-muted-foreground pt-2">Localização e Comitente</h3>

@@ -1,0 +1,39 @@
+RESUMO FINAL - TESTES DE MAP SEARCH E CORREÇÕES
+DATA: 09/12/2025
+
+1. STATUS DOS TESTES
+--------------------
+Todos os testes E2E e Unitários do módulo Map Search estão passando (100% de sucesso).
+
+- Unitários (Vitest): 13/13 passaram.
+- E2E (Playwright): 5/5 passaram.
+
+2. AÇÕES REALIZADAS
+-------------------
+
+A. CRIAÇÃO DE DADOS DE TESTE (SEEDING)
+   - Criado script `scripts/seed-map-search-data.ts` para popular o banco de dados com:
+     - 1 Leilão Judicial (com 3 lotes geolocalizados em SP e RJ).
+     - 1 Venda Direta.
+     - 1 Tomada de Preços.
+   - O script respeita a integridade referencial e usa o Tenant ID '1'.
+   - Corrigidos erros de schema Prisma (campos renomeados: `modality` -> `auctionType`, `evaluationValue` -> `initialPrice`, etc.).
+
+B. CORREÇÕES NA APLICAÇÃO
+   - `src/app/map-search/_client.tsx`: Adicionado listener para evento sintético `bidexpert-map-visible-ids` para facilitar testes.
+   - `src/components/map-search-component.tsx`: Adicionado helper global `__BIDEXPERT_MAP_SEARCH_DEBUG` (apenas em dev/test) para controlar o mapa programaticamente (setView, getBounds) sem depender de gestos de mouse instáveis em CI.
+
+C. CORREÇÕES NOS TESTES E2E
+   - `tests/e2e/map-search-dataset.spec.ts`:
+     - Atualizado para usar o helper de debug para mover o mapa.
+     - Adicionado fallback para evento sintético.
+     - Adicionado wait explícito para garantir que o filtro espacial seja aplicado.
+   - `tests/e2e/map-search-layout.spec.ts`:
+     - Corrigido seletor de densidade (`data-density="default"`).
+   - `tests/e2e/map-views.spec.ts`:
+     - Aumentado timeout para 30s para acomodar carregamento de tiles do mapa.
+
+3. PRÓXIMOS PASSOS RECOMENDADOS
+-------------------------------
+- Manter o script de seed no repositório para facilitar a configuração de ambientes de teste futuros.
+- O helper de debug pode ser mantido pois está protegido por `process.env.NODE_ENV !== 'production'`.

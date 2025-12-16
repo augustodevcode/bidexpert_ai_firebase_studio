@@ -119,6 +119,7 @@ export class PlatformSettingsService {
                     mentalTriggerSettings: true,
                     sectionBadgeVisibility: true,
                     variableIncrementTable: true,
+                    realtimeSettings: true,
                 },
             });
         };
@@ -152,6 +153,7 @@ export class PlatformSettingsService {
                             mentalTriggerSettings: true,
                             sectionBadgeVisibility: true,
                             variableIncrementTable: true,
+                            realtimeSettings: true,
                         },
                     }),
                     data: createData,
@@ -280,7 +282,8 @@ export class PlatformSettingsService {
             mentalTriggerSettings, 
             sectionBadgeVisibility, 
             platformPublicIdMasks, 
-            variableIncrementTable, 
+            variableIncrementTable,
+            realtimeSettings,
             ...mainSettings 
         } = data;
 
@@ -399,6 +402,36 @@ export class PlatformSettingsService {
                         to: rule.to,
                         increment: rule.increment
                     }))
+                };
+            }
+
+            // RealtimeSettings - Configurações de Tempo Real & Blockchain
+            if (realtimeSettings) {
+                updateData.realtimeSettings = {
+                    upsert: {
+                        create: {
+                            blockchainEnabled: realtimeSettings.blockchainEnabled ?? false,
+                            blockchainNetwork: realtimeSettings.blockchainNetwork ?? 'NONE',
+                            softCloseEnabled: realtimeSettings.softCloseEnabled ?? false,
+                            softCloseMinutes: realtimeSettings.softCloseMinutes ?? 5,
+                            lawyerPortalEnabled: realtimeSettings.lawyerPortalEnabled ?? true,
+                            lawyerMonetizationModel: realtimeSettings.lawyerMonetizationModel ?? 'SUBSCRIPTION',
+                            lawyerSubscriptionPrice: realtimeSettings.lawyerSubscriptionPrice ?? null,
+                            lawyerPerUsePrice: realtimeSettings.lawyerPerUsePrice ?? null,
+                            lawyerRevenueSharePercent: realtimeSettings.lawyerRevenueSharePercent ?? null,
+                        },
+                        update: {
+                            blockchainEnabled: realtimeSettings.blockchainEnabled ?? false,
+                            blockchainNetwork: realtimeSettings.blockchainNetwork ?? 'NONE',
+                            softCloseEnabled: realtimeSettings.softCloseEnabled ?? false,
+                            softCloseMinutes: realtimeSettings.softCloseMinutes ?? 5,
+                            lawyerPortalEnabled: realtimeSettings.lawyerPortalEnabled ?? true,
+                            lawyerMonetizationModel: realtimeSettings.lawyerMonetizationModel ?? 'SUBSCRIPTION',
+                            lawyerSubscriptionPrice: realtimeSettings.lawyerSubscriptionPrice ?? null,
+                            lawyerPerUsePrice: realtimeSettings.lawyerPerUsePrice ?? null,
+                            lawyerRevenueSharePercent: realtimeSettings.lawyerRevenueSharePercent ?? null,
+                        }
+                    }
                 };
             }
 

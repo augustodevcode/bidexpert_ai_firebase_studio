@@ -27,26 +27,68 @@ export default function NewAssetPage() {
 
   const fetchPageData = useCallback(async () => {
     try {
-      const [processes, categories, sellers, states, cities] = await Promise.all([
+      console.log("Fetching data for NewAssetPage...");
+
+      const [
+        processesResult,
+        categoriesResult,
+        sellersResult,
+        statesResult,
+        citiesResult
+      ] = await Promise.allSettled([
         getJudicialProcesses(),
         getLotCategories(),
         getSellers(),
         getStates(),
         getCities(),
       ]);
-      
-      // Debug logging to find the Decimal object
-      console.error('Processes:', JSON.stringify(processes).substring(0, 200));
-      console.error('Categories:', JSON.stringify(categories).substring(0, 200));
-      console.error('Sellers:', JSON.stringify(sellers).substring(0, 200));
-      
-      setDependencies({ processes, categories, sellers, allStates: states, allCities: cities });
+
+      const processResult = (result: PromiseSettledResult<any>, name: string) => {
+        if (result.status === 'fulfilled') {
+          return result.value;
+        } else {
+          console.error(`Failed to fetch ${name}:`, result.reason);
+          toast({
+            title: `Erro ao carregar ${name}`,
+            description: 'Não foi possível carregar estes dados. O formulário pode estar limitado.',
+            variant: 'destructive'
+          });
+          return [];
+        }
+      };
+
+      const processes = processResult(processesResult, 'Processos Judiciais');
+      const categories = processResult(categoriesResult, 'Categorias');
+      const sellers = processResult(sellersResult, 'Comitentes');
+      const states = processResult(statesResult, 'Estados');
+      const cities = processResult(citiesResult, 'Cidades');
+
+      // Debug logging
+      if (processes.length > 0) console.log('Processes loaded:', processes.length);
+      if (categories.length > 0) console.log('Categories loaded:', categories.length);
+      if (sellers.length > 0) console.log('Sellers loaded:', sellers.length);
+
+      setDependencies({
+        processes,
+        categories,
+        sellers,
+        allStates: states,
+        allCities: cities
+      });
     } catch (e) {
-      console.error("Failed to load data for new asset page:", e);
-      toast({ title: 'Erro ao Carregar', description: 'Não foi possível buscar os dados necessários para criar um ativo.', variant: 'destructive'});
+      console.error("Critical failure in fetchPageData:", e);
+      toast({ title: 'Erro Crítico', description: 'Falha fatal ao inicializar a página.', variant: 'destructive' });
+      // Fallback to empty arrays to allow form rendering even in critical failure
+      setDependencies({
+        processes: [],
+        categories: [],
+        sellers: [],
+        allStates: [],
+        allCities: []
+      });
     }
   }, [toast]);
-  
+
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData]);
@@ -69,10 +111,10 @@ export default function NewAssetPage() {
         allCities={dependencies.allCities}
         onSubmitAction={createAsset}
         onSuccess={() => {
-            // Small delay to allow the success toast to be seen
-            setTimeout(() => {
-                router.push('/admin/assets');
-            }, 1500);
+          // Small delay to allow the success toast to be seen
+          setTimeout(() => {
+            router.push('/admin/assets');
+          }, 1500);
         }}
         onCancel={() => router.back()}
       />

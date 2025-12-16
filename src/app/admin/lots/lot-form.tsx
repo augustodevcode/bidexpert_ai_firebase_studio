@@ -25,8 +25,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, Auction, Asset, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus, LotCategory, SellerProfileInfo } from '@/types';
-import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature, Sparkles, DollarSign, Percent, Settings as SettingsIcon } from 'lucide-react';
+import type { Lot, Auction, Asset, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus, LotCategory, SellerProfileInfo, LotRiskType, LotRiskLevel } from '@/types';
+import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature, Sparkles, DollarSign, Percent, Settings as SettingsIcon, ShieldAlert, ClipboardCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { getAuctionStatusText, isValidImageUrl } from '@/lib/ui-helpers';
@@ -136,6 +136,11 @@ const LotForm = forwardRef<any, LotFormProps>(({
         stateId: initialData?.stateId || undefined,
         cityId: initialData?.cityId || undefined,
         inheritedMediaFromAssetId: initialData?.inheritedMediaFromAssetId || undefined,
+        lotRisks: initialData?.lotRisks?.map(risk => ({
+          ...risk,
+          id: risk.id || `temp-${Math.random()}`,
+          mitigationStrategy: risk.mitigationStrategy || '',
+        })) || [],
     },
   });
   
@@ -161,6 +166,11 @@ const LotForm = forwardRef<any, LotFormProps>(({
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "stageDetails",
+  });
+
+  const { fields: riskFields, append: appendRisk, remove: removeRisk } = useFieldArray({
+    control: form.control,
+    name: 'lotRisks',
   });
   
   const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
@@ -309,6 +319,26 @@ const LotForm = forwardRef<any, LotFormProps>(({
   }, [currentAvailableAssets, watchedAssetIds]);
   
   const assetSortOptions = [ { value: 'title_asc', label: 'Título A-Z' }, { value: 'title_desc', label: 'Título Z-A' }, { value: 'evaluationValue_asc', label: 'Valor Crescente' }, { value: 'evaluationValue_desc', label: 'Valor Decrescente' }];
+  const riskLevelStyles: Record<LotRiskLevel, string> = {
+    CRITICO: 'bg-destructive/10 text-destructive border-destructive/40',
+    ALTO: 'bg-amber-100 text-amber-900 border-amber-300',
+    MEDIO: 'bg-primary/10 text-primary border-primary/30',
+    BAIXO: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+  };
+  const riskTypeOptions: { value: LotRiskType; label: string }[] = [
+    { value: 'OCUPACAO_IRREGULAR', label: 'Ocupação irregular' },
+    { value: 'PENHORA', label: 'Penhora / Gravame' },
+    { value: 'INSCRICAO_DIVIDA', label: 'Inscrição em dívida' },
+    { value: 'RESTRICAO_AMBIENTAL', label: 'Restrição ambiental' },
+    { value: 'DOENCA_ACARAJADO', label: 'Restrição sanitária' },
+    { value: 'OUTRO', label: 'Outro' },
+  ];
+  const riskLevelOptions: { value: LotRiskLevel; label: string }[] = [
+    { value: 'CRITICO', label: 'Crítico' },
+    { value: 'ALTO', label: 'Alto' },
+    { value: 'MEDIO', label: 'Médio' },
+    { value: 'BAIXO', label: 'Baixo' },
+  ];
   const renderAssetGridItem = (asset: Asset) => (
     <Card key={asset.id} className="container-bem-grid-item">
         <CardHeader className="p-3"><div className="wrapper-bem-grid-image"><Image src={asset.imageUrl || 'https://placehold.co/400x300.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div><CardTitle className="title-bem-grid-item">{asset.title}</CardTitle><CardDescription className="description-bem-grid-item">ID: {asset.publicId || asset.id}</CardDescription></CardHeader>
@@ -361,6 +391,109 @@ const LotForm = forwardRef<any, LotFormProps>(({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField control={form.control} name="price" render={({ field }) => (<FormItem data-ai-id="lot-form-price-field"><FormLabel>Lance Inicial (R$)<span className="text-destructive">*</span></FormLabel><FormControl><div className="relative"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/><Input type="number" placeholder="5000.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>Este é o valor que iniciará o leilão para este lote.</FormDescription><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (<FormItem><FormLabel>Incremento Mínimo (R$)</FormLabel><FormControl><div className="relative"><Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/><Input type="number" placeholder="100.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>O valor mínimo que um lance deve ser acima do anterior.</FormDescription><FormMessage /></FormItem>)}/>
+                        </div>
+                      </section>
+                      
+                      <Separator />
+
+                      <section className="space-y-4" data-ai-id="lot-form-risks-section">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-primary border-b pb-2">Riscos do Lote</h3>
+                            <p className="text-sm text-muted-foreground">Classifique ocupação, gravames e restrições ambientais para orientar os compradores.</p>
+                          </div>
+                          <Button type="button" variant="outline" size="sm" onClick={() => appendRisk({ riskType: 'PENHORA', riskLevel: 'MEDIO', riskDescription: '', mitigationStrategy: '', verified: false })}>
+                            <ShieldAlert className="h-4 w-4 mr-2" /> Adicionar Risco
+                          </Button>
+                        </div>
+
+                        {riskFields.length === 0 && (
+                          <div className="p-4 border rounded-md text-sm text-muted-foreground flex items-center gap-2">
+                            <ClipboardCheck className="h-4 w-4" /> Nenhum risco cadastrado ainda.
+                          </div>
+                        )}
+
+                        <div className="space-y-3">
+                          {riskFields.map((field, index) => (
+                            <Card key={field.id} className="border-dashed">
+                              <CardContent className="p-4 space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                  <FormField control={form.control} name={`lotRisks.${index}.riskType`} render={({ field: f }) => (
+                                    <FormItem>
+                                      <FormLabel>Tipo de Risco</FormLabel>
+                                      <Select onValueChange={f.onChange} value={f.value}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Selecione" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {riskTypeOptions.map(opt => (
+                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )} />
+
+                                  <FormField control={form.control} name={`lotRisks.${index}.riskLevel`} render={({ field: f }) => (
+                                    <FormItem>
+                                      <FormLabel>Nível</FormLabel>
+                                      <Select onValueChange={f.onChange} value={f.value}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Nível" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {riskLevelOptions.map(opt => (
+                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )} />
+
+                                  <FormField control={form.control} name={`lotRisks.${index}.verified`} render={({ field: f }) => (
+                                    <FormItem className="flex flex-col justify-end gap-1">
+                                      <FormLabel>Verificado</FormLabel>
+                                      <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                                        <span className="text-sm text-muted-foreground">Confirmado pela diligência</span>
+                                        <Switch checked={f.value} onCheckedChange={f.onChange} />
+                                      </div>
+                                    </FormItem>
+                                  )} />
+                                </div>
+
+                                <FormField control={form.control} name={`lotRisks.${index}.riskDescription`} render={({ field: f }) => (
+                                  <FormItem>
+                                    <FormLabel>Descrição</FormLabel>
+                                    <FormControl><Textarea rows={3} placeholder="Resuma o risco identificado" {...f} value={f.value ?? ''} /></FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )} />
+
+                                <FormField control={form.control} name={`lotRisks.${index}.mitigationStrategy`} render={({ field: f }) => (
+                                  <FormItem>
+                                    <FormLabel>Mitigação Sugerida</FormLabel>
+                                    <FormControl><Input placeholder="Ex.: Regularização em andamento" {...f} value={f.value ?? ''} /></FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )} />
+
+                                <div className="flex justify-between items-center">
+                                  <div className={`text-xs px-3 py-1 rounded-full border ${riskLevelStyles[(form.getValues(`lotRisks.${index}.riskLevel`) as LotRiskLevel) || 'BAIXO']}`}>
+                                    Severidade: {form.getValues(`lotRisks.${index}.riskLevel`) || 'BAIXO'}
+                                  </div>
+                                  <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeRisk(index)}>
+                                    <Trash2 className="h-4 w-4 mr-2" /> Remover
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
                         </div>
                       </section>
                       

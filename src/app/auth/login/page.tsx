@@ -137,7 +137,10 @@ function LoginPageContent() {
                 });
 
                 setTimeout(() => {
-                    router.push(redirectUrl);
+                    // router.push(redirectUrl);
+                    // Use window.location.href for a hard redirect to ensure state is cleared and navigation succeeds
+                    window.location.href = redirectUrl;
+
                 }, 300);
 
             } else {
@@ -166,6 +169,23 @@ function LoginPageContent() {
                 <DevUserSelector onSelect={(u) => {
                     form.setValue('email', u.email);
                     form.setValue('password', u.passwordHint);
+
+                    // Auto-login logic
+                    const tenantId = selectedTenantId || (availableTenants.length > 0 ? availableTenants[0].id : undefined);
+                    if (tenantId) {
+                        if (!selectedTenantId) {
+                            setSelectedTenantId(tenantId);
+                            form.setValue('tenantId', tenantId);
+                        }
+                        toast({ title: "Auto-login", description: `Autenticando como ${u.roleName}...` });
+                        handleLogin({
+                            email: u.email,
+                            password: u.passwordHint,
+                            tenantId: tenantId
+                        });
+                    } else {
+                        toast({ title: "Atenção", description: "Selecione um tenant para continuar.", variant: "secondary" });
+                    }
                 }} />
 
                 <Form {...form}>
@@ -306,12 +326,12 @@ function DevUserSelector({ onSelect }: { onSelect: (u: any) => void }) {
                 if (u) onSelect(u);
             }}>
                 <SelectTrigger className="h-8 text-xs bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 border-dashed">
-                    <SelectValue placeholder="Selecione um usuário de teste..." />
+                    <SelectValue placeholder="Selecione para auto-login..." />
                 </SelectTrigger>
                 <SelectContent>
                     {users.map(u => (
                         <SelectItem key={u.email} value={u.email} className="text-xs">
-                            <span className="font-medium">{u.roleName}</span>: {u.email}
+                            <span className="font-medium">{u.roleName}</span>: {u.email} (Senha: {u.passwordHint})
                         </SelectItem>
                     ))}
                 </SelectContent>

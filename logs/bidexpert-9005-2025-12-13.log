@@ -1,0 +1,41 @@
+
+================================================================================
+[2025-12-13T03:41:01.401Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> npx prisma generate && next dev --port 9005 --hostname 0.0.0.0
+
+[STDERR] Environment variables loaded from .env
+[STDOUT] Prisma schema loaded from prisma\schema.prisma
+[STDERR] Error: Prisma schema validation - (get-dmmf wasm)
+Error code: P1012
+[1;91merror[0m: [1mError validating field `occupationUpdatedByUser` in model `Asset`: The relation field `occupationUpdatedByUser` on model `Asset` is missing an opposite relation field on the model `User`. Either run `prisma format` or add it manually.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:383[0m
+[1;94m   | [0m
+[1;94m382 | [0m  tenant                     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+[1;94m383 | [0m  [1;91moccupationUpdatedByUser    User?            @relation(fields: [occupationUpdatedBy], references: [id])[0m
+[1;94m384 | [0m  gallery                    AssetMedia[]
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `tenant` in model `LotRisk`: The relation field `tenant` on model `LotRisk` is missing an opposite relation field on the model `Tenant`. Either run `prisma format` or add it manually.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:578[0m
+[1;94m   | [0m
+[1;94m577 | [0m  lot                 Lot           @relation(fields: [lotId], references: [id], onDelete: Cascade)
+[1;94m578 | [0m  [1;91mtenant              Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)[0m
+[1;94m579 | [0m  verifiedByUser      User?         @relation(fields: [verifiedBy], references: [id])
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating field `verifiedByUser` in model `LotRisk`: The relation field `verifiedByUser` on model `LotRisk` is missing an opposite relation field on the model `User`. Either run `prisma format` or add it manually.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:579[0m
+[1;94m   | [0m
+[1;94m578 | [0m  tenant              Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+[1;94m579 | [0m  [1;91mverifiedByUser      User?         @relation(fields: [verifiedBy], references: [id])[0m
+[1;94m580 | [0m
+[1;94m   | [0m
+
+Validation Error Count: 3
+[Context: getDmmf]
+
+Prisma CLI Version : 6.19.0
+
+[2025-12-13T03:41:06.504Z] Processo encerrado com código 1

@@ -1,0 +1,436 @@
+// =============================================================================
+// PRISMA SCHEMA EXTENSION - Gaps Implementation
+// Description: New models and enums for the 8 critical gaps
+// Date: 2024-12-13
+// Version: 1.0.0
+// =============================================================================
+// INSTRUÇÕES: Copiar o conteúdo abaixo para o final do schema.prisma principal
+// =============================================================================
+
+// =============================================================================
+// ENUMS - Novos Enums para os Gaps
+// =============================================================================
+
+enum PropertyType {
+  APARTAMENTO
+  CASA
+  TERRENO
+  SALA_COMERCIAL
+  GALPAO
+  RURAL
+  OUTRO
+}
+
+enum InspectionStatus {
+  NAO_VERIFICADO
+  APROVADO
+  REPROVADO
+  NECESSITA_REPARO
+  NAO_APLICAVEL
+}
+
+enum ReproductiveEventType {
+  INSEMINACAO
+  COBERTURA
+  PARTO
+  DESMAME
+  PRENHEZ_CONFIRMADA
+}
+
+enum AlertFrequency {
+  INSTANT
+  DAILY
+  WEEKLY
+}
+
+// =============================================================================
+// FASE 1: IMÓVEIS - Gap 1.2 (Simulador de Custos)
+// =============================================================================
+
+model AuctionCostConfig {
+  id                    BigInt   @id @default(autoincrement())
+  auctionId             BigInt   @unique
+  tenantId              BigInt
+  
+  // Taxas Percentuais
+  successFeePercent     Decimal  @default(5.00) @db.Decimal(5, 2)
+  itbiPercent           Decimal  @default(3.00) @db.Decimal(5, 2)
+  registryFeePercent    Decimal  @default(1.50) @db.Decimal(5, 2)
+  
+  // Taxas Fixas
+  legalFeesFixed        Decimal? @db.Decimal(15, 2)
+  notaryFeesFixed       Decimal? @db.Decimal(15, 2)
+  
+  // Configurações por Estado
+  stateUf               String?  @db.VarChar(2)
+  customRules           Json?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  auction               Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([stateUf])
+}
+
+// =============================================================================
+// FASE 1: IMÓVEIS - Gap 1.3 (Indicadores de Mercado)
+// =============================================================================
+
+model MarketPriceIndex {
+  id                    BigInt   @id @default(autoincrement())
+  
+  // Localização
+  stateUf               String   @db.VarChar(2)
+  cityName              String?
+  neighborhood          String?
+  zipCodePrefix         String?  @db.VarChar(5)
+  
+  // Tipo de Imóvel
+  propertyType          PropertyType @default(OUTRO)
+  
+  // Preços
+  pricePerSquareMeter   Decimal  @db.Decimal(15, 2)
+  minPrice              Decimal? @db.Decimal(15, 2)
+  maxPrice              Decimal? @db.Decimal(15, 2)
+  medianPrice           Decimal? @db.Decimal(15, 2)
+  
+  // Metadados
+  sampleSize            Int?
+  dataSource            String?
+  referenceDate         DateTime
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  priceHistory          MarketPriceHistory[]
+
+  @@unique([stateUf, cityName, neighborhood, propertyType, referenceDate])
+  @@index([stateUf, cityName])
+  @@index([zipCodePrefix])
+  @@index([propertyType])
+}
+
+model MarketPriceHistory {
+  id                    BigInt   @id @default(autoincrement())
+  marketPriceIndexId    BigInt
+  pricePerSquareMeter   Decimal  @db.Decimal(15, 2)
+  referenceDate         DateTime
+  
+  marketPriceIndex      MarketPriceIndex @relation(fields: [marketPriceIndexId], references: [id], onDelete: Cascade)
+  
+  @@index([marketPriceIndexId])
+  @@index([referenceDate])
+}
+
+// =============================================================================
+// FASE 2: VEÍCULOS - Gap 2.2 (Avaliação FIPE)
+// =============================================================================
+
+model VehicleFipePrice {
+  id                    BigInt   @id @default(autoincrement())
+  
+  // Identificação do Veículo
+  fipeCode              String   @unique
+  brandName             String
+  modelName             String
+  year                  Int
+  fuelType              String?
+  
+  // Preços
+  fipePrice             Decimal  @db.Decimal(15, 2)
+  referenceMonth        String   @db.VarChar(7)
+  
+  // Cache
+  cachedAt              DateTime @default(now())
+  expiresAt             DateTime
+
+  @@index([brandName, modelName, year])
+  @@index([referenceMonth])
+}
+
+model AssetFipeEvaluation {
+  id                    BigInt   @id @default(autoincrement())
+  assetId               BigInt   @unique
+  
+  fipeCode              String?
+  fipePrice             Decimal? @db.Decimal(15, 2)
+  evaluationDate        DateTime @default(now())
+  mileageAdjustment     Decimal? @db.Decimal(15, 2)
+  conditionAdjustment   Decimal? @db.Decimal(15, 2)
+  adjustedPrice         Decimal? @db.Decimal(15, 2)
+  
+  asset                 Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  @@index([assetId])
+}
+
+// =============================================================================
+// FASE 3: ELETRÔNICOS - Gap 3.1 (Especificações Dinâmicas)
+// =============================================================================
+
+model CategorySpecTemplate {
+  id                    BigInt   @id @default(autoincrement())
+  categoryId            BigInt
+  subcategoryId         BigInt?
+  
+  // Template de specs (JSON array)
+  specFields            Json
+  
+  // Metadados
+  version               Int      @default(1)
+  isActive              Boolean  @default(true)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  category              LotCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory           Subcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+
+  @@unique([categoryId, subcategoryId])
+}
+
+// =============================================================================
+// FASE 3: ELETRÔNICOS - Gap 3.2 (Preços de Varejo)
+// =============================================================================
+
+model RetailPriceReference {
+  id                    BigInt   @id @default(autoincrement())
+  
+  // Identificação do Produto
+  productName           String   @db.VarChar(500)
+  brand                 String?
+  model                 String?
+  ean                   String?
+  gtin                  String?
+  
+  // Preços de Referência
+  averageRetailPrice    Decimal  @db.Decimal(15, 2)
+  minRetailPrice        Decimal? @db.Decimal(15, 2)
+  maxRetailPrice        Decimal? @db.Decimal(15, 2)
+  
+  // Fontes
+  source                String?
+  sourceUrl             String?  @db.VarChar(500)
+  
+  // Cache
+  cachedAt              DateTime @default(now())
+  expiresAt             DateTime
+
+  @@index([brand, model])
+  @@index([ean])
+}
+
+// =============================================================================
+// FASE 4: MÁQUINAS - Gap 4.1 & 4.2 (Inspeções e Certificações)
+// =============================================================================
+
+model MachineryInspection {
+  id                    BigInt   @id @default(autoincrement())
+  assetId               BigInt
+  
+  // Inspeção
+  inspectionDate        DateTime
+  inspectorName         String
+  inspectorCredential   String?
+  
+  // Checklist
+  hydraulicSystem       InspectionStatus @default(NAO_VERIFICADO)
+  transmission          InspectionStatus @default(NAO_VERIFICADO)
+  electricalSystem      InspectionStatus @default(NAO_VERIFICADO)
+  structuralIntegrity   InspectionStatus @default(NAO_VERIFICADO)
+  safetyFeatures        InspectionStatus @default(NAO_VERIFICADO)
+  
+  // Resultado
+  overallStatus         InspectionStatus
+  observations          String?  @db.Text
+  reportUrl             String?  @db.VarChar(500)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  asset                 Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  @@index([assetId])
+}
+
+model MachineryCertification {
+  id                    BigInt   @id @default(autoincrement())
+  assetId               BigInt
+  
+  certificationType     String
+  certificationNumber   String?
+  issuingBody           String?
+  issueDate             DateTime?
+  expirationDate        DateTime?
+  isValid               Boolean  @default(true)
+  documentUrl           String?  @db.VarChar(500)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  asset                 Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  @@index([assetId])
+  @@index([certificationType])
+}
+
+// =============================================================================
+// FASE 5: SEMOVENTES - Gap 5.1 (Saúde e Reprodução)
+// =============================================================================
+
+model LivestockHealthRecord {
+  id                    BigInt   @id @default(autoincrement())
+  assetId               BigInt
+  
+  // Vacinas
+  vaccinationType       String
+  applicationDate       DateTime
+  nextApplicationDate   DateTime?
+  veterinarianName      String?
+  veterinarianCrmv      String?
+  batchNumber           String?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  asset                 Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  @@index([assetId])
+}
+
+model LivestockReproductiveHistory {
+  id                    BigInt   @id @default(autoincrement())
+  assetId               BigInt
+  
+  eventType             ReproductiveEventType
+  eventDate             DateTime
+  details               String?  @db.Text
+  offspringCount        Int?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  asset                 Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  @@index([assetId])
+}
+
+// =============================================================================
+// FASE 5: DASHBOARD - Gap 5.2 (Dashboard Pessoal)
+// =============================================================================
+
+model InvestorDashboard {
+  id                    BigInt   @id @default(autoincrement())
+  userId                BigInt   @unique
+  
+  // Configurações
+  alertSettings         Json?
+  dashboardLayout       Json?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedLot {
+  id                    BigInt   @id @default(autoincrement())
+  userId                BigInt
+  lotId                 BigInt
+  
+  savedAt               DateTime @default(now())
+  notes                 String?  @db.Text
+  notifyOnPriceChange   Boolean  @default(true)
+  notifyOnStatusChange  Boolean  @default(true)
+  
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lot                   Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, lotId])
+  @@index([userId])
+  @@index([lotId])
+}
+
+model InvestorAlert {
+  id                    BigInt   @id @default(autoincrement())
+  userId                BigInt
+  
+  // Filtros do alerta
+  alertName             String
+  categoryIds           Json?
+  stateUfs              Json?
+  cityIds               Json?
+  minPrice              Decimal? @db.Decimal(15, 2)
+  maxPrice              Decimal? @db.Decimal(15, 2)
+  keywords              Json?
+  
+  // Notificação
+  notifyEmail           Boolean  @default(true)
+  notifyPush            Boolean  @default(false)
+  frequency             AlertFrequency @default(INSTANT)
+  
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  lastTriggeredAt       DateTime?
+  
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+model InvestorStatistics {
+  id                    BigInt   @id @default(autoincrement())
+  userId                BigInt   @unique
+  
+  // Estatísticas
+  totalBidsPlaced       Int      @default(0)
+  totalLotsWon          Int      @default(0)
+  totalAmountWon        Decimal  @default(0) @db.Decimal(15, 2)
+  totalAmountSpent      Decimal  @default(0) @db.Decimal(15, 2)
+  averageDiscount       Decimal? @db.Decimal(5, 2)
+  winRate               Decimal? @db.Decimal(5, 2)
+  
+  // ROI
+  estimatedPortfolioValue Decimal? @db.Decimal(15, 2)
+  
+  lastCalculatedAt      DateTime @default(now())
+  
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+// RELAÇÕES A ADICIONAR EM MODELOS EXISTENTES
+// =============================================================================
+
+// No model User, adicionar:
+// investorDashboard     InvestorDashboard?
+// savedLots             SavedLot[]
+// investorAlerts        InvestorAlert[]
+// investorStatistics    InvestorStatistics?
+
+// No model Auction, adicionar:
+// costConfig            AuctionCostConfig?
+
+// No model Asset, adicionar:
+// dynamicSpecs              Json?
+// fipeEvaluation            AssetFipeEvaluation?
+// machineryInspections      MachineryInspection[]
+// machineryCertifications   MachineryCertification[]
+// livestockHealthRecords    LivestockHealthRecord[]
+// reproductiveHistory       LivestockReproductiveHistory[]
+
+// No model Lot, adicionar:
+// savedByUsers          SavedLot[]
+
+// No model LotCategory, adicionar:
+// specTemplates         CategorySpecTemplate[]
+
+// No model Subcategory, adicionar:
+// specTemplates         CategorySpecTemplate[]
+
+// No model Tenant, adicionar:
+// auctionCostConfigs    AuctionCostConfig[]

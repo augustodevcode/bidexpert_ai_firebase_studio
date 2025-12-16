@@ -185,6 +185,31 @@ ALWAYS implement SEO best practices automatically for every page/component.
    - Conclude with a very concise summary of the changes you made.
    - Avoid emojis.
 
+# Playwright Testing Guidelines
+
+## Core Principles
+
+- Follow Playwright best practices
+- Do not add comments to each line of code
+- Write only the Playwright test steps for the scenario
+- Read and analyze the provided DOM context from the browser
+- Create one test at a time unless specifically asked for multiple tests
+- Keep test code clean and focused on the test scenario
+
+## Selector Strategy
+
+- Prioritize `getByRole()` and `getByText()` selectors over `locator()` when possible
+- Use semantic selectors that reflect user interaction patterns
+
+## Assertions
+
+- Don't add assertions unless explicitly asked
+
+## Test Data
+
+- For random test data, keep it short and compact
+- Don't write long texts
+
 ## Efficient Tool Usage
 
 ### CARDINAL RULES:

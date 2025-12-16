@@ -32,6 +32,7 @@ import type {
     NotificationSettings as PmNotificationSettings,
     MentalTriggerSettings as PmMentalTriggerSettings,
     SectionBadgeVisibility as PmSectionBadgeVisibility,
+    RealtimeSettings as PmRealtimeSettings,
     UserLotMaxBid as PmUserLotMaxBid,
     JudicialProcess as PmJudicialProcess,
     Court as PmCourt,
@@ -94,6 +95,10 @@ export type Asset = Omit<PmAsset, 'id' | 'categoryId' | 'subcategoryId' | 'judic
   bathrooms?: number | null;
   parkingSpaces?: number | null;
   hoursUsed?: number | null;
+  occupationStatus?: OccupationStatus | null;
+  occupationNotes?: string | null;
+  occupationLastVerified?: Date | string | null;
+  occupationUpdatedBy?: string | null;
   lotInfo?: string | null;
   lots?: any[];
 };
@@ -161,6 +166,13 @@ export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId
   occupancyStatus?: string | null;
   type?: string | null;
   assets?: Asset[];
+  judicialProcesses?: JudicialProcess[];
+  lotRisks?: LotRisk[];
+  propertyMatricula?: string | null;
+  propertyRegistrationNumber?: string | null;
+  actionType?: JudicialActionType | null;
+  actionDescription?: string | null;
+  actionCnjCode?: string | null;
   galleryImageUrls?: string[];
   documents?: LotDocument[];
   requiresDepositGuarantee?: boolean | null;
@@ -235,7 +247,26 @@ export type DirectSaleOfferFormData = Omit<DirectSaleOffer, 'id' | 'publicId' | 
   tenantId?: string | null;
 };
 export type UserLotMaxBid = Omit<PmUserLotMaxBid, 'id' | 'userId' | 'lotId' | 'maxAmount'> & { id: string; userId: string; lotId: string; maxAmount: number; };
-export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { id: string; tenantId: string; courtId?: string | null; districtId?: string | null; branchId?: string | null; sellerId?: string | null; parties: ProcessParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string, lotCount?: number, assetCount?: number };
+export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'courtId' | 'districtId' | 'branchId' | 'sellerId'> & { 
+  id: string; 
+  tenantId: string; 
+  courtId?: string | null; 
+  districtId?: string | null; 
+  branchId?: string | null; 
+  sellerId?: string | null; 
+  parties: ProcessParty[];
+  courtName?: string; 
+  districtName?: string; 
+  branchName?: string; 
+  sellerName?: string; 
+  lotCount?: number; 
+  assetCount?: number;
+  propertyMatricula?: string | null;
+  propertyRegistrationNumber?: string | null;
+  actionType?: JudicialActionType | null;
+  actionDescription?: string | null;
+  actionCnjCode?: string | null;
+};
 export type Court = Omit<PmCourt, 'id'> & { id: string };
 export type JudicialDistrict = Omit<PmJudicialDistrict, 'id' | 'courtId' | 'stateId'> & { id: string; courtId?: string | null; stateId?: string | null; courtName?: string; stateUf?: string };
 export type JudicialBranch = Omit<PmJudicialBranch, 'id' | 'districtId'> & { id: string; districtId?: string | null; districtName?: string; stateUf?: string };
@@ -254,6 +285,25 @@ export type Report = Omit<PmReport, 'id' | 'tenantId' | 'createdById'> & { id: s
 export type ContactMessage = Omit<PmContactMessage, 'id'> & { id: string };
 export type VehicleMake = Omit<PmVehicleMake, 'id'> & { id: string };
 export type VehicleModel = Omit<PmVehicleModel, 'id' | 'makeId'> & { id: string; makeId: string; makeName?: string };
+
+export type OccupationStatus = 'OCCUPIED' | 'UNOCCUPIED' | 'UNCERTAIN' | 'SHARED_POSSESSION';
+export type JudicialActionType = 'USUCAPIAO' | 'REMOCAO' | 'HIPOTECA' | 'DESPEJO' | 'PENHORA' | 'COBRANCA' | 'INVENTARIO' | 'DIVORCIO' | 'OUTROS';
+export type LotRiskType = 'OCUPACAO_IRREGULAR' | 'PENHORA' | 'INSCRICAO_DIVIDA' | 'RESTRICAO_AMBIENTAL' | 'DOENCA_ACARAJADO' | 'OUTRO';
+export type LotRiskLevel = 'BAIXO' | 'MEDIO' | 'ALTO' | 'CRITICO';
+export type LotRisk = {
+  id: string;
+  lotId: string;
+  tenantId: string;
+  riskType: LotRiskType;
+  riskLevel: LotRiskLevel;
+  riskDescription: string;
+  mitigationStrategy?: string | null;
+  verified: boolean;
+  verifiedBy?: string | null;
+  verifiedAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
 
 
 export type UserCreationData = Omit<UserFormData, 'passwordConfirmation' | 'termsAccepted'> & { roleIds: string[], tenantId?: string | null, habilitationStatus?: UserHabilitationStatus };
@@ -300,6 +350,7 @@ export type PlatformSettings = Omit<PmPlatformSettings, 'id' | 'tenantId' | 'cru
   mentalTriggerSettings?: PmMentalTriggerSettings | null;
   sectionBadgeVisibility?: PmSectionBadgeVisibility | null;
   variableIncrementTable?: PmVariableIncrementRule[];
+  realtimeSettings?: RealtimeSettings | null;
 };
 export type VariableIncrementRule = Omit<PmVariableIncrementRule, 'id' | 'platformSettingsId'> & { id: string };
 export type MapSettings = Omit<PmMapSettings, 'id' | 'platformSettingsId'> & { id: string };
@@ -307,6 +358,10 @@ export type BiddingSettings = Omit<PmBiddingSettings, 'id' | 'platformSettingsId
 export type PaymentGatewaySettings = Omit<PmPaymentGatewaySettings, 'id' | 'platformSettingsId'> & { id: string };
 export type MentalTriggerSettings = Omit<PmMentalTriggerSettings, 'id' | 'platformSettingsId'> & { id: string };
 export type SectionBadgeVisibility = Omit<PmSectionBadgeVisibility, 'id' | 'platformSettingsId'> & { id: string };
+export type RealtimeSettings = Omit<PmRealtimeSettings, 'id' | 'platformSettingsId' | 'lawyerRevenueSharePercent'> & { 
+  id: string;
+  lawyerRevenueSharePercent?: number | null;
+};
 export type BadgeVisibilitySettings = { [key: string]: boolean | undefined; };
 
 export interface RecentlyViewedLotInfo {

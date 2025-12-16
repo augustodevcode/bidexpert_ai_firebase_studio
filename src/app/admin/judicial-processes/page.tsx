@@ -54,7 +54,15 @@ export default function AdminJudicialProcessesPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedItems, settings, courts, districts, branches, sellers] = await Promise.all([
+      console.log("Fetching data for JudicialProcesses Page...");
+      const [
+        processesRes,
+        settingsRes,
+        courtsRes,
+        districtsRes,
+        branchesRes,
+        sellersRes
+      ] = await Promise.allSettled([
         getJudicialProcesses(),
         getPlatformSettings(),
         getCourts(),
@@ -62,9 +70,29 @@ export default function AdminJudicialProcessesPage() {
         getJudicialBranches(),
         getSellers(),
       ]);
-      setProcesses(fetchedItems);
+
+      const getValue = <T,>(result: PromiseSettledResult<T>, fallback: T): T => {
+        if (result.status === 'fulfilled') return result.value;
+        console.error("Fetch failed:", result.reason);
+        return fallback;
+      };
+
+      const processes = getValue(processesRes, []);
+      const settings = getValue(settingsRes, null);
+      const courts = getValue(courtsRes, []);
+      const districts = getValue(districtsRes, []);
+      const branches = getValue(branchesRes, []);
+      const sellers = getValue(sellersRes, []);
+
+      setProcesses(processes);
       setPlatformSettings(settings as PlatformSettings);
       setDependencies({ courts, allDistricts: districts, allBranches: branches, sellers });
+
+      // If critical data missing, show toast
+      if (processesRes.status === 'rejected') {
+        toast({ title: "Erro Parcial", description: "Não foi possível carregar a lista de processos.", variant: "destructive" });
+      }
+
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar processos judiciais.";
       console.error("Error fetching judicial processes:", e);
@@ -74,11 +102,11 @@ export default function AdminJudicialProcessesPage() {
       setIsLoading(false);
     }
   }, [toast]);
-  
+
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
-  
+
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
     if (subform) {
@@ -87,17 +115,19 @@ export default function AdminJudicialProcessesPage() {
   }, [subform]);
 
   const handleNewClick = () => {
-    router.push('/admin/judicial-processes/new');
+    // router.push('/admin/judicial-processes/new'); // Old redirect
+    setEditingProcess(null);
+    setIsFormOpen(true);
   };
   const handleEditClick = (process: JudicialProcess) => { setEditingProcess(process); setIsFormOpen(true); };
-  
+
   const handleFormSuccess = (processId?: string) => {
-      setIsFormOpen(false);
-      setEditingProcess(null);
-      onUpdate();
-      if(processId) {
-        router.push(`/admin/judicial-processes/${processId}/edit`);
-      }
+    setIsFormOpen(false);
+    setEditingProcess(null);
+    onUpdate();
+    if (processId) {
+      router.push(`/admin/judicial-processes/${processId}/edit`);
+    }
   };
 
   const handleDelete = useCallback(async (id: string) => {
@@ -118,7 +148,7 @@ export default function AdminJudicialProcessesPage() {
     toast({ title: "Exclusão em Massa Concluída", description: `${selectedItems.length} processo(s) excluído(s) com sucesso.` });
     onUpdate();
   }, [onUpdate, toast]);
-  
+
   const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
 
   const formAction = async (data: JudicialProcessFormData) => {
@@ -127,28 +157,28 @@ export default function AdminJudicialProcessesPage() {
     }
     return createJudicialProcessAction(data);
   };
-  
+
   const facetedFilterOptions = useMemo(() => {
     const courts = [...new Set(processes.map(p => p.courtName).filter(Boolean))] as string[];
     const branches = [...new Set(processes.map(p => p.branchName).filter(Boolean))] as string[];
     return [
-      { id: 'courtName', title: 'Tribunal', options: courts.map(name => ({label: name!, value: name!})) },
-      { id: 'branchName', title: 'Vara', options: branches.map(name => ({label: name!, value: name!})) }
+      { id: 'courtName', title: 'Tribunal', options: courts.map(name => ({ label: name!, value: name! })) },
+      { id: 'branchName', title: 'Vara', options: branches.map(name => ({ label: name!, value: name! })) }
     ];
   }, [processes]);
 
 
   if (isLoading || !platformSettings || !dependencies) {
     return (
-        <div className="space-y-6">
-            <Card className="shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
-                    <Skeleton className="h-10 w-36"/>
-                </CardHeader>
-                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
-            </Card>
-        </div>
+      <div className="space-y-6">
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div><Skeleton className="h-8 w-64 mb-2" /><Skeleton className="h-4 w-80" /></div>
+            <Skeleton className="h-10 w-36" />
+          </CardHeader>
+          <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -167,52 +197,52 @@ export default function AdminJudicialProcessesPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-                 <Button asChild variant="secondary">
-                    <Link href="/admin/import/cnj">
-                        <FileUp className="mr-2 h-4 w-4" /> Importar do CNJ
-                    </Link>
-                </Button>
-                <Button onClick={handleNewClick}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Novo Processo
-                </Button>
+              <Button asChild variant="secondary">
+                <Link href="/admin/import/cnj">
+                  <FileUp className="mr-2 h-4 w-4" /> Importar do CNJ
+                </Link>
+              </Button>
+              <Button onClick={handleNewClick}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Processo
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
-             <BidExpertSearchResultsFrame
-                  items={processes}
-                  dataTableColumns={columns}
-                  onSortChange={() => {}}
-                  platformSettings={platformSettings}
-                  isLoading={isLoading}
-                  searchTypeLabel="processos"
-                  searchColumnId="processNumber"
-                  searchPlaceholder="Buscar por nº do processo..."
-                  facetedFilterColumns={facetedFilterOptions}
-                  onDeleteSelected={handleDeleteSelected as any}
-                  sortOptions={[{ value: 'processNumber', label: 'Nº do Processo' }]}
-                  dataTestId="judicial-processes-table"
-              />
+            <BidExpertSearchResultsFrame
+              items={processes}
+              dataTableColumns={columns}
+              onSortChange={() => { }}
+              platformSettings={platformSettings}
+              isLoading={isLoading}
+              searchTypeLabel="processos"
+              searchColumnId="processNumber"
+              searchPlaceholder="Buscar por nº do processo..."
+              facetedFilterColumns={facetedFilterOptions}
+              onDeleteSelected={handleDeleteSelected as any}
+              sortOptions={[{ value: 'processNumber', label: 'Nº do Processo' }]}
+              dataTestId="judicial-processes-table"
+            />
           </CardContent>
         </Card>
       </div>
       <CrudFormContainer
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          mode={platformSettings?.crudFormMode || 'modal'}
-          title={editingProcess ? 'Editar Processo Judicial' : 'Novo Processo Judicial'}
-          description={editingProcess ? 'Modifique os detalhes do processo.' : 'Cadastre um novo processo judicial.'}
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        mode={platformSettings?.crudFormMode || 'modal'}
+        title={editingProcess ? 'Editar Processo Judicial' : 'Novo Processo Judicial'}
+        description={editingProcess ? 'Modifique os detalhes do processo.' : 'Cadastre um novo processo judicial.'}
       >
-          <JudicialProcessForm
-              initialData={editingProcess}
-              courts={dependencies.courts}
-              allDistricts={dependencies.allDistricts}
-              allBranches={dependencies.allBranches}
-              sellers={dependencies.sellers}
-              onSubmitAction={formAction}
-              onSuccess={handleFormSuccess}
-              onCancel={() => setIsFormOpen(false)}
-              onAddNewEntity={(entity) => setSubform(entity)}
-          />
+        <JudicialProcessForm
+          initialData={editingProcess}
+          courts={dependencies.courts}
+          allDistricts={dependencies.allDistricts}
+          allBranches={dependencies.allBranches}
+          sellers={dependencies.sellers}
+          onSubmitAction={formAction}
+          onSuccess={handleFormSuccess}
+          onCancel={() => setIsFormOpen(false)}
+          onAddNewEntity={(entity) => setSubform(entity)}
+        />
       </CrudFormContainer>
     </>
   );

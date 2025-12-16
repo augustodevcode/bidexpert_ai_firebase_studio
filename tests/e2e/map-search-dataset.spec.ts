@@ -5,7 +5,13 @@ const PAGE_URL = '/map-search';
 
 async function waitForListHydration(page: Page) {
   await expect(page.locator('[data-ai-id="map-search-list"]')).toBeVisible();
-  await page.waitForTimeout(500);
+  // Wait for at least one item to be rendered, indicating data load
+  try {
+    await expect(page.locator('[data-ai-id="map-search-list-item"]').first()).toBeVisible({ timeout: 10000 });
+  } catch (e) {
+    console.log('Warning: No list items found during hydration wait');
+  }
+  await page.waitForTimeout(1000);
 }
 
 test.describe('Map Search dataset interactions', () => {
@@ -18,8 +24,17 @@ test.describe('Map Search dataset interactions', () => {
     expect(initialCount).toBeGreaterThan(0);
 
     await page.evaluate(() => {
-      window.dispatchEvent(new CustomEvent('bidexpert-map-visible-ids', { detail: [] }));
+      // Move map to Antarctica where there are no lots
+      if ((window as any).__BIDEXPERT_MAP_SEARCH_DEBUG) {
+        (window as any).__BIDEXPERT_MAP_SEARCH_DEBUG.setView({ center: [-82.8628, 135.0000], zoom: 10 });
+      } else {
+        // Fallback if debug helper is not available (e.g. production build)
+        window.dispatchEvent(new CustomEvent('bidexpert-map-visible-ids', { detail: [] }));
+      }
     });
+
+    // Wait for the map to settle and filters to apply
+    await page.waitForTimeout(1000); 
 
     await expect(page.locator('[data-ai-id="map-search-count"]')).toContainText('0');
     await expect(listItems).toHaveCount(0);

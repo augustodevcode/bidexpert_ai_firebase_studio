@@ -194,6 +194,15 @@ function MapSearchPageContent() {
     visibilityFrame.current = requestAnimationFrame(() => setVisibleItemIds(normalized));
   }, []);
 
+  // Listen for synthetic events for testing
+  useEffect(() => {
+    const handleSyntheticEvent = (e: CustomEvent) => {
+      handleVisibleItemsChange(e.detail);
+    };
+    window.addEventListener('bidexpert-map-visible-ids', handleSyntheticEvent as EventListener);
+    return () => window.removeEventListener('bidexpert-map-visible-ids', handleSyntheticEvent as EventListener);
+  }, [handleVisibleItemsChange]);
+
   const datasetItems = useMemo(
     () => (isLoading && !warmCacheRef.current ? [] : selectDatasetItems({ dataset: searchType, lots: allLots, auctions: allAuctions, directSales: allDirectSales })),
     [allAuctions, allDirectSales, allLots, isLoading, searchType],

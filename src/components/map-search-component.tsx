@@ -142,8 +142,9 @@ function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange
     if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
       (window as any).__BIDEXPERT_MAP_SEARCH_DEBUG = {
         setView: ({ center, zoom }: { center: [number, number]; zoom: number }) => {
-          map.setView(center, zoom);
+          map.setView(center, zoom, { animate: false });
         },
+        getBounds: () => map.getBounds(),
       };
     }
   }, [map]);

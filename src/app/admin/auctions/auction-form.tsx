@@ -42,6 +42,7 @@ import { getCities } from '../cities/actions';
 import AddressGroup from '@/components/address-group';
 import { getLotCategories } from '../categories/actions';
 import { ChangeHistoryTab } from '@/components/audit/change-history-tab';
+import { ParticipantCard, type ParticipantCardData } from '@/components/admin/participant-card';
 
 const auctionStatusOptions = [
   'RASCUNHO',
@@ -162,57 +163,124 @@ const renderSectionContent = (
         </div>
       );
     case 'participantes':
+      // Encontrar dados completos dos participantes selecionados
+      const selectedAuctioneer = initialAuctioneers?.find(a => a.id === form.watch('auctioneerId'));
+      const selectedSeller = initialSellers?.find(s => s.id === form.watch('sellerId'));
+      const selectedProcess = initialJudicialProcesses?.find(p => p.id === form.watch('judicialProcessId'));
+
+      const auctioneerCardData: ParticipantCardData | null = selectedAuctioneer ? {
+        id: selectedAuctioneer.id,
+        name: selectedAuctioneer.name,
+        logoUrl: selectedAuctioneer.logoUrl,
+        email: selectedAuctioneer.email,
+        phone: selectedAuctioneer.phone,
+        city: selectedAuctioneer.city,
+        state: selectedAuctioneer.state,
+        registrationNumber: selectedAuctioneer.registrationNumber,
+        website: selectedAuctioneer.website,
+      } : null;
+
+      const sellerCardData: ParticipantCardData | null = selectedSeller ? {
+        id: selectedSeller.id,
+        name: selectedSeller.name,
+        logoUrl: selectedSeller.logoUrl,
+        email: selectedSeller.email,
+        phone: selectedSeller.phone,
+        city: selectedSeller.city,
+        state: selectedSeller.state,
+        website: selectedSeller.website,
+      } : null;
+
+      const processCardData: ParticipantCardData | null = selectedProcess ? {
+        id: selectedProcess.id,
+        name: selectedProcess.processNumber,
+        processNumber: selectedProcess.processNumber,
+        courtName: selectedProcess.courtName,
+        districtName: selectedProcess.districtName,
+        branchName: selectedProcess.branchName,
+        isElectronic: selectedProcess.isElectronic,
+      } : null;
+
       return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField control={form.control} name="auctioneerId" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Leiloeiro<span className="text-destructive">*</span></FormLabel>
-              <EntitySelector
-                value={field.value}
-                onChange={field.onChange}
-                options={(initialAuctioneers || []).map((c) => ({ value: c.id, label: c.name }))}
-                placeholder="Selecione o leiloeiro"
-                searchPlaceholder="Buscar..."
-                emptyStateMessage="Nenhum leiloeiro."
-                onRefetch={handleRefetchAuctioneers}
-                isFetching={isSubmitting}
-              />
-              <FormMessage />
-            </FormItem>
-          )} />
-          <FormField control={form.control} name="sellerId" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Comitente/Vendedor<span className="text-destructive">*</span></FormLabel>
-              <EntitySelector
-                value={field.value}
-                onChange={field.onChange}
-                options={(initialSellers || []).map((c) => ({ value: c.id, label: c.name }))}
-                placeholder="Selecione o comitente"
-                searchPlaceholder="Buscar..."
-                emptyStateMessage="Nenhum comitente."
-                onRefetch={handleRefetchSellers}
-                isFetching={isSubmitting}
-              />
-              <FormMessage />
-            </FormItem>
-          )} />
-          <FormField control={form.control} name="judicialProcessId" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Processo Judicial (Opcional)</FormLabel>
-              <EntitySelector
-                value={field.value}
-                onChange={field.onChange}
-                options={(initialJudicialProcesses || []).map((p) => ({ value: p.id, label: p.processNumber }))}
-                placeholder="Vincule a um processo"
-                searchPlaceholder="Buscar processo..."
-                emptyStateMessage="Nenhum processo."
-                onRefetch={handleRefetchProcesses}
-                isFetching={isSubmitting}
-              />
-              <FormDescription>Para bens de origem judicial.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )} />
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField control={form.control} name="auctioneerId" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Leiloeiro<span className="text-destructive">*</span></FormLabel>
+                <EntitySelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={(initialAuctioneers || []).map((c) => ({ value: c.id, label: c.name }))}
+                  placeholder="Selecione o leiloeiro"
+                  searchPlaceholder="Buscar..."
+                  emptyStateMessage="Nenhum leiloeiro."
+                  onRefetch={handleRefetchAuctioneers}
+                  isFetching={isSubmitting}
+                />
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="sellerId" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Comitente/Vendedor<span className="text-destructive">*</span></FormLabel>
+                <EntitySelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={(initialSellers || []).map((c) => ({ value: c.id, label: c.name }))}
+                  placeholder="Selecione o comitente"
+                  searchPlaceholder="Buscar..."
+                  emptyStateMessage="Nenhum comitente."
+                  onRefetch={handleRefetchSellers}
+                  isFetching={isSubmitting}
+                />
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="judicialProcessId" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Processo Judicial (Opcional)</FormLabel>
+                <EntitySelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={(initialJudicialProcesses || []).map((p) => ({ value: p.id, label: p.processNumber }))}
+                  placeholder="Vincule a um processo"
+                  searchPlaceholder="Buscar processo..."
+                  emptyStateMessage="Nenhum processo."
+                  onRefetch={handleRefetchProcesses}
+                  isFetching={isSubmitting}
+                />
+                <FormDescription>Para bens de origem judicial.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
+
+          {/* Cards dos participantes selecionados */}
+          {(auctioneerCardData || sellerCardData || processCardData) && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              {auctioneerCardData && (
+                <ParticipantCard
+                  type="auctioneer"
+                  data={auctioneerCardData}
+                  onRemove={() => form.setValue('auctioneerId', '')}
+                />
+              )}
+              {sellerCardData && (
+                <ParticipantCard
+                  type="seller"
+                  data={sellerCardData}
+                  onRemove={() => form.setValue('sellerId', '')}
+                />
+              )}
+              {processCardData && (
+                <ParticipantCard
+                  type="judicialProcess"
+                  data={processCardData}
+                  onRemove={() => form.setValue('judicialProcessId', '')}
+                />
+              )}
+            </div>
+          )}
         </div>
       );
     case 'modalidade':

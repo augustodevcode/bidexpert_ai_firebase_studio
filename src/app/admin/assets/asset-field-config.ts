@@ -174,6 +174,20 @@ export const PROPERTY_FIELDS: AssetFieldGroup[] = [
     title: 'Situação Jurídica e Ocupacional',
     fields: [
       { name: 'isOccupied', label: 'Imóvel Ocupado?', type: 'boolean' },
+      { 
+        name: 'occupationStatus', 
+        label: 'Situação de Ocupação', 
+        type: 'select',
+        placeholder: 'Selecione...',
+        options: [
+          { value: 'OCCUPIED', label: 'Ocupado' },
+          { value: 'UNOCCUPIED', label: 'Desocupado' },
+          { value: 'UNCERTAIN', label: 'Incerto' },
+          { value: 'SHARED_POSSESSION', label: 'Posse Compartilhada' },
+        ],
+      },
+      { name: 'occupationNotes', label: 'Notas sobre Ocupação', type: 'textarea', placeholder: 'Resumo da vistoria ou relatos' },
+      { name: 'occupationLastVerified', label: 'Data da Última Verificação', type: 'date' },
       { name: 'hasHabiteSe', label: 'Possui Habite-se?', type: 'boolean' },
       { name: 'liensAndEncumbrances', label: 'Ônus e Gravames', type: 'textarea', placeholder: 'Hipotecas, penhoras, servidões...' },
       { name: 'propertyDebts', label: 'Débitos do Imóvel', type: 'textarea', placeholder: 'IPTU, condomínio, taxas...' },

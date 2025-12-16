@@ -185,13 +185,7 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, ...restOfData } = data;
-
-      let finalImageUrl = (data as any).imageUrl;
-      if (data.imageMediaId && data.imageMediaId.toString() !== 'INHERIT' && !(data as any).imageUrl) {
-        const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: BigInt(data.imageMediaId) }});
-        if (mediaItem) finalImageUrl = mediaItem.urlOriginal;
-      }
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, imageUrl: _imageUrl, ...restOfData } = data;
       
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
         // Gera o publicId usando a máscara configurada
@@ -200,7 +194,6 @@ export class AuctionService {
         const createdAuction = await tx.auction.create({
           data: {
             ...(restOfData as any),
-            imageUrl: finalImageUrl,
             publicId,
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
@@ -257,18 +250,11 @@ export class AuctionService {
       }
       const internalId = BigInt(auctionToUpdate.id);
 
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, cityId, stateId, tenantId: _tenantId, ...restOfData } = data;
-
-      let finalImageUrl = (data as any).imageUrl;
-      if (data.imageMediaId && data.imageMediaId.toString() !== 'INHERIT' && !(data as any).imageUrl) {
-        const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: BigInt(data.imageMediaId) }});
-        if (mediaItem) finalImageUrl = mediaItem.urlOriginal;
-      }
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, cityId, stateId, tenantId: _tenantId, imageUrl: _imageUrl, ...restOfData } = data;
 
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
             ...(restOfData as any),
-            imageUrl: finalImageUrl,
         };
         
         if (data.title) dataToUpdate.slug = slugify(data.title);

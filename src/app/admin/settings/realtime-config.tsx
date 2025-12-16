@@ -15,8 +15,8 @@ interface RealtimeConfigProps {
 }
 
 export function RealtimeConfig({ form }: RealtimeConfigProps) {
-  const blockchainEnabled = form.watch('blockchainEnabled');
-  const softCloseEnabled = form.watch('softCloseEnabled');
+  const blockchainEnabled = form.watch('realtimeSettings.blockchainEnabled');
+  const softCloseEnabled = form.watch('realtimeSettings.softCloseEnabled');
 
   return (
     <div className="space-y-6">
@@ -27,7 +27,7 @@ export function RealtimeConfig({ form }: RealtimeConfigProps) {
       {/* Blockchain */}
       <FormField
         control={form.control}
-        name="blockchainEnabled"
+        name="realtimeSettings.blockchainEnabled"
         render={({ field }) => (
           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
@@ -61,7 +61,7 @@ export function RealtimeConfig({ form }: RealtimeConfigProps) {
       {/* Lawyer Monetization */}
       <FormField
         control={form.control}
-        name="lawyerMonetizationModel"
+        name="realtimeSettings.lawyerMonetizationModel"
         render={({ field }) => {
           const options: Array<{
             value: LawyerMonetizationModel;
@@ -91,7 +91,7 @@ export function RealtimeConfig({ form }: RealtimeConfigProps) {
 
           const handleSelection = (value: LawyerMonetizationModel) => {
             field.onChange(value);
-            form.setValue('lawyerMonetizationModel', value, {
+            form.setValue('realtimeSettings.lawyerMonetizationModel', value, {
               shouldDirty: true,
               shouldTouch: true,
             });
@@ -123,7 +123,7 @@ export function RealtimeConfig({ form }: RealtimeConfigProps) {
                         <input
                           id={option.id}
                           type="radio"
-                          name="lawyerMonetizationModel"
+                          name="realtimeSettings.lawyerMonetizationModel"
                           value={option.value}
                           data-ai-id={`lawyer-monetization-input-${option.value.toLowerCase()}`}
                           checked={isSelected}
@@ -149,13 +149,17 @@ export function RealtimeConfig({ form }: RealtimeConfigProps) {
       {/* Soft Close */}
       <FormField
         control={form.control}
-        name="softCloseEnabled"
+        name="realtimeSettings.softCloseEnabled"
         render={({ field }) => (
           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <FormLabel className="text-base" htmlFor="softclose">Soft Close Habilitado</FormLabel>
+              <FormLabel className="text-base" htmlFor="softclose">Soft Close Habilitado (Default da Plataforma)</FormLabel>
               <FormDescription>
-                Estende automaticamente o prazo do leilão se houver lances nos últimos minutos
+                Estende automaticamente o prazo do leilão se houver lances nos últimos minutos.
+                <br />
+                <span className="text-xs text-muted-foreground italic">
+                  Este valor é o padrão da plataforma. Cada leilão pode sobrescrever esta configuração.
+                </span>
               </FormDescription>
             </div>
             <FormControl>
@@ -174,7 +178,7 @@ export function RealtimeConfig({ form }: RealtimeConfigProps) {
       {softCloseEnabled && (
         <FormField
           control={form.control}
-          name="softCloseMinutes"
+          name="realtimeSettings.softCloseMinutes"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Minutos antes do fechamento para disparar extensão</FormLabel>
@@ -193,7 +197,7 @@ export function RealtimeConfig({ form }: RealtimeConfigProps) {
                 </div>
               </FormControl>
               <FormDescription>
-                Se houver lance com menos de {form.watch('softCloseMinutes')} minutos para o fim, o leilão é
+                Se houver lance com menos de {form.watch('realtimeSettings.softCloseMinutes') ?? 5} minutos para o fim, o leilão é
                 estendido por +5 minutos automaticamente.
               </FormDescription>
               <FormMessage />

@@ -11,6 +11,8 @@ const assetStatusValues: [Asset['status'], ...Asset['status'][]] = [
   'CADASTRO', 'DISPONIVEL', 'LOTEADO', 'VENDIDO', 'REMOVIDO', 'INATIVADO'
 ];
 
+const occupationStatusValues = ['OCCUPIED', 'UNOCCUPIED', 'UNCERTAIN', 'SHARED_POSSESSION'] as const;
+
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
 const optionalString = z.string().optional().nullable();
 const optionalNumber = z.coerce.number().optional().nullable();
@@ -86,6 +88,10 @@ export const propertyFieldsSchema = z.object({
   propertyRegistrationNumber: optionalString,
   iptuNumber: optionalString,
   isOccupied: optionalBoolean,
+  occupationStatus: z.enum(occupationStatusValues).optional().nullable(),
+  occupationNotes: optionalString,
+  occupationLastVerified: optionalDate,
+  occupationUpdatedBy: optionalString,
   totalArea: optionalNumber,
   builtArea: optionalNumber,
   bedrooms: optionalNumber,
