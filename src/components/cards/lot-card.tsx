@@ -229,6 +229,11 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
         </div>
         <CardContent className="p-3 flex-grow space-y-2">
           <Link href={lotDetailUrl}>
+            <div className="flex items-center gap-1.5 mb-0.5" data-ai-id="lot-card-auction-info">
+              <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded font-mono">
+                {auction?.publicId || `AUC-${lot.auctionId}`}
+              </span>
+            </div>
             <h3 data-ai-id="lot-card-title" className="text-base font-bold text-zinc-900 dark:text-white hover:text-primary transition-colors leading-tight line-clamp-2">
               Lote {lotNumber}
             </h3>
@@ -267,8 +272,18 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
               {auction.auctionStages.slice(0, 2).map((stage, index) => {
                 // Try to find specific price for this stage
                 const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
-                // Fallback logic for price
-                const stagePriceValue = stagePrice?.initialBid || (index === 0 ? lot.initialPrice : lot.secondInitialPrice) || stage.initialPrice;
+                // Get base price from lot (initialPrice or price)
+                const basePrice = lot.initialPrice || lot.price || 0;
+                // Calculate stage price based on discountPercent (100 = full price, 60 = 60% of price)
+                const discountPercent = stage.discountPercent ?? 100;
+                const calculatedStagePrice = discountPercent < 100 && basePrice > 0
+                  ? (basePrice * discountPercent) / 100
+                  : basePrice;
+                // Fallback logic for price: specific stagePrice > secondInitialPrice > calculated > stage.initialPrice
+                const stagePriceValue = stagePrice?.initialBid 
+                  || (index === 0 ? lot.initialPrice : lot.secondInitialPrice) 
+                  || (index > 0 && calculatedStagePrice > 0 ? calculatedStagePrice : null)
+                  || stage.initialPrice;
                 
                 const discount = lot.evaluationValue && stagePriceValue 
                   ? Math.round(((Number(lot.evaluationValue) - Number(stagePriceValue)) / Number(lot.evaluationValue)) * 100)

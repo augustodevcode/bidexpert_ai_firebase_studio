@@ -5,80 +5,121 @@ import { useWizard } from '../wizard-context';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, Auction } from '@/types';
+import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, Auction, StateInfo, CityInfo, JudicialProcess } from '@/types';
 import { Form } from '@/components/ui/form';
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
-import AuctionForm from '@/app/admin/auctions/auction-form'; // Import the main form
+import AuctionForm from '@/app/admin/auctions/auction-form';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
+import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { Loader2 } from 'lucide-react';
 
 interface Step3AuctionDetailsProps {
-  categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[];
   sellers: SellerProfileInfo[];
+  categories?: LotCategory[];
+  states?: StateInfo[];
+  allCities?: CityInfo[];
+  judicialProcesses?: JudicialProcess[];
 }
 
 export default function Step3AuctionDetails({ 
-    categories, 
     auctioneers, 
-    sellers 
+    sellers,
+    categories: propCategories,
+    states: propStates,
+    allCities: propCities,
+    judicialProcesses: propProcesses,
 }: Step3AuctionDetailsProps) {
   const { wizardData, setWizardData } = useWizard();
+  const [states, setStates] = useState<StateInfo[]>(propStates || []);
+  const [cities, setCities] = useState<CityInfo[]>(propCities || []);
+  const [judicialProcesses, setJudicialProcesses] = useState<JudicialProcess[]>(propProcesses || []);
+  const [categories, setCategories] = useState<LotCategory[]>(propCategories || []);
+  const [isLoading, setIsLoading] = useState(!propStates || !propCities);
 
-  // The main AuctionForm now handles its own state via react-hook-form.
-  // We just need to pass a callback to receive the data when it changes.
+  useEffect(() => {
+    // Only fetch if data wasn't provided via props
+    if (!propStates || !propCities || !propCategories) {
+      async function fetchLocationData() {
+          try {
+              const [fetchedStates, fetchedCities, fetchedProcesses, fetchedCategories] = await Promise.all([
+                  propStates ? Promise.resolve(propStates) : getStates(),
+                  propCities ? Promise.resolve(propCities) : getCities(),
+                  propProcesses ? Promise.resolve(propProcesses) : getJudicialProcesses(),
+                  propCategories ? Promise.resolve(propCategories) : getLotCategories(),
+              ]);
+              setStates(fetchedStates);
+              setCities(fetchedCities);
+              setJudicialProcesses(fetchedProcesses);
+              setCategories(fetchedCategories);
+          } catch (error) {
+              console.error("Failed to load location data for wizard form", error);
+          } finally {
+              setIsLoading(false);
+          }
+      }
+      fetchLocationData();
+    } else {
+      setIsLoading(false);
+    }
+  }, [propStates, propCities, propProcesses, propCategories]);
+
   const handleWizardDataChange = (data: Partial<any>) => {
     setWizardData(prev => ({
         ...prev,
         auctionDetails: {
             ...prev.auctionDetails,
             ...data,
-            // Ensure derived names are also updated
             auctioneer: auctioneers.find(a => a.id === data.auctioneerId)?.name,
             seller: sellers.find(s => s.id === data.sellerId)?.name,
         }
     }));
   };
 
-  // Determine the correct sellerId based on the auctionType
   const initialSellerId = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
         const processSellerId = wizardData.judicialProcess?.sellerId;
-        // If the process already has a linked seller, use it.
         if (processSellerId) {
             return processSellerId;
         }
     }
-    // Otherwise, use whatever is already in the auction details (if any)
     return wizardData.auctionDetails?.sellerId;
   }, [wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
 
-  // Construct the initial data for the form, ensuring dates are Date objects if they exist
-  // CORREÇÃO: Simplificamos a inicialização para evitar criar `new Date(undefined)`
   const initialDataForForm = {
     ...wizardData.auctionDetails,
     sellerId: initialSellerId,
     auctionType: wizardData.auctionType,
     auctionDate: wizardData.auctionDetails?.auctionDate ? new Date(wizardData.auctionDetails.auctionDate) : new Date(),
     endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
-    // Deixa o AuctionForm lidar com a lógica de default das stages se elas não existirem.
-    // Apenas mapeia para Date objects se já existirem no wizard.
-    auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({
-        ...stage,
+    auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({ 
+        ...stage, 
         startDate: stage.startDate ? new Date(stage.startDate) : undefined,
         endDate: stage.endDate ? new Date(stage.endDate) : undefined,
     })),
   };
   
+  if (isLoading) {
+    return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin"/></div>
+  }
+
   return (
     <AuctionForm
         // @ts-ignore
         initialData={initialDataForForm}
-        categories={categories}
         auctioneers={auctioneers}
         sellers={sellers}
+        states={states}
+        allCities={cities}
+        judicialProcesses={judicialProcesses}
+        categories={categories}
         formTitle="Detalhes do Leilão"
         formDescription="Preencha as informações principais, datas e configurações do leilão."
         isWizardMode={true}
         onWizardDataChange={handleWizardDataChange}
+        onSubmitAction={async () => ({success: true, message: ""})}
     />
   );
 }

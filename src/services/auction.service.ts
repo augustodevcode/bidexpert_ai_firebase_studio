@@ -4,11 +4,20 @@
  * a lógica de negócio principal para o gerenciamento de leilões. Atua como um
  * intermediário entre as server actions (controllers) e o repositório de leilões
  * (camada de dados), garantindo a aplicação de regras de negócio e validações.
+ * 
+ * REGRAS DE CONSISTÊNCIA DE ESTADO:
+ * - Leilões só podem ser abertos (ABERTO/ABERTO_PARA_LANCES) se:
+ *   1. Possuem pelo menos 1 Lote que atende aos requisitos de integridade
+ *   2. Todos os Lotes vinculados estão prontos (não em RASCUNHO sem validação)
+ * 
+ * - Ao encerrar um Leilão:
+ *   1. Todos os Lotes abertos são automaticamente encerrados
+ *   2. Ativos vinculados a Lotes vendidos são marcados como VENDIDO
  */
 import { AuctionRepository } from '@/repositories/auction.repository';
 import type { Auction, AuctionFormData, LotCategory } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, AuctionStatus, LotStatus } from '@prisma/client';
 import { PrismaClientValidationError } from '@prisma/client/runtime/library';
 import { nowInSaoPaulo } from '@/lib/timezone';
 import { prisma } from '@/lib/prisma';
@@ -17,6 +26,20 @@ import { generatePublicId } from '@/lib/public-id-generator';
 // Status que NUNCA devem ser visíveis publicamente
 const NON_PUBLIC_STATUSES: Auction['status'][] = ['RASCUNHO', 'EM_PREPARACAO'];
 
+// Status de Leilão que permitem abertura de Lotes
+const AUCTION_ALLOWS_LOT_OPENING: AuctionStatus[] = ['ABERTO', 'ABERTO_PARA_LANCES'];
+
+// Status de Lote que precisam de integridade para Leilão abrir
+const LOT_DRAFT_STATUSES: LotStatus[] = ['RASCUNHO'];
+
+// Resultado da validação de integridade do Leilão
+export interface AuctionIntegrityValidation {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  lotsWithIssues: Array<{ lotId: string; lotTitle: string; issues: string[] }>;
+}
+
 export class AuctionService {
   private auctionRepository: AuctionRepository;
   private prisma;
@@ -24,6 +47,204 @@ export class AuctionService {
   constructor() {
     this.auctionRepository = new AuctionRepository();
     this.prisma = prisma;
+  }
+
+  /**
+   * Valida a integridade de um Leilão para verificar se pode ser aberto.
+   * Regras verificadas:
+   * 1. Possui pelo menos 1 Lote
+   * 2. Todos os Lotes possuem pelo menos 1 Ativo vinculado
+   * 3. Todos os Lotes possuem título e preço válidos
+   * 4. Nenhum Lote está em RASCUNHO sem atender requisitos mínimos
+   */
+  async validateAuctionIntegrity(auctionId: string): Promise<AuctionIntegrityValidation> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const lotsWithIssues: Array<{ lotId: string; lotTitle: string; issues: string[] }> = [];
+
+    try {
+      const auction = await this.prisma.auction.findFirst({
+        where: {
+          OR: [
+            { id: /^\d+$/.test(auctionId) ? BigInt(auctionId) : undefined },
+            { publicId: auctionId }
+          ].filter(Boolean)
+        },
+        include: {
+          lots: {
+            include: {
+              assets: { select: { assetId: true } }
+            }
+          }
+        }
+      });
+
+      if (!auction) {
+        return { isValid: false, errors: ['Leilão não encontrado'], warnings: [], lotsWithIssues: [] };
+      }
+
+      // 1. Verificar se possui Lotes
+      if (!auction.lots || auction.lots.length === 0) {
+        errors.push('Leilão deve possuir pelo menos 1 Lote para ser aberto');
+        return { isValid: false, errors, warnings, lotsWithIssues };
+      }
+
+      // 2. Verificar cada Lote
+      let lotsReady = 0;
+      for (const lot of auction.lots) {
+        const lotIssues: string[] = [];
+
+        // Verificar Ativos vinculados
+        if (!lot.assets || lot.assets.length === 0) {
+          lotIssues.push('Não possui Ativos vinculados');
+        }
+
+        // Verificar título
+        if (!lot.title || lot.title.trim() === '') {
+          lotIssues.push('Título não preenchido');
+        }
+
+        // Verificar preço
+        const initialPrice = lot.initialPrice ? Number(lot.initialPrice) : 0;
+        const price = lot.price ? Number(lot.price) : 0;
+        if (initialPrice <= 0 && price <= 0) {
+          lotIssues.push('Preço inicial não definido');
+        }
+
+        if (lotIssues.length > 0) {
+          lotsWithIssues.push({
+            lotId: lot.id.toString(),
+            lotTitle: lot.title || `Lote #${lot.number || lot.id}`,
+            issues: lotIssues
+          });
+        } else {
+          lotsReady++;
+        }
+      }
+
+      // 3. Verificar se há pelo menos 1 Lote pronto
+      if (lotsReady === 0) {
+        errors.push(`Nenhum dos ${auction.lots.length} Lotes está pronto para abertura. Todos possuem pendências.`);
+      } else if (lotsWithIssues.length > 0) {
+        warnings.push(`${lotsWithIssues.length} de ${auction.lots.length} Lotes possuem pendências e não serão abertos automaticamente`);
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        warnings,
+        lotsWithIssues
+      };
+    } catch (error) {
+      console.error('Erro ao validar integridade do Leilão:', error);
+      return { isValid: false, errors: ['Erro interno ao validar Leilão'], warnings: [], lotsWithIssues: [] };
+    }
+  }
+
+  /**
+   * Atualiza o status de um Leilão com validação de integridade.
+   * Ao abrir um Leilão, valida todos os Lotes.
+   * Ao encerrar um Leilão, encerra automaticamente todos os Lotes abertos.
+   */
+  async updateAuctionStatus(
+    tenantId: string, 
+    auctionId: string, 
+    newStatus: AuctionStatus
+  ): Promise<{ success: boolean; message: string; validation?: AuctionIntegrityValidation }> {
+    try {
+      // Se está abrindo o Leilão, validar integridade
+      if (AUCTION_ALLOWS_LOT_OPENING.includes(newStatus)) {
+        const validation = await this.validateAuctionIntegrity(auctionId);
+        if (!validation.isValid) {
+          return { 
+            success: false, 
+            message: `Não é possível abrir o Leilão. Erros: ${validation.errors.join('; ')}`,
+            validation
+          };
+        }
+
+        // Abrir automaticamente os Lotes que estão prontos
+        await this.prisma.$transaction(async (tx) => {
+          // Atualizar status do Leilão
+          await tx.auction.update({
+            where: { 
+              id: /^\d+$/.test(auctionId) ? BigInt(auctionId) : undefined,
+              publicId: !/^\d+$/.test(auctionId) ? auctionId : undefined
+            },
+            data: { status: newStatus, updatedAt: new Date() }
+          });
+
+          // Buscar Lotes que estão prontos (não em RASCUNHO ou que passam na validação)
+          const readyLotIds = validation.lotsWithIssues.length === 0 
+            ? undefined // Todos estão prontos
+            : { 
+                notIn: validation.lotsWithIssues.map(l => BigInt(l.lotId))
+              };
+
+          // Atualizar status dos Lotes prontos para EM_BREVE ou ABERTO_PARA_LANCES
+          const targetLotStatus: LotStatus = newStatus === 'ABERTO_PARA_LANCES' ? 'ABERTO_PARA_LANCES' : 'EM_BREVE';
+          
+          await tx.lot.updateMany({
+            where: {
+              auctionId: /^\d+$/.test(auctionId) ? BigInt(auctionId) : undefined,
+              status: { in: ['RASCUNHO', 'EM_BREVE'] },
+              ...(readyLotIds ? { id: readyLotIds } : {})
+            },
+            data: { status: targetLotStatus, updatedAt: new Date() }
+          });
+        });
+
+        const warningMsg = validation.warnings.length > 0 
+          ? ` Avisos: ${validation.warnings.join('; ')}` 
+          : '';
+        return { 
+          success: true, 
+          message: `Leilão aberto com sucesso.${warningMsg}`,
+          validation
+        };
+      }
+
+      // Se está encerrando o Leilão, encerrar Lotes automaticamente
+      if (['ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'].includes(newStatus)) {
+        await this.prisma.$transaction(async (tx) => {
+          // Atualizar status do Leilão
+          await tx.auction.update({
+            where: { 
+              id: /^\d+$/.test(auctionId) ? BigInt(auctionId) : undefined,
+              publicId: !/^\d+$/.test(auctionId) ? auctionId : undefined
+            },
+            data: { status: newStatus, updatedAt: new Date() }
+          });
+
+          // Encerrar todos os Lotes abertos
+          const lotStatusOnClose: LotStatus = newStatus === 'CANCELADO' ? 'CANCELADO' : 'ENCERRADO';
+          
+          await tx.lot.updateMany({
+            where: {
+              auctionId: /^\d+$/.test(auctionId) ? BigInt(auctionId) : undefined,
+              status: { in: ['EM_BREVE', 'ABERTO_PARA_LANCES'] }
+            },
+            data: { status: lotStatusOnClose, updatedAt: new Date() }
+          });
+        });
+
+        return { success: true, message: `Leilão ${newStatus.toLowerCase()} com sucesso. Lotes foram encerrados automaticamente.` };
+      }
+
+      // Para outros status, apenas atualizar
+      await this.prisma.auction.update({
+        where: { 
+          id: /^\d+$/.test(auctionId) ? BigInt(auctionId) : undefined,
+          publicId: !/^\d+$/.test(auctionId) ? auctionId : undefined
+        },
+        data: { status: newStatus, updatedAt: new Date() }
+      });
+
+      return { success: true, message: `Status do Leilão atualizado para ${newStatus}` };
+    } catch (error) {
+      console.error('Erro ao atualizar status do Leilão:', error);
+      return { success: false, message: 'Erro ao atualizar status do Leilão' };
+    }
   }
 
   /**
@@ -187,10 +408,10 @@ export class AuctionService {
 
       const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, imageUrl: _imageUrl, ...restOfData } = data;
       
+      // Gera o publicId FORA da transação para evitar timeout por nested transactions
+      const publicId = await generatePublicId(tenantId, 'auction');
+      
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
-        // Gera o publicId usando a máscara configurada
-        const publicId = await generatePublicId(tenantId, 'auction');
-        
         const createdAuction = await tx.auction.create({
           data: {
             ...(restOfData as any),

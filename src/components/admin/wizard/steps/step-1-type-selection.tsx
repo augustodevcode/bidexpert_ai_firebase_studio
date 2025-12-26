@@ -21,7 +21,7 @@ export default function Step1TypeSelection() {
   };
 
   return (
-    <div>
+    <div data-ai-id="wizard-step1-type-selection">
       <h3 className="text-lg font-semibold mb-4">Qual é a modalidade do leilão?</h3>
       <RadioGroup
         value={wizardData.auctionType}

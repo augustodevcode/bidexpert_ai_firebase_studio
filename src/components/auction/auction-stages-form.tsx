@@ -13,6 +13,7 @@ interface AuctionStage {
   startDate: Date;
   endDate: Date;
   initialPrice?: number | null;
+  discountPercent?: number | null;
 }
 
 interface AuctionStagesFormProps {
@@ -115,6 +116,33 @@ export default function AuctionStagesForm({
                 }
                 placeholder="R$ 0,00"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`stage-${index}-discountPercent`}>
+                % do Valor Original
+              </Label>
+              <Input
+                id={`stage-${index}-discountPercent`}
+                type="number"
+                step="1"
+                min="1"
+                max="100"
+                value={stage.discountPercent ?? (index === 0 ? 100 : 60)}
+                onChange={(e) =>
+                  onStageChange(
+                    index,
+                    'discountPercent',
+                    e.target.value ? parseInt(e.target.value, 10) : null
+                  )
+                }
+                placeholder="100"
+              />
+              <p className="text-xs text-muted-foreground">
+                {index === 0 
+                  ? '100% = valor integral (1ª praça)'
+                  : '60% = 60% do valor original (desconto de 40%)'}
+              </p>
             </div>
 
             <div className="space-y-2">

@@ -1,0 +1,52 @@
+﻿--- TENANTS ---
+[
+  {
+    "id": "1",
+    "name": "Lordland Leil├Áes",
+    "subdomain": "lordland",
+    "domain": "lordland.localhost",
+    "createdAt": "2025-12-24T02:10:59.255Z",
+    "updatedAt": "2025-12-24T02:10:59.255Z"
+  },
+  {
+    "id": "2",
+    "name": "BidExpert Marketplace",
+    "subdomain": "marketplace",
+    "domain": "marketplace.localhost",
+    "createdAt": "2025-12-24T02:10:59.558Z",
+    "updatedAt": "2025-12-24T02:10:59.558Z"
+  }
+]
+--- USERS ---
+[]
+--- ROLES ---
+[
+  {
+    "id": "7",
+    "name": "ADMIN",
+    "nameNormalized": "admin",
+    "description": "Administrador do sistema",
+    "permissions": "[\"manage_all\"]"
+  },
+  {
+    "id": "8",
+    "name": "AUCTIONEER",
+    "nameNormalized": "auctioneer",
+    "description": "Leiloeiro",
+    "permissions": "[\"auctions:manage_assigned\",\"lots:read\",\"lots:update\",\"lots:finalize\",\"conduct_auctions\",\"view_reports\"]"
+  },
+  {
+    "id": "9",
+    "name": "AUCTION_ANALYST",
+    "nameNormalized": "auction_analyst",
+    "description": "Analista de Leil├Áes - Gerencia cadastros de leil├Áes, lotes, bens e dados operacionais",
+    "permissions": "[\"auctions:create\",\"auctions:read\",\"auctions:update\",\"auctions:delete\",\"auctions:publish\",\"lots:create\",\"lots:read\",\"lots:update\",\"lots:delete\",\"assets:create\",\"assets:read\",\"assets:update\",\"assets:delete\",\"categories:create\",\"categories:read\",\"categories:update\",\"categories:delete\",\"auctioneers:create\",\"auctioneers:read\",\"auctioneers:update\",\"auctioneers:delete\",\"sellers:create\",\"sellers:read\",\"sellers:update\",\"sellers:delete\",\"judicial_processes:create\",\"judicial_processes:read\",\"judicial_processes:update\",\"judicial_processes:delete\",\"states:read\",\"cities:read\",\"media:upload\",\"media:read\",\"media:update\",\"media:delete\",\"view_reports\"]"
+  },
+  {
+    "id": "10",
+    "name": "BIDDER",
+    "nameNormalized": "bidder",
+    "description": "Arrematante",
+    "permissions": "[\"view_auctions\",\"view_lots\",\"place_bids\",\"direct_sales:place_proposal\",\"direct_sales:buy_now\",\"view_wins\",\"manage_payments\",\"schedule_retrieval\"]"
+  }
+]

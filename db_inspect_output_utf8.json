@@ -1,0 +1,4265 @@
+﻿--- TENANTS ---
+[
+  {
+    "id": "1",
+    "name": "BidExpert Tenant Principal",
+    "subdomain": "principal",
+    "domain": "localhost",
+    "createdAt": "2025-11-26T14:57:29.051Z",
+    "updatedAt": "2025-11-26T14:57:29.051Z"
+  },
+  {
+    "id": "2",
+    "name": "BidExpert Tenant Secund├írio",
+    "subdomain": "tenant-b",
+    "domain": "tenant-b.localhost",
+    "createdAt": "2025-11-26T14:57:29.206Z",
+    "updatedAt": "2025-11-26T14:57:29.206Z"
+  },
+  {
+    "id": "3",
+    "name": "Test Tenant",
+    "subdomain": "test",
+    "domain": null,
+    "createdAt": "2025-12-10T01:49:45.827Z",
+    "updatedAt": "2025-12-10T01:49:45.827Z"
+  }
+]
+--- USERS ---
+[
+  {
+    "id": "1",
+    "email": "admin@bidexpert.com",
+    "password": "$2b$10$HY3kPTg0arD15y19jgLjeODKd9o73x/yheK5d3e46V4qlmV2yyR9.",
+    "fullName": "Admin BidExpert",
+    "cpf": "11111111111",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": "11994281657",
+    "homePhone": "",
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": "87043-420",
+    "street": "R Rio Tocantins",
+    "number": "2203",
+    "complement": "",
+    "neighborhood": "Conjunto Residencial Paulino Carlos Filho",
+    "city": "MARINGA",
+    "state": "PR",
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": "",
+    "cnpj": "",
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": "",
+    "responsibleCpf": "",
+    "optInMarketing": false,
+    "createdAt": "2025-11-26T14:57:30.000Z",
+    "updatedAt": "2025-11-27T02:04:02.489Z",
+    "roles": [
+      {
+        "userId": "1",
+        "roleId": "1",
+        "assignedAt": "2025-11-26T14:57:30.154Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "1",
+          "name": "ADMIN",
+          "nameNormalized": "ADMIN",
+          "description": "Role ADMIN",
+          "permissions": [
+            "manage_all"
+          ]
+        }
+      },
+      {
+        "userId": "1",
+        "roleId": "2",
+        "assignedAt": "2025-11-26T14:57:30.154Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      },
+      {
+        "userId": "1",
+        "roleId": "4",
+        "assignedAt": "2025-11-26T14:57:30.154Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "1",
+        "tenantId": "1",
+        "assignedAt": "2025-11-26T14:57:30.154Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "email": "comprador@bidexpert.com",
+    "password": "$2b$10$HY3kPTg0arD15y19jgLjeODKd9o73x/yheK5d3e46V4qlmV2yyR9.",
+    "fullName": "Jo├úo Silva Comprador",
+    "cpf": "22222222222",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-26T14:57:30.439Z",
+    "updatedAt": "2025-11-26T14:57:30.439Z",
+    "roles": [
+      {
+        "userId": "2",
+        "roleId": "4",
+        "assignedAt": "2025-11-26T14:57:30.602Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "2",
+        "tenantId": "1",
+        "assignedAt": "2025-11-26T14:57:30.602Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "email": "advogado@bidexpert.com",
+    "password": "$2b$10$HY3kPTg0arD15y19jgLjeODKd9o73x/yheK5d3e46V4qlmV2yyR9.",
+    "fullName": "Dr. Paulo Advogado",
+    "cpf": "33333333333",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-26T14:57:30.717Z",
+    "updatedAt": "2025-11-26T14:57:30.717Z",
+    "roles": [
+      {
+        "userId": "3",
+        "roleId": "3",
+        "assignedAt": "2025-11-26T14:57:30.827Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "3",
+          "name": "ADVOGADO",
+          "nameNormalized": "ADVOGADO",
+          "description": "Role ADVOGADO",
+          "permissions": [
+            "lawyer_dashboard:view",
+            "lawyer_cases:view",
+            "lawyer_documents:manage"
+          ]
+        }
+      },
+      {
+        "userId": "3",
+        "roleId": "4",
+        "assignedAt": "2025-11-26T14:57:30.827Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "3",
+        "tenantId": "1",
+        "assignedAt": "2025-11-26T14:57:30.827Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "email": "vendedor@bidexpert.com",
+    "password": "$2b$10$HY3kPTg0arD15y19jgLjeODKd9o73x/yheK5d3e46V4qlmV2yyR9.",
+    "fullName": "Empresa Vendedora LTDA",
+    "cpf": null,
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "LEGAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": "11111111000111",
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-26T14:57:30.939Z",
+    "updatedAt": "2025-11-26T14:57:30.939Z",
+    "roles": [
+      {
+        "userId": "4",
+        "roleId": "4",
+        "assignedAt": "2025-11-26T14:57:31.109Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      },
+      {
+        "userId": "4",
+        "roleId": "5",
+        "assignedAt": "2025-11-26T14:57:31.114Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "5",
+          "name": "VENDEDOR",
+          "nameNormalized": "VENDEDOR",
+          "description": "Role VENDEDOR",
+          "permissions": [
+            "consignor_dashboard:view",
+            "auctions:manage_own",
+            "lots:manage_own"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "4",
+        "tenantId": "1",
+        "assignedAt": "2025-11-26T14:57:31.120Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "email": "avaliador@bidexpert.com",
+    "password": "$2b$10$HY3kPTg0arD15y19jgLjeODKd9o73x/yheK5d3e46V4qlmV2yyR9.",
+    "fullName": "Carlos Avaliador",
+    "cpf": "55555555555",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-26T14:57:31.239Z",
+    "updatedAt": "2025-11-26T14:57:31.239Z",
+    "roles": [
+      {
+        "userId": "5",
+        "roleId": "6",
+        "assignedAt": "2025-11-26T14:57:31.361Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "6",
+          "name": "AVALIADOR",
+          "nameNormalized": "AVALIADOR",
+          "description": "Role AVALIADOR",
+          "permissions": [
+            "documents:generate_report"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "5",
+        "tenantId": "1",
+        "assignedAt": "2025-11-26T14:57:31.361Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "6",
+    "email": "user@tenant-b.com",
+    "password": "$2b$10$HY3kPTg0arD15y19jgLjeODKd9o73x/yheK5d3e46V4qlmV2yyR9.",
+    "fullName": "Usu├írio Tenant B",
+    "cpf": "66666666666",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-26T14:57:31.446Z",
+    "updatedAt": "2025-11-26T14:57:31.446Z",
+    "roles": [
+      {
+        "userId": "6",
+        "roleId": "4",
+        "assignedAt": "2025-11-26T14:57:31.568Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "6",
+        "tenantId": "2",
+        "assignedAt": "2025-11-26T14:57:31.568Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "2",
+          "name": "BidExpert Tenant Secund├írio",
+          "subdomain": "tenant-b",
+          "domain": "tenant-b.localhost",
+          "createdAt": "2025-11-26T14:57:29.206Z",
+          "updatedAt": "2025-11-26T14:57:29.206Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "7",
+    "email": "test.leiloeiro.1764381947456@bidexpert.com",
+    "password": "$2b$10$KGfvF937FM.ewaOrs/qmweVpIzKLNjgE3wuvqMKpVfE7W4yvexYaO",
+    "fullName": "Leiloeiro Test Premium 1764381947456",
+    "cpf": "11117643819",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:05:49.403Z",
+    "updatedAt": "2025-11-29T02:05:49.403Z",
+    "roles": [
+      {
+        "userId": "7",
+        "roleId": "1",
+        "assignedAt": "2025-11-29T02:05:49.666Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "1",
+          "name": "ADMIN",
+          "nameNormalized": "ADMIN",
+          "description": "Role ADMIN",
+          "permissions": [
+            "manage_all"
+          ]
+        }
+      },
+      {
+        "userId": "7",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:05:49.666Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      },
+      {
+        "userId": "7",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:05:49.666Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "7",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:05:51.564Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "8",
+    "email": "test.comprador.1764381947456@bidexpert.com",
+    "password": "$2b$10$KGfvF937FM.ewaOrs/qmweVpIzKLNjgE3wuvqMKpVfE7W4yvexYaO",
+    "fullName": "Comprador Test 1764381947456",
+    "cpf": "55517643819",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:05:50.315Z",
+    "updatedAt": "2025-11-29T02:05:50.315Z",
+    "roles": [
+      {
+        "userId": "8",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:05:50.539Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "8",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:05:51.564Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "9",
+    "email": "advogado.1764381947456@bidexpert.com.br",
+    "password": "$2b$10$KGfvF937FM.ewaOrs/qmweVpIzKLNjgE3wuvqMKpVfE7W4yvexYaO",
+    "fullName": "Dr. Advogado Test 1764381947456",
+    "cpf": "99917643819",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:05:50.682Z",
+    "updatedAt": "2025-11-29T02:05:50.682Z",
+    "roles": [
+      {
+        "userId": "9",
+        "roleId": "3",
+        "assignedAt": "2025-11-29T02:05:50.828Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "3",
+          "name": "ADVOGADO",
+          "nameNormalized": "ADVOGADO",
+          "description": "Role ADVOGADO",
+          "permissions": [
+            "lawyer_dashboard:view",
+            "lawyer_cases:view",
+            "lawyer_documents:manage"
+          ]
+        }
+      },
+      {
+        "userId": "9",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:05:50.828Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "9",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:05:51.564Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "10",
+    "email": "test.vendedor.1764381947456@bidexpert.com",
+    "password": "$2b$10$KGfvF937FM.ewaOrs/qmweVpIzKLNjgE3wuvqMKpVfE7W4yvexYaO",
+    "fullName": "Vendedor Test 1764381947456",
+    "cpf": "44417643819",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "LEGAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:05:50.975Z",
+    "updatedAt": "2025-11-29T02:05:50.975Z",
+    "roles": [
+      {
+        "userId": "10",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:05:51.124Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      },
+      {
+        "userId": "10",
+        "roleId": "5",
+        "assignedAt": "2025-11-29T02:05:51.124Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "5",
+          "name": "VENDEDOR",
+          "nameNormalized": "VENDEDOR",
+          "description": "Role VENDEDOR",
+          "permissions": [
+            "consignor_dashboard:view",
+            "auctions:manage_own",
+            "lots:manage_own"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "10",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:05:51.564Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "11",
+    "email": "test.avaliador.1764381947456@bidexpert.com",
+    "password": "$2b$10$KGfvF937FM.ewaOrs/qmweVpIzKLNjgE3wuvqMKpVfE7W4yvexYaO",
+    "fullName": "Avaliador Test 1764381947456",
+    "cpf": "77717643819",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:05:51.269Z",
+    "updatedAt": "2025-11-29T02:05:51.269Z",
+    "roles": [
+      {
+        "userId": "11",
+        "roleId": "6",
+        "assignedAt": "2025-11-29T02:05:51.413Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "6",
+          "name": "AVALIADOR",
+          "nameNormalized": "AVALIADOR",
+          "description": "Role AVALIADOR",
+          "permissions": [
+            "documents:generate_report"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "11",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:05:51.564Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "12",
+    "email": "test.leiloeiro.1764382473063@bidexpert.com",
+    "password": "$2b$10$vgcd44vj6CDqa6T3/.MmSOrYhbkMytpjuO2j6yNFeW4u5LoSyFezi",
+    "fullName": "Leiloeiro Test Premium 1764382473063",
+    "cpf": "11117643824",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:14:34.439Z",
+    "updatedAt": "2025-11-29T02:14:34.439Z",
+    "roles": [
+      {
+        "userId": "12",
+        "roleId": "1",
+        "assignedAt": "2025-11-29T02:14:34.602Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "1",
+          "name": "ADMIN",
+          "nameNormalized": "ADMIN",
+          "description": "Role ADMIN",
+          "permissions": [
+            "manage_all"
+          ]
+        }
+      },
+      {
+        "userId": "12",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:14:34.602Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      },
+      {
+        "userId": "12",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:14:34.602Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "12",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:14:35.641Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "13",
+    "email": "test.comprador.1764382473063@bidexpert.com",
+    "password": "$2b$10$vgcd44vj6CDqa6T3/.MmSOrYhbkMytpjuO2j6yNFeW4u5LoSyFezi",
+    "fullName": "Comprador Test 1764382473063",
+    "cpf": "55517643824",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:14:34.834Z",
+    "updatedAt": "2025-11-29T02:14:34.834Z",
+    "roles": [
+      {
+        "userId": "13",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:14:34.976Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "13",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:14:35.641Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "14",
+    "email": "advogado.1764382473063@bidexpert.com.br",
+    "password": "$2b$10$vgcd44vj6CDqa6T3/.MmSOrYhbkMytpjuO2j6yNFeW4u5LoSyFezi",
+    "fullName": "Dr. Advogado Test 1764382473063",
+    "cpf": "99917643824",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:14:35.071Z",
+    "updatedAt": "2025-11-29T02:14:35.071Z",
+    "roles": [
+      {
+        "userId": "14",
+        "roleId": "3",
+        "assignedAt": "2025-11-29T02:14:35.168Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "3",
+          "name": "ADVOGADO",
+          "nameNormalized": "ADVOGADO",
+          "description": "Role ADVOGADO",
+          "permissions": [
+            "lawyer_dashboard:view",
+            "lawyer_cases:view",
+            "lawyer_documents:manage"
+          ]
+        }
+      },
+      {
+        "userId": "14",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:14:35.168Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "14",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:14:35.641Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "15",
+    "email": "test.vendedor.1764382473063@bidexpert.com",
+    "password": "$2b$10$vgcd44vj6CDqa6T3/.MmSOrYhbkMytpjuO2j6yNFeW4u5LoSyFezi",
+    "fullName": "Vendedor Test 1764382473063",
+    "cpf": "44417643824",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "LEGAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:14:35.262Z",
+    "updatedAt": "2025-11-29T02:14:35.262Z",
+    "roles": [
+      {
+        "userId": "15",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:14:35.358Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      },
+      {
+        "userId": "15",
+        "roleId": "5",
+        "assignedAt": "2025-11-29T02:14:35.358Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "5",
+          "name": "VENDEDOR",
+          "nameNormalized": "VENDEDOR",
+          "description": "Role VENDEDOR",
+          "permissions": [
+            "consignor_dashboard:view",
+            "auctions:manage_own",
+            "lots:manage_own"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "15",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:14:35.641Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "16",
+    "email": "test.avaliador.1764382473063@bidexpert.com",
+    "password": "$2b$10$vgcd44vj6CDqa6T3/.MmSOrYhbkMytpjuO2j6yNFeW4u5LoSyFezi",
+    "fullName": "Avaliador Test 1764382473063",
+    "cpf": "77717643824",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:14:35.450Z",
+    "updatedAt": "2025-11-29T02:14:35.450Z",
+    "roles": [
+      {
+        "userId": "16",
+        "roleId": "6",
+        "assignedAt": "2025-11-29T02:14:35.544Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "6",
+          "name": "AVALIADOR",
+          "nameNormalized": "AVALIADOR",
+          "description": "Role AVALIADOR",
+          "permissions": [
+            "documents:generate_report"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "16",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:14:35.641Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "17",
+    "email": "test.leiloeiro.1764383256013@bidexpert.com",
+    "password": "$2b$10$E0PdXkqbgMcjIRc8yjB.uOWLeTXGNa.Q93mH8b47W0TN2eM.HPM..",
+    "fullName": "Leiloeiro Test Premium 1764383256013",
+    "cpf": "11117643832",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:27:37.431Z",
+    "updatedAt": "2025-11-29T02:27:37.431Z",
+    "roles": [
+      {
+        "userId": "17",
+        "roleId": "1",
+        "assignedAt": "2025-11-29T02:27:37.611Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "1",
+          "name": "ADMIN",
+          "nameNormalized": "ADMIN",
+          "description": "Role ADMIN",
+          "permissions": [
+            "manage_all"
+          ]
+        }
+      },
+      {
+        "userId": "17",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:27:37.611Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      },
+      {
+        "userId": "17",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:27:37.611Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "17",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:27:39.116Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "18",
+    "email": "test.comprador.1764383256013@bidexpert.com",
+    "password": "$2b$10$E0PdXkqbgMcjIRc8yjB.uOWLeTXGNa.Q93mH8b47W0TN2eM.HPM..",
+    "fullName": "Comprador Test 1764383256013",
+    "cpf": "55517643832",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:27:37.951Z",
+    "updatedAt": "2025-11-29T02:27:37.951Z",
+    "roles": [
+      {
+        "userId": "18",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:27:38.156Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "18",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:27:39.116Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "19",
+    "email": "advogado.1764383256013@bidexpert.com.br",
+    "password": "$2b$10$E0PdXkqbgMcjIRc8yjB.uOWLeTXGNa.Q93mH8b47W0TN2eM.HPM..",
+    "fullName": "Dr. Advogado Test 1764383256013",
+    "cpf": "99917643832",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:27:38.290Z",
+    "updatedAt": "2025-11-29T02:27:38.290Z",
+    "roles": [
+      {
+        "userId": "19",
+        "roleId": "3",
+        "assignedAt": "2025-11-29T02:27:38.427Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "3",
+          "name": "ADVOGADO",
+          "nameNormalized": "ADVOGADO",
+          "description": "Role ADVOGADO",
+          "permissions": [
+            "lawyer_dashboard:view",
+            "lawyer_cases:view",
+            "lawyer_documents:manage"
+          ]
+        }
+      },
+      {
+        "userId": "19",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:27:38.427Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "19",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:27:39.116Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "20",
+    "email": "test.vendedor.1764383256013@bidexpert.com",
+    "password": "$2b$10$E0PdXkqbgMcjIRc8yjB.uOWLeTXGNa.Q93mH8b47W0TN2eM.HPM..",
+    "fullName": "Vendedor Test 1764383256013",
+    "cpf": "44417643832",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "LEGAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:27:38.559Z",
+    "updatedAt": "2025-11-29T02:27:38.559Z",
+    "roles": [
+      {
+        "userId": "20",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:27:38.696Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      },
+      {
+        "userId": "20",
+        "roleId": "5",
+        "assignedAt": "2025-11-29T02:27:38.696Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "5",
+          "name": "VENDEDOR",
+          "nameNormalized": "VENDEDOR",
+          "description": "Role VENDEDOR",
+          "permissions": [
+            "consignor_dashboard:view",
+            "auctions:manage_own",
+            "lots:manage_own"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "20",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:27:39.116Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "21",
+    "email": "test.avaliador.1764383256013@bidexpert.com",
+    "password": "$2b$10$E0PdXkqbgMcjIRc8yjB.uOWLeTXGNa.Q93mH8b47W0TN2eM.HPM..",
+    "fullName": "Avaliador Test 1764383256013",
+    "cpf": "77717643832",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:27:38.835Z",
+    "updatedAt": "2025-11-29T02:27:38.835Z",
+    "roles": [
+      {
+        "userId": "21",
+        "roleId": "6",
+        "assignedAt": "2025-11-29T02:27:38.981Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "6",
+          "name": "AVALIADOR",
+          "nameNormalized": "AVALIADOR",
+          "description": "Role AVALIADOR",
+          "permissions": [
+            "documents:generate_report"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "21",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:27:39.116Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "22",
+    "email": "leiloeiro.sp.01.1764383256013@bidexpert.com",
+    "password": "$2b$10$DY2FOodS6nhoRobj9SRfy.qBeuZJVPYQVkVqxSZ0CEen5Y9oBj64W",
+    "fullName": "LEILOEIRO SP 01",
+    "cpf": "51193064792",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:27:44.487Z",
+    "updatedAt": "2025-11-29T02:27:44.487Z",
+    "roles": [
+      {
+        "userId": "22",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:27:44.620Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "22",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:27:44.758Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "23",
+    "email": "leiloeiro.rj.01.1764383256013@bidexpert.com",
+    "password": "$2b$10$OyGqXstW7y46gahIMB6QB.aLZmhN3.vvdAvthski0N2ogSQqYGjZS",
+    "fullName": "LEILOEIRO RJ 01",
+    "cpf": "22923883954",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:27:45.202Z",
+    "updatedAt": "2025-11-29T02:27:45.202Z",
+    "roles": [
+      {
+        "userId": "23",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:27:45.342Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "23",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:27:45.481Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "24",
+    "email": "leiloeiro.mg.01.1764383256013@bidexpert.com",
+    "password": "$2b$10$Tc7uTmXuZ7YdBNUe0NZ8v.YOns6tyOTkiR7Dq3XZ/Bp/VqRQeM1dC",
+    "fullName": "LEILOEIRO MG 01",
+    "cpf": "12269218187",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:27:45.817Z",
+    "updatedAt": "2025-11-29T02:27:45.817Z",
+    "roles": [
+      {
+        "userId": "24",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:27:45.955Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "24",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:27:46.089Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "25",
+    "email": "test.leiloeiro.1764383480355@bidexpert.com",
+    "password": "$2b$10$eyZ0JVlJY9JpO1rwSXGL1eFP5V2ABCrE3HvuQTx9i6kiId/oGlJwG",
+    "fullName": "Leiloeiro Test Premium 1764383480355",
+    "cpf": "11117643834",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:31:21.544Z",
+    "updatedAt": "2025-11-29T02:31:21.544Z",
+    "roles": [
+      {
+        "userId": "25",
+        "roleId": "1",
+        "assignedAt": "2025-11-29T02:31:21.680Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "1",
+          "name": "ADMIN",
+          "nameNormalized": "ADMIN",
+          "description": "Role ADMIN",
+          "permissions": [
+            "manage_all"
+          ]
+        }
+      },
+      {
+        "userId": "25",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:31:21.680Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      },
+      {
+        "userId": "25",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:31:21.679Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "25",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:31:23.055Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "26",
+    "email": "test.comprador.1764383480355@bidexpert.com",
+    "password": "$2b$10$eyZ0JVlJY9JpO1rwSXGL1eFP5V2ABCrE3HvuQTx9i6kiId/oGlJwG",
+    "fullName": "Comprador Test 1764383480355",
+    "cpf": "55517643834",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:31:21.992Z",
+    "updatedAt": "2025-11-29T02:31:21.992Z",
+    "roles": [
+      {
+        "userId": "26",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:31:22.180Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "26",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:31:23.055Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "27",
+    "email": "advogado.1764383480355@bidexpert.com.br",
+    "password": "$2b$10$eyZ0JVlJY9JpO1rwSXGL1eFP5V2ABCrE3HvuQTx9i6kiId/oGlJwG",
+    "fullName": "Dr. Advogado Test 1764383480355",
+    "cpf": "99917643834",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:31:22.308Z",
+    "updatedAt": "2025-11-29T02:31:22.308Z",
+    "roles": [
+      {
+        "userId": "27",
+        "roleId": "3",
+        "assignedAt": "2025-11-29T02:31:22.434Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "3",
+          "name": "ADVOGADO",
+          "nameNormalized": "ADVOGADO",
+          "description": "Role ADVOGADO",
+          "permissions": [
+            "lawyer_dashboard:view",
+            "lawyer_cases:view",
+            "lawyer_documents:manage"
+          ]
+        }
+      },
+      {
+        "userId": "27",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:31:22.434Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "27",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:31:23.055Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "28",
+    "email": "test.vendedor.1764383480355@bidexpert.com",
+    "password": "$2b$10$eyZ0JVlJY9JpO1rwSXGL1eFP5V2ABCrE3HvuQTx9i6kiId/oGlJwG",
+    "fullName": "Vendedor Test 1764383480355",
+    "cpf": "44417643834",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "LEGAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:31:22.556Z",
+    "updatedAt": "2025-11-29T02:31:22.556Z",
+    "roles": [
+      {
+        "userId": "28",
+        "roleId": "4",
+        "assignedAt": "2025-11-29T02:31:22.685Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      },
+      {
+        "userId": "28",
+        "roleId": "5",
+        "assignedAt": "2025-11-29T02:31:22.685Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "5",
+          "name": "VENDEDOR",
+          "nameNormalized": "VENDEDOR",
+          "description": "Role VENDEDOR",
+          "permissions": [
+            "consignor_dashboard:view",
+            "auctions:manage_own",
+            "lots:manage_own"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "28",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:31:23.055Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "29",
+    "email": "test.avaliador.1764383480355@bidexpert.com",
+    "password": "$2b$10$eyZ0JVlJY9JpO1rwSXGL1eFP5V2ABCrE3HvuQTx9i6kiId/oGlJwG",
+    "fullName": "Avaliador Test 1764383480355",
+    "cpf": "77717643834",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:31:22.808Z",
+    "updatedAt": "2025-11-29T02:31:22.808Z",
+    "roles": [
+      {
+        "userId": "29",
+        "roleId": "6",
+        "assignedAt": "2025-11-29T02:31:22.931Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "6",
+          "name": "AVALIADOR",
+          "nameNormalized": "AVALIADOR",
+          "description": "Role AVALIADOR",
+          "permissions": [
+            "documents:generate_report"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "29",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:31:23.055Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "30",
+    "email": "leiloeiro.sp.01.1764383480355@bidexpert.com",
+    "password": "$2b$10$ZbjcDmPT.5cJs1y5EREW6.d0IomK4QHlrvfmhkejPs9ycjxwpfdRa",
+    "fullName": "LEILOEIRO SP 01",
+    "cpf": "16325019841",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:31:28.417Z",
+    "updatedAt": "2025-11-29T02:31:28.417Z",
+    "roles": [
+      {
+        "userId": "30",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:31:28.624Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "30",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:31:28.818Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "31",
+    "email": "leiloeiro.rj.01.1764383480355@bidexpert.com",
+    "password": "$2b$10$n97pOzcK/qXPjRqxfh5f7.PNVrqE3DCUFkJ4FykJsHrd/TLsQ1Foy",
+    "fullName": "LEILOEIRO RJ 01",
+    "cpf": "78692946522",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:31:29.313Z",
+    "updatedAt": "2025-11-29T02:31:29.313Z",
+    "roles": [
+      {
+        "userId": "31",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:31:29.443Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "31",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:31:29.571Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "32",
+    "email": "leiloeiro.mg.01.1764383480355@bidexpert.com",
+    "password": "$2b$10$6kFP5i1Ako77xEHpzSto9.K3NO6k5mP.HuAKHlVASRgeXeUh4vHPu",
+    "fullName": "LEILOEIRO MG 01",
+    "cpf": "63072531417",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-29T02:31:29.915Z",
+    "updatedAt": "2025-11-29T02:31:29.915Z",
+    "roles": [
+      {
+        "userId": "32",
+        "roleId": "2",
+        "assignedAt": "2025-11-29T02:31:30.044Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "32",
+        "tenantId": "1",
+        "assignedAt": "2025-11-29T02:31:30.232Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "33",
+    "email": "test.leiloeiro.1764537188624@bidexpert.com",
+    "password": "$2b$10$vAH8VUZWGHT1gmIv5IXqCOfY17SOi7VqozI.n7x2ztJcuC54Jzvga",
+    "fullName": "Leiloeiro Test Premium 1764537188624",
+    "cpf": "11117645371",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-30T21:13:10.420Z",
+    "updatedAt": "2025-11-30T21:13:10.420Z",
+    "roles": [
+      {
+        "userId": "33",
+        "roleId": "1",
+        "assignedAt": "2025-11-30T21:13:10.643Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "1",
+          "name": "ADMIN",
+          "nameNormalized": "ADMIN",
+          "description": "Role ADMIN",
+          "permissions": [
+            "manage_all"
+          ]
+        }
+      },
+      {
+        "userId": "33",
+        "roleId": "2",
+        "assignedAt": "2025-11-30T21:13:10.643Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      },
+      {
+        "userId": "33",
+        "roleId": "4",
+        "assignedAt": "2025-11-30T21:13:10.643Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "33",
+        "tenantId": "1",
+        "assignedAt": "2025-11-30T21:13:12.514Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "34",
+    "email": "test.comprador.1764537188624@bidexpert.com",
+    "password": "$2b$10$vAH8VUZWGHT1gmIv5IXqCOfY17SOi7VqozI.n7x2ztJcuC54Jzvga",
+    "fullName": "Comprador Test 1764537188624",
+    "cpf": "55517645371",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-30T21:13:10.973Z",
+    "updatedAt": "2025-11-30T21:13:10.973Z",
+    "roles": [
+      {
+        "userId": "34",
+        "roleId": "4",
+        "assignedAt": "2025-11-30T21:13:11.172Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "34",
+        "tenantId": "1",
+        "assignedAt": "2025-11-30T21:13:12.514Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "35",
+    "email": "advogado.1764537188624@bidexpert.com.br",
+    "password": "$2b$10$vAH8VUZWGHT1gmIv5IXqCOfY17SOi7VqozI.n7x2ztJcuC54Jzvga",
+    "fullName": "Dr. Advogado Test 1764537188624",
+    "cpf": "99917645371",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-30T21:13:11.320Z",
+    "updatedAt": "2025-11-30T21:13:11.320Z",
+    "roles": [
+      {
+        "userId": "35",
+        "roleId": "3",
+        "assignedAt": "2025-11-30T21:13:11.463Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "3",
+          "name": "ADVOGADO",
+          "nameNormalized": "ADVOGADO",
+          "description": "Role ADVOGADO",
+          "permissions": [
+            "lawyer_dashboard:view",
+            "lawyer_cases:view",
+            "lawyer_documents:manage"
+          ]
+        }
+      },
+      {
+        "userId": "35",
+        "roleId": "4",
+        "assignedAt": "2025-11-30T21:13:11.463Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "35",
+        "tenantId": "1",
+        "assignedAt": "2025-11-30T21:13:12.514Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "36",
+    "email": "test.vendedor.1764537188624@bidexpert.com",
+    "password": "$2b$10$vAH8VUZWGHT1gmIv5IXqCOfY17SOi7VqozI.n7x2ztJcuC54Jzvga",
+    "fullName": "Vendedor Test 1764537188624",
+    "cpf": "44417645371",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "LEGAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-30T21:13:11.962Z",
+    "updatedAt": "2025-11-30T21:13:11.962Z",
+    "roles": [
+      {
+        "userId": "36",
+        "roleId": "4",
+        "assignedAt": "2025-11-30T21:13:12.094Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      },
+      {
+        "userId": "36",
+        "roleId": "5",
+        "assignedAt": "2025-11-30T21:13:12.094Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "5",
+          "name": "VENDEDOR",
+          "nameNormalized": "VENDEDOR",
+          "description": "Role VENDEDOR",
+          "permissions": [
+            "consignor_dashboard:view",
+            "auctions:manage_own",
+            "lots:manage_own"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "36",
+        "tenantId": "1",
+        "assignedAt": "2025-11-30T21:13:12.515Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "37",
+    "email": "test.avaliador.1764537188624@bidexpert.com",
+    "password": "$2b$10$vAH8VUZWGHT1gmIv5IXqCOfY17SOi7VqozI.n7x2ztJcuC54Jzvga",
+    "fullName": "Avaliador Test 1764537188624",
+    "cpf": "77717645371",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-30T21:13:12.240Z",
+    "updatedAt": "2025-11-30T21:13:12.240Z",
+    "roles": [
+      {
+        "userId": "37",
+        "roleId": "6",
+        "assignedAt": "2025-11-30T21:13:12.376Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "6",
+          "name": "AVALIADOR",
+          "nameNormalized": "AVALIADOR",
+          "description": "Role AVALIADOR",
+          "permissions": [
+            "documents:generate_report"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "37",
+        "tenantId": "1",
+        "assignedAt": "2025-11-30T21:13:12.515Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "38",
+    "email": "leiloeiro.sp.01.1764537188624@bidexpert.com",
+    "password": "$2b$10$fHQb.XKuYGU6GBPeV34N8OLDvkIZ/LV0zIC1BmAJ.Jn/m6oqYx31u",
+    "fullName": "LEILOEIRO SP 01",
+    "cpf": "16994083517",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-30T21:13:19.499Z",
+    "updatedAt": "2025-11-30T21:13:19.499Z",
+    "roles": [
+      {
+        "userId": "38",
+        "roleId": "2",
+        "assignedAt": "2025-11-30T21:13:19.640Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "38",
+        "tenantId": "1",
+        "assignedAt": "2025-11-30T21:13:19.774Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "39",
+    "email": "leiloeiro.rj.01.1764537188624@bidexpert.com",
+    "password": "$2b$10$4yVq3WmClPNhUqUzmnIZHOopHLKDj2vc/lAc02kDnTKSHfWJlpm.m",
+    "fullName": "LEILOEIRO RJ 01",
+    "cpf": "76004687960",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-30T21:13:20.205Z",
+    "updatedAt": "2025-11-30T21:13:20.205Z",
+    "roles": [
+      {
+        "userId": "39",
+        "roleId": "2",
+        "assignedAt": "2025-11-30T21:13:20.348Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "39",
+        "tenantId": "1",
+        "assignedAt": "2025-11-30T21:13:20.494Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "40",
+    "email": "leiloeiro.mg.01.1764537188624@bidexpert.com",
+    "password": "$2b$10$.zeQ4I0v3Td2d5sh1tbRq.kI950KUmYLj1kEunkoVAxTYtQTgN1xa",
+    "fullName": "LEILOEIRO MG 01",
+    "cpf": "24921727661",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-11-30T21:13:20.844Z",
+    "updatedAt": "2025-11-30T21:13:20.844Z",
+    "roles": [
+      {
+        "userId": "40",
+        "roleId": "2",
+        "assignedAt": "2025-11-30T21:13:20.983Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "40",
+        "tenantId": "1",
+        "assignedAt": "2025-11-30T21:13:21.141Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "41",
+    "email": "admin@bidexpert.com.br",
+    "password": "$2b$10$IW4Yu0tjJ3Kkjn9dwADvF.dDkbxUZD0d2jUWditjCOqQyBTPKBRsm",
+    "fullName": "Administrador",
+    "cpf": "00000000000",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-02T16:13:47.814Z",
+    "updatedAt": "2025-12-02T16:13:47.814Z",
+    "roles": [
+      {
+        "userId": "41",
+        "roleId": "1",
+        "assignedAt": "2025-12-02T16:13:48.568Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "1",
+          "name": "ADMIN",
+          "nameNormalized": "ADMIN",
+          "description": "Role ADMIN",
+          "permissions": [
+            "manage_all"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "41",
+        "tenantId": "1",
+        "assignedAt": "2025-12-02T16:13:49.367Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "42",
+    "email": "test.leiloeiro.1764898885153@bidexpert.com",
+    "password": "$2b$10$Cq68fjUnIVf0LuCQq6um3eczg1NGHWTq3.oVkMXbfGtt.YKozAiLi",
+    "fullName": "Leiloeiro Test Premium 1764898885153",
+    "cpf": "11117648988",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-05T01:41:27.472Z",
+    "updatedAt": "2025-12-05T01:41:27.472Z",
+    "roles": [
+      {
+        "userId": "42",
+        "roleId": "1",
+        "assignedAt": "2025-12-05T01:41:27.625Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "1",
+          "name": "ADMIN",
+          "nameNormalized": "ADMIN",
+          "description": "Role ADMIN",
+          "permissions": [
+            "manage_all"
+          ]
+        }
+      },
+      {
+        "userId": "42",
+        "roleId": "2",
+        "assignedAt": "2025-12-05T01:41:27.625Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      },
+      {
+        "userId": "42",
+        "roleId": "4",
+        "assignedAt": "2025-12-05T01:41:27.625Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "42",
+        "tenantId": "1",
+        "assignedAt": "2025-12-05T01:41:28.962Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "43",
+    "email": "test.comprador.1764898885153@bidexpert.com",
+    "password": "$2b$10$Cq68fjUnIVf0LuCQq6um3eczg1NGHWTq3.oVkMXbfGtt.YKozAiLi",
+    "fullName": "Comprador Test 1764898885153",
+    "cpf": "55517648988",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-05T01:41:27.921Z",
+    "updatedAt": "2025-12-05T01:41:27.921Z",
+    "roles": [
+      {
+        "userId": "43",
+        "roleId": "4",
+        "assignedAt": "2025-12-05T01:41:28.104Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "43",
+        "tenantId": "1",
+        "assignedAt": "2025-12-05T01:41:28.962Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "44",
+    "email": "advogado.1764898885153@bidexpert.com.br",
+    "password": "$2b$10$Cq68fjUnIVf0LuCQq6um3eczg1NGHWTq3.oVkMXbfGtt.YKozAiLi",
+    "fullName": "Dr. Advogado Test 1764898885153",
+    "cpf": "99917648988",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-05T01:41:28.229Z",
+    "updatedAt": "2025-12-05T01:41:28.229Z",
+    "roles": [
+      {
+        "userId": "44",
+        "roleId": "3",
+        "assignedAt": "2025-12-05T01:41:28.351Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "3",
+          "name": "ADVOGADO",
+          "nameNormalized": "ADVOGADO",
+          "description": "Role ADVOGADO",
+          "permissions": [
+            "lawyer_dashboard:view",
+            "lawyer_cases:view",
+            "lawyer_documents:manage"
+          ]
+        }
+      },
+      {
+        "userId": "44",
+        "roleId": "4",
+        "assignedAt": "2025-12-05T01:41:28.351Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "44",
+        "tenantId": "1",
+        "assignedAt": "2025-12-05T01:41:28.962Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "45",
+    "email": "test.vendedor.1764898885153@bidexpert.com",
+    "password": "$2b$10$Cq68fjUnIVf0LuCQq6um3eczg1NGHWTq3.oVkMXbfGtt.YKozAiLi",
+    "fullName": "Vendedor Test 1764898885153",
+    "cpf": "44417648988",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "LEGAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-05T01:41:28.476Z",
+    "updatedAt": "2025-12-05T01:41:28.476Z",
+    "roles": [
+      {
+        "userId": "45",
+        "roleId": "4",
+        "assignedAt": "2025-12-05T01:41:28.599Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "4",
+          "name": "COMPRADOR",
+          "nameNormalized": "COMPRADOR",
+          "description": "Role COMPRADOR",
+          "permissions": [
+            "place_bids",
+            "view_auctions",
+            "view_lots"
+          ]
+        }
+      },
+      {
+        "userId": "45",
+        "roleId": "5",
+        "assignedAt": "2025-12-05T01:41:28.599Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "5",
+          "name": "VENDEDOR",
+          "nameNormalized": "VENDEDOR",
+          "description": "Role VENDEDOR",
+          "permissions": [
+            "consignor_dashboard:view",
+            "auctions:manage_own",
+            "lots:manage_own"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "45",
+        "tenantId": "1",
+        "assignedAt": "2025-12-05T01:41:28.962Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "46",
+    "email": "test.avaliador.1764898885153@bidexpert.com",
+    "password": "$2b$10$Cq68fjUnIVf0LuCQq6um3eczg1NGHWTq3.oVkMXbfGtt.YKozAiLi",
+    "fullName": "Avaliador Test 1764898885153",
+    "cpf": "77717648988",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-05T01:41:28.721Z",
+    "updatedAt": "2025-12-05T01:41:28.721Z",
+    "roles": [
+      {
+        "userId": "46",
+        "roleId": "6",
+        "assignedAt": "2025-12-05T01:41:28.841Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "6",
+          "name": "AVALIADOR",
+          "nameNormalized": "AVALIADOR",
+          "description": "Role AVALIADOR",
+          "permissions": [
+            "documents:generate_report"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "46",
+        "tenantId": "1",
+        "assignedAt": "2025-12-05T01:41:28.962Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "47",
+    "email": "leiloeiro.sp.01.1764898885153@bidexpert.com",
+    "password": "$2b$10$zWueeT.8kY8sS8A7lKt6iOID4xKZmVPdNDoIVLjiNwDc4h95a4ybW",
+    "fullName": "LEILOEIRO SP 01",
+    "cpf": "47745980639",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-05T01:41:36.189Z",
+    "updatedAt": "2025-12-05T01:41:36.189Z",
+    "roles": [
+      {
+        "userId": "47",
+        "roleId": "2",
+        "assignedAt": "2025-12-05T01:41:36.389Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "47",
+        "tenantId": "1",
+        "assignedAt": "2025-12-05T01:41:36.589Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "48",
+    "email": "leiloeiro.rj.01.1764898885153@bidexpert.com",
+    "password": "$2b$10$amTJvQQTYyFTzrw45Qa5w.7eIxntmO5fDdw6JCtAiaaPGXBJ/E8YW",
+    "fullName": "LEILOEIRO RJ 01",
+    "cpf": "26076856591",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-05T01:41:37.285Z",
+    "updatedAt": "2025-12-05T01:41:37.285Z",
+    "roles": [
+      {
+        "userId": "48",
+        "roleId": "2",
+        "assignedAt": "2025-12-05T01:41:37.426Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "48",
+        "tenantId": "1",
+        "assignedAt": "2025-12-05T01:41:37.560Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "49",
+    "email": "leiloeiro.mg.01.1764898885153@bidexpert.com",
+    "password": "$2b$10$RV6XAJR9hw3VYGP3/1/bNebSPQvUa0CorHofq/UKGJiFQIm47bqKe",
+    "fullName": "LEILOEIRO MG 01",
+    "cpf": "20942037536",
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "HABILITADO",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-05T01:41:37.903Z",
+    "updatedAt": "2025-12-05T01:41:37.903Z",
+    "roles": [
+      {
+        "userId": "49",
+        "roleId": "2",
+        "assignedAt": "2025-12-05T01:41:38.039Z",
+        "assignedBy": "system",
+        "role": {
+          "id": "2",
+          "name": "LEILOEIRO",
+          "nameNormalized": "LEILOEIRO",
+          "description": "Role LEILOEIRO",
+          "permissions": [
+            "conduct_auctions",
+            "auctions:manage_assigned",
+            "lots:manage_assigned"
+          ]
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "49",
+        "tenantId": "1",
+        "assignedAt": "2025-12-05T01:41:38.176Z",
+        "assignedBy": null,
+        "tenant": {
+          "id": "1",
+          "name": "BidExpert Tenant Principal",
+          "subdomain": "principal",
+          "domain": "localhost",
+          "createdAt": "2025-11-26T14:57:29.051Z",
+          "updatedAt": "2025-11-26T14:57:29.051Z"
+        }
+      }
+    ]
+  }
+]
+--- ROLES ---
+[
+  {
+    "id": "1",
+    "name": "ADMIN",
+    "nameNormalized": "ADMIN",
+    "description": "Role ADMIN",
+    "permissions": [
+      "manage_all"
+    ]
+  },
+  {
+    "id": "2",
+    "name": "LEILOEIRO",
+    "nameNormalized": "LEILOEIRO",
+    "description": "Role LEILOEIRO",
+    "permissions": [
+      "conduct_auctions",
+      "auctions:manage_assigned",
+      "lots:manage_assigned"
+    ]
+  },
+  {
+    "id": "3",
+    "name": "ADVOGADO",
+    "nameNormalized": "ADVOGADO",
+    "description": "Role ADVOGADO",
+    "permissions": [
+      "lawyer_dashboard:view",
+      "lawyer_cases:view",
+      "lawyer_documents:manage"
+    ]
+  },
+  {
+    "id": "4",
+    "name": "COMPRADOR",
+    "nameNormalized": "COMPRADOR",
+    "description": "Role COMPRADOR",
+    "permissions": [
+      "place_bids",
+      "view_auctions",
+      "view_lots"
+    ]
+  },
+  {
+    "id": "5",
+    "name": "VENDEDOR",
+    "nameNormalized": "VENDEDOR",
+    "description": "Role VENDEDOR",
+    "permissions": [
+      "consignor_dashboard:view",
+      "auctions:manage_own",
+      "lots:manage_own"
+    ]
+  },
+  {
+    "id": "6",
+    "name": "AVALIADOR",
+    "nameNormalized": "AVALIADOR",
+    "description": "Role AVALIADOR",
+    "permissions": [
+      "documents:generate_report"
+    ]
+  }
+]

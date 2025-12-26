@@ -24,8 +24,19 @@ async function main() {
   console.log('⚠️  MODO: Adicionar dados sem apagar existentes\n');
 
   try {
-    // 1. PULAR LIMPEZA - Manter dados existentes
-    console.log('✅ Pulando limpeza - Mantendo dados existentes\n');
+    // 1. LIMPEZA SEGURA - Manter roles e types básicos
+    console.log('🧹 Limpeza parcial (mantendo tables base)...');
+
+    // Deletar dependências primeiro (tabelas de relação N:N)
+    await prisma.usersOnTenants.deleteMany({});
+    await prisma.usersOnRoles.deleteMany({});
+
+    // Deletar usuários (exceto seeds essenciais se necessário, aqui limpamos tudo para recriar)
+    await prisma.user.deleteMany({});
+
+    // NÃO deletar Roles e Tenants para preservar estrutura
+
+    console.log('✅ Limpeza concluída');
 
     // 2. USAR TENANT PADRÃO (ID 1) - NÃO CRIAR NOVOS TENANTS
     console.log('📦 Usando tenant padrão (ID 1)...');
@@ -233,6 +244,60 @@ async function main() {
         assignedBy: 'system',
       },
     });
+
+    // Usuário 6: Analista de Leilões
+    const analistaUser = await prisma.user.create({
+      data: {
+        email: `analista@lordland.com`,
+        password: await bcrypt.hash('password123', 10), // Senha fixa conforme solicitado
+        fullName: `Analista de Leilões Lordland`,
+        cpf: `888${uniqueSuffix}`.substring(0, 11),
+        accountType: 'PHYSICAL',
+        habilitationStatus: 'HABILITADO',
+      },
+    });
+
+    // Garantir que a Role AUCTION_ANALYST existe ou criar
+    let auctionAnalystRole = await prisma.role.findUnique({ where: { name: 'AUCTION_ANALYST' } });
+    if (!auctionAnalystRole) {
+      auctionAnalystRole = await prisma.role.create({
+        data: {
+          name: 'AUCTION_ANALYST',
+          nameNormalized: 'AUCTION_ANALYST',
+          description: 'Analista de Leilões',
+          permissions: [
+            'auctions:create', 'auctions:read', 'auctions:update', 'auctions:delete', 'auctions:publish',
+            'lots:create', 'lots:read', 'lots:update', 'lots:delete',
+            'assets:create', 'assets:read', 'assets:update', 'assets:delete',
+            'categories:create', 'categories:read', 'categories:update', 'categories:delete',
+            'auctioneers:create', 'auctioneers:read', 'auctioneers:update', 'auctioneers:delete',
+            'sellers:create', 'sellers:read', 'sellers:update', 'sellers:delete',
+            'judicial_processes:create', 'judicial_processes:read', 'judicial_processes:update', 'judicial_processes:delete',
+            'states:read', 'cities:read',
+            'media:upload', 'media:read', 'media:update', 'media:delete',
+            'view_reports',
+          ]
+        }
+      });
+    }
+
+    await prisma.usersOnRoles.create({
+      data: {
+        userId: analistaUser.id,
+        roleId: auctionAnalystRole.id, // Role ID dinâmico
+        assignedBy: 'system',
+      },
+    });
+
+    // Associar Analista ao Tenant padrão também
+    await prisma.usersOnTenants.create({
+      data: {
+        userId: analistaUser.id,
+        tenantId: tenants[0].id,
+        assignedBy: 'system',
+      }
+    });
+
 
     // Associar usuários aos tenants
     await Promise.all([
@@ -505,9 +570,9 @@ async function main() {
 
     // 5.5 CRIAR AUCTION STAGES (PRAÇAS) PARA OS LEILÕES
     console.log('🏛️  Criando auction stages (praças) para os leilões...');
-    
+
     const auctionStages = [];
-    
+
     // Criar 2 praças para o Leilão Judicial 1 (Imóveis)
     const stage1_1 = await prisma.auctionStage.create({
       data: {
@@ -689,7 +754,7 @@ async function main() {
 
     // 6. CRIAR LOTS (LOTES)
     console.log('📦 Criando lots...');
-    
+
     // Localizações com endereços das capitais
     const lotLocations = {
       salaComercial: { cityName: 'São Paulo', stateUf: 'SP', address: 'Av. Paulista, 1500 - Sala 201' },
@@ -701,7 +766,7 @@ async function main() {
       torno: { cityName: 'Belo Horizonte', stateUf: 'MG', address: 'Av. Amazonas, 1500' },
       cadeiras: { cityName: 'Brasília', stateUf: 'DF', address: 'SCS Quadra 1' },
     };
-    
+
     const lots = await Promise.all([
       // Lotes do Leilão 1 (Imóveis)
       prisma.lot.create({
@@ -1294,7 +1359,7 @@ async function main() {
     // Criar stages para os auctions adicionais
     console.log('🏛️  Criando stages para os auctions adicionais...');
     let additionalStagesCount = 0;
-    
+
     for (const auction of additionalAuctions) {
       const stage = await prisma.auctionStage.create({
         data: {
@@ -1307,7 +1372,7 @@ async function main() {
         },
       });
       additionalStagesCount++;
-      
+
       // Se for judicial, criar 2ª praça também
       if (auction.auctionType === 'JUDICIAL') {
         await prisma.auctionStage.create({
@@ -1323,7 +1388,7 @@ async function main() {
         additionalStagesCount++;
       }
     }
-    
+
     console.log(`✅ ${additionalStagesCount} stages adicionais criados para os auctions\n`);
 
     // 7.5 CRIAR LOTES COM LOCALIZAÇÃO E LOTEAMENTOS
@@ -1495,7 +1560,7 @@ async function main() {
 
     const createdAssets = [];
     let locationIndex = 0;
-    
+
     for (const { process, count, types } of processesWithAssets) {
       for (let i = 0; i < count; i++) {
         const type = types[i] as keyof typeof assetTypes;
@@ -2190,12 +2255,12 @@ async function main() {
 
     const capitalsList = Object.entries(capitalZipCodes);
     const capitalToUF: Record<string, string> = {
-        'São Paulo': 'SP', 'Rio de Janeiro': 'RJ', 'Belo Horizonte': 'MG', 'Brasília': 'DF',
-        'Salvador': 'BA', 'Fortaleza': 'CE', 'Curitiba': 'PR', 'Manaus': 'AM', 'Recife': 'PE',
-        'Porto Alegre': 'RS', 'Belém': 'PA', 'Goiânia': 'GO', 'São Luís': 'MA', 'Maceió': 'AL',
-        'Natal': 'RN', 'Campo Grande': 'MS', 'Teresina': 'PI', 'João Pessoa': 'PB', 'Aracaju': 'SE',
-        'Cuiabá': 'MT', 'Porto Velho': 'RO', 'Florianópolis': 'SC', 'Macapá': 'AP', 'Rio Branco': 'AC',
-        'Vitória': 'ES', 'Boa Vista': 'RR', 'Palmas': 'TO'
+      'São Paulo': 'SP', 'Rio de Janeiro': 'RJ', 'Belo Horizonte': 'MG', 'Brasília': 'DF',
+      'Salvador': 'BA', 'Fortaleza': 'CE', 'Curitiba': 'PR', 'Manaus': 'AM', 'Recife': 'PE',
+      'Porto Alegre': 'RS', 'Belém': 'PA', 'Goiânia': 'GO', 'São Luís': 'MA', 'Maceió': 'AL',
+      'Natal': 'RN', 'Campo Grande': 'MS', 'Teresina': 'PI', 'João Pessoa': 'PB', 'Aracaju': 'SE',
+      'Cuiabá': 'MT', 'Porto Velho': 'RO', 'Florianópolis': 'SC', 'Macapá': 'AP', 'Rio Branco': 'AC',
+      'Vitória': 'ES', 'Boa Vista': 'RR', 'Palmas': 'TO'
     };
 
     for (const auction of allAuctions) {
@@ -2203,7 +2268,7 @@ async function main() {
       if (auction.stages.length === 0) {
         console.log(`   ➕ Criando praças para o leilão ${auction.title}...`);
         const startDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
-        
+
         await prisma.auctionStage.create({
           data: {
             name: '1ª Praça',
@@ -2231,7 +2296,7 @@ async function main() {
       if (!auction.zipCode || !auction.address) {
         const randomCapital = capitalsList[Math.floor(Math.random() * capitalsList.length)];
         console.log(`   📍 Atualizando localização do leilão ${auction.title} para ${randomCapital[0]}...`);
-        
+
         await prisma.auction.update({
           where: { id: auction.id },
           data: {
@@ -2281,7 +2346,7 @@ async function main() {
         });
       }
     }
-    
+
     console.log('✅ Atualização de dados faltantes concluída!\n');
 
     console.log('✅ Dados de engajamento e auditoria criados\n');

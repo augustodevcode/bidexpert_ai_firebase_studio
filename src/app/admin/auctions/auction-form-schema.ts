@@ -31,6 +31,7 @@ const auctionStageSchema = z.object({
   startDate: z.date({ required_error: "Data de início da praça é obrigatória" }),
   endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
   initialPrice: z.coerce.number().positive("O valor de avaliação deve ser positivo.").optional().nullable(),
+  discountPercent: z.coerce.number().int().min(1, "Mínimo 1%").max(100, "Máximo 100%").optional().nullable(),
 });
 
 export const auctionFormSchema = z.object({

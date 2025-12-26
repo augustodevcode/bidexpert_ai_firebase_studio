@@ -1,0 +1,434 @@
+﻿--- TENANTS ---
+[
+  {
+    "id": "1",
+    "name": "Lordland Leil├Áes",
+    "subdomain": "lordland",
+    "domain": "lordland.localhost",
+    "createdAt": "2025-12-24T02:13:18.961Z",
+    "updatedAt": "2025-12-24T02:13:18.961Z"
+  },
+  {
+    "id": "2",
+    "name": "BidExpert Marketplace",
+    "subdomain": "marketplace",
+    "domain": "marketplace.localhost",
+    "createdAt": "2025-12-24T02:13:19.195Z",
+    "updatedAt": "2025-12-24T02:13:19.195Z"
+  }
+]
+--- USERS ---
+[
+  {
+    "id": "50",
+    "email": "analista@lordland.com",
+    "password": "$2b$10$.t6/aOoHhX5zHG2g/DdlEe/2sivnxBhLyvVCoDs4kOZcwxTUuMPLy",
+    "fullName": "Analista de Leil├Áes Lordland",
+    "cpf": null,
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "PENDING_DOCUMENTS",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-24T02:13:20.749Z",
+    "updatedAt": "2025-12-24T02:13:20.749Z",
+    "roles": [
+      {
+        "userId": "50",
+        "roleId": "14",
+        "assignedAt": "2025-12-24T02:13:20.749Z",
+        "assignedBy": "seed",
+        "role": {
+          "id": "14",
+          "name": "AUCTION_ANALYST",
+          "nameNormalized": "auction_analyst",
+          "description": "Analista de Leil├Áes - Gerencia cadastros de leil├Áes, lotes, bens e dados operacionais",
+          "permissions": "[\"auctions:create\",\"auctions:read\",\"auctions:update\",\"auctions:delete\",\"auctions:publish\",\"lots:create\",\"lots:read\",\"lots:update\",\"lots:delete\",\"assets:create\",\"assets:read\",\"assets:update\",\"assets:delete\",\"categories:create\",\"categories:read\",\"categories:update\",\"categories:delete\",\"auctioneers:create\",\"auctioneers:read\",\"auctioneers:update\",\"auctioneers:delete\",\"sellers:create\",\"sellers:read\",\"sellers:update\",\"sellers:delete\",\"judicial_processes:create\",\"judicial_processes:read\",\"judicial_processes:update\",\"judicial_processes:delete\",\"states:read\",\"cities:read\",\"media:upload\",\"media:read\",\"media:update\",\"media:delete\",\"view_reports\"]"
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "50",
+        "tenantId": "1",
+        "assignedAt": "2025-12-24T02:13:20.749Z",
+        "assignedBy": "seed",
+        "tenant": {
+          "id": "1",
+          "name": "Lordland Leil├Áes",
+          "subdomain": "lordland",
+          "domain": "lordland.localhost",
+          "createdAt": "2025-12-24T02:13:18.961Z",
+          "updatedAt": "2025-12-24T02:13:18.961Z"
+        }
+      },
+      {
+        "userId": "50",
+        "tenantId": "2",
+        "assignedAt": "2025-12-24T02:13:20.749Z",
+        "assignedBy": "seed",
+        "tenant": {
+          "id": "2",
+          "name": "BidExpert Marketplace",
+          "subdomain": "marketplace",
+          "domain": "marketplace.localhost",
+          "createdAt": "2025-12-24T02:13:19.195Z",
+          "updatedAt": "2025-12-24T02:13:19.195Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "51",
+    "email": "admin@lordland.com",
+    "password": "$2b$10$.t6/aOoHhX5zHG2g/DdlEe/2sivnxBhLyvVCoDs4kOZcwxTUuMPLy",
+    "fullName": "Admin Lordland",
+    "cpf": null,
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "PENDING_DOCUMENTS",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-24T02:13:21.078Z",
+    "updatedAt": "2025-12-24T02:13:21.078Z",
+    "roles": [
+      {
+        "userId": "51",
+        "roleId": "13",
+        "assignedAt": "2025-12-24T02:13:21.078Z",
+        "assignedBy": "seed",
+        "role": {
+          "id": "13",
+          "name": "ADMIN",
+          "nameNormalized": "admin",
+          "description": "Administrador do sistema",
+          "permissions": "[\"manage_all\"]"
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "51",
+        "tenantId": "1",
+        "assignedAt": "2025-12-24T02:13:21.078Z",
+        "assignedBy": "seed",
+        "tenant": {
+          "id": "1",
+          "name": "Lordland Leil├Áes",
+          "subdomain": "lordland",
+          "domain": "lordland.localhost",
+          "createdAt": "2025-12-24T02:13:18.961Z",
+          "updatedAt": "2025-12-24T02:13:18.961Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "52",
+    "email": "auctioneer@lordland.com",
+    "password": "$2b$10$.t6/aOoHhX5zHG2g/DdlEe/2sivnxBhLyvVCoDs4kOZcwxTUuMPLy",
+    "fullName": "Leiloeiro Lordland",
+    "cpf": null,
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "PENDING_DOCUMENTS",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-24T02:13:21.299Z",
+    "updatedAt": "2025-12-24T02:13:21.299Z",
+    "roles": [
+      {
+        "userId": "52",
+        "roleId": "11",
+        "assignedAt": "2025-12-24T02:13:21.299Z",
+        "assignedBy": "seed",
+        "role": {
+          "id": "11",
+          "name": "AUCTIONEER",
+          "nameNormalized": "auctioneer",
+          "description": "Leiloeiro",
+          "permissions": "[\"auctions:manage_assigned\",\"lots:read\",\"lots:update\",\"lots:finalize\",\"conduct_auctions\",\"view_reports\"]"
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "52",
+        "tenantId": "1",
+        "assignedAt": "2025-12-24T02:13:21.299Z",
+        "assignedBy": "seed",
+        "tenant": {
+          "id": "1",
+          "name": "Lordland Leil├Áes",
+          "subdomain": "lordland",
+          "domain": "lordland.localhost",
+          "createdAt": "2025-12-24T02:13:18.961Z",
+          "updatedAt": "2025-12-24T02:13:18.961Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "53",
+    "email": "seller@lordland.com",
+    "password": "$2b$10$.t6/aOoHhX5zHG2g/DdlEe/2sivnxBhLyvVCoDs4kOZcwxTUuMPLy",
+    "fullName": "Vendedor Lordland",
+    "cpf": null,
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "PENDING_DOCUMENTS",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-24T02:13:21.492Z",
+    "updatedAt": "2025-12-24T02:13:21.492Z",
+    "roles": [
+      {
+        "userId": "53",
+        "roleId": "12",
+        "assignedAt": "2025-12-24T02:13:21.492Z",
+        "assignedBy": "seed",
+        "role": {
+          "id": "12",
+          "name": "SELLER",
+          "nameNormalized": "seller",
+          "description": "Vendedor/Comitente",
+          "permissions": "[\"auctions:manage_own\",\"lots:manage_own\",\"direct_sales:manage_own\",\"consignor_dashboard:view\",\"view_reports\"]"
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "53",
+        "tenantId": "1",
+        "assignedAt": "2025-12-24T02:13:21.492Z",
+        "assignedBy": "seed",
+        "tenant": {
+          "id": "1",
+          "name": "Lordland Leil├Áes",
+          "subdomain": "lordland",
+          "domain": "lordland.localhost",
+          "createdAt": "2025-12-24T02:13:18.961Z",
+          "updatedAt": "2025-12-24T02:13:18.961Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "54",
+    "email": "bidder@lordland.com",
+    "password": "$2b$10$.t6/aOoHhX5zHG2g/DdlEe/2sivnxBhLyvVCoDs4kOZcwxTUuMPLy",
+    "fullName": "Arrematante Lordland",
+    "cpf": null,
+    "rgNumber": null,
+    "rgIssuer": null,
+    "rgIssueDate": null,
+    "dateOfBirth": null,
+    "cellPhone": null,
+    "homePhone": null,
+    "gender": null,
+    "profession": null,
+    "nationality": null,
+    "maritalStatus": null,
+    "propertyRegime": null,
+    "spouseName": null,
+    "spouseCpf": null,
+    "zipCode": null,
+    "street": null,
+    "number": null,
+    "complement": null,
+    "neighborhood": null,
+    "city": null,
+    "state": null,
+    "avatarUrl": null,
+    "dataAiHint": null,
+    "habilitationStatus": "PENDING_DOCUMENTS",
+    "accountType": "PHYSICAL",
+    "badges": null,
+    "razaoSocial": null,
+    "cnpj": null,
+    "inscricaoEstadual": null,
+    "website": null,
+    "responsibleName": null,
+    "responsibleCpf": null,
+    "optInMarketing": false,
+    "createdAt": "2025-12-24T02:13:21.687Z",
+    "updatedAt": "2025-12-24T02:13:21.687Z",
+    "roles": [
+      {
+        "userId": "54",
+        "roleId": "15",
+        "assignedAt": "2025-12-24T02:13:21.687Z",
+        "assignedBy": "seed",
+        "role": {
+          "id": "15",
+          "name": "BIDDER",
+          "nameNormalized": "bidder",
+          "description": "Arrematante",
+          "permissions": "[\"view_auctions\",\"view_lots\",\"place_bids\",\"direct_sales:place_proposal\",\"direct_sales:buy_now\",\"view_wins\",\"manage_payments\",\"schedule_retrieval\"]"
+        }
+      }
+    ],
+    "tenants": [
+      {
+        "userId": "54",
+        "tenantId": "1",
+        "assignedAt": "2025-12-24T02:13:21.687Z",
+        "assignedBy": "seed",
+        "tenant": {
+          "id": "1",
+          "name": "Lordland Leil├Áes",
+          "subdomain": "lordland",
+          "domain": "lordland.localhost",
+          "createdAt": "2025-12-24T02:13:18.961Z",
+          "updatedAt": "2025-12-24T02:13:18.961Z"
+        }
+      }
+    ]
+  }
+]
+--- ROLES ---
+[
+  {
+    "id": "11",
+    "name": "AUCTIONEER",
+    "nameNormalized": "auctioneer",
+    "description": "Leiloeiro",
+    "permissions": "[\"auctions:manage_assigned\",\"lots:read\",\"lots:update\",\"lots:finalize\",\"conduct_auctions\",\"view_reports\"]"
+  },
+  {
+    "id": "12",
+    "name": "SELLER",
+    "nameNormalized": "seller",
+    "description": "Vendedor/Comitente",
+    "permissions": "[\"auctions:manage_own\",\"lots:manage_own\",\"direct_sales:manage_own\",\"consignor_dashboard:view\",\"view_reports\"]"
+  },
+  {
+    "id": "13",
+    "name": "ADMIN",
+    "nameNormalized": "admin",
+    "description": "Administrador do sistema",
+    "permissions": "[\"manage_all\"]"
+  },
+  {
+    "id": "14",
+    "name": "AUCTION_ANALYST",
+    "nameNormalized": "auction_analyst",
+    "description": "Analista de Leil├Áes - Gerencia cadastros de leil├Áes, lotes, bens e dados operacionais",
+    "permissions": "[\"auctions:create\",\"auctions:read\",\"auctions:update\",\"auctions:delete\",\"auctions:publish\",\"lots:create\",\"lots:read\",\"lots:update\",\"lots:delete\",\"assets:create\",\"assets:read\",\"assets:update\",\"assets:delete\",\"categories:create\",\"categories:read\",\"categories:update\",\"categories:delete\",\"auctioneers:create\",\"auctioneers:read\",\"auctioneers:update\",\"auctioneers:delete\",\"sellers:create\",\"sellers:read\",\"sellers:update\",\"sellers:delete\",\"judicial_processes:create\",\"judicial_processes:read\",\"judicial_processes:update\",\"judicial_processes:delete\",\"states:read\",\"cities:read\",\"media:upload\",\"media:read\",\"media:update\",\"media:delete\",\"view_reports\"]"
+  },
+  {
+    "id": "15",
+    "name": "BIDDER",
+    "nameNormalized": "bidder",
+    "description": "Arrematante",
+    "permissions": "[\"view_auctions\",\"view_lots\",\"place_bids\",\"direct_sales:place_proposal\",\"direct_sales:buy_now\",\"view_wins\",\"manage_payments\",\"schedule_retrieval\"]"
+  }
+]

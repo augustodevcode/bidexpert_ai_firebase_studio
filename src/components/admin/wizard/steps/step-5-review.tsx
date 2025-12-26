@@ -58,11 +58,11 @@ export default function Step5Review() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="wizard-step5-review-card">
       <h3 className="text-lg font-semibold mb-4">Revise e Confirme as Informações</h3>
       
       {/* Resumo do Leilão */}
-      <Card>
+      <Card data-ai-id="wizard-step5-auction-summary-card">
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2"><Gavel className="text-primary"/> Detalhes do Leilão</CardTitle>
         </CardHeader>
@@ -85,7 +85,7 @@ export default function Step5Review() {
 
       {/* Resumo do Processo Judicial (se aplicável) */}
       {auctionType === 'JUDICIAL' && judicialProcess && (
-        <Card>
+        <Card data-ai-id="wizard-step5-judicial-summary-card">
           <CardHeader>
             <CardTitle className="text-lg font-semibold flex items-center gap-2"><FileText className="text-primary"/> Processo Judicial Vinculado</CardTitle>
           </CardHeader>
@@ -106,7 +106,7 @@ export default function Step5Review() {
       )}
 
       {/* Lotes Criados */}
-      <Card>
+      <Card data-ai-id="wizard-step5-lots-summary-card">
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2"><ListChecks className="text-primary"/> Lotes Criados ({createdLots.length})</CardTitle>
         </CardHeader>
@@ -117,8 +117,9 @@ export default function Step5Review() {
             createdLots.map((lot, index) => (
               <div key={index} className="p-3 border rounded-md">
                 <p className="font-semibold">Lote {lot.number}: {lot.title}</p>
-                <p className="text-xs text-muted-foreground">Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                <p className="text-xs text-muted-foreground">{lot.bemIds?.length || 0} bem(ns) agrupado(s).</p>
+                <p className="text-xs text-muted-foreground">
+                    {lot.assetIds?.length || 0} ativo(s) | Lance Inicial: R$ {(lot.initialPrice || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                </p>
               </div>
             ))
           )}

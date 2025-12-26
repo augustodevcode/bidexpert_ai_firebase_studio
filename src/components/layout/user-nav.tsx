@@ -28,34 +28,34 @@ export default function UserNav() {
   const { userProfileWithPermissions, loading, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
-  
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const updateUnreadCount = useCallback(async () => {
     if (userProfileWithPermissions?.id) {
-        try {
-            const count = await getUnreadNotificationCountAction(userProfileWithPermissions.id);
-            setUnreadNotificationsCount(count);
-        } catch (error) {
-            console.error("Failed to fetch notification count:", error);
-            setUnreadNotificationsCount(0);
-        }
-    } else {
+      try {
+        const count = await getUnreadNotificationCountAction(userProfileWithPermissions.id);
+        setUnreadNotificationsCount(count);
+      } catch (error) {
+        console.error("Failed to fetch notification count:", error);
         setUnreadNotificationsCount(0);
+      }
+    } else {
+      setUnreadNotificationsCount(0);
     }
   }, [userProfileWithPermissions?.id]);
 
   useEffect(() => {
     if (isClient) {
-        updateUnreadCount();
-        window.addEventListener('notifications-updated', updateUnreadCount);
+      updateUnreadCount();
+      window.addEventListener('notifications-updated', updateUnreadCount);
     }
     return () => {
-        if(isClient) {
-            window.removeEventListener('notifications-updated', updateUnreadCount);
-        }
+      if (isClient) {
+        window.removeEventListener('notifications-updated', updateUnreadCount);
+      }
     };
   }, [isClient, updateUnreadCount]);
 
@@ -68,8 +68,8 @@ export default function UserNav() {
     const { fullName, email, avatarUrl, roleName } = userProfileWithPermissions;
     const displayName = fullName || email?.split('@')[0] || "Usuário";
     const userInitial = displayName ? displayName.charAt(0).toUpperCase() : "U";
-    
-    const showAdminSectionLinks = hasPermission(userProfileWithPermissions, 'manage_all');
+
+    const showAdminSectionLinks = hasPermission(userProfileWithPermissions, 'manage_all') || userProfileWithPermissions.roleNames?.includes('AUCTION_ANALYST');
     const canSeeConsignorDashboardLink = showAdminSectionLinks || hasAnyPermission(userProfileWithPermissions, ['auctions:manage_own', 'lots:manage_own', 'consignor_dashboard:view']);
 
     return (
@@ -80,10 +80,10 @@ export default function UserNav() {
               {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="profile avatar small" />}
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
-             {unreadNotificationsCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]">
-                    {unreadNotificationsCount}
-                </Badge>
+            {unreadNotificationsCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]">
+                {unreadNotificationsCount}
+              </Badge>
             )}
           </Button>
         </DropdownMenuTrigger>
@@ -104,44 +104,44 @@ export default function UserNav() {
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/profile/edit" className="flex items-center">
-             <UserCircle2 className="mr-2 h-4 w-4" /> Meu Perfil
+              <UserCircle2 className="mr-2 h-4 w-4" /> Meu Perfil
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/dashboard/bids" className="flex items-center">
-             <Gavel className="mr-2 h-4 w-4" /> Meus Lances
+              <Gavel className="mr-2 h-4 w-4" /> Meus Lances
             </Link>
           </DropdownMenuItem>
-           <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild>
             <Link href="/dashboard/wins" className="flex items-center">
-             <ShoppingBag className="mr-2 h-4 w-4" /> Meus Arremates
+              <ShoppingBag className="mr-2 h-4 w-4" /> Meus Arremates
             </Link>
           </DropdownMenuItem>
-           <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild>
             <Link href="/dashboard/favorites" className="flex items-center">
-             <Heart className="mr-2 h-4 w-4" /> Lotes Favoritos
+              <Heart className="mr-2 h-4 w-4" /> Lotes Favoritos
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/dashboard/documents" className="flex items-center">
-             <FileText className="mr-2 h-4 w-4" /> Meus Documentos
+              <FileText className="mr-2 h-4 w-4" /> Meus Documentos
             </Link>
           </DropdownMenuItem>
-           <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild>
             <Link href="/dashboard/history" className="flex items-center">
-             <History className="mr-2 h-4 w-4" /> Histórico de Navegação
+              <History className="mr-2 h-4 w-4" /> Histórico de Navegação
             </Link>
           </DropdownMenuItem>
-          
+
           {canSeeConsignorDashboardLink && (
-             <>
+            <>
               <DropdownMenuSeparator />
-               <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild>
                 <Link href="/consignor-dashboard/overview" className="flex items-center">
                   <ConsignorIcon className="mr-2 h-4 w-4" /> Painel do Comitente
                 </Link>
               </DropdownMenuItem>
-             </>
+            </>
           )}
 
           {showAdminSectionLinks && (
@@ -167,34 +167,34 @@ export default function UserNav() {
 
   return (
     <TooltipProvider>
-        <div className="flex items-center space-x-1">
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
-                      <Link href="/auth/login" aria-label="Login" data-testid="login-link">
-                            <LogIn className="h-4 w-4 sm:h-5 sm:w-5" />
-                            <span className="sr-only">Login</span>
-                        </Link>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Fazer Login</p>
-                </TooltipContent>
-            </Tooltip>
-             <Tooltip>
-                <TooltipTrigger asChild>
-                     <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
-                        <Link href="/auth/register" aria-label="Registrar">
-                            <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
-                             <span className="sr-only">Registrar</span>
-                        </Link>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Registrar-se</p>
-                </TooltipContent>
-            </Tooltip>
-        </div>
+      <div className="flex items-center space-x-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+              <Link href="/auth/login" aria-label="Login" data-testid="login-link">
+                <LogIn className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="sr-only">Login</span>
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Fazer Login</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+              <Link href="/auth/register" aria-label="Registrar">
+                <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="sr-only">Registrar</span>
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Registrar-se</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </TooltipProvider>
   );
 }

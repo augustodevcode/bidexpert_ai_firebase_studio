@@ -1,7 +1,19 @@
 /**
  * @fileoverview Domain service orchestrating tenant-safe Lot operations and projections.
+ * 
+ * REGRAS DE CONSISTÊNCIA DE ESTADO:
+ * - Lotes só podem ser abertos (ABERTO_PARA_LANCES) se:
+ *   1. Possuem pelo menos 1 Ativo vinculado
+ *   2. O Leilão pai está em status compatível (ABERTO ou ABERTO_PARA_LANCES)
+ *   3. Todos os dados obrigatórios estão preenchidos (título, preço inicial, etc.)
+ * 
+ * - Ao vincular/desvincular Ativos:
+ *   1. Atualiza automaticamente o status do Ativo para LOTEADO ou DISPONIVEL
+ * 
+ * - Ao encerrar um Leilão:
+ *   1. Todos os Lotes abertos devem ser encerrados automaticamente
  */
-import { PrismaClient, Lot as PmLot, Auction as PmAuction, Bid, LotStatus, Prisma } from '@prisma/client';
+import { PrismaClient, Lot as PmLot, Auction as PmAuction, Bid, LotStatus, AuctionStatus, AssetStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { generatePublicId } from '@/lib/public-id-generator';
 import type { 
@@ -22,6 +34,22 @@ import { AuctioneerService } from '@/services/auctioneer.service';
 const NON_PUBLIC_LOT_STATUSES: LotStatus[] = ['RASCUNHO', 'CANCELADO', 'RETIRADO'];
 const NON_PUBLIC_AUCTION_STATUSES = ['RASCUNHO', 'EM_PREPARACAO', 'SUSPENSO', 'CANCELADO'];
 
+// Status de Leilão que permitem abertura de Lotes
+const AUCTION_ALLOWS_LOT_OPENING: AuctionStatus[] = ['ABERTO', 'ABERTO_PARA_LANCES'];
+
+// Status de Leilão que permitem modificações nos Lotes
+const AUCTION_EDITABLE_STATUSES: AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE'];
+
+// Status de Lote que requerem validação completa de integridade
+const LOT_STATUSES_REQUIRING_INTEGRITY: LotStatus[] = ['EM_BREVE', 'ABERTO_PARA_LANCES'];
+
+// Resultado da validação de integridade do Lote
+export interface LotIntegrityValidation {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
 export class LotService {
   private prisma: PrismaClient;
   private repository: any; 
@@ -39,6 +67,230 @@ export class LotService {
     this.reviewService = new ReviewService();
     this.sellerService = new SellerService();
     this.auctioneerService = new AuctioneerService();
+  }
+
+  /**
+   * Valida a integridade de um Lote para verificar se pode ser aberto/publicado.
+   * Regras verificadas:
+   * 1. Possui pelo menos 1 Ativo vinculado
+   * 2. Possui título preenchido
+   * 3. Possui preço inicial válido (> 0)
+   * 4. O Leilão pai está em status compatível
+   */
+  async validateLotIntegrity(lotId: string): Promise<LotIntegrityValidation> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    try {
+      const internalId = await this.resolveLotInternalId(lotId);
+      
+      const lot = await this.prisma.lot.findUnique({
+        where: { id: internalId },
+        include: {
+          auction: { select: { id: true, status: true, title: true } },
+          assets: { select: { assetId: true } }
+        }
+      });
+
+      if (!lot) {
+        return { isValid: false, errors: ['Lote não encontrado'], warnings: [] };
+      }
+
+      // 1. Verificar Ativos vinculados
+      if (!lot.assets || lot.assets.length === 0) {
+        errors.push('Lote deve possuir pelo menos 1 Ativo vinculado para ser aberto');
+      }
+
+      // 2. Verificar título
+      if (!lot.title || lot.title.trim() === '') {
+        errors.push('Lote deve possuir título preenchido');
+      }
+
+      // 3. Verificar preço inicial
+      const initialPrice = lot.initialPrice ? Number(lot.initialPrice) : 0;
+      const price = lot.price ? Number(lot.price) : 0;
+      if (initialPrice <= 0 && price <= 0) {
+        errors.push('Lote deve possuir preço inicial válido (maior que zero)');
+      }
+
+      // 4. Verificar status do Leilão pai
+      if (!lot.auction) {
+        errors.push('Lote deve estar vinculado a um Leilão');
+      } else if (!AUCTION_ALLOWS_LOT_OPENING.includes(lot.auction.status as AuctionStatus)) {
+        errors.push(`Leilão "${lot.auction.title}" está em status ${lot.auction.status}. Lotes só podem ser abertos quando o Leilão está ABERTO ou ABERTO_PARA_LANCES`);
+      }
+
+      // Warnings (não bloqueantes)
+      if (!lot.description || lot.description.trim() === '') {
+        warnings.push('Recomenda-se preencher a descrição do Lote');
+      }
+
+      if (!lot.imageUrl) {
+        warnings.push('Recomenda-se adicionar uma imagem ao Lote');
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        warnings
+      };
+    } catch (error) {
+      console.error('Erro ao validar integridade do Lote:', error);
+      return { isValid: false, errors: ['Erro interno ao validar Lote'], warnings: [] };
+    }
+  }
+
+  /**
+   * Verifica se o Leilão permite modificações em seus Lotes.
+   */
+  async canModifyLot(lotId: string): Promise<{ allowed: boolean; reason?: string }> {
+    try {
+      const internalId = await this.resolveLotInternalId(lotId);
+      
+      const lot = await this.prisma.lot.findUnique({
+        where: { id: internalId },
+        include: {
+          auction: { select: { status: true, title: true } }
+        }
+      });
+
+      if (!lot) {
+        return { allowed: false, reason: 'Lote não encontrado' };
+      }
+
+      // Lotes podem ser modificados se o Leilão está em fase de preparação
+      if (AUCTION_EDITABLE_STATUSES.includes(lot.auction.status as AuctionStatus)) {
+        return { allowed: true };
+      }
+
+      // Se o Leilão já está aberto, apenas Lotes em RASCUNHO podem ser editados
+      if (lot.status === 'RASCUNHO') {
+        return { allowed: true };
+      }
+
+      return { 
+        allowed: false, 
+        reason: `Não é possível modificar este Lote. O Leilão "${lot.auction.title}" está em status ${lot.auction.status} e o Lote está em ${lot.status}`
+      };
+    } catch (error) {
+      return { allowed: false, reason: 'Erro ao verificar permissões' };
+    }
+  }
+
+  /**
+   * Atualiza o status de um Lote com validação de integridade.
+   * Esta função garante que transições de estado inválidas sejam bloqueadas.
+   */
+  async updateLotStatus(lotId: string, newStatus: LotStatus): Promise<{ success: boolean; message: string }> {
+    try {
+      const internalId = await this.resolveLotInternalId(lotId);
+      
+      // Se o novo status requer integridade completa, validar primeiro
+      if (LOT_STATUSES_REQUIRING_INTEGRITY.includes(newStatus)) {
+        const validation = await this.validateLotIntegrity(lotId);
+        if (!validation.isValid) {
+          return { 
+            success: false, 
+            message: `Não é possível alterar status para ${newStatus}. Erros: ${validation.errors.join('; ')}`
+          };
+        }
+      }
+
+      await this.prisma.lot.update({
+        where: { id: internalId },
+        data: { status: newStatus, updatedAt: new Date() }
+      });
+
+      return { success: true, message: `Status do Lote atualizado para ${newStatus}` };
+    } catch (error) {
+      console.error('Erro ao atualizar status do Lote:', error);
+      return { success: false, message: 'Erro ao atualizar status do Lote' };
+    }
+  }
+
+  /**
+   * Vincula Ativos a um Lote e atualiza automaticamente o status dos Ativos para LOTEADO.
+   */
+  async linkAssetsToLot(lotId: string, assetIds: string[], tenantId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const internalLotId = await this.resolveLotInternalId(lotId);
+      
+      // Verificar se pode modificar o Lote
+      const canModify = await this.canModifyLot(lotId);
+      if (!canModify.allowed) {
+        return { success: false, message: canModify.reason || 'Não é possível modificar este Lote' };
+      }
+
+      await this.prisma.$transaction(async (tx) => {
+        // Vincular Ativos ao Lote
+        await tx.assetsOnLots.createMany({
+          data: assetIds.map(assetId => ({
+            lotId: internalLotId,
+            assetId: BigInt(assetId),
+            tenantId: BigInt(tenantId),
+            assignedBy: 'SYSTEM'
+          })),
+          skipDuplicates: true
+        });
+
+        // Atualizar status dos Ativos para LOTEADO
+        await tx.asset.updateMany({
+          where: { id: { in: assetIds.map(id => BigInt(id)) } },
+          data: { status: 'LOTEADO', updatedAt: new Date() }
+        });
+      });
+
+      return { success: true, message: `${assetIds.length} Ativo(s) vinculado(s) ao Lote` };
+    } catch (error) {
+      console.error('Erro ao vincular Ativos ao Lote:', error);
+      return { success: false, message: 'Erro ao vincular Ativos ao Lote' };
+    }
+  }
+
+  /**
+   * Remove Ativos de um Lote e reverte o status dos Ativos para DISPONIVEL
+   * (somente se não estiverem vinculados a outros Lotes).
+   */
+  async unlinkAssetsFromLot(lotId: string, assetIds: string[]): Promise<{ success: boolean; message: string }> {
+    try {
+      const internalLotId = await this.resolveLotInternalId(lotId);
+      
+      // Verificar se pode modificar o Lote
+      const canModify = await this.canModifyLot(lotId);
+      if (!canModify.allowed) {
+        return { success: false, message: canModify.reason || 'Não é possível modificar este Lote' };
+      }
+
+      await this.prisma.$transaction(async (tx) => {
+        // Remover vínculos
+        await tx.assetsOnLots.deleteMany({
+          where: {
+            lotId: internalLotId,
+            assetId: { in: assetIds.map(id => BigInt(id)) }
+          }
+        });
+
+        // Para cada Ativo, verificar se ainda está em outro Lote
+        for (const assetId of assetIds) {
+          const otherLinks = await tx.assetsOnLots.count({
+            where: { assetId: BigInt(assetId) }
+          });
+
+          // Se não está mais em nenhum Lote, reverter para DISPONIVEL
+          if (otherLinks === 0) {
+            await tx.asset.update({
+              where: { id: BigInt(assetId) },
+              data: { status: 'DISPONIVEL', updatedAt: new Date() }
+            });
+          }
+        }
+      });
+
+      return { success: true, message: `${assetIds.length} Ativo(s) removido(s) do Lote` };
+    } catch (error) {
+      console.error('Erro ao remover Ativos do Lote:', error);
+      return { success: false, message: 'Erro ao remover Ativos do Lote' };
+    }
   }
 
   private async resolveLotInternalId(idOrPublicId: string): Promise<bigint> {

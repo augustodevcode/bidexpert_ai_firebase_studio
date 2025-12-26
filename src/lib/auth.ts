@@ -12,7 +12,7 @@ const config = {
       name: 'Credentials',
       credentials: {
         email: { label: "Email", type: "text" },
-        password: {  label: "Password", type: "password" }
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
@@ -20,11 +20,19 @@ const config = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email },
+          include: {
+            roles: {
+              include: {
+                role: true
+              }
+            }
+          }
         });
 
         if (user && user.password && await bcrypt.compare(credentials.password, user.password)) {
-          return { id: user.id.toString(), email: user.email, name: user.fullName };
+          const roles = user.roles.map(ur => ur.role.name);
+          return { id: user.id.toString(), email: user.email, name: user.fullName, roles };
         } else {
           return null;
         }

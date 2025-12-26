@@ -10,11 +10,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, 
-  Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, 
-  Boxes, Rocket, FileUp, BarChart3, BookOpen, UserCheck, MessageSquare, Files, 
-  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash, Palette, Wrench, Zap, ArrowUpDown, Database, Eye
+import {
+    ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map,
+    Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText,
+    Boxes, Rocket, FileUp, BarChart3, BookOpen, UserCheck, MessageSquare, Files,
+    ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash, Palette, Wrench, Zap, ArrowUpDown, Database, Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -25,13 +25,13 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 
 const topLevelNavItems = [
-  { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
-  { title: 'Assistente de Leilão', href: '/admin/wizard', icon: Rocket },
+    { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+    { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
+    { title: 'Assistente de Leilão', href: '/admin/wizard', icon: Rocket },
 ];
 
 const managementNavGroups = [
-    { 
+    {
         groupTitle: 'Gestão de Leilões',
         items: [
             { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
@@ -40,7 +40,7 @@ const managementNavGroups = [
             { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
         ]
     },
-    { 
+    {
         groupTitle: 'Participantes',
         items: [
             { title: 'Comitentes', href: '/admin/sellers', icon: Users },
@@ -50,7 +50,7 @@ const managementNavGroups = [
             { title: 'Ver como Arrematante', href: '/admin/bidder-impersonation', icon: Eye },
         ]
     },
-     { 
+    {
         groupTitle: 'Gestão Judicial',
         items: [
             { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
@@ -58,11 +58,11 @@ const managementNavGroups = [
             { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
             { title: 'Tribunais', href: '/admin/courts', icon: Scale },
             { title: 'Importação CNJ', href: '/admin/import/cnj', icon: FileUp },
-                { title: 'Cidades', href: '/admin/cities', icon: MapPin },
-                { title: 'Estados', href: '/admin/states', icon: Map },
+            { title: 'Cidades', href: '/admin/cities', icon: MapPin },
+            { title: 'Estados', href: '/admin/states', icon: Map },
         ]
     },
-     { 
+    {
         groupTitle: 'Catálogo e Mídia',
         items: [
             { title: 'Categorias', href: '/admin/categories', icon: ListChecks },
@@ -90,86 +90,117 @@ const platformNavItems = [
 ];
 
 const settingsSubNavItems = [
-  { title: "Identidade Visual", href: "/admin/settings/themes", icon: Palette },
-  { title: "Geral", href: "/admin/settings/general", icon: Wrench },
-  { title: "Mapas", href: "/admin/settings/maps", icon: MapPin },
-  { title: "Lances", href: "/admin/settings/bidding", icon: Zap },
-  { title: "Incremento Variável", href: "/admin/settings/increments", icon: ArrowUpDown },
-  { title: "Dados de Exemplo", href: "/admin/settings/seeding", icon: Database },
+    { title: "Identidade Visual", href: "/admin/settings/themes", icon: Palette },
+    { title: "Geral", href: "/admin/settings/general", icon: Wrench },
+    { title: "Mapas", href: "/admin/settings/maps", icon: MapPin },
+    { title: "Lances", href: "/admin/settings/bidding", icon: Zap },
+    { title: "Incremento Variável", href: "/admin/settings/increments", icon: ArrowUpDown },
+    { title: "Dados de Exemplo", href: "/admin/settings/seeding", icon: Database },
 ];
 
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
-  <Button
-    key={item.href}
-    variant={pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) ? 'secondary' : 'ghost'}
-    className={cn(
-      'w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-9 text-sm',
-      pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
-    )}
-    asChild
-    disabled={item.disabled}
-    onClick={onLinkClick}
-  >
-    <Link href={item.disabled ? '#' : item.href}>
-      <item.icon className="mr-2 h-4 w-4" />
-      {item.title}
-    </Link>
-  </Button>
+    <Button
+        key={item.href}
+        variant={pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) ? 'secondary' : 'ghost'}
+        className={cn(
+            'w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-9 text-sm',
+            pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
+        )}
+        asChild
+        disabled={item.disabled}
+        onClick={onLinkClick}
+    >
+        <Link href={item.disabled ? '#' : item.href}>
+            <item.icon className="mr-2 h-4 w-4" />
+            {item.title}
+        </Link>
+    </Button>
 );
+
+import { useAuth } from '@/contexts/auth-context';
+
+/* ... imports ... */
 
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
     const pathname = usePathname();
-    
+    const { userProfileWithPermissions } = useAuth();
+
+    const isAdmin = userProfileWithPermissions?.permissions?.includes('manage_all');
+    const isAnalyst = userProfileWithPermissions?.roleNames?.includes('AUCTION_ANALYST');
+
+    // Filter Logic
+    const filteredManagementGroups = managementNavGroups.map(group => {
+        // Clone group items
+        let items = [...group.items];
+
+        // Specific filtering for 'Participantes'
+        if (group.groupTitle === 'Participantes') {
+            if (isAnalyst && !isAdmin) {
+                // Analyst sees Sellers and Auctioneers, but NOT Users or Habilitations
+                items = items.filter(i =>
+                    i.title === 'Comitentes' ||
+                    i.title === 'Leiloeiros' ||
+                    i.title === 'Ver como Arrematante'
+                );
+            }
+        }
+
+        return { ...group, items };
+    }).filter(g => g.items.length > 0);
+
+    // Platform & Settings only for Admin
+    const showPlatform = isAdmin;
+
     // Determine which accordion items should be open by default
     const defaultOpenAccordionItems = useMemo(() => {
         const openItems: string[] = [];
-        if (managementNavGroups.some(g => g.items.some(i => pathname.startsWith(i.href)))) {
+        if (filteredManagementGroups.some(g => g.items.some(i => pathname.startsWith(i.href)))) {
             openItems.push('management');
         }
         if (reportsNavItems.some(i => pathname.startsWith(i.href))) {
             openItems.push('reports');
         }
-        if (platformNavItems.some(i => pathname.startsWith(i.href)) || settingsSubNavItems.some(i => pathname.startsWith(i.href)) || pathname.startsWith('/admin/settings')) {
+        if (showPlatform && (platformNavItems.some(i => pathname.startsWith(i.href)) || settingsSubNavItems.some(i => pathname.startsWith(i.href)) || pathname.startsWith('/admin/settings'))) {
             openItems.push('platform');
         }
         return openItems;
-    }, [pathname]);
+    }, [pathname, filteredManagementGroups, showPlatform]);
 
     return (
         <>
             <div className="p-4 border-b border-sidebar-border">
                 <Link href="/admin/dashboard" className="flex items-center space-x-2">
-                <Image src="/logo.svg" alt="BidExpert Logo" width={40} height={40} />
-                <span className="font-bold text-xl text-sidebar-foreground">BidExpert</span>
+                    <Image src="/logo.svg" alt="BidExpert Logo" width={40} height={40} />
+                    <span className="font-bold text-xl text-sidebar-foreground">BidExpert</span>
                 </Link>
             </div>
             <ScrollArea className="flex-1">
                 <nav className="p-2 space-y-2">
                     {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                    
+
                     <Accordion type="multiple" className="w-full" defaultValue={defaultOpenAccordionItems}>
                         <AccordionItem value="management" className="border-b-0">
                             <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
                                 Gerenciamento
                             </AccordionTrigger>
                             <AccordionContent className="pt-1 space-y-1">
-                                 {managementNavGroups.map(group => (
-                                     <Accordion type="single" collapsible key={group.groupTitle} defaultValue={group.items.some(i => pathname.startsWith(i.href)) ? group.groupTitle : undefined}>
-                                         <AccordionItem value={group.groupTitle} className="border-b-0">
+                                {filteredManagementGroups.map(group => (
+                                    <Accordion type="single" collapsible key={group.groupTitle} defaultValue={group.items.some(i => pathname.startsWith(i.href)) ? group.groupTitle : undefined}>
+                                        <AccordionItem value={group.groupTitle} className="border-b-0">
                                             <AccordionTrigger className="text-sm font-medium text-sidebar-foreground/80 hover:no-underline rounded-md px-3 py-1.5 hover:bg-sidebar-accent">
                                                 {group.groupTitle}
                                             </AccordionTrigger>
                                             <AccordionContent className="pt-1 space-y-1 pl-4 border-l border-sidebar-border ml-3">
-                                                 {group.items.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                                                {group.items.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                                             </AccordionContent>
-                                         </AccordionItem>
-                                     </Accordion>
-                                 ))}
+                                        </AccordionItem>
+                                    </Accordion>
+                                ))}
                             </AccordionContent>
                         </AccordionItem>
 
-                         <AccordionItem value="reports" className="border-b-0">
+                        <AccordionItem value="reports" className="border-b-0">
                             <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
                                 Análise e Relatórios
                             </AccordionTrigger>
@@ -178,17 +209,19 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                             </AccordionContent>
                         </AccordionItem>
 
-                        <AccordionItem value="platform" className="border-b-0">
-                            <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
-                                Plataforma
-                            </AccordionTrigger>
-                            <AccordionContent className="pt-1 space-y-1">
-                                {platformNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                                
-                                {/* Settings Sub-menu */}
-                                <NavButton item={{href: '/admin/settings', title: 'Configurações', icon: Settings}} pathname={pathname} onLinkClick={onLinkClick} />
-                            </AccordionContent>
-                        </AccordionItem>
+                        {showPlatform && (
+                            <AccordionItem value="platform" className="border-b-0">
+                                <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
+                                    Plataforma
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-1 space-y-1">
+                                    {platformNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+
+                                    {/* Settings Sub-menu */}
+                                    <NavButton item={{ href: '/admin/settings', title: 'Configurações', icon: Settings }} pathname={pathname} onLinkClick={onLinkClick} />
+                                </AccordionContent>
+                            </AccordionItem>
+                        )}
                     </Accordion>
                 </nav>
             </ScrollArea>
@@ -197,20 +230,20 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
 }
 
 export default function AdminSidebar() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  return (
-    <>
-      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="w-[300px] p-0 flex flex-col bg-sidebar text-sidebar-foreground md:hidden">
-          <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
-        </SheetContent>
-      </Sheet>
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-      {/* Desktop Sidebar */}
-      <aside className="sticky top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex-col hidden md:flex">
-         <SidebarContent />
-      </aside>
-    </>
-  );
+    return (
+        <>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetContent side="left" className="w-[300px] p-0 flex flex-col bg-sidebar text-sidebar-foreground md:hidden">
+                    <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
+                </SheetContent>
+            </Sheet>
+
+            {/* Desktop Sidebar */}
+            <aside className="sticky top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex-col hidden md:flex">
+                <SidebarContent />
+            </aside>
+        </>
+    );
 }

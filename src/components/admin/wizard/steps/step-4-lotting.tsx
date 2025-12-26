@@ -61,8 +61,8 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
   };
 
   const handleCreateIndividualLotsClick = async () => {
-    if (selectedAssets.length === 0 || !auctionData.id) {
-        toast({ title: "Seleção Incompleta", description: "Por favor, selecione um leilão de destino e pelo menos um ativo.", variant: "destructive" });
+    if (selectedAssets.length === 0) {
+        toast({ title: "Nenhum ativo selecionado", description: "Por favor, selecione pelo menos um ativo.", variant: "destructive" });
         return;
     }
     setIsCreatingIndividualLots(true);
@@ -70,6 +70,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
     let errorCount = 0;
 
     const selectedAuction = wizardData.auctionDetails;
+    const isWizardMode = !auctionData.id; // No wizard, o leilão ainda não foi criado
 
     for (const asset of selectedAssets) {
         const lotNumber = String((wizardData.createdLots?.length || 0) + successCount + 1).padStart(3, '0');
@@ -79,7 +80,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
             price: asset.evaluationValue || 0,
             initialPrice: asset.evaluationValue || 0,
             status: 'EM_BREVE',
-            auctionId: selectedAuction?.id,
+            auctionId: isWizardMode ? undefined : selectedAuction?.id,
             sellerId: selectedAuction?.sellerId,
             categoryId: asset.categoryId,
             type: asset.categoryId || '',
@@ -87,23 +88,43 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
             imageUrl: asset.imageUrl,
             dataAiHint: asset.dataAiHint,
         };
-        const result = await createLot(newLotData);
-        if (result.success) {
-            successCount++;
-             // Optimistically update the local state to remove the newly lotted asset
+
+        if (isWizardMode) {
+            // No modo wizard, apenas salva no contexto local (será criado na revisão final)
+            const tempLot: Lot = {
+                ...(newLotData as Lot),
+                id: `temp-lot-${uuidv4()}`,
+                publicId: `temp-pub-${uuidv4().substring(0,8)}`,
+                auctionId: 'TBD',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
             setWizardData(prev => ({
                 ...prev,
-                createdLots: [...(prev.createdLots || []), { ...newLotData, id: result.lotId, publicId: '' } as Lot]
+                createdLots: [...(prev.createdLots || []), tempLot]
             }));
+            successCount++;
         } else {
-            errorCount++;
-            toast({ title: `Erro ao criar lote para "${asset.title}"`, description: result.message, variant: "destructive"});
+            // Modo edição: cria o lote no banco imediatamente
+            const result = await createLot(newLotData);
+            if (result.success) {
+                successCount++;
+                setWizardData(prev => ({
+                    ...prev,
+                    createdLots: [...(prev.createdLots || []), { ...newLotData, id: result.lotId, publicId: '' } as Lot]
+                }));
+            } else {
+                errorCount++;
+                toast({ title: `Erro ao criar lote para "${asset.title}"`, description: result.message, variant: "destructive"});
+            }
         }
     }
 
     toast({
-        title: "Processamento Concluído",
-        description: `${successCount} lote(s) criado(s) com sucesso. ${errorCount > 0 ? `${errorCount} falharam.` : ''}`,
+        title: isWizardMode ? "Lotes Preparados" : "Processamento Concluído",
+        description: isWizardMode 
+            ? `${successCount} lote(s) preparado(s) para criação na revisão final.`
+            : `${successCount} lote(s) criado(s) com sucesso. ${errorCount > 0 ? `${errorCount} falharam.` : ''}`,
     });
 
     setRowSelection({});
@@ -128,7 +149,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-4" data-ai-id="wizard-step4-lotting">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h3 className="text-lg font-semibold">Loteamento de Ativos</h3>

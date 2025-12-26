@@ -9,6 +9,8 @@ import { getAuctioneers } from '../auctioneers/actions';
 import { getSellers } from '../sellers/actions';
 import { getAssets } from '../assets/actions';
 import { getLotCategories } from '../categories/actions';
+import { getStates } from '../states/actions';
+import { getCities } from '../cities/actions';
 import type { WizardData } from '@/components/admin/wizard/wizard-context';
 import { revalidatePath } from 'next/cache';
 import { AuctionService } from '@/services/auction.service';
@@ -40,7 +42,9 @@ export async function getWizardInitialData() {
       auctioneers,
       sellers,
       availableAssets,
-      categories
+      categories,
+      allStates,
+      allCities
     ] = await Promise.all([
       getCourts(),
       getJudicialDistricts(),
@@ -50,6 +54,8 @@ export async function getWizardInitialData() {
       getSellers(false),
       getAssets({ tenantId }),
       getLotCategories(),
+      getStates(),
+      getCities(),
     ]);
 
     return {
@@ -63,6 +69,8 @@ export async function getWizardInitialData() {
         sellers,
         availableAssets,
         categories,
+        allStates,
+        allCities,
       },
     };
   } catch (error: any) {
