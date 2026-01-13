@@ -1,0 +1,99 @@
+# .dockerignore — BidExpert
+# Otimiza o build Docker excluindo arquivos desnecessários
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+test-results
+playwright-report
+blob-report
+tests
+
+# Next.js
+.next
+out
+
+# Production
+build
+dist
+
+# Misc
+.DS_Store
+*.pem
+*.log
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Development tools
+.windsurf
+.idx
+.gemini
+.qoder
+_Aiexclude
+_components_old
+analisar
+context
+openspec
+
+# Firebase (not used in Cloud Run)
+firebase.json
+firestore.rules
+firestore.indexes.json
+storage.rules
+.firebaserc
+dataconnect
+dataconnect-generated
+
+# Backup files
+*.bak
+*.backup
+next.config.js.bak
+
+# Scripts (only needed for development)
+# scripts (not ignored anymore for cloud migration)
+# scripts
+
+# Logs
+logs
+*.log
+
+# Database inspection outputs
+db_inspect_*.json
+
+# SQL files
+*.sql

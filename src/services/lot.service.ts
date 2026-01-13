@@ -686,9 +686,32 @@ export class LotService {
           updatedAt: new Date(),
       };
 
-      if (cleanData.categoryId) createData.category = { connect: { id: BigInt(cleanData.categoryId) } };
-      if (cleanData.subcategoryId) createData.subcategory = { connect: { id: BigInt(cleanData.subcategoryId) } };
-      if (cleanData.sellerId) createData.seller = { connect: { id: BigInt(cleanData.sellerId) } };
+      if (cleanData.categoryId) {
+        createData.categoryId = BigInt(cleanData.categoryId);
+        delete createData.category;
+      }
+      if (cleanData.subcategoryId) {
+        createData.subcategoryId = BigInt(cleanData.subcategoryId);
+        delete createData.subcategory;
+      }
+      if (cleanData.sellerId) {
+        createData.sellerId = BigInt(cleanData.sellerId);
+        delete createData.seller;
+      }
+      if (cleanData.auctioneerId) {
+        createData.auctioneerId = BigInt(cleanData.auctioneerId);
+        delete createData.auctioneer;
+      }
+      if (cleanData.cityId) {
+        createData.cityId = BigInt(cleanData.cityId);
+        delete createData.city;
+      }
+      if (cleanData.stateId) {
+        createData.stateId = BigInt(cleanData.stateId);
+        delete createData.state;
+      }
+
+
 
       const lot = await this.prisma.lot.create({
         data: createData

@@ -9,14 +9,17 @@ import { ContactMessageRepository } from '@/repositories/contact-message.reposit
 import type { ContactMessage } from '@/types';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
+import { EmailService } from './email.service';
 
 export class ContactMessageService {
   private repository: ContactMessageRepository;
   private prisma;
+  private emailService: EmailService;
 
   constructor() {
     this.repository = new ContactMessageRepository();
     this.prisma = prisma;
+    this.emailService = new EmailService();
   }
 
   async getContactMessages(): Promise<ContactMessage[]> {
@@ -26,7 +29,22 @@ export class ContactMessageService {
 
   async saveMessage(data: Prisma.ContactMessageCreateInput): Promise<{ success: boolean; message: string; }> {
     try {
-      await this.repository.create(data);
+      const savedMessage = await this.repository.create(data);
+
+      // Enviar e-mail de notificação
+      const emailResult = await this.emailService.sendContactMessage({
+        name: data.name as string,
+        email: data.email as string,
+        subject: data.subject as string,
+        message: data.message as string,
+        contactMessageId: savedMessage.id, // Passar o ID da mensagem salva
+      });
+
+      if (!emailResult.success) {
+        console.warn('Mensagem salva, mas falha no envio de e-mail:', emailResult.message);
+        // Não falha a operação se o e-mail não for enviado, apenas loga o warning
+      }
+
       return { success: true, message: 'Mensagem salva com sucesso.' };
     } catch (error: any) {
       console.error("Error in ContactMessageService.saveMessage:", error);
@@ -60,4 +78,56 @@ export class ContactMessageService {
       return { success: false, message: 'Falha ao excluir todas as mensagens de contato.' };
     }
   }
+
+  /**
+   * Recupera todas as mensagens de contato associadas a um usuário específico.
+   * Inclui os logs de e-mail relacionados para mostrar o status de envio.
+   *
+   * @param userId ID do usuário
+   * @returns Lista de mensagens com logs de e-mail
+   */
+  async getUserContactMessages(userId: string) {
+    try {
+      const messages = await this.prisma.contactMessage.findMany({
+        where: {
+          userId: userId,
+        },
+        include: {
+          emailLogs: {
+            orderBy: {
+              createdAt: 'desc', // Mais recente primeiro
+            },
+            take: 1, // Apenas o log mais recente
+          },
+        },
+        orderBy: {
+          createdAt: 'desc', // Mais recentes primeiro
+        },
+      });
+
+      // Converter BigInt para string para compatibilidade com JSON
+      return messages.map((message: any) => ({
+        ...message,
+        id: message.id.toString(),
+        emailLogs: message.emailLogs.map((log: any) => ({
+          ...log,
+          id: log.id.toString(),
+        })),
+      }));
+    } catch (error: any) {
+      console.error('Erro ao buscar mensagens do usuário:', error);
+      throw new Error('Falha ao recuperar mensagens do usuário.');
+    }
+  }
 }
+
+// Instância singleton do serviço
+const contactMessageService = new ContactMessageService();
+
+// Funções exportadas para uso nas actions
+export const getContactMessages = () => contactMessageService.getContactMessages();
+export const saveContactMessage = (data: Prisma.ContactMessageCreateInput) => contactMessageService.saveMessage(data);
+export const toggleContactMessageReadStatus = (id: string, isRead: boolean) => contactMessageService.toggleReadStatus(id, isRead);
+export const deleteContactMessage = (id: string) => contactMessageService.deleteMessage(id);
+export const deleteAllContactMessages = () => contactMessageService.deleteAllContactMessages();
+export const getUserContactMessages = (userId: string) => contactMessageService.getUserContactMessages(userId);

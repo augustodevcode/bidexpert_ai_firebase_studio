@@ -1072,6 +1072,33 @@ O frontend utiliza `localStorage` para persistir certas preferências e históri
 - **Favoritos (`favorite-store.ts`):** Usuários podem marcar lotes como favoritos, e a lista de IDs é salva localmente.
 - **Vistos Recentemente (`recently-viewed-store.ts`):** O sistema armazena os IDs dos últimos 10 lotes visitados por um período de 3 dias.
 
+### RN-AD-012: Integridade de Dados (Leilões, Lotes e Ativos)
+Regras estritas de integridade implementadas para garantir consistência entre as entidades principais.
+
+#### 1. Integridade de Lote (Lot Integrity)
+Um lote **SÓ** pode transitar para o status `OPEN` (Aberto para Lances) se atender a **TODOS** os critérios abaixo:
+- **Ativos:** Deve possuir pelo menos 1 (um) Ativo (`Asset`) vinculado.
+- **Dados Básicos:** Deve possuir `title` preenchido e `initialPrice` maior que zero.
+- **Leilão Pai:** O leilão vinculado deve estar em status compatível (não pode ser `DRAFT` ou `CLOSED` se o lote for ser aberto individualmente, embora o fluxo normal seja o leilão abrir os lotes).
+
+**Restrições de Edição:**
+- Lotes em status `OPEN`, `SOLD` ou `CLOSED` têm edição restrita (campos críticos travados).
+- Para modificar estrutura (ex: remover ativos), o lote deve voltar para `DRAFT` ou `SUSPENDED`.
+
+#### 2. Integridade de Leilão (Auction Integrity)
+Um leilão **SÓ** pode transitar para o status `OPEN` (Publicado/Aberto) se:
+- Possuir pelo menos 1 (um) Lote válido.
+- **Automação:** Ao abrir o leilão, o sistema automaticamente tenta transitar todos os lotes vinculados para `OPEN`. Lotes que não atenderem aos critérios de integridade (ex: sem ativos) permanecerão em `DRAFT` ou terão status ajustado para `SUSPENDED`, garantindo que nada "quebrado" vá para o ar.
+
+#### 3. Integridade de Ativo (Asset Integrity)
+- **Bloqueio de Exclusão:** Um Ativo **NÃO** pode ser excluído se estiver vinculado a um lote com status `OPEN`, `SOLD` ou `CLOSED`. É necessário desvincular do lote (o que exige que o lote esteja em `DRAFT`) antes de excluir.
+- **Sincronização de Status:** O status do Ativo (`AssetStatus`) é sincronizado automaticamente com o status do Lote vinculado:
+  - Lote `OPEN` -> Ativo `LOTEADO` (ou equivalente em uso)
+  - Lote `SOLD` -> Ativo `VENDIDO`
+  - Lote `UNSOLD` -> Ativo `DISPONIVEL` (ou mantém vínculo para relistagem)
+
+---
+
 ### RN-PRACA-001: Percentual da Praça para Cálculo de Lance Mínimo
 Cada praça (etapa) do leilão define um percentual de desconto que será aplicado ao valor inicial dos lotes para determinar o lance mínimo.
 - **Campo:** `AuctionStage.discountPercent` (Decimal 5,2, default 100)

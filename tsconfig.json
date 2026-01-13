@@ -44,6 +44,7 @@
     "node_modules",
     "_Aiexclude",
     "_components_old",
+    "analisar/**",
     "prisma/**",
     "scripts/**",
     "src/ai/**"

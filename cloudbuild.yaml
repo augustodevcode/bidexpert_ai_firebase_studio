@@ -1,0 +1,36 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/bidexpert-app', '.']
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/bidexpert-app']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'bidexpert-app'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/bidexpert-app'
+      - '--region'
+      - 'southamerica-east1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--project'
+      - 'bidexpert-630df'
+      - '--set-env-vars'
+      # Production variables must be set via Secret Manager in production
+      - 'NODE_ENV=production,RUN_MIGRATION=true,DATABASE_URL=postgresql://postgres:xL6cqPhigY5cx!@10.114.0.2:5432/postgres,REDIS_URL=redis://10.63.200.123:6379'
+      - '--vpc-connector'
+      - 'bidexpert-connector'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+images:
+  - 'gcr.io/$PROJECT_ID/bidexpert-app'

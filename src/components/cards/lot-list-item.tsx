@@ -30,7 +30,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'N/A';
   const sellerName = auction?.seller?.name;
   const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
-  const sellerSlug = auction?.seller?.slug;
+  const sellerSlug = auction?.seller?.slug || auction?.seller?.publicId || auction?.seller?.id;
   const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';
 
   const mentalTriggers = React.useMemo(() => {

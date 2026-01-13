@@ -263,6 +263,7 @@ export default function Header({
   const allNavItemsForMobile: NavItem[] = [
     { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
     { href: '/', label: 'Início', icon: HomeIcon },
+    { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
@@ -272,79 +273,80 @@ export default function Header({
   ];
 
   const firstNavItem: NavItem = { label: 'Categorias de Oportunidades', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
-  const centralNavItems: NavItem[] = [
+    const centralNavItems: NavItem[] = [
     { href: '/', label: 'Início', icon: HomeIcon },
+    { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
     {
-        label: 'Modalidades',
-        isMegaMenu: true,
-        contentKey: 'modalities',
-        href: '/search?filter=modalities',
-        icon: ListChecks,
-        megaMenuAlign: 'start',
-        twoColumnMegaMenuProps: {
-            sidebarTitle: 'Tipos de Leilão',
-            mainContent: {
-                imageUrl: 'https://picsum.photos/seed/judicial/400/225',
-                imageAlt: 'Imagem Leilões Judiciais',
-                dataAiHint: 'martelo tribunal',
-                title: 'Oportunidades Únicas',
-                description: 'Explore diversas modalidades de leilão, desde judiciais a extrajudiciais, e encontre o que procura.',
-                buttonLink: '/search?type=auctions',
-                buttonText: 'Ver Todos os Leilões'
-            }
+      label: 'Modalidades',
+      isMegaMenu: true,
+      contentKey: 'modalities',
+      href: '/search?filter=modalities',
+      icon: ListChecks,
+      megaMenuAlign: 'start',
+      twoColumnMegaMenuProps: {
+        sidebarTitle: 'Tipos de Leilão',
+        mainContent: {
+          imageUrl: 'https://picsum.photos/seed/judicial/400/225',
+          imageAlt: 'Imagem Leilões Judiciais',
+          dataAiHint: 'martelo tribunal',
+          title: 'Oportunidades Únicas',
+          description: 'Explore diversas modalidades de leilão, desde judiciais a extrajudiciais, e encontre o que procura.',
+          buttonLink: '/search?type=auctions',
+          buttonText: 'Ver Todos os Leilões'
         }
+      }
     },
     {
-        label: 'Comitentes',
-        isMegaMenu: true,
-        contentKey: 'consignors',
-        href: '/sellers',
-        icon: Landmark,
-        megaMenuAlign: 'start',
-        twoColumnMegaMenuProps: {
-            sidebarTitle: 'Nossos Comitentes',
-            mainContent: {
-                imageUrl: 'https://picsum.photos/seed/sell/400/225',
-                imageAlt: 'Imagem Venda Seus Bens',
-                dataAiHint: 'acordo negocios',
-                title: 'Venda Seus Ativos Conosco',
-                description: 'Transforme seus bens em liquidez de forma rápida, segura e transparente através da nossa plataforma especializada.',
-                buttonLink: '/sell-with-us',
-                buttonText: 'Saiba Como Vender'
-            }
+      label: 'Comitentes',
+      isMegaMenu: true,
+      contentKey: 'consignors',
+      href: '/sellers',
+      icon: Landmark,
+      megaMenuAlign: 'start',
+      twoColumnMegaMenuProps: {
+        sidebarTitle: 'Nossos Comitentes',
+        mainContent: {
+          imageUrl: 'https://picsum.photos/seed/sell/400/225',
+          imageAlt: 'Imagem Venda Seus Bens',
+          dataAiHint: 'acordo negocios',
+          title: 'Venda Seus Ativos Conosco',
+          description: 'Transforme seus bens em liquidez de forma rápida, segura e transparente através da nossa plataforma especializada.',
+          buttonLink: '/sell-with-us',
+          buttonText: 'Saiba Como Vender'
         }
+      }
     },
     {
-        label: 'Leiloeiros',
-        isMegaMenu: true,
-        contentKey: 'auctioneers',
-        href: '/auctioneers',
-        icon: Gavel,
-        megaMenuAlign: 'start',
-        twoColumnMegaMenuProps: {
-            sidebarTitle: 'Leiloeiros Parceiros',
-            mainContent: {
-                imageUrl: 'https://picsum.photos/seed/auctioneer/400/225',
-                imageAlt: 'Imagem Leiloeiros Parceiros',
-                dataAiHint: 'leiloeiro publico',
-                title: 'Profissionais Qualificados',
-                description: 'Conheça os leiloeiros que garantem a transparência e o sucesso dos nossos leilões.',
-                buttonLink: '/auctioneers',
-                buttonText: 'Conheça Nossos Leiloeiros'
-            }
+      label: 'Leiloeiros',
+      isMegaMenu: true,
+      contentKey: 'auctioneers',
+      href: '/auctioneers',
+      icon: Gavel,
+      megaMenuAlign: 'start',
+      twoColumnMegaMenuProps: {
+        sidebarTitle: 'Leiloeiros Parceiros',
+        mainContent: {
+          imageUrl: 'https://picsum.photos/seed/auctioneer/400/225',
+          imageAlt: 'Imagem Leiloeiros Parceiros',
+          dataAiHint: 'leiloeiro publico',
+          title: 'Profissionais Qualificados',
+          description: 'Conheça os leiloeiros que garantem a transparência e o sucesso dos nossos leilões.',
+          buttonLink: '/auctioneers',
+          buttonText: 'Conheça Nossos Leiloeiros'
         }
+      }
     },
     {
-        label: 'Histórico',
-        isMegaMenu: true,
-        contentKey: 'history',
-        icon: History,
-        href: '/dashboard/history',
-        megaMenuAlign: 'end'
+      label: 'Histórico',
+      isMegaMenu: true,
+      contentKey: 'history',
+      icon: History,
+      href: '/dashboard/history',
+      megaMenuAlign: 'end'
     },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
-  ];
+    ];
 
   const headerStyle = useMemo<HeaderCSSVars>(() => ({ '--header-height': '15rem' }), []);
 

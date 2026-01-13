@@ -60,13 +60,8 @@ const analyzeAuctionDataFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const { output } = await analyzeAuctionDataPrompt.generate({
-      input: {
-        performanceData: input.performanceData.slice(0, 50), // Limit input tokens
-      },
-      helpers: {
-        jsonStringify: (data: any) => JSON.stringify(data, null, 2),
-      }
+    const { output } = await analyzeAuctionDataPrompt({
+      performanceData: input.performanceData.slice(0, 50), // Limit input tokens
     });
     
     return output!;

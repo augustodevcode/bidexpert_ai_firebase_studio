@@ -15,6 +15,8 @@ import { AppContentWrapper } from './app-content-wrapper';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import SubscriptionPopup from '@/components/subscription-popup';
 
+export const dynamic = 'force-dynamic';
+
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
 export const metadata: Metadata = {
@@ -36,15 +38,15 @@ export const viewport: Viewport = {
 async function getLayoutData() {
   try {
     const settings = await getPlatformSettings();
-    return { 
+    return {
       platformSettings: settings,
-      isSetupComplete: settings?.isSetupComplete || false, 
+      isSetupComplete: settings?.isSetupComplete || false,
     };
   } catch (error) {
     console.warn("[Layout Data Fetch] Could not fetch platform settings (this is expected on first run):", error);
     return {
       platformSettings: null,
-      isSetupComplete: false, 
+      isSetupComplete: false,
     };
   }
 }
@@ -54,35 +56,35 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  
+
   const { platformSettings, isSetupComplete } = await getLayoutData();
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-  <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="BidExpert" />
-  </head>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="BidExpert" />
+      </head>
       <body>
         <AuthProvider>
-        <TooltipProvider delayDuration={0}>
-            <AppContentWrapper 
-            isSetupComplete={true}
-            platformSettings={platformSettings}
+          <TooltipProvider delayDuration={0}>
+            <AppContentWrapper
+              isSetupComplete={true}
+              platformSettings={platformSettings}
             >
-            {children}
+              {children}
             </AppContentWrapper>
             {/* <SubscriptionPopup /> */}
             <Toaster />
-        </TooltipProvider>
+          </TooltipProvider>
         </AuthProvider>
       </body>
     </html>

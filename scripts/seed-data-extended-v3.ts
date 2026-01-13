@@ -196,15 +196,45 @@ async function main() {
       }),
     ]);
 
-    // Usuário 4: Vendedor
+    // Usuário 4: Vendedor (Comitente) - Perfil Completo e Realista
     const vendedorUser = await prisma.user.create({
       data: {
-        email: `test.vendedor.${uniqueSuffix}@bidexpert.com`,
+        email: `carlos.silva@construtoraabc.com.br`,
         password: senhaHash,
-        fullName: `Vendedor Test ${uniqueSuffix}`,
-        cpf: `444${uniqueSuffix}`.substring(0, 11),
-        accountType: 'LEGAL',
+        fullName: `Carlos Eduardo Silva Santos`,
+        cpf: `12345678901`,
+        rgNumber: `12345678-9`,
+        rgIssuer: `SSP/SP`,
+        rgIssueDate: new Date('2010-05-15'),
+        dateOfBirth: new Date('1985-03-22'),
+        cellPhone: `(11) 99999-8888`,
+        homePhone: `(11) 3333-4444`,
+        gender: 'MASCULINO',
+        profession: 'Empresário',
+        nationality: 'Brasileiro',
+        maritalStatus: 'CASADO',
+        propertyRegime: 'COMUNHAO_PARCIAL',
+        spouseName: 'Ana Paula Silva Santos',
+        spouseCpf: '98765432100',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '123',
+        complement: 'Sala 1501',
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        avatarUrl: 'https://picsum.photos/seed/consignor-123/200/200',
+        dataAiHint: 'consignor_profile',
         habilitationStatus: 'HABILITADO',
+        accountType: 'LEGAL',
+        // Dados da empresa (Pessoa Jurídica)
+        razaoSocial: 'Construtora ABC Ltda',
+        cnpj: '12.345.678/0001-90',
+        inscricaoEstadual: '123.456.789.012',
+        website: 'https://www.construtoraabc.com.br',
+        responsibleName: 'Carlos Eduardo Silva Santos',
+        responsibleCpf: '12345678901',
+        optInMarketing: true,
       },
     });
 
@@ -224,6 +254,92 @@ async function main() {
         },
       }),
     ]);
+
+    // 4.1 CRIAR DOCUMENTOS DO COMITENTE (VENDEDOR)
+    console.log('📄 Criando documentos do comitente...');
+
+    // Buscar tipos de documento existentes ou criar se necessário
+    const documentTypes = [
+      { name: 'RG', appliesTo: 'PHYSICAL' },
+      { name: 'CPF', appliesTo: 'PHYSICAL' },
+      { name: 'Comprovante de Endereço', appliesTo: 'BOTH' },
+      { name: 'Contrato Social', appliesTo: 'LEGAL' },
+      { name: 'CNPJ', appliesTo: 'LEGAL' },
+      { name: 'Certidão Negativa de Débitos', appliesTo: 'LEGAL' },
+      { name: 'Procuração', appliesTo: 'BOTH' },
+    ];
+
+    const createdDocumentTypes: any = {};
+    for (const docType of documentTypes) {
+      let existingType = await prisma.documentType.findUnique({
+        where: { name: docType.name }
+      });
+      if (!existingType) {
+        existingType = await prisma.documentType.create({
+          data: docType
+        });
+      }
+      createdDocumentTypes[docType.name] = existingType;
+    }
+
+    // Criar documentos para o comitente (Pessoa Física)
+    const consignorDocuments = [
+      {
+        documentTypeId: createdDocumentTypes['RG'].id,
+        fileName: 'RG_Carlos_Silva.pdf',
+        fileUrl: 'https://example.com/docs/rg-carlos-silva.pdf',
+        status: 'APPROVED' as const,
+      },
+      {
+        documentTypeId: createdDocumentTypes['CPF'].id,
+        fileName: 'CPF_Carlos_Silva.pdf',
+        fileUrl: 'https://example.com/docs/cpf-carlos-silva.pdf',
+        status: 'APPROVED' as const,
+      },
+      {
+        documentTypeId: createdDocumentTypes['Comprovante de Endereço'].id,
+        fileName: 'Comprovante_Endereco_Carlos_Silva.pdf',
+        fileUrl: 'https://example.com/docs/endereco-carlos-silva.pdf',
+        status: 'APPROVED' as const,
+      },
+      // Documentos da empresa (Pessoa Jurídica)
+      {
+        documentTypeId: createdDocumentTypes['Contrato Social'].id,
+        fileName: 'Contrato_Social_Construtora_ABC.pdf',
+        fileUrl: 'https://example.com/docs/contrato-social-abc.pdf',
+        status: 'APPROVED' as const,
+      },
+      {
+        documentTypeId: createdDocumentTypes['CNPJ'].id,
+        fileName: 'CNPJ_Construtora_ABC.pdf',
+        fileUrl: 'https://example.com/docs/cnpj-construtora-abc.pdf',
+        status: 'APPROVED' as const,
+      },
+      {
+        documentTypeId: createdDocumentTypes['Certidão Negativa de Débitos'].id,
+        fileName: 'Certidao_Negativa_Construtora_ABC.pdf',
+        fileUrl: 'https://example.com/docs/certidao-negativa-abc.pdf',
+        status: 'APPROVED' as const,
+      },
+      {
+        documentTypeId: createdDocumentTypes['Procuração'].id,
+        fileName: 'Procuracao_Carlos_Silva.pdf',
+        fileUrl: 'https://example.com/docs/procuracao-carlos-silva.pdf',
+        status: 'APPROVED' as const,
+      },
+    ];
+
+    for (const doc of consignorDocuments) {
+      await prisma.userDocument.create({
+        data: {
+          ...doc,
+          userId: vendedorUser.id,
+          tenantId: tenants[0].id,
+        },
+      });
+    }
+
+    console.log(`✅ ${consignorDocuments.length} documentos criados para o comitente\n`);
 
     // Usuário 5: Avaliador
     const avaliadorUser = await prisma.user.create({
@@ -406,16 +522,26 @@ async function main() {
       },
     });
 
-    // Criar Seller (Leiloeiro/Vendedor Judicial)
+    // Criar Seller (Comitente Realista - Construtora ABC)
     const seller = await prisma.seller.create({
       data: {
-        publicId: `seller-${judicialTimestamp}`,
-        slug: `leiloeiro-judicial-sp-${judicialTimestamp}`,
-        name: `Leiloeiro Judicial SP ${judicialTimestamp}`,
-        description: 'Leiloeiro autorizado pelo Tribunal de Justiça de São Paulo',
+        publicId: `seller-construtora-abc-${judicialTimestamp}`,
+        slug: `construtora-abc-leiloes-${judicialTimestamp}`,
+        name: `Construtora ABC Ltda - Comitente`,
+        description: 'Construtora ABC Ltda - Empresa especializada em construção civil e incorporação imobiliária. Realizando leilão judicial de imóveis penhorados em processo de execução hipotecária.',
         logoUrl: null,
+        website: 'https://www.construtoraabc.com.br',
+        email: 'leiloes@construtoraabc.com.br',
+        phone: '(11) 3333-4444',
+        contactName: 'Carlos Eduardo Silva Santos',
+        address: 'Rua das Flores, 123 - Sala 1501',
+        city: 'São Paulo',
+        state: 'SP',
+        zipCode: '01234-567',
         tenantId: tenants[0].id,
+        userId: vendedorUser.id, // Vincular ao usuário vendedor criado
         judicialBranchId: judicialBranch.id,
+        isJudicial: true,
       },
     });
 

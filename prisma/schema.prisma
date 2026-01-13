@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -234,14 +234,14 @@ model Lot {
   lotRisks                 LotRisk[]
 
   @@unique([auctionId, number])
-  @@index([auctioneerId], map: "Lot_auctioneerId_fkey")
-  @@index([categoryId], map: "Lot_categoryId_fkey")
-  @@index([cityId], map: "Lot_cityId_fkey")
-  @@index([sellerId], map: "Lot_sellerId_fkey")
-  @@index([stateId], map: "Lot_stateId_fkey")
-  @@index([subcategoryId], map: "Lot_subcategoryId_fkey")
-  @@index([tenantId], map: "Lot_tenantId_fkey")
-  @@index([winnerId], map: "Lot_winnerId_fkey")
+  @@index([auctioneerId])
+  @@index([categoryId])
+  @@index([cityId])
+  @@index([sellerId])
+  @@index([stateId])
+  @@index([subcategoryId])
+  @@index([tenantId])
+  @@index([winnerId])
 }
 
 model Asset {
@@ -387,11 +387,11 @@ model Asset {
   gallery                    AssetMedia[]
   lots                       AssetsOnLots[]
 
-  @@index([categoryId], map: "Asset_categoryId_fkey")
-  @@index([judicialProcessId], map: "Asset_judicialProcessId_fkey")
-  @@index([sellerId], map: "Asset_sellerId_fkey")
-  @@index([subcategoryId], map: "Asset_subcategoryId_fkey")
-  @@index([tenantId], map: "Asset_tenantId_fkey")
+  @@index([categoryId])
+  @@index([judicialProcessId])
+  @@index([sellerId])
+  @@index([subcategoryId])
+  @@index([tenantId])
 }
 
 model AssetsOnLots {
@@ -406,7 +406,7 @@ model AssetsOnLots {
 
   @@id([lotId, assetId])
   @@index([tenantId])
-  @@index([assetId], map: "AssetsOnLots_assetId_fkey")
+  @@index([assetId])
 }
 
 model Auction {
@@ -482,18 +482,18 @@ model Auction {
 
   @@index([auctioneerId])
   @@index([sellerId])
-  @@index([categoryId], map: "Auction_categoryId_fkey")
-  @@index([cityId], map: "Auction_cityId_fkey")
-  @@index([judicialProcessId], map: "Auction_judicialProcessId_fkey")
-  @@index([stateId], map: "Auction_stateId_fkey")
-  @@index([tenantId], map: "Auction_tenantId_fkey")
+  @@index([categoryId])
+  @@index([cityId])
+  @@index([judicialProcessId])
+  @@index([stateId])
+  @@index([tenantId])
 }
 
 model AuctionStage {
   id              BigInt             @id @default(autoincrement())
   name            String
-  startDate       DateTime           @db.DateTime(0)
-  endDate         DateTime           @db.DateTime(0)
+  startDate       DateTime          
+  endDate         DateTime          
   auctionId       BigInt
   status          AuctionStageStatus @default(AGUARDANDO_INICIO)
   tenantId        BigInt
@@ -522,7 +522,7 @@ model LotStagePrice {
   @@unique([lotId, auctionStageId])
   @@index([auctionId])
   @@index([tenantId])
-  @@index([auctionStageId], map: "LotStagePrice_auctionStageId_fkey")
+  @@index([auctionStageId])
 }
 
 model JudicialProcess {
@@ -557,11 +557,11 @@ model JudicialProcess {
   @@index([propertyMatricula])
   @@index([propertyRegistrationNumber])
   @@index([actionType])
-  @@index([branchId], map: "JudicialProcess_branchId_fkey")
-  @@index([courtId], map: "JudicialProcess_courtId_fkey")
-  @@index([districtId], map: "JudicialProcess_districtId_fkey")
-  @@index([sellerId], map: "JudicialProcess_sellerId_fkey")
-  @@index([tenantId], map: "JudicialProcess_tenantId_fkey")
+  @@index([branchId])
+  @@index([courtId])
+  @@index([districtId])
+  @@index([sellerId])
+  @@index([tenantId])
 }
 
 model LotRisk {
@@ -633,7 +633,7 @@ model Seller {
   tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user              User?             @relation(fields: [userId], references: [id])
 
-  @@index([tenantId], map: "Seller_tenantId_fkey")
+  @@index([tenantId])
 }
 
 model Auctioneer {
@@ -663,7 +663,7 @@ model Auctioneer {
   user               User?     @relation(fields: [userId], references: [id])
   lots               Lot[]
 
-  @@index([tenantId], map: "Auctioneer_tenantId_fkey")
+  @@index([tenantId])
 }
 
 model Court {
@@ -694,8 +694,8 @@ model JudicialDistrict {
   judicialProcesses JudicialProcess[]
   auctions          Auction[]         @relation("AuctionToJudicialDistrict")
 
-  @@index([courtId], map: "JudicialDistrict_courtId_fkey")
-  @@index([stateId], map: "JudicialDistrict_stateId_fkey")
+  @@index([courtId])
+  @@index([stateId])
 }
 
 model JudicialBranch {
@@ -713,7 +713,7 @@ model JudicialBranch {
   sellers           Seller?
   auctions          Auction[]         @relation("AuctionToJudicialBranch")
 
-  @@index([districtId], map: "JudicialBranch_districtId_fkey")
+  @@index([districtId])
 }
 
 model State {
@@ -741,7 +741,7 @@ model City {
   lots      Lot[]
 
   @@unique([name, stateId])
-  @@index([stateId], map: "City_stateId_fkey")
+  @@index([stateId])
 }
 
 model AssetMedia {
@@ -776,8 +776,8 @@ model Bid {
 
   @@index([lotId])
   @@index([bidderId])
-  @@index([auctionId], map: "Bid_auctionId_fkey")
-  @@index([tenantId], map: "Bid_tenantId_fkey")
+  @@index([auctionId])
+  @@index([tenantId])
 }
 
 model UserWin {
@@ -886,7 +886,7 @@ model Subcategory {
 
   @@unique([name, parentCategoryId])
   @@index([tenantId])
-  @@index([parentCategoryId], map: "Subcategory_parentCategoryId_fkey")
+  @@index([parentCategoryId])
 }
 
 model DirectSaleOffer {
@@ -920,9 +920,9 @@ model DirectSaleOffer {
   seller               Seller                @relation(fields: [sellerId], references: [id])
   tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([categoryId], map: "DirectSaleOffer_categoryId_fkey")
-  @@index([sellerId], map: "DirectSaleOffer_sellerId_fkey")
-  @@index([tenantId], map: "DirectSaleOffer_tenantId_fkey")
+  @@index([categoryId])
+  @@index([sellerId])
+  @@index([tenantId])
 }
 
 model Notification {
@@ -941,9 +941,9 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([auctionId], map: "Notification_auctionId_fkey")
-  @@index([lotId], map: "Notification_lotId_fkey")
-  @@index([tenantId], map: "Notification_tenantId_fkey")
+  @@index([auctionId])
+  @@index([lotId])
+  @@index([tenantId])
 }
 
 model UserDocument {
@@ -1006,8 +1006,8 @@ model Review {
 
   @@index([lotId])
   @@index([tenantId])
-  @@index([auctionId], map: "Review_auctionId_fkey")
-  @@index([userId], map: "Review_userId_fkey")
+  @@index([auctionId])
+  @@index([userId])
 }
 
 model LotQuestion {
@@ -1031,8 +1031,8 @@ model LotQuestion {
 
   @@index([lotId])
   @@index([tenantId])
-  @@index([auctionId], map: "LotQuestion_auctionId_fkey")
-  @@index([userId], map: "LotQuestion_userId_fkey")
+  @@index([auctionId])
+  @@index([userId])
 }
 
 model MediaItem {
@@ -1061,8 +1061,8 @@ model MediaItem {
   uploadedBy        User?            @relation("UploadedBy", fields: [uploadedByUserId], references: [id])
 
   @@index([tenantId])
-  @@index([judicialProcessId], map: "MediaItem_judicialProcessId_fkey")
-  @@index([uploadedByUserId], map: "MediaItem_uploadedByUserId_fkey")
+  @@index([judicialProcessId])
+  @@index([uploadedByUserId])
 }
 
 model PlatformSettings {
@@ -1114,7 +1114,7 @@ model ThemeSettings {
   colors             ThemeColors?
   platformSettings   PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
 
-  @@index([platformSettingsId], map: "ThemeSettings_platformSettingsId_fkey")
+  @@index([platformSettingsId])
 }
 
 model ThemeColors {
@@ -1147,7 +1147,7 @@ model VariableIncrementRule {
   increment          Float
   platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
 
-  @@index([platformSettingsId], map: "VariableIncrementRule_platformSettingsId_fkey")
+  @@index([platformSettingsId])
 }
 
 model MapSettings {
@@ -1253,8 +1253,8 @@ model Report {
   createdBy   User     @relation("CreatedBy", fields: [createdById], references: [id])
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@index([createdById], map: "Report_createdById_fkey")
-  @@index([tenantId], map: "Report_tenantId_fkey")
+  @@index([createdById])
+  @@index([tenantId])
 }
 
 model Subscriber {
@@ -1269,7 +1269,7 @@ model Subscriber {
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([email, tenantId], name: "email_tenantId")
-  @@index([tenantId], map: "Subscriber_tenantId_fkey")
+  @@index([tenantId])
 }
 
 model PasswordResetToken {
@@ -1366,7 +1366,7 @@ model WonLot {
   tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
-  @@index([bidderId], map: "won_lots_bidderId_fkey")
+  @@index([bidderId])
   @@map("won_lots")
 }
 
@@ -1385,7 +1385,7 @@ model BidderNotification {
   tenant    Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
-  @@index([bidderId], map: "bidder_notifications_bidderId_fkey")
+  @@index([bidderId])
   @@map("bidder_notifications")
 }
 
@@ -1408,7 +1408,7 @@ model PaymentMethod {
   tenant     Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
-  @@index([bidderId], map: "payment_methods_bidderId_fkey")
+  @@index([bidderId])
   @@map("payment_methods")
 }
 
@@ -1430,7 +1430,7 @@ model ParticipationHistory {
   tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
-  @@index([bidderId], map: "participation_history_bidderId_fkey")
+  @@index([bidderId])
   @@map("participation_history")
 }
 
@@ -1703,7 +1703,7 @@ model ITSM_Attachment {
   uploadedByUser User        @relation(fields: [uploadedBy], references: [id])
 
   @@index([ticketId])
-  @@index([uploadedBy], map: "itsm_attachments_uploadedBy_fkey")
+  @@index([uploadedBy])
   @@map("itsm_attachments")
 }
 
@@ -1726,7 +1726,7 @@ model ITSM_ChatLog {
   @@index([userId])
   @@index([sessionId])
   @@index([tenantId])
-  @@index([ticketId], map: "itsm_chat_logs_ticketId_fkey")
+  @@index([ticketId])
   @@map("itsm_chat_logs")
 }
 

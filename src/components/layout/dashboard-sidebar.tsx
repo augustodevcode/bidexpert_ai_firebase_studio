@@ -63,7 +63,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
     
     const canSeeLawyerDashboard = hasAnyPermission(userProfileWithPermissions, ['lawyer_dashboard:view', 'manage_all']);
     const canSeeConsignorDashboard = hasAnyPermission(userProfileWithPermissions, ['consignor_dashboard:view', 'manage_all']);
-    const canSeeAdminDashboard = hasPermission(userProfileWithPermissions, 'manage_all');
+    const canSeeAdminDashboard = hasPermission(userProfileWithPermissions, 'manage_all') || userProfileWithPermissions?.roleNames?.includes('AUCTION_ANALYST');
 
     return (
         <>

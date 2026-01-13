@@ -97,7 +97,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
-  const sellerSlug = auction.seller?.slug;
+  const sellerSlug = auction.seller?.slug || auction.seller?.publicId || auction.seller?.id;
   const sellerName = auction.seller?.name;
 
 

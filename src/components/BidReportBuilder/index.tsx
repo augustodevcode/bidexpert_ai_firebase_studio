@@ -187,4 +187,9 @@ const BidReportBuilder = () => {
     );
 };
 
+// Re-export new components
+export { default as ReportWizard } from './components/ReportWizard';
+export { default as PredefinedReportsGallery } from './components/PredefinedReportsGallery';
+export { default as ReportViewer } from './components/ReportViewer';
+
 export default BidReportBuilder;

@@ -59,3 +59,5 @@ firestore-debug.log
 # IDX specific
 .idx/
 dataconnect-debug.log
+
+tests/unit/__screenshots__

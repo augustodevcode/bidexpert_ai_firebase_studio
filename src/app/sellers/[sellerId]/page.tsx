@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Star, Loader2, Mail, Phone, Globe, Briefcase, TrendingUp, Pencil, Landmark } from 'lucide-react';
+import { Star, Loader2, Mail, Phone, Globe, Briefcase, TrendingUp, Pencil, Landmark, MessageSquare } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions';

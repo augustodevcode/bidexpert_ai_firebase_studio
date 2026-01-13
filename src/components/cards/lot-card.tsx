@@ -132,7 +132,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
   const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
   const sellerName = auction?.seller?.name;
-  const sellerSlug = auction?.seller?.slug;
+  const sellerSlug = auction?.seller?.slug || auction?.seller?.publicId || auction?.seller?.id;
   const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction?.seller?.logoUrl : undefined;
   const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';
   

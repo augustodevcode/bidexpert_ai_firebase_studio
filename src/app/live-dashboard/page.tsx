@@ -1,3 +1,8 @@
+/**
+ * @file Live Dashboard Page
+ * @description Real-time auction monitoring dashboard showing open lots.
+ * Uses dynamic rendering to fetch fresh data on each request.
+ */
 
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
@@ -6,6 +11,9 @@ import LiveLotCard from '@/components/live-lot-card';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tv, AlertCircle } from 'lucide-react';
 import { isPast } from 'date-fns';
+
+// Force dynamic rendering - this page needs real-time DB data
+export const dynamic = 'force-dynamic';
 
 async function getLiveDashboardData(): Promise<{ allOpenLots: Lot[] }> {
   const [allAuctions, allLots] = await Promise.all([

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission, hasAnyPermission } from '@/lib/permissions';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header';
 import AdminSidebar from '@/components/layout/admin-sidebar';
@@ -17,6 +17,19 @@ import AdminQueryMonitor from '@/components/support/admin-query-monitor';
 interface AdminLayoutClientProps {
   children: React.ReactNode;
 }
+
+const ADMIN_ACCESS_PERMISSIONS = [
+  'manage_all',
+  'auctions:read',
+  'lots:read',
+  'view_reports',
+  'users:read',
+  'sellers:read',
+  'auctioneers:read',
+  'categories:read',
+  'assets:read',
+  'judicial_processes:read'
+];
 
 export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   const { userProfileWithPermissions, loading } = useAuth();
@@ -54,7 +67,7 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
     );
   }
 
-  const canAccessAdmin = hasPermission(userProfileWithPermissions, 'manage_all');
+  const canAccessAdmin = hasAnyPermission(userProfileWithPermissions, ADMIN_ACCESS_PERMISSIONS);
 
   if (!canAccessAdmin) {
     return (

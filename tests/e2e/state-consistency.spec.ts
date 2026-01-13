@@ -27,12 +27,14 @@
 
 import { test, expect } from '@playwright/test';
 import { prisma } from '@/lib/prisma';
-import { AuctionService, AuctionIntegrityValidation } from '@/services/auction.service';
-import { LotService, LotIntegrityValidation } from '@/services/lot.service';
+import { AuctionService } from '@/services/auction.service';
+import { LotService } from '@/services/lot.service';
 import { AssetService } from '@/services/asset.service';
 
-// Tenant de teste
-const TEST_TENANT_ID = '1';
+// Variáveis para armazenar IDs criados no setup
+let TEST_TENANT_ID: string;
+let TEST_AUCTIONEER_ID: bigint;
+let TEST_SELLER_ID: bigint;
 
 // Helpers para criar dados de teste
 async function createTestAuction(tenantId: string, options: {
@@ -41,14 +43,14 @@ async function createTestAuction(tenantId: string, options: {
 } = {}) {
   const auction = await prisma.auction.create({
     data: {
-      publicId: `TEST-AUCTION-${Date.now()}`,
+      publicId: `TEST-AUCTION-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       title: options.title || 'Leilão de Teste - Consistência',
-      slug: `leilao-teste-${Date.now()}`,
+      slug: `leilao-teste-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       status: (options.status as any) || 'RASCUNHO',
       auctionDate: new Date(),
       tenantId: BigInt(tenantId),
-      auctioneerId: BigInt(1), // Assumindo que existe
-      sellerId: BigInt(1), // Assumindo que existe
+      auctioneerId: TEST_AUCTIONEER_ID,
+      sellerId: TEST_SELLER_ID,
     }
   });
   return auction;
@@ -102,29 +104,75 @@ async function linkAssetToLot(lotId: bigint, assetId: bigint, tenantId: string) 
 
 // Cleanup helper
 async function cleanupTestData(prefix: string) {
-  await prisma.assetsOnLots.deleteMany({
-    where: {
-      OR: [
-        { lot: { publicId: { startsWith: prefix } } },
-        { asset: { publicId: { startsWith: prefix } } }
-      ]
-    }
-  });
-  await prisma.lot.deleteMany({
-    where: { publicId: { startsWith: prefix } }
-  });
-  await prisma.auction.deleteMany({
-    where: { publicId: { startsWith: prefix } }
-  });
-  await prisma.asset.deleteMany({
-    where: { publicId: { startsWith: prefix } }
-  });
+  try {
+    await prisma.assetsOnLots.deleteMany({
+      where: {
+        OR: [
+          { lot: { publicId: { startsWith: prefix } } },
+          { asset: { publicId: { startsWith: prefix } } }
+        ]
+      }
+    });
+    await prisma.lot.deleteMany({
+      where: { publicId: { startsWith: prefix } }
+    });
+    await prisma.auction.deleteMany({
+      where: { publicId: { startsWith: prefix } }
+    });
+    await prisma.asset.deleteMany({
+      where: { publicId: { startsWith: prefix } }
+    });
+  } catch (error) {
+    console.error('Erro no cleanup:', error);
+  }
 }
 
 test.describe('Consistência de Estado - Auction/Lot/Asset', () => {
   const auctionService = new AuctionService();
   const lotService = new LotService();
   const assetService = new AssetService();
+
+  test.beforeAll(async () => {
+    // 1. Criar Tenant de Teste (ou usar existente)
+    const tenantSlug = `test-tenant-${Date.now()}`;
+    const tenant = await prisma.tenant.create({
+      data: {
+        name: 'Tenant de Teste E2E',
+        subdomain: tenantSlug,
+
+      }
+    });
+    TEST_TENANT_ID = tenant.id.toString();
+
+    // 2. Criar Leiloeiro
+    const auctioneer = await prisma.auctioneer.create({
+      data: {
+        name: 'Leiloeiro de Teste',
+        email: `auctioneer-${Date.now()}@test.com`,
+        phone: '11999999999',
+        registrationNumber: `JUCESP-${Date.now()}`,
+        tenantId: tenant.id,
+        publicId: `auctioneer-${Date.now()}`,
+        slug: `auctioneer-${Date.now()}`,
+      }
+    });
+    TEST_AUCTIONEER_ID = auctioneer.id;
+
+    // 3. Criar Comitente
+    const seller = await prisma.seller.create({
+      data: {
+        name: 'Comitente de Teste',
+        email: `seller-${Date.now()}@test.com`,
+        phone: '11988888888',
+        document: `987654321${Math.floor(Math.random() * 100)}`,
+        type: 'COMPANY',
+        tenantId: tenant.id,
+        publicId: `seller-${Date.now()}`,
+        slug: `seller-${Date.now()}`,
+      }
+    });
+    TEST_SELLER_ID = seller.id;
+  });
 
   test.beforeEach(async () => {
     // Limpar dados de teste anteriores
@@ -134,6 +182,13 @@ test.describe('Consistência de Estado - Auction/Lot/Asset', () => {
   test.afterEach(async () => {
     // Limpar dados após cada teste
     await cleanupTestData('TEST-');
+  });
+
+  test.afterAll(async () => {
+    // Limpar entidades base criadas no beforeAll
+    if (TEST_SELLER_ID) await prisma.seller.delete({ where: { id: TEST_SELLER_ID } }).catch(() => {});
+    if (TEST_AUCTIONEER_ID) await prisma.auctioneer.delete({ where: { id: TEST_AUCTIONEER_ID } }).catch(() => {});
+    if (TEST_TENANT_ID) await prisma.tenant.delete({ where: { id: BigInt(TEST_TENANT_ID) } }).catch(() => {});
   });
 
   test('Cenário 1: Não deve abrir Leilão com Lotes sem Ativos', async () => {

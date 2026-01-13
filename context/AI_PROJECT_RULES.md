@@ -318,6 +318,20 @@ This prevents accidental loss of functionality.
 
 ---
 
+## RULE 9: Cloud Validation (GCP Migration)
+
+**Status:** ✅ ENFORCED
+
+### Requirement
+- **Ambiente:** Testes finais devem ser validados na URL pública do Cloud Run (GCP).
+- **Banco de Dados:** AlloyDB (PostgreSQL) e Redis Remote.
+- **Processo de Deploy:**
+    - Alterações de banco exigem `RUN_MIGRATION=true` no Cloud Build.
+    - Scripts de start (`scripts/start-cloud.sh`) executam `prisma db push` e seed quando solicitado.
+- **Verificação:**
+    - Login funcional com usuários seed.
+    - Lances em tempo real validam integração com Redis.
+
 ---
 
 ## Summary Table
@@ -332,6 +346,7 @@ This prevents accidental loss of functionality.
 | Testing strategy | ✅ | 🟡 MEDIUM | Test files |
 | Prisma integrity | ✅ | 🔴 CRITICAL | `prisma/schema.prisma` |
 | Environment variables | ✅ | 🔴 CRITICAL | `.env` |
+| Cloud Validation | ✅ | 🔴 CRITICAL | `docs/GCP_MIGRATION.md` |
 
 ---
 

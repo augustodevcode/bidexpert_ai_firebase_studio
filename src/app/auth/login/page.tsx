@@ -168,7 +168,7 @@ function LoginPageContent() {
                 {/* DEV ONLY: User Selector */}
                 <DevUserSelector onSelect={(u) => {
                     form.setValue('email', u.email);
-                    form.setValue('password', u.passwordHint);
+                    form.setValue('password', u.password); // Use password from the object passed by DevUserSelector
 
                     // Auto-login logic
                     const tenantId = selectedTenantId || (availableTenants.length > 0 ? availableTenants[0].id : undefined);
@@ -180,7 +180,7 @@ function LoginPageContent() {
                         toast({ title: "Auto-login", description: `Autenticando como ${u.roleName}...` });
                         handleLogin({
                             email: u.email,
-                            password: u.passwordHint,
+                            password: u.password, // Use password from the object passed by DevUserSelector
                             tenantId: tenantId
                         });
                     } else {
@@ -323,7 +323,7 @@ function DevUserSelector({ onSelect }: { onSelect: (u: any) => void }) {
             <Label className="text-xs text-muted-foreground mb-1 block">Dev: Auto-login (Ambiente de Teste)</Label>
             <Select onValueChange={(email) => {
                 const u = users.find(user => user.email === email);
-                if (u) onSelect(u);
+                if (u) onSelect({ ...u, password: u.passwordHint });
             }}>
                 <SelectTrigger className="h-8 text-xs bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 border-dashed">
                     <SelectValue placeholder="Selecione para auto-login..." />

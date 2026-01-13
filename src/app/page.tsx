@@ -149,6 +149,7 @@ export default async function HomePage({ searchParams }: { searchParams?: HomeSe
                   startDate: stage.startDate,
                   endDate: stage.endDate,
                   initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
+                  discountPercent: stage.discountPercent ? Number(stage.discountPercent) : 100,
                   status: 'ATIVO' as const, // Default status
                   order: 0, // Default order
                   createdAt: new Date(), // Default to current date

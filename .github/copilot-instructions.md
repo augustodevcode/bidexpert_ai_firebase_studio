@@ -727,3 +727,30 @@ Since the codebase is a template, you should not assume they have set up anythin
   }
 }
 "
+
+# Playwright testing guidelines
+- Sempre abra o relatório de testes do Vitest UI no Simple Browser do Vscode para garantir que todos os testes passaram.
+- Sempre utilize o Vitest UI com Playwright para implementar testes e2e conforme a estratégia de testes documentada nos arquivos .md de testes visuais ou a partir da implementação recém feita.
+- Sempre utilize o Vitest UI com Playwright para implementar testes unitários conforme a estratégia de testes documentada nos arquivos .md de testes visuais ou a partir da implementação recém feita.
+- Sempre utilize To open last HTML report run: npx playwright show-report
+
+# Playwright testing guidelines
+- Sempre abra o relatório de testes do Vitest UI no Simple Browser do Vscode para garantir que todos os testes passaram.
+- Sempre utilize o Vitest UI com Playwright para implementar testes e2e conforme a estratégia de testes documentada nos arquivos .md de testes visuais ou a partir da implementação recém feita.
+- Sempre utilize o Vitest UI com Playwright para implementar testes unitários conforme a estratégia de testes documentada nos arquivos .md de testes visuais ou a partir da implementação recém feita.
+- Sempre utilize To open last HTML report run: npx playwright show-report
+
+# General IA Rules
+- Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
+
+# Usuários para testes 
+- Sempre crie usuários para testes com diferentes perfis (admin, user comum, user premium, etc) conforme a necessidade do sistema que está sendo desenvolvido toda vez que ver credenciais inválidas. Documente e incremente no seed-master-data.ts sempre que criar novos usuários para testes. Documente também para que outros desenvolvedores saibam quais usuários existem para testes.
+
+# Verificar se a aplicação já está em execução por outro desenvolvedor
+- Sempre verificar se a aplicação já está em execução por outro desenvolvedor antes de iniciar a execução da aplicação. Se sim, inicie em uma nova porta para não competir com outro desenvolvedor que está testando sua aplicação.
+
+# Nomear e identificar todos os elementos html
+- Sempre nomear e identificar com nomes de contexto do que o elemento html faz para todos os elementos html com atributos classname data-ai-id para todos os elementos para facilitar a identificação dos elementos nos testes automatizados com Vitest UI e Playwright ou para localizar fácil no console do browser.
+
+# usuarios de testes
+ao tentar logar verificar os usuários que estão nos arquivos de seed ou fazer select diretamente na base para saber o usuário, sua senha e seu perfil, pois lá podem estar os usuários que precisa para teste.

@@ -108,3 +108,57 @@
 {"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":769,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:41:23.292Z"}
 {"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":234,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:41:23.529Z","where":{"tenantId":"4"}}
 {"action":"update","durationMs":234,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T14:41:23.529Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":868,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:54:03.616Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":263,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:54:03.882Z","where":{"tenantId":"6"}}
+{"action":"update","durationMs":263,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T14:54:03.882Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":526,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:54:55.907Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":157,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:54:56.068Z","where":{"tenantId":"7"}}
+{"action":"update","durationMs":157,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T14:54:56.068Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":990,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:55:56.011Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":307,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:55:56.321Z","where":{"tenantId":"8"}}
+{"action":"update","durationMs":308,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T14:55:56.322Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":542,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:56:50.856Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":165,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:56:51.025Z","where":{"tenantId":"9"}}
+{"action":"update","durationMs":166,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T14:56:51.026Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":617,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:57:43.136Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":193,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:57:43.336Z","where":{"tenantId":"10"}}
+{"action":"update","durationMs":194,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T14:57:43.337Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":796,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:58:20.899Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":237,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T14:58:21.141Z","where":{"tenantId":"11"}}
+{"action":"update","durationMs":238,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T14:58:21.142Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":609,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:00:37.346Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":181,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:00:37.531Z","where":{"tenantId":"12"}}
+{"action":"update","durationMs":181,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T15:00:37.531Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":698,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:17:42.456Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":215,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:17:42.674Z","where":{"tenantId":"13"}}
+{"action":"update","durationMs":215,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T15:17:42.674Z"}
+{"amount":25000,"level":"info","lotId":"153","message":"[BidEvent]","timestamp":"2025-12-26T15:18:02.604Z"}
+{"amount":15000,"level":"info","lotId":"154","message":"[BidEvent]","timestamp":"2025-12-26T15:18:03.605Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":818,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:18:54.033Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":250,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:18:54.287Z","where":{"tenantId":"14"}}
+{"action":"update","durationMs":251,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T15:18:54.288Z"}
+{"amount":25000,"level":"info","lotId":"155","message":"[BidEvent]","timestamp":"2025-12-26T15:19:16.515Z"}
+{"amount":15000,"level":"info","lotId":"156","message":"[BidEvent]","timestamp":"2025-12-26T15:19:17.696Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":702,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:20:13.942Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":213,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:20:14.159Z","where":{"tenantId":"15"}}
+{"action":"update","durationMs":213,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T15:20:14.159Z"}
+{"amount":25000,"level":"info","lotId":"157","message":"[BidEvent]","timestamp":"2025-12-26T15:20:33.309Z"}
+{"amount":15000,"level":"info","lotId":"158","message":"[BidEvent]","timestamp":"2025-12-26T15:20:34.305Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":814,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:22:37.459Z"}
+{"action":"update","dataKeys":["siteTitle","siteTagline","isSetupComplete"],"durationMs":240,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-26T15:22:37.702Z","where":{"tenantId":"16"}}
+{"action":"update","durationMs":240,"error":"Do not know how to serialize a BigInt","level":"error","message":"[AUDIT_ERROR]","model":"PlatformSettings","timestamp":"2025-12-26T15:22:37.702Z"}
+{"amount":121000,"level":"info","lotId":"159","message":"[BidEvent]","timestamp":"2025-12-26T15:23:01.918Z"}
+{"amount":122000,"level":"info","lotId":"159","message":"[BidEvent]","timestamp":"2025-12-26T15:23:02.217Z"}
+{"amount":201000,"level":"info","lotId":"160","message":"[BidEvent]","timestamp":"2025-12-26T15:23:02.503Z"}
+{"amount":202000,"level":"info","lotId":"160","message":"[BidEvent]","timestamp":"2025-12-26T15:23:02.811Z"}
+{"amount":361000,"level":"info","lotId":"161","message":"[BidEvent]","timestamp":"2025-12-26T15:23:03.087Z"}
+{"amount":362000,"level":"info","lotId":"161","message":"[BidEvent]","timestamp":"2025-12-26T15:23:03.367Z"}
+{"amount":61000,"level":"info","lotId":"162","message":"[BidEvent]","timestamp":"2025-12-26T15:23:03.648Z"}
+{"amount":62000,"level":"info","lotId":"162","message":"[BidEvent]","timestamp":"2025-12-26T15:23:03.930Z"}
+{"amount":53000,"level":"info","lotId":"163","message":"[BidEvent]","timestamp":"2025-12-26T15:23:04.209Z"}
+{"amount":54000,"level":"info","lotId":"163","message":"[BidEvent]","timestamp":"2025-12-26T15:23:04.491Z"}
+{"amount":37000,"level":"info","lotId":"164","message":"[BidEvent]","timestamp":"2025-12-26T15:23:04.771Z"}
+{"amount":38000,"level":"info","lotId":"164","message":"[BidEvent]","timestamp":"2025-12-26T15:23:05.051Z"}
+{"amount":25000,"level":"info","lotId":"165","message":"[BidEvent]","timestamp":"2025-12-26T15:23:05.340Z"}
+{"amount":15000,"level":"info","lotId":"166","message":"[BidEvent]","timestamp":"2025-12-26T15:23:06.506Z"}
+{"action":"create","dataKeys":["tenantId","siteTitle","siteTagline","isSetupComplete","crudFormMode"],"durationMs":982,"level":"info","message":"[AUDIT]","model":"PlatformSettings","timestamp":"2025-12-27T02:01:59.602Z"}

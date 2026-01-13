@@ -80,9 +80,7 @@ const extractProcessDataFlow = ai.defineFlow(
     outputSchema: ExtractProcessDataOutputSchema,
   },
   async (input) => {
-    const {output} = await extractProcessDataPrompt.generate({
-        input,
-    });
+    const {output} = await extractProcessDataPrompt(input);
     
     // Return the structured output from the LLM
     return output!;

@@ -1,6 +1,5 @@
 // src/middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { tenantContext } from '@/lib/tenant-context';
 import { getSession } from '@/server/lib/session';
 
 // Adicione aqui os caminhos que devem ser ignorados pelo middleware
@@ -45,15 +44,13 @@ export async function middleware(req: NextRequest) {
         tenantId = session.tenantId;
     }
 
-    // Armazena o tenantId no AsyncLocalStorage para ser usado pelo Prisma
-    return tenantContext.run({ tenantId }, () => {
-        const requestHeaders = new Headers(req.headers);
-        requestHeaders.set('x-tenant-id', tenantId);
+    // Passa o tenantId via headers
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-tenant-id', tenantId);
 
-        return NextResponse.next({
-            request: {
-                headers: requestHeaders,
-            },
-        });
+    return NextResponse.next({
+        request: {
+            headers: requestHeaders,
+        },
     });
 }

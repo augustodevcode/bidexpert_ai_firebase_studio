@@ -34,6 +34,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 
 // Sort options for auctions (similar to search page)
 const sortOptionsAuctions = [
@@ -178,33 +180,20 @@ export default function AuctioneerDetailsPage() {
   }
   
   const renderAuctionGridItem = (auction: Auction) => (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg line-clamp-2">{auction.title}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <p className="text-sm text-muted-foreground">Data: {format(new Date(auction.auctionDate as string), 'dd/MM/yyyy', { locale: ptBR })}</p>
-        <p className="text-sm text-muted-foreground">Status: {auction.status}</p>
-      </CardContent>
-      <CardFooter className="pt-0">
-          <Link href={`/auctions/${auction.id}`} className="w-full">
-              <Button variant="outline" className="w-full">Ver Detalhes</Button>
-          </Link>
-      </CardFooter>
-    </Card>
+    <BidExpertCard
+      key={auction.id}
+      item={auction}
+      type="auction"
+      platformSettings={platformSettings}
+    />
   );
   const renderAuctionListItem = (auction: Auction) => (
-    <Card className="flex items-center space-x-4 p-4">
-      <div className="flex-grow">
-        <CardTitle className="text-xl line-clamp-1">{auction.title}</CardTitle>
-        <CardDescription>
-          Data: {format(new Date(auction.auctionDate as string), 'dd/MM/yyyy', { locale: ptBR })} - Status: {auction.status}
-        </CardDescription>
-      </div>
-      <Link href={`/auctions/${auction.id}`}>
-        <Button>Ver Detalhes</Button>
-      </Link>
-    </Card>
+    <BidExpertListItem
+      key={auction.id}
+      item={auction}
+      type="auction"
+      platformSettings={platformSettings}
+    />
   );
   if (isLoading || !platformSettings) {
     return (

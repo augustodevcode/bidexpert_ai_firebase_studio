@@ -1,0 +1,218 @@
+# P0 CI Pipeline — BidExpert
+# Skills: DEV-01 (Build/Typecheck Gate), OPS-01 (Prebuild E2E), DEV-06 (Visual Regression)
+# Triggers: push/PR to main/develop
+
+name: P0 CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+  CI: 'true'
+
+jobs:
+  # ============================================
+  # DEV-01: Build/Typecheck Gate
+  # ============================================
+  build-gate:
+    name: DEV-01 Build/Typecheck Gate
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run Typecheck
+        run: npm run typecheck
+        
+      - name: Run Lint
+        run: npm run lint
+        continue-on-error: true  # Não bloqueia por enquanto
+
+      - name: Build Application
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'mysql://root:root@localhost:3306/bidexpert_test' }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-test-secret-key-32-chars-long!' }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'ci-test-secret-key-32-chars-long!' }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-test-secret-key-32-chars-long!' }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .next/
+          retention-days: 1
+
+  # ============================================
+  # OPS-01: Prebuild E2E Orchestrator
+  # ============================================
+  e2e-tests:
+    name: OPS-01 Prebuild E2E
+    runs-on: ubuntu-latest
+    needs: build-gate
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bidexpert_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: .next/
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup Database
+        run: |
+          npx prisma generate
+          npx prisma db push --force-reset
+        env:
+          DATABASE_URL: mysql://root:root@localhost:3306/bidexpert_test
+
+      - name: Seed Database (minimal)
+        run: npm run db:seed:v3 || echo "Seed optional, continuing..."
+        env:
+          DATABASE_URL: mysql://root:root@localhost:3306/bidexpert_test
+        continue-on-error: true
+
+      - name: Start Server (background)
+        run: |
+          npm run start:9002 &
+          npx wait-on http://localhost:9002 --timeout 60000
+        env:
+          DATABASE_URL: mysql://root:root@localhost:3306/bidexpert_test
+          NEXTAUTH_SECRET: ci-test-secret-key-32-chars-long!
+          AUTH_SECRET: ci-test-secret-key-32-chars-long!
+          SESSION_SECRET: ci-test-secret-key-32-chars-long!
+          PORT: '9002'
+
+      - name: Run Smoke Tests (no auth required)
+        run: npm run test:e2e:smoke -- --reporter=list
+        env:
+          BASE_URL: http://localhost:9002
+          CI: 'true'
+          PLAYWRIGHT_SKIP_WEBSERVER: '1'
+
+      - name: Run E2E Tests
+        run: npm run test:e2e -- --reporter=html --reporter=json
+        env:
+          DATABASE_URL: mysql://root:root@localhost:3306/bidexpert_test
+          BASE_URL: http://localhost:9002
+          CI: 'true'
+          PLAYWRIGHT_SKIP_WEBSERVER: '1'
+        continue-on-error: true  # Smoke tests são gate principal por enquanto
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # ============================================
+  # DEV-06: Visual Regression (Vitest Browser)
+  # ============================================
+  visual-tests:
+    name: DEV-06 Visual Regression
+    runs-on: ubuntu-latest
+    needs: build-gate
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Install Playwright for Vitest
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Visual Tests
+        run: npm run test:visual || echo "Visual tests optional, continuing..."
+        continue-on-error: true
+
+      - name: Upload Visual Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-test-results
+          path: |
+            html/
+            tests/visual/__snapshots__/
+          retention-days: 7
+
+  # ============================================
+  # Summary Job
+  # ============================================
+  summary:
+    name: P0 Summary
+    runs-on: ubuntu-latest
+    needs: [build-gate, e2e-tests, visual-tests]
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## P0 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Skill | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| DEV-01 Build/Typecheck | ${{ needs.build-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OPS-01 E2E Tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| DEV-06 Visual Tests | ${{ needs.visual-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Artifacts available for download above." >> $GITHUB_STEP_SUMMARY

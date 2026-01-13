@@ -4,14 +4,25 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ShieldAlert } from 'lucide-react';
 import { getCurrentUser } from '@/app/auth/actions';
-import { hasPermission } from '@/lib/permissions';
+import { hasAnyPermission } from '@/lib/permissions';
 import { AdminLayoutClient } from './admin-layout.client';
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
-
+const ADMIN_ACCESS_PERMISSIONS = [
+  'manage_all',
+  'auctions:read',
+  'lots:read',
+  'view_reports',
+  'users:read',
+  'sellers:read',
+  'auctioneers:read',
+  'categories:read',
+  'assets:read',
+  'judicial_processes:read'
+];
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +33,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     redirect('/auth/login?redirect=/admin');
   }
 
-  if (!hasPermission(user, 'manage_all')) {
+  if (!hasAnyPermission(user, ADMIN_ACCESS_PERMISSIONS)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
         <ShieldAlert className="h-16 w-16 text-destructive mb-4" />

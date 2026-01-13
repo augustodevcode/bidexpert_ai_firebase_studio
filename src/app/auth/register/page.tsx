@@ -16,9 +16,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { UserPlus, CalendarIcon, Loader2 } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { DatePicker } from '@/components/ui/date-picker';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -32,6 +32,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { registrationFormSchema, type RegistrationFormValues } from './form-schema';
 import DocumentUploadCard from '@/components/document-upload-card';
 import type { UserCreationData } from '@/types';
+import { UserContactAssociationService } from '@/services/user-contact-association.service';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -151,6 +152,19 @@ export default function RegisterPage() {
       const result = await createUser(creationData);
 
       if (result.success && result.userId) {
+        // Associar mensagens de contato anônimas ao novo usuário
+        try {
+          const associationService = new UserContactAssociationService();
+          const associatedCount = await associationService.associateContactMessages(BigInt(result.userId), data.email.trim());
+          
+          if (associatedCount > 0) {
+            console.log(`Associadas ${associatedCount} mensagens de contato ao usuário ${result.userId}`);
+          }
+        } catch (associationError) {
+          console.error('Erro ao associar mensagens de contato:', associationError);
+          // Não falha o cadastro por causa disso
+        }
+
         toast({
           title: "Cadastro realizado!",
           description: "Enviando seus documentos, por favor aguarde...",
@@ -224,7 +238,7 @@ export default function RegisterPage() {
                     <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem><FormLabel>Nome Completo<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Nome Completo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
-                  <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Nascimento<span className="text-destructive">*</span></FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione uma data</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() - 18} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Nascimento<span className="text-destructive">*</span></FormLabel><FormControl><DatePicker date={field.value} onSelect={field.onChange} placeholder="Selecione uma data" fromYear={1900} toYear={new Date().getFullYear() - 18} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
               )}
 

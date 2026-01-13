@@ -3,6 +3,7 @@
 
 import HeroSection from '@/components/hero-section';
 import ClosingSoonCarousel from '@/components/closing-soon-carousel';
+import HotDealCard from '@/components/hot-deal-card';
 import TopCategories from '@/components/top-categories';
 import FilterLinkCard from '@/app/filter-link-card';
 import PromoCard from '@/app/promo-card';
@@ -100,6 +101,18 @@ function HomeExperienceClassic({
 
       {closingSoonLots.length > 0 && (
         <ClosingSoonCarousel lots={closingSoonLots} auctions={allAuctions} platformSettings={platformSettings} />
+      )}
+
+      {/* Hot Deal Section - Lotes com encerramento próximo */}
+      {closingSoonLots.length > 0 && (
+        <HotDealCard 
+          lots={closingSoonLots.slice(0, 5)} 
+          auctions={allAuctions} 
+          platformSettings={platformSettings}
+          title="Oferta Imperdível de Hoje"
+          autoPlay={true}
+          autoPlayInterval={10000}
+        />
       )}
 
       <section className="space-y-6">

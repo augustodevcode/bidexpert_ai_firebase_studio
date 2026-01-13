@@ -209,8 +209,8 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
       const roleName = u.roles.length > 0 ? u.roles[0].role.name : 'User';
       // Determine password hint based on email or role
       let passwordHint = 'Test@12345';
-      if (u.email === 'admin@bidexpert.com.br') {
-        passwordHint = 'Admin@123';
+      if (u.email === 'analista@lordland.com') {
+        passwordHint = 'password123';
       }
 
       return {

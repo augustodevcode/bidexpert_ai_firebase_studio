@@ -62,7 +62,7 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
   
   const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl! : `https://placehold.co/600x400.png?text=Leilao`;
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
-  const sellerSlug = auction.seller?.slug;
+  const sellerSlug = auction.seller?.slug || auction.seller?.publicId || auction.seller?.id;
   const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';
 
   const isCompact = density === 'compact';
