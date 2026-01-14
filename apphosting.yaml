@@ -24,7 +24,7 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: "bidexpert-630df"
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: "4c89838d15a6bb707f2ccb919bb61af31296ee28"
+    value: "AIzaSyAnVwejd_SzA8_d7kDwkYDm6FKZQ00ndYw"
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     value: "bidexpert-630df.firebaseapp.com"
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
