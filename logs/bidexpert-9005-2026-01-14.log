@@ -1,0 +1,99 @@
+
+================================================================================
+[2026-01-14T04:49:36.212Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> npx prisma generate && next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] Environment variables loaded from .env
+[STDOUT] Prisma schema loaded from prisma\schema.prisma
+[STDOUT] 
+✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 1.18s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Easily identify and fix slow SQL queries in your app. Optimize helps you enhance your visibility: https://pris.ly/--optimize
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+[STDOUT]   - Local:        http://localhost:9005
+  - Network:      http://0.0.0.0:9005
+  - Environments: .env
+
+[STDOUT]  ✓ Starting...
+[STDOUT]  ✓ Ready in 5.9s
+[STDOUT]  ○ Compiling /src/middleware ...
+[STDOUT]  ✓ Compiled /src/middleware in 1344ms (212 modules)
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  ○ Compiling /auth/login ...
+[STDOUT]  ✓ Compiled /auth/login in 17.2s (5309 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT]  GET /auth/login 200 in 22733ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  ○ Compiling /api/public/tenants ...
+[STDOUT]  ✓ Compiled /api/public/tenants in 3.3s (3321 modules)
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  POST /auth/login 200 in 4361ms
+[STDOUT]  GET /api/public/tenants 200 in 4547ms
+[STDOUT]  GET /api/public/tenants 200 in 4559ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  POST /auth/login 200 in 98ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  POST /auth/login 200 in 455ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  POST /auth/login 200 in 356ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT] [Action getLots] Tenant: 52, Filter: undefined
+[STDOUT]  POST /auth/login 200 in 523ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  POST /auth/login 200 in 210ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  POST /auth/login 200 in 193ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  POST /auth/login 200 in 154ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT]  POST /auth/login 200 in 160ms
+[STDOUT] [Get Session] Cookie "session" não encontrado.
+[STDOUT] [Login Action] Tentativa de login para o email: test-admin-ticket@bidexpert.com
+[STDOUT] [Login Action] Usuário 'test-admin-ticket@bidexpert.com' encontrado. Verificando a senha.
+[STDOUT] [Create Session] Criando sessão para usuário test-admin-ticket@bidexpert.com no tenant 52
+[STDOUT] [Create Session] Token JWT gerado. Definindo cookie com tamanho: 316
+[STDOUT] [Create Session] NODE_ENV: development
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT]  POST /auth/login 200 in 180ms
+[STDOUT]  POST /auth/login 200 in 86ms
+[STDOUT]  POST /auth/login 200 in 1602ms
+[STDOUT]  ○ Compiling /dashboard/overview ...
+[STDOUT]  ✓ Compiled /dashboard/overview in 3.6s (5427 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT]  POST /auth/login 200 in 4050ms
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT]  GET /dashboard/overview 200 in 4993ms
+[STDOUT]  POST /dashboard/overview 200 in 351ms
+[STDOUT]  ○ Compiling /support/new ...
+[STDOUT]  ✓ Compiled /support/new in 2.3s (5421 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT]  POST /dashboard/overview 200 in 2478ms
+[STDOUT] [NewTicketPage] Rendering...
+[STDOUT]  POST /dashboard/overview 200 in 578ms
+[STDOUT]  GET /support/new 200 in 3457ms
+[STDOUT]  POST /support/new 200 in 409ms
+[STDOUT]  POST /support/new 200 in 326ms
+[STDOUT] [Action getLots] Tenant: 52, Filter: undefined
+[STDOUT]  POST /support/new 200 in 207ms
+[STDOUT]  POST /support/new 200 in 118ms
+[STDOUT]  POST /support/new 200 in 113ms
+[STDOUT]  POST /support/new 200 in 125ms
+[STDOUT]  POST /support/new 200 in 250ms
+[STDOUT]  POST /support/new 200 in 104ms
+[STDOUT]  POST /support/new 200 in 116ms

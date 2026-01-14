@@ -28,8 +28,8 @@ test.describe('Fluxo Visual de Suporte Técnico', () => {
             await tenantOption.click();
         }
 
-        await page.locator('[data-ai-id="auth-login-email-input"]').fill('admin@bidexpert.com');
-        await page.locator('[data-ai-id="auth-login-password-input"]').fill('Test@12345');
+        await page.locator('[data-ai-id="auth-login-email-input"]').fill('test-admin-ticket@bidexpert.com');
+        await page.locator('[data-ai-id="auth-login-password-input"]').fill('password123');
         await page.locator('[data-ai-id="auth-login-submit-button"]').click();
         
         // Wait for login to complete (redirect or dashboard)

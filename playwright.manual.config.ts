@@ -13,7 +13,7 @@ export default defineConfig({
     trace: 'on',
     screenshot: 'on',
     video: 'on',
-    storageState: './tests/e2e/.auth/admin.json',
+    // storageState: './tests/e2e/.auth/admin.json',
   },
   projects: [
     {

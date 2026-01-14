@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,8 +19,9 @@ interface FileUpload {
 }
 
 export default function NewTicketPage() {
+  console.log('[NewTicketPage] Rendering...');
   const router = useRouter();
-  const { data: session } = useSession();
+  const { userProfileWithPermissions: user } = useAuth();
   const { toast } = useToast();
   
   const [title, setTitle] = useState('');
@@ -63,8 +64,8 @@ export default function NewTicketPage() {
     files.forEach(f => formData.append('files', f.file));
     formData.append('path', 'support-tickets');
     // Ensure userId is present if session is available
-    if (session?.user?.id) {
-        formData.append('userId', session.user.id);
+    if (user?.id) {
+        formData.append('userId', user.id);
     }
 
     const response = await fetch('/api/upload', {
@@ -83,7 +84,7 @@ export default function NewTicketPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user?.id) {
+    if (!user?.id) {
       toast({
         title: "Erro",
         description: "Você precisa estar logado para abrir um ticket.",
@@ -111,12 +112,12 @@ export default function NewTicketPage() {
 
       // 2. Create Ticket
       const ticketData = {
-        userId: session.user.id,
+        userId: user.id,
         title,
         description,
         category,
         priority,
-        userSnapshot: shareData ? { ...session.user } : null,
+        userSnapshot: shareData ? { ...user } : null,
         userAgent: shareData ? browserInfo.userAgent : null,
         browserInfo: shareData ? browserInfo.browserInfo : null,
         screenSize: shareData ? browserInfo.screenSize : null,
@@ -139,7 +140,7 @@ export default function NewTicketPage() {
 
       // Redirect to support list or dashboard
       // Assuming there is a list page, if not, create one later.
-      router.push('/support/success'); 
+      router.push('/support'); 
 
     } catch (error) {
       console.error(error);
