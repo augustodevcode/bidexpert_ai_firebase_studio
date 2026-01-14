@@ -4,7 +4,7 @@ set -e
 # Run migrations if enabled
 if [ "$RUN_MIGRATION" = "true" ]; then
   echo "Running Prisma DB Push..."
-  npx prisma db push --accept-data-loss
+  npx prisma db push --accept-data-loss --skip-generate
   
   echo "Running Seed..."
   # Try running the v3 seed, falling back or just ensure compatibility

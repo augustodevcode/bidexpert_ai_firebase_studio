@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -165,9 +166,11 @@ export default function SupportTicketsPage() {
                       {ticket.description.length > 150 && '...'}
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">
-                    <Eye className="h-4 w-4 mr-2" />
-                    Ver Detalhes
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/admin/support-tickets/${ticket.id}`}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Ver Detalhes
+                    </Link>
                   </Button>
                 </div>
               </CardHeader>

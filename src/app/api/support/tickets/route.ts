@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       browserInfo,
       screenSize,
       pageUrl,
+      attachments, // Array of { fileName, fileUrl, fileSize, mimeType }
     } = body;
 
     // Generate unique ticket ID
@@ -44,6 +45,15 @@ export async function POST(req: NextRequest) {
         screenSize,
         pageUrl,
         errorLogs: null,
+        attachments: {
+            create: attachments?.map((att: any) => ({
+                fileName: att.fileName,
+                fileUrl: att.fileUrl,
+                fileSize: att.fileSize,
+                mimeType: att.mimeType,
+                uploadedBy: BigInt(userId)
+            }))
+        }
       },
     });
 

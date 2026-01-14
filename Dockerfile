@@ -25,7 +25,7 @@ COPY . .
 # Set dummy environment variables for build-time validation
 ENV SESSION_SECRET="dummy_session_secret_at_least_32_characters_long"
 ENV NEXTAUTH_SECRET="dummy_nextauth_secret_at_least_32_characters_long"
-ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
+ENV DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy"
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -45,6 +45,9 @@ RUN npx tsc --project tsconfig.server.json
 FROM base AS runner
 WORKDIR /app
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
@@ -63,12 +66,14 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/dist/src/server.js ./server.js
-COPY prisma ./prisma
-COPY scripts ./scripts
+COPY --chown=nextjs:nodejs prisma ./prisma
+COPY --chown=nextjs:nodejs scripts ./scripts
 
 # Install tools for migration and seeding
 USER root
-RUN npm install -g prisma tsx
+RUN npm install -g prisma@5.21.1 tsx
+# Pre-download Prisma engines by running version check
+RUN npx prisma -v
 RUN chmod +x scripts/start-cloud.sh
 
 USER nextjs
