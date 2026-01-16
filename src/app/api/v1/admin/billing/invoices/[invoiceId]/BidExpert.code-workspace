@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../../.."
+		},
+		{
+			"path": "../../../../../../../../../infra-dashboard"
+		}
+	],
+	"settings": {
+		"github.copilot.chat.anthropic.tools.websearch.enabled": true,
+		"github.copilot.chat.codesearch.enabled": true,
+		"github.copilot.chat.generateTests.codeLens": true,
+		"github.copilot.chat.nesFetcher": "node-fetch",
+		"github.copilot.chat.notebook.enhancedNextEditSuggestions.enabled": true,
+		"github.copilot.chat.tools.memory.enabled": true,
+		"github.copilot.chat.virtualTools.threshold": 128,
+		"github.copilot.chat.codeGeneration.useInstructionFiles": true,
+		"terminal.integrated.suggest.enabled": true,
+		"chat.agent.maxRequests": 9999,
+		"geminicodeassist.agentDebugMode": true,
+		"geminicodeassist.agentYoloMode": false,
+		"geminicodeassist.codeGenerationPaneViewEnabled": true,
+		"geminicodeassist.inlineSuggestions.suggestionSpeed": "Fast"
+	}
+}

@@ -25,7 +25,7 @@ steps:
       - 'bidexpert-630df'
       - '--set-env-vars'
       # Production variables must be set via Secret Manager in production
-      - 'NODE_ENV=production,RUN_MIGRATION=true,DATABASE_URL=mysql://bidxprtmsqfire:xL6cqPhigY5cx!@bidxprtmsqfire.mysql.dbaas.com.br/bidxprtmsqfire'
+      - 'NODE_ENV=production,RUN_MIGRATION=true,DATABASE_URL=mysql://bidxprtmsqfire:xL6cqPhigY5cx!@bidxprtmsqfire.mysql.dbaas.com.br/bidxprtmsqfire,ADMIN_API_KEY=bf17b39cffc34c2bb87583cfe94261607c8bc27cd7854fbeb94a95622ba8c309'
 
 options:
   logging: CLOUD_LOGGING_ONLY

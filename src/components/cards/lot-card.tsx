@@ -266,67 +266,15 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             </div>
           )}
 
-          {/* Auction Stages (Praças) List */}
-          {auction?.auctionStages && auction.auctionStages.length > 0 && (
-            <div className="space-y-1.5 mt-2 border-t pt-2">
-              {auction.auctionStages.slice(0, 2).map((stage, index) => {
-                // Try to find specific price for this stage
-                const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
-                // Get base price from lot (initialPrice or price)
-                const basePrice = lot.initialPrice || lot.price || 0;
-                // Calculate stage price based on discountPercent (100 = full price, 60 = 60% of price)
-                const discountPercent = stage.discountPercent ?? 100;
-                const calculatedStagePrice = discountPercent < 100 && basePrice > 0
-                  ? (basePrice * discountPercent) / 100
-                  : basePrice;
-                // Fallback logic for price: specific stagePrice > secondInitialPrice > calculated > stage.initialPrice
-                const stagePriceValue = stagePrice?.initialBid 
-                  || (index === 0 ? lot.initialPrice : lot.secondInitialPrice) 
-                  || (index > 0 && calculatedStagePrice > 0 ? calculatedStagePrice : null)
-                  || stage.initialPrice;
-                
-                const discount = lot.evaluationValue && stagePriceValue 
-                  ? Math.round(((Number(lot.evaluationValue) - Number(stagePriceValue)) / Number(lot.evaluationValue)) * 100)
-                  : 0;
-                
-                const isFirstStage = index === 0;
-                
-                return (
-                  <div 
-                    key={stage.id.toString()} 
-                    className={`flex items-center justify-between text-xs py-1 px-1.5 rounded ${
-                      isFirstStage ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800' : 'bg-muted/30'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${isFirstStage ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
-                      <div className="flex flex-col">
-                        <span className="font-medium leading-none">{index + 1}ª praça</span>
-                        <span className="text-[10px] text-muted-foreground leading-none mt-0.5">
-                          {stage.startDate && new Date(stage.startDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                           {' - '}
-                          {stage.startDate && new Date(stage.startDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className={`font-bold ${isFirstStage ? 'text-zinc-900 dark:text-zinc-100' : 'text-muted-foreground'}`}>
-                        {stagePriceValue ? new Intl.NumberFormat('pt-BR', { 
-                          style: 'currency', 
-                          currency: 'BRL' 
-                        }).format(Number(stagePriceValue)) : 'R$ --'}
-                      </span>
-                      {discount > 0 && (
-                        <span className="text-[10px] text-green-600 font-medium flex items-center">
-                          <TrendingUp className="h-2.5 w-2.5 mr-0.5 rotate-180" /> {discount}% OFF
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="mt-2 border-t pt-2" data-ai-id="lot-card-timeline">
+            <BidExpertAuctionStagesTimeline
+              stages={auction?.auctionStages || []}
+              lot={lot}
+              auction={auction}
+              auctionOverallStartDate={timelineReferenceDate || undefined}
+              variant="compact"
+            />
+          </div>
 
           {/* Footer Info */}
           <div className="flex justify-between items-center text-xs text-muted-foreground mt-1 pt-1">

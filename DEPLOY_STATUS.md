@@ -1,12 +1,23 @@
 # Status do Deploy Cloud Run
 
-**ID do Build**: `2603a71a-e847-4f3d-9ce6-de4039bce9b6`
-**Status**: Em andamento (WORKING)
-**Timestamp**: 2026-01-14T00:06:26+00:00
+**ID do Build**: `(Falha no Upload)`
+**Status**: Erro (BILLING_SUSPENDED)
+**Timestamp**: 2026-01-15T09:10:00+00:00
 
-## Correção Aplicada
-O arquivo `scripts/start-cloud.sh` foi alterado para incluir a flag `--skip-generate` no comando `prisma db push`.
-Isso evita que o Prisma tente gravar na pasta global `node_modules` (que é somente leitura) durante a inicialização do container, corrigindo o erro `Error: Can't write to /usr/local/lib/node_modules/prisma`.
+## Erro Crítico
+O deploy foi interrompido pelo Google Cloud.
+**Motivo:** A conta de faturamento associada ao projeto `bidexpert-630df` está desativada ou com pendências ("state delinquent").
+
+> `ERROR: (gcloud.builds.submit) 403 Could not upload file ... The billing account for the owning project is disabled in state delinquent.`
+
+## Ação Necessária
+1. Acesse o [Console de Faturamento do Google Cloud](https://console.cloud.google.com/billing).
+2. Verifique o status da conta de pagamento.
+3. Assim que regularizado, solicite um novo deploy.
+
+## Correção Aplicada (Pendente)
+Atualização da Admin API Key.
+Correção do arquivo `.gcloudignore` para garantir inclusão do Dockerfile.
 
 ## Próximos Passos
 Assim que o build terminar (Status: SUCCESS), execute o comando abaixo para atualizar o serviço Cloud Run:

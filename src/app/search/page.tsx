@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import type { ActiveFilters } from '@/components/BidExpertFilter'; 
+import type { ActiveFilters } from '@/components/BidExpertFilter';
 import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -62,8 +62,8 @@ const sortOptionsDirectSales = [
 
 
 const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' } = {
-  modality: 'TODAS', 
-  category: 'TODAS', 
+  modality: 'TODAS',
+  category: 'TODAS',
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
@@ -81,12 +81,12 @@ const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | '
 function SearchPageContent() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
-  
+
   // State for different data types
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]);
   const [allDirectSales, setAllDirectSales] = useState<DirectSaleOffer[]>([]);
-  
+
   // State for shared filter data
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
@@ -95,34 +95,34 @@ function SearchPageContent() {
 
   // State for UI and Filters
   const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
-  const [currentSearchType, setCurrentSearchType] = useState<'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos'>( (searchParamsHook.get('type') as any) || 'auctions');
+  const [currentSearchType, setCurrentSearchType] = useState<'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos'>((searchParamsHook.get('type') as any) || 'auctions');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortBy, setSortByState] = useState<string>('relevance');
-  
+
   const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' }>(() => {
-    const initial: typeof initialFiltersState = {...initialFiltersState, searchType: 'auctions'};
+    const initial: typeof initialFiltersState = { ...initialFiltersState, searchType: 'auctions' };
     const typeParam = searchParamsHook.get('type') as typeof currentSearchType | null;
     const auctionTypeFromQuery = searchParamsHook.get('auctionType');
-    
+
     let newSearchType: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' = 'auctions'; // Valor padrão
     if (typeParam) {
-        if (typeParam === 'auctions' && auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
-            newSearchType = 'tomada_de_precos';
-        } else {
-            newSearchType = typeParam;
-        }
-    } else if (auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
+      if (typeParam === 'auctions' && auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
         newSearchType = 'tomada_de_precos';
+      } else {
+        newSearchType = typeParam;
+      }
+    } else if (auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
+      newSearchType = 'tomada_de_precos';
     }
 
     if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
     if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
     if (searchParamsHook.get('status')) initial.status = [searchParamsHook.get('status')!.toUpperCase()];
-    
+
     initial.searchType = newSearchType;
     return initial;
   });
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
 
@@ -141,7 +141,7 @@ function SearchPageContent() {
           getAuctions(true),
           getLots(undefined, true),
         ]);
-        
+
         // Set all data states
         setAllDirectSales(offers);
         setAllCategoriesForFilter(categories);
@@ -163,7 +163,7 @@ function SearchPageContent() {
           if (item.cityName && item.stateUf) locations.add(`${item.cityName} - ${item.stateUf}`);
         });
         setUniqueLocationsForFilter(Array.from(locations).sort());
-        
+
         setUniqueSellersForFilter(sellers.map(s => s.name).sort());
 
       } catch (error) {
@@ -181,15 +181,15 @@ function SearchPageContent() {
     const typeFromParams = searchParamsHook.get('type') as typeof currentSearchType | null;
     const auctionTypeFromParams = searchParamsHook.get('auctionType');
 
-    let newSearchType: typeof currentSearchType = 'auctions'; 
+    let newSearchType: typeof currentSearchType = 'auctions';
     if (typeFromParams) {
-        if (typeFromParams === 'auctions' && auctionTypeFromParams === 'TOMADA_DE_PRECOS') {
-            newSearchType = 'tomada_de_precos';
-        } else {
-            newSearchType = typeFromParams;
-        }
-    } else if (auctionTypeFromParams === 'TOMADA_DE_PRECOS') {
+      if (typeFromParams === 'auctions' && auctionTypeFromParams === 'TOMADA_DE_PRECOS') {
         newSearchType = 'tomada_de_precos';
+      } else {
+        newSearchType = typeFromParams;
+      }
+    } else if (auctionTypeFromParams === 'TOMADA_DE_PRECOS') {
+      newSearchType = 'tomada_de_precos';
     }
     setCurrentSearchType(newSearchType);
   }, [searchParamsHook]);
@@ -203,52 +203,52 @@ function SearchPageContent() {
     const categoryParam = currentParams.get('category') || 'TODAS';
 
     if (type === 'tomada_de_precos') {
-        currentParams.set('type', 'auctions');
-        currentParams.set('auctionType', 'TOMADA_DE_PRECOS');
-        setActiveFilters(prev => ({ ...initialFiltersState, searchType: 'tomada_de_precos', modality: 'TOMADA_DE_PRECOS', category: categoryParam, status: ['ACTIVE'] }));
+      currentParams.set('type', 'auctions');
+      currentParams.set('auctionType', 'TOMADA_DE_PRECOS');
+      setActiveFilters(prev => ({ ...initialFiltersState, searchType: 'tomada_de_precos', modality: 'TOMADA_DE_PRECOS', category: categoryParam, status: ['ACTIVE'] }));
     } else {
-        currentParams.set('type', type);
-        currentParams.delete('auctionType');
-        setActiveFilters(prev => ({ ...initialFiltersState, searchType: type, category: categoryParam, status: type === 'direct_sale' ? ['ACTIVE'] : []}));
+      currentParams.set('type', type);
+      currentParams.delete('auctionType');
+      setActiveFilters(prev => ({ ...initialFiltersState, searchType: type, category: categoryParam, status: type === 'direct_sale' ? ['ACTIVE'] : [] }));
     }
     router.push(`/search?${currentParams.toString()}`);
   };
 
   const handleFilterSubmit = (filters: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; }) => {
-    setActiveFilters(prev => ({...prev, ...filters, searchType: currentSearchType}));
-    setIsFilterSheetOpen(false); 
+    setActiveFilters(prev => ({ ...prev, ...filters, searchType: currentSearchType }));
+    setIsFilterSheetOpen(false);
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
     currentParams.set('type', currentSearchType === 'tomada_de_precos' ? 'auctions' : currentSearchType);
 
     currentParams.set('category', filters.category);
 
     if (currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') {
-        currentParams.set('auctionType', currentSearchType === 'tomada_de_precos' ? 'TOMADA_DE_PRECOS' : filters.modality);
+      currentParams.set('auctionType', currentSearchType === 'tomada_de_precos' ? 'TOMADA_DE_PRECOS' : filters.modality);
     } else {
-        currentParams.delete('auctionType');
+      currentParams.delete('auctionType');
     }
 
     if (currentSearchType === 'direct_sale' && filters.offerType) {
-        currentParams.set('offerType', filters.offerType);
+      currentParams.set('offerType', filters.offerType);
     } else {
-        currentParams.delete('offerType');
+      currentParams.delete('offerType');
     }
 
     if (filters.status && filters.status.length > 0) {
-        currentParams.set('status', filters.status.join(','));
+      currentParams.set('status', filters.status.join(','));
     } else {
-        currentParams.delete('status');
+      currentParams.delete('status');
     }
     router.push(`/search?${currentParams.toString()}`);
   };
 
   const handleFilterReset = () => {
-    const resetFilters: typeof initialFiltersState = {...initialFiltersState, searchType: currentSearchType};
+    const resetFilters: typeof initialFiltersState = { ...initialFiltersState, searchType: currentSearchType };
     if (currentSearchType === 'tomada_de_precos') {
-        resetFilters.modality = 'TOMADA_DE_PRECOS';
-        resetFilters.status = ['ACTIVE'];
+      resetFilters.modality = 'TOMADA_DE_PRECOS';
+      resetFilters.status = ['ACTIVE'];
     } else if (currentSearchType === 'direct_sale') {
-        resetFilters.status = ['ACTIVE'];
+      resetFilters.status = ['ACTIVE'];
     }
     setActiveFilters(resetFilters);
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
@@ -257,7 +257,7 @@ function SearchPageContent() {
     currentParams.delete('offerType');
     currentParams.delete('status');
     currentParams.set('type', currentSearchType === 'tomada_de_precos' ? 'auctions' : currentSearchType);
-    if (currentSearchType === 'tomada_de_precos') currentParams.set('auctionType','TOMADA_DE_PRECOS');
+    if (currentSearchType === 'tomada_de_precos') currentParams.set('auctionType', 'TOMADA_DE_PRECOS');
     if (currentSearchType === 'direct_sale' || currentSearchType === 'tomada_de_precos') currentParams.set('status', 'ACTIVE');
 
 
@@ -286,16 +286,16 @@ function SearchPageContent() {
     // 1. Apply Search Term first
     let searchedItems = itemsToFilter;
     if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        searchedItems = itemsToFilter.filter(item => {
-            let searchableText = item.title.toLowerCase();
-            if (item.description) searchableText += ` ${item.description.toLowerCase()}`;
-            if ('auctionName' in item && item.auctionName) searchableText += ` ${item.auctionName.toLowerCase()}`;
-            if ('sellerName' in item && item.sellerName) searchableText += ` ${item.sellerName.toLowerCase()}`;
-            else if ('seller' in item && (item as Auction).seller) searchableText += ` ${(item as Auction).seller!.name.toLowerCase()}`;
-            if ('id' in item && item.id) searchableText += ` ${String(item.id).toLowerCase()}`;
-            return searchableText.includes(term);
-        });
+      const term = searchTerm.toLowerCase();
+      searchedItems = itemsToFilter.filter(item => {
+        let searchableText = item.title.toLowerCase();
+        if (item.description) searchableText += ` ${item.description.toLowerCase()}`;
+        if ('auctionName' in item && item.auctionName) searchableText += ` ${item.auctionName.toLowerCase()}`;
+        if ('sellerName' in item && item.sellerName) searchableText += ` ${item.sellerName.toLowerCase()}`;
+        else if ('seller' in item && (item as Auction).seller) searchableText += ` ${(item as Auction).seller!.name.toLowerCase()}`;
+        if ('id' in item && item.id) searchableText += ` ${String(item.id).toLowerCase()}`;
+        return searchableText.includes(term);
+      });
     }
 
     // 2. Apply other filters
@@ -319,12 +319,12 @@ function SearchPageContent() {
         else if ('seller' in item && (item as Auction).seller) sellerName = (item as Auction).seller!.name;
         if (!sellerName || !activeFilters.sellers.includes(sellerName)) return false;
       }
-       if (activeFilters.status && activeFilters.status.length > 0) {
-          if (!item.status || !activeFilters.status.includes(item.status as string)) return false;
+      if (activeFilters.status && activeFilters.status.length > 0) {
+        if (!item.status || !activeFilters.status.includes(item.status as string)) return false;
       }
       if (itemTypeContext === 'auction' && activeFilters.modality !== 'TODAS' && (item as Auction).auctionType?.toUpperCase() !== activeFilters.modality) return false;
       if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
-      
+
       // Filtro de praças para leilões
       if ((itemTypeContext === 'auction' || itemTypeContext === 'tomada_de_precos') && activeFilters.praça && activeFilters.praça !== 'todas') {
         const stagesCount = (item as Auction).auctionStages?.length || 0;
@@ -337,92 +337,92 @@ function SearchPageContent() {
 
     // 3. Apply sorting
     switch (sortBy) {
-        case 'id_desc':
-            filteredItems.sort((a,b) => String(b.id).localeCompare(String(a.id)));
-            break;
-        case 'endDate_asc':
-            filteredItems.sort((a, b) => new Date((a as any).endDate).getTime() - new Date((b as any).endDate).getTime());
-            break;
-        case 'endDate_desc':
-            filteredItems.sort((a, b) => new Date((b as any).endDate).getTime() - new Date((a as any).endDate).getTime());
-            break;
-        case 'price_asc':
-             filteredItems.sort((a, b) => ((a as any).price ?? Infinity) - ((b as any).price ?? Infinity));
-            break;
-        case 'price_desc':
-            filteredItems.sort((a, b) => ((b as any).price ?? -Infinity) - ((a as any).price ?? -Infinity));
-            break;
-        case 'views_desc':
-            filteredItems.sort((a, b) => ((b as any).views || 0) - ((a as any).views || 0));
-            break;
-        case 'createdAt_desc':
-            filteredItems.sort((a,b) => new Date((b as any).createdAt).getTime() - new Date((a as any).createdAt).getTime());
-            break;
-        case 'lotNumber_asc':
-            filteredItems.sort((a,b) => (parseInt(String((a as Lot).number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String((b as Lot).number || b.id).replace(/\D/g,'')) || 0));
-            break;
-        case 'relevance':
-        default:
-            break;
+      case 'id_desc':
+        filteredItems.sort((a, b) => String(b.id).localeCompare(String(a.id)));
+        break;
+      case 'endDate_asc':
+        filteredItems.sort((a, b) => new Date((a as any).endDate).getTime() - new Date((b as any).endDate).getTime());
+        break;
+      case 'endDate_desc':
+        filteredItems.sort((a, b) => new Date((b as any).endDate).getTime() - new Date((a as any).endDate).getTime());
+        break;
+      case 'price_asc':
+        filteredItems.sort((a, b) => ((a as any).price ?? Infinity) - ((b as any).price ?? Infinity));
+        break;
+      case 'price_desc':
+        filteredItems.sort((a, b) => ((b as any).price ?? -Infinity) - ((a as any).price ?? -Infinity));
+        break;
+      case 'views_desc':
+        filteredItems.sort((a, b) => ((b as any).views || 0) - ((a as any).views || 0));
+        break;
+      case 'createdAt_desc':
+        filteredItems.sort((a, b) => new Date((b as any).createdAt).getTime() - new Date((a as any).createdAt).getTime());
+        break;
+      case 'lotNumber_asc':
+        filteredItems.sort((a, b) => (parseInt(String((a as Lot).number || a.id).replace(/\D/g, '')) || 0) - (parseInt(String((b as Lot).number || b.id).replace(/\D/g, '')) || 0));
+        break;
+      case 'relevance':
+      default:
+        break;
     }
     return filteredItems;
   }, [searchTerm, activeFilters, sortBy, currentSearchType, allAuctions, allLots, allDirectSales, allCategoriesForFilter]);
-  
+
   const handleSearchFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
     if (searchTerm.trim()) {
-        currentParams.set('term', searchTerm.trim());
+      currentParams.set('term', searchTerm.trim());
     } else {
-        currentParams.delete('term');
+      currentParams.delete('term');
     }
     router.push(`/search?${currentParams.toString()}`);
   };
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
     if (!platformSettings) return null;
-    let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType;
-    
+    let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
+
     return (
-        <BidExpertCard
-            key={`${itemType}-${item.id}-${index}`}
-            item={item}
-            type={itemType}
-            platformSettings={platformSettings}
-            parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
-        />
+      <BidExpertCard
+        key={`${itemType}-${item.id}-${index}`}
+        item={item}
+        type={itemType}
+        platformSettings={platformSettings}
+        parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
+      />
     );
   };
 
   const renderListItem = (item: any, index: number): React.ReactNode => {
-     if (!platformSettings) return null;
-     let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType;
+    if (!platformSettings) return null;
+    let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
-     return (
-        <BidExpertListItem
-            key={`${itemType}-list-${item.id}-${index}`}
-            item={item}
-            type={itemType as 'auction' | 'lot' | 'direct_sale'}
-            platformSettings={platformSettings}
-            parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
-        />
+    return (
+      <BidExpertListItem
+        key={`${itemType}-list-${item.id}-${index}`}
+        item={item}
+        type={itemType as 'auction' | 'lot' | 'direct_sale'}
+        platformSettings={platformSettings}
+        parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
+      />
     );
   };
 
   const getSearchTypeLabel = () => {
-    switch(currentSearchType) {
-        case 'auctions': return 'leilões';
-        case 'lots': return 'lotes';
-        case 'direct_sale': return 'ofertas';
-        case 'tomada_de_precos': return 'tomadas de preços';
-        default: return 'itens';
+    switch (currentSearchType) {
+      case 'auctions': return 'leilões';
+      case 'lots': return 'lotes';
+      case 'direct_sale': return 'ofertas';
+      case 'tomada_de_precos': return 'tomadas de preços';
+      default: return 'itens';
     }
   }
 
   const currentSortOptions =
     currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? sortOptionsAuctions :
-    currentSearchType === 'lots' ? sortOptionsLots :
-    sortOptionsDirectSales;
+      currentSearchType === 'lots' ? sortOptionsLots :
+        sortOptionsDirectSales;
 
 
   if (isFilterDataLoading || !platformSettings) {
@@ -443,58 +443,58 @@ function SearchPageContent() {
           </p>
         </div>
         <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl mx-auto">
-            <div className="relative flex-grow w-full">
-                <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                type="search"
-                placeholder="O que você está procurando?"
-                className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-            <Button type="submit" className="h-12 w-full md:w-auto">
-              <SearchIcon className="mr-2 h-4 w-4 md:hidden" /> Buscar
-            </Button>
+          <div className="relative flex-grow w-full">
+            <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="O que você está procurando?"
+              className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button type="submit" className="h-12 w-full md:w-auto">
+            <SearchIcon className="mr-2 h-4 w-4 md:hidden" /> Buscar
+          </Button>
         </form>
       </Card>
-      
+
       <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full" data-ai-id="search-tabs">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2">
-            <TabsTrigger value="auctions" data-ai-id="tab-auctions">Leilões ({allAuctions.filter(a=> a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>
-            <TabsTrigger value="lots" data-ai-id="tab-lots">Lotes ({allLots.length})</TabsTrigger>
-            <TabsTrigger value="direct_sale" data-ai-id="tab-direct-sale">Venda Direta ({allDirectSales.length})</TabsTrigger>
-            <TabsTrigger value="tomada_de_precos" data-ai-id="tab-tomada-precos">Tomada de Preços ({allAuctions.filter(a => a.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
+          <TabsTrigger value="auctions" data-ai-id="tab-auctions">Leilões ({allAuctions.filter(a => a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>
+          <TabsTrigger value="lots" data-ai-id="tab-lots">Lotes ({allLots.length})</TabsTrigger>
+          <TabsTrigger value="direct_sale" data-ai-id="tab-direct-sale">Venda Direta ({allDirectSales.length})</TabsTrigger>
+          <TabsTrigger value="tomada_de_precos" data-ai-id="tab-tomada-precos">Tomada de Preços ({allAuctions.filter(a => a.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
         </TabsList>
       </Tabs>
-      
+
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <aside className="hidden md:block sticky top-24 h-fit">
-             <BidExpertFilter
-                categories={allCategoriesForFilter}
-                locations={uniqueLocationsForFilter}
-                sellers={uniqueSellersForFilter}
-                onFilterSubmit={handleFilterSubmit as any}
-                onFilterReset={handleFilterReset}
-                initialFilters={activeFilters as ActiveFilters}
-                filterContext={currentSearchType as 'auctions' | 'directSales' | 'lots' | 'tomada_de_precos'}
-            />
+          <BidExpertFilter
+            categories={allCategoriesForFilter}
+            locations={uniqueLocationsForFilter}
+            sellers={uniqueSellersForFilter}
+            onFilterSubmit={handleFilterSubmit as any}
+            onFilterReset={handleFilterReset}
+            initialFilters={activeFilters as ActiveFilters}
+            filterContext={currentSearchType as 'auctions' | 'directSales' | 'lots' | 'tomada_de_precos'}
+          />
         </aside>
-        
+
         <main className="min-w-0 space-y-6 md:ml-4">
-            <BidExpertSearchResultsFrame
-              items={filteredAndSortedItems}
-              totalItemsCount={filteredAndSortedItems.length}
-              renderGridItem={renderGridItem}
-              renderListItem={renderListItem}
-              sortOptions={currentSortOptions}
-              initialSortBy={sortBy}
-              onSortChange={setSortByState}
-              platformSettings={platformSettings}
-              isLoading={isLoading}
-              searchTypeLabel={getSearchTypeLabel()}
-              emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
-            />
+          <BidExpertSearchResultsFrame
+            items={filteredAndSortedItems}
+            totalItemsCount={filteredAndSortedItems.length}
+            renderGridItem={renderGridItem}
+            renderListItem={renderListItem}
+            sortOptions={currentSortOptions}
+            initialSortBy={sortBy}
+            onSortChange={setSortByState}
+            platformSettings={platformSettings}
+            isLoading={isLoading}
+            searchTypeLabel={getSearchTypeLabel()}
+            emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
+          />
         </main>
       </div>
     </div>

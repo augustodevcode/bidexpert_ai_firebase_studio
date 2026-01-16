@@ -1,4 +1,7 @@
-// src/components/live-lot-card.tsx
+/**
+ * @fileoverview Card de lote para o modo "ao vivo" (auditório), com destaque e informações essenciais.
+ * Inclui visualização de praças/etapas quando disponíveis.
+ */
 'use client';
 
 import type { Lot } from '@/types';
@@ -12,6 +15,7 @@ import { format, differenceInMinutes, differenceInHours, differenceInDays, isPas
 import { ptBR } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/ui-helpers';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 
 interface LiveLotCardProps {
   lot: Lot;
@@ -72,6 +76,7 @@ function TimeRemaining({ endDate, status }: { endDate: Date | string | null; sta
 
 export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardProps) {
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
+  const auctionStartDate = lot.auction?.auctionDate ? new Date(lot.auction.auctionDate as unknown as string) : undefined;
 
   return (
     <Card data-ai-id="live-lot-card-container" className={`flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group ${isHighlighted ? 'border-2 border-primary ring-2 ring-primary/50' : ''}`}>
@@ -112,6 +117,15 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
         <div className="flex items-center text-xs text-muted-foreground">
           <Tag className="h-3 w-3 mr-1" />
           <span>{lot.type}</span>
+        </div>
+
+        <div className="pt-1" data-ai-id="live-lot-card-timeline">
+          <BidExpertAuctionStagesTimeline
+            auction={lot.auction}
+            stages={lot.auction?.auctionStages || []}
+            auctionOverallStartDate={auctionStartDate}
+            variant="compact"
+          />
         </div>
       </CardContent>
 

@@ -1,0 +1,61 @@
+# Deploy to Production (Firebase App Hosting) — BidExpert
+# Triggered on push to main branch
+# Requires manual approval via GitHub Environments
+
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  approve:
+    name: Manual Approval
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Awaiting Approval
+        run: echo "Production deployment approved"
+
+  deploy:
+    name: Build and Deploy to Production
+    needs: approve
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run DB Migrations (PRD)
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PRD }}
+
+      - name: Run DB Seeds (PRD)
+        run: npx prisma db seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PRD }}
+
+      - name: Firebase App Hosting Deploy
+        run: |
+          echo "Triggering Firebase App Hosting via branch push..."
+          # Since Firebase App Hosting usually monitors the 'main' branch, 
+          # the push to 'main' itself triggers it. 
+          # This workflow serves as the governance layer and DB synchronization.
+          # If a specific CI trigger is needed for Firebase App Hosting CLI, it would go here.
+          echo "Production environment synchronized."

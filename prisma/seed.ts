@@ -54,7 +54,11 @@ async function clearDatabase() {
 async function main() {
   console.log('Starting database seeding...');
 
-  await clearDatabase();
+  if (process.env.RESET_DB === 'true') {
+    await clearDatabase();
+  } else {
+    console.log('Skipping clearDatabase because RESET_DB != "true"');
+  }
 
   const lordlandTenant = await prisma.tenant.upsert({
     where: { id: 1 },
@@ -81,12 +85,12 @@ async function main() {
   const allTenants = [lordlandTenant, bidexpertTenant];
 
   const rolesToCreate = [
-    { name: 'ADMIN', nameNormalized: 'admin', description: 'Administrador do sistema', permissions: JSON.stringify(['manage_all']) },
+    { name: 'ADMIN', nameNormalized: 'admin', description: 'Administrador do sistema', permissions: ['manage_all'] },
     {
       name: 'AUCTION_ANALYST',
       nameNormalized: 'auction_analyst',
       description: 'Analista de Leilões - Gerencia cadastros de leilões, lotes, bens e dados operacionais',
-      permissions: JSON.stringify([
+      permissions: [
         'auctions:create', 'auctions:read', 'auctions:update', 'auctions:delete', 'auctions:publish',
         'lots:create', 'lots:read', 'lots:update', 'lots:delete',
         'assets:create', 'assets:read', 'assets:update', 'assets:delete',
@@ -97,11 +101,11 @@ async function main() {
         'states:read', 'cities:read',
         'media:upload', 'media:read', 'media:update', 'media:delete',
         'view_reports',
-      ])
+      ]
     },
-    { name: 'AUCTIONEER', nameNormalized: 'auctioneer', description: 'Leiloeiro', permissions: JSON.stringify(['auctions:manage_assigned', 'lots:read', 'lots:update', 'lots:finalize', 'conduct_auctions', 'view_reports']) },
-    { name: 'SELLER', nameNormalized: 'seller', description: 'Vendedor/Comitente', permissions: JSON.stringify(['auctions:manage_own', 'lots:manage_own', 'direct_sales:manage_own', 'consignor_dashboard:view', 'view_reports']) },
-    { name: 'BIDDER', nameNormalized: 'bidder', description: 'Arrematante', permissions: JSON.stringify(['view_auctions', 'view_lots', 'place_bids', 'direct_sales:place_proposal', 'direct_sales:buy_now', 'view_wins', 'manage_payments', 'schedule_retrieval']) },
+    { name: 'AUCTIONEER', nameNormalized: 'auctioneer', description: 'Leiloeiro', permissions: ['auctions:manage_assigned', 'lots:read', 'lots:update', 'lots:finalize', 'conduct_auctions', 'view_reports'] },
+    { name: 'SELLER', nameNormalized: 'seller', description: 'Vendedor/Comitente', permissions: ['auctions:manage_own', 'lots:manage_own', 'direct_sales:manage_own', 'consignor_dashboard:view', 'view_reports'] },
+    { name: 'BIDDER', nameNormalized: 'bidder', description: 'Arrematante', permissions: ['view_auctions', 'view_lots', 'place_bids', 'direct_sales:place_proposal', 'direct_sales:buy_now', 'view_wins', 'manage_payments', 'schedule_retrieval'] },
   ];
 
   const createdRoles = await Promise.all(

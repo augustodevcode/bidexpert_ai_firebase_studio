@@ -96,13 +96,66 @@ model UsersOnRoles {
   @@index([roleId])
 }
 
+// ============================================================================
+// ENUMS para Multi-tenant White-label SaaS
+// ============================================================================
+
+enum TenantStatus {
+  PENDING          // Aguardando ativação (trial não iniciado)
+  TRIAL            // Em período de trial (30 dias grátis)
+  ACTIVE           // Assinatura ativa e paga
+  SUSPENDED        // Suspenso por inadimplência
+  CANCELLED        // Cancelado pelo cliente ou admin
+  EXPIRED          // Trial expirado sem conversão
+}
+
+enum ResolutionStrategy {
+  SUBDOMAIN        // tenant.bidexpert.com.br
+  PATH             // bidexpert.com.br/app/tenant
+  CUSTOM_DOMAIN    // www.leiloeirox.com.br
+}
+
+// ============================================================================
+// Model Tenant - Multi-tenant com suporte a White-label
+// ============================================================================
+
 model Tenant {
-  id                     BigInt                 @id @default(autoincrement())
-  name                   String
-  subdomain              String                 @unique
-  domain                 String?                @unique
-  createdAt              DateTime               @default(now())
-  updatedAt              DateTime               @updatedAt
+  id                       BigInt                 @id @default(autoincrement())
+  name                     String
+  subdomain                String                 @unique
+  domain                   String?                @unique
+  
+  // White-label e Resolução de URL
+  resolutionStrategy       ResolutionStrategy     @default(SUBDOMAIN)
+  customDomainVerified     Boolean                @default(false)
+  customDomainVerifyToken  String?                @db.VarChar(64)
+  
+  // Status e Ciclo de Vida
+  status                   TenantStatus           @default(PENDING)
+  trialStartedAt           DateTime?
+  trialExpiresAt           DateTime?
+  activatedAt              DateTime?
+  suspendedAt              DateTime?
+  suspendedReason          String?
+  
+  // Plano e Limites
+  planId                   String?                @db.VarChar(50)
+  maxUsers                 Int?                   @default(5)
+  maxStorageBytes          BigInt?                @default(1073741824)  // 1GB default
+  maxAuctions              Int?                   @default(10)
+  
+  // Integração com Control Plane (CRM)
+  externalId               String?                @unique @db.VarChar(100)
+  apiKey                   String?                @unique @db.VarChar(64)
+  webhookUrl               String?                @db.Text
+  webhookSecret            String?                @db.VarChar(64)
+  
+  // Metadados
+  metadata                 Json?
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  
+  // Relacionamentos
   assets                 Asset[]
   assetMedia             AssetMedia[]
   assetsOnLots           AssetsOnLots[]
@@ -142,6 +195,7 @@ model Tenant {
   participationHistories ParticipationHistory[]
   paymentMethods         PaymentMethod[]
   wonLots                WonLot[]
+  invoices               TenantInvoice[]
 }
 
 model UsersOnTenants {
@@ -1073,6 +1127,43 @@ model PlatformSettings {
   logoUrl                    String?
   faviconUrl                 String?
   isSetupComplete            Boolean                 @default(false)
+  
+  // ============================================================================
+  // White-label Branding (cores em HSL para injeção de CSS dinâmico)
+  // Formato: "210 40% 98%" (sem o "hsl()")
+  // ============================================================================
+  primaryColorHsl            String?                 @db.VarChar(50)
+  primaryForegroundHsl       String?                 @db.VarChar(50)
+  secondaryColorHsl          String?                 @db.VarChar(50)
+  secondaryForegroundHsl     String?                 @db.VarChar(50)
+  accentColorHsl             String?                 @db.VarChar(50)
+  accentForegroundHsl        String?                 @db.VarChar(50)
+  destructiveColorHsl        String?                 @db.VarChar(50)
+  mutedColorHsl              String?                 @db.VarChar(50)
+  backgroundColorHsl         String?                 @db.VarChar(50)
+  foregroundColorHsl         String?                 @db.VarChar(50)
+  borderColorHsl             String?                 @db.VarChar(50)
+  radiusValue                String?                 @db.VarChar(20)  // e.g., "0.5rem"
+  
+  // Custom CSS e Scripts (advanced)
+  customCss                  String?                 @db.Text
+  customHeadScripts          String?                 @db.Text
+  customFontUrl              String?                 @db.Text
+  
+  // Email Branding
+  emailFromName              String?                 @db.VarChar(100)
+  emailFromAddress           String?                 @db.VarChar(255)
+  smsFromName                String?                 @db.VarChar(50)
+  
+  // Feature Flags por Tenant
+  enableBlockchain           Boolean                 @default(false)
+  enableRealtime             Boolean                 @default(true)
+  enableSoftClose            Boolean                 @default(true)
+  enableDirectSales          Boolean                 @default(true)
+  enableMapSearch            Boolean                 @default(true)
+  enableAIFeatures           Boolean                 @default(false)
+  
+  // Configurações existentes
   crudFormMode               String?                 @default("modal")
   galleryImageBasePath       String?
   storageProvider            StorageProviderType?
@@ -2053,4 +2144,66 @@ enum ITSM_Category {
   SUGESTAO
   BUG
   OUTRO
+}
+
+// ============================================================================
+// Model TenantInvoice - Faturas para cobrança do tenant (Control Plane → Data Plane)
+// ============================================================================
+
+model TenantInvoice {
+  id               BigInt               @id @default(autoincrement())
+  tenantId         BigInt
+  
+  // Identificação
+  invoiceNumber    String               @unique @db.VarChar(50)
+  externalId       String?              @unique @db.VarChar(100)  // ID no CRM/Control Plane
+  
+  // Valores
+  amount           Decimal              @db.Decimal(15, 2)
+  currency         String               @default("BRL") @db.VarChar(3)
+  
+  // Período de referência
+  periodStart      DateTime
+  periodEnd        DateTime
+  
+  // Datas
+  issueDate        DateTime             @default(now())
+  dueDate          DateTime
+  paidAt           DateTime?
+  
+  // Status
+  status           InvoiceStatus        @default(PENDING)
+  
+  // Detalhes
+  description      String?              @db.Text
+  lineItems        Json?                // Array de itens da fatura
+  
+  // Pagamento
+  paymentMethod    String?              @db.VarChar(50)
+  paymentReference String?              @db.VarChar(100)
+  
+  // URLs
+  invoiceUrl       String?              @db.Text
+  receiptUrl       String?              @db.Text
+  
+  // Metadados
+  metadata         Json?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  
+  // Relacionamentos
+  tenant           Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([periodStart, periodEnd])
+}
+
+enum InvoiceStatus {
+  PENDING      // Aguardando pagamento
+  PAID         // Paga
+  OVERDUE      // Atrasada
+  CANCELLED    // Cancelada
+  REFUNDED     // Reembolsada
 }

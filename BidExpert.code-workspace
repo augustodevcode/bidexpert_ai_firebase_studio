@@ -1,0 +1,27 @@
+{
+	"folders": [
+		{
+			"path": ".",
+			"name": "BidExpert Platform (Main)"
+		},
+		{
+			"path": "infra-dashboard",
+			"name": "BidExpert Ops Center (Infra)"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/infra-dashboard": true
+		},
+        "search.exclude": {
+            "**/infra-dashboard": true
+        }
+	},
+    "extensions": {
+        "recommendations": [
+            "bradlc.vscode-tailwindcss",
+            "esbenp.prettier-vscode",
+            "dbaeumer.vscode-eslint"
+        ]
+    }
+}

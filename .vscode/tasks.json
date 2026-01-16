@@ -77,6 +77,40 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             }
+        },
+        {
+            "label": "Run InfraControl",
+            "type": "shell",
+            "command": "npm run dev",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder:BidExpert InfraControl}"
+            }
+        },
+        {
+            "label": "Run InfraControl (Prod)",
+            "type": "shell",
+            "command": "npm run start",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder:BidExpert InfraControl}"
+            }
         }
     ]
 }

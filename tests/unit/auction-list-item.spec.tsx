@@ -69,6 +69,6 @@ describe('AuctionListItem', () => {
     const { container } = render(<AuctionListItem auction={auctionWithStages} density="compact" />);
 
     expect(container.querySelector('[data-density="compact"]')).toBeTruthy();
-    expect(screen.queryByTestId('timeline')).not.toBeInTheDocument();
+    expect(screen.getByTestId('timeline')).toBeInTheDocument();
   });
 });

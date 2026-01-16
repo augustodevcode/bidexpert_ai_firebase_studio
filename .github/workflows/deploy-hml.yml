@@ -1,0 +1,92 @@
+# Deploy to Homologation (Locaweb FTP) — BidExpert
+# Triggered on push to homolog branch
+# Includes DB migrations and seeds
+
+name: Deploy Homologation
+
+on:
+  push:
+    branches: [homolog]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to Locaweb
+    runs-on: ubuntu-latest
+    environment: Homologation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run DB Migrations (HML)
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_HML }}
+
+      - name: Run DB Seeds (HML)
+        run: npx prisma db seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_HML }}
+
+      - name: Build Application
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_HML }}
+          NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM: "mysql"
+
+      - name: Prepare FTP Files
+        run: |
+          mkdir -p deploy_dist
+          cp -r .next/standalone/. deploy_dist/
+          cp -r .next/static deploy_dist/.next/static
+          cp -r public deploy_dist/public
+
+      - name: Create Remote Backup via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          port: 22
+          script: |
+            if [ -d "public_html" ]; then
+              mv public_html public_html_backup_$(date +%Y%m%d_%H%M%S)
+              mkdir public_html
+            fi
+
+      - name: FTP Deploy Locaweb
+        uses: locaweb/ftp-deploy@1.0.0
+        with:
+          host: ${{ secrets.HOST }} 
+          user: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          localDir: "deploy_dist"
+          remoteDir: "public_html"
+          forceSsl: false
+
+      - name: Restart Application via PM2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          port: 22
+          script: |
+            cd public_html
+            pm2 restart bidexpert-hml || pm2 start server.js --name bidexpert-hml
+            pm2 save

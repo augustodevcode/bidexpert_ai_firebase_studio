@@ -66,6 +66,7 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
   const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';
 
   const isCompact = density === 'compact';
+  const auctionStartDate = auction.auctionDate ? new Date(auction.auctionDate as string) : undefined;
 
   return (
     <TooltipProvider>
@@ -178,11 +179,20 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
               )}
             </div>
 
-            {!isCompact && auction.auctionStages && auction.auctionStages.length > 0 && (
-                <div className="my-2 p-3 bg-muted/30 rounded-md">
-                    <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
-                </div>
-            )}
+            <div
+              className={cn(
+                'my-2 rounded-md',
+                isCompact ? 'p-2 bg-muted/20' : 'p-3 bg-muted/30'
+              )}
+              data-ai-id="auction-list-item-timeline"
+            >
+              <BidExpertAuctionStagesTimeline
+                auction={auction}
+                stages={auction.auctionStages || []}
+                auctionOverallStartDate={auctionStartDate}
+                variant={isCompact ? 'compact' : 'extended'}
+              />
+            </div>
             
             <div className={cn('mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed', isCompact && 'text-[11px]')}>
               <div className="flex-shrink-0">

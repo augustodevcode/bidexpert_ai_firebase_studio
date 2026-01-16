@@ -61,6 +61,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
 
   const IconComponent = auctionTypeDisplay?.icon;
   const isCompact = density === 'compact';
+  const auctionStartDate = auction?.auctionDate ? new Date(auction.auctionDate as string) : undefined;
   const badgeBaseClass = cn('px-1.5 py-0.5 text-xs shadow-sm', isCompact && 'px-1 text-[11px]');
 
   return (
@@ -166,11 +167,21 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
               )}
             </div>
 
-            {!isCompact && auction?.auctionStages && auction.auctionStages.length > 0 && (
-                <div className="my-2 p-3 bg-muted/30 rounded-md">
-                    <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} variant="compact" />
-                </div>
-            )}
+            <div
+              className={cn(
+                'my-2 rounded-md',
+                isCompact ? 'p-2 bg-muted/20' : 'p-3 bg-muted/30'
+              )}
+              data-ai-id="lot-list-item-timeline"
+            >
+              <BidExpertAuctionStagesTimeline
+                auction={auction}
+                lot={lot}
+                stages={auction?.auctionStages || []}
+                auctionOverallStartDate={auctionStartDate}
+                variant="compact"
+              />
+            </div>
             
             <div className={cn('mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed', isCompact && 'border-dashed/50 pt-2')}
             >

@@ -33,3 +33,4 @@ docs/
 next.config.js.bak
 db_inspect_*.json
 *.sql
+!Dockerfile

@@ -411,6 +411,8 @@ Deve ser configurada em `src/app/globals.css` como variável `--primary`
 - Tooltip com detalhes
 - Usado em AuctionCard
 
+**Regra (Obrigatória):** Todo card e todo item de lista de **Leilão** e de **Lote** (grid e lista, incluindo modo `compact`) **DEVE** renderizar este componente como visualização padrão de praças/etapas. Caso o leilão/lote não possua etapas cadastradas, o componente **DEVE** exibir um estado vazio explícito (ex.: “Praças não cadastradas”).
+
 ### 6. LotCountdown
 **Localização:** `src/components/lot-countdown.tsx`
 

@@ -1,14 +1,14 @@
 # P0 CI Pipeline — BidExpert
 # Skills: DEV-01 (Build/Typecheck Gate), OPS-01 (Prebuild E2E), DEV-06 (Visual Regression)
-# Triggers: push/PR to main/develop
+# Triggers: push/PR to development
 
 name: P0 CI Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [development]
   pull_request:
-    branches: [main, develop]
+    branches: [development]
 
 env:
   NODE_VERSION: '20'

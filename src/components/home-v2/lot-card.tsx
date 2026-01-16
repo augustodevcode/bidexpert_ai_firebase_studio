@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { LotCardData, SegmentType, LotBadge } from './types';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 
 interface LotCardProps {
   lot: LotCardData;
@@ -192,6 +193,16 @@ export default function LotCard({
                 <p className="text-primary font-bold text-sm mt-1">
                   {formatCurrency(lot.currentPrice)}
                 </p>
+                <div className="mt-2" data-ai-id="home-v2-lot-card-timeline">
+                  <BidExpertAuctionStagesTimeline
+                    auction={lot.auction}
+                    stages={lot.auction?.auctionStages || []}
+                    auctionOverallStartDate={
+                      lot.auction?.auctionDate ? new Date(lot.auction.auctionDate as unknown as string) : undefined
+                    }
+                    variant="compact"
+                  />
+                </div>
                 {lot.bidsCount > 0 && (
                   <span className="text-xs text-muted-foreground">
                     {lot.bidsCount} {lot.bidsCount === 1 ? 'lance' : 'lances'}
@@ -276,6 +287,17 @@ export default function LotCard({
           <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors mb-2">
             {lot.title}
           </h3>
+
+          <div className="mb-3" data-ai-id="home-v2-lot-card-timeline">
+            <BidExpertAuctionStagesTimeline
+              auction={lot.auction}
+              stages={lot.auction?.auctionStages || []}
+              auctionOverallStartDate={
+                lot.auction?.auctionDate ? new Date(lot.auction.auctionDate as unknown as string) : undefined
+              }
+              variant="compact"
+            />
+          </div>
 
           {/* Segment-specific details */}
           <div className="mb-3">

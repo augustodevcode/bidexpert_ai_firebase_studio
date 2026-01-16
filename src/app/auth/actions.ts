@@ -32,12 +32,24 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
   })) || [];
 
   const permissions = Array.from(new Set(roles.flatMap((r: any) => {
-    if (typeof r.permissions === 'string') {
-      return r.permissions.split(',');
+    let perms = r.permissions;
+    if (!perms) return [];
+
+    if (typeof perms === 'string') {
+      try {
+        // Tenta fazer o parse se for uma string JSON (ex: '["manage_all"]')
+        const parsed = JSON.parse(perms);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        // Se não for JSON, trata como lista separada por vírgula
+        return perms.split(',').map((p: string) => p.trim()).filter(Boolean);
+      }
     }
-    if (Array.isArray(r.permissions)) {
-      return r.permissions;
+
+    if (Array.isArray(perms)) {
+      return perms;
     }
+
     return [];
   })));
 

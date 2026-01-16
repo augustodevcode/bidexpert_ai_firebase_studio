@@ -44,6 +44,7 @@ function AdminSettingsPageContent() {
         { title: "Notificações", description: "Controle os e-mails de notificação.", icon: Bell, link: "/admin/settings/notifications", dataAiId: "settings-card-notifications" },
         { title: "Gatilhos Mentais & Badges", description: "Ajuste os gatilhos de marketing e visibilidade.", icon: Bot, link: "/admin/settings/triggers", dataAiId: "settings-card-triggers" },
         { title: "Tempo Real & Blockchain", description: "Habilite soft-close, blockchain e monetização de advogados.", icon: LightningIcon, link: "/admin/settings/realtime", dataAiId: "settings-card-realtime" },
+        { title: "Domínios & Infraestrutura", description: "Configure domínios personalizados e integração DNS.", icon: MapIcon, link: "/admin/settings/domains", dataAiId: "settings-card-domains" },
         { title: "Dados de Exemplo", description: "Popule o banco de dados para demonstração.", icon: Database, link: "/admin/settings/seeding", dataAiId: "settings-card-seeding" },
     ];
 

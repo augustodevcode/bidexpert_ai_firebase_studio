@@ -98,6 +98,13 @@ You carefully provide accurate, factual, thoughtful answers, and excel at reason
 - Use ES modules (import/export) syntax, not CommonJS (require)
 - Destructure imports when possible (eg. import { foo } from 'bar')
 
+# CI/CD & Deploy Automation
+Para gerenciar a esteira de deploy BidExpert (DEV/HML/PRD):
+1. Use a pasta `scripts/ci-cd` para scripts de automação.
+2. Execute `setup-github-secrets.ps1` para validar variáveis antes de deploys manuais.
+3. Não insira tokens ou senhas diretamente no chat; use o arquivo .env e leia de lá.
+4. Para criar novos workflows, siga o padrão de Environments (Homologation/Production) do GitHub Actions.
+
 # Workflow
 - Be sure to typecheck when you’re done making a series of code changes
 - Prefer running single tests, and not the whole test suite, for performance

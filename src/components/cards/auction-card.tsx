@@ -207,11 +207,14 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             </div>
 
             
-            {auction.auctionStages && auction.auctionStages.length > 0 && (
-                <div className="pt-2" data-ai-id="auction-card-timeline">
-                    <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
-                </div>
-            )}
+            <div className="pt-2" data-ai-id="auction-card-timeline">
+              <BidExpertAuctionStagesTimeline
+                auction={auction}
+                stages={auction.auctionStages || []}
+                auctionOverallStartDate={auction.auctionDate ? new Date(auction.auctionDate as string) : undefined}
+                variant="extended"
+              />
+            </div>
           </CardContent>
           <CardFooter className="p-3 border-t flex items-end justify-between">
             {auction.initialOffer && (
