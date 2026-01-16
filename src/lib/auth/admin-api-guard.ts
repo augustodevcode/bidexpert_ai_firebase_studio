@@ -17,37 +17,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export interface AdminApiGuardResult {
   isValid: boolean;
-  error?: string;
-}
-
-/**
- * Headers CORS para permitir chamadas do BidExpertCRM (Control Plane)
- */
-export const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*', // Em produção, especifique o domínio do CRM
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-  'Access-Control-Max-Age': '86400', // 24 horas de cache para preflight
-};
-
-/**
- * Retorna resposta para requisições OPTIONS (CORS preflight)
- */
-export function handleCorsPreflightRequest(): NextResponse {
-  return new NextResponse(null, {
-    status: 204,
-    headers: CORS_HEADERS,
-  });
-}
-
-/**
- * Adiciona headers CORS a uma resposta
- */
-export function withCorsHeaders(response: NextResponse): NextResponse {
-  Object.entries(CORS_HEADERS).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
-  return response;
+  error?: NextResponse;
 }
 
 /**
@@ -56,7 +26,7 @@ export function withCorsHeaders(response: NextResponse): NextResponse {
  * Formato esperado: "Authorization: Bearer <ADMIN_API_KEY>"
  * 
  * @param request NextRequest
- * @returns { isValid: boolean, error?: string }
+ * @returns { isValid: boolean, error?: NextResponse }
  */
 export function validateAdminApiKey(request: NextRequest): AdminApiGuardResult {
   const authHeader = request.headers.get('Authorization');
@@ -64,7 +34,14 @@ export function validateAdminApiKey(request: NextRequest): AdminApiGuardResult {
   if (!authHeader) {
     return {
       isValid: false,
-      error: 'Header Authorization é obrigatório. Use: Authorization: Bearer <API_KEY>',
+      error: NextResponse.json(
+        { 
+          success: false, 
+          error: 'UNAUTHORIZED',
+          message: 'Header Authorization é obrigatório. Use: Authorization: Bearer <API_KEY>' 
+        },
+        { status: 401 }
+      ),
     };
   }
 
@@ -73,7 +50,14 @@ export function validateAdminApiKey(request: NextRequest): AdminApiGuardResult {
   if (scheme?.toLowerCase() !== 'bearer' || !apiKey) {
     return {
       isValid: false,
-      error: 'Formato de autorização inválido. Use: Authorization: Bearer <API_KEY>',
+      error: NextResponse.json(
+        { 
+          success: false, 
+          error: 'INVALID_AUTH_FORMAT',
+          message: 'Formato de autorização inválido. Use: Authorization: Bearer <API_KEY>' 
+        },
+        { status: 401 }
+      ),
     };
   }
 
@@ -83,7 +67,14 @@ export function validateAdminApiKey(request: NextRequest): AdminApiGuardResult {
     console.error('[AdminApiGuard] ADMIN_API_KEY não configurada no ambiente!');
     return {
       isValid: false,
-      error: 'Servidor não configurado para autenticação de API.',
+      error: NextResponse.json(
+        { 
+          success: false, 
+          error: 'SERVER_MISCONFIGURED',
+          message: 'Servidor não configurado para autenticação de API.' 
+        },
+        { status: 500 }
+      ),
     };
   }
 
@@ -91,7 +82,14 @@ export function validateAdminApiKey(request: NextRequest): AdminApiGuardResult {
   if (apiKey !== expectedApiKey) {
     return {
       isValid: false,
-      error: 'API Key inválida.',
+      error: NextResponse.json(
+        { 
+          success: false, 
+          error: 'INVALID_API_KEY',
+          message: 'API Key inválida.' 
+        },
+        { status: 401 }
+      ),
     };
   }
 
@@ -103,7 +101,7 @@ export function validateAdminApiKey(request: NextRequest): AdminApiGuardResult {
  * 
  * @param request NextRequest
  * @param tenantApiKey API Key do tenant (obtida do banco)
- * @returns { isValid: boolean, error?: string }
+ * @returns { isValid: boolean, error?: NextResponse }
  */
 export function validateTenantApiKey(
   request: NextRequest, 
@@ -114,7 +112,10 @@ export function validateTenantApiKey(
   if (!authHeader) {
     return {
       isValid: false,
-      error: 'Header Authorization é obrigatório.',
+      error: NextResponse.json(
+        { success: false, error: 'UNAUTHORIZED', message: 'Header Authorization é obrigatório.' },
+        { status: 401 }
+      ),
     };
   }
 
@@ -123,14 +124,20 @@ export function validateTenantApiKey(
   if (scheme?.toLowerCase() !== 'bearer' || !apiKey) {
     return {
       isValid: false,
-      error: 'Formato de autorização inválido.',
+      error: NextResponse.json(
+        { success: false, error: 'INVALID_AUTH_FORMAT', message: 'Formato de autorização inválido.' },
+        { status: 401 }
+      ),
     };
   }
 
   if (!tenantApiKey || apiKey !== tenantApiKey) {
     return {
       isValid: false,
-      error: 'API Key do tenant inválida.',
+      error: NextResponse.json(
+        { success: false, error: 'INVALID_API_KEY', message: 'API Key do tenant inválida.' },
+        { status: 401 }
+      ),
     };
   }
 
@@ -139,7 +146,6 @@ export function validateTenantApiKey(
 
 /**
  * Higher-order function para criar um handler protegido por API Key admin.
- * Inclui suporte a CORS automaticamente.
  * 
  * @example
  * export const POST = withAdminApiKey(async (request) => {
@@ -154,15 +160,9 @@ export function withAdminApiKey(
     const guardResult = validateAdminApiKey(request);
     
     if (!guardResult.isValid) {
-      return withCorsHeaders(
-        NextResponse.json(
-          { success: false, error: 'UNAUTHORIZED', message: guardResult.error },
-          { status: 401 }
-        )
-      );
+      return guardResult.error!;
     }
     
-    const response = await handler(request);
-    return withCorsHeaders(response);
+    return handler(request);
   };
 }
