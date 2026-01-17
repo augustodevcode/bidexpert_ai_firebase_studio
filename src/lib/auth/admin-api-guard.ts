@@ -20,6 +20,25 @@ export interface AdminApiGuardResult {
   error?: NextResponse;
 }
 
+const DEFAULT_ADMIN_CORS_HEADERS = {
+  'Access-Control-Allow-Origin': process.env.ADMIN_API_CORS_ORIGIN ?? '*',
+  'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-Admin-API-Key',
+  'Access-Control-Max-Age': '86400',
+};
+
+export function withCorsHeaders(response: NextResponse): NextResponse {
+  Object.entries(DEFAULT_ADMIN_CORS_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  return response;
+}
+
+export function handleCorsPreflightRequest(): NextResponse {
+  return withCorsHeaders(new NextResponse(null, { status: 204 }));
+}
+
 /**
  * Valida a API Key administrativa a partir do header Authorization.
  * 

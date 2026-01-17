@@ -48,6 +48,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_HML }}
           NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM: "mysql"
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET_HML || secrets.SESSION_SECRET || 'ci-test-secret-key-32-chars-long!' }}
 
       - name: Prepare FTP Files
         run: |

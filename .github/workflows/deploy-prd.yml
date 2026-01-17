@@ -59,3 +59,5 @@ jobs:
           # This workflow serves as the governance layer and DB synchronization.
           # If a specific CI trigger is needed for Firebase App Hosting CLI, it would go here.
           echo "Production environment synchronized."
+        env:
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET_PRD || secrets.SESSION_SECRET }}
