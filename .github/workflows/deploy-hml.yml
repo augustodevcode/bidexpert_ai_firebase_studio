@@ -64,7 +64,7 @@ jobs:
           user: ${{ secrets.USER }}
           password: ${{ secrets.PASS }}
           localDir: "deploy_dist"
-          remoteDir: "public_html_staging"
+          remoteDir: "/home/bidexpert3/public_html_staging"
           forceSsl: false
 
       - name: Atomic Swap and Restart Application via PM2
@@ -77,6 +77,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            cd /home/bidexpert3/
+            
             # Backup do site atual se existir
             if [ -d "public_html" ]; then
               rm -rf public_html_backup_prev
@@ -87,12 +89,20 @@ jobs:
             if [ -d "public_html_staging" ]; then
               mv public_html_staging public_html
             else
-              echo "Erro: public_html_staging não encontrada!"
+              echo "Erro: public_html_staging não encontrada em /home/bidexpert3/!"
               exit 1
             fi
 
-            cd public_html
-            # Inicia/Reinicia o app Next.js
-            pm2 delete bidexpert-hml || true
-            PORT=3000 pm2 start server.js --name bidexpert-hml
-            pm2 save
+            cd /home/bidexpert3/public_html
+            
+            # Tenta reiniciar via PM2 (se disponível)
+            if command -v pm2 >/dev/null 2>&1; then
+              pm2 delete bidexpert-hml || true
+              PORT=3000 pm2 start server.js --name bidexpert-hml
+              pm2 save
+            else
+              # Se for Locaweb Compartilhada (Passenger), cria/atualiza o restart.txt
+              mkdir -p tmp
+              touch tmp/restart.txt
+              echo "Aviso: PM2 não encontrado. Usando restart via Passenger (restart.txt)."
+            fi
