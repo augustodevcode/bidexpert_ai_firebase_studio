@@ -57,32 +57,17 @@ jobs:
           cp -r .next/static deploy_dist/.next/static
           cp -r public deploy_dist/public
 
-      - name: Create Remote Backup via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        continue-on-error: true
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          password: ${{ secrets.PASS }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            if [ -d "public_html" ]; then
-              mv public_html public_html_backup_$(date +%Y%m%d_%H%M%S)
-              mkdir public_html
-            fi
-
-      - name: FTP Deploy Locaweb
+      - name: FTP Deploy Locaweb (Staging)
         uses: locaweb/ftp-deploy@1.0.0
         with:
           host: ${{ secrets.HOST }} 
           user: ${{ secrets.USER }}
           password: ${{ secrets.PASS }}
           localDir: "deploy_dist"
-          remoteDir: "public_html"
+          remoteDir: "public_html_staging"
           forceSsl: false
 
-      - name: Restart Application via PM2
+      - name: Atomic Swap and Restart Application via PM2
         uses: appleboy/ssh-action@v1.0.3
         continue-on-error: true
         with:
@@ -92,6 +77,20 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            # Backup do site atual se existir
+            if [ -d "public_html" ]; then
+              rm -rf public_html_backup_prev
+              mv public_html public_html_backup_prev
+            fi
+            
+            # Swap staging para produção
+            if [ -d "public_html_staging" ]; then
+              mv public_html_staging public_html
+            else
+              echo "Erro: public_html_staging não encontrada!"
+              exit 1
+            fi
+
             cd public_html
             # Inicia/Reinicia o app Next.js
             pm2 delete bidexpert-hml || true
