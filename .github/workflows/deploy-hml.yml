@@ -76,26 +76,26 @@ jobs:
           RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
           EOF
 
-      - name: Deploy via RSYNC (Much faster than FTP)
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > deploy_key
-          chmod 600 deploy_key
-          # Criar pasta staging se não existir via SSH antes do rsync
-          ssh -i deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.HOST }} "mkdir -p /home/bidexpert3/public_html_staging"
-          # Sync files
-          rsync -avz --delete -e "ssh -i deploy_key -o StrictHostKeyChecking=no" \
-            deploy_dist/ ${{ secrets.USER }}@${{ secrets.HOST }}:/home/bidexpert3/public_html_staging/
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: FTP Deploy Locaweb (Staging - Atomic)
+        uses: locaweb/ftp-deploy@1.0.0
+        with:
+          host: ${{ secrets.HOST }} 
+          user: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          localDir: "deploy_dist"
+          remoteDir: "/home/bidexpert3/public_html_staging"
+          forceSsl: false
+          exclude: |
+            **/node_modules/**
+            .git/**
+            .github/**
 
-      - name: Atomic Swap and Restart Application via PM2
+      - name: Atomic Swap and Restart Application
         uses: appleboy/ssh-action@v1.0.3
-        continue-on-error: true
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASS }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
             cd /home/bidexpert3/
