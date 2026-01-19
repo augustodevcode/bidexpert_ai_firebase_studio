@@ -76,15 +76,17 @@ jobs:
           RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
           EOF
 
-      - name: FTP Deploy Locaweb (Staging)
-        uses: locaweb/ftp-deploy@1.0.0
-        with:
-          host: ${{ secrets.HOST }} 
-          user: ${{ secrets.USER }}
-          password: ${{ secrets.PASS }}
-          localDir: "deploy_dist"
-          remoteDir: "/home/bidexpert3/public_html_staging"
-          forceSsl: false
+      - name: Deploy via RSYNC (Much faster than FTP)
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > deploy_key
+          chmod 600 deploy_key
+          # Criar pasta staging se não existir via SSH antes do rsync
+          ssh -i deploy_key -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.HOST }} "mkdir -p /home/bidexpert3/public_html_staging"
+          # Sync files
+          rsync -avz --delete -e "ssh -i deploy_key -o StrictHostKeyChecking=no" \
+            deploy_dist/ ${{ secrets.USER }}@${{ secrets.HOST }}:/home/bidexpert3/public_html_staging/
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Atomic Swap and Restart Application via PM2
         uses: appleboy/ssh-action@v1.0.3
@@ -98,6 +100,15 @@ jobs:
           script: |
             cd /home/bidexpert3/
             
+            # Verificar ambiente Node
+            echo "--- Ambiente do Servidor ---"
+            export PATH=$PATH:/usr/local/bin:/usr/bin
+            source .bashrc 2>/dev/null || source .profile 2>/dev/null || true
+            echo "Node version: $(node -v || echo 'não encontrado')"
+            echo "NPM version: $(npm -v || echo 'não encontrado')"
+            echo "Path: $PATH"
+            echo "----------------------------"
+
             # Backup do site atual se existir
             if [ -d "public_html" ]; then
               rm -rf public_html_backup_prev
