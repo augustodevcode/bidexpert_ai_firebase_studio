@@ -58,6 +58,23 @@ jobs:
           cp -r .next/standalone/. deploy_dist/
           cp -r .next/static deploy_dist/.next/static
           cp -r public deploy_dist/public
+          
+          # Locaweb Passenger Compatibility: Rename server.js to app.js
+          mv deploy_dist/server.js deploy_dist/app.js
+          
+          # Create .htaccess for Passenger
+          cat <<EOF > deploy_dist/.htaccess
+          # Locaweb Passenger Node.js Configuration
+          PassengerEnabled on
+          PassengerAppType node
+          PassengerAppRoot /home/bidexpert3/public_html
+          PassengerStartupFile app.js
+          
+          # Optional: Redirect to HTTPS
+          RewriteEngine On
+          RewriteCond %{HTTPS} off
+          RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+          EOF
 
       - name: FTP Deploy Locaweb (Staging)
         uses: locaweb/ftp-deploy@1.0.0
@@ -105,7 +122,7 @@ jobs:
             # Tenta reiniciar via PM2 (se disponível)
             if command -v pm2 >/dev/null 2>&1; then
               pm2 delete bidexpert-hml || true
-              PORT=3000 pm2 start server.js --name bidexpert-hml
+              PORT=3000 pm2 start app.js --name bidexpert-hml
               pm2 save
             else
               # Se for Locaweb Compartilhada (Passenger), cria/atualiza o restart.txt
