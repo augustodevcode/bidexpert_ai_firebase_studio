@@ -33,17 +33,17 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Reset DB (HML) - Temporary Fix for Schema Drift
-        run: npx prisma db push --force-reset
-        continue-on-error: true
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_HML }}
+      #- name: Reset DB (HML) - Temporary Fix for Schema Drift
+      #  run: npx prisma db push --force-reset
+      #  continue-on-error: true
+      #  env:
+      #    DATABASE_URL: ${{ secrets.DATABASE_URL_HML }}
 
-      - name: Run DB Seeds (HML)
-        run: npx prisma db seed
-        continue-on-error: true
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_HML }}
+      #- name: Run DB Seeds (HML)
+      #  run: npx prisma db seed
+      #  continue-on-error: true
+      #  env:
+      #    DATABASE_URL: ${{ secrets.DATABASE_URL_HML }}
 
       - name: Build Application
         run: npm run build
@@ -52,7 +52,7 @@ jobs:
           NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM: "mysql"
           SESSION_SECRET: ${{ secrets.SESSION_SECRET_HML || secrets.SESSION_SECRET || 'ci-test-secret-key-32-chars-long!' }}
 
-      - name: Prepare FTP Files
+      - name: Prepare Deploy Package (ZIP for speed)
         run: |
           mkdir -p deploy_dist
           cp -r .next/standalone/. deploy_dist/
@@ -76,21 +76,26 @@ jobs:
           RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
           EOF
 
-      - name: FTP Deploy Locaweb (Staging - Atomic)
+          # List contents to verify
+          ls -R deploy_dist | head -n 20
+
+          # Tar everything to avoid slow FTP of 10k+ files
+          cd deploy_dist && tar -czf ../deploy.tar.gz .
+
+      - name: FTP Deploy compressed package
         uses: locaweb/ftp-deploy@1.0.0
         with:
           host: ${{ secrets.HOST }} 
           user: ${{ secrets.USER }}
           password: ${{ secrets.PASS }}
-          localDir: "deploy_dist"
-          remoteDir: "/home/bidexpert3/public_html_staging"
+          localDir: "."
+          remoteDir: "/home/bidexpert3/"
           forceSsl: false
           exclude: |
-            **/node_modules/**
-            .git/**
-            .github/**
+            **/*
+            !deploy.tar.gz
 
-      - name: Atomic Swap and Restart Application
+      - name: Atomic Unpack and Swap via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
@@ -98,46 +103,46 @@ jobs:
           password: ${{ secrets.PASS }}
           port: 22
           script: |
+            # Mover para o diretório base
             cd /home/bidexpert3/
             
-            # Verificar ambiente Node
-            echo "--- Ambiente do Servidor ---"
-            export PATH=$PATH:/usr/local/bin:/usr/bin
-            source .bashrc 2>/dev/null || source .profile 2>/dev/null || true
-            echo "Node version: $(node -v || echo 'não encontrado')"
-            echo "NPM version: $(npm -v || echo 'não encontrado')"
-            echo "Path: $PATH"
-            echo "----------------------------"
-
-            # Backup do site atual se existir
-            if [ -d "public_html" ]; then
-              rm -rf public_html_backup_prev
-              mv public_html public_html_backup_prev
-            fi
-            
-            # Swap staging para produção
-            if [ -d "public_html_staging" ]; then
-              mv public_html_staging public_html
-            else
-              echo "Erro: public_html_staging não encontrada em /home/bidexpert3/!"
+            # Garantir que o tar.gz existe
+            if [ ! -f "deploy.tar.gz" ]; then
+              echo "ERRO: deploy.tar.gz não encontrado após FTP!"
               exit 1
             fi
 
-            cd /home/bidexpert3/public_html
-            
-            # Tenta rodar migrações locally (dentro da rede Locaweb)
-            export DATABASE_URL="${{ secrets.DATABASE_URL_HML }}"
-            # Usa localhost se a conexão externa falhar
-            npx prisma db push --accept-data-loss || true
+            # Extração atômica em staging
+            rm -rf public_html_staging
+            mkdir -p public_html_staging
+            echo "Extraindo arquivos..."
+            tar -xzf deploy.tar.gz -C public_html_staging/
+            rm deploy.tar.gz
 
-            # Tenta reiniciar via PM2 (se disponível)
-            if command -v pm2 >/dev/null 2>&1; then
-              pm2 delete bidexpert-hml || true
-              PORT=3000 pm2 start app.js --name bidexpert-hml
-              pm2 save
-            else
-              # Se for Locaweb Compartilhada (Passenger), cria/atualiza o restart.txt
-              mkdir -p tmp
-              touch tmp/restart.txt
-              echo "Aviso: PM2 não encontrado. Usando restart via Passenger (restart.txt)."
+            # Backup da versão atual
+            if [ -d "public_html" ]; then
+              echo "Criando backup da versão atual..."
+              rm -rf public_html_old
+              mv public_html public_html_old
             fi
+
+            # Swap staging para produção
+            echo "Realizando swap (staging -> production)..."
+            mv public_html_staging public_html
+
+            # Reiniciar Passenger Node.js
+            echo "Reiniciando a aplicação..."
+            mkdir -p public_html/tmp
+            touch public_html/tmp/restart.txt
+            
+            echo "Deploy concluído com sucesso!"
+              mv public_html public_html_backup_prev
+            fi
+            
+            mv public_html_staging public_html
+            cd public_html
+            
+            # Restart via Passenger
+            mkdir -p tmp
+            touch tmp/restart.txt
+            echo "Deploy concluído com sucesso."
