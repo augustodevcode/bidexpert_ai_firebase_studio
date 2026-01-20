@@ -218,7 +218,7 @@ async function seedInstallmentPayments() {
     for (const win of winsWithoutInstallments) {
         try {
             const numInstallments = faker.number.int({ min: 2, max: 12 });
-            const paymentResult = await services.installmentPayment.createInstallmentsForWin(win, numInstallments);
+            const paymentResult = await services.installmentPayment.createInstallmentsForWin(win as any, numInstallments);
             
             if (paymentResult.success && paymentResult.payments?.length > 0) {
                 totalInstallments += paymentResult.payments.length;
@@ -303,7 +303,8 @@ async function seedPostAuctionInteractions() {
                     auctionId: lotWithAuction.auctionId,
                     userDisplayName: user.fullName || 'Usuário Anônimo',
                     questionText: questionText,
-                    isPublic: true
+                    isPublic: true,
+                    tenantId: BigInt(entityStore.tenantId)
                 }
             });
             if (questionResult) {
@@ -330,6 +331,7 @@ async function seedPostAuctionInteractions() {
                             auction: { connect: { id: lot.auctionId } },
                             lot: { connect: { id: BigInt(win.lotId) } },
                             user: { connect: { id: BigInt(win.userId) } },
+                            tenant: { connect: { id: BigInt(entityStore.tenantId) } },
                             rating: faker.number.int({ min: 3, max: 5 }),
                             comment: faker.lorem.paragraph()
                         }

@@ -11,7 +11,7 @@
  * - No mínimo 3 lotes ativos por comitente.
  */
 
-import { PrismaClient, $Enums, ProcessPartyType } from '@prisma/client';
+import { PrismaClient, $Enums, ProcessPartyType, AuctionStatus } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -297,7 +297,7 @@ async function main() {
         const isCancelled = i < 10 && auctionDate.getMonth() === 0;
         const isFinished = auctionDate < new Date(); 
         
-        let status = 'EM_BREVE';
+        let status: AuctionStatus = 'EM_BREVE';
         if (isCancelled) status = 'CANCELADO';
         else if (isFinished) status = 'ENCERRADO';
         else if (i % 20 === 0) status = 'ABERTO_PARA_LANCES';
@@ -355,12 +355,30 @@ async function main() {
 
         const numLots = 3 + (i % 3);
         const categoryId = categoryIds[i % categoryIds.length];
+        
+        // Imagens de Exemplo (Placeholders)
+        const vehicleImages = [
+            'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80',
+            'https://images.unsplash.com/photo-1503376763036-066120622c74?w=800&q=80',
+            'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&q=80'
+        ];
+        const propertyImages = [
+            'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80',
+            'https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?w=800&q=80',
+            'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80'
+        ];
+
         for (let j = 1; j <= numLots; j++) {
             const initialPrice = 50000 + (Math.random() * 1000000);
             const lotNumber = j.toString().padStart(3, '0');
-            await prisma.lot.upsert({
+            const isVehicle = i % 2 !== 0; // Alternar entre Imóvel e Veículo por leilão
+            const lotImage = isVehicle ? vehicleImages[j % 3] : propertyImages[j % 3];
+            const assetSubtype = isVehicle ? 'VEICULO' : 'IMOVEL';
+
+            // 2. Criar ou Atualizar Lote
+            const lot = await prisma.lot.upsert({
                 where: { auctionId_number: { auctionId: auction.id, number: lotNumber } },
-                update: {},
+                update: { imageUrl: lotImage },
                 create: {
                     publicId: uuidv4(),
                     number: lotNumber,
@@ -372,10 +390,95 @@ async function main() {
                     status: status === 'ENCERRADO' ? 'VENDIDO' : 'ABERTO_PARA_LANCES',
                     tenantId: tenant.id,
                     auctionId: auction.id,
-                    type: i % 2 === 0 ? 'IMOVEL' : 'VEICULO',
-                    categoryId: categoryId
+                    type: assetSubtype,
+                    categoryId: categoryId,
+                    imageUrl: lotImage
                 }
             });
+
+            // Verificar se o lote já possui ativos vinculados
+            const existingAssets = await prisma.assetsOnLots.findFirst({
+                where: { lotId: lot.id }
+            });
+
+            if (!existingAssets) {
+                // Criar Asset e Vincular
+                 const assetTitle = `${isVehicle ? 'Veículo' : 'Imóvel'} Modelo Demo ${j} - ${seller.state || 'BR'}`;
+                 const assetSlug = slugify(`${assetTitle}-${auction.slug}-${lotNumber}`);
+
+                 // Mídia
+                 const mediaItem = await prisma.mediaItem.create({
+                    data: {
+                        fileName: `demo-${assetSlug}.jpg`,
+                        storagePath: `demo/${assetSlug}.jpg`,
+                        urlOriginal: lotImage,
+                        mimeType: 'image/jpeg',
+                        tenantId: tenant.id
+                    }
+                });
+
+                const asset = await prisma.asset.create({
+                    data: {
+                        publicId: uuidv4(),
+                        title: assetTitle,
+                        description: `Bem em bom estado de conservação, localizado em ${seller.city || 'Cidade Demo'} - ${seller.state || 'UF'}.`,
+                        status: 'DISPONIVEL',
+                        tenantId: tenant.id,
+                        imageUrl: lotImage,
+                        imageMediaId: mediaItem.id,
+                        evaluationValue: initialPrice * 1.2,
+                        categoryId: categoryId
+                    }
+                });
+
+                await prisma.assetsOnLots.create({
+                    data: {
+                        lotId: lot.id,
+                        assetId: asset.id,
+                        tenantId: tenant.id,
+                        assignedBy: 'system'
+                    }
+                });
+            }
+
+            // 3. Gerar Lances Simulados (Bids)
+            // Se o leilão estiver Aberto ou Encerrado/Vendido, gerar histórico de lances
+            if (status === 'ABERTO_PARA_LANCES' || status === 'ENCERRADO' || status === 'VENDIDO') {
+                const numBids = Math.floor(Math.random() * 10) + 1; // 1 a 10 lances
+                let currentPrice = Number(initialPrice);
+                
+                // Pegar um usuário 'Arrematante' aleatório (aqui pegamos o fixo ou criamos outros se necessário, usaremos o fixo por enquanto)
+                const bidderUser = await prisma.user.findFirst({ where: { email: 'Arrematante.Demo@bidexpert.com.br' } });
+
+                if (bidderUser) {
+                    for (let k = 0; k < numBids; k++) {
+                        currentPrice += 1000 + (Math.random() * 500); // Incremento variável
+                        
+                        await prisma.bid.create({
+                            data: {
+                                amount: currentPrice,
+                                bidderId: bidderUser.id,
+                                lotId: lot.id,
+                                auctionId: auction.id,
+                                tenantId: tenant.id,
+                                timestamp: new Date(auctionDate.getTime() - (1000 * 60 * 60) + (k * 1000 * 60 * 5)), // Lances distribuídos na última hora
+                                bidderDisplay: 'Arrematante Demo'
+                            }
+                        });
+                    }
+                    
+                    // Atualizar preço atual do lote
+                    await prisma.lot.update({
+                        where: { id: lot.id },
+                        data: { price: currentPrice, bidsCount: numBids }
+                    });
+
+                    // Se vendido, registrar vencedor
+                    if (status === 'ENCERRADO' || status === 'VENDIDO') {
+                       // Opcional: Criar UserWin se necessário
+                    }
+                }
+            }
         }
     }
 
