@@ -28,6 +28,7 @@ $ApiUrl = "https://api.github.com/repos/$RepoOwner/$RepoName"
 $RequiredSecrets = @(
     "DATABASE_URL_DEV",
     "DATABASE_URL_HML",
+    "DATABASE_URL_DEMO",
     "DATABASE_URL_PRD",
     "HOST",
     "USER",

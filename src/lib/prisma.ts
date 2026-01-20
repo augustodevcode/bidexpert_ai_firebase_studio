@@ -1,15 +1,30 @@
 
 import { PrismaClient } from '@prisma/client';
 import { auditMiddleware } from './audit-middleware';
+import { headers } from 'next/headers';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof createPrismaClient> | undefined;
+  demoPrisma: ReturnType<typeof createPrismaClient> | undefined;
 };
 
-function createPrismaClient() {
-  let client = new PrismaClient({
+/**
+ * Cria uma instância do Prisma Client com suporte a extensões e logs.
+ */
+function createPrismaClient(databaseUrl?: string) {
+  const options: any = {
     log: process.env.PRISMA_QUERY_LOG === 'true' ? ['query', 'error', 'warn'] : ['error', 'warn'],
-  });
+  };
+
+  if (databaseUrl) {
+    options.datasources = {
+      db: {
+        url: databaseUrl,
+      },
+    };
+  }
+
+  let client = new PrismaClient(options);
 
   // Enable ITSM query monitoring unless explicitly disabled
   if (process.env.ITSM_QUERY_MONITOR_ENABLED !== 'false') {
@@ -94,10 +109,66 @@ function createPrismaClient() {
   return client;
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+// Cliente Principal (Production/Default)
+const defaultClient = globalForPrisma.prisma ?? createPrismaClient();
+
+// Cliente Demo (Opcional)
+const demoClient = globalForPrisma.demoPrisma ?? (process.env.DATABASE_URL_DEMO 
+  ? createPrismaClient(process.env.DATABASE_URL_DEMO) 
+  : null);
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+  globalForPrisma.prisma = defaultClient;
+  if (demoClient) globalForPrisma.demoPrisma = demoClient;
+}
+
+/**
+ * Proxy Dinâmico para seleção de Banco de Dados.
+ * Intercepta chamadas ao 'prisma' e verifica os headers da requisição
+ * para determinar se deve usar o banco Demo ou Principal.
+ * 
+ * Requer que o middleware.ts defina o header 'x-tenant-subdomain'.
+ */
+export const prisma = new Proxy(defaultClient, {
+  get(target, prop, receiver) {
+    let client = target;
+    
+    try {
+      // Tenta obter o header para verificar se é ambiente Demo
+      const h = headers();
+      const subdomain = h.get('x-tenant-subdomain');
+      
+      // Se for subdomínio 'demo' e cliente estiver configurado, troca
+      if (subdomain === 'demo' && demoClient) {
+        client = demoClient;
+      }
+    } catch (e) {
+      // Fora do contexto de requisição (build time ou scripts), usa o default
+    }
+    
+    const value = Reflect.get(client, prop, receiver);
+    
+    // Garante que métodos sejam chamados no contexto do cliente correto
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    
+    return value;
+  }
+});
+
+// Alias explícitos para usos específicos se necessário
+export const mainPrisma = defaultClient;
+export const demoPrisma = demoClient;
+
+/**
+ * Helper para obter o cliente correto manualmente se necessário
+ */
+export function getPrismaClientBySubdomain(subdomain?: string | null) {
+  if (subdomain?.toLowerCase() === 'demo' && demoPrisma) {
+    return demoPrisma;
+  }
+  return mainPrisma;
 }
 
 export default prisma;

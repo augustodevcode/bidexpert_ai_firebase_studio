@@ -130,7 +130,35 @@ async function seedEssentialData() {
         },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
-    
+
+    console.log('[DB SEED] Seeding CRM Tenant...');
+    const crmTenant = await prisma.tenant.upsert({
+        where: { id: 3 }, // Fixed ID for CRM
+        update: {},
+        create: { 
+            id: 3, 
+            name: 'BidExpert CRM', 
+            subdomain: 'crm', 
+            domain: 'crm.bidexpert.com.br',
+            status: 'ACTIVE'
+        },
+    });
+    console.log('[DB SEED] ✅ SUCCESS: CRM tenant ensured.');
+
+    console.log('[DB SEED] Seeding Demo Tenant...');
+    const demoTenant = await prisma.tenant.upsert({
+        where: { id: 4 }, // Fixed ID for Demo
+        update: {},
+        create: { 
+            id: 4, 
+            name: 'Ambiente Demonstração', 
+            subdomain: 'demo', 
+            domain: 'demo.bidexpert.com.br',
+            status: 'ACTIVE'
+        },
+    });
+    console.log('[DB SEED] ✅ SUCCESS: Demo tenant ensured.');
+
     console.log('[DB SEED] Seeding Platform Settings for Landlord...');
     const platformSettings = await prisma.platformSettings.upsert({
         where: { tenantId: landlordTenant.id },
@@ -186,6 +214,9 @@ async function seedEssentialData() {
         { email: 'bidder@bidexpert.com.br', fullName: 'Arrematante de Teste', password: 'senha@123', roleName: 'BIDDER' },
         { email: 'comit@bidexpert.com.br', fullName: 'Comitente de Teste', password: 'senha@123', roleName: 'CONSIGNOR' },
         { email: 'leilo@bidexpert.com.br', fullName: 'Leiloeiro de Teste', password: 'senha@123', roleName: 'AUCTIONEER' },
+        // Demo Users
+        { email: 'demo.admin@bidexpert.com.br', fullName: 'Demo Admin', password: 'demo@123', roleName: 'TENANT_ADMIN', tenantId: 4 },
+        { email: 'demo.user@bidexpert.com.br', fullName: 'Demo User', password: 'demo@123', roleName: 'USER', tenantId: 4 },
     ];
 
     for (const userData of testUsers) {
@@ -199,14 +230,7 @@ async function seedEssentialData() {
 
         const user = await prisma.user.upsert({
             where: { email: userData.email },
-            update: {
-                fullName: userData.fullName,
-                password: hashedPassword,
-                roles: {
-                    deleteMany: {}, // Clear existing roles to avoid duplicates
-                    create: { role: { connect: { id: role.id } }, assignedBy: 'system-seed-update' }
-                }
-            },
+            update: {},
             create: {
                 email: userData.email,
                 fullName: userData.fullName,
@@ -214,21 +238,32 @@ async function seedEssentialData() {
                 habilitationStatus: 'HABILITADO',
                 accountType: 'PHYSICAL',
                 roles: { create: { role: { connect: { id: role.id } }, assignedBy: 'system-seed' } },
-                tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
+                // If specific tenantId provided use it, otherwise use Landlord (1) as default
+                tenants: { create: { tenant: { connect: { id: userData.tenantId ? userData.tenantId : landlordTenant.id } }, assignedBy: 'system-seed' } }
             }
         });
-
-        // Ensure tenant association exists if user was updated
-        const userTenantLink = await prisma.usersOnTenants.findUnique({
-            where: { userId_tenantId: { userId: user.id, tenantId: landlordTenant.id } }
-        });
-        if (!userTenantLink) {
-            await prisma.usersOnTenants.create({
-                data: { userId: user.id, tenantId: landlordTenant.id, assignedBy: 'system-seed-fix' }
-            });
-        }
         
-        console.log(`[DB SEED] ✅ SUCCESS: Test user '${userData.email}' upserted with role '${userData.roleName}'.`);
+        // Ensure user is linked to explicit tenant if updated (upsert doesn't run create block on update)
+        if (userData.tenantId) {
+             const link = await prisma.usersOnTenants.findUnique({
+                 where: { userId_tenantId: { userId: user.id, tenantId: userData.tenantId } }
+             });
+             if (!link) {
+                 await prisma.usersOnTenants.create({
+                     data: { userId: user.id, tenantId: userData.tenantId, assignedBy: 'system-seed-fix' }
+                 });
+             }
+        } else {
+             // Link default users to Demo tenant as well for easy testing there
+             const demoLink = await prisma.usersOnTenants.findUnique({
+                 where: { userId_tenantId: { userId: user.id, tenantId: 4 } }
+             });
+             if (!demoLink) {
+                 await prisma.usersOnTenants.create({
+                     data: { userId: user.id, tenantId: 4, assignedBy: 'system-seed-expansion' }
+                 });
+             }
+        }
     }
 
     console.log('[DB SEED] Seeding Brazilian States...');

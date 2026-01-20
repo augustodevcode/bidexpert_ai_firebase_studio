@@ -1,0 +1,105 @@
+# Deploy to Demo Environment (Locaweb) — BidExpert
+# Follows Production logic but to a separate Demo folder
+# Includes massive Demo seeding logic
+
+name: Deploy Demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Permite disparar manualmente
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to Locaweb Demo
+    runs-on: ubuntu-latest
+    environment: Demo
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-package-lock
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run DB Seeds (DEMO Massivo)
+        run: npx ts-node scripts/seed-demo.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEMO }}
+
+      - name: Build Application
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEMO }}
+          NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM: "mysql"
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET_DEMO || secrets.SESSION_SECRET }}
+
+      - name: Prepare Deploy Package (ZIP)
+        run: |
+          mkdir -p deploy_dist
+          cp -r .next/standalone/. deploy_dist/
+          cp -r .next/static deploy_dist/.next/static
+          cp -r public deploy_dist/public
+          
+          # Locaweb Passenger Compatibility: Rename server.js to app.js
+          mv deploy_dist/server.js deploy_dist/app.js
+          
+          # Create .htaccess for Passenger (Custom App Root for Demo)
+          cat <<EOF > deploy_dist/.htaccess
+          PassengerEnabled on
+          PassengerAppType node
+          PassengerAppRoot /home/bidexpert3/demo
+          PassengerStartupFile app.js
+          
+          # Optional: Redirect to HTTPS
+          RewriteEngine On
+          RewriteCond %{HTTPS} off
+          RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+          EOF
+
+          cd deploy_dist && tar -czf ../deploy.tar.gz .
+
+      - name: FTP Deploy to Demo Folder
+        uses: locaweb/ftp-deploy@1.0.0
+        with:
+          host: ${{ secrets.HOST }} 
+          user: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          localDir: "."
+          remoteDir: "/home/bidexpert3/demo/"
+          forceSsl: false
+          exclude: |
+            **/*
+            !deploy.tar.gz
+
+      - name: Unpack and Restart Service via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          script: |
+            cd /home/bidexpert3/demo
+            tar -xzf deploy.tar.gz
+            rm deploy.tar.gz
+            # Run Migrations and Seed for Demo
+            export DATABASE_URL="${{ secrets.DATABASE_URL_DEMO }}"
+            npx prisma db push --accept-data-loss
+            npx tsx scripts/seed-demo.ts
+            
+            # Touch restart file for Locaweb Passenger
+            mkdir -p tmp
+            touch tmp/restart.txt
+            echo "Demo deployment completed, database updated and service restarted."

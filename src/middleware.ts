@@ -85,10 +85,33 @@ async function resolveTenantFromRequest(
 ): Promise<TenantResolution> {
   // Usa X-Forwarded-Host se disponível (SSL termination no proxy)
   const effectiveHost = forwardedHost || hostname;
-  const normalizedHost = effectiveHost.toLowerCase().replace(/:\d+$/, ''); // Remove porta
+  const normalizedHost = effectiveHost.toLowerCase();
+  const hostWithoutPort = normalizedHost.replace(/:\d+$/, ''); // Remove porta
 
-  // 1. Check if it's a Landlord domain
-  if (LANDLORD_DOMAINS.some(d => normalizedHost === d.toLowerCase().replace(/:\d+$/, ''))) {
+  // 1. Check for localhost subdomain pattern: [subdomain].localhost or [subdomain].localhost:port
+  // This supports demo.localhost:3000, crm.localhost:9002, etc.
+  const localhostSubdomainMatch = hostWithoutPort.match(/^([a-z0-9-]+)\.localhost$/i);
+  if (localhostSubdomainMatch) {
+    const subdomain = localhostSubdomainMatch[1].toLowerCase();
+    // www is treated as landlord
+    if (subdomain === 'www') {
+      return {
+        tenantId: LANDLORD_ID,
+        subdomain: null,
+        isCustomDomain: false,
+        isPathBased: false,
+      };
+    }
+    return {
+      tenantId: subdomain, // Será resolvido para ID na rota via slug lookup
+      subdomain,
+      isCustomDomain: false,
+      isPathBased: false,
+    };
+  }
+
+  // 2. Check if it's a plain Landlord domain (no subdomain)
+  if (LANDLORD_DOMAINS.some(d => hostWithoutPort === d.toLowerCase().replace(/:\d+$/, ''))) {
     // Check for path-based routing on landlord domain: /app/[slug]
     const pathMatch = pathname.match(/^\/app\/([a-z0-9-]+)/i);
     if (pathMatch) {
@@ -109,13 +132,13 @@ async function resolveTenantFromRequest(
     };
   }
 
-  // 2. Check for subdomain pattern: [subdomain].bidexpert.com.br
+  // 3. Check for subdomain pattern: [subdomain].bidexpert.com.br
   const appDomainNormalized = APP_DOMAIN.replace(/:\d+$/, '');
   const subdomainPattern = new RegExp(
     `^(?!www\\.)([a-z0-9-]+)\\.${appDomainNormalized.replace(/\./g, '\\.')}$`,
     'i'
   );
-  const subdomainMatch = normalizedHost.match(subdomainPattern);
+  const subdomainMatch = hostWithoutPort.match(subdomainPattern);
   
   if (subdomainMatch) {
     const subdomain = subdomainMatch[1].toLowerCase();
@@ -127,7 +150,7 @@ async function resolveTenantFromRequest(
     };
   }
 
-  // 3. Assume it's a custom domain
+  // 4. Assume it's a custom domain
   return {
     tenantId: normalizedHost, // Será resolvido para ID na rota
     subdomain: null,
@@ -150,6 +173,20 @@ export async function middleware(req: NextRequest) {
   
   // Resolve o tenant
   const resolution = await resolveTenantFromRequest(hostname, pathname, forwardedHost);
+
+  // REDIRECT STRATEGY: Root path on Landlord domain redirects to CRM (Sales Page)
+  // Only applies if we are at root path '/' and resolved to Landlord (not a specific tenant subdomain)
+  if (resolution.tenantId === LANDLORD_ID && pathname === '/') {
+    const protocol = req.nextUrl.protocol;
+    const portSuffix = req.nextUrl.port ? `:${req.nextUrl.port}` : '';
+    // Determine base domain from hostname (remove subdomains if any, though LANDLORD mostly doesn't have them except www)
+    const baseDomain = hostname.replace('www.', '').replace(/:\d+$/, ''); 
+    
+    // Construct CRM URL
+    const crmUrl = `${protocol}//crm.${baseDomain}${portSuffix}`;
+    
+    return NextResponse.redirect(crmUrl);
+  }
   
   // Obtém a sessão do usuário (se logado)
   const session = await getSession();

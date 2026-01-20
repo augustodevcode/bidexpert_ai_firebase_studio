@@ -1,14 +1,21 @@
 // src/app/auth/actions.ts
 /**
- * @fileoverview Server Actions para autenticação de usuários.
+ * @fileoverview Server Actions para autenticação de usuários com suporte Multi-Tenant.
+ * 
  * Este arquivo contém a lógica de backend para os processos de login e logout,
  * bem como para a recuperação de informações do usuário logado. As ações interagem
  * com a camada de serviço e com a biblioteca de sessão (jose) para validar
  * credenciais, criar e destruir sessões seguras em cookies.
+ * 
+ * FUNCIONALIDADE MULTI-TENANT:
+ * - Valida que o usuário pertence ao tenant do subdomínio atual
+ * - getDevUsers() filtra usuários pelo tenant do contexto atual
+ * - getCurrentTenantContext() retorna info do tenant baseado no subdomínio
  */
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createSession, getSession as getSessionFromCookie, deleteSession as deleteSessionFromCookie } from '@/server/lib/session';
 import type { UserProfileWithPermissions, Role, Tenant, UserCreationData, EditableUserProfileData } from '@/types';
 import { revalidatePath } from 'next/cache';
@@ -20,15 +27,13 @@ import { UserService } from '@/services/user.service';
  * Formata um objeto de usuário bruto do Prisma para o tipo `UserProfileWithPermissions`,
  * enriquecendo-o com uma lista de permissões consolidadas de seus perfis e uma
  * lista de nomes de perfis para fácil acesso.
- * @param {any} user - O objeto de usuário retornado pelo Prisma, incluindo `roles` e `tenants`.
- * @returns {UserProfileWithPermissions | null} O perfil formatado ou null se o usuário for inválido.
  */
 function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
   if (!user) return null;
 
   const roles: Role[] = user.roles?.map((ur: any) => ({
     ...ur.role,
-    id: ur.role.id, // ID is already a string
+    id: ur.role.id,
   })) || [];
 
   const permissions = Array.from(new Set(roles.flatMap((r: any) => {
@@ -37,11 +42,9 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
 
     if (typeof perms === 'string') {
       try {
-        // Tenta fazer o parse se for uma string JSON (ex: '["manage_all"]')
         const parsed = JSON.parse(perms);
         return Array.isArray(parsed) ? parsed : [parsed];
       } catch (e) {
-        // Se não for JSON, trata como lista separada por vírgula
         return perms.split(',').map((p: string) => p.trim()).filter(Boolean);
       }
     }
@@ -55,7 +58,7 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
 
   const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
     ...ut.tenant,
-    id: ut.tenant.id, // ID is already a string
+    id: ut.tenant.id,
   })) || [];
 
   return {
@@ -75,10 +78,7 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
 /**
  * Realiza o processo de login de um usuário.
  * Valida as credenciais, verifica a associação ao tenant (se aplicável), e cria
- * uma sessão segura em caso de sucesso. Lida com o cenário multi-tenant, onde um
- * usuário pode pertencer a múltiplos "workspaces".
- * @param {object} values - Os dados do formulário de login.
- * @returns {Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }>} O resultado da operação de login.
+ * uma sessão segura em caso de sucesso.
  */
 export async function login(values: { email: string, password?: string, tenantId?: string }): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
   const { email, password, tenantId: initialTenantId } = values;
@@ -97,6 +97,31 @@ export async function login(values: { email: string, password?: string, tenantId
         tenants: { include: { tenant: true } }
       }
     });
+
+    // Strict Tenant Check: If tenantId was NOT provided by user, check the context header
+    if (!tenantId) {
+        const headersList = await headers();
+        const contextTenantId = headersList.get('x-tenant-id');
+        const LANDLORD_ID = '1';
+        
+        if (contextTenantId && contextTenantId !== LANDLORD_ID) {
+            tenantId = contextTenantId;
+        }
+    }
+    
+    // Validate strict tenant isolation
+    if (tenantId && user && user.tenants) {
+        const userInTenant = user.tenants.some(ut => ut.tenantId.toString() === tenantId);
+        if (!userInTenant) {
+            const headersList = await headers();
+            const contextTenantId = headersList.get('x-tenant-id');
+            // Only enforce strictness if we are actually in that context (subdomain access)
+            if (contextTenantId === tenantId) {
+                console.log(`[Login Action] Usuário ${email} não pertence ao tenant ${tenantId}`);
+                return { success: false, message: 'Usuário não cadastrado neste Espaço de Trabalho. Verifique o endereço ou registre-se.' };
+            }
+        }
+    }
 
     if (!user || !user.password) {
       console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado.`);
@@ -123,19 +148,14 @@ export async function login(values: { email: string, password?: string, tenantId
       if (user.tenants?.length === 1) {
         tenantId = user.tenants[0].tenantId;
       } else if (user.tenants && user.tenants.length > 1) {
-        // Se o usuário tem múltiplos tenants mas nenhum foi selecionado,
-        // retorne o usuário para que a UI possa pedir a seleção.
         return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
       } else {
-        // Se o usuário não tem tenants, mas existe, ele pode ser um super admin
-        // ou estamos no processo de setup. O padrão é o landlord.
         console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord ('1').`);
         tenantId = '1';
       }
     }
 
     const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId.toString() === tenantId);
-    // Permite que super admins ou usuários sem tenant loguem no tenant '1' (Landlord)
     if (!userBelongsToFinalTenant) {
       const isAdmin = userProfileWithPerms.permissions.includes('manage_all');
       if (tenantId !== '1' || (!isAdmin && user.tenants && user.tenants.length > 0)) {
@@ -155,7 +175,6 @@ export async function login(values: { email: string, password?: string, tenantId
 
 /**
  * Realiza o logout do usuário, destruindo a sessão e o cookie associado.
- * @returns {Promise<{success: boolean, message: string}>} O resultado da operação.
  */
 export async function logout(): Promise<{ success: boolean; message: string }> {
   try {
@@ -169,7 +188,6 @@ export async function logout(): Promise<{ success: boolean; message: string }> {
 
 /**
  * Obtém o perfil completo do usuário autenticado na sessão atual.
- * @returns {Promise<UserProfileWithPermissions | null>} O perfil completo do usuário ou null.
  */
 export async function getCurrentUser(): Promise<UserProfileWithPermissions | null> {
   const session = await getSessionFromCookie();
@@ -182,9 +200,15 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
 }
 
 /**
+ * Re-export getSession from session lib for backward compatibility.
+ * Other modules import getSession from '@/app/auth/actions'.
+ */
+export async function getSession() {
+  return getSessionFromCookie();
+}
+
+/**
  * Fetches the admin user specifically for development auto-login purposes.
- * This should only be used in non-production environments.
- * @returns {Promise<UserProfileWithPermissions | null>} The admin user profile or null.
  */
 export async function getAdminUserForDev(): Promise<UserProfileWithPermissions | null> {
   if (process.env.NODE_ENV !== 'development') {
@@ -194,18 +218,103 @@ export async function getAdminUserForDev(): Promise<UserProfileWithPermissions |
   return userService.findUserByEmail('admin@bidexpert.com.br');
 }
 
+
+/**
+ * Recupera o contexto do tenant atual a partir dos headers da requisição.
+ * Útil para componentes clientes saberem em qual subdomínio/tenant estão.
+ * 
+ * NOTA: O middleware passa o subdomain/slug como x-tenant-id, não o ID numérico.
+ * Esta função resolve o slug para o ID real do tenant.
+ */
+export async function getCurrentTenantContext() {
+  const headersList = await headers();
+  const tenantIdOrSlug = headersList.get('x-tenant-id') || '1';
+  const subdomain = headersList.get('x-tenant-subdomain') || '';
+  
+  let resolvedTenantId = tenantIdOrSlug;
+  let tenantName = 'BidExpert';
+  
+  // Se não é o Landlord (1), precisamos resolver o slug para ID
+  if (tenantIdOrSlug !== '1') {
+      try {
+          // Tenta primeiro como ID numérico
+          const numericId = parseInt(tenantIdOrSlug, 10);
+          
+          let tenant;
+          if (!isNaN(numericId) && numericId > 0) {
+              // É um ID numérico válido
+              tenant = await basePrisma.tenant.findUnique({ 
+                  where: { id: numericId }
+              });
+          }
+          
+          // Se não encontrou por ID, tenta por subdomain/slug
+          if (!tenant) {
+              tenant = await basePrisma.tenant.findFirst({ 
+                  where: { subdomain: tenantIdOrSlug.toLowerCase() }
+              });
+          }
+          
+          if (tenant) {
+              resolvedTenantId = tenant.id.toString();
+              tenantName = tenant.name;
+              console.log(`[getCurrentTenantContext] Resolved "${tenantIdOrSlug}" -> tenant ID ${resolvedTenantId} (${tenantName})`);
+          } else {
+              console.warn(`[getCurrentTenantContext] Tenant not found for: ${tenantIdOrSlug}`);
+          }
+      } catch (e) {
+          console.error('[getCurrentTenantContext] Error fetching tenant:', e);
+      }
+  }
+
+  return {
+    tenantId: resolvedTenantId,
+    subdomain,
+    tenantName
+  };
+}
+
 /**
  * Fetches a list of users for development testing purposes.
- * Includes Admins, Auctioneers, Bidders, etc.
- * @returns {Promise<Array<{ email: string; fullName: string; roleName: string; passwordHint: string }>>}
+ * Filters users by the current tenant context (from subdomain).
  */
-export async function getDevUsers(): Promise<Array<{ email: string; fullName: string; roleName: string; passwordHint: string }>> {
+export async function getDevUsers(): Promise<Array<{ email: string; fullName: string; roleName: string; passwordHint: string; tenantId: string }>> {
   if (process.env.NODE_ENV !== 'development') {
     return [];
   }
 
   try {
+    const headersList = await headers();
+    const contextTenantId = headersList.get('x-tenant-id') || '1';
+    const LANDLORD_ID = '1';
+
+    const whereClause: any = {};
+    
+    // Filter by tenant if we are in a strict tenant subdomain (not Landlord)
+    if (contextTenantId !== LANDLORD_ID) {
+        // Try to parse as number first (numeric ID) or use as subdomain
+        const tenantIdNum = parseInt(contextTenantId);
+        if (!isNaN(tenantIdNum)) {
+            whereClause.tenants = {
+                some: {
+                    tenantId: tenantIdNum
+                }
+            };
+        } else {
+            // It's a subdomain slug, find the tenant first
+            const tenant = await basePrisma.tenant.findFirst({ where: { subdomain: contextTenantId } });
+            if (tenant) {
+                whereClause.tenants = {
+                    some: {
+                        tenantId: tenant.id
+                    }
+                };
+            }
+        }
+    }
+
     const users = await basePrisma.user.findMany({
+      where: whereClause,
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -213,23 +322,29 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
           include: {
             role: true
           }
-        }
+        },
+        tenants: { include: { tenant: true } }
       }
     });
 
     return users.map(u => {
       const roleName = u.roles.length > 0 ? u.roles[0].role.name : 'User';
       // Determine password hint based on email or role
-      let passwordHint = 'Test@12345';
+      let passwordHint = 'senha@123';
       if (u.email === 'analista@lordland.com') {
         passwordHint = 'password123';
+      } else if (u.email === 'demo.admin@bidexpert.com.br' || u.email === 'demo.user@bidexpert.com.br') {
+        passwordHint = 'demo@123';
+      } else if (u.email === 'admin@bidexpert.com.br') {
+        passwordHint = 'Admin@123';
       }
 
       return {
         email: u.email,
         fullName: u.fullName || 'Unknown',
         roleName: roleName,
-        passwordHint: passwordHint
+        passwordHint: passwordHint,
+        tenantId: u.tenants[0]?.tenantId?.toString() || '1'
       };
     });
   } catch (error) {

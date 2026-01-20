@@ -1,11 +1,15 @@
 // src/app/auth/login/page.tsx
 /**
- * @fileoverview Página de Login de Usuários.
+ * @fileoverview Página de Login de Usuários com suporte a Multi-Tenant via Subdomínio.
+ * 
  * Este componente de cliente renderiza o formulário de login e gerencia a lógica de
  * submissão. Ele interage com a `login` server action para autenticar o usuário.
- * Uma característica importante é o tratamento do cenário multi-tenant: se um
- * usuário pertence a múltiplos "espaços de trabalho" (tenants), a UI apresenta
- * um seletor para que o usuário escolha em qual tenant deseja logar.
+ * 
+ * FUNCIONALIDADE MULTI-TENANT:
+ * - Se acessado via subdomínio (ex: demo.localhost:3000), o tenant é pré-selecionado
+ *   e o seletor de workspace fica bloqueado.
+ * - O sistema valida que o usuário pertence ao tenant do subdomínio atual.
+ * - Se o usuário não pertence ao tenant, exibe mensagem de erro específica.
  */
 'use client';
 
@@ -15,10 +19,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, Loader2, Lock } from 'lucide-react';
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { login, getDevUsers } from '@/app/auth/actions';
+import { login, getDevUsers, getCurrentTenantContext } from '@/app/auth/actions';
 import { useAuth } from '@/contexts/auth-context';
 import type { UserProfileWithPermissions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -55,6 +59,8 @@ function LoginPageContent() {
     const [availableTenants, setAvailableTenants] = useState<TenantOption[]>([]);
     const [isFetchingTenants, setIsFetchingTenants] = useState<boolean>(true);
     const [tenantsError, setTenantsError] = useState<string | null>(null);
+    const [lockedTenantId, setLockedTenantId] = useState<string | null>(null);
+    const [lockedTenantName, setLockedTenantName] = useState<string | null>(null);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginFormSchema),
@@ -63,6 +69,18 @@ function LoginPageContent() {
             password: '',
         },
     });
+
+    // Fetch tenant context on mount to see if we are in a specific subdomain
+    useEffect(() => {
+        getCurrentTenantContext().then(context => {
+            if (context.tenantId && context.tenantId !== '1') {
+                setLockedTenantId(context.tenantId);
+                setLockedTenantName(context.tenantName);
+                setSelectedTenantId(context.tenantId);
+                form.setValue('tenantId', context.tenantId);
+            }
+        });
+    }, [form]);
 
     const fetchTenants = useCallback(async () => {
         try {
@@ -89,6 +107,9 @@ function LoginPageContent() {
     const tenantOptions = userWithMultipleTenants?.tenants || availableTenants;
 
     useEffect(() => {
+        // Don't auto-select if we have a locked tenant
+        if (lockedTenantId) return;
+        
         if (tenantOptions.length === 0) {
             return;
         }
@@ -101,13 +122,16 @@ function LoginPageContent() {
             setSelectedTenantId(defaultTenantId);
             form.setValue('tenantId', defaultTenantId);
         }
-    }, [tenantOptions, form, selectedTenantId]);
+    }, [tenantOptions, form, selectedTenantId, lockedTenantId]);
 
     const handleLogin = async (values: LoginFormValues) => {
         setIsLoading(true);
         setError(null);
 
-        if (!selectedTenantId) {
+        // Usa o tenantId dos values (passado diretamente) OU do estado
+        const effectiveTenantId = values.tenantId || lockedTenantId || selectedTenantId;
+        
+        if (!effectiveTenantId) {
             const validationMessage = 'Selecione um espaço de trabalho antes de continuar.';
             setError(validationMessage);
             toast({ title: 'Selecione o Espaço de Trabalho', description: validationMessage, variant: 'destructive' });
@@ -115,19 +139,19 @@ function LoginPageContent() {
             return;
         }
 
-        values.tenantId = selectedTenantId;
+        // Garante que o tenantId está nos values
+        values.tenantId = effectiveTenantId;
 
         try {
             const result = await login(values);
 
-            if (result.success && result.user && result.user.tenants && result.user.tenants.length > 1 && !selectedTenantId) {
+            if (result.success && result.user && result.user.tenants && result.user.tenants.length > 1 && !effectiveTenantId) {
                 toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
                 setUserWithMultipleTenants(result.user);
-                form.setValue('password', '[already_validated]'); // Placeholder para não reenviar senha
+                form.setValue('password', '[already_validated]');
             } else if (result.success && result.user) {
                 const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
-
-                const finalTenantId = selectedTenantId || (result.user.tenants && result.user.tenants.length > 0 ? result.user.tenants[0].id : '1');
+                const finalTenantId = effectiveTenantId || (result.user.tenants && result.user.tenants.length > 0 ? result.user.tenants[0].id : '1');
 
                 loginUser(result.user, finalTenantId);
 
@@ -137,10 +161,7 @@ function LoginPageContent() {
                 });
 
                 setTimeout(() => {
-                    // router.push(redirectUrl);
-                    // Use window.location.href for a hard redirect to ensure state is cleared and navigation succeeds
                     window.location.href = redirectUrl;
-
                 }, 300);
 
             } else {
@@ -168,19 +189,20 @@ function LoginPageContent() {
                 {/* DEV ONLY: User Selector */}
                 <DevUserSelector onSelect={(u) => {
                     form.setValue('email', u.email);
-                    form.setValue('password', u.password); // Use password from the object passed by DevUserSelector
+                    form.setValue('password', u.password);
 
-                    // Auto-login logic
-                    const tenantId = selectedTenantId || (availableTenants.length > 0 ? availableTenants[0].id : undefined);
+                    // Prioridade: lockedTenantId (do subdomínio) > selectedTenantId > primeiro da lista
+                    const tenantId = lockedTenantId || selectedTenantId || (availableTenants.length > 0 ? availableTenants[0].id : undefined);
                     if (tenantId) {
+                        // Atualiza o estado se não estava setado
                         if (!selectedTenantId) {
                             setSelectedTenantId(tenantId);
-                            form.setValue('tenantId', tenantId);
                         }
+                        form.setValue('tenantId', tenantId);
                         toast({ title: "Auto-login", description: `Autenticando como ${u.roleName}...` });
                         handleLogin({
                             email: u.email,
-                            password: u.password, // Use password from the object passed by DevUserSelector
+                            password: u.password,
                             tenantId: tenantId
                         });
                     } else {
@@ -197,7 +219,10 @@ function LoginPageContent() {
                                 render={() => (
                                     <FormItem>
                                         <Label htmlFor="tenant-select" className="flex items-center justify-between text-sm font-medium">
-                                            Espaço de Trabalho
+                                            <span className="flex items-center gap-1">
+                                                Espaço de Trabalho
+                                                {lockedTenantId && <Lock className="h-3 w-3 text-blue-500" />}
+                                            </span>
                                             {isFetchingTenants && <span className="text-xs text-muted-foreground">Carregando...</span>}
                                         </Label>
                                         <FormControl>
@@ -207,7 +232,7 @@ function LoginPageContent() {
                                                     setSelectedTenantId(value);
                                                     form.setValue('tenantId', value);
                                                 }}
-                                                disabled={isLoading || isFetchingTenants || tenantOptions.length === 0}
+                                                disabled={isLoading || isFetchingTenants || tenantOptions.length === 0 || !!lockedTenantId}
                                             >
                                                 <SelectTrigger id="tenant-select" data-testid="tenant-select" data-ai-id="auth-login-tenant-select">
                                                     <SelectValue placeholder={isFetchingTenants ? 'Carregando espaços...' : 'Selecione um tenant'} />
@@ -225,7 +250,11 @@ function LoginPageContent() {
                                                 </SelectContent>
                                             </Select>
                                         </FormControl>
-                                        {userWithMultipleTenants ? (
+                                        {lockedTenantId ? (
+                                            <p className="text-xs text-blue-600 font-medium mt-1">
+                                                Você está acessando: <strong>{lockedTenantName || 'Este espaço exclusivo'}</strong>
+                                            </p>
+                                        ) : userWithMultipleTenants ? (
                                             <p className="text-xs text-muted-foreground">Escolha em qual espaço de trabalho deseja entrar.</p>
                                         ) : (
                                             <p className="text-xs text-muted-foreground">Selecione o tenant com o qual deseja autenticar.</p>
@@ -311,8 +340,6 @@ function DevUserSelector({ onSelect }: { onSelect: (u: any) => void }) {
     const [users, setUsers] = useState<any[]>([]);
 
     useEffect(() => {
-        // Check if we are in development mode (client-side check usually relies on env vars exposed to client or just try calling the action)
-        // Since getDevUsers checks NODE_ENV on server, it will return empty array if not dev.
         getDevUsers().then(setUsers);
     }, []);
 

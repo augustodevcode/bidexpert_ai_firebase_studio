@@ -37,35 +37,32 @@ if (!secretKey || secretKey.length < 32) {
 // ============================================================================
 
 /**
- * Obtém o domínio do cookie para suporte cross-subdomain.
+ * Obtém o domínio do cookie para configuração STRICT de tenant.
  * 
- * Em produção: retorna ".bidexpert.com.br" (com ponto no início)
- * para que o cookie seja compartilhado entre todos os subdomínios.
+ * IMPORTANTE: Para isolamento estrito entre tenants, NÃO compartilhamos
+ * cookies entre subdomínios. Cada subdomain terá sua própria sessão.
  * 
- * Em desenvolvimento: retorna undefined (cookie funciona só no localhost)
+ * Isso significa que:
+ * - demo.localhost:3000 terá sua própria sessão
+ * - crm.localhost:3000 terá sua própria sessão
+ * - O usuário precisa fazer login em cada subdomain separadamente
+ * 
+ * Esta é uma decisão de segurança para evitar vazamento de dados entre tenants.
  */
 function getCookieDomain(): string | undefined {
-  const isProduction = process.env.NODE_ENV === 'production';
+  // STRICT MODE: Sempre retorna undefined para que o cookie seja
+  // associado apenas ao host atual (não compartilhado entre subdomínios)
+  // 
+  // Se no futuro precisar de SSO entre subdomínios, mude para:
+  // return `.${appDomain}` em produção
   
-  // Em desenvolvimento, não define domain (funciona em localhost)
-  if (!isProduction) {
-    return undefined;
-  }
-  
-  // Usa COOKIE_DOMAIN se definido explicitamente
+  // Se COOKIE_DOMAIN estiver explicitamente definido, respeita
   if (process.env.COOKIE_DOMAIN) {
     return process.env.COOKIE_DOMAIN;
   }
   
-  // Em produção, usa o APP_DOMAIN com ponto no início
-  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'bidexpert.com.br';
-  
-  // Remove porta se houver
-  const domainWithoutPort = appDomain.replace(/:\d+$/, '');
-  
-  // Adiciona ponto no início para cross-subdomain
-  // Ex: ".bidexpert.com.br" permite cookies em *.bidexpert.com.br
-  return `.${domainWithoutPort}`;
+  // Por padrão: undefined = cookie restrito ao host atual
+  return undefined;
 }
 
 export async function encrypt(payload: any) {
