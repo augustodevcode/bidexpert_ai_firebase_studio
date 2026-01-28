@@ -2,7 +2,7 @@
  * @fileoverview Complete Playwright test suite for BidExpert realtime features
  * Tests cover: WebSocket bids, soft close, audit/logs, blockchain toggle, responsiveness
  * Prerequisites: 
- *  - Database must be seeded with npm run db:seed:v3
+ *  - Database must be seeded with `npm run db:seed:ultimate`
  *  - Server running on port 9002 via npm run dev
  */
 

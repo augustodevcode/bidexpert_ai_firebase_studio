@@ -140,12 +140,17 @@ npm run db:push
 
 ### 2. Popular com Dados de Amostra
 
-Este comando executa o script `seed-db-sample-data.ts`, que preenche o banco de dados com um conjunto rico de dados de exemplo (leilões, lotes, usuários, etc.), criando um ambiente realista para os testes.
+- Para preencher o banco para *demos completas* (RECOMENDADO):
+```bash
+npm run db:seed:ultimate
+```
 
+- Para dados de amostra mais leves usados em E2E:
 ```bash
 npm run db:seed:samples
 ```
-*Nota: O comando `db:push` já executa o `db:seed` para dados essenciais, mas o `db:seed:samples` é necessário para os dados de teste E2E.*
+
+*Nota:* `db:push` executa seeds essenciais; use `db:seed:ultimate` para um dataset completo de demonstração.
 
 ### 3. Executar Testes de Integração e E2E (Vitest)
 

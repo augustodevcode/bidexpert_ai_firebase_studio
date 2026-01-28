@@ -1,4 +1,5 @@
 /**
+ * DEPRECATED — use `scripts/ultimate-master-seed.ts` for canonical demo datasets. This test seed remains for isolated unit scenarios.
  * Seed script for e2e test data
  * Generates realistic test data for auction platform testing
  * Run with: npm run db:seed:test

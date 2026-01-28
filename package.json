@@ -6,7 +6,7 @@
         "dev": "npx prisma generate && ts-node --project tsconfig.server.json src/server.ts",
         "dev:next": "npx prisma generate && next dev --port 9002 --hostname 0.0.0.0",
         "dev:9003": "npx prisma generate && next dev --port 9003 --hostname 0.0.0.0",
-        "dev:9005": "npx prisma generate && next dev --port 9005 --hostname 0.0.0.0",
+        "dev:9005": "next dev --port 9005 --hostname 0.0.0.0",
         "dev:9009": "npx prisma generate && next dev --port 9009 --hostname 0.0.0.0",
         "dev:with-seed": "npx prisma db push && npx tsx --env-file=.env scripts/seed-db.ts && npx next dev --port 9002 --hostname 0.0.0.0",
         "build": "npx prisma generate && next build --debug",
@@ -36,6 +36,9 @@
         "db:seed:resume": "npx tsx --env-file=.env scripts/seed-resume.ts",
         "db:seed:auctions": "npx tsx --env-file=.env scripts/seed-auctions-only.ts",
         "db:seed:populate": "npx tsx seed-data-extended-v3.ts",
+        "db:seed:ultimate": "npx tsx --env-file=.env scripts/ultimate-master-seed.ts",
+        "seed:verify": "npx tsx --env-file=.env scripts/seed-verify.ts",
+        "test:seed-verify": "vitest run tests/unit/seed-verify.spec.ts",
         "db:check-status": "npx tsx --env-file=.env scripts/check-seed-status.ts",
         "db:enrich:v2": "npx tsx --env-file=.env scripts/enrich-lot-v2-data.ts",
         "db:migrate": "npx prisma migrate dev",
@@ -65,7 +68,21 @@
         "skill:db-metrics": "npx tsx scripts/db-metrics-snapshot.ts",
         "skill:audit-report": "npx tsx scripts/audit-trail-report.ts",
         "skill:risk-matrix": "npx tsx scripts/vertical-risk-matrix.ts",
+<<<<<<< HEAD
         "skill:funnel": "npx tsx scripts/conversion-funnel-analyzer.ts"
+=======
+        "skill:funnel": "npx tsx scripts/conversion-funnel-analyzer.ts",
+        "check:demo-consistency": "npx tsx --env-file=.env scripts/check-demo-consistency.ts",
+        "dev:hml": "npx prisma generate && next dev --port 9006 --hostname 0.0.0.0 --env-file=.env.hml",
+        "dev:demo": "npx prisma generate && next dev --port 9007 --hostname 0.0.0.0 --env-file=.env.demo",
+        "dev:prod": "npx prisma generate && next dev --port 9008 --hostname 0.0.0.0 --env-file=.env.prod",
+        "db:push:hml": "npx prisma db push --env-file=.env.hml",
+        "db:push:demo": "npx prisma db push --env-file=.env.demo",
+        "db:push:prod": "npx prisma db push --env-file=.env.prod",
+        "db:seed:hml": "cross-env DATABASE_URL=\"mysql://root:M!nh@S3nha2025@localhost:3306/bidexpert_hml\" npx tsx scripts/ultimate-master-seed.ts",
+        "db:seed:demo": "cross-env DATABASE_URL=\"mysql://root:M!nh@S3nha2025@localhost:3306/bidexpert_demo\" npx tsx scripts/ultimate-master-seed.ts",
+        "db:seed:prod": "cross-env DATABASE_URL=\"mysql://root:M!nh@S3nha2025@localhost:3306/bidexpert_prod\" npx tsx scripts/ultimate-master-seed.ts"
+>>>>>>> 56fe66d3 (chore(seed): canonicalize demo seed to scripts/ultimate-master-seed.ts; deprecate variants, add seed-verify, tests and CI workflow)
     },
     "dependencies": {
         "@auth/core": "^0.34.3",

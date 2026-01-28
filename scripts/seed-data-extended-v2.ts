@@ -1,5 +1,6 @@
 
 /**
+ * DEPRECATED — use `scripts/ultimate-master-seed.ts`. This file will be removed after two releases; update your PRs to modify `ultimate-master-seed.ts` instead.
  * @file Extended Seed Script (v2.4)
  * @version 2.4
  * @description Populates the database with a comprehensive and interconnected set of data

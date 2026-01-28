@@ -9,7 +9,7 @@
  * D) PWA + Responsivo
  * E) POCs Mock FIPE/Cartórios/Tribunais
  * 
- * Requer: npm run db:seed:v3 executado antes
+ * Requer: `npm run db:seed:ultimate` executado antes
  * 
  * Execução: npm run test:e2e tests/e2e/5-gaps-complete.spec.ts
  */

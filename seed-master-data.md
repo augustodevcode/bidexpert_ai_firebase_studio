@@ -189,18 +189,15 @@ const user = await services.user.create({ ... });
 
 ## Como Executar
 
-### Script Atual
+### Seed canônico (RECOMENDADO)
 ```bash
-npx tsx scripts/seed-data-extended-v3.ts
-```
-
-### Script Expandido (Recomendado)
-```bash
-npx tsx scripts/seed-data-extended.ts
+npm run db:seed:ultimate
 ```
 
 ### Verificação
 ```bash
+npm run seed:verify
+# ou (ferramentas auxiliares)
 npx tsx scripts/check-counts.ts
 npx tsx scripts/check-seed-status.ts
 ```
@@ -233,6 +230,23 @@ npx tsx scripts/check-seed-status.ts
 2. Implementar sistema de pagamentos
 3. Garantir 100+ arrematantes pagantes
 4. Criar avaliações e notificações
+
+## Próximos Passos para Implementação Completa
+
+### Execução do Seed (canônico)
+1. **Executar Seed (canônico)**
+   ```bash
+   npm run db:seed:ultimate
+   ```
+
+2. **Implementar Seed Master Completo**
+   - Usar `scripts/ultimate-master-seed.ts` como fonte única canônica
+   - Garantir 100+ arrematantes com pagamento
+
+### Verificação Final
+```bash
+npx tsx scripts/verify-seed-data.ts
+```
 
 ## Validações e Testes
 

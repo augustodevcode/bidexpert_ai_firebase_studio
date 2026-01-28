@@ -1,4 +1,6 @@
 /**
+ * DEPRECATED — use `scripts/ultimate-master-seed.ts`. This file will be removed after two releases; update your PRs to modify `ultimate-master-seed.ts` instead.
+ *
  * SUPER SEED MASTER DATA - Script Unificado e Abrangente
  *
  * Este script consolida TODOS os arquivos de seed analisados, criando um dataset

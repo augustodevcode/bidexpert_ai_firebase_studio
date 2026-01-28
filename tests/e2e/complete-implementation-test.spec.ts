@@ -3,7 +3,7 @@ import { test, expect, Page } from '@playwright/test';
 /**
  * COMPLETE IMPLEMENTATION TEST SUITE
  * Testa todas as funcionalidades implementadas até o momento
- * Executar seed-data-extended-v3.ts antes destes testes
+ * Executar `npm run db:seed:ultimate` antes destes testes
  */
 
 // Configuration

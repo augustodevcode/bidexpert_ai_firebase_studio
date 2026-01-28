@@ -1,4 +1,5 @@
 // scripts/seed-data-extended.ts
+// DEPRECATED — use `scripts/ultimate-master-seed.ts`. This file will be removed after two releases; update your PRs to modify `ultimate-master-seed.ts` instead.
 /**
  * @fileoverview Script de seed completo e robusto para a plataforma BidExpert.
  * Popula TODAS as tabelas do banco de dados com dados consistentes e interligados,

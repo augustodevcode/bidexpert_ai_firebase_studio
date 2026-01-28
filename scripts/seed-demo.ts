@@ -1,4 +1,5 @@
 /**
+ * DEPRECATED — use `scripts/ultimate-master-seed.ts`. This file will be removed after two releases; update your PRs to modify `ultimate-master-seed.ts` instead.
  * @fileoverview Script de Seed Massivo para o Ambiente Demo (BidExpert).
  * 
  * Este script gera uma massa de dados completa para demonstração, seguindo as regras:
