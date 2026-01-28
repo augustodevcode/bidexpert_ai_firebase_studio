@@ -48,7 +48,7 @@ async function main() {
             auctionType: 'EXTRAJUDICIAL',
             cityId: city.id,
             stateId: city.stateId,
-            tenantId: '1',
+            tenantId: 1n,
           },
         });
 
@@ -80,7 +80,7 @@ async function main() {
               cityName: city.name,
               stateId: city.stateId,
               stateUf: city.state.uf,
-              tenantId: '1',
+              tenantId: 1n,
             },
           });
           created++;

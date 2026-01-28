@@ -21,7 +21,7 @@ async function checkData() {
     }
 
     const auctionById = await prisma.auction.findUnique({
-        where: { id: '201' }
+      where: { id: 201n }
     });
 
     if (auctionById) {

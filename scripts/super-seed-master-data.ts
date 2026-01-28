@@ -71,7 +71,7 @@ const prisma = new PrismaClient();
 
 // --- Armazenamento de Entidades Criadas (expandido) ---
 const entityStore: {
-  tenantId: string;
+  tenantId: bigint;
   roles: Record<string, bigint>;
   users: (Prisma.UserGetPayload<{}> & { roleNames: string[], id: bigint })[];
   categories: (Prisma.LotCategoryGetPayload<{ include: { subcategories: true } }> & { id: bigint })[];
@@ -97,7 +97,7 @@ const entityStore: {
   payments: (Prisma.PaymentGetPayload<{}> & { id: bigint })[];
   installmentPayments: (Prisma.InstallmentPaymentGetPayload<{}> & { id: bigint })[];
 } = {
-  tenantId: '1',
+  tenantId: 1n,
   roles: {},
   users: [],
   categories: [],

@@ -78,7 +78,7 @@ const slugifyText = (text: string) => {
 
 // --- Armazenamento de Entidades Criadas ---
 const entityStore: {
-  tenantId: string;
+  tenantId: bigint;
   roles: Record<string, bigint>;
   users: (Prisma.UserGetPayload<{}> & { roleNames: string[], id: bigint })[];
   categories: (Prisma.LotCategoryGetPayload<{ include: { subcategories: true } }> & { id: bigint })[];
@@ -101,7 +101,7 @@ const entityStore: {
   vehicleMakes: (Prisma.VehicleMakeGetPayload<{}> & { id: bigint })[];
   vehicleModels: (Prisma.VehicleModelGetPayload<{}> & { id: bigint })[];
 } = {
-  tenantId: '1',
+  tenantId: 1n,
   roles: {},
   users: [],
   categories: [],

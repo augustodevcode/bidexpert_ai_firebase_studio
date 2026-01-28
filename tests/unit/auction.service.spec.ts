@@ -23,7 +23,7 @@ describe('AuctionService.updateAuction', () => {
     service = new AuctionService();
     // Sobrescreve dependências internas para evitar acesso ao banco real
     (service as any).auctionRepository = {
-      findById: vi.fn().mockResolvedValue({ id: '40', tenantId: '1' }),
+      findById: vi.fn().mockResolvedValue({ id: 40n, tenantId: 1n }),
     };
     (service as any).prisma = {
       $transaction: (cb: any) => cb(tx),

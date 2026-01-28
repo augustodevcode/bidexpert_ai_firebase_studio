@@ -47,7 +47,7 @@ describe('LotService.updateLot', () => {
     const payload = {
       title: 'Atualização via publicId',
       assetIds: ['101', '', '202'],
-      tenantId: '7'
+      tenantId: 7n
     };
 
     const response = await service.updateLot('lot-public-123', payload);

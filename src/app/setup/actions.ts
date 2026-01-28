@@ -79,6 +79,7 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
         }
 
         const landlordTenantId = '1';
+        const landlordTenantIdBigInt = 1n;
         let userToLogin;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -100,7 +101,7 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
                          create: { roleId: adminRole.id, assignedBy: 'system-setup' }
                      },
                      tenants: {
-                         create: { tenantId: landlordTenantId, assignedBy: 'system-setup' }
+                         create: { tenantId: landlordTenantIdBigInt, assignedBy: 'system-setup' }
                      }
                  }
              });
@@ -146,7 +147,7 @@ export async function markSetupAsComplete(): Promise<{ success: boolean; message
   try {
     const settingsService = new PlatformSettingsService();
     // The setup completion flag is a global setting tied to the Landlord tenant.
-    const result = await settingsService.updateSettings({ tenantId: '1', isSetupComplete: true });
+    const result = await settingsService.updateSettings({ tenantId: landlordTenantIdBigInt, isSetupComplete: true });
 
     if (result.success) {
       console.log('[Setup Action] Platform setup marked as complete in the database.');
