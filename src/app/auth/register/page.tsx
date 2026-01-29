@@ -24,7 +24,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { createUser } from '@/app/admin/users/actions';
+import { createUser, associateContactMessages } from '@/app/admin/users/actions';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -32,7 +32,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { registrationFormSchema, type RegistrationFormValues } from './form-schema';
 import DocumentUploadCard from '@/components/document-upload-card';
 import type { UserCreationData } from '@/types';
-import { UserContactAssociationService } from '@/services/user-contact-association.service';
+// Removed: import { UserContactAssociationService } from '@/services/user-contact-association.service';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -154,8 +154,7 @@ export default function RegisterPage() {
       if (result.success && result.userId) {
         // Associar mensagens de contato anônimas ao novo usuário
         try {
-          const associationService = new UserContactAssociationService();
-          const associatedCount = await associationService.associateContactMessages(BigInt(result.userId), data.email.trim());
+          const associatedCount = await associateContactMessages(result.userId, data.email.trim());
           
           if (associatedCount > 0) {
             console.log(`Associadas ${associatedCount} mensagens de contato ao usuário ${result.userId}`);

@@ -1,0 +1,22 @@
+
+================================================================================
+[2026-01-29T00:18:58.941Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+[STDOUT]   - Local:        http://localhost:9005
+  - Network:      http://0.0.0.0:9005
+  - Environments: .env
+
+ ✓ Starting...
+[STDOUT]  ✓ Ready in 4.6s
+
+[2026-01-29T00:19:11.303Z] Processo interrompido pelo usuário

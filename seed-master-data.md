@@ -307,3 +307,10 @@ Para atingir os requisitos de **2000+ ativos, 1000+ lotes, 500+ leilÃµes**:
 
 O sistema estÃ¡ pronto para expansÃ£o controlada dos dados de seed, mantendo consistÃªncia e integridade referencial.</content>
 <parameter name="filePath">e:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\seed-master-data.md
+## Atualização (2025) - Ultimate Master Seed Reconstruído
+
+O arquivo scripts/ultimate-master-seed.ts foi reconstruído combinando:
+- scripts/seed-data-extended-v3.ts (Lógica Base Completa)
+- scripts/seed-populate-missing.ts (Dados Complementares)
+
+Ele agora restaura o banco e popula toda a massa de dados necessária para Demo e HML.

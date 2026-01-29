@@ -13,6 +13,7 @@ import type { UserProfileWithPermissions, Role, UserCreationData, EditableUserPr
 import { UserService } from '@/services/user.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { prisma } from '@/lib/prisma'; // Import prisma directly for dev-only action
+import { UserContactAssociationService } from '@/services/user-contact-association.service';
 
 const userService = new UserService();
 
@@ -94,4 +95,9 @@ export async function deleteUser(id: string): Promise<{ success: boolean; messag
         revalidatePath('/admin/users');
     }
   return result;
+}
+
+export async function associateContactMessages(userId: string, email: string): Promise<number> {
+  const associationService = new UserContactAssociationService();
+  return associationService.associateContactMessages(BigInt(userId), email);
 }

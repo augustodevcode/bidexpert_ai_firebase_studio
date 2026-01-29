@@ -138,6 +138,9 @@ Este comando irá garantir que o schema do seu banco de dados está atualizado c
 npm run db:push
 ```
 
+> Nota: A partir desta branch, o fluxo de desenvolvimento **usa MySQL local por padrão** (não usamos mais Locaweb para desenvolvimento local). Ajuste sua `.env` para apontar `DATABASE_URL` para `localhost` (ex.: `mysql://root:password@localhost:3306/bidexpert_dev`) e então rode `npm run db:seed:dev`.
+
+
 ### 2. Popular com Dados de Amostra
 
 - Para preencher o banco para *demos completas* (RECOMENDADO):

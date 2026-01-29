@@ -181,6 +181,11 @@ export async function middleware(req: NextRequest) {
     const portSuffix = req.nextUrl.port ? `:${req.nextUrl.port}` : '';
     // Determine base domain from hostname (remove subdomains if any, though LANDLORD mostly doesn't have them except www)
     const baseDomain = hostname.replace('www.', '').replace(/:\d+$/, ''); 
+
+    // Skip redirect if accessing via IP address (avoids malformed URL crm.127.0.0.1)
+    if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(baseDomain)) {
+      return NextResponse.next();
+    }
     
     // Construct CRM URL
     const crmUrl = `${protocol}//crm.${baseDomain}${portSuffix}`;

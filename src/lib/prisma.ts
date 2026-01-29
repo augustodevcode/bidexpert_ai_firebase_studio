@@ -1,7 +1,14 @@
+/**
+ * @fileoverview Instâncias Prisma com seleção dinâmica por tenant/subdomínio.
+ * Inclui suporte a banco demo e proxy para roteamento automático por slug.
+ *
+ * BDD: Garantir que subdomínios como "demo" usem o banco correto sem alterar chamadas existentes.
+ * TDD: Cobrir seleção de cliente Prisma por subdomínio com testes unitários.
+ */
 
 import { PrismaClient } from '@prisma/client';
-import { auditMiddleware } from './audit-middleware';
 import { headers } from 'next/headers';
+import { auditMiddleware } from './audit-middleware';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof createPrismaClient> | undefined;
@@ -110,59 +117,25 @@ function createPrismaClient(databaseUrl?: string) {
 }
 
 // Cliente Principal (Production/Default)
-const defaultClient = globalForPrisma.prisma ?? createPrismaClient();
+const basePrisma = globalForPrisma.prisma ?? createPrismaClient();
 
 // Cliente Demo (Opcional)
-const demoClient = globalForPrisma.demoPrisma ?? (process.env.DATABASE_URL_DEMO 
-  ? createPrismaClient(process.env.DATABASE_URL_DEMO) 
+export const demoPrisma = globalForPrisma.demoPrisma ?? (process.env.DATABASE_URL_DEMO
+  ? createPrismaClient(process.env.DATABASE_URL_DEMO)
   : null);
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = defaultClient;
-  if (demoClient) globalForPrisma.demoPrisma = demoClient;
+  globalForPrisma.prisma = basePrisma;
+  if (demoPrisma) globalForPrisma.demoPrisma = demoPrisma;
 }
 
-/**
- * Proxy Dinâmico para seleção de Banco de Dados.
- * Intercepta chamadas ao 'prisma' e verifica os headers da requisição
- * para determinar se deve usar o banco Demo ou Principal.
- * 
- * Requer que o middleware.ts defina o header 'x-tenant-subdomain'.
- */
-export const prisma = new Proxy(defaultClient, {
-  get(target, prop, receiver) {
-    let client = target;
-    
-    try {
-      // Tenta obter o header para verificar se é ambiente Demo
-      const h = headers();
-      const subdomain = h.get('x-tenant-subdomain');
-      
-      // Se for subdomínio 'demo' e cliente estiver configurado, troca
-      if (subdomain === 'demo' && demoClient) {
-        client = demoClient;
-      }
-    } catch (e) {
-      // Fora do contexto de requisição (build time ou scripts), usa o default
-    }
-    
-    const value = Reflect.get(client, prop, receiver);
-    
-    // Garante que métodos sejam chamados no contexto do cliente correto
-    if (typeof value === 'function') {
-      return value.bind(client);
-    }
-    
-    return value;
-  }
-});
-
-// Alias explícitos para usos específicos se necessário
-export const mainPrisma = defaultClient;
-export const demoPrisma = demoClient;
+// Alias para compatibilidade
+export const mainPrisma = basePrisma;
 
 /**
  * Helper para obter o cliente correto manualmente se necessário
+ * Nota: A detecção automática de tenant foi removida para evitar problemas de compilação.
+ * Use este helper explicitamente quando precisar do cliente demo.
  */
 export function getPrismaClientBySubdomain(subdomain?: string | null) {
   if (subdomain?.toLowerCase() === 'demo' && demoPrisma) {
@@ -171,4 +144,29 @@ export function getPrismaClientBySubdomain(subdomain?: string | null) {
   return mainPrisma;
 }
 
-export default prisma;
+function resolveSubdomainFromHeaders(): string | null {
+  try {
+    const headersList = headers();
+    const subdomain = headersList.get('x-tenant-subdomain');
+    return subdomain ? subdomain.toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getPrismaInstance(subdomain?: string | null) {
+  const resolvedSubdomain = subdomain ?? resolveSubdomainFromHeaders();
+  return getPrismaClientBySubdomain(resolvedSubdomain);
+}
+
+const prismaProxy = new Proxy(basePrisma, {
+  get(_target, prop) {
+    const client = getPrismaInstance();
+    const value = (client as any)[prop];
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+}) as PrismaClient;
+
+export const prisma = prismaProxy;
+
+export default prismaProxy;

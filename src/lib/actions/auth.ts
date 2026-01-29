@@ -60,7 +60,16 @@ async function ensureDefaultTenant(): Promise<string> {
             return tenant.id.toString();
         })()
         .catch((error) => {
+            // Se falhar devido a problemas de BD (ex.: credenciais, conta bloqueada),
+            // em ambiente de desenvolvimento não queremos travar todo o servidor.
             ensureDefaultTenantPromise = null;
+
+            console.error('Erro durante ensureDefaultTenant:', error);
+            if (process.env.NODE_ENV !== 'production') {
+                console.warn('Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.');
+                return '1';
+            }
+
             throw error;
         })
         .finally(() => {
@@ -88,6 +97,10 @@ export async function getTenantIdFromRequest(isPublicCall = false): Promise<stri
             return await ensureDefaultTenant();
         } catch (error) {
             console.error("Falha crítica ao garantir a existência do tenant padrão em chamada pública:", error);
+            if (process.env.NODE_ENV !== 'production') {
+                console.warn('Ambiente de desenvolvimento: fallback tenantId=1 será usado para chamadas públicas.');
+                return '1';
+            }
             throw new Error("Falha ao inicializar o tenant principal do sistema.");
         }
     }
