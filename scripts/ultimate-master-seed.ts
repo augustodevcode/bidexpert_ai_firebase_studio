@@ -480,9 +480,34 @@ async function main() {
                     assignedBy: 'system',
                 },
             });
-            console.log('   Fixed admin user created.');
+            await prisma.usersOnTenants.create({
+                data: {
+                    userId: fixedAdmin.id,
+                    tenantId: tenants[0].id,
+                    assignedBy: 'system',
+                },
+            });
+            console.log('   Fixed admin user created and assigned to tenant.');
         } else {
-             console.log('   Fixed admin user already exists.');
+             console.log('   Fixed admin user already exists. Updating password...');
+             await prisma.user.update({
+                 where: { email: 'admin@bidexpert.com' },
+                 data: { password: senhaHash }
+             });
+             // Ensure tenant association exists
+             const tenantAssociation = await prisma.usersOnTenants.findUnique({
+                 where: { userId_tenantId: { userId: fixedAdmin.id, tenantId: tenants[0].id } }
+             });
+             if (!tenantAssociation) {
+                 await prisma.usersOnTenants.create({
+                     data: {
+                         userId: fixedAdmin.id,
+                         tenantId: tenants[0].id,
+                         assignedBy: 'system',
+                     },
+                 });
+                 console.log('   Fixed admin user assigned to tenant (was missing).');
+             }
         }
     } catch (e) {
         console.log('   Error ensuring fixed admin user (ignoring):', e);

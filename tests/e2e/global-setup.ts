@@ -1,3 +1,6 @@
+/**
+ * @fileoverview Setup global do Playwright com autenticação por tenant e usuários seed.
+ */
 import { chromium, FullConfig, Page } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -21,10 +24,22 @@ async function captureDebugArtifacts(page: Page, name: string) {
 
 async function globalSetup(config: FullConfig) {
   const baseURL = process.env.BASE_URL || config.projects[0].use.baseURL || 'http://localhost:9005';
+  const baseUrlObject = new URL(baseURL);
+  const isDemoTenant = baseUrlObject.hostname.startsWith('demo.') || baseUrlObject.hostname.includes('demo');
+  const adminEmail = process.env.ADMIN_EMAIL || (isDemoTenant ? 'demo.admin@bidexpert.com.br' : 'admin@bidexpert.com');
+  const adminPassword = process.env.ADMIN_PASSWORD || (isDemoTenant ? 'demo@123' : 'Test@12345');
+  const fallbackAdminPassword = process.env.ADMIN_PASSWORD_FALLBACK || (isDemoTenant ? 'demo@123' : 'Admin@123');
+  const shouldAuthLawyer = process.env.PLAYWRIGHT_SKIP_LAWYER !== '1' && !isDemoTenant;
   
   console.log('🔐 Iniciando autenticação global para testes...');
   console.log('🌐 Base URL:', baseURL);
   console.log('⏳ Aguardando servidor estar disponível...');
+
+  // Extract port and protocol to check connectivity on localhost/IP directly
+  // This bypasses issues where Node cannot resolve *.localhost
+  const checkUrl = `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`;
+
+  console.log(`🔍 Checking connectivity at ${checkUrl} (bypassing DNS for check)...`);
   
   // Aguarda o servidor estar realmente acessível antes de prosseguir
   const maxWaitTime = 180000; // 3 minutos
@@ -33,13 +48,22 @@ async function globalSetup(config: FullConfig) {
   
   while (!serverReady && (Date.now() - startTime) < maxWaitTime) {
     try {
-      const response = await fetch(`${baseURL}/auth/login`);
+      const response = await fetch(checkUrl);
       if (response.status < 500) {
         serverReady = true;
         console.log('✅ Servidor acessível');
       }
     } catch (e) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Fallback: try original URL just in case
+      try {
+          const response = await fetch(`${baseURL}/auth/login`);
+          if (response.status < 500) {
+            serverReady = true;
+            console.log('✅ Servidor acessível (via URL original)');
+          }
+      } catch (e2) {
+         await new Promise(resolve => setTimeout(resolve, 2000));
+      }
     }
   }
   
@@ -56,38 +80,37 @@ async function globalSetup(config: FullConfig) {
     await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await adminPage.waitForTimeout(5000);
 
-    // Wait for tenant selector to be populated
-    await adminPage.waitForSelector('[data-ai-id="auth-login-tenant-select"]', { timeout: 30000 });
-    
-    // Select "Tenant Principal" (ID: 1) which is where admin@bidexpert.com.br belongs
-    try {
-      const tenantSelector = adminPage.locator('[data-ai-id="auth-login-tenant-select"]');
-      await tenantSelector.click();
-      await adminPage.waitForTimeout(1000);
-      
-      // Look for tenant option with value "1" or containing "Principal"
-      const tenantOption = adminPage.locator('[role="option"]').filter({ hasText: /Tenant Principal|LANDLORD|Principal/i }).first();
-      
-      // Fallback: if not found, try selecting by value="1"
-      if (await tenantOption.count() > 0) {
-        await tenantOption.click();
-      } else {
-        // Try last option (usually Tenant Principal is last in the list)
-        const lastOption = adminPage.locator('[role="option"]').last();
-        await lastOption.click();
+    if (!isDemoTenant) {
+      // Wait for tenant selector to be populated
+      await adminPage.waitForSelector('[data-ai-id="auth-login-tenant-select"]', { timeout: 30000 });
+
+      // Select "Tenant Principal" (ID: 1) which is where admin@bidexpert.com.br belongs
+      try {
+        const tenantSelector = adminPage.locator('[data-ai-id="auth-login-tenant-select"]');
+        await tenantSelector.click();
+        await adminPage.waitForTimeout(1000);
+
+        const tenantOption = adminPage.locator('[role="option"]').filter({ hasText: /Tenant Principal|LANDLORD|Principal/i }).first();
+
+        if (await tenantOption.count() > 0) {
+          await tenantOption.click();
+        } else {
+          const lastOption = adminPage.locator('[role="option"]').last();
+          await lastOption.click();
+        }
+
+        await adminPage.waitForTimeout(1000);
+      } catch (e) {
+        console.log('⚠️  Tenant selector interaction failed, continuing anyway:', e);
       }
-      
-      await adminPage.waitForTimeout(1000);
-    } catch (e) {
-      console.log('⚠️  Tenant selector interaction failed, continuing anyway:', e);
     }
 
     const adminEmailInput = adminPage.locator('[data-ai-id="auth-login-email-input"]');
     const adminPasswordInput = adminPage.locator('[data-ai-id="auth-login-password-input"]');
     const adminSubmitButton = adminPage.locator('[data-ai-id="auth-login-submit-button"]');
     
-    await adminEmailInput.fill('admin@bidexpert.com');
-    await adminPasswordInput.fill('Test@12345');
+    await adminEmailInput.fill(adminEmail);
+    await adminPasswordInput.fill(adminPassword);
     await adminSubmitButton.click();
 
     try {
@@ -105,11 +128,11 @@ async function globalSetup(config: FullConfig) {
     const adminSessionCookie = adminCookies.find(c => c.name === 'session' || c.name === 'next-auth.session-token');
     
     if (!adminSessionCookie) {
-      console.warn('⚠️  Session cookie não encontrado, tentando senha alternativa Admin123...');
+      console.warn('⚠️  Session cookie não encontrado, tentando senha alternativa...');
       await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded' });
       await adminPage.waitForTimeout(5000);
-      await adminEmailInput.fill('admin@bidexpert.com');
-      await adminPasswordInput.fill('Test@12345');
+      await adminEmailInput.fill(adminEmail);
+      await adminPasswordInput.fill(fallbackAdminPassword);
       await adminSubmitButton.click();
       await adminPage.waitForURL(/\/admin|\/dashboard|\/$/i, { timeout: 60000 });
       await adminPage.waitForTimeout(2000);
@@ -119,54 +142,53 @@ async function globalSetup(config: FullConfig) {
     console.log('✅ Autenticação ADMIN concluída');
     await adminPage.close();
 
-    // 2. Autenticar como ADVOGADO
-    const lawyerPage = await browser.newPage();
-    await lawyerPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await lawyerPage.waitForTimeout(5000);
+    if (shouldAuthLawyer) {
+      // 2. Autenticar como ADVOGADO
+      const lawyerPage = await browser.newPage();
+      await lawyerPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await lawyerPage.waitForTimeout(5000);
 
-    const lawyerEmailInput = lawyerPage.locator('[data-ai-id="auth-login-email-input"]');
-    const lawyerPasswordInput = lawyerPage.locator('[data-ai-id="auth-login-password-input"]');
-    const lawyerSubmitButton = lawyerPage.locator('[data-ai-id="auth-login-submit-button"]');
-    
-    await lawyerEmailInput.fill('advogado@bidexpert.com');
-    await lawyerPasswordInput.fill('Test@12345');
-    await lawyerSubmitButton.click();
+      const lawyerEmailInput = lawyerPage.locator('[data-ai-id="auth-login-email-input"]');
+      const lawyerPasswordInput = lawyerPage.locator('[data-ai-id="auth-login-password-input"]');
+      const lawyerSubmitButton = lawyerPage.locator('[data-ai-id="auth-login-submit-button"]');
 
-    try {
-      await lawyerPage.waitForLoadState('networkidle', { timeout: 60000 });
-    } catch (error) {
-      console.warn('[global-setup] Lawyer login não atingiu networkidle em 60s, seguindo para validação manual.');
-    }
+      await lawyerEmailInput.fill('advogado@bidexpert.com');
+      await lawyerPasswordInput.fill('Test@12345');
+      await lawyerSubmitButton.click();
 
-    // Força navegação para o dashboard do advogado para validar sessão, independente do redirect padrão.
-    await lawyerPage.goto(`${baseURL}/lawyer/dashboard`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-
-    try {
-      await Promise.race([
-        lawyerPage.waitForSelector('[data-ai-id="lawyer-dashboard-page"]', { timeout: 60000 }),
-        lawyerPage.waitForSelector('[data-ai-id="lawyer-dashboard-error-state"]', { timeout: 60000 })
-      ]);
-      
-      if (await lawyerPage.isVisible('[data-ai-id="lawyer-dashboard-error-state"]')) {
-        const errorText = await lawyerPage.textContent('[data-ai-id="lawyer-dashboard-error-state"]');
-        console.warn('⚠️  Painel do advogado carregou com erro:', errorText);
-        // We don't throw here to allow other tests to proceed, but we log it.
-        // Or we can throw if we want to be strict. 
-        // Given "Só pare quando tudo estiver perfeitamente funcionando", maybe we should fix it.
-        // But for now, let's allow it to proceed so we can see if Module 2 works.
+      try {
+        await lawyerPage.waitForLoadState('networkidle', { timeout: 60000 });
+      } catch (error) {
+        console.warn('[global-setup] Lawyer login não atingiu networkidle em 60s, seguindo para validação manual.');
       }
-    } catch (error) {
-      console.error('[global-setup] Falha ao carregar painel do advogado (timeout ou erro). URL atual:', lawyerPage.url());
-      await captureDebugArtifacts(lawyerPage, `lawyer-login-error-${Date.now()}`);
-      // throw error; // Commented out to allow proceeding
+
+      // Força navegação para o dashboard do advogado para validar sessão, independente do redirect padrão.
+      await lawyerPage.goto(`${baseURL}/lawyer/dashboard`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+      try {
+        await Promise.race([
+          lawyerPage.waitForSelector('[data-ai-id="lawyer-dashboard-page"]', { timeout: 60000 }),
+          lawyerPage.waitForSelector('[data-ai-id="lawyer-dashboard-error-state"]', { timeout: 60000 })
+        ]);
+
+        if (await lawyerPage.isVisible('[data-ai-id="lawyer-dashboard-error-state"]')) {
+          const errorText = await lawyerPage.textContent('[data-ai-id="lawyer-dashboard-error-state"]');
+          console.warn('⚠️  Painel do advogado carregou com erro:', errorText);
+        }
+      } catch (error) {
+        console.error('[global-setup] Falha ao carregar painel do advogado (timeout ou erro). URL atual:', lawyerPage.url());
+        await captureDebugArtifacts(lawyerPage, `lawyer-login-error-${Date.now()}`);
+      }
+
+      console.log('✅ Painel do advogado acessado em', lawyerPage.url());
+      await lawyerPage.waitForTimeout(1000);
+
+      await lawyerPage.context().storageState({ path: './tests/e2e/.auth/lawyer.json' });
+      console.log('✅ Autenticação ADVOGADO concluída');
+      await lawyerPage.close();
+    } else {
+      console.log('ℹ️  Login do advogado pulado para tenant demo.');
     }
-
-    console.log('✅ Painel do advogado acessado em', lawyerPage.url());
-    await lawyerPage.waitForTimeout(1000);
-
-    await lawyerPage.context().storageState({ path: './tests/e2e/.auth/lawyer.json' });
-    console.log('✅ Autenticação ADVOGADO concluída');
-    await lawyerPage.close();
 
     console.log('✅ Todas autenticações concluídas');
     

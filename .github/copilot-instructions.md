@@ -71,7 +71,18 @@ rodar testes com playwright acada implementação ou correção
 - **`npm run build && npm start`**: Testes E2E, CI/CD, Pré-produção, Produção
 - **`node .vscode/run-e2e-tests.js`**: Automação de testes E2E completa
 
-## 9. Diretrizes de Codificação e Melhores Práticas
+## 9. Regras de Ambiente e Multi-Tenancy (URLs e Slugs)
+
+**REGRA OBRIGATÓRIA:** Para garantir que os testes acessem o contexto de dados correto (onde usuários e tenants existem), utilize SEMPRE o padrão de URL: `<slug>.servidor:<porta>`.
+
+### Mapeamento de Slugs:
+- **`dev`**: Ambiente de desenvolvimento (`dev.servidor:9005`).
+- **`hml`**: Ambiente de testes/homologação.
+- **`demo`**: Ambiente com **Master Data Seed** (onde residem os usuários e tenants de teste).
+
+**Restrição:** O uso de URLs genéricas (ex: `localhost:3000` ou `localhost:9005`) sem o slug correto causará timeouts e falhas de login, pois os tenants não serão resolvidos corretamente. Todas as requisições de teste devem apontar para o slug específico.
+
+## 10. Diretrizes de Codificação e Melhores Práticas
 
 You always use the latest version of HTML, Tailwind CSS and vanilla JavaScript, and you are familiar with the latest features and best practices.
 
@@ -91,7 +102,24 @@ You carefully provide accurate, factual, thoughtful answers, and excel at reason
 - If I ask for adjustments to code, do not repeat all of my code unnecessarily. Instead try to keep the answer brief by giving just a couple lines before/after any changes you make.
 
 
-# Bash commands
+# Environment & Shell Commands (Windows 11)
+
+**CRITICAL: The current environment is Windows 11 using PowerShell.**
+The agent MUST detect that it is running on Windows and AVOID using Linux-specific commands definitions that are not native to PowerShell.
+
+**Command Translation Table (Use these PowerShell equivalents):**
+- **`grep`** → **`Select-String`** (e.g., `Select-String -Pattern "text" -Path "file.txt"`)
+- **`cat`** → **`Get-Content`** (or `type`)
+- **`ls`** → **`Get-ChildItem`** (or `dir`, `ls` is often aliased but optional arguments differ)
+- **`touch`** → **`New-Item -ItemType File -Force`** OR `"" | Out-File`
+- **`rm`** → **`Remove-Item`** (or `del`)
+- **`cp`** → **`Copy-Item`** (or `copy`)
+- **`mv`** → **`Move-Item`** (or `move`)
+- **`export VAR=VAL`** → **`$env:VAR = 'VAL'`**
+- **`&&`** (chaining) → **`;`** (semicolon) or check previous command success manually in scripts if needed.
+- **File Paths**: Be mindful of paths. PowerShell accepts `/`, but native Windows tools expect `\`.
+
+**Specific Project Commands:**
 - npm run typecheck: Run the typechecker
 
 # Code style
@@ -196,6 +224,7 @@ ALWAYS implement SEO best practices automatically for every page/component.
 
 ## Core Principles
 
+- **VISIBILIDADE OBRIGATÓRIA:** Sempre configure o Playwright para rodar com o navegador aberto (`headless: false`) para que o usuário possa acompanhar a navegação em tempo real.
 - Follow Playwright best practices
 - Do not add comments to each line of code
 - Write only the Playwright test steps for the scenario

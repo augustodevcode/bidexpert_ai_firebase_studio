@@ -1,3 +1,6 @@
+/**
+ * @fileoverview Configuração do Vitest com provider Playwright para testes visuais e E2E.
+ */
 import { defineConfig } from 'vitest/config'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import react from '@vitejs/plugin-react'
@@ -51,7 +54,7 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     browser: {
       enabled: true,
-      headless: true,
+      headless: false,
       provider: playwright(),
       instances: [
         {

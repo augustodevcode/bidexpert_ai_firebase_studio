@@ -120,9 +120,14 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
         secure: isProduction,
         expires: expiresAt,
         maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-        sameSite: 'lax' as const,
         path: '/',
     };
+
+    // Em produção, usa 'lax' para proteção CSRF. Em dev (localhost), omitimos (default browser behavior)
+    // para evitar problemas com subdomínios e localhost
+    if (isProduction) {
+        cookieOptions.sameSite = 'lax';
+    }
     
     // Só define domain em produção (para cross-subdomain)
     if (cookieDomain) {
@@ -135,7 +140,9 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
 export async function getSession(): Promise<{ userId: string; tenantId: string;[key: string]: any } | null> {
     const cookie = cookies().get('session')?.value;
     if (!cookie) {
-        console.log('[Get Session] Cookie "session" não encontrado.');
+        console.log('[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.');
+        const allCookies = cookies().getAll().map(c => c.name).join(', ');
+        console.log('[Get Session] Cookies disponiveis:', allCookies || '(nenhum)');
         return null;
     }
     const session = await decrypt(cookie);

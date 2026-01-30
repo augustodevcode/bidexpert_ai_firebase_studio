@@ -166,9 +166,11 @@ export async function login(values: { email: string, password?: string, tenantId
 
     await createSession(userProfileWithPerms, tenantId);
 
+    console.log(`[Login Action] SUCESSO: Sessão criada para ${email} no tenant ${tenantId}. Retornando sucesso.`);
     return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
 
   } catch (error: any) {
+    console.error(`[Login Action] ERRO FATAL: ${error.message}`, error);
     return { success: false, message: `Ocorreu um erro interno durante o login: ${error.message}` };
   }
 }
