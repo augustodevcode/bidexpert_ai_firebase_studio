@@ -22,16 +22,17 @@ const config = {
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
           include: {
-            roles: {
+            UsersOnRoles: {
               include: {
-                role: true
+                Role: true
               }
             }
           }
         });
 
         if (user && user.password && await bcrypt.compare(credentials.password, user.password)) {
-          const roles = user.roles.map(ur => ur.role.name);
+          const userRoles = user.UsersOnRoles || [];
+          const roles = userRoles.map(ur => ur.Role.name);
           return { id: user.id.toString(), email: user.email, name: user.fullName, roles };
         } else {
           return null;

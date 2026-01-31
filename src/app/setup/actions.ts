@@ -39,9 +39,11 @@ export async function verifyInitialData(): Promise<{ success: boolean; message: 
 function formatUserForSession(user: any): UserProfileWithPermissions | null {
     if (!user) return null;
 
-    const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
+    const userRoles = user.UsersOnRoles || user.roles || [];
+    const userTenants = user.UsersOnTenants || user.tenants || [];
+    const roles: Role[] = userRoles.map((ur: any) => ur.Role || ur.role);
     const permissions = Array.from(new Set(roles.flatMap((r: any) => r.permissions || [])));
-    const tenants: Tenant[] = user.tenants?.map((ut: any) => ut.tenant) || [];
+    const tenants: Tenant[] = userTenants.map((ut: any) => ut.Tenant || ut.tenant);
     
     return {
         ...user,
@@ -111,8 +113,8 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
         const userWithRelations = await prisma.user.findUnique({
             where: { id: userToLogin.id },
             include: {
-                roles: { include: { role: true } },
-                tenants: { include: { tenant: true } }
+                UsersOnRoles: { include: { Role: true } },
+                UsersOnTenants: { include: { Tenant: true } }
             }
         });
         

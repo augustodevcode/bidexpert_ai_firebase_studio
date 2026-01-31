@@ -30,14 +30,14 @@ export class UserRepository {
         id,
       },
       include: {
-        roles: {
+        UsersOnRoles: {
           include: {
-            role: true,
+            Role: true,
           },
         },
-        tenants: {
+        UsersOnTenants: {
             include: {
-                tenant: true
+                Tenant: true
             }
         }
       },
@@ -51,14 +51,14 @@ export class UserRepository {
         email,
       },
        include: {
-        roles: {
+        UsersOnRoles: {
           include: {
-            role: true,
+            Role: true,
           },
         },
-        tenants: {
+        UsersOnTenants: {
             include: {
-                tenant: true
+                Tenant: true
             }
         }
       },

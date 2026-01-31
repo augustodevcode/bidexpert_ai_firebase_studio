@@ -31,9 +31,13 @@ import { UserService } from '@/services/user.service';
 function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
   if (!user) return null;
 
-  const roles: Role[] = user.roles?.map((ur: any) => ({
-    ...ur.role,
-    id: ur.role.id,
+  // Map from Prisma relations (UsersOnRoles/UsersOnTenants) to expected format (roles/tenants)
+  const userRoles = user.UsersOnRoles || user.roles || [];
+  const userTenants = user.UsersOnTenants || user.tenants || [];
+
+  const roles: Role[] = userRoles.map((ur: any) => ({
+    ...(ur.Role || ur.role),
+    id: (ur.Role || ur.role)?.id,
   })) || [];
 
   const permissions = Array.from(new Set(roles.flatMap((r: any) => {
@@ -56,9 +60,9 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
     return [];
   })));
 
-  const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
-    ...ut.tenant,
-    id: ut.tenant.id,
+  const tenants: Tenant[] = userTenants.map((ut: any) => ({
+    ...(ut.Tenant || ut.tenant),
+    id: (ut.Tenant || ut.tenant)?.id,
   })) || [];
 
   return {
@@ -93,8 +97,8 @@ export async function login(values: { email: string, password?: string, tenantId
     const user = await basePrisma.user.findUnique({
       where: { email },
       include: {
-        roles: { include: { role: true } },
-        tenants: { include: { tenant: true } }
+        UsersOnRoles: { include: { Role: true } },
+        UsersOnTenants: { include: { Tenant: true } }
       }
     });
 
@@ -123,8 +127,10 @@ export async function login(values: { email: string, password?: string, tenantId
     }
 
     // Validate strict tenant isolation
-    if (tenantId && user && user.tenants) {
-        const userInTenant = user.tenants.some(ut => ut.tenantId.toString() === tenantId);
+    // NOTE: Prisma returns UsersOnTenants, not tenants
+    const userTenants = user.UsersOnTenants || user.tenants || [];
+    if (tenantId && user && userTenants.length > 0) {
+        const userInTenant = userTenants.some(ut => ut.tenantId?.toString() === tenantId);
         if (!userInTenant) {
             const headersList = await headers();
             const contextTenantId = headersList.get('x-tenant-id');
@@ -166,10 +172,12 @@ export async function login(values: { email: string, password?: string, tenantId
     }
 
     // Tenant Selection Logic
+    // NOTE: Prisma returns UsersOnTenants, not tenants
+    const userTenantsForSelection = user.UsersOnTenants || user.tenants || [];
     if (!tenantId) {
-      if (user.tenants?.length === 1) {
-        tenantId = user.tenants[0].tenantId;
-      } else if (user.tenants && user.tenants.length > 1) {
+      if (userTenantsForSelection.length === 1) {
+        tenantId = userTenantsForSelection[0].tenantId;
+      } else if (userTenantsForSelection.length > 1) {
         return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
       } else {
         console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord ('1').`);
@@ -177,11 +185,11 @@ export async function login(values: { email: string, password?: string, tenantId
       }
     }
 
-    const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId.toString() === tenantId);
+    const userBelongsToFinalTenant = userTenantsForSelection.some(t => t.tenantId?.toString() === tenantId);
     if (!userBelongsToFinalTenant) {
       const isAdmin = userProfileWithPerms.permissions.includes('manage_all');
-      if (tenantId !== '1' || (!isAdmin && user.tenants && user.tenants.length > 0)) {
-        console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
+      if (tenantId !== '1' || (!isAdmin && userTenantsForSelection.length > 0)) {
+        console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'. UserTenants: ${JSON.stringify(userTenantsForSelection.map(ut => ut.tenantId?.toString()))}`);
         return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
       }
     }
@@ -255,6 +263,8 @@ export async function getCurrentTenantContext() {
   const tenantIdOrSlug = headersList.get('x-tenant-id') || '1';
   const subdomain = headersList.get('x-tenant-subdomain') || '';
   
+  console.log(`[getCurrentTenantContext] Headers: x-tenant-id='${tenantIdOrSlug}', x-tenant-subdomain='${subdomain}'`);
+  
   let resolvedTenantId = tenantIdOrSlug;
   let tenantName = 'BidExpert';
   
@@ -263,6 +273,7 @@ export async function getCurrentTenantContext() {
       try {
           // Tenta primeiro como ID numérico
           const numericId = parseInt(tenantIdOrSlug, 10);
+          console.log(`[getCurrentTenantContext] Parsed as numericId: ${numericId}, isNaN: ${isNaN(numericId)}`);
           
           let tenant;
           if (!isNaN(numericId) && numericId > 0) {
@@ -270,13 +281,16 @@ export async function getCurrentTenantContext() {
               tenant = await basePrisma.tenant.findUnique({ 
                   where: { id: numericId }
               });
+              console.log(`[getCurrentTenantContext] findUnique by ID ${numericId}:`, tenant ? `found (id=${tenant.id}, name=${tenant.name})` : 'not found');
           }
           
           // Se não encontrou por ID, tenta por subdomain/slug
           if (!tenant) {
+              console.log(`[getCurrentTenantContext] Trying findFirst by subdomain '${tenantIdOrSlug.toLowerCase()}'`);
               tenant = await basePrisma.tenant.findFirst({ 
                   where: { subdomain: tenantIdOrSlug.toLowerCase() }
               });
+              console.log(`[getCurrentTenantContext] findFirst by subdomain:`, tenant ? `found (id=${tenant.id}, name=${tenant.name})` : 'not found');
           }
           
           if (tenant) {
@@ -291,6 +305,7 @@ export async function getCurrentTenantContext() {
       }
   }
 
+  console.log(`[getCurrentTenantContext] Returning: tenantId=${resolvedTenantId}, subdomain=${subdomain}, tenantName=${tenantName}`);
   return {
     tenantId: resolvedTenantId,
     subdomain,
@@ -319,7 +334,7 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
         // Try to parse as number first (numeric ID) or use as subdomain
         const tenantIdNum = parseInt(contextTenantId);
         if (!isNaN(tenantIdNum)) {
-            whereClause.tenants = {
+            whereClause.UsersOnTenants = {
                 some: {
                     tenantId: tenantIdNum
                 }
@@ -328,7 +343,7 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
             // It's a subdomain slug, find the tenant first
             const tenant = await basePrisma.tenant.findFirst({ where: { subdomain: contextTenantId } });
             if (tenant) {
-                whereClause.tenants = {
+                whereClause.UsersOnTenants = {
                     some: {
                         tenantId: tenant.id
                     }
@@ -342,17 +357,17 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: {
-        roles: {
+        UsersOnRoles: {
           include: {
-            role: true
+            Role: true
           }
         },
-        tenants: { include: { tenant: true } }
+        UsersOnTenants: { include: { Tenant: true } }
       }
     });
 
     return users.map(u => {
-      const roleName = u.roles.length > 0 ? u.roles[0].role.name : 'User';
+      const roleName = u.UsersOnRoles.length > 0 ? u.UsersOnRoles[0].Role.name : 'User';
       // Determine password hint based on email or role
       let passwordHint = 'senha@123';
       if (u.email === 'analista@lordland.com') {
@@ -368,7 +383,7 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
         fullName: u.fullName || 'Unknown',
         roleName: roleName,
         passwordHint: passwordHint,
-        tenantId: u.tenants[0]?.tenantId?.toString() || '1'
+        tenantId: u.UsersOnTenants[0]?.tenantId?.toString() || '1'
       };
     });
   } catch (error) {

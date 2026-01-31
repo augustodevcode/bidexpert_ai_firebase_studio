@@ -90,7 +90,8 @@ export class TenantService {
               });
 
               // 2. Add ADMIN role if not present
-              const hasAdminRole = existingUser.roles.some(r => r.role.nameNormalized === 'ADMIN');
+              const existingRoles = existingUser.roles || [];
+              const hasAdminRole = existingRoles.some((r: any) => r.nameNormalized === 'ADMIN');
               if (!hasAdminRole) {
                   await prisma.usersOnRoles.create({
                       data: {

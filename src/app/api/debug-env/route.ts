@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   
   const user = await prisma.user.findUnique({
     where: { email },
-    include: { tenants: true }
+    include: { UsersOnTenants: true }
   });
 
   let passwordCheck = 'Skipped';
