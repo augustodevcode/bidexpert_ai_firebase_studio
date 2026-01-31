@@ -6,20 +6,21 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
 import * as customCommands from './tests/visual/commands'
+import path from 'path'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src')
+    }
+  },
   plugins: [
     tsconfigPaths(),
     react()
   ],
   optimizeDeps: {
-    include: [
-      'vitest-browser-react',
-      'next/link',
-      'next/image',
-      '@testing-library/react',
-      '@testing-library/jest-dom/matchers'
-    ]
+    noDiscovery: true,
+    include: []
   },
   test: {
     environment: 'node',
@@ -28,7 +29,8 @@ export default defineConfig({
       'tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'tests/visual/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+      'tests/visual/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'tests/ui-e2e/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
     ],
     exclude: [
       '**/node_modules/**',
@@ -37,7 +39,6 @@ export default defineConfig({
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
       '**/tests/e2e/**',
-      '**/tests/ui-e2e/**',
       '**/tests/itsm/**',
       '**/tests/ui/**',
       '**/analisar/**'

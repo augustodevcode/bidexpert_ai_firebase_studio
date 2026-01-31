@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  mysql-demo:
+    image: mysql:8.0
+    container_name: bidexpert-mysql-demo
+    environment:
+      MYSQL_ROOT_PASSWORD: M!nh@S3nha2025
+      MYSQL_DATABASE: bidexpert_demo
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-data-demo:/var/lib/mysql
+      - ./scripts/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bidexpert-demo
+
+  app-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bidexpert-app-demo
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://root:M!nh@S3nha2025@mysql-demo:3306/bidexpert_demo
+      TENANT_SLUG: demo
+    ports:
+      - "9007:3000"
+    depends_on:
+      mysql-demo:
+        condition: service_healthy
+    networks:
+      - bidexpert-demo
+
+networks:
+  bidexpert-demo:
+    driver: bridge
+
+volumes:
+  mysql-data-demo: {}

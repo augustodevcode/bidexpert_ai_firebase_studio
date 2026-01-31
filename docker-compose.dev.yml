@@ -5,6 +5,7 @@ services:
     container_name: bidexpert-mysql-dev
     environment:
       MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: bidexpert_dev
       MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
     ports:
       - "3306:3306"
@@ -16,5 +17,45 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bidexpert-dev
+
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bidexpert-app-dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: mysql://root:password@mysql:3306/bidexpert_dev
+      TENANT_SLUG: dev
+    ports:
+      - "9005:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - bidexpert-dev
+    volumes:
+      - ./src:/app/src:ro
+
+  smtp4dev:
+    image: rnwood/smtp4dev:latest
+    container_name: bidexpert-smtp4dev
+    ports:
+      - "2525:2525"
+      - "8025:80"
+    environment:
+      ServerOptions__Port: "2525"
+      ServerOptions__HostName: "localhost"
+    restart: unless-stopped
+    networks:
+      - bidexpert-dev
+
+networks:
+  bidexpert-dev:
+    driver: bridge
+
 volumes:
   mysql-data: {}

@@ -51,6 +51,7 @@ import type {
     InstallmentPayment,
     LotStagePrice,
 } from '@prisma/client';
+import type { ThemeTokens } from '@/lib/theme-tokens';
 import { Decimal } from '@prisma/client/runtime/library';
 
 // Regra: IDs expostos para o frontend (em tipos, services, actions) devem ser strings.
@@ -337,11 +338,15 @@ export type ThemeSettings = Omit<PmThemeSettings, 'id' | 'platformSettingsId'> &
 export type IdMasks = Omit<PmIdMasks, 'id' | 'platformSettingsId'> & { id: string };
 export type ThemeColors = Omit<PmThemeColors, 'id' | 'themeSettingsId'> & { id: string };
 export type NotificationSettings = Omit<PmNotificationSettings, 'id' | 'platformSettingsId'> & { id: string };
-export type PlatformSettings = Omit<PmPlatformSettings, 'id' | 'tenantId' | 'crudFormMode'> & {
+export type PlatformSettings = Omit<PmPlatformSettings, 'id' | 'tenantId' | 'crudFormMode' | 'logoMediaId'> & {
   id: string;
   tenantId: string;
   crudFormMode?: 'modal' | 'sheet';
-  themes?: ThemeSettings | null;
+  logoMediaId?: string | null;
+  logoMedia?: MediaItem | null;
+  themeColorsLight?: ThemeTokens | null;
+  themeColorsDark?: ThemeTokens | null;
+  themes?: ThemeSettings[] | null;
   platformPublicIdMasks?: IdMasks | null;
   mapSettings?: PmMapSettings | null;
   biddingSettings?: PmBiddingSettings | null;

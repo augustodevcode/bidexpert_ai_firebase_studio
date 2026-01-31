@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogIn, Loader2, Lock } from 'lucide-react';
+import { LogIn, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { login, getDevUsers, getCurrentTenantContext } from '@/app/auth/actions';
@@ -61,6 +61,7 @@ function LoginPageContent() {
     const [tenantsError, setTenantsError] = useState<string | null>(null);
     const [lockedTenantId, setLockedTenantId] = useState<string | null>(null);
     const [lockedTenantName, setLockedTenantName] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginFormSchema),
@@ -295,14 +296,30 @@ function LoginPageContent() {
                                             <FormItem>
                                                 <Label htmlFor="password">Senha</Label>
                                                 <FormControl>
-                                                    <Input
-                                                        id="password"
-                                                        type="password"
-                                                        required
-                                                        disabled={isLoading}
-                                                        {...field}
-                                                        data-ai-id="auth-login-password-input"
-                                                    />
+                                                    <div className="relative">
+                                                        <Input
+                                                            id="password"
+                                                            type={showPassword ? "text" : "password"}
+                                                            required
+                                                            disabled={isLoading}
+                                                            {...field}
+                                                            data-ai-id="auth-login-password-input"
+                                                            className="pr-10"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                                            data-ai-id="auth-login-toggle-password"
+                                                            tabIndex={-1}
+                                                        >
+                                                            {showPassword ? (
+                                                                <EyeOff className="h-4 w-4" />
+                                                            ) : (
+                                                                <Eye className="h-4 w-4" />
+                                                            )}
+                                                        </button>
+                                                    </div>
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>

@@ -42,7 +42,6 @@ import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import TwoColumnMegaMenu from './two-column-mega-menu';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ThemeToggle } from './theme-toggle';
 
 type HeaderCSSVars = CSSProperties & { '--header-height'?: string };
 
@@ -537,9 +536,6 @@ export default function Header({
             </form>
            </div>
           <div className="flex items-center space-x-0.5 sm:space-x-1">
-            <TooltipProvider>
-              <ThemeToggle />
-            </TooltipProvider>
 
             <TooltipProvider>
                 <Tooltip>

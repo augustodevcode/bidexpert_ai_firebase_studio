@@ -22,8 +22,8 @@ export class RoleService {
     return this.repository.findAll();
   }
 
-  async getRoleById(id: bigint): Promise<Role | null> {
-    return this.repository.findById(id);
+  async getRoleById(id: string): Promise<Role | null> {
+    return this.repository.findById(BigInt(id));
   }
 
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: bigint }> {
@@ -49,7 +49,7 @@ export class RoleService {
     }
   }
 
-  async updateRole(id: bigint, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }> {
+  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const dataToUpdate: any = { ...data };
       if (data.name) {
@@ -60,7 +60,7 @@ export class RoleService {
         dataToUpdate.permissions = data.permissions || Prisma.JsonNull;
       }
       
-      await this.repository.update(id, dataToUpdate);
+      await this.repository.update(BigInt(id), dataToUpdate);
       return { success: true, message: 'Perfil atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in RoleService.updateRole for id ${id}:`, error);
@@ -68,14 +68,15 @@ export class RoleService {
     }
   }
 
-  async deleteRole(id: bigint): Promise<{ success: boolean; message: string; }> {
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
     try {
+      const roleIdBigInt = BigInt(id);
       // Add check for users with this role
-      const usersWithRole = await prisma.usersOnRoles.count({ where: { roleId: id } });
+      const usersWithRole = await prisma.usersOnRoles.count({ where: { roleId: roleIdBigInt } });
       if (usersWithRole > 0) {
         return { success: false, message: `Não é possível excluir. O perfil está em uso por ${usersWithRole} usuário(s).` };
       }
-      await this.repository.delete(id);
+      await this.repository.delete(roleIdBigInt);
       return { success: true, message: 'Perfil excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in RoleService.deleteRole for id ${id}:`, error);

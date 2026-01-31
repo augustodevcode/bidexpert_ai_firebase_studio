@@ -7,6 +7,7 @@ import { withAudit } from '@/lib/audit'; // Importa a função de auditoria
 import { Prisma, type PlatformSettings as PrismaPlatformSettings, type Tenant } from '@prisma/client';
 import type { PlatformSettings } from '@/types';
 import { prisma } from '@/lib/prisma';
+import { defaultRadiusValue, defaultThemeTokensDark, defaultThemeTokensLight } from '@/lib/theme-tokens';
 import {
     defaultFeatureFlags,
     defaultBlockchainConfig,
@@ -136,6 +137,9 @@ export class PlatformSettingsService {
                     siteTagline: 'Sua plataforma de leilões online.',
                     isSetupComplete: false,
                     crudFormMode: 'modal',
+                    radiusValue: defaultRadiusValue,
+                    themeColorsLight: defaultThemeTokensLight,
+                    themeColorsDark: defaultThemeTokensDark,
                 };
 
                 settings = await withAudit({
@@ -271,7 +275,7 @@ export class PlatformSettingsService {
         const tenantIdBigInt = BigInt(tenantId);
         
         // Remove campos que não devem ser atualizados diretamente
-        const { 
+            const { 
             tenantId: _, 
             id: __, 
             themes, 
@@ -284,6 +288,10 @@ export class PlatformSettingsService {
             platformPublicIdMasks, 
             variableIncrementTable,
             realtimeSettings,
+            themeColorsLight,
+            themeColorsDark,
+            logoMediaId,
+            logoUrl,
             ...mainSettings 
         } = data;
 
@@ -299,6 +307,44 @@ export class PlatformSettingsService {
             const updateData: any = {
                 ...mainSettings
             };
+
+            if (themeColorsLight !== undefined) {
+                updateData.themeColorsLight = themeColorsLight ?? null;
+            }
+
+            if (themeColorsDark !== undefined) {
+                updateData.themeColorsDark = themeColorsDark ?? null;
+            }
+
+            if (logoMediaId !== undefined || logoUrl !== undefined) {
+                const normalizedLogoMediaId = typeof logoMediaId === 'string'
+                    ? (logoMediaId.trim() ? BigInt(logoMediaId) : null)
+                    : typeof logoMediaId === 'number'
+                        ? BigInt(logoMediaId)
+                        : logoMediaId ?? null;
+
+                if (!normalizedLogoMediaId) {
+                    if (logoUrl) {
+                        return { success: false, message: 'O logo deve vir da biblioteca de mídia.' };
+                    }
+                    updateData.logoMediaId = null;
+                    updateData.logoUrl = null;
+                } else {
+                    const mediaItem = await prisma.mediaItem.findFirst({
+                        where: {
+                            id: normalizedLogoMediaId,
+                            tenantId: tenantIdBigInt,
+                        },
+                    });
+
+                    if (!mediaItem) {
+                        return { success: false, message: 'Logo inválido. Selecione um item existente na biblioteca de mídia.' };
+                    }
+
+                    updateData.logoMediaId = normalizedLogoMediaId;
+                    updateData.logoUrl = mediaItem.urlLarge || mediaItem.urlMedium || mediaItem.urlOriginal || mediaItem.urlThumbnail || null;
+                }
+            }
 
             // Adiciona os relacionamentos apenas se existirem nos dados
             if (mapSettings) {

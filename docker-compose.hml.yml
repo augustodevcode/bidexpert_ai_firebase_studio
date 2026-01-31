@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  mysql-hml:
+    image: mysql:8.0
+    container_name: bidexpert-mysql-hml
+    environment:
+      MYSQL_ROOT_PASSWORD: HmlPassword2025
+      MYSQL_DATABASE: bidexpert_hml
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data-hml:/var/lib/mysql
+      - ./scripts/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bidexpert-hml
+
+  app-hml:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bidexpert-app-hml
+    environment:
+      NODE_ENV: test
+      PORT: 3000
+      DATABASE_URL: mysql://root:HmlPassword2025@mysql-hml:3306/bidexpert_hml
+      TENANT_SLUG: hml
+    ports:
+      - "9006:3000"
+    depends_on:
+      mysql-hml:
+        condition: service_healthy
+    networks:
+      - bidexpert-hml
+
+networks:
+  bidexpert-hml:
+    driver: bridge
+
+volumes:
+  mysql-data-hml: {}

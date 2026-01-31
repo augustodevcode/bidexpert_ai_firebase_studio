@@ -1,54 +1,76 @@
-// src/components/layout/dev-info-indicator.tsx
+/**
+ * @fileoverview Rodape padrao do dashboard com informacoes de ambiente para debug.
+ */
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === 'undefined') {
-    return undefined;
-  }
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop()?.split(';').shift();
-  }
-}
-
-const InfoItem = ({ label, value }: { label: string; value: string }) => (
-    <div className="text-center sm:text-left">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <p className="font-semibold text-primary truncate" title={value}>{value}</p>
-    </div>
-);
-
 export default function DevInfoIndicator() {
-  const { userProfileWithPermissions, activeTenantId } = useAuth();
-  const [dbSystem, setDbSystem] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-    const dbFromCookie = getCookie('dev-config-db');
-    const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
-    setDbSystem(dbFromCookie || dbFromEnv);
-    setProjectId(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'N/A');
-  }, []);
-
-  if (!isClient || process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
   return (
-    <div className="mt-4 p-4 bg-muted/50 rounded-lg border w-full max-w-4xl mx-auto" data-ai-id="dev-info-indicator">
-        <p className="font-semibold text-center text-foreground mb-3 text-sm">Dev Info</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
-             <InfoItem label="Tenant ID" value={activeTenantId || 'N/A'} />
-             <InfoItem label="User" value={userProfileWithPermissions?.email || 'N/A'} />
-             <InfoItem label="DB System" value={dbSystem.toUpperCase()} />
-             <InfoItem label="Project" value={projectId} />
+    // Regular footer in the page flow (not fixed). Admin layout will add padding-bottom when Query Monitor is present
+    <footer className="mt-4 w-full" data-ai-id="dashboard-footer" data-testid="dev-info-indicator">
+      <div
+        className="mt-4 p-4 bg-muted/50 rounded-lg border w-full max-w-4xl mx-auto"
+        data-ai-id="dev-info-indicator-inner"
+      >
+        <p
+          className="font-semibold text-center text-foreground mb-3 text-sm"
+          data-ai-id="dev-info-title"
+        >
+          Dev Info
+        </p>
+        <div
+          className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2"
+          data-ai-id="dev-info-grid"
+        >
+          <div className="text-center sm:text-left" data-ai-id="dev-info-tenant">
+            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-tenant-label">
+              Tenant ID
+            </span>
+            <p
+              className="font-semibold text-primary truncate"
+              title="1"
+              data-ai-id="dev-info-tenant-value"
+            >
+              1
+            </p>
+          </div>
+          <div className="text-center sm:text-left" data-ai-id="dev-info-user">
+            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-user-label">
+              User
+            </span>
+            <p
+              className="font-semibold text-primary truncate"
+              title="admin@bidexpert.ai"
+              data-ai-id="dev-info-user-value"
+            >
+              admin@bidexpert.ai
+            </p>
+          </div>
+          <div className="text-center sm:text-left" data-ai-id="dev-info-db">
+            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-db-label">
+              DB System
+            </span>
+            <p
+              className="font-semibold text-primary truncate"
+              title="MYSQL"
+              data-ai-id="dev-info-db-value"
+            >
+              MYSQL
+            </p>
+          </div>
+          <div className="text-center sm:text-left" data-ai-id="dev-info-project">
+            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-project-label">
+              Project
+            </span>
+            <p
+              className="font-semibold text-primary truncate"
+              title="bidexpert"
+              data-ai-id="dev-info-project-value"
+            >
+              bidexpert
+            </p>
+          </div>
         </div>
-    </div>
+      </div>
+    </footer>
   );
 }

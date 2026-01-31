@@ -137,6 +137,21 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  a {
+    @apply text-primary underline-offset-4 transition-colors hover:underline;
+  }
+
+  a:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: var(--font-sans);
+  }
+
   h1,
   h2,
   h3,

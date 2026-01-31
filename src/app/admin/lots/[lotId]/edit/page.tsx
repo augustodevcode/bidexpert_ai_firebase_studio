@@ -53,6 +53,11 @@ export default function EditLotPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [isRelistModalOpen, setIsRelistModalOpen] = useState(false);
+  const [isNotFound, setIsNotFound] = useState(false);
+
+  if (isNotFound) {
+    notFound();
+  }
 
   const fetchPageData = useCallback(async () => {
     if (!lotId) return;
@@ -60,7 +65,7 @@ export default function EditLotPage() {
     try {
       const fetchedLot = await getLot(lotId);
       if (!fetchedLot) {
-        notFound();
+        setIsNotFound(true);
         return;
       }
       

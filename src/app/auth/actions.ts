@@ -109,6 +109,19 @@ export async function login(values: { email: string, password?: string, tenantId
         }
     }
     
+    // Resolve Tenant Slug to ID if necessary
+    // This allows "demo" to be resolved to "2" (or whatever ID)
+    if (tenantId && isNaN(Number(tenantId))) {
+         console.log(`[Login Action] Resolvendo tenantId slug '${tenantId}'...`);
+         const t = await basePrisma.tenant.findFirst({ where: { subdomain: tenantId } });
+         if (t) {
+             console.log(`[Login Action] Slug '${tenantId}' resolvido para ID '${t.id}'`);
+             tenantId = t.id.toString();
+         } else {
+             console.log(`[Login Action] Slug '${tenantId}' não encontrado.`);
+         }
+    }
+
     // Validate strict tenant isolation
     if (tenantId && user && user.tenants) {
         const userInTenant = user.tenants.some(ut => ut.tenantId.toString() === tenantId);
@@ -116,8 +129,12 @@ export async function login(values: { email: string, password?: string, tenantId
             const headersList = await headers();
             const contextTenantId = headersList.get('x-tenant-id');
             // Only enforce strictness if we are actually in that context (subdomain access)
-            if (contextTenantId === tenantId) {
-                console.log(`[Login Action] Usuário ${email} não pertence ao tenant ${tenantId}`);
+            // Note: contextTenantId might be the slug "demo", so we compare against original or resolved?
+            // Let's perform a loose check or just allow if password is valid (handled below)
+            console.log(`[Login Action] Aviso: Usuário não pertence ao tenant ${tenantId}. Context: ${contextTenantId}`);
+            
+            // If it's the exact same string (e.g. both are IDs), block it.
+            if (contextTenantId && (contextTenantId === tenantId || contextTenantId === initialTenantId)) {
                 return { success: false, message: 'Usuário não cadastrado neste Espaço de Trabalho. Verifique o endereço ou registre-se.' };
             }
         }
@@ -133,6 +150,11 @@ export async function login(values: { email: string, password?: string, tenantId
       const isPasswordValid = await bcryptjs.compare(password, user.password);
 
       if (!isPasswordValid) {
+        // Special Debug for Admin
+        if (email === 'admin@bidexpert.ai') {
+             console.log(`[Login Action] Failed hash comparison for admin@bidexpert.ai. Provided: '${password}'. Hash: '${user.password.substring(0, 10)}...'`);
+             return { success: false, message: 'Credenciais inválidas (Debug: Senha não confere com hash).' };
+        }
         console.log(`[Login Action] Falha: Senha inválida para o usuário '${email}'.`);
         return { success: false, message: 'Credenciais inválidas.' };
       }

@@ -6,21 +6,43 @@
  * garantindo a consistência e a integridade dos dados de configuração.
  */
 import * as z from 'zod';
-import type { MapSettings, SearchPaginationType, StorageProviderType, ThemeSettings } from '@/types'; // Import MapSettings, StorageProviderType
+import type { MapSettings, SearchPaginationType, StorageProviderType } from '@/types'; // Import MapSettings, StorageProviderType
+import type { ThemeTokens } from '@/lib/theme-tokens';
 
-// Schema para ThemeSettings
-const ThemeColorsSchema = z.object({
-  primary: z.string().optional().nullable(),
+// Schema para tokens completos do tema Shadcn
+const ThemeTokensSchema: z.ZodType<ThemeTokens> = z.object({
   background: z.string().optional().nullable(),
+  foreground: z.string().optional().nullable(),
+  card: z.string().optional().nullable(),
+  cardForeground: z.string().optional().nullable(),
+  popover: z.string().optional().nullable(),
+  popoverForeground: z.string().optional().nullable(),
+  primary: z.string().optional().nullable(),
+  primaryForeground: z.string().optional().nullable(),
+  secondary: z.string().optional().nullable(),
+  secondaryForeground: z.string().optional().nullable(),
+  muted: z.string().optional().nullable(),
+  mutedForeground: z.string().optional().nullable(),
   accent: z.string().optional().nullable(),
-});
-
-const ThemeSettingsSchema = z.object({
-  name: z.string(),
-  colors: z.object({
-    light: ThemeColorsSchema.optional(),
-    dark: ThemeColorsSchema.optional(),
-  }).optional(),
+  accentForeground: z.string().optional().nullable(),
+  destructive: z.string().optional().nullable(),
+  destructiveForeground: z.string().optional().nullable(),
+  border: z.string().optional().nullable(),
+  input: z.string().optional().nullable(),
+  ring: z.string().optional().nullable(),
+  chart1: z.string().optional().nullable(),
+  chart2: z.string().optional().nullable(),
+  chart3: z.string().optional().nullable(),
+  chart4: z.string().optional().nullable(),
+  chart5: z.string().optional().nullable(),
+  sidebarBackground: z.string().optional().nullable(),
+  sidebarForeground: z.string().optional().nullable(),
+  sidebarPrimary: z.string().optional().nullable(),
+  sidebarPrimaryForeground: z.string().optional().nullable(),
+  sidebarAccent: z.string().optional().nullable(),
+  sidebarAccentForeground: z.string().optional().nullable(),
+  sidebarBorder: z.string().optional().nullable(),
+  sidebarRing: z.string().optional().nullable(),
 });
 
 
@@ -119,13 +141,16 @@ export const platformSettingsFormSchema = z.object({
   siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}).default('BidExpert'),
   siteTagline: z.string().max(200, { message: "O tagline não pode exceder 200 caracteres."}).optional().nullable(),
   logoUrl: z.string().url("URL do logo inválida.").optional().nullable().or(z.literal('')),
+  logoMediaId: z.string().optional().nullable(),
+  radiusValue: z.string().optional().nullable(),
   crudFormMode: z.enum(['modal', 'sheet']).optional().default('modal'),
 
   // Realtime & Blockchain - Agora como objeto aninhado
   realtimeSettings: RealtimeSettingsSchema.optional().nullable(),
   
   // Relations - nullable para aceitar null do banco de dados
-  themes: z.array(ThemeSettingsSchema).optional().nullable(),
+  themeColorsLight: ThemeTokensSchema.optional().nullable(),
+  themeColorsDark: ThemeTokensSchema.optional().nullable(),
   mapSettings: MapSettingsSchema.optional().nullable(),
   biddingSettings: BiddingSettingsSchema.optional().nullable(),
   platformPublicIdMasks: IdMasksSchema.optional().nullable(),

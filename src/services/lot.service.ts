@@ -315,6 +315,7 @@ export class LotService {
     return {
       ...lot,
       id: lot.id.toString(),
+      bidsCount: lot._count?.bids ?? lot.bidsCount ?? 0,
       auctionId: lot.auctionId.toString(),
       tenantId: lot.tenantId.toString(),
       categoryId: lot.categoryId?.toString(),
@@ -417,6 +418,9 @@ export class LotService {
                 lotRisks: true,
                 documents: {
                     orderBy: { displayOrder: 'asc' }
+                },
+                _count: {
+                    select: { bids: true }
                 }
             }
         });
@@ -466,6 +470,9 @@ export class LotService {
                 lotRisks: true,
                 documents: {
                     orderBy: { displayOrder: 'asc' }
+                },
+                _count: {
+                    select: { bids: true }
                 }
             },
             take: limit,
@@ -596,7 +603,14 @@ export class LotService {
         return { success: false, message: 'Este lote não está mais disponível para lances.' };
       }
 
-      if (lot.price && amount <= Number(lot.price)) {
+      // Validar valor do lance
+      // Se já houver lances, o novo lance DEVE ser maior que o valor atual (lot.price).
+      // Se NÃO houver lances (bidsCount == 0), o lot.price pode estar com Valor de Avaliação ou outro valor inicial
+      // que não necessariamente reflete o lance mínimo da praça atual (ex: 510k vs 720k).
+      // Nesse caso, confiamos na validação do frontend/regra de negócio de praça e permitimos o primeiro lance.
+      const hasBids = (lot.bidsCount ?? 0) > 0;
+
+      if (hasBids && lot.price && amount <= Number(lot.price)) {
         return { 
           success: false, 
           message: `O lance deve ser maior que o valor atual de ${lot.price}.` 
@@ -771,6 +785,9 @@ export class LotService {
                     include: {
                         asset: true
                     }
+                },
+                _count: {
+                    select: { bids: true }
                 }
             }
           });

@@ -54,6 +54,8 @@ interface InvestorAnalysisSectionProps {
   auction: Auction;
   platformSettings?: PlatformSettings;
   className?: string;
+  /** Histórico de lances compartilhado do componente pai */
+  bidHistory?: Array<{ id: string; amount: number; timestamp: Date | string; bidderDisplay?: string; isWinning?: boolean }>;
 }
 
 type LotCategoryType = 'imovel' | 'veiculo' | 'eletronico' | 'maquinario' | 'semovente' | 'outros';
@@ -273,7 +275,8 @@ export function InvestorAnalysisSection({
   lot,
   auction: _auction,
   platformSettings: _platformSettings,
-  className
+  className,
+  bidHistory = []
 }: InvestorAnalysisSectionProps) {
   const [activeTab, setActiveTab] = useState('custos');
   const [isLoading, setIsLoading] = useState(true);
@@ -401,9 +404,10 @@ export function InvestorAnalysisSection({
           {/* Tab: Histórico de Lances */}
           <TabsContent value="historico">
             <BidHistory 
-              bids={[]}
+              bids={bidHistory}
               lotStatus={lot.status}
               initialPrice={lot.initialPrice ?? undefined}
+              showDuringAuction={true}
             />
           </TabsContent>
           

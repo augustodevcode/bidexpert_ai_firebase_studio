@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wrench } from 'lucide-react';
+import { defaultRadiusValue, defaultThemeTokensDark, defaultThemeTokensLight } from '@/lib/theme-tokens';
 
 interface SettingsFormWrapperProps {
   title: string;
@@ -33,6 +34,11 @@ export default function SettingsFormWrapper({ title, description, children }: Se
     defaultValues: {
       siteTitle: 'BidExpert', // Valor padrão obrigatório
       siteTagline: '',
+      logoUrl: '',
+      logoMediaId: null,
+      radiusValue: defaultRadiusValue,
+      themeColorsLight: defaultThemeTokensLight,
+      themeColorsDark: defaultThemeTokensDark,
       // RealtimeSettings agrupado em objeto
       realtimeSettings: {
         blockchainEnabled: false,
@@ -87,7 +93,11 @@ export default function SettingsFormWrapper({ title, description, children }: Se
             lawyerPerUsePrice: null,
             lawyerRevenueSharePercent: null,
           },
-          themes: fetchedSettings.themes || undefined,
+          logoMediaId: fetchedSettings.logoMediaId ?? null,
+          logoUrl: fetchedSettings.logoUrl || '',
+          radiusValue: fetchedSettings.radiusValue || defaultRadiusValue,
+          themeColorsLight: fetchedSettings.themeColorsLight ?? defaultThemeTokensLight,
+          themeColorsDark: fetchedSettings.themeColorsDark ?? defaultThemeTokensDark,
           mapSettings: fetchedSettings.mapSettings || undefined,
           biddingSettings: fetchedSettings.biddingSettings || undefined,
           platformPublicIdMasks: fetchedSettings.platformPublicIdMasks || undefined,

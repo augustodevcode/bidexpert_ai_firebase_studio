@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  mysql-prod:
+    image: mysql:8.0
+    container_name: bidexpert-mysql-prod
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-ProdSecurePassword2025!}
+      MYSQL_DATABASE: bidexpert_prod
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-data-prod:/var/lib/mysql
+      - ./scripts/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bidexpert-prod
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bidexpert-app-prod
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-ProdSecurePassword2025!}@mysql-prod:3306/bidexpert_prod
+      TENANT_SLUG: prod
+    ports:
+      - "9008:3000"
+    depends_on:
+      mysql-prod:
+        condition: service_healthy
+    networks:
+      - bidexpert-prod
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+networks:
+  bidexpert-prod:
+    driver: bridge
+
+volumes:
+  mysql-data-prod: {}

@@ -104,6 +104,8 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
 
   // Prepara configurações de tema
   const themeConfig = tenant.settings ? {
+    themeColorsLight: tenant.settings.themeColorsLight,
+    themeColorsDark: tenant.settings.themeColorsDark,
     primaryColorHsl: tenant.settings.primaryColorHsl,
     primaryForegroundHsl: tenant.settings.primaryForegroundHsl,
     secondaryColorHsl: tenant.settings.secondaryColorHsl,

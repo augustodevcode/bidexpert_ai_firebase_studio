@@ -30,6 +30,7 @@ import {
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { seedWonLotsWithServices } from './seed-won-lots-lib';
 // Imports removed to avoid module resolution issues
 // import { AuctionHabilitationService } from '../src/services/auction-habilitation.service';
 // import { ContactMessageService } from '../src/services/contact-message.service';
@@ -363,6 +364,1053 @@ async function populateMissingData(tenantId: bigint) {
   } catch(e) { console.log('Erro visitor:', e); }
 
   console.log('[POPULATE] ✅ População complementar concluída com sucesso!');
+}
+
+// ========================================================================
+// FUNÇÕES DE CORREÇÃO DE INCONSISTÊNCIAS DE AUDITORIA
+// Migradas de fix-audit-inconsistencies.ts para garantir seed completo
+// ========================================================================
+
+/**
+ * Corrige Lotes sem Ativos criando um asset para cada
+ */
+async function fixLotsWithoutAssets(tenantId: bigint) {
+  console.log('[AUDIT-FIX] 📦 Corrigindo Lotes sem Ativos...');
+  
+  const lotsWithoutAssets = await prisma.lot.findMany({
+    where: { tenantId, assets: { none: {} } },
+    include: { category: true, subcategory: true }
+  });
+  
+  console.log(`   Encontrados: ${lotsWithoutAssets.length} lotes sem ativos`);
+  
+  for (const lot of lotsWithoutAssets) {
+    const publicId = `ASSET-${Date.now()}-${faker.string.alphanumeric(6).toUpperCase()}`;
+    const uniqueVin = `VIN${Date.now()}${faker.string.alphanumeric(4).toUpperCase()}`;
+    
+    const asset = await prisma.asset.create({
+      data: {
+        publicId,
+        tenantId,
+        title: lot.title || `Ativo do Lote ${lot.number}`,
+        description: lot.description || faker.commerce.productDescription(),
+        status: 'DISPONIVEL',
+        make: faker.company.name(),
+        model: faker.vehicle.model(),
+        vin: uniqueVin,
+        year: faker.date.past({ years: 10 }).getFullYear(),
+        evaluationValue: lot.price ? Number(lot.price) : faker.number.float({ min: 10000, max: 500000, fractionDigits: 2 }),
+        dataAiHint: `asset lote ${lot.number}`,
+        categoryId: lot.categoryId,
+        subcategoryId: lot.subcategoryId,
+      }
+    });
+    
+    await prisma.assetsOnLots.create({
+      data: {
+        assetId: asset.id,
+        lotId: lot.id,
+        assignedBy: 'system-seed',
+        tenantId,
+      }
+    });
+    
+    const mediaItem = await prisma.mediaItem.create({
+      data: {
+        tenantId,
+        fileName: `asset-${asset.id}.jpg`,
+        storagePath: `/media/assets/${asset.id}/`,
+        urlOriginal: faker.image.url({ width: 800, height: 600 }),
+        urlThumbnail: faker.image.url({ width: 200, height: 150 }),
+        mimeType: 'image/jpeg',
+        sizeBytes: faker.number.int({ min: 100000, max: 500000 }),
+        title: `Imagem principal - ${asset.title}`,
+        dataAiHint: `imagem ${asset.title}`,
+      }
+    });
+    
+    await prisma.assetMedia.create({
+      data: {
+        tenantId,
+        assetId: asset.id,
+        mediaItemId: mediaItem.id,
+        isPrimary: true,
+        displayOrder: 0,
+      }
+    });
+  }
+  console.log(`   ✅ ${lotsWithoutAssets.length} lotes corrigidos`);
+}
+
+/**
+ * Corrige Leilões Judiciais sem Processo
+ */
+async function fixJudicialAuctionsWithoutProcess(tenantId: bigint) {
+  console.log('[AUDIT-FIX] ⚖️ Corrigindo Leilões Judiciais sem Processo...');
+  
+  const judicialAuctions = await prisma.auction.findMany({
+    where: { tenantId, auctionType: 'JUDICIAL', judicialProcessId: null }
+  });
+  
+  console.log(`   Encontrados: ${judicialAuctions.length} leilões judiciais sem processo`);
+  
+  const existingProcesses = await prisma.judicialProcess.findMany({ where: { tenantId }, take: 10 });
+  
+  for (let i = 0; i < judicialAuctions.length; i++) {
+    const auction = judicialAuctions[i];
+    let processId: bigint;
+    
+    if (existingProcesses[i]) {
+      processId = existingProcesses[i].id;
+    } else {
+      const court = await prisma.court.findFirst();
+      const district = await prisma.judicialDistrict.findFirst();
+      const branch = await prisma.judicialBranch.findFirst();
+      
+      const process = await prisma.judicialProcess.create({
+        data: {
+          tenantId,
+          publicId: `PROC-${Date.now()}-${faker.string.alphanumeric(4).toUpperCase()}`,
+          processNumber: `${faker.string.numeric(7)}-${faker.string.numeric(2)}.${2024}.8.26.${faker.string.numeric(4)}`,
+          courtId: court?.id,
+          districtId: district?.id,
+          branchId: branch?.id,
+          actionType: faker.helpers.arrayElement(['EXECUCAO_FISCAL', 'RECUPERACAO_JUDICIAL', 'FALENCIA', 'EXECUCAO_CIVIL']) as any,
+          actionDescription: faker.lorem.paragraph(),
+        }
+      });
+      processId = process.id;
+    }
+    
+    await prisma.auction.update({
+      where: { id: auction.id },
+      data: { judicialProcessId: processId }
+    });
+  }
+  console.log(`   ✅ ${judicialAuctions.length} leilões judiciais corrigidos`);
+}
+
+/**
+ * Corrige Leilões sem Responsáveis
+ */
+async function fixAuctionsWithoutResponsible(tenantId: bigint) {
+  console.log('[AUDIT-FIX] 👤 Corrigindo Leilões sem Responsáveis...');
+  
+  const auctionsWithoutResponsible = await prisma.auction.findMany({
+    where: { tenantId, auctioneerId: null }
+  });
+  
+  console.log(`   Encontrados: ${auctionsWithoutResponsible.length} leilões sem responsável`);
+  
+  let auctioneers = await prisma.auctioneer.findMany({ where: { tenantId } });
+  
+  if (auctioneers.length < 4) {
+    for (let i = auctioneers.length; i < 4; i++) {
+      const publicId = `AUC-${Date.now()}-${faker.string.alphanumeric(4).toUpperCase()}`;
+      const name = faker.person.fullName();
+      const slug = slugify(`${name}-${Date.now()}`);
+      const newAuctioneer = await prisma.auctioneer.create({
+        data: {
+          publicId,
+          slug,
+          tenantId,
+          name,
+          description: faker.lorem.paragraph(),
+          registrationNumber: `JUCESP-${faker.string.numeric(6)}`,
+          email: faker.internet.email(),
+          phone: faker.phone.number(),
+          address: faker.location.streetAddress(),
+          city: faker.location.city(),
+          state: 'SP',
+          zipCode: faker.location.zipCode(),
+        }
+      });
+      auctioneers.push(newAuctioneer);
+    }
+  }
+  
+  for (let i = 0; i < auctionsWithoutResponsible.length; i++) {
+    const auction = auctionsWithoutResponsible[i];
+    const auctioneer = auctioneers[i % auctioneers.length];
+    
+    await prisma.auction.update({
+      where: { id: auction.id },
+      data: { auctioneerId: auctioneer.id }
+    });
+  }
+  console.log(`   ✅ ${auctionsWithoutResponsible.length} leilões corrigidos`);
+}
+
+/**
+ * Corrige Ativos sem Imagem
+ */
+async function fixAssetsWithoutImage(tenantId: bigint) {
+  console.log('[AUDIT-FIX] 🖼️ Corrigindo Ativos sem Imagem...');
+  
+  const assetsWithoutImage = await prisma.asset.findMany({
+    where: { tenantId, gallery: { none: {} } }
+  });
+  
+  console.log(`   Encontrados: ${assetsWithoutImage.length} ativos sem imagem`);
+  
+  for (const asset of assetsWithoutImage) {
+    const mediaItem = await prisma.mediaItem.create({
+      data: {
+        tenantId,
+        fileName: `asset-${asset.id}.jpg`,
+        storagePath: `/media/assets/${asset.id}/`,
+        urlOriginal: faker.image.url({ width: 800, height: 600 }),
+        urlThumbnail: faker.image.url({ width: 200, height: 150 }),
+        mimeType: 'image/jpeg',
+        sizeBytes: faker.number.int({ min: 100000, max: 500000 }),
+        title: `Imagem principal - ${asset.title}`,
+        dataAiHint: `imagem ${asset.title}`,
+      }
+    });
+    
+    await prisma.assetMedia.create({
+      data: {
+        tenantId,
+        assetId: asset.id,
+        mediaItemId: mediaItem.id,
+        isPrimary: true,
+        displayOrder: 0,
+      }
+    });
+  }
+  console.log(`   ✅ ${assetsWithoutImage.length} ativos corrigidos`);
+}
+
+/**
+ * Corrige Habilitações Aprovadas sem Documentos
+ */
+async function fixHabilitationsWithoutDocs(tenantId: bigint) {
+  console.log('[AUDIT-FIX] 📄 Corrigindo Habilitações sem Documentos...');
+  
+  const usersWithHabilitationNoDocs = await prisma.user.findMany({
+    where: {
+      habilitations: { some: {} },
+      documents: { none: {} }
+    },
+    take: 10
+  });
+  
+  console.log(`   Encontrados: ${usersWithHabilitationNoDocs.length} usuários habilitados sem docs`);
+  
+  const docTypes = await prisma.documentType.findMany();
+  const rgType = docTypes.find(d => d.name.includes('RG')) || docTypes[0];
+  const cpfType = docTypes.find(d => d.name.includes('CPF')) || docTypes[1];
+  
+  for (const user of usersWithHabilitationNoDocs) {
+    if (rgType) {
+      await prisma.userDocument.create({
+        data: {
+          tenantId,
+          userId: user.id,
+          documentTypeId: rgType.id,
+          fileName: `rg-${user.id}.pdf`,
+          fileUrl: faker.image.url(),
+          status: UserDocumentStatus.APPROVED,
+        }
+      });
+    }
+    if (cpfType) {
+      await prisma.userDocument.create({
+        data: {
+          tenantId,
+          userId: user.id,
+          documentTypeId: cpfType.id,
+          fileName: `cpf-${user.id}.pdf`,
+          fileUrl: faker.image.url(),
+          status: UserDocumentStatus.APPROVED,
+        }
+      });
+    }
+  }
+  console.log(`   ✅ ${usersWithHabilitationNoDocs.length} usuários corrigidos`);
+}
+
+/**
+ * Cria DocumentTemplates se não existirem
+ */
+async function createDocumentTemplates(tenantId: bigint) {
+  console.log('[AUDIT-FIX] 📝 Criando DocumentTemplates...');
+  
+  const existingCount = await prisma.documentTemplate.count();
+  if (existingCount >= 5) {
+    console.log(`   Já existem ${existingCount} templates`);
+    return;
+  }
+  
+  const templates = [
+    { name: 'Termo de Arrematação', type: 'ARREMATACAO' as DocumentTemplateType },
+    { name: 'Contrato de Compra e Venda', type: 'CONTRATO' as DocumentTemplateType },
+    { name: 'Edital de Leilão', type: 'EDITAL' as DocumentTemplateType },
+    { name: 'Laudo de Avaliação', type: 'LAUDO' as DocumentTemplateType },
+    { name: 'Certidão de Débitos', type: 'CERTIDAO' as DocumentTemplateType },
+  ];
+  
+  for (const tpl of templates) {
+    const exists = await prisma.documentTemplate.findFirst({ where: { name: tpl.name } });
+    if (!exists) {
+      await prisma.documentTemplate.create({
+        data: {
+          name: tpl.name,
+          type: tpl.type,
+          content: generateTemplateContent(tpl.name),
+        }
+      });
+    }
+  }
+  console.log(`   ✅ Templates verificados/criados`);
+}
+
+function generateTemplateContent(templateName: string): string {
+  return `<!DOCTYPE html><html><head><title>${templateName}</title></head><body><h1>${templateName}</h1><p>Data: {{data}}</p><p>Leilão: {{leilao.titulo}}</p><p>Lote: {{lote.numero}}</p><p>Arrematante: {{arrematante.nome}}</p><p>Valor: R$ {{valor}}</p><hr><p>Documento gerado automaticamente pelo sistema BidExpert.</p></body></html>`;
+}
+
+/**
+ * Adiciona mais LotQuestions
+ */
+async function addMoreLotQuestions(tenantId: bigint) {
+  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 10, include: { auction: true } });
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  
+  if (lots.length === 0 || users.length === 0) return;
+  
+  const existingCount = await prisma.lotQuestion.count({ where: { tenantId } });
+  if (existingCount >= 15) return;
+  
+  const questions = [
+    'Qual o estado de conservação do bem?',
+    'É possível agendar uma visita presencial?',
+    'O bem possui todas as documentações em dia?',
+    'Há débitos pendentes associados?',
+    'Qual a forma de pagamento aceita?',
+  ];
+  
+  for (let i = 0; i < 6; i++) {
+    const lot = lots[i % lots.length];
+    const user = users[i % users.length];
+    
+    await prisma.lotQuestion.create({
+      data: {
+        tenantId,
+        lotId: lot.id,
+        auctionId: lot.auctionId,
+        userId: user.id,
+        userDisplayName: user.fullName || 'Usuário',
+        questionText: questions[i % questions.length],
+        answerText: i % 2 === 0 ? faker.lorem.paragraph() : null,
+        isPublic: true,
+        answeredAt: i % 2 === 0 ? new Date() : null,
+      }
+    });
+  }
+  console.log('   ✅ LotQuestions adicionadas');
+}
+
+/**
+ * Adiciona mais Reviews
+ */
+async function addMoreReviews(tenantId: bigint) {
+  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 5, include: { auction: true } });
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  
+  if (lots.length === 0 || users.length === 0) return;
+  
+  const existingCount = await prisma.review.count({ where: { tenantId } });
+  if (existingCount >= 15) return;
+  
+  for (let i = 0; i < 6; i++) {
+    const lot = lots[i % lots.length];
+    const user = users[i % users.length];
+    
+    await prisma.review.create({
+      data: {
+        tenantId,
+        lotId: lot.id,
+        auctionId: lot.auctionId,
+        userId: user.id,
+        rating: faker.number.int({ min: 3, max: 5 }),
+        comment: faker.lorem.paragraph(),
+        userDisplayName: user.fullName || 'Usuário',
+      }
+    });
+  }
+  console.log('   ✅ Reviews adicionadas');
+}
+
+/**
+ * Adiciona mais DirectSaleOffers
+ */
+async function addMoreDirectSaleOffers(tenantId: bigint) {
+  const categories = await prisma.lotCategory.findMany({ where: { tenantId }, take: 5 });
+  const sellers = await prisma.seller.findMany({ where: { tenantId }, take: 3 });
+  
+  if (categories.length === 0 || sellers.length === 0) return;
+  
+  const existingCount = await prisma.directSaleOffer.count({ where: { tenantId } });
+  if (existingCount >= 10) return;
+  
+  const offerTypes = ['BUY_NOW', 'ACCEPTS_PROPOSALS'] as const;
+  const statuses = ['ACTIVE', 'PENDING_APPROVAL', 'SOLD', 'EXPIRED'] as const;
+  
+  for (let i = 0; i < 6; i++) {
+    const category = categories[i % categories.length];
+    const seller = sellers[i % sellers.length];
+    
+    await prisma.directSaleOffer.create({
+      data: {
+        tenantId,
+        publicId: `dso-${Date.now()}-${i}`,
+        title: faker.commerce.productName(),
+        description: faker.lorem.paragraph(),
+        offerType: offerTypes[i % offerTypes.length],
+        price: faker.number.float({ min: 10000, max: 100000, fractionDigits: 2 }),
+        status: statuses[i % statuses.length],
+        locationCity: faker.location.city(),
+        locationState: 'SP',
+        categoryId: category.id,
+        sellerId: seller.id,
+        sellerName: seller.name,
+        dataAiHint: `venda direta ${i}`,
+      }
+    });
+  }
+  console.log('   ✅ DirectSaleOffers adicionadas');
+}
+
+/**
+ * Adiciona mais Subscribers
+ */
+async function addMoreSubscribers(tenantId: bigint) {
+  const existingCount = await prisma.subscriber.count({ where: { tenantId } });
+  if (existingCount >= 8) return;
+  
+  for (let i = 0; i < 8; i++) {
+    await prisma.subscriber.create({
+      data: {
+        tenantId,
+        email: `subscriber-seed-${Date.now()}-${i}@example.com`,
+        name: faker.person.fullName(),
+        phone: faker.phone.number(),
+        preferences: { categories: ['Imóveis', 'Veículos'] },
+      }
+    });
+  }
+  console.log('   ✅ Subscribers adicionados');
+}
+
+/**
+ * Adiciona mais Notifications
+ */
+async function addMoreNotifications(tenantId: bigint) {
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 5, include: { auction: true } });
+  
+  if (users.length === 0) return;
+  
+  const existingCount = await prisma.notification.count({ where: { tenantId } });
+  if (existingCount >= 8) return;
+  
+  const messages = [
+    'Seu lance foi superado!',
+    'O leilão começou!',
+    'O leilão foi encerrado',
+    'Sua habilitação foi aprovada',
+    'Pagamento pendente - prazo em 48h',
+  ];
+  
+  for (let i = 0; i < 8; i++) {
+    const user = users[i % users.length];
+    const lot = lots.length > 0 ? lots[i % lots.length] : null;
+    
+    await prisma.notification.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        lotId: lot?.id,
+        auctionId: lot?.auctionId,
+        message: messages[i % messages.length],
+        link: lot ? `/leiloes/${lot.auctionId}/lotes/${lot.id}` : null,
+        isRead: faker.datatype.boolean(),
+      }
+    });
+  }
+  console.log('   ✅ Notifications adicionadas');
+}
+
+/**
+ * Adiciona mais AuditLogs
+ */
+async function addMoreAuditLogs(tenantId: bigint) {
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  
+  if (users.length === 0) return;
+  
+  const existingCount = await prisma.auditLog.count({ where: { tenantId } });
+  if (existingCount >= 10) return;
+  
+  const actions = [AuditAction.CREATE, AuditAction.UPDATE, AuditAction.DELETE, AuditAction.APPROVE, AuditAction.REJECT];
+  const entities = ['Auction', 'Lot', 'Bid', 'User', 'Payment'];
+  
+  for (let i = 0; i < 10; i++) {
+    const user = users[i % users.length];
+    
+    await prisma.auditLog.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        action: actions[i % actions.length],
+        entityType: entities[i % entities.length],
+        entityId: BigInt(faker.number.int({ min: 1, max: 100 })),
+        changes: i % 2 === 0 ? { before: { status: 'OLD' }, after: { status: 'NEW' } } : undefined,
+        metadata: { source: 'seed-script' },
+        ipAddress: faker.internet.ip(),
+        userAgent: faker.internet.userAgent(),
+      }
+    });
+  }
+  console.log('   ✅ AuditLogs adicionados');
+}
+
+/**
+ * Adiciona mais BidderProfiles
+ */
+async function addMoreBidderProfiles(tenantId: bigint) {
+  const users = await prisma.user.findMany({ 
+    where: { tenants: { some: { tenantId } }, bidderProfile: null },
+    take: 6 
+  });
+  
+  if (users.length === 0) return;
+  
+  for (const user of users) {
+    try {
+      await prisma.bidderProfile.create({
+        data: {
+          tenantId,
+          userId: user.id,
+          fullName: user.fullName || faker.person.fullName(),
+          cpf: faker.string.numeric(11),
+          phone: faker.phone.number(),
+          dateOfBirth: faker.date.birthdate({ min: 18, max: 65, mode: 'age' }),
+          address: faker.location.streetAddress(),
+          city: faker.location.city(),
+          state: 'SP',
+          zipCode: faker.location.zipCode(),
+          documentStatus: 'APPROVED',
+          emailNotifications: true,
+          smsNotifications: false,
+          isActive: true,
+        }
+      });
+    } catch (e) { /* ignore duplicate */ }
+  }
+  console.log(`   ✅ BidderProfiles verificados`);
+}
+
+/**
+ * Adiciona mais Courts
+ */
+async function addMoreCourts() {
+  const courts = [
+    { name: 'Tribunal de Justiça de São Paulo', slug: 'tjsp', stateUf: 'SP' },
+    { name: 'Tribunal de Justiça do Rio de Janeiro', slug: 'tjrj', stateUf: 'RJ' },
+    { name: 'Tribunal de Justiça de Minas Gerais', slug: 'tjmg', stateUf: 'MG' },
+    { name: 'Tribunal Regional Federal da 3ª Região', slug: 'trf3', stateUf: 'SP' },
+    { name: 'Tribunal de Justiça do Paraná', slug: 'tjpr', stateUf: 'PR' },
+  ];
+  
+  for (const court of courts) {
+    const existing = await prisma.court.findFirst({ where: { slug: court.slug } });
+    if (!existing) {
+      await prisma.court.create({ data: court });
+    }
+  }
+  console.log('   ✅ Courts verificados');
+}
+
+/**
+ * Adiciona mais Sellers
+ */
+async function addMoreSellers(tenantId: bigint) {
+  const sellerData = [
+    { name: 'Banco do Brasil S.A.', city: 'Brasília', state: 'DF' },
+    { name: 'Caixa Econômica Federal', city: 'Brasília', state: 'DF' },
+    { name: 'Santander Brasil', city: 'São Paulo', state: 'SP' },
+    { name: 'Itaú Unibanco', city: 'São Paulo', state: 'SP' },
+  ];
+  
+  for (let i = 0; i < sellerData.length; i++) {
+    const data = sellerData[i];
+    const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    
+    const existing = await prisma.seller.findFirst({ where: { slug } });
+    if (!existing) {
+      await prisma.seller.create({
+        data: {
+          tenantId,
+          publicId: `seller-seed-${Date.now()}-${i}`,
+          name: data.name,
+          slug,
+          description: `Comitente ${data.name} - leilões de bens.`,
+          email: faker.internet.email(),
+          phone: faker.phone.number(),
+          address: faker.location.streetAddress(),
+          city: data.city,
+          state: data.state,
+          zipCode: faker.location.zipCode(),
+        }
+      });
+    }
+  }
+  console.log('   ✅ Sellers verificados');
+}
+
+/**
+ * Função principal de correção de inconsistências de auditoria
+ */
+// ========================================================================
+// FUNÇÕES DE SEED PARA ITSM (Sistema de Chamados de Suporte)
+// ========================================================================
+
+/**
+ * Cria tickets de suporte simulados
+ */
+async function seedItsmTickets(tenantId: bigint) {
+  console.log('[ITSM] 🎫 Criando tickets de suporte...');
+  
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 10 });
+  const supportUsers = users.filter(u => u.email.includes('admin') || u.email.includes('suporte'));
+  
+  if (users.length === 0) {
+    console.log('   ⚠️ Sem usuários para criar tickets');
+    return;
+  }
+  
+  const existingCount = await prisma.iTSM_Ticket.count({ where: { tenantId } });
+  if (existingCount >= 15) {
+    console.log(`   Já existem ${existingCount} tickets`);
+    return;
+  }
+  
+  const ticketTemplates = [
+    { title: 'Erro ao fazer lance no leilão', category: 'BUG', priority: 'ALTA', status: 'ABERTO', description: 'Quando tento fazer um lance, aparece uma mensagem de erro "Operação não permitida". Já tentei em diferentes navegadores.' },
+    { title: 'Dúvida sobre pagamento de arrematação', category: 'DUVIDA', priority: 'MEDIA', status: 'EM_ANDAMENTO', description: 'Gostaria de saber quais são as formas de pagamento aceitas após arrematar um lote.' },
+    { title: 'Não consigo me habilitar para leilão judicial', category: 'TECNICO', priority: 'ALTA', status: 'AGUARDANDO_USUARIO', description: 'Estou tentando me habilitar para o leilão #123 mas o sistema não aceita meu CPF.' },
+    { title: 'Sugestão de melhoria na busca', category: 'SUGESTAO', priority: 'BAIXA', status: 'RESOLVIDO', description: 'Seria interessante adicionar filtros por cidade e estado na busca de lotes.' },
+    { title: 'Sistema lento durante leilão ao vivo', category: 'TECNICO', priority: 'CRITICA', status: 'EM_ANDAMENTO', description: 'Durante o leilão às 14h, o sistema ficou muito lento e perdi vários lances.' },
+    { title: 'Problema com certificado digital', category: 'TECNICO', priority: 'ALTA', status: 'ABERTO', description: 'Meu certificado A3 não está sendo reconhecido pelo sistema.' },
+    { title: 'Erro 500 ao acessar meus leilões', category: 'BUG', priority: 'CRITICA', status: 'RESOLVIDO', description: 'Ao clicar em "Meus Leilões" aparece uma página de erro.' },
+    { title: 'Dúvida sobre comissão do leiloeiro', category: 'DUVIDA', priority: 'BAIXA', status: 'FECHADO', description: 'Qual a porcentagem de comissão cobrada pelo leiloeiro?' },
+    { title: 'Imagens dos lotes não carregam', category: 'BUG', priority: 'MEDIA', status: 'EM_ANDAMENTO', description: 'As fotos dos lotes 45, 46 e 47 aparecem como placeholder.' },
+    { title: 'Solicitação de cancelamento de lance', category: 'FUNCIONAL', priority: 'ALTA', status: 'AGUARDANDO_USUARIO', description: 'Fiz um lance errado e gostaria de cancelar. Processo CNJ 1234567-89.2024.8.26.0100.' },
+    { title: 'Relatório de arrematação com erro', category: 'BUG', priority: 'MEDIA', status: 'ABERTO', description: 'O PDF do termo de arrematação está saindo com dados incorretos.' },
+    { title: 'App mobile não sincroniza lances', category: 'TECNICO', priority: 'ALTA', status: 'EM_ANDAMENTO', description: 'Fiz lances pelo app mas não aparecem no site.' },
+    { title: 'Documentação para venda direta', category: 'DUVIDA', priority: 'BAIXA', status: 'RESOLVIDO', description: 'Quais documentos preciso para comprar um imóvel por venda direta?' },
+    { title: 'Timeout durante upload de documentos', category: 'TECNICO', priority: 'MEDIA', status: 'FECHADO', description: 'Ao enviar RG em PDF, dá timeout após 2 minutos.' },
+    { title: 'Proposta de parceria comercial', category: 'OUTRO', priority: 'BAIXA', status: 'ABERTO', description: 'Somos uma empresa de leilões e gostaríamos de usar a plataforma.' },
+  ];
+  
+  const createdTickets: bigint[] = [];
+  
+  for (let i = 0; i < ticketTemplates.length; i++) {
+    const tpl = ticketTemplates[i];
+    const user = users[i % users.length];
+    const assignedTo = supportUsers.length > 0 ? supportUsers[i % supportUsers.length] : null;
+    
+    const ticket = await prisma.iTSM_Ticket.create({
+      data: {
+        tenantId,
+        publicId: `TKT-${Date.now()}-${i.toString().padStart(3, '0')}`,
+        userId: user.id,
+        title: tpl.title,
+        description: tpl.description,
+        status: tpl.status as any,
+        priority: tpl.priority as any,
+        category: tpl.category as any,
+        assignedToUserId: assignedTo?.id,
+        userSnapshot: { name: user.fullName, email: user.email },
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        browserInfo: faker.helpers.arrayElement(['Chrome 120', 'Firefox 121', 'Safari 17', 'Edge 120']),
+        screenSize: faker.helpers.arrayElement(['1920x1080', '1366x768', '2560x1440', '1440x900']),
+        pageUrl: faker.helpers.arrayElement(['/leiloes', '/lotes/123', '/minha-conta', '/habilitacao']),
+        resolvedAt: tpl.status === 'RESOLVIDO' || tpl.status === 'FECHADO' ? faker.date.recent({ days: 5 }) : null,
+        closedAt: tpl.status === 'FECHADO' ? faker.date.recent({ days: 3 }) : null,
+        updatedAt: new Date(),
+      }
+    });
+    createdTickets.push(ticket.id);
+  }
+  
+  console.log(`   ✅ ${ticketTemplates.length} tickets criados`);
+  return createdTickets;
+}
+
+/**
+ * Cria mensagens nos tickets
+ */
+async function seedItsmMessages(tenantId: bigint) {
+  console.log('[ITSM] 💬 Criando mensagens nos tickets...');
+  
+  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 15 });
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  
+  if (tickets.length === 0 || users.length === 0) {
+    console.log('   ⚠️ Sem tickets ou usuários');
+    return;
+  }
+  
+  const existingCount = await prisma.iTSM_Message.count();
+  if (existingCount >= 30) {
+    console.log(`   Já existem ${existingCount} mensagens`);
+    return;
+  }
+  
+  const responses = [
+    'Olá! Já estamos analisando seu chamado.',
+    'Poderia fornecer mais detalhes sobre o problema?',
+    'Conseguimos identificar a causa. Estamos trabalhando na correção.',
+    'O problema foi corrigido. Por favor, teste novamente.',
+    'Entendemos sua dúvida. A resposta é: [informação relevante]',
+    'Agradecemos o feedback! Vamos considerar sua sugestão.',
+    'Precisamos de um print da tela com o erro.',
+    'Qual navegador e versão você está utilizando?',
+    'O problema foi escalado para a equipe técnica.',
+    'Verificamos e o sistema está funcionando normalmente agora.',
+  ];
+  
+  const userFollowups = [
+    'Obrigado pela resposta rápida!',
+    'Ainda não funcionou, o erro persiste.',
+    'Testei e agora está funcionando perfeitamente.',
+    'Segue o print solicitado em anexo.',
+    'Estou usando Chrome versão 120.',
+    'Muito obrigado pelo suporte!',
+  ];
+  
+  let msgCount = 0;
+  for (const ticket of tickets) {
+    const numMessages = faker.number.int({ min: 2, max: 5 });
+    
+    for (let i = 0; i < numMessages; i++) {
+      const isSupport = i % 2 === 1;
+      const user = isSupport ? users[0] : await prisma.user.findUnique({ where: { id: ticket.userId } });
+      
+      if (!user) continue;
+      
+      await prisma.iTSM_Message.create({
+        data: {
+          ticketId: ticket.id,
+          userId: user.id,
+          message: isSupport ? responses[i % responses.length] : userFollowups[i % userFollowups.length],
+          isInternal: isSupport && faker.datatype.boolean({ probability: 0.2 }),
+        }
+      });
+      msgCount++;
+    }
+  }
+  
+  console.log(`   ✅ ${msgCount} mensagens criadas`);
+}
+
+/**
+ * Cria attachments nos tickets
+ */
+async function seedItsmAttachments(tenantId: bigint) {
+  console.log('[ITSM] 📎 Criando anexos nos tickets...');
+  
+  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 10 });
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  
+  if (tickets.length === 0 || users.length === 0) {
+    console.log('   ⚠️ Sem tickets ou usuários');
+    return;
+  }
+  
+  const existingCount = await prisma.iTSM_Attachment.count();
+  if (existingCount >= 15) {
+    console.log(`   Já existem ${existingCount} anexos`);
+    return;
+  }
+  
+  const attachmentTypes = [
+    { name: 'screenshot-erro.png', mime: 'image/png', size: 125000 },
+    { name: 'log-console.txt', mime: 'text/plain', size: 8500 },
+    { name: 'documento-rg.pdf', mime: 'application/pdf', size: 450000 },
+    { name: 'video-bug.mp4', mime: 'video/mp4', size: 5200000 },
+    { name: 'certificado-a3.cer', mime: 'application/x-x509-ca-cert', size: 2048 },
+    { name: 'comprovante-pagamento.pdf', mime: 'application/pdf', size: 380000 },
+    { name: 'print-tela.jpg', mime: 'image/jpeg', size: 95000 },
+  ];
+  
+  let attachCount = 0;
+  for (const ticket of tickets.slice(0, 8)) {
+    const numAttachments = faker.number.int({ min: 1, max: 2 });
+    
+    for (let i = 0; i < numAttachments; i++) {
+      const att = attachmentTypes[faker.number.int({ min: 0, max: attachmentTypes.length - 1 })];
+      const user = users[faker.number.int({ min: 0, max: users.length - 1 })];
+      
+      await prisma.iTSM_Attachment.create({
+        data: {
+          ticketId: ticket.id,
+          fileName: att.name,
+          fileUrl: `https://storage.bidexpert.com/itsm/${ticket.publicId}/${att.name}`,
+          fileSize: att.size,
+          mimeType: att.mime,
+          uploadedBy: user.id,
+        }
+      });
+      attachCount++;
+    }
+  }
+  
+  console.log(`   ✅ ${attachCount} anexos criados`);
+}
+
+/**
+ * Cria logs de chat do assistente virtual
+ */
+async function seedItsmChatLogs(tenantId: bigint) {
+  console.log('[ITSM] 🤖 Criando logs de chat do assistente...');
+  
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 10 });
+  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 5 });
+  
+  if (users.length === 0) {
+    console.log('   ⚠️ Sem usuários');
+    return;
+  }
+  
+  const existingCount = await prisma.iTSM_ChatLog.count({ where: { tenantId } });
+  if (existingCount >= 12) {
+    console.log(`   Já existem ${existingCount} chat logs`);
+    return;
+  }
+  
+  const chatSessions = [
+    {
+      messages: [
+        { role: 'user', content: 'Como faço para participar de um leilão?' },
+        { role: 'assistant', content: 'Para participar, você precisa: 1) Criar uma conta, 2) Enviar documentos para habilitação, 3) Aguardar aprovação.' },
+        { role: 'user', content: 'Obrigado!' }
+      ],
+      wasHelpful: true,
+      ticketCreated: false
+    },
+    {
+      messages: [
+        { role: 'user', content: 'Estou com erro ao fazer login' },
+        { role: 'assistant', content: 'Vou ajudar. Qual mensagem de erro aparece?' },
+        { role: 'user', content: 'Diz que minha senha está errada mas tenho certeza que está certa' },
+        { role: 'assistant', content: 'Recomendo usar a opção "Esqueci minha senha" para redefinir. Posso abrir um chamado para você?' },
+        { role: 'user', content: 'Sim, por favor' }
+      ],
+      wasHelpful: false,
+      ticketCreated: true
+    },
+    {
+      messages: [
+        { role: 'user', content: 'Qual o prazo para pagamento após arrematação?' },
+        { role: 'assistant', content: 'O prazo padrão é de 24 horas para sinal (30%) e 15 dias para o restante, mas pode variar conforme o edital.' }
+      ],
+      wasHelpful: true,
+      ticketCreated: false
+    },
+    {
+      messages: [
+        { role: 'user', content: 'O leilão 456 foi cancelado?' },
+        { role: 'assistant', content: 'Deixe-me verificar... O leilão 456 foi suspenso temporariamente por determinação judicial. Sem previsão de retorno.' },
+        { role: 'user', content: 'E os lances que já foram dados?' },
+        { role: 'assistant', content: 'Todos os lances foram cancelados. Você receberá notificação quando houver nova data.' }
+      ],
+      wasHelpful: true,
+      ticketCreated: false
+    },
+    {
+      messages: [
+        { role: 'user', content: 'Não consigo enviar meus documentos' },
+        { role: 'assistant', content: 'Qual formato e tamanho do arquivo?' },
+        { role: 'user', content: 'PDF com 15MB' },
+        { role: 'assistant', content: 'O limite é 10MB. Tente comprimir o arquivo ou dividir em partes.' }
+      ],
+      wasHelpful: true,
+      ticketCreated: false
+    },
+  ];
+  
+  for (let i = 0; i < chatSessions.length; i++) {
+    const session = chatSessions[i];
+    const user = users[i % users.length];
+    const ticket = session.ticketCreated && tickets[i % tickets.length] ? tickets[i % tickets.length] : null;
+    
+    await prisma.iTSM_ChatLog.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        ticketId: ticket?.id,
+        sessionId: uuidv4(),
+        messages: session.messages,
+        context: { page: '/ajuda', timestamp: new Date().toISOString() },
+        wasHelpful: session.wasHelpful,
+        ticketCreated: session.ticketCreated,
+        updatedAt: new Date(),
+      }
+    });
+  }
+  
+  console.log(`   ✅ ${chatSessions.length} chat logs criados`);
+}
+
+/**
+ * Cria logs de queries (performance/debug)
+ */
+async function seedItsmQueryLogs(tenantId: bigint) {
+  console.log('[ITSM] 📊 Criando logs de queries...');
+  
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  
+  const existingCount = await prisma.iTSM_QueryLog.count();
+  if (existingCount >= 20) {
+    console.log(`   Já existem ${existingCount} query logs`);
+    return;
+  }
+  
+  const queryTemplates = [
+    { endpoint: '/api/leiloes', method: 'GET', success: true, duration: 45 },
+    { endpoint: '/api/lotes/search', method: 'POST', success: true, duration: 120 },
+    { endpoint: '/api/lances', method: 'POST', success: true, duration: 35 },
+    { endpoint: '/api/lances', method: 'POST', success: false, duration: 5000, error: 'Timeout ao processar lance' },
+    { endpoint: '/api/habilitacao', method: 'POST', success: true, duration: 250 },
+    { endpoint: '/api/documentos/upload', method: 'POST', success: false, duration: 30000, error: 'Request Entity Too Large' },
+    { endpoint: '/api/relatorios/pdf', method: 'GET', success: true, duration: 1500 },
+    { endpoint: '/api/auth/login', method: 'POST', success: true, duration: 180 },
+    { endpoint: '/api/auth/login', method: 'POST', success: false, duration: 50, error: 'Invalid credentials' },
+    { endpoint: '/api/pagamentos', method: 'POST', success: true, duration: 890 },
+    { endpoint: '/api/notificacoes', method: 'GET', success: true, duration: 25 },
+    { endpoint: '/api/leiloes/ao-vivo', method: 'GET', success: true, duration: 15 },
+    { endpoint: '/api/usuarios/perfil', method: 'PUT', success: true, duration: 95 },
+    { endpoint: '/api/favoritos', method: 'POST', success: true, duration: 40 },
+    { endpoint: '/api/busca/avancada', method: 'POST', success: true, duration: 350 },
+  ];
+  
+  for (let i = 0; i < queryTemplates.length; i++) {
+    const tpl = queryTemplates[i];
+    const user = users.length > 0 ? users[i % users.length] : null;
+    
+    await prisma.iTSM_QueryLog.create({
+      data: {
+        query: `SELECT * FROM ... (${tpl.endpoint})`,
+        duration: tpl.duration,
+        success: tpl.success,
+        errorMessage: tpl.error || null,
+        userId: user?.id,
+        endpoint: tpl.endpoint,
+        method: tpl.method,
+        ipAddress: faker.internet.ip(),
+      }
+    });
+  }
+  
+  console.log(`   ✅ ${queryTemplates.length} query logs criados`);
+}
+
+/**
+ * Cria form submissions
+ */
+async function seedFormSubmissions(tenantId: bigint) {
+  console.log('[ITSM] 📝 Criando form submissions...');
+  
+  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 10 });
+  
+  if (users.length === 0) {
+    console.log('   ⚠️ Sem usuários');
+    return;
+  }
+  
+  const existingCount = await prisma.formSubmission.count({ where: { tenantId } });
+  if (existingCount >= 15) {
+    console.log(`   Já existem ${existingCount} form submissions`);
+    return;
+  }
+  
+  const formTemplates = [
+    { formType: 'CADASTRO_USUARIO', status: 'SUBMITTED', score: 100, data: { nome: 'João Silva', cpf: '123.456.789-00', email: 'joao@email.com' } },
+    { formType: 'HABILITACAO_LEILAO', status: 'VALID', score: 95, data: { documentos: ['RG', 'CPF', 'Comprovante'], leilaoId: 1 } },
+    { formType: 'HABILITACAO_LEILAO', status: 'INVALID', score: 45, data: { documentos: ['RG'], leilaoId: 2 }, errors: ['CPF obrigatório', 'Comprovante de residência obrigatório'] },
+    { formType: 'PROPOSTA_VENDA_DIRETA', status: 'SUBMITTED', score: 100, data: { loteId: 5, valorProposta: 150000, mensagem: 'Interessado no imóvel' } },
+    { formType: 'CADASTRO_LEILOEIRO', status: 'VALIDATING', score: 80, data: { nome: 'Maria Leiloeira', jucesp: '123456', creci: '78901' } },
+    { formType: 'CONTATO', status: 'SUBMITTED', score: 100, data: { assunto: 'Dúvida', mensagem: 'Gostaria de mais informações' } },
+    { formType: 'RECURSO_LANCE', status: 'DRAFT', score: 60, data: { lanceId: 123, motivo: 'Erro no sistema' } },
+    { formType: 'CADASTRO_COMITENTE', status: 'VALID', score: 100, data: { razaoSocial: 'Banco XYZ', cnpj: '12.345.678/0001-90' } },
+    { formType: 'HABILITACAO_LEILAO', status: 'SUBMITTED', score: 90, data: { documentos: ['RG', 'CPF', 'Certidão'], leilaoId: 3 } },
+    { formType: 'ALTERACAO_CADASTRO', status: 'VALID', score: 100, data: { campo: 'telefone', valorAntigo: '11999999999', valorNovo: '11988888888' } },
+    { formType: 'SOLICITACAO_VISITA', status: 'SUBMITTED', score: 100, data: { loteId: 10, dataPreferida: '2026-02-15', horario: '14:00' } },
+    { formType: 'CADASTRO_USUARIO', status: 'FAILED', score: 30, data: { nome: '', cpf: 'invalido' }, errors: ['Nome obrigatório', 'CPF inválido'] },
+  ];
+  
+  for (let i = 0; i < formTemplates.length; i++) {
+    const tpl = formTemplates[i];
+    const user = users[i % users.length];
+    
+    await prisma.formSubmission.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        formType: tpl.formType,
+        status: tpl.status as any,
+        validationScore: tpl.score,
+        data: tpl.data,
+        validationErrors: tpl.errors || undefined,
+        completedAt: tpl.status === 'SUBMITTED' || tpl.status === 'VALID' ? new Date() : null,
+      }
+    });
+  }
+  
+  console.log(`   ✅ ${formTemplates.length} form submissions criados`);
+}
+
+/**
+ * Função principal para seed de dados ITSM
+ */
+async function seedItsmData(tenantId: bigint) {
+  console.log('\n[ITSM] 🎫 Iniciando seed de dados de suporte (ITSM)...');
+  
+  await seedItsmTickets(tenantId);
+  await seedItsmMessages(tenantId);
+  await seedItsmAttachments(tenantId);
+  await seedItsmChatLogs(tenantId);
+  await seedItsmQueryLogs(tenantId);
+  await seedFormSubmissions(tenantId);
+  
+  console.log('[ITSM] ✅ Seed de dados ITSM concluído!\n');
+}
+
+async function fixAuditInconsistencies(tenantId: bigint) {
+  console.log('\n[AUDIT-FIX] 🔧 Iniciando correção de inconsistências de auditoria...');
+  
+  await fixLotsWithoutAssets(tenantId);
+  await fixJudicialAuctionsWithoutProcess(tenantId);
+  await fixAuctionsWithoutResponsible(tenantId);
+  await fixAssetsWithoutImage(tenantId);
+  await fixHabilitationsWithoutDocs(tenantId);
+  await createDocumentTemplates(tenantId);
+  
+  console.log('[AUDIT-FIX] 📈 Incrementando tabelas com poucos dados...');
+  await addMoreLotQuestions(tenantId);
+  await addMoreReviews(tenantId);
+  await addMoreDirectSaleOffers(tenantId);
+  await addMoreSubscribers(tenantId);
+  await addMoreNotifications(tenantId);
+  await addMoreAuditLogs(tenantId);
+  await addMoreBidderProfiles(tenantId);
+  await addMoreCourts();
+  await addMoreSellers(tenantId);
+  
+  console.log('[AUDIT-FIX] ✅ Correção de inconsistências concluída!\n');
 }
 
 async function main() {
@@ -2902,6 +3950,18 @@ async function main() {
     // EXECUTAR POPULAÇÃO COMPLEMENTAR (MESCLADO DE seed-populate-missing.ts)
     // Passando o tenantId 1n (Padrão do script V3)
     await populateMissingData(BigInt(1));
+
+    // EXECUTAR CORREÇÃO DE INCONSISTÊNCIAS DE AUDITORIA
+    // Garante que todas as tabelas estejam completas e sem inconsistências
+    await fixAuditInconsistencies(BigInt(1));
+
+    // SEED DE DADOS ITSM (Sistema de Chamados de Suporte)
+    // Popula tickets, mensagens, anexos, chat logs, query logs e form submissions
+    await seedItsmData(BigInt(1));
+
+    // SEED DE LOTES ARREMATADOS (COM SERVICES)
+    // Gera leilões finalizados com lotes vendidos e arrematantes habilitados
+    await seedWonLotsWithServices(BigInt(1));
 
   } catch (error) {
     console.error('❌ Erro durante seed:', error);

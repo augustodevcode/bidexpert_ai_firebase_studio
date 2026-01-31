@@ -13,10 +13,10 @@ export const slugify = (text: string): string => {
     .toString()
     .toLowerCase()
     .trim()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
-    .replace(/\s+/g, '-') 
-    .replace(/[^\w-]+/g, '') 
-    .replace(/--+/g, '-'); 
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
 };
 
 /**
@@ -25,24 +25,24 @@ export const slugify = (text: string): string => {
  * @returns {boolean} True if the URL is valid, false otherwise.
  */
 export const isValidImageUrl = (url?: string | null): boolean => {
-    if (!url) {
-        return false;
-    }
-    // Check for local relative paths
-    if (url.startsWith('/')) {
-        return true;
-    }
-    // Check for absolute URLs using the URL constructor
-    try {
-        const parsed = new URL(url);
-        return parsed.protocol === "http:" || parsed.protocol === "https:";
-    } catch (e) {
-        return false;
-    }
+  if (!url) {
+    return false;
+  }
+  // Check for local relative paths
+  if (url.startsWith('/')) {
+    return true;
+  }
+  // Check for absolute URLs using the URL constructor
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch (e) {
+    return false;
+  }
 };
 
 
-export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | PaymentStatus | DirectSaleOfferStatus | string | undefined ): string => {
+export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | PaymentStatus | DirectSaleOfferStatus | string | undefined): string => {
   if (!status) return 'Status Desconhecido';
   switch (status) {
     case 'ABERTO_PARA_LANCES': return 'Aberto para Lances';
@@ -60,12 +60,12 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'REJECTED': return 'Rejeitado';
     case 'PENDING_ANALYSIS': return 'Em Análise';
     case 'PENDING_DOCUMENTS': return 'Documentos Pendentes';
-    case 'HABILITADO': return 'Habilitado'; 
+    case 'HABILITADO': return 'Habilitado';
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Conta Bloqueada';
-    case 'ACTIVE': return 'Ativa'; 
-    case 'SOLD': return 'Vendido'; 
-    case 'EXPIRED': return 'Expirada'; 
+    case 'ACTIVE': return 'Ativa';
+    case 'SOLD': return 'Vendido';
+    case 'EXPIRED': return 'Expirada';
     case 'PENDING_APPROVAL': return 'Pendente Aprovação';
     case 'RASCUNHO': return 'Rascunho';
     case 'EM_PREPARACAO': return 'Em Preparação';
@@ -86,16 +86,16 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
 export const getLotStatusColor = (status: LotStatus | DirectSaleOfferStatus | string): string => {
   switch (status) {
     case 'ABERTO_PARA_LANCES':
-    case 'ACTIVE': 
+    case 'ACTIVE':
       return 'bg-green-600 text-white';
     case 'EM_BREVE':
-    case 'PENDING_APPROVAL': 
+    case 'PENDING_APPROVAL':
       return 'bg-blue-500 text-white';
     case 'ENCERRADO':
     case 'VENDIDO':
     case 'NAO_VENDIDO':
-    case 'SOLD': 
-    case 'EXPIRED': 
+    case 'SOLD':
+    case 'EXPIRED':
       return 'bg-gray-500 text-white';
     default:
       return 'bg-gray-300 text-gray-800';
@@ -124,14 +124,14 @@ export const getAuctionStatusColor = (status: AuctionStatus | undefined): string
 };
 
 export const getAuctionTypeDisplayData = (type?: AuctionType) => {
-    if (!type) return null;
-    switch (type) {
-      case 'JUDICIAL': return { label: 'Judicial', icon: Gavel };
-      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', icon: Gavel };
-      case 'PARTICULAR': return { label: 'Particular', icon: Gavel };
-      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', icon: TomadaPrecosIcon };
-      default: return null;
-    }
+  if (!type) return null;
+  switch (type) {
+    case 'JUDICIAL': return { label: 'Judicial', icon: Gavel };
+    case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', icon: Gavel };
+    case 'PARTICULAR': return { label: 'Particular', icon: Gavel };
+    case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', icon: TomadaPrecosIcon };
+    default: return null;
+  }
 };
 
 export const getPaymentStatusText = (status: PaymentStatus): string => getAuctionStatusText(status);
@@ -185,14 +185,14 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus | u
 
 export const getCategoryAssets = (categoryName: string): { bannerUrl: string, bannerAiHint: string } => {
   const assets: Record<string, { bannerUrl: string, bannerAiHint: string }> = {
-      'Leilões Judiciais': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Judiciais', bannerAiHint: 'tribunal martelo' },
-      'Leilões Extrajudiciais': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Extrajudiciais', bannerAiHint: 'contrato assinatura' },
-      'Tomada de Preços': { bannerUrl: 'https://placehold.co/1200x250.png?text=Tomada+de+Precos', bannerAiHint: 'documentos negocios' },
-      'Venda Direta': { bannerUrl: 'https://placehold.co/1200x250.png?text=Venda+Direta', bannerAiHint: 'carrinho compras' },
-      'Segunda Praça': { bannerUrl: 'https://placehold.co/1200x250.png?text=Segunda+Praca', bannerAiHint: 'desconto oportunidade' },
-      'Leilões Encerrados': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Encerrados', bannerAiHint: 'arquivo historico' },
-      'Leilões Cancelados': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Cancelados', bannerAiHint: 'carimbo cancelado' },
-      'Default': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes', bannerAiHint: 'leilao geral' }
+    'Leilões Judiciais': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Judiciais', bannerAiHint: 'tribunal martelo' },
+    'Leilões Extrajudiciais': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Extrajudiciais', bannerAiHint: 'contrato assinatura' },
+    'Tomada de Preços': { bannerUrl: 'https://placehold.co/1200x250.png?text=Tomada+de+Precos', bannerAiHint: 'documentos negocios' },
+    'Venda Direta': { bannerUrl: 'https://placehold.co/1200x250.png?text=Venda+Direta', bannerAiHint: 'carrinho compras' },
+    'Segunda Praça': { bannerUrl: 'https://placehold.co/1200x250.png?text=Segunda+Praca', bannerAiHint: 'desconto oportunidade' },
+    'Leilões Encerrados': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Encerrados', bannerAiHint: 'arquivo historico' },
+    'Leilões Cancelados': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Cancelados', bannerAiHint: 'carimbo cancelado' },
+    'Default': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes', bannerAiHint: 'leilao geral' }
   };
   return assets[categoryName] || assets['Default'];
 };
@@ -209,41 +209,41 @@ export const getUniqueLotLocations = (lots: Lot[]): string[] => {
 };
 
 export const getEffectiveLotEndDate = (lot: Lot, auction?: Auction): { effectiveLotEndDate: Date | null, effectiveLotStartDate: Date | null } => {
-    if (!lot) return { effectiveLotEndDate: null, effectiveLotStartDate: null };
+  if (!lot) return { effectiveLotEndDate: null, effectiveLotStartDate: null };
 
-    const now = new Date();
+  const now = new Date();
 
-    // Prioritize stage dates from the parent auction if available
-    if (auction?.auctionStages && auction.auctionStages.length > 0) {
-        const activeOrNextStage = auction.auctionStages
-            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
-            .sort((a, b) => new Date(a.startDate as Date).getTime() - new Date(b.startDate as Date).getTime())[0];
-        
-        if (activeOrNextStage) {
-            return {
-                effectiveLotEndDate: new Date(activeOrNextStage.endDate as string),
-                effectiveLotStartDate: new Date(activeOrNextStage.startDate as string)
-            };
-        }
-        
-        // If all stages are in the past, find the most recent one
-        const lastFinishedStage = auction.auctionStages
-            .filter(stage => stage.endDate)
-            .sort((a,b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
-            
-        if (lastFinishedStage) {
-             return {
-                effectiveLotEndDate: new Date(lastFinishedStage.endDate as string),
-                effectiveLotStartDate: new Date(lastFinishedStage.startDate as string)
-            };
-        }
+  // Prioritize stage dates from the parent auction if available
+  if (auction?.auctionStages && auction.auctionStages.length > 0) {
+    const activeOrNextStage = auction.auctionStages
+      .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
+      .sort((a, b) => new Date(a.startDate as Date).getTime() - new Date(b.startDate as Date).getTime())[0];
+
+    if (activeOrNextStage) {
+      return {
+        effectiveLotEndDate: new Date(activeOrNextStage.endDate as string),
+        effectiveLotStartDate: new Date(activeOrNextStage.startDate as string)
+      };
     }
-    
-    // Fallback to lot-specific dates
-    const endDate = lot.endDate ? new Date(lot.endDate as string) : (auction?.endDate ? new Date(auction.endDate as string) : null);
-    const startDate = lot.auctionDate ? new Date(lot.auctionDate as string) : (auction?.auctionDate ? new Date(auction.auctionDate as string) : null);
 
-    return { effectiveLotEndDate: endDate, effectiveLotStartDate: startDate };
+    // If all stages are in the past, find the most recent one
+    const lastFinishedStage = auction.auctionStages
+      .filter(stage => stage.endDate)
+      .sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
+
+    if (lastFinishedStage) {
+      return {
+        effectiveLotEndDate: new Date(lastFinishedStage.endDate as string),
+        effectiveLotStartDate: new Date(lastFinishedStage.startDate as string)
+      };
+    }
+  }
+
+  // Fallback to lot-specific dates
+  const endDate = lot.endDate ? new Date(lot.endDate as string) : (auction?.endDate ? new Date(auction.endDate as string) : null);
+  const startDate = lot.auctionDate ? new Date(lot.auctionDate as string) : (auction?.auctionDate ? new Date(auction.auctionDate as string) : null);
+
+  return { effectiveLotEndDate: endDate, effectiveLotStartDate: startDate };
 }
 
 
@@ -263,7 +263,7 @@ export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => 
     const endDate = new Date(stage.endDate);
     return !isFuture(startDate) && isFuture(endDate);
   });
-  
+
   // If multiple stages are active, return the one that started most recently
   if (activeStages.length > 1) {
     return activeStages.sort((a, b) => new Date(b.startDate as Date).getTime() - new Date(a.startDate as Date).getTime())[0];
@@ -279,24 +279,24 @@ export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => 
  * @returns An object with initialBid and increment or null.
  */
 export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initialBid: number | null, bidIncrement: number | null } | null => {
-    if (!lot) return null;
+  if (!lot) return null;
 
-    // If there's a specific price for the active stage, use it
-    if (activeStageId && lot.stageDetails) {
-        const stagePrice = lot.stageDetails.find(p => p.stageId === activeStageId);
-        if (stagePrice) {
-            return {
-                initialBid: stagePrice.initialBid,
-                bidIncrement: stagePrice.bidIncrement,
-            };
-        }
+  // If there's a specific price for the active stage, use it
+  if (activeStageId && lot.stageDetails) {
+    const stagePrice = lot.stageDetails.find(p => p.stageId === activeStageId);
+    if (stagePrice) {
+      return {
+        initialBid: stagePrice.initialBid,
+        bidIncrement: stagePrice.bidIncrement,
+      };
     }
-    
-    // Fallback to the lot's main price details
-    return {
-        initialBid: lot.initialPrice,
-        bidIncrement: lot.bidIncrementStep,
-    };
+  }
+
+  // Fallback to the lot's main price details
+  return {
+    initialBid: lot.initialPrice,
+    bidIncrement: lot.bidIncrementStep,
+  };
 };
 
 /**
@@ -313,25 +313,25 @@ export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initial
  * @returns O valor do lance mínimo calculado
  */
 export const calculateMinimumBid = (
-    lot: Lot,
-    activeStage: AuctionStage | null,
-    currentBidCount: number = 0,
-    lastBidValue: number | null = null
+  lot: Lot,
+  activeStage: AuctionStage | null,
+  currentBidCount: number = 0,
+  lastBidValue: number | null = null
 ): number => {
-    if (!lot) return 0;
-    
-    const bidIncrement = lot.bidIncrementStep ?? 100;
-    
-    // Se houver lances, o lance mínimo é o último lance + incremento
-    if (currentBidCount > 0 && lastBidValue !== null) {
-        return lastBidValue + bidIncrement;
-    }
-    
-    // Se não houver lances, aplica o percentual da praça ao valor inicial do lote
-    const initialPrice = lot.initialPrice ?? 0;
-    const discountPercent = activeStage?.discountPercent ?? 100;
-    
-    return initialPrice * (discountPercent / 100);
+  if (!lot) return 0;
+
+  const bidIncrement = lot.bidIncrementStep ?? 100;
+
+  // Se houver lances, o lance mínimo é o último lance + incremento
+  if (currentBidCount > 0 && lastBidValue !== null) {
+    return lastBidValue + bidIncrement;
+  }
+
+  // Se não houver lances, aplica o percentual da praça ao valor inicial do lote
+  const initialPrice = lot.initialPrice ?? 0;
+  const discountPercent = activeStage?.discountPercent ?? 100;
+
+  return initialPrice * (discountPercent / 100);
 };
 
 /**
@@ -342,13 +342,76 @@ export const calculateMinimumBid = (
  * @returns O valor inicial com desconto da praça aplicado
  */
 export const getLotInitialPriceForStage = (
-    lot: Lot,
-    activeStage: AuctionStage | null
+  lot: Lot,
+  activeStage: AuctionStage | null
 ): number => {
-    if (!lot) return 0;
-    
-    const initialPrice = lot.initialPrice ?? 0;
-    const discountPercent = activeStage?.discountPercent ?? 100;
-    
-    return initialPrice * (discountPercent / 100);
+  if (!lot) return 0;
+
+  const initialPrice = lot.initialPrice ?? 0;
+  const discountPercent = activeStage?.discountPercent ?? 100;
+
+  return initialPrice * (discountPercent / 100);
+};
+
+/**
+ * Determines the correct display price and label for a lot card based on auction stage and bids.
+ * 
+ * @param lot The lot object
+ * @param auction The parent auction object (optional but recommended for stage info)
+ * @returns Object containing the numeric value to display and the appropriate label
+ */
+export const getLotDisplayPrice = (lot: Lot, auction?: Auction): { value: number, label: string } => {
+  const activeStage = getActiveStage(auction?.auctionStages);
+  const hasBids = (lot.bidsCount || 0) > 0;
+
+  // Case 1: Has existing bids - always show current price (which is technically the last bid value, stored in price)
+  if (hasBids) {
+    return {
+      value: lot.price,
+      label: 'Lance Atual'
+    };
+  }
+
+  // Case 2: No bids, but we have an active stage (handling 2nd praça etc)
+  if (activeStage) {
+    // If it's the first stage (or only stage), usually just initial price
+    // But if it's a subsequent stage, we might have a discount
+    // We can reuse getLotInitialPriceForStage logic here
+    const discountedInitialFn = getLotInitialPriceForStage(lot, activeStage);
+
+    // Also check if there is a specific override in lotStagePrices/stageDetails if implemented
+    // For simple rule: use the discounted calculation
+
+    // We'll call it "Lance Mínimo" if it differentiates from the raw initial price, 
+    // or effectively "Lance Inicial" is also fine, but "Lance Mínimo" aligns with "2ª Praça" context better.
+    // Let's stick to "Lance Mínimo" when we are in a stage context to be safe.
+    // However, user request says: "lance inicial se não houve lance ou valor atual se houve lance" for main logic
+    // AND "já nas demais praças... lance mínimo".
+
+    // Let's refine:
+    // If activeStage is the FIRST stage, normally it's just "Lance Inicial".
+    // If activeStage is NOT the first stage (e.g. 2nd Praça), it is "Lance Mínimo".
+
+    const isFirstStage = auction?.auctionStages && auction.auctionStages[0]?.id === activeStage.id;
+
+    if (!isFirstStage && auction?.auctionStages && auction.auctionStages.length > 1) {
+      return {
+        value: discountedInitialFn,
+        label: 'Lance Mínimo'
+      };
+    }
+
+    // Fallback for 1st stage active
+    return {
+      value: lot.initialPrice || 0,
+      label: 'Lance Inicial'
+    };
+  }
+
+  // Case 3: No active stage info or simple lot (e.g. Direct Sale or just Listed)
+  // Default to Initial Price
+  return {
+    value: lot.initialPrice || lot.price || 0, // Fallback to price if initial not set
+    label: 'Lance Inicial'
+  };
 };

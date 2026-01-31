@@ -75,6 +75,9 @@ export default async function HomePage({ searchParams }: { searchParams?: HomeSe
                       orderBy: { endDate: 'desc' },
                   }
               }
+          },
+          _count: {
+              select: { bids: true }
           }
       },
       take: 50,
@@ -100,6 +103,7 @@ export default async function HomePage({ searchParams }: { searchParams?: HomeSe
       return {
           ...lot,
           id: lot.id.toString(),
+          bidsCount: (lot as any)._count?.bids ?? lot.bidsCount ?? 0,
           auctionId: lot.auctionId.toString(),
           categoryId: lot.categoryId?.toString() || null,
           subcategoryId: lot.subcategoryId?.toString() || null,

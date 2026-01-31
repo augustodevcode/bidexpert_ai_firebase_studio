@@ -10,17 +10,27 @@ async function main() {
     const password = 'senha@123';
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // 1. Ensure Tenant exists (ID 1)
-    const tenant = await prisma.tenant.upsert({
-        where: { id: 1 },
-        update: {},
-        create: {
-            id: 1,
-            name: 'BidExpert Demo Environment',
-            subdomain: 'demo',
-            domain: 'demo.bidexpert.ai' // Example
-        }
+    
+    // 1. Ensure Demo Tenant exists (Subdomain 'demo')
+    let tenant = await prisma.tenant.findFirst({
+        where: { subdomain: 'demo' }
     });
+
+    if (!tenant) {
+        console.log('Creating new Tenant for Demo Environment...');
+        tenant = await prisma.tenant.create({
+            data: {
+                name: 'BidExpert Demo Environment',
+                subdomain: 'demo',
+                domain: 'demo.localhost',
+                status: 'ACTIVE'
+            }
+        });
+        console.log(`Created Tenant ID: ${tenant.id}`);
+    } else {
+        console.log(`Found existing Demo Tenant ID: ${tenant.id}`);
+    }
+
 
     // 2. Ensure Role exists
     const role = await prisma.role.findFirst({

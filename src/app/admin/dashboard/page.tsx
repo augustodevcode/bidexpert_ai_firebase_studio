@@ -1,17 +1,17 @@
+/**
+ * @fileoverview Página do dashboard administrativo principal com métricas reais da plataforma.
+ */
 // src/app/admin/dashboard/page.tsx
 'use client';
 
-
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, DollarSign, Gavel, Package, Users, BarChart3, TrendingUp, AlertTriangle, LineChart as LineChartIcon, PieChart as PieChartIcon } from 'lucide-react';
+import { Settings, DollarSign, Gavel, Package, Users, BarChart3, TrendingUp, LineChart as LineChartIcon, PieChart as PieChartIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import type { AdminReportData } from '@/types';
-import { getAdminReportDataAction } from '../reports/actions';
+import { getAdminReportDataAction } from '@/app/admin/reports/actions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useWidgetPreferences } from '@/contexts/widget-preferences-context';
 import { LineChart, PieChart, Pie, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, Cell } from 'recharts';
 
@@ -64,14 +64,6 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6" data-ai-id="admin-dashboard-page-container">
       {/* O cabeçalho com título foi movido para o AdminHeader e AdminLayout */}
-
-       <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Informação</AlertTitle>
-          <AlertDescription>
-           Olá! Esta é uma área de demonstração. Os dados abaixo são gerados para ilustrar as capacidades da plataforma.
-          </AlertDescription>
-      </Alert>
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-ai-id="admin-dashboard-stats-grid">
             {isWidgetVisible('totalRevenue') && (

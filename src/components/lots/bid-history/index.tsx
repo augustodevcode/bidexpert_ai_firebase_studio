@@ -56,6 +56,8 @@ interface BidHistoryProps {
   className?: string;
   /** Quantidade máxima de lances a exibir inicialmente */
   initialDisplayCount?: number;
+  /** Se true, exibe histórico mesmo durante leilão aberto (para uso em tempo real) */
+  showDuringAuction?: boolean;
 }
 
 // =============================================================================
@@ -225,11 +227,12 @@ export function BidHistory({
   initialPrice = 0,
   className,
   initialDisplayCount = 5,
+  showDuringAuction = false,
 }: BidHistoryProps) {
   const [showAll, setShowAll] = React.useState(false);
 
-  // Verifica se pode exibir histórico (apenas para lotes encerrados)
-  const canShowHistory = ['ENCERRADO', 'VENDIDO', 'FINALIZADO'].includes(lotStatus);
+  // Verifica se pode exibir histórico (após encerramento OU se showDuringAuction=true)
+  const canShowHistory = showDuringAuction || ['ENCERRADO', 'VENDIDO', 'FINALIZADO'].includes(lotStatus);
 
   // Ordena lances por valor (maior primeiro) ou timestamp (mais recente primeiro)
   const sortedBids = React.useMemo(() => {

@@ -1,0 +1,895 @@
+
+================================================================================
+[2026-01-31T02:04:57.750Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+  - Local:        http://localhost:9005
+[STDOUT]   - Network:      http://0.0.0.0:9005
+  - Environments: .env
+
+ ✓ Starting...
+[STDOUT]  ✓ Ready in 4.6s
+[STDOUT]  ✓ Compiled /src/middleware in 285ms (212 modules)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  ○ Compiling / ...
+[STDOUT]  ✓ Compiled / in 17.7s (7203 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT] prisma:error 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+[STDERR] [getPlatformSettings Action] Error fetching or creating settings: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:56:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async findSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:116:20)
+    at async PlatformSettingsService.loadSettingsFromDatabase (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:138:24) {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: {
+    modelName: 'PlatformSettings',
+    column: 'bidexpert_demo.PlatformSettings.themeColorsLight'
+  }
+}
+[STDERR] [getPlatformSettings Action] Error fetching or creating settings: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:56:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async findSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:116:20)
+    at async PlatformSettingsService.loadSettingsFromDatabase (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:138:24) {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: {
+    modelName: 'PlatformSettings',
+    column: 'bidexpert_demo.PlatformSettings.themeColorsLight'
+  }
+}
+[Layout Data Fetch] Could not fetch platform settings (this is expected on first run): Error: [getPlatformSettings Action] Error: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:35:15)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[STDERR]  ⨯ src\app\admin\settings\actions.ts (23:11) @ getPlatformSettings
+[STDERR]  ⨯ Error: [getPlatformSettings Action] Error: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at getPlatformSettings (./src/app/admin/settings/actions.ts:35:15)
+    at async Promise.all (index 0)
+    at async HomePage (./src/app/page.tsx:122:77)
+digest: "4158832232"
+[0m [90m 21 |[39m     console[33m.[39merror([32m"[getPlatformSettings Action] Error fetching or creating settings:"[39m[33m,[39m error)[33m;[39m[0m
+[0m [90m 22 |[39m     [36mconst[39m errorMessage [33m=[39m error[33m.[39mname [33m+[39m [32m': '[39m [33m+[39m error[33m.[39mmessage[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m 23 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`[getPlatformSettings Action] Error: ${errorMessage}`[39m)[33m;[39m[0m
+[0m [90m    |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 24 |[39m   }[0m
+[0m [90m 25 |[39m }[0m
+[0m [90m 26 |[39m[0m
+ ⨯ src\app\admin\settings\actions.ts (23:11) @ getPlatformSettings
+[STDERR]  ⨯ Error: [getPlatformSettings Action] Error: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at getPlatformSettings (./src/app/admin/settings/actions.ts:35:15)
+    at async Promise.all (index 0)
+    at async HomePage (./src/app/page.tsx:122:77)
+digest: "4158832232"
+[0m [90m 21 |[39m     console[33m.[39merror([32m"[getPlatformSettings Action] Error fetching or creating settings:"[39m[33m,[39m error)[33m;[39m[0m
+[0m [90m 22 |[39m     [36mconst[39m errorMessage [33m=[39m error[33m.[39mname [33m+[39m [32m': '[39m [33m+[39m error[33m.[39mmessage[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m 23 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`[getPlatformSettings Action] Error: ${errorMessage}`[39m)[33m;[39m[0m
+[0m [90m    |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 24 |[39m   }[0m
+[0m [90m 25 |[39m }[0m
+[0m [90m 26 |[39m[0m
+[STDOUT]  GET /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 500 in 19549ms
+[STDOUT]  ✓ Compiled in 1984ms (2655 modules)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 116ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 92ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "11", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "11", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "9", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "10", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "9", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "10", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 7, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "7", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "8", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 7, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "7", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "8", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 6, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "6", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "2", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "3", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "5", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: Decimal, imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: ..., builtArea: ..., bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "2", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "3", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "7", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: Decimal, imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: ..., builtArea: ..., bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "2", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "3", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "12", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: Decimal, imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: ..., builtArea: ..., bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "4", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "4", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "4", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "5", lotId: "5", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "4", lotId: "4", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "3", lotId: "3", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "2", lotId: "2", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", lotId: "1", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: ..., imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: Decimal, builtArea: ..., bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: ..., imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: ..., builtArea: Decimal, bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^^^^^^^
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 112ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 7, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 6, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 83ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 74ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 78ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 182ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "5", lotId: "5", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 106ms
+[STDOUT]  ✓ Compiled in 1129ms (2655 modules)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT] prisma:error 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+[STDERR] [getPlatformSettings Action] Error fetching or creating settings: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:56:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async findSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:116:20)
+    at async PlatformSettingsService.loadSettingsFromDatabase (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:138:24) {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: {
+    modelName: 'PlatformSettings',
+    column: 'bidexpert_demo.PlatformSettings.themeColorsLight'
+  }
+}
+[STDERR] [getPlatformSettings Action] Error fetching or creating settings: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:56:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async findSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:116:20)
+    at async PlatformSettingsService.loadSettingsFromDatabase (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:138:24) {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: {
+    modelName: 'PlatformSettings',
+    column: 'bidexpert_demo.PlatformSettings.themeColorsLight'
+  }
+}
+[Layout Data Fetch] Could not fetch platform settings (this is expected on first run): Error: [getPlatformSettings Action] Error: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:35:15)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[STDERR]  ⨯ src\app\admin\settings\actions.ts (23:11) @ getPlatformSettings
+[STDERR]  ⨯ Error: [getPlatformSettings Action] Error: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at getPlatformSettings (./src/app/admin/settings/actions.ts:35:15)
+    at async Promise.all (index 0)
+    at async HomePage (./src/app/page.tsx:122:77)
+digest: "4158832232"
+[0m [90m 21 |[39m     console[33m.[39merror([32m"[getPlatformSettings Action] Error fetching or creating settings:"[39m[33m,[39m error)[33m;[39m[0m
+[0m [90m 22 |[39m     [36mconst[39m errorMessage [33m=[39m error[33m.[39mname [33m+[39m [32m': '[39m [33m+[39m error[33m.[39mmessage[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m 23 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`[getPlatformSettings Action] Error: ${errorMessage}`[39m)[33m;[39m[0m
+[0m [90m    |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 24 |[39m   }[0m
+[0m [90m 25 |[39m }[0m
+[0m [90m 26 |[39m[0m
+[STDERR]  ⨯ src\app\admin\settings\actions.ts (23:11) @ getPlatformSettings
+[STDERR]  ⨯ Error: [getPlatformSettings Action] Error: PrismaClientKnownRequestError: 
+Invalid `prisma.platformSettings.findUnique()` invocation:
+
+
+The column `bidexpert_demo.PlatformSettings.themeColorsLight` does not exist in the current database.
+    at getPlatformSettings (./src/app/admin/settings/actions.ts:35:15)
+    at async Promise.all (index 0)
+    at async HomePage (./src/app/page.tsx:122:77)
+digest: "4158832232"
+[0m [90m 21 |[39m     console[33m.[39merror([32m"[getPlatformSettings Action] Error fetching or creating settings:"[39m[33m,[39m error)[33m;[39m[0m
+[0m [90m 22 |[39m     [36mconst[39m errorMessage [33m=[39m error[33m.[39mname [33m+[39m [32m': '[39m [33m+[39m error[33m.[39mmessage[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m 23 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`[getPlatformSettings Action] Error: ${errorMessage}`[39m)[33m;[39m[0m
+[0m [90m    |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 24 |[39m   }[0m
+[0m [90m 25 |[39m }[0m
+[0m [90m 26 |[39m[0m
+[STDOUT]  GET /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 500 in 207ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 77ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 69ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "11", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "11", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "9", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "10", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "9", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "10", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 7, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "7", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "8", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 7, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "7", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "8", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 6, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "6", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "2", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "3", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "5", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: Decimal, imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: ..., builtArea: ..., bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "2", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "3", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "7", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: Decimal, imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: ..., builtArea: ..., bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "2", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "3", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "12", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: Decimal, imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: ..., builtArea: ..., bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "4", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "4", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "4", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "5", lotId: "5", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "4", lotId: "4", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "3", lotId: "3", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "2", lotId: "2", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", lotId: "1", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: ..., imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: Decimal, builtArea: ..., bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", publicId: ..., title: ..., description: ..., status: ..., categoryId: ..., subcategoryId: ..., judicialProcessId: ..., sellerId: ..., evaluationValue: ..., imageUrl: ..., imageMediaId: ..., galleryImageUrls: ..., mediaItemIds: ..., dataAiHint: ..., locationCity: ..., locationState: ..., address: ..., latitude: ..., longitude: ..., createdAt: ..., updatedAt: ..., tenantId: ..., plate: ..., make: ..., model: ..., version: ..., year: ..., modelYear: ..., mileage: ..., color: ..., fuelType: ..., transmissionType: ..., bodyType: ..., vin: ..., renavam: ..., enginePower: ..., numberOfDoors: ..., vehicleOptions: ..., detranStatus: ..., debts: ..., runningCondition: ..., bodyCondition: ..., tiresCondition: ..., hasKey: ..., propertyRegistrationNumber: ..., iptuNumber: ..., isOccupied: ..., occupationStatus: ..., occupationNotes: ..., occupationLastVerified: ..., occupationUpdatedBy: ..., totalArea: ..., builtArea: Decimal, bedrooms: ..., suites: ..., bathrooms: ..., parkingSpaces: ..., constructionType: ..., finishes: ..., infrastructure: ..., condoDetails: ..., improvements: ..., topography: ..., liensAndEncumbrances: ..., propertyDebts: ..., unregisteredRecords: ..., hasHabiteSe: ..., zoningRestrictions: ..., amenities: ..., brand: ..., serialNumber: ..., itemCondition: ..., specifications: ..., includedAccessories: ..., batteryCondition: ..., hasInvoice: ..., hasWarranty: ..., repairHistory: ..., applianceCapacity: ..., voltage: ..., applianceType: ..., additionalFunctions: ..., hoursUsed: ..., engineType: ..., capacityOrPower: ..., maintenanceHistory: ..., installationLocation: ..., compliesWithNR: ..., operatingLicenses: ..., breed: ..., age: ..., sex: ..., weight: ..., individualId: ..., purpose: ..., sanitaryCondition: ..., lineage: ..., isPregnant: ..., specialSkills: ..., gtaDocument: ..., breedRegistryDocument: ..., furnitureType: ..., material: ..., style: ..., dimensions: ..., pieceCount: ..., jewelryType: ..., metal: ..., gemstones: ..., totalWeight: ..., jewelrySize: ..., authenticityCertificate: ..., workType: ..., artist: ..., period: ..., technique: ..., provenance: ..., boatType: ..., boatLength: ..., hullMaterial: ..., onboardEquipment: ..., productName: ..., quantity: ..., packagingType: ..., expirationDate: ..., storageConditions: ..., preciousMetalType: ..., purity: ..., forestGoodsType: ..., volumeOrQuantity: ..., species: ..., dofNumber: ...}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^^^^^^^
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 86ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 7, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 6, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 69ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 51ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 58ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 71ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "1", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "5", lotId: "5", auctionId: 1, auctionStageId: ..., initialBid: ..., bidIncrement: Decimal, tenantId: ...}
+                                                                                          ^^^^^^^
+[STDOUT]  POST /?id=7a9a23c8-0aad-464b-b742-919f9bd9bce7&vscodeBrowserReqId=1769825120116 200 in 58ms
+[STDOUT] [?25h
+
+[2026-01-31T02:08:12.619Z] Processo encerrado com código 0
+
+================================================================================
+[2026-01-31T02:36:06.051Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+[STDOUT]   - Local:        http://localhost:9005
+  - Network:      http://0.0.0.0:9005
+  - Environments: .env
+
+[STDOUT]  ✓ Starting...
+[STDOUT]  ✓ Ready in 7s
+[STDOUT]  ✓ Compiled /src/middleware in 406ms (212 modules)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  ○ Compiling / ...
+[STDOUT]  ✓ Compiled / in 26.8s (7203 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 7, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 4, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 25, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 22, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 19, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 16, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 6, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 26, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 27, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "26", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "27", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 25, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "25", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 23, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 24, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "23", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "24", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 22, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "22", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 20, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 21, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "20", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "21", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 19, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "19", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 17, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 18, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "17", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "18", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 16, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "16", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "11", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 11, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "11", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "9", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "10", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 9, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "9", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                   ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: "10", name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                    ^^^^^^^
+[STDOUT]  ✓ Compiled in 4.2s (2655 modules)
+[STDOUT]  ✓ Compiled in 30.9s (2655 modules)
+[STDOUT]  ✓ Compiled in 48.3s (2655 modules)
+[STDOUT]  ✓ Compiled in 1306ms (2655 modules)
+[STDOUT]  ✓ Compiled in 33.1s (2655 modules)
+[STDOUT]  ✓ Compiled in 28.5s (2655 modules)

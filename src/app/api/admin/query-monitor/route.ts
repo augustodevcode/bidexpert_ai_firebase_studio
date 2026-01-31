@@ -5,15 +5,17 @@ import { auth } from '@/lib/auth';
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
+    const isDev = process.env.NODE_ENV === 'development';
+    const isDemo = req.headers.get('host')?.includes('demo');
     
-    // Check if user is admin
-    if (!session?.user?.id) {
+    // Check if user is admin or bypassing in dev/demo
+    if (!session?.user?.id && !isDev && !isDemo) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Get recent query logs (last 50 queries)
+    // Get recent query logs (last 100 queries)
     const queryLogs = await prisma.iTSM_QueryLog.findMany({
-      take: 50,
+      take: 100,
       orderBy: { timestamp: 'desc' },
       include: {
         user: {
@@ -81,5 +83,25 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Erro ao criar log de query:', error);
     return NextResponse.json({ error: 'Erro ao criar log' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await auth();
+    const isDev = process.env.NODE_ENV === 'development';
+    const isDemo = req.headers.get('host')?.includes('demo');
+    
+    // Check if user is admin or bypassing in dev/demo
+    if (!session?.user?.id && !isDev && !isDemo) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    await prisma.iTSM_QueryLog.deleteMany({});
+    
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao limpar logs:', error);
+    return NextResponse.json({ error: 'Erro ao limpar logs' }, { status: 500 });
   }
 }

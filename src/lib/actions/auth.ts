@@ -14,6 +14,34 @@ let cachedDefaultTenantId: string | null = null;
 let ensureDefaultTenantPromise: Promise<string> | null = null;
 
 /**
+ * Resolve o tenantId vindo do header (slug ou domínio) para um ID numérico.
+ * Retorna null quando não for possível resolver.
+ */
+async function resolveTenantIdFromHeader(tenantIdFromHeader?: string | null): Promise<string | null> {
+    if (!tenantIdFromHeader) return null;
+
+    const normalized = tenantIdFromHeader.trim().toLowerCase();
+    if (!normalized) return null;
+
+    if (/^\d+$/.test(normalized)) {
+        return normalized;
+    }
+
+    const tenant = await prisma.tenant.findFirst({
+        where: {
+            OR: [
+                { subdomain: normalized },
+                { domain: normalized },
+            ],
+        },
+        select: { id: true },
+    });
+
+    if (!tenant) return null;
+    return tenant.id.toString();
+}
+
+/**
  * Garante que um tenant padrão (landlord) exista no banco de dados e retorna seu ID.
  * Se nenhum tenant for encontrado, cria um novo com valores padrão.
  * Isso é crucial para a primeira execução do sistema ou para ambientes de teste.
@@ -106,17 +134,23 @@ export async function getTenantIdFromRequest(isPublicCall = false): Promise<stri
     }
 
     const session = await getSession();
+    const headersList = headers();
+    const tenantIdFromHeader = headersList.get('x-tenant-id');
+
+    const resolvedHeaderTenantId = await resolveTenantIdFromHeader(tenantIdFromHeader);
+
     if (session?.tenantId) {
+        // Admin do landlord pode navegar em qualquer tenant: usa o tenant da URL quando houver.
+        if (session.tenantId === '1' && resolvedHeaderTenantId && resolvedHeaderTenantId !== '1') {
+            return resolvedHeaderTenantId;
+        }
         // Retorna o ID do tenant da sessão do usuário autenticado
         return session.tenantId;
     }
 
-    const headersList = headers();
-    const tenantIdFromHeader = headersList.get('x-tenant-id');
-
-    if (tenantIdFromHeader) {
-        // Retorna o ID do tenant de um header, geralmente injetado por um middleware
-        return tenantIdFromHeader;
+    if (resolvedHeaderTenantId) {
+        // Retorna o ID do tenant resolvido a partir do header
+        return resolvedHeaderTenantId;
     }
 
     // Fallback de segurança para chamadas internas não-públicas.

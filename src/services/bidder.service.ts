@@ -186,6 +186,21 @@ export class BidderService {
   }
 
   /**
+   * Cria lote arrematado para o bidder
+   */
+  async createWonLot(data: any): Promise<ApiResponse<WonLot>> {
+    try {
+      const created = await this.bidderRepository.createWonLot(data);
+      return { success: true, data: this.mapWonLot(created) };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      };
+    }
+  }
+
+  /**
    * Obtém métodos de pagamento do bidder
    */
   async getBidderPaymentMethods(userId: bigint) {

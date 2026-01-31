@@ -70,6 +70,18 @@ export default function RoleForm({
     },
   });
 
+  // Check if the role has manage_all permission (super admin)
+  const hasManageAll = form.watch('permissions')?.includes('manage_all') || initialData?.permissions?.includes('manage_all');
+
+  // Get effective permissions - if has manage_all, consider all permissions as selected
+  const getEffectivePermissions = (): string[] => {
+    const currentPermissions = form.watch('permissions') || [];
+    if (hasManageAll) {
+      return predefinedPermissions.map(p => p.id);
+    }
+    return currentPermissions;
+  };
+
   async function onSubmit(values: RoleFormValues) {
     setIsSubmitting(true);
     try {
@@ -101,7 +113,7 @@ export default function RoleForm({
   }
 
   return (
-    <Card className="max-w-2xl mx-auto shadow-lg">
+    <Card className="max-w-2xl mx-auto shadow-lg" data-ai-id="role-form">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-primary" /> {formTitle}
@@ -161,8 +173,30 @@ export default function RoleForm({
                               <FormItem key={permission.id} className="flex flex-row items-center space-x-3 space-y-0">
                                 <FormControl>
                                   <Checkbox
-                                    checked={field.value?.includes(permission.id)}
+                                    checked={
+                                      hasManageAll || 
+                                      field.value?.includes(permission.id) ||
+                                      getEffectivePermissions().includes(permission.id)
+                                    }
+                                    disabled={hasManageAll && permission.id !== 'manage_all'}
                                     onCheckedChange={(checked) => {
+                                      // Special handling for manage_all
+                                      if (permission.id === 'manage_all') {
+                                        if (checked) {
+                                          // When selecting manage_all, only keep manage_all
+                                          field.onChange(['manage_all']);
+                                        } else {
+                                          // When deselecting manage_all, remove it
+                                          field.onChange(
+                                            (field.value || []).filter(value => value !== 'manage_all')
+                                          );
+                                        }
+                                        return;
+                                      }
+
+                                      // Regular permission handling
+                                      if (hasManageAll) return; // Don't allow changes if manage_all is selected
+                                      
                                       return checked
                                         ? field.onChange([...(field.value || []), permission.id])
                                         : field.onChange(
@@ -175,6 +209,9 @@ export default function RoleForm({
                                 </FormControl>
                                 <FormLabel className="text-xs font-normal cursor-pointer">
                                   {permission.label}
+                                  {hasManageAll && permission.id !== 'manage_all' && (
+                                    <span className="text-muted-foreground ml-1">(via Acesso Total)</span>
+                                  )}
                                 </FormLabel>
                               </FormItem>
                             ))}

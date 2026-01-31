@@ -1,10 +1,18 @@
 // src/repositories/contact-message.repository.ts
+/**
+ * @fileoverview Repositório de mensagens de contato.
+ * Centraliza acesso ao Prisma para consultas e mutações.
+ */
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 
 export class ContactMessageRepository {
   async findAll() {
     return prisma.contactMessage.findMany({ orderBy: { createdAt: 'desc' } });
+  }
+
+  async findById(id: bigint) {
+    return prisma.contactMessage.findUnique({ where: { id } });
   }
 
   async create(data: Prisma.ContactMessageCreateInput) {

@@ -50,13 +50,23 @@ const DEFAULT_CENTER: LatLngLiteral = { lat: -14.235004, lng: -51.92528 };
 const NOMINATIM_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
 const geocodeCache = new Map<string, LatLngLiteral>();
 
-type MapSettingsLike = Pick<PlatformSettings, 'mapSettings'> | { mapSettings?: { defaultProvider?: string | null } | null } | null;
+type MapSettingsLike = Pick<PlatformSettings, 'mapSettings'> | { mapSettings?: { defaultProvider?: string | null; googleMapsApiKey?: string | null } | null } | null;
 
 export function normalizeMapProvider(settings?: MapSettingsLike): MapProvider {
   const raw = settings?.mapSettings?.defaultProvider?.toLowerCase();
+  const apiKey = settings?.mapSettings?.googleMapsApiKey;
+
+  // Google Maps Fallback Logic:
+  // If provider is Google but API Key is missing or invalid format (doesn't start with AIza),
+  // fallback to OpenMap to ensure the user sees a map instead of an error.
+  if (raw === 'google') {
+    if (!apiKey || apiKey.trim() === '' || !apiKey.trim().startsWith('AIza')) {
+      return 'openmap';
+    }
+    return 'google';
+  }
+
   switch (raw) {
-    case 'google':
-      return 'google';
     case 'staticimage':
       return 'staticImage';
     case 'openmap':
@@ -291,7 +301,8 @@ export function getStaticMapImageUrl(opts: {
     return null;
   }
 
-  if (apiKey) {
+  // Only use Google Static Maps if we have a seemingly valid key
+  if (apiKey && apiKey.trim().startsWith('AIza')) {
     const { lat, lng } = coords;
     return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=${opts.zoom ?? 15}&size=640x400&scale=2&markers=color:red|${lat},${lng}&key=${apiKey}`;
   }

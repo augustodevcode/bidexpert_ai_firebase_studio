@@ -12,7 +12,7 @@ Este documento descreve as regras e o modo de operação do assistente de IA nes
 ## 2. Capacidades Principais
 
 -   **Edição de Arquivos em Lote**: A principal forma de interação é através de pedidos para alterar o código. Eu gero um "plano de alteração" em formato XML que é então executado automaticamente para modificar os arquivos.
--   **Stack de Tecnologia Predefinida**: O aplicativo é construído com **Next.js, React, ShadCN UI, Tailwind CSS, e Genkit**. Pedidos para usar outras tecnologias (como Angular, Vue, etc.) serão educadamente recusados para manter a consistência do projeto.
+-   **Stack de Tecnologia Predefinida**: O aplicativo é construído com **Next.js, React, TypeScript, ZOD, Prisma, ShadCN UI, Tailwind CSS, e Genkit** e usando padrão MVC + Server Actions. Pedidos para usar outras tecnologias (como Angular, Vue, etc.) serão educadamente recusados para manter a consistência do projeto.
 
 ## 3. Formato Essencial para Mudanças de Código (XML)
 
@@ -43,6 +43,15 @@ Eu sou programado para seguir estritamente as diretrizes definidas no arquivo `R
 ## 7. Estratégia de Testes
 
 A estratégia de testes está documentada no `README.md` e deve ser seguida para garantir a qualidade do código. Eu posso ser instruído a criar ou modificar testes que sigam essa estratégia.
+
+## 7.1 Diretriz Crítica: Credenciais e Seleção de Tenant no Login
+
+**REGRA OBRIGATÓRIA:** Antes de executar qualquer teste automatizado (Playwright/Vitest UI) ou fluxo de login em agentes, o assistente **DEVE**:
+1. **Analisar o seed principal** (ex.: `seed-master-data.ts` e/ou `seed-master-data.md`) para obter credenciais válidas (usuário, senha e perfil).
+2. **Ler a página de login** para entender o mecanismo de seleção de tenant/usuário (ex.: selector, modal, dropdown ou campo dedicado).
+3. **Evitar tentativa-e-erro**: só utilizar credenciais e seleção de tenant confirmadas no seed e/ou na UI.
+
+Se não houver credenciais claras no seed, o assistente deve primeiro identificar onde elas são geradas ou persistidas antes de prosseguir com o login.
 
 ## 8. DIRETRIZA CRÍTICA: Lazy Compilation vs Pre-Build em Next.js
 
@@ -82,7 +91,47 @@ rodar testes com playwright acada implementação ou correção
 
 **Restrição:** O uso de URLs genéricas (ex: `localhost:3000` ou `localhost:9005`) sem o slug correto causará timeouts e falhas de login, pois os tenants não serão resolvidos corretamente. Todas as requisições de teste devem apontar para o slug específico.
 
-## 10. Diretrizes de Codificação e Melhores Práticas
+## 10. Container Tools - Gerenciamento de Ambientes Docker
+
+O Copilot tem acesso às ferramentas de container para gerenciar diferentes ambientes via Docker.
+
+### Extensões Configuradas
+- **Docker Extension Pack** (`ms-azuretools.vscode-docker`)
+- **Remote Containers** (`ms-vscode-remote.remote-containers`)
+
+### Uso do container-tools_get-config
+Antes de executar qualquer comando Docker, **SEMPRE** chamar a ferramenta `container-tools_get-config` para obter a configuração correta de CLI.
+
+### Arquivos Docker Compose por Ambiente
+| Arquivo | Ambiente | Uso |
+|---------|----------|-----|
+| `docker-compose.dev.yml` | DEV | Desenvolvimento local |
+| `docker-compose.hml.yml` | HML | Homologação/Testes |
+| `docker-compose.demo.yml` | DEMO | Demonstração |
+| `docker-compose.prod.yml` | PROD | Produção |
+
+### Comandos Padrão (PowerShell)
+```powershell
+# Iniciar ambiente dev
+docker compose -f docker-compose.dev.yml up -d
+
+# Verificar status
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Logs de um container
+docker logs -f <container-name>
+
+# Parar ambiente
+docker compose -f docker-compose.dev.yml down
+```
+
+### Regras para o Copilot
+1. **Verificar containers** antes de testes E2E
+2. **Usar ambiente correto** conforme contexto (dev/hml/demo)
+3. **Não modificar produção** sem autorização explícita
+4. **Documentar alterações** em configurações de containers
+
+## 11. Diretrizes de Codificação e Melhores Práticas
 
 You always use the latest version of HTML, Tailwind CSS and vanilla JavaScript, and you are familiar with the latest features and best practices.
 
@@ -790,3 +839,10 @@ Since the codebase is a template, you should not assume they have set up anythin
 
 # usuarios de testes
 ao tentar logar verificar os usuários que estão nos arquivos de seed ou fazer select diretamente na base para saber o usuário, sua senha e seu perfil, pois lá podem estar os usuários que precisa para teste.
+
+# Design System
+- Sempre utilize o Design System para implementar novos componentes ou alterar componentes existentes. Ao final de cada implementação, sempre rode o comando npx shadcn-ui@latest upgrade para garantir que o Design System está atualizado. E que as páginas estão com o design system pré-definido.
+
+# Finalização da task do chat
+ - Sempre que finalizar uma task do chat, informe todas as alterações que foram feitas no código de forma sucinta e objetiva para o usuário. 
+ - nunca mostre a mensagem: "Reinicie o servidor e teste novamente." ao invés disso, sempre reinicie o servidor você mesmo e teste antes de informar ao usuário que a task foi finalizada.

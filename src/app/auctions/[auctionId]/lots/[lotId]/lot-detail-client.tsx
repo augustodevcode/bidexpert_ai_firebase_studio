@@ -44,7 +44,7 @@ import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdF
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage } from '@/lib/ui-helpers';
 
-import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction, getLotDocuments } from './actions';
+import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction, getLotDocuments, getBidsForLot } from './actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -324,6 +324,8 @@ export default function LotDetailClientContent({
   const [isHabilitadoForThisAuction, setIsHabilitadoForThisAuction] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [api, setApi] = useState<CarouselApi>()
+  const [sharedBidHistory, setSharedBidHistory] = useState<BidInfo[]>([]);
+  const [isLoadingBidHistory, setIsLoadingBidHistory] = useState(true);
 
   useEffect(() => {
     if (!api) {
@@ -353,6 +355,21 @@ export default function LotDetailClientContent({
   const handleHabilitacaoSuccess = () => {
     setIsHabilitadoForThisAuction(true);
   };
+
+  // Função centralizada para buscar histórico de lances - sincroniza ambos os painéis
+  const fetchSharedBidHistory = useCallback(async () => {
+    if (!lot?.id) return;
+    setIsLoadingBidHistory(true);
+    try {
+      const history = await getBidsForLot(lot.publicId || lot.id);
+      setSharedBidHistory(history);
+    } catch (error) {
+      console.error('[LotDetailClient] Erro ao buscar histórico de lances:', error);
+      toast({ title: "Erro de Conexão", description: "Não foi possível obter o histórico de lances.", variant: "destructive" });
+    } finally {
+      setIsLoadingBidHistory(false);
+    }
+  }, [lot?.id, lot?.publicId, toast]);
 
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
   const sectionBadges = platformSettings.sectionBadgeVisibility?.lotDetail || {
@@ -434,12 +451,14 @@ export default function LotDetailClientContent({
         }
       };
       fetchData();
+      fetchSharedBidHistory(); // Busca inicial do histórico de lances
     }
-  }, [lot?.id, lot.publicId, toast, auction.endDate, isClient]);
+  }, [lot?.id, lot.publicId, toast, auction.endDate, isClient, fetchSharedBidHistory]);
 
   const handleBidSuccess = (updatedLotData: Partial<Lot>, newBid?: BidInfo) => {
     setLot(prevLot => ({...prevLot!, ...updatedLotData}));
-    // Future: Could also update a local bid history state to be even faster
+    // Atualiza o histórico de lances para sincronizar ambos os painéis
+    fetchSharedBidHistory();
   };
 
 
@@ -637,6 +656,9 @@ export default function LotDetailClientContent({
                     onHabilitacaoSuccess={handleHabilitacaoSuccess}
                     activeStage={activeStage}
                     activeLotPrices={activeLotPrices}
+                    sharedBidHistory={sharedBidHistory}
+                    isLoadingSharedHistory={isLoadingBidHistory}
+                    onRefreshBidHistory={fetchSharedBidHistory}
                   />
                 </div>
 
@@ -787,6 +809,7 @@ export default function LotDetailClientContent({
                   lot={lot}
                   auction={auction}
                   platformSettings={platformSettings}
+                  bidHistory={sharedBidHistory}
                 />
                 
                 {/* Documents Section */}
@@ -830,6 +853,9 @@ export default function LotDetailClientContent({
                     onHabilitacaoSuccess={handleHabilitacaoSuccess}
                     activeStage={activeStage}
                     activeLotPrices={activeLotPrices}
+                    sharedBidHistory={sharedBidHistory}
+                    isLoadingSharedHistory={isLoadingBidHistory}
+                    onRefreshBidHistory={fetchSharedBidHistory}
                   />
                   <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{!activeLotPrices?.initialBid && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
                   

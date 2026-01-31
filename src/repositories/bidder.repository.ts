@@ -85,6 +85,13 @@ export class BidderRepository {
   }
 
   /**
+   * Cria lote arrematado
+   */
+  async createWonLot(data: Prisma.WonLotCreateInput) {
+    return prisma.wonLot.create({ data });
+  }
+
+  /**
    * Busca métodos de pagamento do bidder
    */
   async findPaymentMethodsByBidderId(bidderId: bigint) {

@@ -79,6 +79,34 @@ export class ContactMessageService {
     }
   }
 
+  async sendReplyToContactMessage(
+    id: string,
+    data: { subject: string; message: string }
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const contactMessage = await this.repository.findById(BigInt(id));
+      if (!contactMessage) {
+        return { success: false, message: 'Mensagem de contato não encontrada.' };
+      }
+
+      const subject = data.subject?.trim()
+        ? data.subject
+        : `Re: ${contactMessage.subject || 'Mensagem de Contato'}`;
+
+      return await this.emailService.sendContactMessageReply({
+        to: contactMessage.email,
+        name: contactMessage.name,
+        subject,
+        message: data.message,
+        originalMessage: contactMessage.message,
+        contactMessageId: contactMessage.id,
+      });
+    } catch (error: any) {
+      console.error('Erro ao enviar resposta de contato:', error);
+      return { success: false, message: 'Falha ao enviar resposta da mensagem.' };
+    }
+  }
+
   /**
    * Recupera todas as mensagens de contato associadas a um usuário específico.
    * Inclui os logs de e-mail relacionados para mostrar o status de envio.
@@ -131,3 +159,4 @@ export const toggleContactMessageReadStatus = (id: string, isRead: boolean) => c
 export const deleteContactMessage = (id: string) => contactMessageService.deleteMessage(id);
 export const deleteAllContactMessages = () => contactMessageService.deleteAllContactMessages();
 export const getUserContactMessages = (userId: string) => contactMessageService.getUserContactMessages(userId);
+export const sendReplyToContactMessage = (id: string, data: { subject: string; message: string }) => contactMessageService.sendReplyToContactMessage(id, data);

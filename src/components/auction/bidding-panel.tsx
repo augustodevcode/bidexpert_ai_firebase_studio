@@ -28,11 +28,15 @@ interface BiddingPanelProps {
   onHabilitacaoSuccess?: () => void; // Tornando a prop opcional
   activeStage?: AuctionStage | null;
   activeLotPrices?: { initialBid?: number | null; bidIncrement?: number | null } | null;
+  // Props para histórico compartilhado (sincronização entre painéis mobile/desktop)
+  sharedBidHistory?: BidInfo[];
+  isLoadingSharedHistory?: boolean;
+  onRefreshBidHistory?: () => void;
 }
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 
-export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuccess, isHabilitadoForThisAuction, onHabilitacaoSuccess, activeStage, activeLotPrices }: BiddingPanelProps) {
+export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuccess, isHabilitadoForThisAuction, onHabilitacaoSuccess, activeStage, activeLotPrices, sharedBidHistory, isLoadingSharedHistory, onRefreshBidHistory }: BiddingPanelProps) {
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
   
@@ -42,10 +46,15 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
   const [maxBidAmountInput, setMaxBidAmountInput] = useState('');
   const [isSettingMaxBid, setIsSettingMaxBid] = useState(false);
   const [activeMaxBid, setActiveMaxBid] = useState<UserLotMaxBid | null>(null);
-  const [bidHistory, setBidHistory] = useState<BidInfo[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  // Estado local só é usado como fallback quando não houver histórico compartilhado
+  const [localBidHistory, setLocalBidHistory] = useState<BidInfo[]>([]);
+  const [isLoadingLocalHistory, setIsLoadingLocalHistory] = useState(true);
   const [isAllBidsModalOpen, setIsAllBidsModalOpen] = useState(false);
   const [isHabilitando, setIsHabilitando] = useState(false);
+
+  // Usar histórico compartilhado se disponível, caso contrário usar local
+  const bidHistory = sharedBidHistory ?? localBidHistory;
+  const isLoadingHistory = isLoadingSharedHistory ?? isLoadingLocalHistory;
 
   // Atualiza o estado interno do lote quando a prop inicial muda
   useEffect(() => {
@@ -68,17 +77,23 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
   const canUserBid = (isEffectivelySuperTestUser || hasAdminRights || (isDocHabilitado && isHabilitadoForThisAuction)) && currentLot?.status === 'ABERTO_PARA_LANCES';
 
   const fetchBidHistory = useCallback(async () => {
+    // Se existe função de refresh compartilhada, usamos ela
+    if (onRefreshBidHistory) {
+      onRefreshBidHistory();
+      return;
+    }
+    // Fallback: busca localmente se não houver histórico compartilhado
     if (!currentLot?.id) return;
-    setIsLoadingHistory(true);
+    setIsLoadingLocalHistory(true);
     try {
       const history = await getBidsForLot(currentLot.publicId || currentLot.id);
-      setBidHistory(history);
+      setLocalBidHistory(history);
     } catch (error) {
        toast({ title: "Erro de Conexão", description: "Não foi possível obter o histórico de lances.", variant: "destructive" });
     } finally {
-        setIsLoadingHistory(false);
+        setIsLoadingLocalHistory(false);
     }
-  }, [currentLot?.id, currentLot?.publicId, toast]);
+  }, [currentLot?.id, currentLot?.publicId, toast, onRefreshBidHistory]);
   
   // Busca o lance máximo ativo do usuário ao carregar
   const fetchActiveMaxBid = useCallback(async () => {
@@ -95,9 +110,12 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
   }, [currentLot?.id, currentLot?.publicId, userProfileWithPermissions?.id]);
 
   useEffect(() => {
-    fetchBidHistory(); // Fetch inicial
+    // Só faz fetch inicial local se não houver histórico compartilhado
+    if (!sharedBidHistory) {
+      fetchBidHistory();
+    }
     fetchActiveMaxBid(); // Busca lance máximo ativo
-  }, [fetchBidHistory, fetchActiveMaxBid]);
+  }, [fetchBidHistory, fetchActiveMaxBid, sharedBidHistory]);
 
 
   const handleHabilitarClick = async () => {

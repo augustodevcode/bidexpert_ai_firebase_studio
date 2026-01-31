@@ -11,6 +11,7 @@
 import { revalidatePath } from 'next/cache';
 import type { ContactMessage } from '@/types';
 import { ContactMessageService } from '@/services/contact-message.service';
+import { z } from 'zod';
 
 const contactMessageService = new ContactMessageService();
 
@@ -45,6 +46,37 @@ export async function deleteContactMessage(id: string): Promise<{ success: boole
   const result = await contactMessageService.deleteMessage(id);
   if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/contact-messages');
+  }
+  return result;
+}
+
+const replySchema = z.object({
+  id: z.string().min(1),
+  subject: z.string().min(3, 'Assunto é obrigatório'),
+  message: z.string().min(3, 'Mensagem é obrigatória'),
+});
+
+/**
+ * Sends a reply to a contact message using configured SMTP/SendGrid.
+ * @param {string} id - The ID of the contact message.
+ * @param {string} subject - Reply subject.
+ * @param {string} message - Reply body.
+ * @returns {Promise<{success: boolean; message: string}>} Result of the operation.
+ */
+export async function sendContactMessageReply(
+  id: string,
+  subject: string,
+  message: string
+): Promise<{ success: boolean; message: string }> {
+  const parsed = replySchema.safeParse({ id, subject, message });
+  if (!parsed.success) {
+    return { success: false, message: parsed.error.errors[0]?.message || 'Dados inválidos.' };
+  }
+
+  const result = await contactMessageService.sendReplyToContactMessage(id, { subject, message });
+  if (result.success && process.env.NODE_ENV !== 'test') {
+    revalidatePath('/admin/contact-messages');
+    revalidatePath('/admin/email-logs');
   }
   return result;
 }

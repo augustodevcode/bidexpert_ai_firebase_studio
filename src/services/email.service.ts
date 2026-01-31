@@ -108,4 +108,77 @@ export class EmailService {
       return { success: false, message: `Falha ao enviar e-mail: ${error.message}` };
     }
   }
+
+  async sendContactMessageReply(data: {
+    to: string;
+    name?: string | null;
+    subject: string;
+    message: string;
+    originalMessage?: string | null;
+    contactMessageId?: bigint;
+  }): Promise<{ success: boolean; message: string }> {
+    try {
+      const emailSubject = data.subject;
+      const emailBody = `
+        <p>Olá${data.name ? ` ${data.name}` : ''},</p>
+        <p>Recebemos sua mensagem e segue nosso retorno:</p>
+        <p>${data.message.replace(/\n/g, '<br>')}</p>
+        ${data.originalMessage ? `
+          <hr>
+          <p><strong>Mensagem original</strong></p>
+          <p>${data.originalMessage.replace(/\n/g, '<br>')}</p>
+        ` : ''}
+        <hr>
+        <p><small>Equipe BidExpert</small></p>
+      `;
+
+      const provider = this.sendGridApiKey ? 'SendGrid' : 'SMTP';
+      const fromAddress = process.env.CONTACT_EMAIL_FROM || 'noreply@bidexpert.com.br';
+
+      const emailLog = await this.emailLogService.createLog({
+        recipient: data.to,
+        subject: emailSubject,
+        content: emailBody,
+        provider,
+        contactMessageId: data.contactMessageId,
+      });
+
+      try {
+        if (this.sendGridApiKey) {
+          const msg = {
+            to: data.to,
+            from: fromAddress,
+            subject: emailSubject,
+            html: emailBody,
+            replyTo: fromAddress,
+          };
+
+          await sgMail.send(msg);
+        } else {
+          const mailOptions = {
+            from: fromAddress,
+            to: data.to,
+            subject: emailSubject,
+            html: emailBody,
+            replyTo: fromAddress,
+          };
+
+          await this.transporter.sendMail(mailOptions);
+        }
+
+        await this.emailLogService.updateLogStatus(emailLog.id, 'SENT');
+        return { success: true, message: 'Resposta enviada com sucesso.' };
+      } catch (sendError: any) {
+        await this.emailLogService.updateLogStatus(
+          emailLog.id,
+          'FAILED',
+          sendError.message
+        );
+        throw sendError;
+      }
+    } catch (error: any) {
+      console.error('Erro ao enviar resposta:', error);
+      return { success: false, message: `Falha ao enviar resposta: ${error.message}` };
+    }
+  }
 }

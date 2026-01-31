@@ -62,6 +62,7 @@ const updateTenantSettingsSchema = z.object({
     siteTitle: z.string().optional(),
     siteTagline: z.string().optional(),
     logoUrl: z.string().url().nullable().optional(),
+    logoMediaId: z.string().nullable().optional(),
     faviconUrl: z.string().url().nullable().optional(),
     primaryColorHsl: z.string().nullable().optional(),
     primaryForegroundHsl: z.string().nullable().optional(),
@@ -189,6 +190,42 @@ export async function PATCH(request: NextRequest) {
     // 4.3 Atualizações de Branding (PlatformSettings)
     if (data.branding) {
       Object.assign(settingsUpdates, data.branding);
+
+      if (data.branding.logoMediaId !== undefined || data.branding.logoUrl !== undefined) {
+        const normalizedLogoMediaId = data.branding.logoMediaId
+          ? BigInt(data.branding.logoMediaId)
+          : null;
+
+        if (!normalizedLogoMediaId) {
+          if (data.branding.logoUrl) {
+            return NextResponse.json({
+              success: false,
+              error: 'INVALID_LOGO_SOURCE',
+              message: 'O logo deve vir da biblioteca de mídia do tenant.',
+            }, { status: 400 });
+          }
+          settingsUpdates.logoMediaId = null;
+          settingsUpdates.logoUrl = null;
+        } else {
+          const mediaItem = await prisma.mediaItem.findFirst({
+            where: {
+              id: normalizedLogoMediaId,
+              tenantId: tenantIdBigInt,
+            },
+          });
+
+          if (!mediaItem) {
+            return NextResponse.json({
+              success: false,
+              error: 'LOGO_NOT_FOUND',
+              message: 'Logo inválido. Selecione um item existente na biblioteca de mídia.',
+            }, { status: 404 });
+          }
+
+          settingsUpdates.logoMediaId = normalizedLogoMediaId;
+          settingsUpdates.logoUrl = mediaItem.urlLarge || mediaItem.urlMedium || mediaItem.urlOriginal || mediaItem.urlThumbnail || null;
+        }
+      }
     }
 
     // 4.4 Atualizações de Features

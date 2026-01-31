@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Definições de colunas da tabela de mensagens de contato do admin.
+ * Inclui ações de visualizar, marcar como lida e excluir.
+ */
 // src/app/admin/contact-messages/columns.tsx
 'use client';
 
@@ -11,9 +15,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 type ActionsProps = {
   handleDelete: (id: string) => void;
   handleToggleRead: (id: string, currentStatus: boolean) => void;
+  handleView: (message: ContactMessage) => void;
 };
 
-export const createColumns = ({ handleDelete, handleToggleRead }: ActionsProps): ColumnDef<ContactMessage>[] => [
+export const createColumns = ({ handleDelete, handleToggleRead, handleView }: ActionsProps): ColumnDef<ContactMessage>[] => [
   {
     id: 'select',
     header: ({ table }) => (
@@ -66,12 +71,23 @@ export const createColumns = ({ handleDelete, handleToggleRead }: ActionsProps):
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              data-ai-id={`contact-message-actions-trigger-${message.id}`}
+            >
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => handleView(message)}
+              data-ai-id={`contact-message-view-${message.id}`}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Visualizar
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleToggleRead(message.id, message.isRead)}>
               {message.isRead ? <Eye className="mr-2 h-4 w-4" /> : <Check className="mr-2 h-4 w-4" />}
               Marcar como {message.isRead ? 'não lida' : 'lida'}

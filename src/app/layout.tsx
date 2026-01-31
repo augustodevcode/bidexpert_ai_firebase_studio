@@ -14,6 +14,7 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { AppContentWrapper } from './app-content-wrapper';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import SubscriptionPopup from '@/components/subscription-popup';
+import { generateThemeCssFromSettings } from '@/lib/theme-injector';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +59,7 @@ export default async function RootLayout({
 }>) {
 
   const { platformSettings, isSetupComplete } = await getLayoutData();
+  const platformThemeCss = generateThemeCssFromSettings(platformSettings);
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
@@ -72,6 +74,12 @@ export default async function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="BidExpert" />
+        {platformThemeCss ? (
+          <style
+            id="platform-theme-css"
+            dangerouslySetInnerHTML={{ __html: platformThemeCss }}
+          />
+        ) : null}
       </head>
       <body>
         <AuthProvider>

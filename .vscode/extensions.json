@@ -1,6 +1,8 @@
 {
     "recommendations": [
         "googlecloudtools.firebase-dataconnect-vscode",
-        "ms-playwright.playwright"
+        "ms-playwright.playwright",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode-remote.remote-containers"
     ]
 }

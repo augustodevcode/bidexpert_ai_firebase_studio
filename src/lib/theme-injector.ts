@@ -15,9 +15,11 @@
  * background: hsl(var(--primary));
  */
 
-import type { PlatformSettings } from '@prisma/client';
+import { themeTokenCssVariables, type ThemeTokens } from '@/lib/theme-tokens';
 
 export interface ThemeBrandingConfig {
+  themeColorsLight?: ThemeTokens | null;
+  themeColorsDark?: ThemeTokens | null;
   primaryColorHsl?: string | null;
   primaryForegroundHsl?: string | null;
   secondaryColorHsl?: string | null;
@@ -34,6 +36,38 @@ export interface ThemeBrandingConfig {
   customFontUrl?: string | null;
 }
 
+export interface ThemeSettingsSource {
+  themeColorsLight?: ThemeTokens | null;
+  themeColorsDark?: ThemeTokens | null;
+  primaryColorHsl?: string | null;
+  primaryForegroundHsl?: string | null;
+  secondaryColorHsl?: string | null;
+  secondaryForegroundHsl?: string | null;
+  accentColorHsl?: string | null;
+  accentForegroundHsl?: string | null;
+  destructiveColorHsl?: string | null;
+  mutedColorHsl?: string | null;
+  backgroundColorHsl?: string | null;
+  foregroundColorHsl?: string | null;
+  borderColorHsl?: string | null;
+  radiusValue?: string | null;
+  customCss?: string | null;
+  customFontUrl?: string | null;
+}
+
+function buildThemeCssVariables(tokens?: ThemeTokens | null): string {
+  if (!tokens) return '';
+  const lines = Object.entries(tokens)
+    .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+    .map(([key, value]) => {
+      const cssVar = themeTokenCssVariables[key as keyof typeof themeTokenCssVariables];
+      return cssVar ? `${cssVar}: ${value};` : null;
+    })
+    .filter(Boolean);
+
+  return lines.length > 0 ? lines.join('\n  ') : '';
+}
+
 /**
  * Gera o CSS de variáveis customizadas para o tenant.
  * 
@@ -41,6 +75,9 @@ export interface ThemeBrandingConfig {
  * @returns String CSS para ser injetada no <style> tag
  */
 export function generateTenantThemeCss(config: ThemeBrandingConfig): string {
+  const hasThemeTokens = Boolean(config.themeColorsLight || config.themeColorsDark);
+  const themeTokensLight = buildThemeCssVariables(config.themeColorsLight);
+  const themeTokensDark = buildThemeCssVariables(config.themeColorsDark);
   const cssVariables: string[] = [];
 
   // Cores principais
@@ -103,7 +140,14 @@ export function generateTenantThemeCss(config: ThemeBrandingConfig): string {
   }
   
   // Variáveis CSS
-  if (cssVariables.length > 0) {
+  if (hasThemeTokens) {
+    if (themeTokensLight) {
+      css += `:root {\n  ${themeTokensLight}\n}\n`;
+    }
+    if (themeTokensDark) {
+      css += `.dark {\n  ${themeTokensDark}\n}\n`;
+    }
+  } else if (cssVariables.length > 0) {
     css += `:root {\n  ${cssVariables.join('\n  ')}\n}\n`;
   }
   
@@ -118,10 +162,12 @@ export function generateTenantThemeCss(config: ThemeBrandingConfig): string {
 /**
  * Gera o CSS a partir de PlatformSettings do Prisma.
  */
-export function generateThemeCssFromSettings(settings: PlatformSettings | null): string {
+export function generateThemeCssFromSettings(settings: ThemeSettingsSource | null): string {
   if (!settings) return '';
   
   return generateTenantThemeCss({
+    themeColorsLight: settings.themeColorsLight as ThemeTokens | null,
+    themeColorsDark: settings.themeColorsDark as ThemeTokens | null,
     primaryColorHsl: settings.primaryColorHsl,
     primaryForegroundHsl: settings.primaryForegroundHsl,
     secondaryColorHsl: settings.secondaryColorHsl,

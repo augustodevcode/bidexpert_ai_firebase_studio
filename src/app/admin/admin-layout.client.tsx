@@ -6,7 +6,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { hasPermission, hasAnyPermission } from '@/lib/permissions';
-import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header';
 import AdminSidebar from '@/components/layout/admin-sidebar';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
@@ -97,7 +96,7 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
       <WidgetPreferencesProvider>
         <div className="flex min-h-screen bg-secondary">
           <AdminSidebar />
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col" style={{ paddingBottom: 'var(--admin-query-monitor-height, 0px)' }}>
             <AdminHeader
               onSearchClick={() => setCommandPaletteOpen(true)}
               onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
@@ -105,7 +104,6 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
             <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto pb-24">
               <div className="w-full">
                 {children}
-                <DevInfoIndicator />
               </div>
             </main>
             <AdminQueryMonitor />

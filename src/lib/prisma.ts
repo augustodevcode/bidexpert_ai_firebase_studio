@@ -54,8 +54,11 @@ function createPrismaClient(databaseUrl?: string) {
               const after = Date.now();
               const duration = after - before;
 
-              // Only log queries that take longer than 100ms or failed queries
-              if (duration > 100 || !success) {
+              // Log all queries for debugging purposes
+              // The threshold can be adjusted via env var strictly if needed
+              const threshold = process.env.QUERY_LOG_THRESHOLD ? parseInt(process.env.QUERY_LOG_THRESHOLD) : 0;
+              
+              if (duration >= threshold || !success) {
                 try {
                   // Avoid infinite loop - don't log the logging query itself
                   if (model !== 'ITSM_QueryLog') {
@@ -69,6 +72,11 @@ function createPrismaClient(databaseUrl?: string) {
                     );
 
                     // Use raw query to avoid triggering middleware again
+                    // Using default(now()) for timestamp in schema, so we can omit it or pass it.
+                    // But we want the exact time of execution.
+                    // We also need to map the table correcty.
+                    // The schema @@map("itsm_query_logs") means the table is `itsm_query_logs`.
+                    
                     await client.$executeRaw`
                       INSERT INTO itsm_query_logs (query, duration, success, errorMessage, timestamp)
                       VALUES (${queryString}, ${duration}, ${success}, ${errorMessage}, NOW())
