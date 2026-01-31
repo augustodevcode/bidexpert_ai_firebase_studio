@@ -14,11 +14,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Get recent query logs (last 100 queries)
-    const queryLogs = await prisma.iTSM_QueryLog.findMany({
+    // @ts-ignore - Handle prisma model name mismatch
+    const queryLogs = await (prisma.itsm_query_logs || prisma.iTSM_QueryLog).findMany({
       take: 100,
       orderBy: { timestamp: 'desc' },
       include: {
-        user: {
+        User: {
           select: {
             email: true,
             fullName: true,
@@ -66,7 +67,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { query, duration, success, errorMessage, userId, endpoint, method, ipAddress } = body;
 
-    await prisma.iTSM_QueryLog.create({
+    // @ts-ignore
+    await (prisma.itsm_query_logs || prisma.iTSM_QueryLog).create({
       data: {
         query,
         duration,

@@ -33,7 +33,10 @@ export class JudicialProcessService {
     return processes.map(p => {
         // Explicitly remove potential relations that might cause serialization issues
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { lots, assets, ...rest } = p as any;
+        const { lots, assets, Lot, Asset, Court, JudicialDistrict, JudicialBranch, Seller, JudicialParty, ...rest } = p as any;
+        
+        const partiesList = p.JudicialParty ?? p.parties ?? [];
+        
         return {
             ...rest,
             id: p.id.toString(),
@@ -42,13 +45,13 @@ export class JudicialProcessService {
             districtId: p.districtId?.toString(),
             branchId: p.branchId?.toString(),
             sellerId: p.sellerId?.toString(),
-            courtName: p.court?.name,
-            districtName: p.district?.name,
-            branchName: p.branch?.name,
-            sellerName: p.seller?.name,
-            parties: p.parties.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
-            lotCount: p._count?.lots ?? 0,
-            assetCount: p._count?.assets ?? 0,
+            courtName: p.Court?.name ?? p.court?.name,
+            districtName: p.JudicialDistrict?.name ?? p.district?.name,
+            branchName: p.JudicialBranch?.name ?? p.branch?.name,
+            sellerName: p.Seller?.name ?? p.seller?.name,
+            parties: partiesList.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
+            lotCount: p._count?.Lot ?? p._count?.lots ?? 0,
+            assetCount: p._count?.Asset ?? p._count?.assets ?? 0,
         };
     });
   }
@@ -56,19 +59,26 @@ export class JudicialProcessService {
   async getJudicialProcessById(tenantId: string, id: string): Promise<JudicialProcess | null> {
     const process = await this.repository.findById(tenantId, id);
     if (!process) return null;
+    
+    // Clean up relations
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { lots, assets, Lot, Asset, Court, JudicialDistrict, JudicialBranch, Seller, JudicialParty, ...rest } = process as any;
+    
+    const partiesList = process.JudicialParty ?? process.parties ?? [];
+
     return {
-      ...process,
+      ...rest,
       id: process.id.toString(),
       tenantId: process.tenantId.toString(),
       courtId: process.courtId?.toString(),
       districtId: process.districtId?.toString(),
       branchId: process.branchId?.toString(),
       sellerId: process.sellerId?.toString(),
-      courtName: process.court?.name,
-      districtName: process.district?.name,
-      branchName: process.branch?.name,
-      sellerName: process.seller?.name,
-      parties: process.parties.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
+      courtName: process.Court?.name ?? process.court?.name,
+      districtName: process.JudicialDistrict?.name ?? process.district?.name,
+      branchName: process.JudicialBranch?.name ?? process.branch?.name,
+      sellerName: process.Seller?.name ?? process.seller?.name,
+      parties: partiesList.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
     };
   }
 

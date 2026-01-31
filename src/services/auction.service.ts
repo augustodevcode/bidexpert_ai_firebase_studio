@@ -255,11 +255,27 @@ export class AuctionService {
    */
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {
     return auctions.map(a => {
-        // Encontra o lote em destaque, se houver
-        const featuredLot = a.lots?.find((lot: any) => lot.isFeatured);
-        
+        // Extract raw relations to avoid leaking them (and their Decimals/BigInts) into the response
+        const { 
+            Lot, lots, 
+            Seller, seller, 
+            Auctioneer, auctioneer, 
+            LotCategory, category, 
+            AuctionStage, stages, auctionStages,
+            _count, 
+            ...rest
+        } = a;
+
+        const lotList = Lot ?? lots ?? [];
+        const featuredLot = lotList.find((lot: any) => lot.isFeatured);
+        const sellerObj = Seller ?? seller;
+        const auctioneerObj = Auctioneer ?? auctioneer;
+        const categoryObj = LotCategory ?? category;
+        const stagesList = AuctionStage ?? stages ?? auctionStages ?? [];
+        const countLot = _count?.Lot ?? _count?.lots ?? lotList.length ?? 0;
+
         return {
-            ...a,
+            ...rest,
             id: a.id.toString(),
             initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
             estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
@@ -268,7 +284,7 @@ export class AuctionService {
             floorPrice: a.floorPrice ? Number(a.floorPrice) : null,
             latitude: a.latitude ? Number(a.latitude) : null,
             longitude: a.longitude ? Number(a.longitude) : null,
-            totalLots: a._count?.lots ?? a.lots?.length ?? 0,
+            totalLots: countLot,
             sellerId: a.sellerId?.toString() ?? null,
             auctioneerId: a.auctioneerId?.toString() ?? null,
             categoryId: a.categoryId?.toString() ?? null,
@@ -276,14 +292,14 @@ export class AuctionService {
             stateId: a.stateId?.toString() ?? null,
             cityId: a.cityId?.toString() ?? null,
             tenantId: a.tenantId.toString(),
-            seller: a.seller ? { ...a.seller, id: a.seller.id.toString() } : null,
-            auctioneer: a.auctioneer ? { ...a.auctioneer, id: a.auctioneer.id.toString() } : null,
-            category: a.category ? { ...a.category, id: a.category.id.toString() } : null,
-            sellerName: a.seller?.name,
-            auctioneerName: a.auctioneer?.name,
-            categoryName: a.category?.name,
+            seller: sellerObj ? { ...sellerObj, id: sellerObj.id.toString() } : null,
+            auctioneer: auctioneerObj ? { ...auctioneerObj, id: auctioneerObj.id.toString() } : null,
+            category: categoryObj ? { ...categoryObj, id: categoryObj.id.toString() } : null,
+            sellerName: sellerObj?.name,
+            auctioneerName: auctioneerObj?.name,
+            categoryName: categoryObj?.name,
             imageUrl: a.imageMediaId === 'INHERIT' ? featuredLot?.imageUrl : a.imageUrl,
-            auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
+            auctionStages: stagesList.map((stage: any) => ({
                 id: stage.id.toString(),
                 name: stage.name,
                 auctionId: stage.auctionId.toString(),
@@ -293,7 +309,7 @@ export class AuctionService {
                 startDate: stage.startDate,
                 endDate: stage.endDate,
             })),
-            lots: (a.lots || []).map((lot: any) => ({
+            lots: lotList.map((lot: any) => ({
                 ...lot,
                 id: lot.id.toString(),
                 auctionId: lot.auctionId.toString(),

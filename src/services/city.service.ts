@@ -32,7 +32,7 @@ export class CityService {
       ...city,
       id: city.id.toString(),
       stateId: city.stateId.toString(),
-      stateUf: city.state.uf,
+      stateUf: city.State?.uf ?? city.state?.uf,
     }));
   }
 
