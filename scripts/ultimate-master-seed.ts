@@ -31,6 +31,7 @@ import { faker } from '@faker-js/faker/locale/pt_BR';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { seedWonLotsWithServices } from './seed-won-lots-lib';
+import { seedMin50ZeroTables } from './seed-min-50-lib';
 // Imports removed to avoid module resolution issues
 // import { AuctionHabilitationService } from '../src/services/auction-habilitation.service';
 // import { ContactMessageService } from '../src/services/contact-message.service';
@@ -1506,18 +1507,20 @@ async function main() {
     const uniqueSuffix = timestamp;
 
     // --- FIX: Create Fixed Admin User for E2E Tests ---
-    console.log('   Creating fixed admin user: admin@bidexpert.com');
+    console.log('   Creating fixed admin user: admin@bidexpert.com.br');
+    const adminHash = await bcrypt.hash('Admin@123', 10);
     try {
-        let fixedAdmin = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com' }});
+        let fixedAdmin = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com.br' }});
         if (!fixedAdmin) {
             fixedAdmin = await prisma.user.create({
                 data: {
-                    email: 'admin@bidexpert.com',
-                    password: senhaHash,
+                    email: 'admin@bidexpert.com.br',
+                    password: adminHash,
                     fullName: 'Fixed Admin For Tests',
                     cpf: '00000000000',
                     accountType: 'PHYSICAL',
-                    habilitationStatus: 'HABILITADO'
+                    habilitationStatus: 'HABILITADO',
+                    updatedAt: new Date()
                 }
             });
             
@@ -1539,8 +1542,8 @@ async function main() {
         } else {
              console.log('   Fixed admin user already exists. Updating password...');
              await prisma.user.update({
-                 where: { email: 'admin@bidexpert.com' },
-                 data: { password: senhaHash }
+                 where: { email: 'admin@bidexpert.com.br' },
+                 data: { password: adminHash }
              });
              // Ensure tenant association exists
              const tenantAssociation = await prisma.usersOnTenants.findUnique({
@@ -1571,6 +1574,7 @@ async function main() {
         cpf: `111${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
+        updatedAt: new Date()
       },
     });
 
@@ -1607,6 +1611,7 @@ async function main() {
         cpf: `555${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
+        updatedAt: new Date(),
       },
     });
 
@@ -1627,6 +1632,7 @@ async function main() {
         cpf: `999${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
+        updatedAt: new Date(),
       },
     });
 
@@ -1648,8 +1654,7 @@ async function main() {
     ]);
 
     // Usuário 4: Vendedor (Comitente) - Perfil Completo e Realista
-    const vendedorUser = await prisma.user.create({
-      data: {
+    const vendedorData = {
         email: `carlos.silva@construtoraabc.com.br`,
         password: senhaHash,
         fullName: `Carlos Eduardo Silva Santos`,
@@ -1685,20 +1690,29 @@ async function main() {
         website: 'https://www.construtoraabc.com.br',
         responsibleName: 'Carlos Eduardo Silva Santos',
         responsibleCpf: '12345678901',
+        updatedAt: new Date(),
         optInMarketing: true,
-      },
+    };
+    const vendedorUser = await prisma.user.upsert({
+      where: { email: vendedorData.email },
+      update: {},
+      create: vendedorData,
     });
 
     await Promise.all([
-      prisma.usersOnRoles.create({
-        data: {
+      prisma.usersOnRoles.upsert({
+        where: { userId_roleId: { userId: vendedorUser.id, roleId: roles['VENDEDOR'].id } },
+        update: {},
+        create: {
           userId: vendedorUser.id,
           roleId: roles['VENDEDOR'].id,
           assignedBy: 'system',
         },
       }),
-      prisma.usersOnRoles.create({
-        data: {
+      prisma.usersOnRoles.upsert({
+        where: { userId_roleId: { userId: vendedorUser.id, roleId: roles['COMPRADOR'].id } },
+        update: {},
+        create: {
           userId: vendedorUser.id,
           roleId: roles['COMPRADOR'].id,
           assignedBy: 'system',
@@ -1781,11 +1795,14 @@ async function main() {
     ];
 
     for (const doc of consignorDocuments) {
-      await prisma.userDocument.create({
-        data: {
+      await prisma.userDocument.upsert({
+        where: { userId_documentTypeId: { userId: vendedorUser.id, documentTypeId: doc.documentTypeId } },
+        update: {},
+        create: {
           ...doc,
           userId: vendedorUser.id,
           tenantId: tenants[0].id,
+          updatedAt: new Date(),
         },
       });
     }
@@ -1800,12 +1817,15 @@ async function main() {
         fullName: `Avaliador Test ${uniqueSuffix}`,
         cpf: `777${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
+        updatedAt: new Date(),
         habilitationStatus: 'HABILITADO',
       },
     });
 
-    await prisma.usersOnRoles.create({
-      data: {
+    await prisma.usersOnRoles.upsert({
+      where: { userId_roleId: { userId: avaliadorUser.id, roleId: roles['AVALIADOR'].id } },
+      update: {},
+      create: {
         userId: avaliadorUser.id,
         roleId: roles['AVALIADOR'].id,
         assignedBy: 'system',
@@ -1813,15 +1833,19 @@ async function main() {
     });
 
     // Usuário 6: Analista de Leilões
-    const analistaUser = await prisma.user.create({
-      data: {
+    const analistaData = {
         email: `analista@lordland.com`,
         password: await bcrypt.hash('password123', 10), // Senha fixa conforme solicitado
         fullName: `Analista de Leilões Lordland`,
         cpf: `888${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
+        updatedAt: new Date(),
         habilitationStatus: 'HABILITADO',
-      },
+    };
+    const analistaUser = await prisma.user.upsert({
+      where: { email: analistaData.email },
+      update: {},
+      create: analistaData,
     });
 
     // Garantir que a Role AUCTION_ANALYST existe ou criar
@@ -1855,8 +1879,10 @@ async function main() {
       });
     }
 
-    await prisma.usersOnRoles.create({
-      data: {
+    await prisma.usersOnRoles.upsert({
+      where: { userId_roleId: { userId: analistaUser.id, roleId: auctionAnalystRole.id } },
+      update: {},
+      create: {
         userId: analistaUser.id,
         roleId: auctionAnalystRole.id, // Role ID dinâmico
         assignedBy: 'system',
@@ -1864,8 +1890,10 @@ async function main() {
     });
 
     // Associar Analista ao Tenant padrão também
-    await prisma.usersOnTenants.create({
-      data: {
+    await prisma.usersOnTenants.upsert({
+      where: { userId_tenantId: { userId: analistaUser.id, tenantId: tenants[0].id } },
+      update: {},
+      create: {
         userId: analistaUser.id,
         tenantId: tenants[0].id,
         assignedBy: 'system',
@@ -1875,32 +1903,42 @@ async function main() {
 
     // Associar usuários aos tenants
     await Promise.all([
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: leiloeiroUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: leiloeiroUser.id,
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: compradorUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: compradorUser.id,
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: advogadoUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: advogadoUser.id,
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: vendedorUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: vendedorUser.id,
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: avaliadorUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: avaliadorUser.id,
           tenantId: tenants[0].id,
         },
@@ -1937,7 +1975,7 @@ async function main() {
         title: `${safeIdentifier} ${entityType} ${variant}`,
         dataAiHint: entityType,
         // uploadedByUserId: leiloeiroUser.id, // REMOVED: Property does not exist
-        tenant: { connect: { id: tenants[0].id } },
+        Tenant: { connect: { id: tenants[0].id } },
         ...overrides,
       };
 
@@ -1956,6 +1994,7 @@ async function main() {
         name: 'Tribunal de Justiça de São Paulo',
         stateUf: 'SP',
         website: 'https://www.tjsp.jus.br',
+        updatedAt: new Date(),
       },
     });
 
@@ -1965,6 +2004,7 @@ async function main() {
         slug: `comarca-sao-paulo-${judicialTimestamp}`,
         name: `Comarca de São Paulo ${judicialTimestamp}`,
         courtId: court.id,
+        updatedAt: new Date(),
       },
     });
 
@@ -1977,31 +2017,39 @@ async function main() {
         contactName: 'Dr. João Silva',
         phone: '(11) 3133-1000',
         email: 'vara.civel@tjsp.jus.br',
+        updatedAt: new Date(),
       },
     });
 
     // Criar Seller (Comitente Realista - Construtora ABC)
-    const seller = await prisma.seller.create({
-      data: {
-        publicId: `seller-construtora-abc-${judicialTimestamp}`,
-        slug: `construtora-abc-leiloes-${judicialTimestamp}`,
-        name: `Construtora ABC Ltda - Comitente`,
-        description: 'Construtora ABC Ltda - Empresa especializada em construção civil e incorporação imobiliária. Realizando leilão judicial de imóveis penhorados em processo de execução hipotecária.',
-        logoUrl: null,
-        website: 'https://www.construtoraabc.com.br',
-        email: 'leiloes@construtoraabc.com.br',
-        phone: '(11) 3333-4444',
-        contactName: 'Carlos Eduardo Silva Santos',
-        address: 'Rua das Flores, 123 - Sala 1501',
-        city: 'São Paulo',
-        state: 'SP',
-        zipCode: '01234-567',
-        tenantId: tenants[0].id,
-        userId: vendedorUser.id, // Vincular ao usuário vendedor criado
-        judicialBranchId: judicialBranch.id,
-        isJudicial: true,
-      },
+    let seller = await prisma.seller.findFirst({
+         where: { name: 'Construtora ABC Ltda - Comitente' }
     });
+
+    if (!seller) {
+        seller = await prisma.seller.create({
+        data: {
+            publicId: `seller-construtora-abc-${judicialTimestamp}`,
+            slug: `construtora-abc-leiloes-${judicialTimestamp}`,
+            name: `Construtora ABC Ltda - Comitente`,
+            description: 'Construtora ABC Ltda - Empresa especializada em construção civil e incorporação imobiliária. Realizando leilão judicial de imóveis penhorados em processo de execução hipotecária.',
+            logoUrl: null,
+            website: 'https://www.construtoraabc.com.br',
+            email: 'leiloes@construtoraabc.com.br',
+            phone: '(11) 3333-4444',
+            contactName: 'Carlos Eduardo Silva Santos',
+            address: 'Rua das Flores, 123 - Sala 1501',
+            city: 'São Paulo',
+            state: 'SP',
+            zipCode: '01234-567',
+            tenantId: tenants[0].id,
+            userId: vendedorUser.id, // Vincular ao usuário vendedor criado
+            judicialBranchId: judicialBranch.id,
+            isJudicial: true,
+            updatedAt: new Date(),
+        },
+        });
+    }
 
     const sellerLogo = await createSeedMediaItem('seller', seller.slug, 1, {
       dataAiHint: 'logo comitente',
@@ -2071,6 +2119,7 @@ async function main() {
           sellerId: seller.id,
           address: 'Av. Paulista, 1000 - Bela Vista',
           zipCode: capitalZipCodes['São Paulo'],
+          updatedAt: new Date(),
         },
       }),
       // Leilão 2: Extrajudicial - Veículos
@@ -2089,6 +2138,7 @@ async function main() {
           participation: 'ONLINE',
           address: 'Av. Atlântica, 500 - Copacabana',
           zipCode: capitalZipCodes['Rio de Janeiro'],
+          updatedAt: new Date(),
         },
       }),
       // Leilão 3: Particular - Maquinários
@@ -2107,6 +2157,7 @@ async function main() {
           participation: 'HIBRIDO',
           address: 'Av. Afonso Pena, 1000 - Centro',
           zipCode: capitalZipCodes['Belo Horizonte'],
+          updatedAt: new Date(),
         },
       }),
       // Leilão 4: Tomada de Preços - Mobiliários
@@ -2125,6 +2176,7 @@ async function main() {
           participation: 'PRESENCIAL',
           address: 'Esplanada dos Ministérios - Brasília',
           zipCode: capitalZipCodes['Brasília'],
+          updatedAt: new Date(),
         },
       }),
     ]);
@@ -3962,6 +4014,9 @@ async function main() {
     // SEED DE LOTES ARREMATADOS (COM SERVICES)
     // Gera leilões finalizados com lotes vendidos e arrematantes habilitados
     await seedWonLotsWithServices(BigInt(1));
+
+    // SEED MÍNIMO DE 50 REGISTROS PARA TABELAS ZERADAS (NÃO CONFIG)
+    await seedMin50ZeroTables(BigInt(1));
 
   } catch (error) {
     console.error('❌ Erro durante seed:', error);

@@ -26,9 +26,13 @@ async function globalSetup(config: FullConfig) {
   const baseURL = process.env.BASE_URL || config.projects[0].use.baseURL || 'http://localhost:9005';
   const baseUrlObject = new URL(baseURL);
   const isDemoTenant = baseUrlObject.hostname.startsWith('demo.') || baseUrlObject.hostname.includes('demo');
-  const adminEmail = process.env.ADMIN_EMAIL || (isDemoTenant ? 'demo.admin@bidexpert.com.br' : 'admin@bidexpert.com');
-  const adminPassword = process.env.ADMIN_PASSWORD || (isDemoTenant ? 'demo@123' : 'Test@12345');
-  const fallbackAdminPassword = process.env.ADMIN_PASSWORD_FALLBACK || (isDemoTenant ? 'demo@123' : 'Admin@123');
+  
+  // SEED CREDENTIALS: 
+  // - Demo tenant (demo.localhost): admin@bidexpert.ai / senha@123
+  // - Default tenant (localhost): admin@lordland.com / password123
+  const adminEmail = process.env.ADMIN_EMAIL || (isDemoTenant ? 'admin@bidexpert.ai' : 'admin@lordland.com');
+  const adminPassword = process.env.ADMIN_PASSWORD || (isDemoTenant ? 'senha@123' : 'password123');
+  const fallbackAdminPassword = process.env.ADMIN_PASSWORD_FALLBACK || adminPassword;
   const shouldAuthLawyer = process.env.PLAYWRIGHT_SKIP_LAWYER !== '1' && !isDemoTenant;
   
   console.log('🔐 Iniciando autenticação global para testes...');

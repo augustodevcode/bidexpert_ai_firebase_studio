@@ -1,6 +1,9 @@
 /**
  * @fileoverview Seed de lotes arrematados usando services (leilões finalizados,
  * lotes vendidos, arrematantes habilitados e documentação aprovada).
+ *
+ * BDD: Garantir massa de dados para jornada do arrematante.
+ * TDD: Validar criação via services e amarração de entidades.
  */
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import { prisma } from '../src/lib/prisma';
