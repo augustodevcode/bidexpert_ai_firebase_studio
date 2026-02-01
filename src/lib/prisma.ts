@@ -127,10 +127,19 @@ function createPrismaClient(databaseUrl?: string) {
 // Cliente Principal (Production/Default)
 const basePrisma = globalForPrisma.prisma ?? createPrismaClient();
 
-// Cliente Demo (Opcional)
-export const demoPrisma = globalForPrisma.demoPrisma ?? (process.env.DATABASE_URL_DEMO
-  ? createPrismaClient(process.env.DATABASE_URL_DEMO)
-  : null);
+// Cliente Demo (Opcional) - DESABILITADO em desenvolvimento local
+// Em ambiente de desenvolvimento, usamos o banco principal (bidexpert_dev) que já tem
+// o tenant "demo" configurado. O banco separado bidexpert_demo é apenas para
+// ambientes de produção/staging com isolamento real.
+const shouldUseSeparateDemoDb = 
+  process.env.NODE_ENV === 'production' || 
+  process.env.USE_SEPARATE_DEMO_DB === 'true';
+
+export const demoPrisma = globalForPrisma.demoPrisma ?? (
+  shouldUseSeparateDemoDb && process.env.DATABASE_URL_DEMO
+    ? createPrismaClient(process.env.DATABASE_URL_DEMO)
+    : null
+);
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = basePrisma;
