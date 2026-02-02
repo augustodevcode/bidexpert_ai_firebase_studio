@@ -5,9 +5,9 @@ import type { Prisma, AuctionHabilitation } from '@prisma/client';
 export class AuctionHabilitationRepository {
   async upsert(data: Prisma.AuctionHabilitationCreateInput): Promise<AuctionHabilitation> {
     // @ts-ignore
-    const userId = data.user.connect.id;
+    const userId = data.User.connect.id;
     // @ts-ignore
-    const auctionId = data.auction.connect.id;
+    const auctionId = data.Auction.connect.id;
 
     return prisma.auctionHabilitation.upsert({
       where: { userId_auctionId: { userId, auctionId } },

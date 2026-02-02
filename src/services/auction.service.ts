@@ -22,6 +22,7 @@ import { PrismaClientValidationError } from '@prisma/client/runtime/library';
 import { nowInSaoPaulo } from '@/lib/timezone';
 import { prisma } from '@/lib/prisma';
 import { generatePublicId } from '@/lib/public-id-generator';
+import { createManualAuditLog } from '@/lib/audit-context';
 
 // Status que NUNCA devem ser visíveis publicamente
 const NON_PUBLIC_STATUSES: Auction['status'][] = ['RASCUNHO', 'EM_PREPARACAO'];
@@ -71,9 +72,9 @@ export class AuctionService {
           ].filter(Boolean)
         },
         include: {
-          lots: {
+          Lot: {
             include: {
-              assets: { select: { assetId: true } }
+              AssetsOnLots: { select: { assetId: true } }
             }
           }
         }
@@ -83,19 +84,23 @@ export class AuctionService {
         return { isValid: false, errors: ['Leilão não encontrado'], warnings: [], lotsWithIssues: [] };
       }
 
+      // @ts-ignore
+      const lots = auction.Lot || [];
+
       // 1. Verificar se possui Lotes
-      if (!auction.lots || auction.lots.length === 0) {
+      if (lots.length === 0) {
         errors.push('Leilão deve possuir pelo menos 1 Lote para ser aberto');
         return { isValid: false, errors, warnings, lotsWithIssues };
       }
 
       // 2. Verificar cada Lote
       let lotsReady = 0;
-      for (const lot of auction.lots) {
+      for (const lot of lots) {
         const lotIssues: string[] = [];
 
         // Verificar Ativos vinculados
-        if (!lot.assets || lot.assets.length === 0) {
+        // @ts-ignore
+        if (!lot.AssetsOnLots || lot.AssetsOnLots.length === 0) {
           lotIssues.push('Não possui Ativos vinculados');
         }
 
@@ -124,9 +129,9 @@ export class AuctionService {
 
       // 3. Verificar se há pelo menos 1 Lote pronto
       if (lotsReady === 0) {
-        errors.push(`Nenhum dos ${auction.lots.length} Lotes está pronto para abertura. Todos possuem pendências.`);
+        errors.push(`Nenhum dos ${lots.length} Lotes está pronto para abertura. Todos possuem pendências.`);
       } else if (lotsWithIssues.length > 0) {
-        warnings.push(`${lotsWithIssues.length} de ${auction.lots.length} Lotes possuem pendências e não serão abertos automaticamente`);
+        warnings.push(`${lotsWithIssues.length} de ${lots.length} Lotes possuem pendências e não serão abertos automaticamente`);
       }
 
       return {
@@ -435,13 +440,14 @@ export class AuctionService {
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
-            auctioneer: { connect: { id: BigInt(auctioneerId) } },
-            seller: { connect: { id: BigInt(sellerId) } }, // Corrected relation name
-            category: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
-            tenant: { connect: { id: BigInt(tenantId) } },
-            cityRef: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
-            stateRef: stateId ? { connect: { id: BigInt(stateId) } } : undefined,
-            judicialProcess: judicialProcessId ? { connect: { id: BigInt(judicialProcessId) } } : undefined,
+            Auctioneer: { connect: { id: BigInt(auctioneerId) } },
+            Seller: { connect: { id: BigInt(sellerId) } },
+            LotCategory: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
+            Tenant: { connect: { id: BigInt(tenantId) } },
+            City: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
+            State: stateId ? { connect: { id: BigInt(stateId) } } : undefined,
+            JudicialProcess: judicialProcessId ? { connect: { id: BigInt(judicialProcessId) } } : undefined,
+            updatedAt: new Date(),
           }
         });
 
@@ -516,6 +522,18 @@ export class AuctionService {
 
         await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });
 
+        // Auditoria manual para operações em transação
+        await createManualAuditLog(tx, {
+          entityType: 'Auction',
+          entityId: internalId,
+          action: 'UPDATE',
+          changes: {
+            before: { title: auctionToUpdate.title },
+            after: { title: data.title || auctionToUpdate.title, ...restOfData },
+          },
+          metadata: { operation: 'updateAuction', hasStages: !!auctionStages },
+        });
+
         if (auctionStages) {
             await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
             await tx.auctionStage.createMany({
@@ -551,11 +569,26 @@ export class AuctionService {
       if (lotCount > 0) {
         return { success: false, message: `Não é possível excluir. O leilão possui ${lotCount} lote(s) associado(s).` };
       }
+      
+      // Buscar dados do leilão antes de excluir para auditoria
+      const auctionToDelete = await this.auctionRepository.findById(tenantId, id);
+      
       const auctionIdAsBigInt = BigInt(id);
       await this.prisma.$transaction(async (tx: any) => {
           await tx.auctionHabilitation.deleteMany({ where: { auctionId: auctionIdAsBigInt } });
           await tx.auctionStage.deleteMany({ where: { auctionId: auctionIdAsBigInt }});
           await tx.auction.delete({ where: { id: auctionIdAsBigInt, tenantId: BigInt(tenantId) } });
+          
+          // Auditoria manual para operações em transação
+          await createManualAuditLog(tx, {
+            entityType: 'Auction',
+            entityId: auctionIdAsBigInt,
+            action: 'DELETE',
+            changes: {
+              before: auctionToDelete ? { id: auctionToDelete.id, title: auctionToDelete.title, status: auctionToDelete.status } : null,
+            },
+            metadata: { operation: 'deleteAuction' },
+          });
       });
       return { success: true, message: 'Leilão excluído com sucesso.' };
     } catch (error: any) {

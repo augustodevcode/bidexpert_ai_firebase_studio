@@ -32,10 +32,11 @@ export class BidderService {
 
     if (!profile) {
       profile = await this.bidderRepository.create({
-        user: { connect: { id: userId } },
+        User: { connect: { id: userId } },
         emailNotifications: true,
         smsNotifications: false,
-        isActive: true
+        isActive: true,
+        updatedAt: new Date()
       });
     }
 
@@ -190,7 +191,10 @@ export class BidderService {
    */
   async createWonLot(data: any): Promise<ApiResponse<WonLot>> {
     try {
-      const created = await this.bidderRepository.createWonLot(data);
+      const created = await this.bidderRepository.createWonLot({
+        ...data,
+        updatedAt: new Date()
+      });
       return { success: true, data: this.mapWonLot(created) };
     } catch (error) {
       return {

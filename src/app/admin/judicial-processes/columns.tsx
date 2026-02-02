@@ -71,6 +71,32 @@ export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: str
     },
   },
   {
+    accessorKey: "auctions",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Leilões Vinculados" />,
+    cell: ({ row }) => {
+      const auctions = row.original.auctions;
+      if (!auctions || auctions.length === 0) return <span className="text-muted-foreground text-xs">Sem leilão</span>;
+      
+      return (
+        <div className="flex flex-col gap-1 max-w-[200px]">
+          {auctions.map((a: any) => (
+            <div key={a.id} className="text-xs border rounded p-1 bg-muted/20">
+               <div className="font-medium truncate text-xs" title={a.title}>{a.title}</div>
+               <div className="flex gap-1 items-center mt-1">
+                  <span className={`px-1 rounded-[2px] text-[10px] ${a.isJudicial ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'}`}>
+                    {a.isJudicial ? 'Jud' : 'Extra'}
+                  </span>
+                  <span className={`px-1 rounded-[2px] text-[10px] font-medium ${a.status === 'OPEN' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100' : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100'}`}>
+                    {a.status === 'OPEN' ? 'Aberto' : a.status}
+                  </span>
+               </div>
+            </div>
+          ))}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "courtName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Tribunal" />,
     enableGrouping: true,

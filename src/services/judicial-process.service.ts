@@ -33,7 +33,7 @@ export class JudicialProcessService {
     return processes.map(p => {
         // Explicitly remove potential relations that might cause serialization issues
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { lots, assets, Lot, Asset, Court, JudicialDistrict, JudicialBranch, Seller, JudicialParty, ...rest } = p as any;
+        const { lots, assets, Lot, Asset, Court, JudicialDistrict, JudicialBranch, Seller, JudicialParty, Auction, ...rest } = p as any;
         
         const partiesList = p.JudicialParty ?? p.parties ?? [];
         
@@ -52,6 +52,7 @@ export class JudicialProcessService {
             parties: partiesList.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
             lotCount: p._count?.Lot ?? p._count?.lots ?? 0,
             assetCount: p._count?.Asset ?? p._count?.assets ?? 0,
+            auctions: Auction?.map((a: any) => ({ ...a, id: a.id.toString() })) ?? [],
         };
     });
   }
@@ -62,7 +63,7 @@ export class JudicialProcessService {
     
     // Clean up relations
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { lots, assets, Lot, Asset, Court, JudicialDistrict, JudicialBranch, Seller, JudicialParty, ...rest } = process as any;
+    const { lots, assets, Lot, Asset, Court, JudicialDistrict, JudicialBranch, Seller, JudicialParty, Auction, ...rest } = process as any;
     
     const partiesList = process.JudicialParty ?? process.parties ?? [];
 
@@ -79,6 +80,9 @@ export class JudicialProcessService {
       branchName: process.JudicialBranch?.name ?? process.branch?.name,
       sellerName: process.Seller?.name ?? process.seller?.name,
       parties: partiesList.map((party: any) => ({...party, id: party.id.toString(), processId: party.processId.toString()})),
+      auctions: Auction?.map((a: any) => ({ ...a, id: a.id.toString() })) ?? [],
+      lots: Lot?.map((l: any) => ({ ...l, id: l.id.toString(), title: l.title ?? l.description ?? 'Lote sem título' })) ?? [],
+      assets: Asset?.map((a: any) => ({ ...a, id: a.id.toString() })) ?? [],
     };
   }
 

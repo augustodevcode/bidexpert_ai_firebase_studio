@@ -12,6 +12,15 @@ export class JudicialProcessRepository {
         JudicialDistrict: { select: { name: true } },
         JudicialBranch: { select: { name: true } },
         Seller: { select: { name: true } },
+        Auction: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            isJudicial: true,
+            publicId: true
+          }
+        },
         JudicialParty: true,
         _count: {
           select: { Lot: true, Asset: true },
@@ -29,6 +38,9 @@ export class JudicialProcessRepository {
         JudicialDistrict: { select: { name: true } },
         JudicialBranch: { select: { name: true } },
         Seller: { select: { name: true } },
+        Auction: true,
+        Lot: true,
+        Asset: true,
         JudicialParty: true,
       },
     });

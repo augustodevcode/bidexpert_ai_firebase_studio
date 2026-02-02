@@ -34,8 +34,9 @@ export class ReportService {
               name: data.name,
               description: data.description,
               definition: data.definition,
-              tenant: { connect: { id: BigInt(finalTenantId) } },
-              createdBy: { connect: { id: BigInt(data.createdById) } }
+              Tenant: { connect: { id: BigInt(finalTenantId) } },
+              User: { connect: { id: BigInt(data.createdById) } },
+              updatedAt: new Date()
           };
           const newReport = await this.repository.create(reportData);
           return { success: true, message: 'Relatório criado com sucesso.', report: newReport };
@@ -47,7 +48,7 @@ export class ReportService {
   async updateReport(id: string, data: Partial<Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId'>>, tenantId?: string): Promise<{ success: boolean; message: string }> {
       const finalTenantId = tenantId || tenantContext.getStore()?.tenantId || '1';
       try {
-          await this.repository.update(finalTenantId, id, data);
+          await this.repository.update(finalTenantId, id, { ...data, updatedAt: new Date() });
           return { success: true, message: 'Relatório atualizado com sucesso.'};
       } catch (error: any) {
           return { success: false, message: `Falha ao atualizar relatório: ${error.message}`};

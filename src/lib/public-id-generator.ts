@@ -72,6 +72,7 @@ async function getNextCounterValue(tenantId: bigint, entityType: EntityType): Pr
           tenantId,
           entityType,
           currentValue: 1,
+          updatedAt: new Date(),
         },
       });
       return 1;
@@ -87,6 +88,7 @@ async function getNextCounterValue(tenantId: bigint, entityType: EntityType): Pr
       },
       data: {
         currentValue: { increment: 1 },
+        updatedAt: new Date(),
       },
     });
 
@@ -142,14 +144,14 @@ async function getMaskForEntity(
   try {
     const settings = await prisma.platformSettings.findUnique({
       where: { tenantId },
-      include: { platformPublicIdMasks: true },
+      include: { IdMasks: true },
     });
 
-    if (!settings?.platformPublicIdMasks) {
+    if (!settings?.IdMasks) {
       return null;
     }
 
-    const masks = settings.platformPublicIdMasks;
+    const masks = settings.IdMasks;
     
     switch (entityType) {
       case 'auction':
