@@ -1,14 +1,18 @@
 import { prisma } from '@/lib/prisma';
 import logger from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export interface AuditLogEntry {
   id: string;
   tenantId: string;
   userId: string;
-  model: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'READ';
-  recordId: string;
-  changes?: Record<string, { old: any; new: any }>;
+  entityType: string; // Was 'model'
+  action: string;
+  entityId: string; // Was 'recordId'
+  changes?: Record<string, any>; // Legacy JSON
+  oldValues?: Record<string, any>; // New 360
+  newValues?: Record<string, any>; // New 360
+  traceId?: string; // New 360
   timestamp: Date;
   ipAddress?: string;
   userAgent?: string;
@@ -16,43 +20,52 @@ export interface AuditLogEntry {
 
 export class AuditService {
   /**
-   * Log uma ação de auditoria
+   * Log uma ação de auditoria (Manual)
+   * Prefer using the automatic Audit Extension when possible.
    */
   static async logAction(
     tenantId: string,
     userId: string,
-    model: string,
-    action: 'CREATE' | 'UPDATE' | 'DELETE' | 'READ',
-    recordId: string,
-    changes?: Record<string, { old: any; new: any }>,
+    entityType: string,
+    action: string,
+    entityId: string,
+    changes?: Record<string, any>,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
+    traceId?: string,
+    oldValues?: Record<string, any>,
+    newValues?: Record<string, any>
   ): Promise<void> {
     try {
-      await prisma.auditLog.create({
+      // @ts-ignore - prisma.audit_logs might be typed differently based on generation
+      await prisma.audit_logs.create({
         data: {
-          tenantId,
-          userId,
-          model,
-          action,
-          recordId,
-          changes: changes ? JSON.stringify(changes) : null,
+          tenantId: BigInt(tenantId),
+          userId: BigInt(userId),
+          entityType,
+          action: action as any, // Enum casing might differ
+          entityId: BigInt(entityId),
+          changes: changes ? JSON.stringify(changes) : Prisma.JsonNull,
+          oldValues: oldValues ? JSON.stringify(oldValues) : Prisma.JsonNull,
+          newValues: newValues ? JSON.stringify(newValues) : Prisma.JsonNull,
+          traceId: traceId || null,
           timestamp: new Date(),
           ipAddress,
           userAgent,
         },
       });
 
-      // Log também em arquivo
-      logger.info(`[AUDIT] ${action} on ${model}`, {
+      // Log também em arquivo para redundância
+      logger.info(`[AUDIT] ${action} on ${entityType}`, {
         tenantId,
         userId,
-        recordId,
-        changes,
+        entityId,
+        hasDiff: !!(oldValues || newValues),
+        traceId
       });
     } catch (error) {
       logger.error('[AUDIT_ERROR]', {
-        model,
+        entityType,
         action,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -86,13 +99,14 @@ export class AuditService {
       offset = 0,
     } = options;
 
-    const logs = await prisma.auditLog.findMany({
+    // @ts-ignore
+    const logs = await prisma.audit_logs.findMany({
       where: {
-        tenantId,
-        ...(userId && { userId }),
-        ...(model && { model }),
-        ...(action && { action }),
-        ...(recordId && { recordId }),
+        tenantId: BigInt(tenantId),
+        ...(userId && { userId: BigInt(userId) }),
+        ...(model && { entityType: model }),
+        ...(action && { action: action as any }),
+        ...(recordId && { entityId: BigInt(recordId) }),
         ...(startDate || endDate) && {
           timestamp: {
             ...(startDate && { gte: startDate }),
@@ -103,9 +117,30 @@ export class AuditService {
       orderBy: { timestamp: 'desc' },
       take: limit,
       skip: offset,
+      include: {
+        User: {
+          select: { name: true, email: true }
+        }
+      }
     });
 
-    return logs as AuditLogEntry[];
+    return logs.map((log: any) => ({
+      id: log.id.toString(),
+      tenantId: log.tenantId?.toString() || '',
+      userId: log.userId.toString(),
+      userEmail: log.User?.email,
+      userName: log.User?.name,
+      entityType: log.entityType,
+      action: log.action,
+      entityId: log.entityId.toString(),
+      changes: log.changes ? (typeof log.changes === 'string' ? JSON.parse(log.changes) : log.changes) : null,
+      oldValues: log.oldValues ? (typeof log.oldValues === 'string' ? JSON.parse(log.oldValues) : log.oldValues) : null,
+      newValues: log.newValues ? (typeof log.newValues === 'string' ? JSON.parse(log.newValues) : log.newValues) : null,
+      traceId: log.traceId,
+      timestamp: log.timestamp,
+      ipAddress: log.ipAddress,
+      userAgent: log.userAgent
+    }));
   }
 
   /**
@@ -115,16 +150,21 @@ export class AuditService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const logs = await prisma.auditLog.groupBy({
-      by: ['model', 'action'],
+    // @ts-ignore
+    const logs = await prisma.audit_logs.groupBy({
+      by: ['entityType', 'action'],
       where: {
-        tenantId,
+        tenantId: BigInt(tenantId),
         timestamp: { gte: startDate },
       },
       _count: true,
     });
 
-    return logs;
+    return logs.map((l: any) => ({
+      model: l.entityType,
+      action: l.action,
+      count: l._count
+    }));
   }
 
   /**
@@ -134,9 +174,10 @@ export class AuditService {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
-    const result = await prisma.auditLog.deleteMany({
+    // @ts-ignore
+    const result = await prisma.audit_logs.deleteMany({
       where: {
-        tenantId,
+        tenantId: BigInt(tenantId),
         timestamp: { lt: cutoffDate },
       },
     });

@@ -21,16 +21,30 @@
 
 import { 
   PrismaClient, Prisma, 
-  ITSM_TicketStatus, ITSM_Priority, ITSM_Category, PaymentMethodType, 
-  AuditAction, AuctionStageStatus, BidderNotificationType, DirectSaleOfferType, 
-  DocumentTemplateType, ParticipationResult, SubmissionStatus, UserDocumentStatus, 
-  LotRiskType, LotRiskLevel, VisitorEventType, ValidationType, ValidationSeverity, 
-  InvoiceStatus 
+  itsm_tickets_status as ITSM_TicketStatus, 
+  itsm_tickets_priority as ITSM_Priority, 
+  itsm_tickets_category as ITSM_Category, 
+  payment_methods_type as PaymentMethodType, 
+  audit_logs_action as AuditAction, 
+  AuctionStage_status as AuctionStageStatus, 
+  bidder_notifications_type as BidderNotificationType, 
+  DirectSaleOffer_offerType as DirectSaleOfferType, 
+  DocumentTemplate_type as DocumentTemplateType, 
+  participation_history_result as ParticipationResult, 
+  form_submissions_status as SubmissionStatus, 
+  UserDocument_status as UserDocumentStatus, 
+  LotRisk_riskType as LotRiskType, 
+  LotRisk_riskLevel as LotRiskLevel, 
+  visitor_events_type as VisitorEventType, 
+  validation_rules_type as ValidationType, 
+  validation_rules_severity as ValidationSeverity, 
+  TenantInvoice_status as InvoiceStatus 
 } from '@prisma/client';
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { seedWonLotsWithServices } from './seed-won-lots-lib';
+import { seedMin50ZeroTables } from './seed-min-50-lib';
 // Imports removed to avoid module resolution issues
 // import { AuctionHabilitationService } from '../src/services/auction-habilitation.service';
 // import { ContactMessageService } from '../src/services/contact-message.service';
@@ -66,7 +80,7 @@ async function populateMissingData(tenantId: bigint) {
   console.log('\n[POPULATE] 🔄 Iniciando população de tabelas complementares (Ultimate Merge)...');
 
   const users = await prisma.user.findMany({ 
-      where: { tenants: { some: { tenantId: tenantId } } } 
+      where: { UsersOnTenants: { some: { tenantId: tenantId } } } 
   });
   const arrematante = users.find(u => u.email.startsWith('arrematante')) || users[0];
   const allAuctions = await prisma.auction.findMany({ where: { tenantId: tenantId } });
@@ -157,7 +171,8 @@ async function populateMissingData(tenantId: bigint) {
                   riskType: LotRiskType.PENHORA,
                   riskLevel: LotRiskLevel.MEDIO,
                   riskDescription: 'Risco jurídico moderado associado à penhora do bem.',
-                  mitigationStrategy: 'Revisão documental completa e acompanhamento jurídico especializado.'
+                  mitigationStrategy: 'Revisão documental completa e acompanhamento jurídico especializado.',
+                  updatedAt: new Date()
               }
           });
       }
@@ -174,6 +189,7 @@ async function populateMissingData(tenantId: bigint) {
                   fileName: `laudo-${lot.id}.pdf`,
                   title: 'Laudo Técnico do Lote',
                   description: 'Laudo técnico fictício para demonstração.',
+                  updatedAt: new Date(),
                   fileUrl: `https://storage.demo/lot/${lot.id}/laudo.pdf`,
                   mimeType: 'application/pdf',
                   fileSize: BigInt(450000)
@@ -184,15 +200,18 @@ async function populateMissingData(tenantId: bigint) {
   
   if (arrematante) {
       // Garantir Perfil de Arrematante
-      let bidderProfile = await prisma.bidderProfile.findUnique({ where: { userId: arrematante.id } });
+      let bidderProfile = await prisma.bidder_profiles.findUnique({ where: { userId: arrematante.id } });
       if (!bidderProfile) {
           try {
-            bidderProfile = await prisma.bidderProfile.create({
+            // Generate pseudo-valid CPF to avoid unique constraint 
+            const randomCpf = `123.${Math.floor(Math.random() * 999)}.${Math.floor(Math.random() * 999)}-${Math.floor(Math.random() * 99)}`;
+            bidderProfile = await prisma.bidder_profiles.create({
                 data: {
                     userId: arrematante.id,
                     fullName: arrematante.fullName || 'Arrematante Demo',
-                    cpf: '123.456.789-00',
-                    tenantId: tenantId
+                    cpf: randomCpf,
+                    tenantId: tenantId,
+                    updatedAt: new Date()
                 }
             });
           } catch (e) { console.log('Erro ao criar perfil:', e); }
@@ -221,9 +240,9 @@ async function populateMissingData(tenantId: bigint) {
       // 4.1 Métodos de Pagamento
       if (bidderProfile) {
         try {
-            const existingPayments = await prisma.paymentMethod.count({ where: { tenantId: tenantId } });
+            const existingPayments = await prisma.payment_methods.count({ where: { tenantId: tenantId } });
             if (existingPayments < 10) {
-                await prisma.paymentMethod.create({
+                await prisma.payment_methods.create({
                     data: {
                         bidderId: bidderProfile.id,
                         type: 'CREDIT_CARD' as PaymentMethodType,
@@ -232,16 +251,17 @@ async function populateMissingData(tenantId: bigint) {
                         cardToken: `tok_demo_${Date.now()}`,
                         isDefault: true,
                         tenantId: tenantId,
-                        isActive: true
+                        isActive: true,
+                        updatedAt: new Date()
                     }
                 });
             }
         } catch(e) { console.log('Erro PaymentMethod:', e); }
 
         // 4.2 Notificações
-        const existingBidderNotifs = await prisma.bidderNotification.count({ where: { bidderId: bidderProfile.id } });
+        const existingBidderNotifs = await prisma.bidder_notifications.count({ where: { bidderId: bidderProfile.id } });
         if (existingBidderNotifs < 5) {
-            await prisma.bidderNotification.create({
+            await prisma.bidder_notifications.create({
                 data: {
                     bidderId: bidderProfile.id,
                     tenantId: tenantId,
@@ -278,7 +298,7 @@ async function populateMissingData(tenantId: bigint) {
   console.log('[POPULATE] 🖼️ Gerando Galeria de Imagens (AssetMedia)...');
   const assets = await prisma.asset.findMany({ 
       where: { tenantId: tenantId },
-      include: { gallery: true },
+      include: { AssetMedia: true },
       take: 20
   });
 
@@ -288,7 +308,7 @@ async function populateMissingData(tenantId: bigint) {
   ];
 
   for (const asset of assets) {
-      if (asset.gallery.length === 0) {
+      if (asset.AssetMedia.length === 0) {
         for (let i = 0; i < 2; i++) {
             const imgUrl = sampleImages[i % sampleImages.length];
             const media = await createMediaItemLocal(tenantId, `gallery-${asset.id}-${i}.jpg`, imgUrl);
@@ -334,10 +354,10 @@ async function populateMissingData(tenantId: bigint) {
   // 7. Popular Visitors e Sessões
   console.log('[POPULATE] 🌍 Criando dados de Visitantes (Analytics)...');
   try {
-      const existingVisitors = await prisma.visitor.count();
+      const existingVisitors = await prisma.visitors.count();
       if (existingVisitors < 10) {
         for (let i = 0; i < 10; i++) {
-            const visitor = await prisma.visitor.create({
+            const visitor = await prisma.visitors.create({
                 data: {
                     visitorId: uuidv4(),
                     firstIpAddress: `200.100.50.${(10 + i)}`,
@@ -345,10 +365,11 @@ async function populateMissingData(tenantId: bigint) {
                     deviceType: "DESKTOP",
                     firstVisitAt: new Date(),
                     lastVisitAt: new Date(),
+                    updatedAt: new Date()
                 }
             });
             
-            await prisma.visitorSession.create({
+            await prisma.visitor_sessions.create({
                 data: {
                     visitorId: visitor.id,
                     sessionId: uuidv4(),
@@ -378,8 +399,8 @@ async function fixLotsWithoutAssets(tenantId: bigint) {
   console.log('[AUDIT-FIX] 📦 Corrigindo Lotes sem Ativos...');
   
   const lotsWithoutAssets = await prisma.lot.findMany({
-    where: { tenantId, assets: { none: {} } },
-    include: { category: true, subcategory: true }
+    where: { tenantId, AssetsOnLots: { none: {} } },
+    include: { LotCategory: true, Subcategory: true }
   });
   
   console.log(`   Encontrados: ${lotsWithoutAssets.length} lotes sem ativos`);
@@ -403,6 +424,7 @@ async function fixLotsWithoutAssets(tenantId: bigint) {
         dataAiHint: `asset lote ${lot.number}`,
         categoryId: lot.categoryId,
         subcategoryId: lot.subcategoryId,
+        updatedAt: new Date(),
       }
     });
     
@@ -475,8 +497,8 @@ async function fixJudicialAuctionsWithoutProcess(tenantId: bigint) {
           courtId: court?.id,
           districtId: district?.id,
           branchId: branch?.id,
-          actionType: faker.helpers.arrayElement(['EXECUCAO_FISCAL', 'RECUPERACAO_JUDICIAL', 'FALENCIA', 'EXECUCAO_CIVIL']) as any,
-          actionDescription: faker.lorem.paragraph(),
+          actionType: faker.helpers.arrayElement(['COBRANCA', 'PENHORA', 'INVENTARIO', 'OUTROS']) as any,
+          actionDescription: faker.lorem.sentence(),
         }
       });
       processId = process.id;
@@ -548,7 +570,7 @@ async function fixAssetsWithoutImage(tenantId: bigint) {
   console.log('[AUDIT-FIX] 🖼️ Corrigindo Ativos sem Imagem...');
   
   const assetsWithoutImage = await prisma.asset.findMany({
-    where: { tenantId, gallery: { none: {} } }
+    where: { tenantId, AssetMedia: { none: {} } }
   });
   
   console.log(`   Encontrados: ${assetsWithoutImage.length} ativos sem imagem`);
@@ -589,8 +611,8 @@ async function fixHabilitationsWithoutDocs(tenantId: bigint) {
   
   const usersWithHabilitationNoDocs = await prisma.user.findMany({
     where: {
-      habilitations: { some: {} },
-      documents: { none: {} }
+      AuctionHabilitation: { some: {} },
+      UserDocument: { none: {} }
     },
     take: 10
   });
@@ -603,28 +625,34 @@ async function fixHabilitationsWithoutDocs(tenantId: bigint) {
   
   for (const user of usersWithHabilitationNoDocs) {
     if (rgType) {
-      await prisma.userDocument.create({
-        data: {
-          tenantId,
-          userId: user.id,
-          documentTypeId: rgType.id,
-          fileName: `rg-${user.id}.pdf`,
-          fileUrl: faker.image.url(),
-          status: UserDocumentStatus.APPROVED,
-        }
-      });
+      try {
+        await prisma.userDocument.create({
+            data: {
+            tenantId,
+            userId: user.id,
+            documentTypeId: rgType.id,
+            fileName: `rg-${user.id}.pdf`,
+            fileUrl: faker.image.url(),
+            status: UserDocumentStatus.APPROVED,
+            updatedAt: new Date(),
+            }
+        });
+      } catch (e) {}
     }
     if (cpfType) {
-      await prisma.userDocument.create({
-        data: {
-          tenantId,
-          userId: user.id,
-          documentTypeId: cpfType.id,
-          fileName: `cpf-${user.id}.pdf`,
-          fileUrl: faker.image.url(),
-          status: UserDocumentStatus.APPROVED,
-        }
-      });
+      try {
+        await prisma.userDocument.create({
+            data: {
+            tenantId,
+            userId: user.id,
+            documentTypeId: cpfType.id,
+            fileName: `cpf-${user.id}.pdf`,
+            fileUrl: faker.image.url(),
+            status: UserDocumentStatus.APPROVED,
+            updatedAt: new Date(),
+            }
+        });
+      } catch (e) {}
     }
   }
   console.log(`   ✅ ${usersWithHabilitationNoDocs.length} usuários corrigidos`);
@@ -673,8 +701,8 @@ function generateTemplateContent(templateName: string): string {
  * Adiciona mais LotQuestions
  */
 async function addMoreLotQuestions(tenantId: bigint) {
-  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 10, include: { auction: true } });
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 10 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   
   if (lots.length === 0 || users.length === 0) return;
   
@@ -704,6 +732,7 @@ async function addMoreLotQuestions(tenantId: bigint) {
         answerText: i % 2 === 0 ? faker.lorem.paragraph() : null,
         isPublic: true,
         answeredAt: i % 2 === 0 ? new Date() : null,
+        updatedAt: new Date(),
       }
     });
   }
@@ -714,8 +743,8 @@ async function addMoreLotQuestions(tenantId: bigint) {
  * Adiciona mais Reviews
  */
 async function addMoreReviews(tenantId: bigint) {
-  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 5, include: { auction: true } });
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 5 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   
   if (lots.length === 0 || users.length === 0) return;
   
@@ -735,6 +764,7 @@ async function addMoreReviews(tenantId: bigint) {
         rating: faker.number.int({ min: 3, max: 5 }),
         comment: faker.lorem.paragraph(),
         userDisplayName: user.fullName || 'Usuário',
+        updatedAt: new Date(),
       }
     });
   }
@@ -775,6 +805,7 @@ async function addMoreDirectSaleOffers(tenantId: bigint) {
         sellerId: seller.id,
         sellerName: seller.name,
         dataAiHint: `venda direta ${i}`,
+        updatedAt: new Date(),
       }
     });
   }
@@ -796,6 +827,7 @@ async function addMoreSubscribers(tenantId: bigint) {
         name: faker.person.fullName(),
         phone: faker.phone.number(),
         preferences: { categories: ['Imóveis', 'Veículos'] },
+        updatedAt: new Date(),
       }
     });
   }
@@ -806,8 +838,8 @@ async function addMoreSubscribers(tenantId: bigint) {
  * Adiciona mais Notifications
  */
 async function addMoreNotifications(tenantId: bigint) {
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
-  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 5, include: { auction: true } });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
+  const lots = await prisma.lot.findMany({ where: { tenantId }, take: 5 });
   
   if (users.length === 0) return;
   
@@ -835,6 +867,7 @@ async function addMoreNotifications(tenantId: bigint) {
         message: messages[i % messages.length],
         link: lot ? `/leiloes/${lot.auctionId}/lotes/${lot.id}` : null,
         isRead: faker.datatype.boolean(),
+        updatedAt: new Date(),
       }
     });
   }
@@ -845,11 +878,11 @@ async function addMoreNotifications(tenantId: bigint) {
  * Adiciona mais AuditLogs
  */
 async function addMoreAuditLogs(tenantId: bigint) {
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   
   if (users.length === 0) return;
   
-  const existingCount = await prisma.auditLog.count({ where: { tenantId } });
+  const existingCount = await prisma.audit_logs.count({ where: { tenantId } });
   if (existingCount >= 10) return;
   
   const actions = [AuditAction.CREATE, AuditAction.UPDATE, AuditAction.DELETE, AuditAction.APPROVE, AuditAction.REJECT];
@@ -858,7 +891,7 @@ async function addMoreAuditLogs(tenantId: bigint) {
   for (let i = 0; i < 10; i++) {
     const user = users[i % users.length];
     
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
         tenantId,
         userId: user.id,
@@ -880,7 +913,7 @@ async function addMoreAuditLogs(tenantId: bigint) {
  */
 async function addMoreBidderProfiles(tenantId: bigint) {
   const users = await prisma.user.findMany({ 
-    where: { tenants: { some: { tenantId } }, bidderProfile: null },
+    where: { UsersOnTenants: { some: { tenantId } }, bidder_profiles: null },
     take: 6 
   });
   
@@ -888,7 +921,7 @@ async function addMoreBidderProfiles(tenantId: bigint) {
   
   for (const user of users) {
     try {
-      await prisma.bidderProfile.create({
+      await prisma.bidder_profiles.create({
         data: {
           tenantId,
           userId: user.id,
@@ -904,6 +937,7 @@ async function addMoreBidderProfiles(tenantId: bigint) {
           emailNotifications: true,
           smsNotifications: false,
           isActive: true,
+          updatedAt: new Date(),
         }
       });
     } catch (e) { /* ignore duplicate */ }
@@ -926,7 +960,12 @@ async function addMoreCourts() {
   for (const court of courts) {
     const existing = await prisma.court.findFirst({ where: { slug: court.slug } });
     if (!existing) {
-      await prisma.court.create({ data: court });
+      await prisma.court.create({ 
+        data: { 
+          ...court,
+          updatedAt: new Date(),
+        } 
+      });
     }
   }
   console.log('   ✅ Courts verificados');
@@ -962,6 +1001,7 @@ async function addMoreSellers(tenantId: bigint) {
           city: data.city,
           state: data.state,
           zipCode: faker.location.zipCode(),
+          updatedAt: new Date(),
         }
       });
     }
@@ -982,7 +1022,7 @@ async function addMoreSellers(tenantId: bigint) {
 async function seedItsmTickets(tenantId: bigint) {
   console.log('[ITSM] 🎫 Criando tickets de suporte...');
   
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 10 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 10 });
   const supportUsers = users.filter(u => u.email.includes('admin') || u.email.includes('suporte'));
   
   if (users.length === 0) {
@@ -990,7 +1030,7 @@ async function seedItsmTickets(tenantId: bigint) {
     return;
   }
   
-  const existingCount = await prisma.iTSM_Ticket.count({ where: { tenantId } });
+  const existingCount = await prisma.itsm_tickets.count({ where: { tenantId } });
   if (existingCount >= 15) {
     console.log(`   Já existem ${existingCount} tickets`);
     return;
@@ -1021,7 +1061,7 @@ async function seedItsmTickets(tenantId: bigint) {
     const user = users[i % users.length];
     const assignedTo = supportUsers.length > 0 ? supportUsers[i % supportUsers.length] : null;
     
-    const ticket = await prisma.iTSM_Ticket.create({
+    const ticket = await prisma.itsm_tickets.create({
       data: {
         tenantId,
         publicId: `TKT-${Date.now()}-${i.toString().padStart(3, '0')}`,
@@ -1055,15 +1095,15 @@ async function seedItsmTickets(tenantId: bigint) {
 async function seedItsmMessages(tenantId: bigint) {
   console.log('[ITSM] 💬 Criando mensagens nos tickets...');
   
-  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 15 });
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  const tickets = await prisma.itsm_tickets.findMany({ where: { tenantId }, take: 15 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   
   if (tickets.length === 0 || users.length === 0) {
     console.log('   ⚠️ Sem tickets ou usuários');
     return;
   }
   
-  const existingCount = await prisma.iTSM_Message.count();
+  const existingCount = await prisma.itsm_messages.count();
   if (existingCount >= 30) {
     console.log(`   Já existem ${existingCount} mensagens`);
     return;
@@ -1101,7 +1141,7 @@ async function seedItsmMessages(tenantId: bigint) {
       
       if (!user) continue;
       
-      await prisma.iTSM_Message.create({
+      await prisma.itsm_messages.create({
         data: {
           ticketId: ticket.id,
           userId: user.id,
@@ -1122,15 +1162,15 @@ async function seedItsmMessages(tenantId: bigint) {
 async function seedItsmAttachments(tenantId: bigint) {
   console.log('[ITSM] 📎 Criando anexos nos tickets...');
   
-  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 10 });
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  const tickets = await prisma.itsm_tickets.findMany({ where: { tenantId }, take: 10 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   
   if (tickets.length === 0 || users.length === 0) {
     console.log('   ⚠️ Sem tickets ou usuários');
     return;
   }
   
-  const existingCount = await prisma.iTSM_Attachment.count();
+  const existingCount = await prisma.itsm_attachments.count();
   if (existingCount >= 15) {
     console.log(`   Já existem ${existingCount} anexos`);
     return;
@@ -1154,7 +1194,7 @@ async function seedItsmAttachments(tenantId: bigint) {
       const att = attachmentTypes[faker.number.int({ min: 0, max: attachmentTypes.length - 1 })];
       const user = users[faker.number.int({ min: 0, max: users.length - 1 })];
       
-      await prisma.iTSM_Attachment.create({
+      await prisma.itsm_attachments.create({
         data: {
           ticketId: ticket.id,
           fileName: att.name,
@@ -1177,15 +1217,15 @@ async function seedItsmAttachments(tenantId: bigint) {
 async function seedItsmChatLogs(tenantId: bigint) {
   console.log('[ITSM] 🤖 Criando logs de chat do assistente...');
   
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 10 });
-  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 5 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 10 });
+  const tickets = await prisma.itsm_tickets.findMany({ where: { tenantId }, take: 5 });
   
   if (users.length === 0) {
     console.log('   ⚠️ Sem usuários');
     return;
   }
   
-  const existingCount = await prisma.iTSM_ChatLog.count({ where: { tenantId } });
+  const existingCount = await prisma.itsm_chat_logs.count({ where: { tenantId } });
   if (existingCount >= 12) {
     console.log(`   Já existem ${existingCount} chat logs`);
     return;
@@ -1247,7 +1287,7 @@ async function seedItsmChatLogs(tenantId: bigint) {
     const user = users[i % users.length];
     const ticket = session.ticketCreated && tickets[i % tickets.length] ? tickets[i % tickets.length] : null;
     
-    await prisma.iTSM_ChatLog.create({
+    await prisma.itsm_chat_logs.create({
       data: {
         tenantId,
         userId: user.id,
@@ -1271,9 +1311,9 @@ async function seedItsmChatLogs(tenantId: bigint) {
 async function seedItsmQueryLogs(tenantId: bigint) {
   console.log('[ITSM] 📊 Criando logs de queries...');
   
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 5 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   
-  const existingCount = await prisma.iTSM_QueryLog.count();
+  const existingCount = await prisma.itsm_query_logs.count();
   if (existingCount >= 20) {
     console.log(`   Já existem ${existingCount} query logs`);
     return;
@@ -1301,7 +1341,7 @@ async function seedItsmQueryLogs(tenantId: bigint) {
     const tpl = queryTemplates[i];
     const user = users.length > 0 ? users[i % users.length] : null;
     
-    await prisma.iTSM_QueryLog.create({
+    await prisma.itsm_query_logs.create({
       data: {
         query: `SELECT * FROM ... (${tpl.endpoint})`,
         duration: tpl.duration,
@@ -1324,14 +1364,14 @@ async function seedItsmQueryLogs(tenantId: bigint) {
 async function seedFormSubmissions(tenantId: bigint) {
   console.log('[ITSM] 📝 Criando form submissions...');
   
-  const users = await prisma.user.findMany({ where: { tenants: { some: { tenantId } } }, take: 10 });
+  const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 10 });
   
   if (users.length === 0) {
     console.log('   ⚠️ Sem usuários');
     return;
   }
   
-  const existingCount = await prisma.formSubmission.count({ where: { tenantId } });
+  const existingCount = await prisma.form_submissions.count({ where: { tenantId } });
   if (existingCount >= 15) {
     console.log(`   Já existem ${existingCount} form submissions`);
     return;
@@ -1356,7 +1396,7 @@ async function seedFormSubmissions(tenantId: bigint) {
     const tpl = formTemplates[i];
     const user = users[i % users.length];
     
-    await prisma.formSubmission.create({
+    await prisma.form_submissions.create({
       data: {
         tenantId,
         userId: user.id,
@@ -1432,28 +1472,38 @@ async function main() {
 
     console.log('✅ Limpeza concluída');
 
-    // 2. USAR TENANT PADRÃO (ID 1) - NÃO CRIAR NOVOS TENANTS
-    console.log('📦 Usando tenant padrão (ID 1)...');
+    // 2. USAR TENANT (Prioridade: DEMO > ID 1)
+    console.log('📦 Buscando tenant alvo...');
     const timestamp = Date.now();
 
-    // Buscar o tenant padrão existente
+    // Tentar encontrar tenant 'demo' primeiro
     let defaultTenant = await prisma.tenant.findFirst({
-      where: { id: 1 }
+      where: { subdomain: 'demo' }
     });
 
-    if (!defaultTenant) {
-      // Se não existir, criar o tenant padrão
-      defaultTenant = await prisma.tenant.create({
-        data: {
-          id: 1,
-          name: 'BidExpert Tenant',
-          subdomain: 'default',
-          domain: 'localhost',
-        },
-      });
-      console.log('✅ Tenant padrão criado');
+    if (defaultTenant) {
+        console.log(`✅ Tenant DEMO encontrado (ID ${defaultTenant.id}) - Usando para seed.`);
     } else {
-      console.log('✅ Tenant padrão encontrado');
+        console.log('ℹ️ Tenant DEMO não encontrado. Buscando tenant padrão (ID 1)...');
+        // Buscar o tenant padrão existente
+        defaultTenant = await prisma.tenant.findFirst({
+          where: { id: 1 }
+        });
+
+        if (!defaultTenant) {
+          // Se não existir, criar o tenant padrão
+          defaultTenant = await prisma.tenant.create({
+            data: {
+              id: 1,
+              name: 'BidExpert Tenant',
+              subdomain: 'default',
+              domain: 'localhost',
+            },
+          });
+          console.log('✅ Tenant padrão criado (ID 1)');
+        } else {
+          console.log('✅ Tenant padrão encontrado (ID 1)');
+        }
     }
 
     // Array com apenas o tenant padrão (para compatibilidade com o resto do código)
@@ -1506,18 +1556,20 @@ async function main() {
     const uniqueSuffix = timestamp;
 
     // --- FIX: Create Fixed Admin User for E2E Tests ---
-    console.log('   Creating fixed admin user: admin@bidexpert.com');
+    console.log('   Creating fixed admin user: admin@bidexpert.com.br');
+    const adminHash = await bcrypt.hash('Admin@123', 10);
     try {
-        let fixedAdmin = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com' }});
+        let fixedAdmin = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com.br' }});
         if (!fixedAdmin) {
             fixedAdmin = await prisma.user.create({
                 data: {
-                    email: 'admin@bidexpert.com',
-                    password: senhaHash,
+                    email: 'admin@bidexpert.com.br',
+                    password: adminHash,
                     fullName: 'Fixed Admin For Tests',
                     cpf: '00000000000',
                     accountType: 'PHYSICAL',
-                    habilitationStatus: 'HABILITADO'
+                    habilitationStatus: 'HABILITADO',
+                    updatedAt: new Date()
                 }
             });
             
@@ -1539,8 +1591,8 @@ async function main() {
         } else {
              console.log('   Fixed admin user already exists. Updating password...');
              await prisma.user.update({
-                 where: { email: 'admin@bidexpert.com' },
-                 data: { password: senhaHash }
+                 where: { email: 'admin@bidexpert.com.br' },
+                 data: { password: adminHash }
              });
              // Ensure tenant association exists
              const tenantAssociation = await prisma.usersOnTenants.findUnique({
@@ -1571,6 +1623,7 @@ async function main() {
         cpf: `111${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
+        updatedAt: new Date()
       },
     });
 
@@ -1607,6 +1660,7 @@ async function main() {
         cpf: `555${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
+        updatedAt: new Date(),
       },
     });
 
@@ -1627,6 +1681,7 @@ async function main() {
         cpf: `999${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
         habilitationStatus: 'HABILITADO',
+        updatedAt: new Date(),
       },
     });
 
@@ -1648,8 +1703,7 @@ async function main() {
     ]);
 
     // Usuário 4: Vendedor (Comitente) - Perfil Completo e Realista
-    const vendedorUser = await prisma.user.create({
-      data: {
+    const vendedorData = {
         email: `carlos.silva@construtoraabc.com.br`,
         password: senhaHash,
         fullName: `Carlos Eduardo Silva Santos`,
@@ -1685,20 +1739,29 @@ async function main() {
         website: 'https://www.construtoraabc.com.br',
         responsibleName: 'Carlos Eduardo Silva Santos',
         responsibleCpf: '12345678901',
+        updatedAt: new Date(),
         optInMarketing: true,
-      },
+    };
+    const vendedorUser = await prisma.user.upsert({
+      where: { email: vendedorData.email },
+      update: {},
+      create: vendedorData,
     });
 
     await Promise.all([
-      prisma.usersOnRoles.create({
-        data: {
+      prisma.usersOnRoles.upsert({
+        where: { userId_roleId: { userId: vendedorUser.id, roleId: roles['VENDEDOR'].id } },
+        update: {},
+        create: {
           userId: vendedorUser.id,
           roleId: roles['VENDEDOR'].id,
           assignedBy: 'system',
         },
       }),
-      prisma.usersOnRoles.create({
-        data: {
+      prisma.usersOnRoles.upsert({
+        where: { userId_roleId: { userId: vendedorUser.id, roleId: roles['COMPRADOR'].id } },
+        update: {},
+        create: {
           userId: vendedorUser.id,
           roleId: roles['COMPRADOR'].id,
           assignedBy: 'system',
@@ -1781,11 +1844,14 @@ async function main() {
     ];
 
     for (const doc of consignorDocuments) {
-      await prisma.userDocument.create({
-        data: {
+      await prisma.userDocument.upsert({
+        where: { userId_documentTypeId: { userId: vendedorUser.id, documentTypeId: doc.documentTypeId } },
+        update: {},
+        create: {
           ...doc,
           userId: vendedorUser.id,
           tenantId: tenants[0].id,
+          updatedAt: new Date(),
         },
       });
     }
@@ -1800,12 +1866,15 @@ async function main() {
         fullName: `Avaliador Test ${uniqueSuffix}`,
         cpf: `777${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
+        updatedAt: new Date(),
         habilitationStatus: 'HABILITADO',
       },
     });
 
-    await prisma.usersOnRoles.create({
-      data: {
+    await prisma.usersOnRoles.upsert({
+      where: { userId_roleId: { userId: avaliadorUser.id, roleId: roles['AVALIADOR'].id } },
+      update: {},
+      create: {
         userId: avaliadorUser.id,
         roleId: roles['AVALIADOR'].id,
         assignedBy: 'system',
@@ -1813,15 +1882,19 @@ async function main() {
     });
 
     // Usuário 6: Analista de Leilões
-    const analistaUser = await prisma.user.create({
-      data: {
+    const analistaData = {
         email: `analista@lordland.com`,
         password: await bcrypt.hash('password123', 10), // Senha fixa conforme solicitado
         fullName: `Analista de Leilões Lordland`,
         cpf: `888${uniqueSuffix}`.substring(0, 11),
         accountType: 'PHYSICAL',
+        updatedAt: new Date(),
         habilitationStatus: 'HABILITADO',
-      },
+    };
+    const analistaUser = await prisma.user.upsert({
+      where: { email: analistaData.email },
+      update: {},
+      create: analistaData,
     });
 
     // Garantir que a Role AUCTION_ANALYST existe ou criar
@@ -1855,8 +1928,10 @@ async function main() {
       });
     }
 
-    await prisma.usersOnRoles.create({
-      data: {
+    await prisma.usersOnRoles.upsert({
+      where: { userId_roleId: { userId: analistaUser.id, roleId: auctionAnalystRole.id } },
+      update: {},
+      create: {
         userId: analistaUser.id,
         roleId: auctionAnalystRole.id, // Role ID dinâmico
         assignedBy: 'system',
@@ -1864,8 +1939,10 @@ async function main() {
     });
 
     // Associar Analista ao Tenant padrão também
-    await prisma.usersOnTenants.create({
-      data: {
+    await prisma.usersOnTenants.upsert({
+      where: { userId_tenantId: { userId: analistaUser.id, tenantId: tenants[0].id } },
+      update: {},
+      create: {
         userId: analistaUser.id,
         tenantId: tenants[0].id,
         assignedBy: 'system',
@@ -1875,32 +1952,42 @@ async function main() {
 
     // Associar usuários aos tenants
     await Promise.all([
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: leiloeiroUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: leiloeiroUser.id,
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: compradorUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: compradorUser.id,
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: advogadoUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: advogadoUser.id,
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: vendedorUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: vendedorUser.id,
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.create({
-        data: {
+      prisma.usersOnTenants.upsert({
+        where: { userId_tenantId: { userId: avaliadorUser.id, tenantId: tenants[0].id } },
+        update: {},
+        create: {
           userId: avaliadorUser.id,
           tenantId: tenants[0].id,
         },
@@ -1937,7 +2024,7 @@ async function main() {
         title: `${safeIdentifier} ${entityType} ${variant}`,
         dataAiHint: entityType,
         // uploadedByUserId: leiloeiroUser.id, // REMOVED: Property does not exist
-        tenant: { connect: { id: tenants[0].id } },
+        Tenant: { connect: { id: tenants[0].id } },
         ...overrides,
       };
 
@@ -1956,6 +2043,7 @@ async function main() {
         name: 'Tribunal de Justiça de São Paulo',
         stateUf: 'SP',
         website: 'https://www.tjsp.jus.br',
+        updatedAt: new Date(),
       },
     });
 
@@ -1965,6 +2053,7 @@ async function main() {
         slug: `comarca-sao-paulo-${judicialTimestamp}`,
         name: `Comarca de São Paulo ${judicialTimestamp}`,
         courtId: court.id,
+        updatedAt: new Date(),
       },
     });
 
@@ -1977,31 +2066,39 @@ async function main() {
         contactName: 'Dr. João Silva',
         phone: '(11) 3133-1000',
         email: 'vara.civel@tjsp.jus.br',
+        updatedAt: new Date(),
       },
     });
 
     // Criar Seller (Comitente Realista - Construtora ABC)
-    const seller = await prisma.seller.create({
-      data: {
-        publicId: `seller-construtora-abc-${judicialTimestamp}`,
-        slug: `construtora-abc-leiloes-${judicialTimestamp}`,
-        name: `Construtora ABC Ltda - Comitente`,
-        description: 'Construtora ABC Ltda - Empresa especializada em construção civil e incorporação imobiliária. Realizando leilão judicial de imóveis penhorados em processo de execução hipotecária.',
-        logoUrl: null,
-        website: 'https://www.construtoraabc.com.br',
-        email: 'leiloes@construtoraabc.com.br',
-        phone: '(11) 3333-4444',
-        contactName: 'Carlos Eduardo Silva Santos',
-        address: 'Rua das Flores, 123 - Sala 1501',
-        city: 'São Paulo',
-        state: 'SP',
-        zipCode: '01234-567',
-        tenantId: tenants[0].id,
-        userId: vendedorUser.id, // Vincular ao usuário vendedor criado
-        judicialBranchId: judicialBranch.id,
-        isJudicial: true,
-      },
+    let seller = await prisma.seller.findFirst({
+         where: { name: 'Construtora ABC Ltda - Comitente' }
     });
+
+    if (!seller) {
+        seller = await prisma.seller.create({
+        data: {
+            publicId: `seller-construtora-abc-${judicialTimestamp}`,
+            slug: `construtora-abc-leiloes-${judicialTimestamp}`,
+            name: `Construtora ABC Ltda - Comitente`,
+            description: 'Construtora ABC Ltda - Empresa especializada em construção civil e incorporação imobiliária. Realizando leilão judicial de imóveis penhorados em processo de execução hipotecária.',
+            logoUrl: null,
+            website: 'https://www.construtoraabc.com.br',
+            email: 'leiloes@construtoraabc.com.br',
+            phone: '(11) 3333-4444',
+            contactName: 'Carlos Eduardo Silva Santos',
+            address: 'Rua das Flores, 123 - Sala 1501',
+            city: 'São Paulo',
+            state: 'SP',
+            zipCode: '01234-567',
+            tenantId: tenants[0].id,
+            userId: vendedorUser.id, // Vincular ao usuário vendedor criado
+            judicialBranchId: judicialBranch.id,
+            isJudicial: true,
+            updatedAt: new Date(),
+        },
+        });
+    }
 
     const sellerLogo = await createSeedMediaItem('seller', seller.slug, 1, {
       dataAiHint: 'logo comitente',
@@ -2071,6 +2168,7 @@ async function main() {
           sellerId: seller.id,
           address: 'Av. Paulista, 1000 - Bela Vista',
           zipCode: capitalZipCodes['São Paulo'],
+          updatedAt: new Date(),
         },
       }),
       // Leilão 2: Extrajudicial - Veículos
@@ -2089,6 +2187,7 @@ async function main() {
           participation: 'ONLINE',
           address: 'Av. Atlântica, 500 - Copacabana',
           zipCode: capitalZipCodes['Rio de Janeiro'],
+          updatedAt: new Date(),
         },
       }),
       // Leilão 3: Particular - Maquinários
@@ -2107,6 +2206,7 @@ async function main() {
           participation: 'HIBRIDO',
           address: 'Av. Afonso Pena, 1000 - Centro',
           zipCode: capitalZipCodes['Belo Horizonte'],
+          updatedAt: new Date(),
         },
       }),
       // Leilão 4: Tomada de Preços - Mobiliários
@@ -2125,6 +2225,7 @@ async function main() {
           participation: 'PRESENCIAL',
           address: 'Esplanada dos Ministérios - Brasília',
           zipCode: capitalZipCodes['Brasília'],
+          updatedAt: new Date(),
         },
       }),
     ]);
@@ -2237,7 +2338,7 @@ async function main() {
         districtId: district.id,
         branchId: judicialBranch.id,
         sellerId: seller.id,
-        parties: {
+        JudicialParty: {
           create: [
             {
               name: 'Banco Brasil S.A.',
@@ -2273,7 +2374,7 @@ async function main() {
         districtId: district.id,
         branchId: judicialBranch.id,
         sellerId: seller.id,
-        parties: {
+        JudicialParty: {
           create: [
             {
               name: 'Caixa Econômica Federal',
@@ -2309,7 +2410,7 @@ async function main() {
         districtId: district.id,
         branchId: judicialBranch.id,
         sellerId: seller.id,
-        parties: {
+        JudicialParty: {
           create: [
             {
               name: 'Banco do Brasil S.A.',
@@ -2369,6 +2470,7 @@ async function main() {
           cityName: lotLocations.salaComercial.cityName,
           stateUf: lotLocations.salaComercial.stateUf,
           mapAddress: lotLocations.salaComercial.address,
+          updatedAt: new Date(),
         },
       }),
       prisma.lot.create({
@@ -2387,6 +2489,7 @@ async function main() {
           cityName: lotLocations.apartamento.cityName,
           stateUf: lotLocations.apartamento.stateUf,
           mapAddress: lotLocations.apartamento.address,
+          updatedAt: new Date(),
         },
       }),
       prisma.lot.create({
@@ -2405,6 +2508,7 @@ async function main() {
           cityName: lotLocations.galpao.cityName,
           stateUf: lotLocations.galpao.stateUf,
           mapAddress: lotLocations.galpao.address,
+          updatedAt: new Date(),
         },
       }),
       // Lotes do Leilão 2 (Veículos)
@@ -2424,6 +2528,7 @@ async function main() {
           cityName: lotLocations.civic.cityName,
           stateUf: lotLocations.civic.stateUf,
           mapAddress: lotLocations.civic.address,
+          updatedAt: new Date(),
         },
       }),
       prisma.lot.create({
@@ -2442,6 +2547,7 @@ async function main() {
           cityName: lotLocations.corolla.cityName,
           stateUf: lotLocations.corolla.stateUf,
           mapAddress: lotLocations.corolla.address,
+          updatedAt: new Date(),
         },
       }),
       prisma.lot.create({
@@ -2460,6 +2566,7 @@ async function main() {
           cityName: lotLocations.uno.cityName,
           stateUf: lotLocations.uno.stateUf,
           mapAddress: lotLocations.uno.address,
+          updatedAt: new Date(),
         },
       }),
       // Lotes do Leilão 3 (Maquinários)
@@ -2479,6 +2586,7 @@ async function main() {
           cityName: lotLocations.torno.cityName,
           stateUf: lotLocations.torno.stateUf,
           mapAddress: lotLocations.torno.address,
+          updatedAt: new Date(),
         },
       }),
       // Lotes do Leilão 4 (Mobiliários)
@@ -2498,6 +2606,7 @@ async function main() {
           cityName: lotLocations.cadeiras.cityName,
           stateUf: lotLocations.cadeiras.stateUf,
           mapAddress: lotLocations.cadeiras.address,
+          updatedAt: new Date(),
         },
       }),
     ]);
@@ -2748,6 +2857,7 @@ async function main() {
           cpf: `${Math.floor(Math.random() * 100000000000)}`.padStart(11, '0'),
           accountType: 'PHYSICAL',
           habilitationStatus: 'HABILITADO',
+          updatedAt: new Date(),
         },
       });
 
@@ -2776,6 +2886,7 @@ async function main() {
           name: email.split('@')[0].replace(/\./g, ' ').toUpperCase(),
           tenantId: tenants[0].id,
           userId: auctioneer.id,
+          updatedAt: new Date(),
         },
       });
 
@@ -2792,6 +2903,7 @@ async function main() {
           slug: `comarca-rj-${judicialTimestamp}`,
           name: `Comarca do Rio de Janeiro ${judicialTimestamp}`,
           courtId: court.id,
+          updatedAt: new Date(),
         },
       }),
       prisma.judicialDistrict.create({
@@ -2799,6 +2911,7 @@ async function main() {
           slug: `comarca-mg-${judicialTimestamp}`,
           name: `Comarca de Belo Horizonte ${judicialTimestamp}`,
           courtId: court.id,
+          updatedAt: new Date(),
         },
       }),
     ]);
@@ -2812,6 +2925,7 @@ async function main() {
           contactName: 'Dra. Maria Silva',
           phone: '(21) 2131-1000',
           email: 'vara.civel.rj@tribunal.rj.jus.br',
+          updatedAt: new Date(),
         },
       }),
       prisma.judicialBranch.create({
@@ -2822,6 +2936,7 @@ async function main() {
           contactName: 'Dr. Carlos Costa',
           phone: '(31) 3207-1000',
           email: 'vara.civel.mg@tribunal.mg.jus.br',
+          updatedAt: new Date(),
         },
       }),
     ]);
@@ -2840,6 +2955,7 @@ async function main() {
           logoUrl: null,
           tenantId: tenants[0].id,
           judicialBranchId: additionalBranches[0].id,
+          updatedAt: new Date(),
         },
       }),
       prisma.seller.create({
@@ -2851,6 +2967,7 @@ async function main() {
           logoUrl: null,
           tenantId: tenants[0].id,
           judicialBranchId: additionalBranches[1].id,
+          updatedAt: new Date(),
         },
       }),
     ]);
@@ -2932,6 +3049,7 @@ async function main() {
             tenantId: tenants[0].id,
             auctionMethod: 'STANDARD',
             participation: 'ONLINE',
+            updatedAt: new Date(),
           },
         })
       )
@@ -3039,6 +3157,7 @@ async function main() {
               bidIncrementStep: new Prisma.Decimal('1000'),
               status: 'ABERTO_PARA_LANCES',
               ...lotData,
+              updatedAt: new Date(),
             },
           });
           lotsCreated++;
@@ -3089,7 +3208,8 @@ async function main() {
                 districtId: branches[i].districtId,
                 branchId: branches[i].id,
                 sellerId: sellers_for_process[i].id,
-                parties: {
+                updatedAt: new Date(),
+                JudicialParty: {
                     create: partiesData.map(p => ({
                         name: p.name,
                         documentNumber: p.documentNumber,
@@ -3180,6 +3300,7 @@ async function main() {
             locationCity: location.city,
             locationState: location.state,
             address: location.address,
+            updatedAt: new Date(),
           },
         });
 
@@ -3221,6 +3342,7 @@ async function main() {
             locationCity: location.city,
             locationState: location.state,
             address: location.address,
+            updatedAt: new Date(),
           },
         });
 
@@ -3443,7 +3565,32 @@ async function main() {
 
     const platformSettings = await prisma.platformSettings.upsert({
       where: { tenantId: tenants[0].id },
-      update: {},
+      update: {
+        IdMasks: {
+          upsert: {
+            create: {
+              auctionCodeMask: 'AUC-{YYYY}-{####}',
+              lotCodeMask: 'LOTE-{####}',
+              assetCodeMask: 'ASSET-{####}',
+              userCodeMask: 'USER-{####}',
+              auctioneerCodeMask: 'LEIL-{####}',
+              sellerCodeMask: 'COM-{####}',
+              categoryCodeMask: 'CAT-{####}',
+              subcategoryCodeMask: 'SUB-{####}'
+            },
+            update: {
+              auctionCodeMask: 'AUC-{YYYY}-{####}',
+              lotCodeMask: 'LOTE-{####}',
+              assetCodeMask: 'ASSET-{####}',
+              userCodeMask: 'USER-{####}',
+              auctioneerCodeMask: 'LEIL-{####}',
+              sellerCodeMask: 'COM-{####}',
+              categoryCodeMask: 'CAT-{####}',
+              subcategoryCodeMask: 'SUB-{####}'
+            }
+          }
+        }
+      },
       create: {
         tenantId: tenants[0].id,
         siteTitle: 'BidExpert Leilões',
@@ -3454,13 +3601,25 @@ async function main() {
         searchItemsPerPage: 12,
         showCountdownOnCards: true,
         showCountdownOnLotDetail: true,
-        paymentGatewaySettings: {
+        IdMasks: {
+          create: {
+            auctionCodeMask: 'AUC-{YYYY}-{####}',
+            lotCodeMask: 'LOTE-{####}',
+            assetCodeMask: 'ASSET-{####}',
+            userCodeMask: 'USER-{####}',
+            auctioneerCodeMask: 'LEIL-{####}',
+            sellerCodeMask: 'COM-{####}',
+            categoryCodeMask: 'CAT-{####}',
+            subcategoryCodeMask: 'SUB-{####}'
+          }
+        },
+        PaymentGatewaySettings: {
           create: {
             defaultGateway: 'Manual',
             platformCommissionPercentage: 5.0,
           }
         },
-        mentalTriggerSettings: {
+        MentalTriggerSettings: {
           create: {
             showDiscountBadge: true,
             showPopularityBadge: true,
@@ -3468,7 +3627,7 @@ async function main() {
             showExclusiveBadge: true,
           }
         },
-        notificationSettings: {
+        NotificationSettings: {
           create: {
             notifyOnNewAuction: true,
             notifyOnAuctionEndingSoon: true,
@@ -3614,6 +3773,7 @@ async function main() {
           sellerId: seller.id,
           tenantId: tenants[0].id,
           itemsIncluded: ['Projeto Arquitetônico', 'Topografia'],
+          updatedAt: new Date(),
         }
       });
     }
@@ -3633,6 +3793,7 @@ async function main() {
           categoryId: veiculosCat.id,
           sellerId: seller.id,
           tenantId: tenants[0].id,
+          updatedAt: new Date(),
         }
       });
     }
@@ -3642,27 +3803,41 @@ async function main() {
     console.log('👤 Criando dados do dashboard do arrematante...');
 
     // Perfil do Arrematante
-    const bidderProfile = await prisma.bidderProfile.upsert({
-      where: { userId: compradorUser.id },
-      update: {},
-      create: {
-        userId: compradorUser.id,
-        fullName: compradorUser.fullName,
-        cpf: compradorUser.cpf,
-        phone: '(11) 99999-8888',
-        address: 'Rua dos Compradores, 100',
-        city: 'São Paulo',
-        state: 'SP',
-        zipCode: '01000-000',
-        documentStatus: 'APPROVED',
-        emailNotifications: true,
-        smsNotifications: true,
-        tenantId: tenants[0].id
-      }
-    });
+    let bidderProfile = await prisma.bidder_profiles.findUnique({ where: { userId: compradorUser.id } });
+
+    if (!bidderProfile && compradorUser.cpf) {
+        bidderProfile = await prisma.bidder_profiles.findUnique({ where: { cpf: compradorUser.cpf } });
+        
+        if (bidderProfile) {
+             bidderProfile = await prisma.bidder_profiles.update({
+                where: { id: bidderProfile.id },
+                data: { userId: compradorUser.id }
+             });
+        }
+    }
+
+    if (!bidderProfile) {
+         bidderProfile = await prisma.bidder_profiles.create({
+            data: {
+                userId: compradorUser.id,
+                fullName: compradorUser.fullName,
+                cpf: compradorUser.cpf,
+                phone: '(11) 99999-8888',
+                address: 'Rua dos Compradores, 100',
+                city: 'São Paulo',
+                state: 'SP',
+                zipCode: '01000-000',
+                documentStatus: 'APPROVED',
+                emailNotifications: true,
+                smsNotifications: true,
+                tenantId: tenants[0].id,
+                updatedAt: new Date(),
+            }
+         });
+    }
 
     // Métodos de Pagamento
-    await prisma.paymentMethod.create({
+    await prisma.payment_methods.create({
       data: {
         bidderId: bidderProfile.id,
         type: 'CREDIT_CARD',
@@ -3670,12 +3845,13 @@ async function main() {
         cardLast4: '4242',
         cardBrand: 'VISA',
         isActive: true,
-        tenantId: tenants[0].id
+        tenantId: tenants[0].id,
+        updatedAt: new Date(),
       }
     });
 
     // Histórico de Participação
-    await prisma.participationHistory.create({
+    await prisma.participation_history.create({
       data: {
         bidderId: bidderProfile.id,
         lotId: lots[0].id,
@@ -3691,7 +3867,7 @@ async function main() {
     });
 
     // Notificações do Arrematante
-    await prisma.bidderNotification.create({
+    await prisma.bidder_notifications.create({
       data: {
         bidderId: bidderProfile.id,
         type: 'AUCTION_ENDING',
@@ -3732,7 +3908,7 @@ async function main() {
     });
 
     // Criar WonLot (view do dashboard)
-    await prisma.wonLot.create({
+    await prisma.won_lots.create({
       data: {
         bidderId: bidderProfile.id,
         lotId: wonLot.id,
@@ -3743,7 +3919,8 @@ async function main() {
         paymentStatus: 'PENDENTE',
         totalAmount: new Prisma.Decimal('65100.00'), // +5% comissão
         deliveryStatus: 'PENDING',
-        tenantId: tenants[0].id
+        tenantId: tenants[0].id,
+        updatedAt: new Date()
       }
     });
 
@@ -3764,7 +3941,7 @@ async function main() {
     // 14. CRIAR DADOS DE SUPORTE (ITSM)
     console.log('🆘 Criando dados de suporte (ITSM)...');
 
-    const ticket = await prisma.iTSM_Ticket.create({
+    const ticket = await prisma.itsm_tickets.create({
       data: {
         publicId: `ticket-${timestamp}-1`,
         userId: compradorUser.id,
@@ -3774,7 +3951,8 @@ async function main() {
         priority: 'MEDIA',
         category: 'DUVIDA',
         tenantId: tenants[0].id,
-        messages: {
+        updatedAt: new Date(),
+        itsm_messages: {
           create: [
             {
               userId: compradorUser.id,
@@ -3817,7 +3995,7 @@ async function main() {
     });
 
     // Audit Log
-    await prisma.auditLog.create({
+    await prisma.audit_logs.create({
       data: {
         tenantId: tenants[0].id,
         userId: compradorUser.id,
@@ -3846,7 +4024,7 @@ async function main() {
     console.log('\n🔄 Executando verificação e atualização de dados faltantes (Praças e Localização)...');
 
     const allAuctions = await prisma.auction.findMany({
-      include: { stages: true }
+      include: { AuctionStage: true }
     });
 
     const capitalsList = Object.entries(capitalZipCodes);
@@ -3861,7 +4039,7 @@ async function main() {
 
     for (const auction of allAuctions) {
       // 1. Garantir Praças (Stages)
-      if (auction.stages.length === 0) {
+      if (auction.AuctionStage.length === 0) {
         console.log(`   ➕ Criando praças para o leilão ${auction.title}...`);
         const startDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
 
@@ -3962,6 +4140,9 @@ async function main() {
     // SEED DE LOTES ARREMATADOS (COM SERVICES)
     // Gera leilões finalizados com lotes vendidos e arrematantes habilitados
     await seedWonLotsWithServices(BigInt(1));
+
+    // SEED MÍNIMO DE 50 REGISTROS PARA TABELAS ZERADAS (NÃO CONFIG)
+    await seedMin50ZeroTables(BigInt(1));
 
   } catch (error) {
     console.error('❌ Erro durante seed:', error);

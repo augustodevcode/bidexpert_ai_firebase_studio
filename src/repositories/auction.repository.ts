@@ -15,9 +15,9 @@ export class AuctionRepository {
       orderBy: { auctionDate: 'desc' },
       take: limit,
       include: {
-        _count: { select: { lots: true } },
-        seller: true,
-        stages: true,
+        _count: { select: { Lot: true } },
+        Seller: true,
+        AuctionStage: true,
       },
     });
   }
@@ -43,10 +43,10 @@ export class AuctionRepository {
     return this.prisma.auction.findFirst({
       where: whereClause,
       include: {
-        lots: { include: { assets: { include: { asset: true } } } }, 
-        auctioneer: true,
-        seller: true,
-        stages: true,
+        Lot: { include: { AssetsOnLots: { include: { Asset: true } } } }, 
+        Auctioneer: true,
+        Seller: true,
+        AuctionStage: true,
       },
     });
   }
@@ -65,9 +65,9 @@ export class AuctionRepository {
           tenantId: BigInt(tenantId)
       },
       include: { 
-          _count: { select: { lots: true } },
-          seller: true,
-          stages: true,
+          _count: { select: { Lot: true } },
+          Seller: true,
+          AuctionStage: true,
       }
     });
   }
@@ -95,7 +95,7 @@ export class AuctionRepository {
     return this.prisma.auction.findMany({
       where: {
         tenantId: BigInt(tenantId),
-        auctioneer: {
+        Auctioneer: {
           OR: [
             { slug: auctioneerSlug },
             { publicId: auctioneerSlug },
@@ -104,9 +104,9 @@ export class AuctionRepository {
         },
       },
       include: {
-        _count: { select: { lots: true } },
-        seller: true,
-        stages: true,
+        _count: { select: { Lot: true } },
+        Seller: true,
+        AuctionStage: true,
       },
       orderBy: { auctionDate: 'desc' },
     });
@@ -117,7 +117,7 @@ export class AuctionRepository {
     return this.prisma.auction.findMany({
         where: {
             tenantId: BigInt(tenantId),
-            seller: {
+            Seller: {
                 OR: [
                     { slug: sellerSlugOrPublicId }, 
                     { publicId: sellerSlugOrPublicId },
@@ -126,8 +126,8 @@ export class AuctionRepository {
             }
         },
         include: { 
-            _count: { select: { lots: true } },
-            seller: true,
+            _count: { select: { Lot: true } },
+            Seller: true,
             stages: true,
         }
     });

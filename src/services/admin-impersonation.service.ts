@@ -25,9 +25,9 @@ export class AdminImpersonationService {
     const userWithRoles = await prisma.user.findUnique({
       where: { id: userPrimaryKey },
       include: {
-        roles: {
+        UsersOnRoles: {
           include: {
-            role: true,
+            Role: true,
           },
         },
       },
@@ -38,11 +38,12 @@ export class AdminImpersonationService {
     }
 
     // Verifica se o usuário tem alguma role de administrador
-    return userWithRoles.roles.some(
+    const roles = userWithRoles.UsersOnRoles || [];
+    return roles.some(
       (userRole) =>
-        userRole.role.nameNormalized === 'ADMIN' ||
-        userRole.role.nameNormalized === 'SUPERADMIN' ||
-        userRole.role.nameNormalized === 'ADMINISTRATOR'
+        userRole.Role.nameNormalized === 'ADMIN' ||
+        userRole.Role.nameNormalized === 'SUPERADMIN' ||
+        userRole.Role.nameNormalized === 'ADMINISTRATOR'
     );
   }
 

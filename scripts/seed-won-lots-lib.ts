@@ -1,6 +1,9 @@
 /**
  * @fileoverview Seed de lotes arrematados usando services (leilões finalizados,
  * lotes vendidos, arrematantes habilitados e documentação aprovada).
+ *
+ * BDD: Garantir massa de dados para jornada do arrematante.
+ * TDD: Validar criação via services e amarração de entidades.
  */
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import { prisma } from '../src/lib/prisma';
@@ -205,7 +208,7 @@ export async function seedWonLotsWithServices(
   const winnerUserIds = await ensureApprovedBidderUsers(tenantId, requiredWinners, deps);
 
   for (let a = 0; a < auctionsCount; a++) {
-    const auctionName = `Leilão Finalizado Seed #${a + 1}`;
+    const auctionName = `Leilão Finalizado Seed #${a + 1} - ${Date.now()}`;
     const startDate = faker.date.past({ years: 1 });
     const endDate = faker.date.recent({ days: 10 });
 
@@ -267,9 +270,9 @@ export async function seedWonLotsWithServices(
       } as any);
 
       await deps.auctionHabilitationService.upsertAuctionHabilitation({
-        user: { connect: { id: winnerUserId } },
-        auction: { connect: { id: BigInt(auctionId) } },
-        tenant: { connect: { id: tenantId } },
+        User: { connect: { id: winnerUserId } },
+        Auction: { connect: { id: BigInt(auctionId) } },
+        Tenant: { connect: { id: tenantId } },
       } as any);
 
       const bidderProfile = await deps.bidderService.getOrCreateBidderProfile(winnerUserId);
@@ -278,9 +281,9 @@ export async function seedWonLotsWithServices(
       });
 
       await deps.userWinService.create({
-        lot: { connect: { id: BigInt(createdLot.lotId) } },
-        user: { connect: { id: winnerUserId } },
-        tenant: { connect: { id: tenantId } },
+        Lot: { connect: { id: BigInt(createdLot.lotId) } },
+        User: { connect: { id: winnerUserId } },
+        Tenant: { connect: { id: tenantId } },
         winningBidAmount: winningBid,
         paymentStatus: 'PAGO' as any,
         retrievalStatus: 'ENTREGUE',
@@ -288,7 +291,7 @@ export async function seedWonLotsWithServices(
       } as any);
 
       await deps.bidderService.createWonLot({
-        bidderId: bidderProfile.id,
+        bidder_profiles: { connect: { id: bidderProfile.id } },
         lotId: BigInt(createdLot.lotId),
         auctionId: BigInt(auctionId),
         title: `Lote ${l + 1} do ${auctionName}`,
@@ -300,7 +303,8 @@ export async function seedWonLotsWithServices(
         paidAmount: winningBid,
         dueDate: faker.date.recent({ days: 5 }),
         deliveryStatus: 'DELIVERED' as any,
-        tenant: { connect: { id: tenantId } },
+        Tenant: { connect: { id: tenantId } },
+        updatedAt: new Date(),
       } as any);
     }
   }

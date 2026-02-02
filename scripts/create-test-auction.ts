@@ -1,74 +1,60 @@
 
-import { prisma } from '../src/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Creating test auction...');
+  const tenants = [BigInt(1), BigInt(3)]; // Create for both potential login tenants
 
-  // Find necessary relations
-  const auctioneer = await prisma.auctioneer.findFirst();
-  const seller = await prisma.seller.findFirst();
-  const category = await prisma.lotCategory.findFirst({ where: { name: 'Veículos' } }) || await prisma.lotCategory.findFirst();
-
-  const tenant = await prisma.tenant.findFirst();
-  if (!auctioneer || !seller || !category || !tenant) {
-    console.error('Missing required relations (Auctioneer, Seller, Category, or Tenant). Run seed first.');
-    return;
-  }
-
-  const auction = await prisma.auction.create({
-    data: {
-      title: 'Leilão Teste Automático (Script)',
-      description: 'Leilão criado via script para testes automatizados.',
-      status: 'ABERTO',
-      auctionType: 'JUDICIAL',
-      participation: 'ONLINE',
-      auctionMethod: 'STANDARD',
-      categoryId: category.id,
-      auctioneerId: auctioneer.id,
-      sellerId: seller.id,
-      tenantId: BigInt(tenant.id),
-      stages: {
-        create: [
-          {
-            name: 'Praça 1',
-            startDate: new Date(Date.now() - 3600000), // Started 1 hour ago
-            endDate: new Date(Date.now() + 86400000 * 7), // Next week
-            status: 'ABERTO'
-          }
-        ]
-      },
-      lots: {
-        create: [
-          {
-            title: 'Lote Teste 001',
-            description: 'Lote para teste de lances.',
-            status: 'ABERTO_PARA_LANCES',
-            price: 1000,
-            bidIncrementStep: 100,
-            categoryId: category.id,
-            sellerId: seller.id,
-            tenantId: BigInt(tenant.id),
-            number: '001',
-            type: 'VEICULO',
-            slug: 'lote-teste-script-001',
-            publicId: 'LOTE-SCRIPT-001'
-          }
-        ]
+  for (const tenantId of tenants) {
+    try {
+        console.log(`Ensuring data for Tenant ${tenantId}...`);
+    // 1. Create Auctioneer
+    const auctioneer = await prisma.auctioneer.upsert({
+      where: { id: BigInt(900000 + Number(tenantId)) }, // Unique ID per tenant
+      update: {},
+      create: {
+        id: BigInt(900000 + Number(tenantId)),
+        tenantId: tenantId,
+        publicId: `auct-test-${tenantId}`,
+        slug: `leiloeiro-teste-e2e-${tenantId}`,
+        name: `Leiloeiro Teste E2E (T${tenantId})`,
+        email: `leiloeiro${tenantId}@teste.com`,
+        phone: '11999999999',
+        registrationNumber: '123/2024',
+        updatedAt: new Date(),
       }
-    },
-    include: {
-      lots: true
-    }
-  });
+    });
 
-  console.log(`Auction created successfully: ${auction.title} (ID: ${auction.id})`);
+    // 2. Create Auction
+    const auction = await prisma.auction.upsert({
+      where: { id: BigInt(800000 + Number(tenantId)) },
+      update: {
+        status: 'ABERTO', 
+        title: `Leilão de Teste E2E - Auditoria (T${tenantId})`,
+        slug: `leilao-de-teste-e2e-auditoria-${tenantId}`,
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 
+      },
+      create: {
+        id: BigInt(800000 + Number(tenantId)),
+        tenantId: tenantId,
+        auctioneerId: auctioneer.id,
+        title: `Leilão de Teste E2E - Auditoria (T${tenantId})`,
+        slug: `leilao-de-teste-e2e-auditoria-${tenantId}`,
+        description: 'Descrição completa do leilão de teste',
+        status: 'ABERTO',
+        auctionDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        zipCode: '01001-000',
+        address: 'Rua de Teste, 123',
+      }
+    });
+    console.log('Auction created:', auction.title);
+    } catch (e) { console.error(`Error for tenant ${tenantId}:`, e); }
+  }
+  
+  await prisma.$disconnect();
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main();

@@ -8,7 +8,7 @@ export class CityRepository {
     return prisma.city.findMany({
       where: stateIdFilter ? { stateId: stateIdFilter } : {},
       include: {
-        state: {
+        State: {
           select: { uf: true },
         },
       },
@@ -20,7 +20,7 @@ export class CityRepository {
     return prisma.city.findUnique({
       where: { id },
       include: {
-        state: { select: { uf: true } },
+        State: { select: { uf: true } },
       },
     });
   }

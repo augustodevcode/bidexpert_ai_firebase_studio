@@ -267,6 +267,9 @@ export type JudicialProcess = Omit<PmJudicialProcess, 'id' | 'tenantId' | 'court
   actionType?: JudicialActionType | null;
   actionDescription?: string | null;
   actionCnjCode?: string | null;
+  auctions?: any[];
+  lots?: any[];
+  assets?: any[];
 };
 export type Court = Omit<PmCourt, 'id'> & { id: string };
 export type JudicialDistrict = Omit<PmJudicialDistrict, 'id' | 'courtId' | 'stateId'> & { id: string; courtId?: string | null; stateId?: string | null; courtName?: string; stateUf?: string };

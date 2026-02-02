@@ -35,8 +35,8 @@ export async function createFAQ(data: z.infer<typeof faqSchema>) {
 
     // Verify roles
     const allowedRoles = ['ADMIN', 'AUCTION_ANALYST', 'AUCTIONEER'];
-    const userRoles = user.roles.map(r => r.role.name);
-    const isAllowed = userRoles.some(role => allowedRoles.includes(role));
+    const userRoles = (user.roles || []).map((r: any) => r.name);
+    const isAllowed = userRoles.some((role: string) => allowedRoles.includes(role));
 
     if (!isAllowed) throw new Error("Sem permissão para criar FAQs");
 
@@ -63,8 +63,8 @@ export async function updateFAQ(id: string | bigint, data: z.infer<typeof faqSch
 
     // Verify roles
     const allowedRoles = ['ADMIN', 'AUCTION_ANALYST', 'AUCTIONEER'];
-    const userRoles = user.roles.map(r => r.role.name);
-    const isAllowed = userRoles.some(role => allowedRoles.includes(role));
+    const userRoles = (user.roles || []).map((r: any) => r.name);
+    const isAllowed = userRoles.some((role: string) => allowedRoles.includes(role));
 
     if (!isAllowed) throw new Error("Sem permissão para atualizar FAQs");
 
@@ -85,8 +85,8 @@ export async function deleteFAQ(id: string | bigint) {
     if (!user) throw new Error("Não autorizado");
 
     const allowedRoles = ['ADMIN', 'AUCTION_ANALYST', 'AUCTIONEER'];
-    const userRoles = user.roles.map(r => r.role.name);
-    const isAllowed = userRoles.some(role => allowedRoles.includes(role));
+    const userRoles = (user.roles || []).map((r: any) => r.name);
+    const isAllowed = userRoles.some((role: string) => allowedRoles.includes(role));
 
     if (!isAllowed) throw new Error("Sem permissão para excluir FAQs");
 

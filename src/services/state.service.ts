@@ -22,7 +22,7 @@ export class StateService {
     return states.map((s: any) => ({
       ...s,
       id: s.id.toString(),
-      cityCount: s._count.cities,
+      cityCount: s._count.City ?? s._count.cities ?? 0,
     }));
   }
 

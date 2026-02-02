@@ -28,10 +28,16 @@ export class UserService {
   private formatUser(user: any): UserProfileWithPermissions | null {
     if (!user) return null;
 
-    const roles: Role[] = user.roles?.map((ur: any) => ({
-      ...ur.role,
-      id: ur.role.id.toString(), // Convert BigInt to string
-    })) || [];
+    const userRoles = user.UsersOnRoles || user.roles || [];
+    const userTenants = user.UsersOnTenants || user.tenants || [];
+    
+    const roles: Role[] = userRoles.map((ur: any) => {
+      const role = ur.Role || ur.role;
+      return {
+        ...role,
+        id: role.id.toString(), // Convert BigInt to string
+      };
+    });
     
     const permissions = Array.from(new Set(roles.flatMap((r: any) => {
         if (Array.isArray(r.permissions)) {
@@ -40,10 +46,13 @@ export class UserService {
         return [];
     })));
 
-    const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
-        ...ut.tenant,
-        id: ut.tenant.id.toString(), // Convert BigInt to string
-    })) || [];
+    const tenants: Tenant[] = userTenants.map((ut: any) => {
+      const tenant = ut.Tenant || ut.tenant;
+      return {
+        ...tenant,
+        id: tenant.id.toString(), // Convert BigInt to string
+      };
+    });
     
     return {
       ...user,
@@ -153,10 +162,11 @@ export class UserService {
         return { success: false, message: 'Usuário não encontrado.'};
       }
 
+      const userRoles = user.roles || [];
       console.log('[UserService.updateUserRoles] Usuário encontrado:', {
         id: user.id.toString(),
         email: user.email,
-        currentRoles: user.roles?.map((r: any) => ({ id: r.roleId.toString(), name: r.role.name }))
+        currentRoles: userRoles.map((r: any) => ({ id: r.id.toString(), name: r.name }))
       });
 
       const tenantIds = user.tenants?.map((t: any) => t.tenantId) || [];
@@ -235,7 +245,7 @@ export class UserService {
   async checkAndHabilitateUser(userId: string): Promise<void> {
     const user = await basePrisma.user.findUnique({
       where: { id: BigInt(userId) },
-      include: { documents: true, tenants: true }
+      include: { documents: true, UsersOnTenants: true }
     }) as any;
 
     if (!user || user.habilitationStatus === 'HABILITADO') {

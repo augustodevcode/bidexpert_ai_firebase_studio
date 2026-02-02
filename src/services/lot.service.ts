@@ -87,8 +87,8 @@ export class LotService {
       const lot = await this.prisma.lot.findUnique({
         where: { id: internalId },
         include: {
-          auction: { select: { id: true, status: true, title: true } },
-          assets: { select: { assetId: true } }
+          Auction: { select: { id: true, status: true, title: true } },
+          AssetsOnLots: { select: { assetId: true } }
         }
       });
 
@@ -97,7 +97,7 @@ export class LotService {
       }
 
       // 1. Verificar Ativos vinculados
-      if (!lot.assets || lot.assets.length === 0) {
+      if (!lot.AssetsOnLots || lot.AssetsOnLots.length === 0) {
         errors.push('Lote deve possuir pelo menos 1 Ativo vinculado para ser aberto');
       }
 
@@ -114,10 +114,10 @@ export class LotService {
       }
 
       // 4. Verificar status do Leilão pai
-      if (!lot.auction) {
+      if (!lot.Auction) {
         errors.push('Lote deve estar vinculado a um Leilão');
-      } else if (!AUCTION_ALLOWS_LOT_OPENING.includes(lot.auction.status as AuctionStatus)) {
-        errors.push(`Leilão "${lot.auction.title}" está em status ${lot.auction.status}. Lotes só podem ser abertos quando o Leilão está ABERTO ou ABERTO_PARA_LANCES`);
+      } else if (!AUCTION_ALLOWS_LOT_OPENING.includes(lot.Auction.status as AuctionStatus)) {
+        errors.push(`Leilão "${lot.Auction.title}" está em status ${lot.Auction.status}. Lotes só podem ser abertos quando o Leilão está ABERTO ou ABERTO_PARA_LANCES`);
       }
 
       // Warnings (não bloqueantes)
@@ -150,7 +150,7 @@ export class LotService {
       const lot = await this.prisma.lot.findUnique({
         where: { id: internalId },
         include: {
-          auction: { select: { status: true, title: true } }
+          Auction: { select: { status: true, title: true } }
         }
       });
 
@@ -159,7 +159,7 @@ export class LotService {
       }
 
       // Lotes podem ser modificados se o Leilão está em fase de preparação
-      if (AUCTION_EDITABLE_STATUSES.includes(lot.auction.status as AuctionStatus)) {
+      if (lot.Auction && AUCTION_EDITABLE_STATUSES.includes(lot.Auction.status as AuctionStatus)) {
         return { allowed: true };
       }
 
@@ -170,7 +170,7 @@ export class LotService {
 
       return { 
         allowed: false, 
-        reason: `Não é possível modificar este Lote. O Leilão "${lot.auction.title}" está em status ${lot.auction.status} e o Lote está em ${lot.status}`
+        reason: `Não é possível modificar este Lote. O Leilão "${lot.Auction?.title}" está em status ${lot.Auction?.status} e o Lote está em ${lot.status}`
       };
     } catch (error) {
       return { allowed: false, reason: 'Erro ao verificar permissões' };
@@ -311,11 +311,19 @@ export class LotService {
   }
 
   private mapLotWithDetails(lot: any): Lot {
-    const primaryProcess = lot.judicialProcesses?.[0];
+    const primaryProcess = lot.JudicialProcess?.[0] ?? lot.judicialProcesses?.[0];
+    const lotAuction = lot.Auction ?? lot.auction;
+    const lotPrices = lot.LotStagePrice ?? lot.lotPrices;
+    const judicialProcesses = lot.JudicialProcess ?? lot.judicialProcesses;
+    const lotRisks = lot.LotRisk ?? lot.lotRisks;
+    const assetsOnLots = lot.AssetsOnLots ?? lot.assets; // Note: assets var was usually array of flat assets in old map, we need to extract from AssetsOnLots
+    const documents = lot.LotDocument ?? lot.documents;
+    const bidsCount = lot._count?.Bid ?? lot._count?.bids ?? lot.bidsCount ?? 0;
+
     return {
       ...lot,
       id: lot.id.toString(),
-      bidsCount: lot._count?.bids ?? lot.bidsCount ?? 0,
+      bidsCount: bidsCount,
       auctionId: lot.auctionId.toString(),
       tenantId: lot.tenantId.toString(),
       categoryId: lot.categoryId?.toString(),
@@ -334,24 +342,24 @@ export class LotService {
       evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
       latitude: lot.latitude ? Number(lot.latitude) : null,
       longitude: lot.longitude ? Number(lot.longitude) : null,
-      lotPrices: lot.lotPrices?.map((lp: any) => ({
+      lotPrices: lotPrices?.map((lp: any) => ({
         ...lp,
         id: lp.id.toString(),
         lotId: lp.lotId.toString(),
         auctionStageId: lp.auctionStageId.toString(),
         initialBid: Number(lp.initialBid)
       })),
-      auction: lot.auction ? {
-        ...lot.auction,
-        id: lot.auction.id.toString(),
-        tenantId: lot.auction.tenantId.toString(),
-        auctionStages: lot.auction.stages?.map((s: any) => ({
+      auction: lotAuction ? {
+        ...lotAuction,
+        id: lotAuction.id.toString(),
+        tenantId: lotAuction.tenantId.toString(),
+        auctionStages: (lotAuction.AuctionStage ?? lotAuction.stages ?? []).map((s: any) => ({
             ...s,
             id: s.id.toString(),
             auctionId: s.auctionId.toString()
         }))
       } : undefined,
-      judicialProcesses: lot.judicialProcesses?.map((jp: any) => ({
+      judicialProcesses: judicialProcesses?.map((jp: any) => ({
         ...jp,
         id: jp.id.toString(),
         tenantId: jp.tenantId.toString(),
@@ -360,19 +368,24 @@ export class LotService {
         branchId: jp.branchId?.toString(),
         sellerId: jp.sellerId?.toString(),
       })),
-      lotRisks: lot.lotRisks?.map((risk: any) => ({
+      lotRisks: lotRisks?.map((risk: any) => ({
         ...risk,
         id: risk.id.toString(),
         lotId: risk.lotId.toString(),
         tenantId: risk.tenantId.toString(),
         verifiedBy: risk.verifiedBy?.toString() || null,
       })),
-      assets: lot.assets?.map((a: any) => ({
-          ...a.asset,
-          id: a.asset.id.toString(),
-          tenantId: a.asset.tenantId.toString()
-      })),
-      documents: lot.documents?.map((d: any) => ({
+      assets: assetsOnLots?.map((a: any) => {
+          // If came from AssetsOnLots, it has an 'Asset' property. If from 'assets', it IS the array of { asset: ... }
+          const assetObj = a.Asset ?? a.asset;
+          if (!assetObj) return null;
+          return {
+            ...assetObj,
+            id: assetObj.id.toString(),
+            tenantId: assetObj.tenantId.toString()
+          };
+      }).filter(Boolean),
+      documents: documents?.map((d: any) => ({
           ...d,
           id: d.id.toString(),
           lotId: d.lotId.toString(),
@@ -403,24 +416,24 @@ export class LotService {
         const lot = await this.prisma.lot.findUnique({
             where: whereClause,
             include: {
-                auction: {
+                Auction: {
                     include: {
-                        stages: { orderBy: { id: 'asc' } }
+                        AuctionStage: { orderBy: { id: 'asc' } }
                     }
                 },
-                judicialProcesses: true,
-                lotPrices: true,
-                assets: {
+                JudicialProcess: true,
+                LotStagePrice: true,
+                AssetsOnLots: {
                     include: {
-                        asset: true
+                        Asset: true
                     }
                 },
-                lotRisks: true,
-                documents: {
+                LotRisk: true,
+                LotDocument: {
                     orderBy: { displayOrder: 'asc' }
                 },
                 _count: {
-                    select: { bids: true }
+                    select: { Bid: true }
                 }
             }
         });
@@ -447,7 +460,7 @@ export class LotService {
         
         if (isPublicCall) {
             where.status = { notIn: NON_PUBLIC_LOT_STATUSES };
-            where.auction = {
+            where.Auction = {
                 status: { notIn: NON_PUBLIC_AUCTION_STATUSES }
             };
         }
@@ -455,24 +468,24 @@ export class LotService {
         const lots = await this.prisma.lot.findMany({
             where,
             include: {
-                auction: {
+                Auction: {
                     include: {
-                        stages: { orderBy: { id: 'asc' } }
+                        AuctionStage: { orderBy: { id: 'asc' } }
                     }
                 },
-                judicialProcesses: true,
-                lotPrices: true,
-                assets: {
+                JudicialProcess: true,
+                LotStagePrice: true,
+                AssetsOnLots: {
                     include: {
-                        asset: true
+                        Asset: true
                     }
                 },
-                lotRisks: true,
-                documents: {
+                LotRisk: true,
+                LotDocument: {
                     orderBy: { displayOrder: 'asc' }
                 },
                 _count: {
-                    select: { bids: true }
+                    select: { Bid: true }
                 }
             },
             take: limit,
@@ -775,19 +788,19 @@ export class LotService {
                   id: { in: ids.map(id => BigInt(id)) }
               },
               include: {
-                auction: {
+                Auction: {
                     include: {
-                        stages: { orderBy: { id: 'asc' } }
+                        AuctionStage: { orderBy: { id: 'asc' } }
                     }
                 },
-                lotPrices: true,
-                assets: {
+                LotStagePrice: true,
+                AssetsOnLots: {
                     include: {
-                        asset: true
+                        Asset: true
                     }
                 },
                 _count: {
-                    select: { bids: true }
+                    select: { Bid: true }
                 }
             }
           });

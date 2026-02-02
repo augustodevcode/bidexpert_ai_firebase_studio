@@ -1,3 +1,54 @@
+# 🚀 WORKFLOW OBRIGATÓRIO: Desenvolvimento Paralelo com Branches
+
+> **REGRA CRÍTICA DE MÁXIMA PRIORIDADE:** Este workflow DEVE ser seguido por TODOS os agentes AI (Copilot, GitHub Chat, etc.) ANTES de iniciar qualquer implementação, alteração ou correção no projeto.
+
+## Objetivo do Workflow Paralelo
+
+Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **simultaneamente**, cada um com:
+- ✅ Sua própria **branch dedicada** (a partir da `main`)
+- ✅ Sua própria **porta de desenvolvimento** (9005, 9006, 9007, etc.)
+- ✅ Seus próprios **testes isolados**
+
+## 📋 Checklist Obrigatório no INÍCIO de Cada Task/Chat
+
+### 1. Criar Branch a partir da Main
+```powershell
+git fetch origin main && git checkout main && git pull origin main
+git checkout -b <tipo>/<descricao-curta>-<timestamp>
+# Tipos: feat/, fix/, chore/, docs/, test/
+# Exemplo: git checkout -b feat/auction-filter-20260131-1430
+```
+
+### 2. Verificar e Usar Porta Disponível
+```powershell
+netstat -ano | findstr "9005 9006 9007 9008"
+# Usar primeira porta livre: 9005, 9006, 9007, 9008...
+$env:PORT=<porta-livre>; npm run dev
+```
+
+### 3. Durante o Desenvolvimento
+- Commits frequentes e atômicos
+- Testes a cada alteração significativa
+- Documentação inline
+
+### 4. No ÚLTIMO TODO do Chat - SOLICITAR AUTORIZAÇÃO
+**OBRIGATÓRIO:** Antes de finalizar, o agente DEVE:
+1. ✅ Garantir todos os testes passaram
+2. ✅ Fazer push de todos os commits na branch
+3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request e faça merge na main?"
+4. ⏳ Aguardar autorização explícita antes de qualquer merge
+
+### 5. Proteções Absolutas
+- 🚫 **NUNCA** fazer push direto na `main`
+- 🚫 **NUNCA** fazer merge sem autorização explícita do usuário
+- 🚫 **NUNCA** resolver conflitos automaticamente sem revisão
+
+---
+
+**Arquivo de Workflow Detalhado:** `.agent/workflows/parallel-development.md`
+
+---
+
 # Regras e Diretrizes do github copilot AI Assistant
 
 Este documento descreve as regras e o modo de operação do assistente de IA neste projeto.

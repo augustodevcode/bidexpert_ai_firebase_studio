@@ -8,13 +8,22 @@ export class JudicialProcessRepository {
     return prisma.judicialProcess.findMany({
       where: { tenantId },
       include: {
-        court: { select: { name: true } },
-        district: { select: { name: true } },
-        branch: { select: { name: true } },
-        seller: { select: { name: true } },
-        parties: true,
+        Court: { select: { name: true } },
+        JudicialDistrict: { select: { name: true } },
+        JudicialBranch: { select: { name: true } },
+        Seller: { select: { name: true } },
+        Auction: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            isJudicial: true,
+            publicId: true
+          }
+        },
+        JudicialParty: true,
         _count: {
-          select: { lots: true, assets: true },
+          select: { Lot: true, Asset: true },
         },
       },
       orderBy: { processNumber: 'desc' }
@@ -25,11 +34,14 @@ export class JudicialProcessRepository {
     return prisma.judicialProcess.findFirst({
       where: { id, tenantId },
       include: {
-        court: { select: { name: true } },
-        district: { select: { name: true } },
-        branch: { select: { name: true } },
-        seller: { select: { name: true } },
-        parties: true,
+        Court: { select: { name: true } },
+        JudicialDistrict: { select: { name: true } },
+        JudicialBranch: { select: { name: true } },
+        Seller: { select: { name: true } },
+        Auction: true,
+        Lot: true,
+        Asset: true,
+        JudicialParty: true,
       },
     });
   }

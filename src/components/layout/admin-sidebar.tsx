@@ -85,7 +85,7 @@ const platformNavItems = [
     { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
     { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
     { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
-    { title: 'Auditoria de Dados', href: '/admin/reports/audit', icon: ServerCrash },
+    { title: 'Auditoria de Dados (Audit 360)', href: '/admin/audit-logs', icon: ServerCrash },
     { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
 ];
 

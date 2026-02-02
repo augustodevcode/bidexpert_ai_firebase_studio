@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { judicialProcessFormSchema, type JudicialProcessFormValues } from './judicial-process-form-schema';
 import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, MediaItem, DocumentType, JudicialActionType } from '@/types';
 import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot, Eye } from 'lucide-react';
@@ -530,6 +531,73 @@ export default function JudicialProcessForm({
         </Card>
     )}
     </div>
+
+    {initialData && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 max-w-3xl mx-auto">
+             {/* Lots */}
+             <Card className="shadow-md" data-ai-id="process-linked-lots">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">Lotes Vinculados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {initialData.lots && initialData.lots.length > 0 ? (
+                        <ul className="space-y-2">
+                            {initialData.lots.map((lot: any) => (
+                                <li key={lot.id} className="text-sm p-2 border rounded bg-background flex justify-between items-center">
+                                    <span className="truncate flex-1" title={lot.title}>{lot.title}</span>
+                                    <Link href={`/admin/lots/${lot.id}/edit`} className="ml-2 text-primary hover:text-primary/80"><Pencil className="h-3 w-3"/></Link>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-sm text-muted-foreground italic">Nenhum lote vinculado.</p>}
+                </CardContent>
+             </Card>
+
+             {/* Assets */}
+             <Card className="shadow-md" data-ai-id="process-linked-assets">
+                <CardHeader className="pb-2">
+                     <CardTitle className="text-lg flex items-center gap-2">Ativos Vinculados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                     {initialData.assets && initialData.assets.length > 0 ? (
+                        <ul className="space-y-2">
+                            {initialData.assets.map((asset: any) => (
+                                <li key={asset.id} className="text-sm p-2 border rounded bg-background flex justify-between items-center">
+                                     <span className="truncate flex-1" title={asset.name}>{asset.name}</span>
+                                     <Link href={`/admin/assets/${asset.id}/edit`} className="ml-2 text-primary hover:text-primary/80"><Pencil className="h-3 w-3"/></Link>
+                                </li>
+                            ))}
+                        </ul>
+                     ) : <p className="text-sm text-muted-foreground italic">Nenhum ativo vinculado.</p>}
+                </CardContent>
+             </Card>
+
+             {/* Auctions */}
+             <Card className="shadow-md" data-ai-id="process-linked-auctions">
+                <CardHeader className="pb-2">
+                     <CardTitle className="text-lg flex items-center gap-2">Leilões Vinculados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                     {initialData.auctions && initialData.auctions.length > 0 ? (
+                        <ul className="space-y-2">
+                            {initialData.auctions.map((auc: any) => (
+                                <li key={auc.id} className="text-sm p-2 border rounded bg-background">
+                                    <div className="flex justify-between items-center mb-1">
+                                         <span className="font-semibold truncate flex-1" title={auc.title}>{auc.title}</span>
+                                         <Link href={`/admin/auctions/${auc.id}/edit`} className="ml-2 text-primary hover:text-primary/80"><Pencil className="h-3 w-3"/></Link>
+                                    </div>
+                                     <div className="flex gap-2">
+                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${auc.status === 'OPEN' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100' : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100'}`}>{auc.status === 'OPEN' ? 'Aberto' : auc.status}</span>
+                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${auc.isJudicial ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'}`}>{auc.isJudicial ? 'Judicial' : 'Extra'}</span>
+                                     </div>
+                                </li>
+                            ))}
+                        </ul>
+                     ) : <p className="text-sm text-muted-foreground italic">Nenhum leilão vinculado.</p>}
+                </CardContent>
+             </Card>
+        </div>
+    )}
     
     <DataValidationModal
         isOpen={isValidationModalOpen}

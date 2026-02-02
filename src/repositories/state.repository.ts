@@ -8,7 +8,7 @@ export class StateRepository {
     return prisma.state.findMany({
       include: {
         _count: {
-          select: { cities: true }
+          select: { City: true }
         }
       },
       orderBy: { name: 'asc' }
