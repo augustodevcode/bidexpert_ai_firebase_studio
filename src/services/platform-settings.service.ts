@@ -140,6 +140,8 @@ export class PlatformSettingsService {
                     radiusValue: defaultRadiusValue,
                     themeColorsLight: defaultThemeTokensLight,
                     themeColorsDark: defaultThemeTokensDark,
+                    marketingSiteAdsSuperOpportunitiesEnabled: true,
+                    marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds: 6,
                 };
 
                 settings = await withAudit({

@@ -1,4 +1,6 @@
-// src/app/home-page-client.tsx
+/**
+ * @fileoverview Cliente da home com controle de seções baseado em configurações da plataforma.
+ */
 'use client';
 
 import HeroSection from '@/components/hero-section';
@@ -94,12 +96,13 @@ function HomeExperienceClassic({
     .sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0))
     .slice(0, 3);
   const featuredSellers = sellers.filter(s => s.logoUrl).slice(0, 12);
+  const isSuperOpportunitiesEnabled = platformSettings.marketingSiteAdsSuperOpportunitiesEnabled ?? true;
 
   return (
     <div className="space-y-12 md:space-y-16 lg:space-y-20">
       <HeroSection />
 
-      {closingSoonLots.length > 0 && (
+      {closingSoonLots.length > 0 && isSuperOpportunitiesEnabled && (
         <ClosingSoonCarousel lots={closingSoonLots} auctions={allAuctions} platformSettings={platformSettings} />
       )}
 
