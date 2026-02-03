@@ -134,6 +134,12 @@ const RealtimeSettingsSchema = z.object({
     lawyerRevenueSharePercent: z.coerce.number().min(0).max(100).optional().nullable(),
 });
 
+// Schema para Marketing > Publicidade do Site
+const SiteAdsSettingsSchema = z.object({
+  marketingSiteAdsSuperOpportunitiesEnabled: z.boolean().default(true),
+  marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds: z.coerce.number().int().min(3).max(60).default(6),
+});
+
 
 // Schema principal de configurações da plataforma
 export const platformSettingsFormSchema = z.object({
@@ -159,6 +165,8 @@ export const platformSettingsFormSchema = z.object({
   mentalTriggerSettings: MentalTriggerSettingsSchema.optional().nullable(),
   sectionBadgeVisibility: SectionBadgeVisibilitySchema.optional().nullable(),
   variableIncrementTable: z.array(VariableIncrementRuleSchema).optional().nullable(),
+  marketingSiteAdsSuperOpportunitiesEnabled: SiteAdsSettingsSchema.shape.marketingSiteAdsSuperOpportunitiesEnabled,
+  marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds: SiteAdsSettingsSchema.shape.marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds,
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;

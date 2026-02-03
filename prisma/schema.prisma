@@ -953,6 +953,8 @@ model PlatformSettings {
   relatedLotsCount           Int?                                   @default(5)
   defaultUrgencyTimerHours   Int?
   defaultListItemsPerPage    Int?                                   @default(10)
+  marketingSiteAdsSuperOpportunitiesEnabled Boolean                 @default(true)
+  marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds Int?      @default(6)
   auditTrailConfig           Json?
   updatedAt                  DateTime?
   supportAddress             String?

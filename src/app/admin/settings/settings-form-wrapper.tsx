@@ -1,4 +1,6 @@
-// src/app/admin/settings/settings-form-wrapper.tsx
+/**
+ * @fileoverview Wrapper de formulário para configurações globais da plataforma.
+ */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -69,6 +71,8 @@ export default function SettingsFormWrapper({ title, description, children }: Se
           showExclusiveBadge: true,
         },
       },
+      marketingSiteAdsSuperOpportunitiesEnabled: true,
+      marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds: 6,
     },
   });
 
@@ -119,6 +123,8 @@ export default function SettingsFormWrapper({ title, description, children }: Se
               showExclusiveBadge: true,
             },
           },
+          marketingSiteAdsSuperOpportunitiesEnabled: fetchedSettings.marketingSiteAdsSuperOpportunitiesEnabled ?? true,
+          marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds: fetchedSettings.marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds ?? 6,
         });
       }
       setIsLoading(false);

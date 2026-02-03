@@ -258,6 +258,27 @@ Proibir mix de `cuid()` em novos docs/código
 - `Pagination` com contagem total e seleção de itens por página  
   
 🎚️ **Funcionalidades**:  
+
+### RN-023: Marketing > Publicidade do Site (Super Oportunidades)
+✅ A seção Super Oportunidades DEVE ser habilitada/desabilitada via módulo Marketing > Publicidade do Site  
+✅ A frequência de rolagem do carousel DEVE ser configurável no mesmo submódulo  
+✅ NÃO exibir contador regressivo acima dos cards (apenas nos cards)  
+
+**BDD - Cenários principais**
+- **Dado** que a configuração está habilitada  
+  **Quando** a home é carregada  
+  **Então** a seção Super Oportunidades é exibida  
+- **Dado** que a configuração está desabilitada  
+  **Quando** a home é carregada  
+  **Então** a seção Super Oportunidades não é exibida  
+- **Dado** que a frequência de rolagem foi ajustada  
+  **Quando** o carousel é exibido  
+  **Então** a rolagem automática usa o intervalo configurado  
+
+**TDD - Cobertura mínima exigida**
+- Teste unitário do carousel confirmando ausência de contador superior  
+- Teste UI E2E validando toggle e ajuste de intervalo  
+- Teste visual com screenshot da página de Publicidade do Site
 - **Ordenação** por coluna (asc/desc)  
 - **Busca livre** com highlight dos termos  
 - **Filtros avançados** combináveis  
