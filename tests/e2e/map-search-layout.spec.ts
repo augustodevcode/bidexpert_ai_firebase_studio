@@ -1,27 +1,55 @@
 // tests/e2e/map-search-layout.spec.ts
 import { test, expect } from '@playwright/test';
 
-const PAGE_URL = '/map-search';
+const PAGE_URL = 'http://localhost:9005/map-search';
 
-async function waitForMapSidebar(page) {
+async function waitForMapModal(page) {
   await page.goto(PAGE_URL);
-  await page.locator('[data-ai-id="map-search-list"]').waitFor({ state: 'visible' });
+  await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 10000 });
 }
 
-test.describe('Map search layout enhancements', () => {
-  test('opens and closes fullscreen mode', async ({ page }) => {
-    await waitForMapSidebar(page);
-    await page.getByRole('button', { name: /Tela cheia/i }).click();
-    await expect(page.getByRole('button', { name: /Fechar tela cheia/i })).toBeVisible();
-    await page.getByRole('button', { name: /Fechar tela cheia/i }).click();
-    await expect(page.getByRole('button', { name: /Tela cheia/i })).toBeVisible();
+test.describe('Map search modal layout', () => {
+  test('modal opens on page load and shows header with title', async ({ page }) => {
+    await waitForMapModal(page);
+    
+    // Verificar que o modal está visível
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible();
+    
+    // Verificar header com título
+    await expect(page.getByRole('heading', { name: /Mapa Inteligente BidExpert/i })).toBeVisible();
   });
 
-  test('renders compact list items inside the sidebar', async ({ page }) => {
-    await waitForMapSidebar(page);
-    const firstListItem = page.locator('[data-ai-id="map-search-list-item"]').first();
-    await expect(firstListItem.locator('[data-density="default"]')).toBeVisible();
-    await page.getByRole('button', { name: /Recentrar mapa/i }).click();
-    await expect(page.locator('[data-ai-id="map-search-count"]')).toBeVisible();
+  test('modal has 70/30 grid layout with map and sidebar', async ({ page }) => {
+    await waitForMapModal(page);
+    
+    // Verificar que o grid existe
+    const gridContainer = page.locator('.xl\\:grid-cols-\\[7fr_3fr\\]');
+    await expect(gridContainer).toBeVisible();
+    
+    // Verificar que tem pelo menos 2 filhos (mapa e sidebar)
+    const gridChildren = gridContainer.locator('> div');
+    await expect(gridChildren).toHaveCount(2);
+  });
+
+  test('renders list items with map density', async ({ page }) => {
+    await waitForMapModal(page);
+    
+    // Aguardar lista carregar
+    await page.locator('[data-ai-id="map-search-list"]').waitFor({ state: 'visible', timeout: 10000 });
+    
+    // Verificar que existe pelo menos um item com densidade map
+    const listItems = page.locator('[data-density="map"]');
+    await expect(listItems.first()).toBeVisible();
+  });
+
+  test('closes modal when close button is clicked', async ({ page }) => {
+    await waitForMapModal(page);
+    
+    // Clicar no botão de fechar (X)
+    await page.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+    
+    // Aguardar o modal fechar (dialog não deve estar mais visível)
+    await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 5000 });
   });
 });
