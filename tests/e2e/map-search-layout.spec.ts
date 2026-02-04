@@ -1,16 +1,50 @@
 // tests/e2e/map-search-layout.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 const PAGE_URL = 'http://localhost:9005/map-search';
 
-async function waitForMapModal(page) {
+// Estratégia de Observabilidade: Capturar erros de console do browser
+interface ConsoleMessage {
+  type: string;
+  text: string;
+  location?: string;
+}
+
+async function setupConsoleMonitoring(page: Page): Promise<ConsoleMessage[]> {
+  const consoleErrors: ConsoleMessage[] = [];
+  
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') {
+      consoleErrors.push({
+        type: msg.type(),
+        text: msg.text(),
+        location: msg.location()?.url,
+      });
+    }
+  });
+
+  page.on('pageerror', (error) => {
+    consoleErrors.push({
+      type: 'pageerror',
+      text: error.message,
+    });
+  });
+
+  return consoleErrors;
+}
+
+async function waitForMapModal(page: Page, consoleErrors: ConsoleMessage[]) {
   await page.goto(PAGE_URL);
   await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 10000 });
+  
+  // Aguardar estabilização do mapa (evitar falsos positivos de erros de carregamento)
+  await page.waitForTimeout(1000);
 }
 
 test.describe('Map search modal layout', () => {
-  test('modal opens on page load and shows header with title', async ({ page }) => {
-    await waitForMapModal(page);
+  test('modal opens on page load and shows header with title (without console errors)', async ({ page }) => {
+    const consoleErrors = await setupConsoleMonitoring(page);
+    await waitForMapModal(page, consoleErrors);
     
     // Verificar que o modal está visível
     const dialog = page.locator('[role="dialog"]');
@@ -18,10 +52,24 @@ test.describe('Map search modal layout', () => {
     
     // Verificar header com título
     await expect(page.getByRole('heading', { name: /Mapa Inteligente BidExpert/i })).toBeVisible();
+    
+    // Observabilidade: Verificar ausência de erros críticos no console
+    const criticalErrors = consoleErrors.filter(err => 
+      err.text.toLowerCase().includes('typeerror') || 
+      err.text.toLowerCase().includes('referenceerror') ||
+      err.text.toLowerCase().includes('failed to fetch')
+    );
+    
+    if (criticalErrors.length > 0) {
+      console.error('🔴 Erros críticos detectados no console:', criticalErrors);
+    }
+    
+    expect(criticalErrors, `Encontrados ${criticalErrors.length} erros críticos no console: ${JSON.stringify(criticalErrors, null, 2)}`).toHaveLength(0);
   });
 
-  test('modal has 70/30 grid layout with map and sidebar', async ({ page }) => {
-    await waitForMapModal(page);
+  test('modal has 70/30 grid layout with map and sidebar (without console errors)', async ({ page }) => {
+    const consoleErrors = await setupConsoleMonitoring(page);
+    await waitForMapModal(page, consoleErrors);
     
     // Verificar que o grid existe
     const gridContainer = page.locator('.xl\\:grid-cols-\\[7fr_3fr\\]');
@@ -30,10 +78,18 @@ test.describe('Map search modal layout', () => {
     // Verificar que tem pelo menos 2 filhos (mapa e sidebar)
     const gridChildren = gridContainer.locator('> div');
     await expect(gridChildren).toHaveCount(2);
+    
+    // Observabilidade: Verificar ausência de erros críticos
+    const criticalErrors = consoleErrors.filter(err => 
+      err.text.toLowerCase().includes('typeerror') || 
+      err.text.toLowerCase().includes('referenceerror')
+    );
+    expect(criticalErrors).toHaveLength(0);
   });
 
-  test('renders list items with map density', async ({ page }) => {
-    await waitForMapModal(page);
+  test('renders list items with map density (without console errors)', async ({ page }) => {
+    const consoleErrors = await setupConsoleMonitoring(page);
+    await waitForMapModal(page, consoleErrors);
     
     // Aguardar lista carregar
     await page.locator('[data-ai-id="map-search-list"]').waitFor({ state: 'visible', timeout: 10000 });
@@ -41,15 +97,65 @@ test.describe('Map search modal layout', () => {
     // Verificar que existe pelo menos um item com densidade map
     const listItems = page.locator('[data-density="map"]');
     await expect(listItems.first()).toBeVisible();
+    
+    // Observabilidade: Log de todos os erros para diagnóstico
+    if (consoleErrors.length > 0) {
+      console.log('⚠️ Erros de console detectados:', consoleErrors);
+    }
+    
+    // Verificar apenas erros críticos (ignorar warnings de libs externas)
+    const criticalErrors = consoleErrors.filter(err => 
+      err.type === 'pageerror' ||
+      err.text.toLowerCase().includes('typeerror') || 
+      err.text.toLowerCase().includes('referenceerror')
+    );
+    expect(criticalErrors).toHaveLength(0);
   });
 
-  test('closes modal when close button is clicked', async ({ page }) => {
-    await waitForMapModal(page);
+  test('closes modal when close button is clicked (without console errors)', async ({ page }) => {
+    const consoleErrors = await setupConsoleMonitoring(page);
+    await waitForMapModal(page, consoleErrors);
     
     // Clicar no botão de fechar (X)
     await page.getByRole('button').filter({ has: page.locator('svg') }).first().click();
     
     // Aguardar o modal fechar (dialog não deve estar mais visível)
     await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 5000 });
+    
+    // Observabilidade: Verificar que o fechamento não gerou erros
+    const criticalErrors = consoleErrors.filter(err => 
+      err.text.toLowerCase().includes('typeerror') || 
+      err.text.toLowerCase().includes('referenceerror')
+    );
+    expect(criticalErrors).toHaveLength(0);
+  });
+
+  test('detects and reports network errors (4xx/5xx)', async ({ page }) => {
+    const networkErrors: { url: string; status: number }[] = [];
+    
+    page.on('response', (response) => {
+      const status = response.status();
+      if (status >= 400) {
+        networkErrors.push({
+          url: response.url(),
+          status,
+        });
+      }
+    });
+    
+    const consoleErrors = await setupConsoleMonitoring(page);
+    await waitForMapModal(page, consoleErrors);
+    
+    // Aguardar carregamento completo dos dados
+    await page.waitForTimeout(2000);
+    
+    // Observabilidade: Reportar erros de rede
+    if (networkErrors.length > 0) {
+      console.error('🌐 Erros de rede detectados:', networkErrors);
+    }
+    
+    // Verificar que não há erros de rede críticos (500+)
+    const serverErrors = networkErrors.filter(err => err.status >= 500);
+    expect(serverErrors, `Erros de servidor detectados: ${JSON.stringify(serverErrors)}`).toHaveLength(0);
   });
 });
