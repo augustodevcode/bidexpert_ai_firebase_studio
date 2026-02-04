@@ -22,7 +22,7 @@ interface LotListItemProps {
   auction?: Auction;
   platformSettings: PlatformSettings;
   onUpdate?: () => void;
-  density?: 'default' | 'compact';
+  density?: 'default' | 'compact' | 'map';
 }
 
 export default function LotListItem({ lot, auction, platformSettings, onUpdate, density = 'default' }: LotListItemProps) {
@@ -61,6 +61,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
 
   const IconComponent = auctionTypeDisplay?.icon;
   const isCompact = density === 'compact';
+  const isMap = density === 'map';
   const auctionStartDate = auction?.auctionDate ? new Date(auction.auctionDate as string) : undefined;
   const badgeBaseClass = cn('px-1.5 py-0.5 text-xs shadow-sm', isCompact && 'px-1 text-[11px]');
 
@@ -77,7 +78,8 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
           <div
             className={cn(
               'md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted',
-              isCompact && 'w-[120px] h-[110px] aspect-square rounded-xl overflow-hidden'
+              isCompact && 'w-[120px] h-[110px] aspect-square rounded-xl overflow-hidden',
+              isMap && 'md:w-2/5 lg:w-[38%] md:aspect-[5/3]'
             )}
           >
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} className="block h-full w-full">

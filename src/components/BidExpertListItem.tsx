@@ -24,7 +24,7 @@ interface BidExpertListItemProps {
   platformSettings: PlatformSettings;
   parentAuction?: Auction;
   onUpdate?: () => void;
-  density?: 'default' | 'compact';
+  density?: 'default' | 'compact' | 'map';
 }
 
 export default function BidExpertListItem({ item, type, platformSettings, parentAuction, onUpdate, density = 'default' }: BidExpertListItemProps) {

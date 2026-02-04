@@ -41,7 +41,7 @@ export interface MapSearchSidebarProps {
   isRefreshingDatasets: boolean;
   onForceRefresh: () => void;
   isUsingCache: boolean;
-  listDensity?: 'default' | 'compact';
+  listDensity?: 'default' | 'compact' | 'map';
 }
 
 export default function MapSearchSidebar({

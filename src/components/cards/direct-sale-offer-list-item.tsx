@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 
 interface DirectSaleOfferListItemProps {
   offer: DirectSaleOffer;
-  density?: 'default' | 'compact';
+  density?: 'default' | 'compact' | 'map';
 }
 
 export default function DirectSaleOfferListItem({ offer, density = 'default' }: DirectSaleOfferListItemProps) {
@@ -42,7 +42,8 @@ export default function DirectSaleOfferListItem({ offer, density = 'default' }: 
         <div
           className={cn(
             'md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted',
-            density === 'compact' && 'w-[120px] h-[110px] aspect-square rounded-xl overflow-hidden'
+            density === 'compact' && 'w-[120px] h-[110px] aspect-square rounded-xl overflow-hidden',
+            density === 'map' && 'md:w-2/5 lg:w-[38%] md:aspect-[5/3]'
           )}
         >
           <Link href={`/direct-sales/${offer.id}`} className="block h-full w-full">

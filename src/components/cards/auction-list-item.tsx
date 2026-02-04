@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 interface AuctionListItemProps {
   auction: Auction;
   onUpdate?: () => void;
-  density?: 'default' | 'compact';
+  density?: 'default' | 'compact' | 'map';
 }
 
 export default function AuctionListItem({ auction, onUpdate, density = 'default' }: AuctionListItemProps) {
@@ -66,6 +66,7 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
   const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';
 
   const isCompact = density === 'compact';
+  const isMap = density === 'map';
   const auctionStartDate = auction.auctionDate ? new Date(auction.auctionDate as string) : undefined;
 
   return (
@@ -81,7 +82,8 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
           <div
             className={cn(
               'md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted',
-              isCompact && 'w-[120px] h-[110px] aspect-square rounded-xl overflow-hidden'
+              isCompact && 'w-[120px] h-[110px] aspect-square rounded-xl overflow-hidden',
+              isMap && 'md:w-2/5 lg:w-[38%] md:aspect-[5/3]'
             )}
           >
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block h-full w-full">
