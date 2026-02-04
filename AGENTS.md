@@ -17,6 +17,40 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 ## Regras Específicas
 - Sempre ao terminar qualquer implementação, correção ou criação de scripts, tabelas, campos, alterações, execute um teste e2e para validar o que foi feito e documente.
 
+## Estratégia de Observabilidade (Logs do Browser + Servidor)
+Os agentes devem sempre buscar a visão completa do problema:
+1. **Logs do Browser**: Execute scripts Playwright (como `tests/e2e/console-error-detection.spec.ts`) para ver erros de console (`TypeError`, `404`, `500 network`) que não aparecem no terminal do servidor.
+2. **Logs do Servidor**: Verifique o output do `next dev` ou `start`.
+3. **Triangulação**: Um erro de "Failed to fetch" no browser geralmente tem uma stack trace correspondente no servidor. Use ambos para corrigir com precisão.
+
+## Estratégia de Inicialização Robusta (Powershell)
+
+**PROBLEMA:** O comando `next dev` padrão pode falhar na ligação de portas ou resolução de `localhost` em ambientes Windows/Powershell, ou ignorar variáveis de ambiente.
+
+**SOLUÇÃO (OBRIGATÓRIA):** Ao iniciar a aplicação para testes ou desenvolvimento, utilize SEMPRE esta sequência de comandos no PowerShell:
+
+```powershell
+# 1. Parar processos Node anteriores para liberar a porta (evita erro EADDRINUSE)
+Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
+
+# 2. Definir variáveis de ambiente explicitamente na sessão
+$env:PORT=9005
+$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_demo" # Ou bidexpert_dev conforme necessidade
+$env:NODE_ENV="development"
+
+# 3. Gerar cliente Prisma (garante schema sincronizado)
+npx prisma generate
+
+# 4. Iniciar servidor customizado (monitorando logs no terminal)
+# Nota: Usa ts-node com server.ts para garantir leitura correta de env e binding
+npx ts-node --project tsconfig.server.json src/server.ts
+```
+
+**Monitoramento:**
+- Após iniciar, verifique se a mensagem "Ready in..." aparece.
+- Se houver erro de conexão, testar com: `Test-NetConnection -ComputerName 127.0.0.1 -Port 9005`
+- Sempre abra o **Simple Browser** (`http://demo.localhost:9005`) para validar visualmente.
+
 ## Container Tools - Ambientes Multi-Tenant
 
 As AIs (Copilot, Gemini, etc.) têm acesso às ferramentas de container para gerenciar diferentes ambientes.

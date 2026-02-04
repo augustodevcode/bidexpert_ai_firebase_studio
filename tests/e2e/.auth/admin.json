@@ -2,10 +2,10 @@
   "cookies": [
     {
       "name": "session",
-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiI1IiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiXSwic2VsbGVySWQiOm51bGwsImF1Y3Rpb25lZXJJZCI6bnVsbCwiaWF0IjoxNzY5NzMyMDAwLCJleHAiOjE3NzAzMzY4MDB9.VXjRsh0C071CktDOSVhk4Kg9rNT_JOXXHlzxDIBhf_s",
-      "domain": "localhost",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiXSwic2VsbGVySWQiOm51bGwsImF1Y3Rpb25lZXJJZCI6bnVsbCwiaWF0IjoxNzcwMTc2MTIxLCJleHAiOjE3NzA3ODA5MjF9.Sy51_Fy0bztMWyTZHjUPKT7dF2CXIaBTjcXyxM_OkW8",
+      "domain": "demo.localhost",
       "path": "/",
-      "expires": 1770336800.505792,
+      "expires": 1770780921.923545,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
@@ -13,7 +13,7 @@
   ],
   "origins": [
     {
-      "origin": "http://localhost:9007",
+      "origin": "http://demo.localhost:9005",
       "localStorage": [
         {
           "name": "bidexpert-widget-preferences",

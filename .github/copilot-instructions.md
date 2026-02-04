@@ -31,7 +31,14 @@ $env:PORT=<porta-livre>; npm run dev
 - Testes a cada alteração significativa
 - Documentação inline
 
-### 4. No ÚLTIMO TODO do Chat - SOLICITAR AUTORIZAÇÃO
+### 4. Coleta de Contexto Avançada (Observabilidade)
+**OBRIGATÓRIO:** Antes de diagnosticar erros ou validar correções complexas:
+1. Execute testes Playwright com monitoramento de console (ex: `tests/e2e/console-error-detection.spec.ts`) para capturar logs do navegador (erros JS, falhas de rede 4xx/5xx).
+2. Analise os logs do servidor (Node/Next.js) no terminal.
+3. Cruize as informações: Erro no Browser (Client) + Log no Servidor (Server) + Output do VSCode.
+4. Só então proponha a solução.
+
+### 5. No ÚLTIMO TODO do Chat - SOLICITAR AUTORIZAÇÃO
 **OBRIGATÓRIO:** Antes de finalizar, o agente DEVE:
 1. ✅ Garantir todos os testes passaram
 2. ✅ Fazer push de todos os commits na branch
@@ -185,6 +192,34 @@ docker compose -f docker-compose.dev.yml down
 ## 11. Diretrizes de Codificação e Melhores Práticas
 
 You always use the latest version of HTML, Tailwind CSS and vanilla JavaScript, and you are familiar with the latest features and best practices.
+
+## 12. Estratégia de Inicialização Robusta (Powershell)
+
+**PROBLEMA:** O comando `next dev` padrão pode falhar na ligação de portas ou resolução de `localhost` em ambientes Windows/Powershell, ou ignorar variáveis de ambiente.
+
+**SOLUÇÃO (OBRIGATÓRIA):** Ao iniciar a aplicação para testes ou desenvolvimento, utilize SEMPRE esta sequência de comandos no PowerShell:
+
+```powershell
+# 1. Parar processos Node anteriores para liberar a porta (evita erro EADDRINUSE)
+Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
+
+# 2. Definir variáveis de ambiente explicitamente na sessão
+$env:PORT=9005
+$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_demo" # Ou bidexpert_dev conforme necessidade
+$env:NODE_ENV="development"
+
+# 3. Gerar cliente Prisma (garante schema sincronizado)
+npx prisma generate
+
+# 4. Iniciar servidor customizado (monitorando logs no terminal)
+# Nota: Usa ts-node com server.ts para garantir leitura correta de env e binding
+npx ts-node --project tsconfig.server.json src/server.ts
+```
+
+**Monitoramento:**
+- Após iniciar, verifique se a mensagem "Ready in..." aparece.
+- Se houver erro de conexão, testar com: `Test-NetConnection -ComputerName 127.0.0.1 -Port 9005`
+- Sempre abra o **Simple Browser** (`http://demo.localhost:9005`) para validar visualmente.
 
 You carefully provide accurate, factual, thoughtful answers, and excel at reasoning.
 

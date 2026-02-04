@@ -8,6 +8,10 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// FORCE DEMO DATABASE FOR VALIDATION
+process.env.DATABASE_URL = "mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_demo";
+process.env.PORT = "9005";
+
 // Criar arquivo de log
 const logDir = path.join(__dirname, '..', 'logs');
 if (!fs.existsSync(logDir)) {

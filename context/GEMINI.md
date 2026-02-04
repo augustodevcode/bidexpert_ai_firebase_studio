@@ -44,6 +44,22 @@ Eu sou programado para seguir estritamente as diretrizes definidas no arquivo `R
 
 A estratégia de testes está documentada no `README.md` e deve ser seguida para garantir a qualidade do código. Eu posso ser instruído a criar ou modificar testes que sigam essa estratégia.
 
+## 7.1 Diretriz Crítica: Credenciais e Seleção de Tenant no Login
+
+**REGRA OBRIGATÓRIA:** Antes de executar qualquer teste automatizado (Playwright/Vitest UI) ou fluxo de login em agentes, o assistente **DEVE**:
+1. **Analisar o seed principal** (ex.: `seed-master-data.ts` e/ou `seed-master-data.md`) para obter credenciais válidas (usuário, senha e perfil).
+2. **Ler a página de login** para entender o mecanismo de seleção de tenant/usuário (ex.: selector, modal, dropdown ou campo dedicado).
+3. **Evitar tentativa-e-erro**: só utilizar credenciais e seleção de tenant confirmadas no seed e/ou na UI.
+
+Se não houver credenciais claras no seed, o assistente deve primeiro identificar onde elas são geradas ou persistidas antes de prosseguir com o login.
+
+## 7.2 Diagnóstico via Logs do Navegador (Playwright)
+
+Para diagnósticos precisos, o assistente **DEVE**:
+1. Utilizar ou criar scripts Playwright que capturem logs do console e falhas de rede (`page.on('console')`, `page.on('pageerror')`).
+2. Executar esses testes sempre que houver suspeita de erro no client-side (ex: tela branca, botões que não funcionam).
+3. Cruzar os logs do console do navegador com os logs do servidor para identificar a causa raiz (ex: erro 500 no fetch -> log de erro no servidor).
+
 ## 8. DIRETRIZA CRÍTICA: Lazy Compilation vs Pre-Build em Next.js
 
 **REGRA OBRIGATÓRIA:** Ao executar testes E2E ou ao iniciar o servidor para ambientes de teste/produção, SEMPRE usar **pré-compilação** em vez de lazy compilation em dev mode.

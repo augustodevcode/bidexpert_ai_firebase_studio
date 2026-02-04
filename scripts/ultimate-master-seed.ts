@@ -545,6 +545,7 @@ async function fixAuctionsWithoutResponsible(tenantId: bigint) {
           city: faker.location.city(),
           state: 'SP',
           zipCode: faker.location.zipCode(),
+          updatedAt: new Date(),
         }
       });
       auctioneers.push(newAuctioneer);
@@ -671,11 +672,9 @@ async function createDocumentTemplates(tenantId: bigint) {
   }
   
   const templates = [
-    { name: 'Termo de Arrematação', type: 'ARREMATACAO' as DocumentTemplateType },
-    { name: 'Contrato de Compra e Venda', type: 'CONTRATO' as DocumentTemplateType },
-    { name: 'Edital de Leilão', type: 'EDITAL' as DocumentTemplateType },
-    { name: 'Laudo de Avaliação', type: 'LAUDO' as DocumentTemplateType },
-    { name: 'Certidão de Débitos', type: 'CERTIDAO' as DocumentTemplateType },
+    { name: 'Termo de Arrematação', type: 'WINNING_BID_TERM' as any },
+    { name: 'Laudo de Avaliação', type: 'EVALUATION_REPORT' as any },
+    { name: 'Certidão de Arrematação', type: 'AUCTION_CERTIFICATE' as any },
   ];
   
   for (const tpl of templates) {
@@ -686,6 +685,7 @@ async function createDocumentTemplates(tenantId: bigint) {
           name: tpl.name,
           type: tpl.type,
           content: generateTemplateContent(tpl.name),
+          updatedAt: new Date(),
         }
       });
     }
@@ -732,7 +732,6 @@ async function addMoreLotQuestions(tenantId: bigint) {
         answerText: i % 2 === 0 ? faker.lorem.paragraph() : null,
         isPublic: true,
         answeredAt: i % 2 === 0 ? new Date() : null,
-        updatedAt: new Date(),
       }
     });
   }
@@ -764,7 +763,6 @@ async function addMoreReviews(tenantId: bigint) {
         rating: faker.number.int({ min: 3, max: 5 }),
         comment: faker.lorem.paragraph(),
         userDisplayName: user.fullName || 'Usuário',
-        updatedAt: new Date(),
       }
     });
   }
@@ -867,7 +865,6 @@ async function addMoreNotifications(tenantId: bigint) {
         message: messages[i % messages.length],
         link: lot ? `/leiloes/${lot.auctionId}/lotes/${lot.id}` : null,
         isRead: faker.datatype.boolean(),
-        updatedAt: new Date(),
       }
     });
   }
@@ -1484,26 +1481,35 @@ async function main() {
     if (defaultTenant) {
         console.log(`✅ Tenant DEMO encontrado (ID ${defaultTenant.id}) - Usando para seed.`);
     } else {
-        console.log('ℹ️ Tenant DEMO não encontrado. Buscando tenant padrão (ID 1)...');
-        // Buscar o tenant padrão existente
-        defaultTenant = await prisma.tenant.findFirst({
-          where: { id: 1 }
-        });
-
-        if (!defaultTenant) {
-          // Se não existir, criar o tenant padrão
-          defaultTenant = await prisma.tenant.create({
+        console.log('ℹ️ Tenant DEMO não encontrado. Buscando tenant padrão...');
+        // Tentar encontrar tenant ID 1
+        let tenantOne = await prisma.tenant.findUnique({ where: { id: 1 } });
+        
+        if (tenantOne) {
+           console.log('ℹ️ Tenant ID 1 encontrado, atualizando para demo...');
+           defaultTenant = await prisma.tenant.update({
+             where: { id: 1 },
+             data: { subdomain: 'demo', name: 'BidExpert Demo', updatedAt: new Date() }
+           });
+        } else {
+           console.log('ℹ️ Criando novo tenant Demo...');
+           // Create new demo tenant
+           defaultTenant = await prisma.tenant.create({
             data: {
-              id: 1,
-              name: 'BidExpert Tenant',
-              subdomain: 'default',
+              // Usually we might want ID 1, but if it's auto-increment, we just let it be. 
+              // However, references often assume ID 1. Let's try to force ID 1 if possible or let it slide.
+              // If ID is not autoincrement in standard prisma for sqlite/mysql... 
+              // Wait, schema usually uses BigInt @id @default(autoincrement()).
+              // We can't easily force ID unless we enable identity insert or similar, but Prisma creates allow ID input.
+              id: 1, 
+              name: 'BidExpert Demo',
+              subdomain: 'demo',
               domain: 'localhost',
+              updatedAt: new Date()
             },
           });
-          console.log('✅ Tenant padrão criado (ID 1)');
-        } else {
-          console.log('✅ Tenant padrão encontrado (ID 1)');
         }
+        console.log(`✅ Tenant Demo configurado (ID ${defaultTenant.id})`);
     }
 
     // Array com apenas o tenant padrão (para compatibilidade com o resto do código)
@@ -4126,23 +4132,24 @@ async function main() {
     console.log('✅ Dados de engajamento e auditoria criados\n');
 
     // EXECUTAR POPULAÇÃO COMPLEMENTAR (MESCLADO DE seed-populate-missing.ts)
-    // Passando o tenantId 1n (Padrão do script V3)
-    await populateMissingData(BigInt(1));
+    // Usando o tenantId do tenant principal
+    const mainTenantId = tenants[0].id;
+    await populateMissingData(mainTenantId);
 
     // EXECUTAR CORREÇÃO DE INCONSISTÊNCIAS DE AUDITORIA
     // Garante que todas as tabelas estejam completas e sem inconsistências
-    await fixAuditInconsistencies(BigInt(1));
+    await fixAuditInconsistencies(mainTenantId);
 
     // SEED DE DADOS ITSM (Sistema de Chamados de Suporte)
     // Popula tickets, mensagens, anexos, chat logs, query logs e form submissions
-    await seedItsmData(BigInt(1));
+    await seedItsmData(mainTenantId);
 
     // SEED DE LOTES ARREMATADOS (COM SERVICES)
     // Gera leilões finalizados com lotes vendidos e arrematantes habilitados
-    await seedWonLotsWithServices(BigInt(1));
+    await seedWonLotsWithServices(mainTenantId);
 
     // SEED MÍNIMO DE 50 REGISTROS PARA TABELAS ZERADAS (NÃO CONFIG)
-    await seedMin50ZeroTables(BigInt(1));
+    await seedMin50ZeroTables(mainTenantId);
 
   } catch (error) {
     console.error('❌ Erro durante seed:', error);

@@ -67,7 +67,7 @@ function MapSearchPageContent() {
   const [fitBoundsSignal, setFitBoundsSignal] = useState(0);
   const [activeBounds, setActiveBounds] = useState<LatLngBounds | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(cacheSnapshot.lastUpdatedAt);
-  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(true);
 
   // Advanced Filters
   const [locationFilter, setLocationFilter] = useState('');
