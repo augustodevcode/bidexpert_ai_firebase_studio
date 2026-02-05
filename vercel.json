@@ -1,0 +1,49 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "projectId": "prj_4tz3zXk6sCgHUJg1TTSNnLQ9UgIs",
+  "framework": "nextjs",
+  "buildCommand": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "regions": ["gru1"],
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "PRISMA_SCHEMA": "prisma/schema.postgresql.prisma"
+  },
+  "build": {
+    "env": {
+      "PRISMA_SCHEMA": "prisma/schema.postgresql.prisma",
+      "NEXT_TELEMETRY_DISABLED": "1"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "destination": "/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
+}

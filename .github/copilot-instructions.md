@@ -921,6 +921,83 @@ Since the codebase is a template, you should not assume they have set up anythin
 - **Nunca use:** `npm run dev` diretamente, pois não garante logging completo e configuração de porta
 - **Acesso:** Após iniciar, sempre abra `http://demo.localhost:9005` no Simple Browser
 
+# 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
+
+> **REGRA CRÍTICA:** Quando o USUÁRIO estiver usando o ambiente DEMO, os agentes AI DEVEM usar o ambiente DEV para não interferir nos testes do usuário.
+
+### Mapeamento de Ambientes
+
+| Ambiente | Infraestrutura | Database | Branch Base | Porta | Uso |
+|----------|----------------|----------|-------------|-------|-----|
+| **DEV** | Local (Docker) | MySQL `bidexpert_dev` | `demo-stable` | 9006 | Agentes AI |
+| **DEMO** | Vercel + Prisma Postgres | PostgreSQL | `demo-stable` | 9005 | Usuário humano |
+| **PROD** | Cloud Run / Vercel | PostgreSQL | `main` | - | Produção final |
+
+### Workflow de Branches
+
+```
+main (produção - PROTEGIDO)
+  │
+  └── demo-stable (base estável para features)
+        │
+        ├── feat/auction-filter-20260131-1430
+        ├── fix/login-bug-20260131-1500
+        └── chore/update-deps-20260131-1530
+```
+
+**Regras de Branch:**
+1. `main` = **PRODUÇÃO** → Nunca alterar diretamente, somente via PR aprovado
+2. `demo-stable` = Base para todas as features → Sempre começar branches daqui
+3. Feature branches → Sempre merge via PR para `demo-stable`
+4. CI verde obrigatório antes de merge em `main`
+
+### Detecção de Ambiente do Usuário
+
+**Como identificar se o usuário está em DEMO:**
+- URL contém `demo.localhost` ou domínio Vercel
+- Logs mostram conexão PostgreSQL
+- Porta 9005 ocupada
+
+**Quando usuário está em DEMO → Agente AI faz:**
+```powershell
+# 1. Usar porta diferente (9006, 9007...)
+$env:PORT=9006
+$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
+
+# 2. Iniciar em ambiente DEV
+node .vscode/start-9006-dev.js
+```
+
+### Compatibilidade MySQL ↔ PostgreSQL
+
+Ao escrever queries que usam comparação de strings case-insensitive:
+
+```typescript
+// ✅ CORRETO - Usar helper de compatibilidade
+import { insensitiveContains } from '@/lib/prisma/query-helpers';
+
+const results = await prisma.auction.findMany({
+  where: {
+    title: insensitiveContains('termo')  // Funciona em MySQL e PostgreSQL
+  }
+});
+
+// ❌ INCORRETO - Hardcode de mode
+const results = await prisma.auction.findMany({
+  where: {
+    title: { contains: 'termo', mode: 'insensitive' }  // Só funciona em PostgreSQL
+  }
+});
+```
+
+### Verificação Pré-Implementação
+
+Antes de iniciar qualquer task, o agente DEVE:
+1. Verificar se porta 9005 está em uso: `netstat -ano | findstr "9005"`
+2. Se ocupada → Usuário em DEMO → Usar DEV na porta 9006
+3. Criar branch a partir de `demo-stable`
+4. Testar em DEV antes de propor merge
+
 # Usuários para testes 
 - Sempre crie usuários para testes com diferentes perfis (admin, user comum, user premium, etc) conforme a necessidade do sistema que está sendo desenvolvido toda vez que ver credenciais inválidas. Documente e incremente no seed-master-data.ts sempre que criar novos usuários para testes. Documente também para que outros desenvolvedores saibam quais usuários existem para testes.
 

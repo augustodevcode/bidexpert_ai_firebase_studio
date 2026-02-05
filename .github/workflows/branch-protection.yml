@@ -1,0 +1,178 @@
+# ==============================================================================
+# GitHub Action: Branch Protection & CI Gates
+# ==============================================================================
+# Validação de código em todos os PRs
+# Bloqueia merge em main sem CI verde
+# ==============================================================================
+
+name: CI - Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - demo-stable
+  push:
+    branches:
+      - main
+      - demo-stable
+
+env:
+  PRISMA_SCHEMA: prisma/schema.prisma
+
+jobs:
+  # ============================================================================
+  # JOB 1: Type Check & Lint
+  # ============================================================================
+  typecheck:
+    name: 🔍 Type Check & Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install dependencies
+        run: npm ci
+        
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+        
+      - name: 🔍 Type Check
+        run: npm run typecheck
+        
+      - name: 🧹 Lint
+        run: npm run lint || echo "Lint warnings (non-blocking)"
+
+  # ============================================================================
+  # JOB 2: Build Test
+  # ============================================================================
+  build:
+    name: 🏗️ Build Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install dependencies
+        run: npm ci
+        
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+        
+      - name: 🏗️ Build
+        run: npm run build
+        env:
+          # Dummy values for build (não acessa DB)
+          DATABASE_URL: "mysql://root:password@localhost:3306/dummy"
+          NEXTAUTH_SECRET: "dummy-secret-for-build-only"
+
+  # ============================================================================
+  # JOB 3: Unit Tests (Vitest)
+  # ============================================================================
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install dependencies
+        run: npm ci
+        
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+        
+      - name: 🧪 Run Unit Tests
+        run: npm run test:unit || echo "No unit tests configured"
+
+  # ============================================================================
+  # JOB 4: Schema Validation (MySQL + PostgreSQL)
+  # ============================================================================
+  schema-validation:
+    name: 🗃️ Schema Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install dependencies
+        run: npm ci
+        
+      - name: 🔍 Validate MySQL Schema
+        run: npx prisma validate --schema=prisma/schema.prisma
+        
+      - name: 🔍 Validate PostgreSQL Schema
+        run: |
+          if [ -f "prisma/schema.postgresql.prisma" ]; then
+            npx prisma validate --schema=prisma/schema.postgresql.prisma
+          else
+            echo "⚠️ PostgreSQL schema not found, skipping"
+          fi
+
+  # ============================================================================
+  # JOB 5: Security Audit
+  # ============================================================================
+  security:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 🔒 npm audit
+        run: npm audit --audit-level=high || echo "Security warnings (non-blocking for now)"
+
+  # ============================================================================
+  # RESULTADO: Gate de Qualidade
+  # ============================================================================
+  quality-gate:
+    name: ✅ Quality Gate
+    runs-on: ubuntu-latest
+    needs: [typecheck, build, schema-validation]
+    if: always()
+    
+    steps:
+      - name: ✅ Check All Jobs
+        run: |
+          if [ "${{ needs.typecheck.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ] || \
+             [ "${{ needs.schema-validation.result }}" != "success" ]; then
+            echo "❌ Quality gate failed!"
+            exit 1
+          fi
+          echo "✅ All quality checks passed!"

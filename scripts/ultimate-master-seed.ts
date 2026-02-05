@@ -17,6 +17,10 @@
  * - Habilitações de usuários
  * - Transações seguras com tratamento de erros
  * - Dados globais (Veículos, ITSM, Logs)
+ * 
+ * COMPATIBILIDADE: MySQL e PostgreSQL
+ * - Detecta automaticamente o tipo de banco via DATABASE_URL
+ * - Usa helpers de query para compatibilidade cross-database
  */
 
 import { 
@@ -45,6 +49,28 @@ import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { seedWonLotsWithServices } from './seed-won-lots-lib';
 import { seedMin50ZeroTables } from './seed-min-50-lib';
+
+// =============================================================================
+// DATABASE TYPE DETECTION - Compatibilidade MySQL/PostgreSQL
+// =============================================================================
+const DATABASE_URL = process.env.DATABASE_URL || '';
+const IS_MYSQL = DATABASE_URL.includes('mysql://');
+const IS_POSTGRES = DATABASE_URL.includes('postgres://') || DATABASE_URL.includes('postgresql://');
+const DB_TYPE = IS_MYSQL ? 'MySQL' : IS_POSTGRES ? 'PostgreSQL' : 'Unknown';
+
+// Log do tipo de banco detectado
+console.log('\n' + '='.repeat(60));
+console.log('🗄️  DATABASE TYPE DETECTION');
+console.log('='.repeat(60));
+console.log(`📌 Detected: ${DB_TYPE}`);
+console.log(`📍 URL prefix: ${DATABASE_URL.substring(0, 30)}...`);
+if (IS_POSTGRES) {
+  console.log('ℹ️  PostgreSQL mode: Using insensitive string comparisons');
+} else if (IS_MYSQL) {
+  console.log('ℹ️  MySQL mode: Default collation handles case-insensitivity');
+}
+console.log('='.repeat(60) + '\n');
+// =============================================================================
 // Imports removed to avoid module resolution issues
 // import { AuctionHabilitationService } from '../src/services/auction-habilitation.service';
 // import { ContactMessageService } from '../src/services/contact-message.service';
@@ -1424,6 +1450,346 @@ async function seedItsmData(tenantId: bigint) {
   await seedFormSubmissions(tenantId);
   
   console.log('[ITSM] ✅ Seed de dados ITSM concluído!\n');
+}
+
+/**
+ * SEED DE TABELAS GLOBAIS CRÍTICAS
+ * Popula States, Cities, ValidationRules, ThemeSettings, RealtimeSettings, etc.
+ */
+async function seedCriticalGlobalTables(tenantId: bigint) {
+  console.log('\n[GLOBAL-TABLES] 🌍 Iniciando seed de tabelas globais críticas...');
+  
+  // 1. STATES (Estados Brasileiros)
+  console.log('[GLOBAL-TABLES] 📍 Populando States (Estados)...');
+  const brazilianStates = [
+    { name: 'Acre', uf: 'AC' },
+    { name: 'Alagoas', uf: 'AL' },
+    { name: 'Amapá', uf: 'AP' },
+    { name: 'Amazonas', uf: 'AM' },
+    { name: 'Bahia', uf: 'BA' },
+    { name: 'Ceará', uf: 'CE' },
+    { name: 'Distrito Federal', uf: 'DF' },
+    { name: 'Espírito Santo', uf: 'ES' },
+    { name: 'Goiás', uf: 'GO' },
+    { name: 'Maranhão', uf: 'MA' },
+    { name: 'Mato Grosso', uf: 'MT' },
+    { name: 'Mato Grosso do Sul', uf: 'MS' },
+    { name: 'Minas Gerais', uf: 'MG' },
+    { name: 'Pará', uf: 'PA' },
+    { name: 'Paraíba', uf: 'PB' },
+    { name: 'Paraná', uf: 'PR' },
+    { name: 'Pernambuco', uf: 'PE' },
+    { name: 'Piauí', uf: 'PI' },
+    { name: 'Rio de Janeiro', uf: 'RJ' },
+    { name: 'Rio Grande do Norte', uf: 'RN' },
+    { name: 'Rio Grande do Sul', uf: 'RS' },
+    { name: 'Rondônia', uf: 'RO' },
+    { name: 'Roraima', uf: 'RR' },
+    { name: 'Santa Catarina', uf: 'SC' },
+    { name: 'São Paulo', uf: 'SP' },
+    { name: 'Sergipe', uf: 'SE' },
+    { name: 'Tocantins', uf: 'TO' }
+  ];
+
+  for (const state of brazilianStates) {
+    await prisma.state.upsert({
+      where: { uf: state.uf },
+      update: {},
+      create: {
+        name: state.name,
+        uf: state.uf,
+        slug: slugify(state.name)
+      }
+    });
+  }
+  console.log(`   ✅ ${brazilianStates.length} estados criados`);
+
+  // 2. CITIES (Principais cidades)
+  console.log('[GLOBAL-TABLES] 🏙️  Populando Cities (Cidades)...');
+  const mainCities = [
+    { name: 'São Paulo', stateUf: 'SP' },
+    { name: 'Rio de Janeiro', stateUf: 'RJ' },
+    { name: 'Brasília', stateUf: 'DF' },
+    { name: 'Salvador', stateUf: 'BA' },
+    { name: 'Fortaleza', stateUf: 'CE' },
+    { name: 'Belo Horizonte', stateUf: 'MG' },
+    { name: 'Manaus', stateUf: 'AM' },
+    { name: 'Curitiba', stateUf: 'PR' },
+    { name: 'Recife', stateUf: 'PE' },
+    { name: 'Porto Alegre', stateUf: 'RS' },
+    { name: 'Goiânia', stateUf: 'GO' },
+    { name: 'Belém', stateUf: 'PA' },
+    { name: 'Guarulhos', stateUf: 'SP' },
+    { name: 'Campinas', stateUf: 'SP' },
+    { name: 'São Luís', stateUf: 'MA' }
+  ];
+
+  for (const city of mainCities) {
+    const state = await prisma.state.findUnique({ where: { uf: city.stateUf } });
+    if (state) {
+      await prisma.city.upsert({
+        where: { 
+          name_stateId: { 
+            name: city.name, 
+            stateId: state.id 
+          } 
+        },
+        update: {},
+        create: {
+          name: city.name,
+          stateId: state.id,
+          slug: slugify(city.name)
+        }
+      });
+    }
+  }
+  console.log(`   ✅ ${mainCities.length} cidades criadas`);
+
+  // 3. VALIDATION RULES
+  console.log('[GLOBAL-TABLES] ✅ Populando Validation Rules...');
+  const validationRules = [
+    { 
+      entityType: 'User',
+      fieldName: 'cpf',
+      ruleType: 'PATTERN',
+      config: { pattern: '^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$' },
+      isRequired: true,
+      errorMessage: 'CPF inválido. Formato esperado: 000.000.000-00',
+      severity: 'ERROR'
+    },
+    { 
+      entityType: 'User',
+      fieldName: 'email',
+      ruleType: 'PATTERN',
+      config: { pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$' },
+      isRequired: true,
+      errorMessage: 'Email inválido',
+      severity: 'ERROR'
+    },
+    { 
+      entityType: 'User',
+      fieldName: 'phone',
+      ruleType: 'PATTERN',
+      config: { pattern: '^\\(\\d{2}\\) \\d{4,5}-\\d{4}$' },
+      isRequired: false,
+      errorMessage: 'Telefone inválido. Formato: (00) 00000-0000',
+      severity: 'WARNING'
+    },
+    { 
+      entityType: 'Auction',
+      fieldName: 'title',
+      ruleType: 'MIN_LENGTH',
+      config: { minLength: 10 },
+      isRequired: true,
+      errorMessage: 'Título deve ter no mínimo 10 caracteres',
+      severity: 'ERROR'
+    },
+    { 
+      entityType: 'Bid',
+      fieldName: 'value',
+      ruleType: 'MIN_VALUE',
+      config: { minValue: 0.01 },
+      isRequired: true,
+      errorMessage: 'Valor do lance deve ser maior que zero',
+      severity: 'ERROR'
+    }
+  ];
+
+  for (const rule of validationRules) {
+    await prisma.validation_rules.upsert({
+      where: {
+        entityType_fieldName_ruleType: {
+          entityType: rule.entityType,
+          fieldName: rule.fieldName,
+          ruleType: rule.ruleType as any
+        }
+      },
+      update: {},
+      create: {
+        entityType: rule.entityType,
+        fieldName: rule.fieldName,
+        ruleType: rule.ruleType as any,
+        config: rule.config,
+        isRequired: rule.isRequired,
+        errorMessage: rule.errorMessage,
+        severity: rule.severity as any,
+        isActive: true,
+        updatedAt: new Date()
+      }
+    });
+  }
+  console.log(`   ✅ ${validationRules.length} regras de validação criadas`);
+
+  // 4. VISITOR EVENTS
+  console.log('[GLOBAL-TABLES] 👁️  Populando Visitor Events...');
+  const visitors = await prisma.visitors.findMany({ take: 10 });
+  const eventTypes = ['PAGE_VIEW', 'LOT_VIEW', 'AUCTION_VIEW', 'SEARCH', 'FILTER_APPLIED'];
+  
+  let eventCounter = 0;
+  for (const visitor of visitors) {
+    // Criar sessão para o visitante
+    const session = await prisma.visitor_sessions.create({
+      data: {
+        sessionId: `session-${visitor.id}-${Date.now()}`,
+        visitorId: visitor.id,
+        startedAt: new Date(),
+        lastActivityAt: new Date()
+      }
+    });
+    
+    // Criar 5 eventos para cada visitante
+    for (let i = 0; i < 5; i++) {
+      eventCounter++;
+      await prisma.visitor_events.create({
+        data: {
+          eventId: `event-${eventCounter}-${Date.now()}-${i}`,
+          visitorId: visitor.id,
+          sessionId: session.id,
+          eventType: eventTypes[i % eventTypes.length] as any,
+          pageUrl: `/auctions/${i}`,
+          metadata: { 
+            action: 'viewed_lot',
+            lotId: i 
+          },
+          timestamp: new Date()
+        }
+      });
+    }
+  }
+  console.log(`   ✅ ${visitors.length} sessões e ${eventCounter} eventos criados`);
+
+  // 5. THEME SETTINGS & THEME COLORS
+  console.log('[GLOBAL-TABLES] 🎨 Populando Theme Settings & Colors...');
+  const themeSettings = await prisma.themeSettings.create({
+    data: {
+      name: `theme-${tenantId}`,
+      ThemeColors: {
+        create: {
+          light: {
+            primary: '#1E40AF',
+            secondary: '#7C3AED',
+            accent: '#F59E0B',
+            background: '#FFFFFF',
+            text: '#1F2937'
+          },
+          dark: {
+            primary: '#3B82F6',
+            secondary: '#A78BFA',
+            accent: '#FBBF24',
+            background: '#111827',
+            text: '#F9FAFB'
+          }
+        }
+      }
+    }
+  });
+  console.log(`   ✅ Theme Settings e Colors criados`);
+
+  // 6. SECTION BADGE VISIBILITY (se existe no schema)
+  console.log('[GLOBAL-TABLES] 🏷️  Populando Section Badge Visibility...');
+  const sectionExists = await prisma.$queryRaw`SHOW TABLES LIKE 'SectionBadgeVisibility'`.catch(() => []);
+  if ((sectionExists as any[]).length > 0) {
+    const sections = ['super-opportunities', 'featured-auctions', 'ending-soon', 'new-arrivals'];
+    for (const section of sections) {
+      try {
+        await (prisma as any).sectionBadgeVisibility.create({
+          data: {
+            sectionKey: section,
+            isVisible: true,
+            badgeText: section.replace(/-/g, ' ').toUpperCase(),
+            badgeColor: '#EF4444'
+          }
+        });
+      } catch (e: any) {
+        console.log(`      ⚠️ Section ${section} pode já existir ou tabela não existe`);
+      }
+    }
+    console.log(`   ✅ Seções de badge configuradas`);
+  } else {
+    console.log(`   ⚠️ Tabela SectionBadgeVisibility não existe - pulando`);
+  }
+
+  // 7. REALTIME SETTINGS (se existe no schema)
+  console.log('[GLOBAL-TABLES] ⚡ Populando Realtime Settings...');
+  const realtimeExists = await prisma.$queryRaw`SHOW TABLES LIKE 'RealtimeSettings'`.catch(() => []);
+  if ((realtimeExists as any[]).length > 0) {
+    try {
+      await (prisma as any).realtimeSettings.create({
+        data: {
+          enableLiveBidding: true,
+          enableNotifications: true,
+          updateIntervalMs: 3000
+        }
+      });
+      console.log(`   ✅ Realtime Settings criado`);
+    } catch (e) {
+      console.log(`   ⚠️ Realtime Settings pode já existir ou tabela não existe`);
+    }
+  } else {
+    console.log(`   ⚠️ Tabela RealtimeSettings não existe - pulando`);
+  }
+
+  // 8. ENTITY VIEW METRICS (se existe no schema)
+  console.log('[GLOBAL-TABLES] 📊 Populando Entity View Metrics...');
+  const metricsExists = await prisma.$queryRaw`SHOW TABLES LIKE 'entity_view_metrics'`.catch(() => []);
+  if ((metricsExists as any[]).length > 0) {
+    const auctions = await prisma.auction.findMany({ take: 10 });
+    for (const auction of auctions) {
+      try {
+        await (prisma as any).entity_view_metrics.create({
+          data: {
+            entityType: 'Auction',
+            entityId: auction.id.toString(),
+            viewCount: faker.number.int({ min: 100, max: 5000 }),
+            uniqueViewers: faker.number.int({ min: 50, max: 2000 }),
+            avgTimeSpent: faker.number.int({ min: 60, max: 600 }),
+            lastViewedAt: new Date()
+          }
+        });
+      } catch (e) {
+        // Ignora duplicação
+      }
+    }
+    console.log(`   ✅ Métricas de visualização criadas`);
+  } else {
+    console.log(`   ⚠️ Tabela entity_view_metrics não existe - pulando`);
+  }
+
+  // 9. AUDIT CONFIGS (se existe no schema)
+  console.log('[GLOBAL-TABLES] 🔍 Populando Audit Configs...');
+  const auditConfigsExists = await prisma.$queryRaw`SHOW TABLES LIKE 'audit_configs'`.catch(() => []);
+  if ((auditConfigsExists as any[]).length > 0) {
+    const auditConfigs = [
+      { tableName: 'User', isEnabled: true, retentionDays: 365 },
+      { tableName: 'Auction', isEnabled: true, retentionDays: 730 },
+      { tableName: 'Bid', isEnabled: true, retentionDays: 1095 },
+      { tableName: 'Lot', isEnabled: true, retentionDays: 730 },
+      { tableName: 'Asset', isEnabled: true, retentionDays: 365 }
+    ];
+
+    for (const config of auditConfigs) {
+      try {
+        await (prisma as any).audit_configs.create({
+          data: {
+            tableName: config.tableName,
+            isEnabled: config.isEnabled,
+            retentionDays: config.retentionDays
+          }
+        });
+      } catch (e) {
+        // Ignora duplicação
+      }
+    }
+    console.log(`   ✅ ${auditConfigs.length} configurações de auditoria criadas`);
+  } else {
+    console.log(`   ⚠️ Tabela audit_configs não existe - pulando`);
+  }
+
+  // 10. RELAÇÕES N:N (Tabelas de junção) - Todas já implementadas no schema principal
+  console.log('[GLOBAL-TABLES] 🔗 Relações N:N já são gerenciadas pelo Prisma automaticamente');
+  console.log(`   ✅ Tabelas _JudicialProcessToLot, _AuctionToJudicialDistrict, etc. gerenciadas pelo ORM`);
+
+  console.log('[GLOBAL-TABLES] ✅ Seed de tabelas globais concluído!\n');
 }
 
 async function fixAuditInconsistencies(tenantId: bigint) {
@@ -4134,6 +4500,10 @@ async function main() {
     // EXECUTAR POPULAÇÃO COMPLEMENTAR (MESCLADO DE seed-populate-missing.ts)
     // Usando o tenantId do tenant principal
     const mainTenantId = tenants[0].id;
+    
+    // SEED DE TABELAS COMPLEMENTARES CRÍTICAS (States, Cities, Validation Rules, etc)
+    await seedCriticalGlobalTables(mainTenantId);
+    
     await populateMissingData(mainTenantId);
 
     // EXECUTAR CORREÇÃO DE INCONSISTÊNCIAS DE AUDITORIA

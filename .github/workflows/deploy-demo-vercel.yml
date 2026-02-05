@@ -1,0 +1,195 @@
+# ==============================================================================
+# GitHub Action: Deploy DEMO para Vercel
+# ==============================================================================
+# Trigger: Push na branch demo-stable
+# Ação: Deploy para Vercel com Prisma Postgres
+# ==============================================================================
+
+name: Deploy DEMO to Vercel
+
+on:
+  push:
+    branches:
+      - demo-stable
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente de deploy'
+        required: true
+        default: 'demo'
+        type: choice
+        options:
+          - demo
+          - preview
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  PRISMA_SCHEMA: prisma/schema.postgresql.prisma
+
+jobs:
+  # ============================================================================
+  # JOB 1: Build & Type Check
+  # ============================================================================
+  build:
+    name: 🔨 Build & Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install dependencies
+        run: npm ci
+        
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+        
+      - name: 🔍 Type Check
+        run: npm run typecheck
+        
+      - name: 🏗️ Build
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.DEMO_NEXTAUTH_SECRET }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.DEMO_APP_URL }}
+
+  # ============================================================================
+  # JOB 2: Deploy to Vercel
+  # ============================================================================
+  deploy:
+    name: 🚀 Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: build
+    
+    environment:
+      name: demo
+      url: ${{ steps.deploy.outputs.url }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install Vercel CLI
+        run: npm install -g vercel@latest
+        
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        
+      - name: 🔗 Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        
+      - name: 🏗️ Build with Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        
+      - name: 🚀 Deploy to Vercel
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> $GITHUB_OUTPUT
+          echo "✅ Deployed to: $url"
+
+  # ============================================================================
+  # JOB 3: Database Migration (opcional - apenas se houver mudanças)
+  # ============================================================================
+  migrate:
+    name: 🗃️ Database Migration
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[migrate]')
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install dependencies
+        run: npm ci
+        
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        
+      - name: 🗃️ Run Prisma Migrate
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL_DIRECT }}
+
+  # ============================================================================
+  # JOB 4: Smoke Test (E2E básico)
+  # ============================================================================
+  smoke-test:
+    name: 🧪 Smoke Test
+    runs-on: ubuntu-latest
+    needs: deploy
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install dependencies
+        run: npm ci
+        
+      - name: 🎭 Install Playwright
+        run: npx playwright install --with-deps chromium
+        
+      - name: 🧪 Run Smoke Tests
+        run: npx playwright test tests/e2e/vercel-smoke.spec.ts --project=chromium
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.DEMO_APP_URL }}
+          
+      - name: 📊 Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ============================================================================
+  # JOB 5: Notify (Slack/Discord - opcional)
+  # ============================================================================
+  notify:
+    name: 📢 Notify
+    runs-on: ubuntu-latest
+    needs: [deploy, smoke-test]
+    if: always()
+    
+    steps:
+      - name: 📢 Notify on Success
+        if: ${{ needs.deploy.result == 'success' && needs.smoke-test.result == 'success' }}
+        run: |
+          echo "✅ Deploy DEMO successful!"
+          echo "URL: ${{ needs.deploy.outputs.url }}"
+          
+      - name: 🚨 Notify on Failure
+        if: ${{ needs.deploy.result == 'failure' || needs.smoke-test.result == 'failure' }}
+        run: |
+          echo "❌ Deploy DEMO failed!"
+          echo "Check the workflow logs for details."
