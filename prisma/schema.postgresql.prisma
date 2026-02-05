@@ -165,7 +165,7 @@ model Asset {
 
   @@index([categoryId])
   @@index([judicialProcessId])
-  @@index([occupationUpdatedBy], map: "Asset_occupationUpdatedBy_fkey")
+  @@index([occupationUpdatedBy], map: "Asset_occupationUpdatedBy_idx")
   @@index([sellerId])
   @@index([subcategoryId])
   @@index([tenantId])
@@ -796,7 +796,7 @@ model LotRisk {
   @@index([riskLevel])
   @@index([riskType])
   @@index([tenantId])
-  @@index([verifiedBy], map: "LotRisk_verifiedBy_fkey")
+  @@index([verifiedBy], map: "LotRisk_verifiedBy_idx")
 }
 
 model LotStagePrice {
@@ -992,7 +992,7 @@ model PlatformSettings {
   ThemeSettings              ThemeSettings[]
   VariableIncrementRule      VariableIncrementRule[]
 
-  @@index([logoMediaId], map: "PlatformSettings_logoMediaId_fkey")
+  @@index([logoMediaId], map: "PlatformSettings_logoMediaId_idx")
 }
 
 model RealtimeSettings {
