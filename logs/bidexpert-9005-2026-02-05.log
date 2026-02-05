@@ -1,0 +1,2173 @@
+
+================================================================================
+[2026-02-05T01:05:50.387Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+  - Local:        http://localhost:9005
+[STDOUT]   - Network:      http://0.0.0.0:9005
+  - Environments: .env
+
+ ✓ Starting...
+[STDOUT]  ✓ Ready in 4s
+[STDOUT]  ✓ Compiled /src/middleware in 466ms (212 modules)
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  ○ Compiling / ...
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 5, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 5, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 16, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 16, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 23, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 23, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 25, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 25, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDOUT]  GET /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 13678ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 135ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 90ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[STDOUT] [Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT]  POST /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 391ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 5, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 5, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 16, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 16, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 23, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 23, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 25, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 25, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDOUT]  GET / 200 in 492ms
+[STDOUT]  POST /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 257ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 98ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 140ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 524ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742 200 in 129ms
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDOUT]  GET /favicon.ico 200 in 3147ms
+[STDOUT]  POST / 200 in 2161ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST / 200 in 111ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST / 200 in 284ms
+[STDOUT]  POST / 200 in 116ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST / 200 in 115ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST / 200 in 107ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST / 200 in 218ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST / 200 in 101ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 2, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 3, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 1, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 5, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 5, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                 ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 10, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 13, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                           ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 8, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                           ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 16, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 16, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 23, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 23, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDERR] Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: Decimal, longitude: ..., documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 15, publicId: ..., slug: ..., title: ..., description: ..., status: ..., auctionDate: ..., endDate: ..., totalLots: ..., visits: ..., totalHabilitatedUsers: ..., initialOffer: ..., auctionType: ..., auctionMethod: ..., participation: ..., onlineUrl: ..., address: ..., zipCode: ..., latitude: ..., longitude: Decimal, documentsUrl: ..., isFeaturedOnMarketplace: ..., softCloseEnabled: ..., softCloseMinutes: ..., achievedRevenue: ..., evaluationReportUrl: ..., auctionCertificateUrl: ..., floorPrice: ..., decrementAmount: ..., decrementIntervalSeconds: ..., sellingBranch: ..., additionalTriggers: ..., createdAt: ..., updatedAt: ..., tenantId: ..., auctioneerId: ..., sellerId: ..., imageMediaId: ..., isRelisted: ..., relistCount: ..., originalAuctionId: ..., cityId: ..., stateId: ..., judicialProcessId: ..., categoryId: ..., complement: ..., neighborhood: ..., number: ..., street: ..., AuctionStage: ...}
+                                                                                                                                                                                                                                                                                                                            ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 25, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+Warning: Only plain objects can be passed to Client Components from Server Components. Decimal objects are not supported.
+  {id: 25, name: ..., startDate: Date, endDate: ..., auctionId: ..., status: ..., tenantId: ..., discountPercent: Decimal}
+                                                                                                                  ^^^^^^^
+[STDOUT]  GET /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742&_rsc=uhopf 200 in 449ms
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLot] ID: 3, Public: true, Tenant: 1
+[STDOUT] [LotService.getLotById] ID: 3, Tenant: 1, Public: true
+[STDOUT] [LotService.getLotById] Public Check - LotPublic: true, AuctionPublic: true
+[STDOUT] [LotRedirectPage] Lot 3 found. Redirecting to: /auctions/2/lots/lot-1770173586619-5
+[STDOUT]  GET /lots/3?_rsc=1rn92 200 in 159ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/page.tsx
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [getLotPageData] Buscando leilão: 2, lote: lot-1770173586619-5
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [Action getLot] ID: lot-1770173586619-5, Public: true, Tenant: 1
+[STDOUT] [LotService.getLotById] ID: lot-1770173586619-5, Tenant: 1, Public: true
+[STDOUT] [LotService.getLotById] Public Check - LotPublic: true, AuctionPublic: true
+[STDOUT]  GET /auctions/2/lots/lot-1770173586619-5?_rsc=q2jwi 200 in 266ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[STDOUT] [Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 2529ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 118ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 100ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[STDOUT] [Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 115ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 127ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 93ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[STDOUT] [Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 100ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 100ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 99ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 90ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 90ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /auctions/2/lots/lot-1770173586619-5 200 in 99ms
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[STDOUT] [Middleware] Active Tenant ID set to: 'demo'
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: tenantId='3', userId='651'
+[STDOUT] [Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT]  GET /?id=493d1214-85b1-4ecf-a7c9-73fb350c09e7&vscodeBrowserReqId=1770253823742&_rsc=uhopf 200 in 404ms
+[STDOUT]  GET /?_rsc=r3yhw 200 in 405ms
+[STDERR]  ⨯ src\app\page.tsx (97:7) @ eval
+[STDERR]  ⨯ ReferenceError: isPast is not defined
+    at eval (./src/app/page.tsx:159:9)
+    at Array.map (<anonymous>)
+    at HomePage (./src/app/page.tsx:151:55)
+[STDERR] digest: "2117365531"
+[0m [90m  95 |[39m       [36mconst[39m relevantEndDate [33m=[39m lastStage[33m?[39m[33m.[39mendDate [33m||[39m lot[33m.[39mendDate[33m;[39m[0m
+[0m [90m  96 |[39m[0m
+[0m[31m[1m>[22m[39m[90m  97 |[39m       [36mif[39m ([33m![39mrelevantEndDate [33m||[39m isPast([36mnew[39m [33mDate[39m(relevantEndDate)) [33m||[39m [36mnew[39m [33mDate[39m(relevantEndDate) [33m>[39m sevenDaysFromNow) {[0m
+[0m [90m     |[39m       [31m[1m^[22m[39m[0m
+[0m [90m  98 |[39m           [36mreturn[39m [36mnull[39m[33m;[39m [90m// Ignorar lotes que não se encaixam no critério[39m[0m
+[0m [90m  99 |[39m       }[0m
+[0m [90m 100 |[39m       [0m
+ ⨯ src\app\page.tsx (97:7) @ eval
+ ⨯ ReferenceError: isPast is not defined
+    at eval (./src/app/page.tsx:159:9)
+    at Array.map (<anonymous>)
+    at HomePage (./src/app/page.tsx:151:55)
+digest: "2117365531"
+[STDERR] [0m [90m  95 |[39m       [36mconst[39m relevantEndDate [33m=[39m lastStage[33m?[39m[33m.[39mendDate [33m||[39m lot[33m.[39mendDate[33m;[39m[0m
+[0m [90m  96 |[39m[0m
+[0m[31m[1m>[22m[39m[90m  97 |[39m       [36mif[39m ([33m![39mrelevantEndDate [33m||[39m isPast([36mnew[39m [33mDate[39m(relevantEndDate)) [33m||[39m [36mnew[39m [33mDate[39m(relevantEndDate) [33m>[39m sevenDaysFromNow) {[0m
+[0m [90m     |[39m       [31m[1m^[22m[39m[0m
+[0m [90m  98 |[39m           [36mreturn[39m [36mnull[39m[33m;[39m [90m// Ignorar lotes que não se encaixam no critério[39m[0m
+[0m [90m  99 |[39m       }[0m
+[0m [90m 100 |[39m       [0m
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT] prisma:error 
+Invalid `prisma.lot.findMany()` invocation:
+
+{
+  where: {
+    status: "ABERTO_PARA_LANCES",
+    Auction: {
+      isNot: null,
+      ~~~~~
+      AuctionStage: {
+        some: {}
+      },
+?     AND?: AuctionWhereInput | AuctionWhereInput[],
+?     OR?: AuctionWhereInput[],
+?     NOT?: AuctionWhereInput | AuctionWhereInput[],
+?     id?: BigIntFilter | BigInt,
+?     publicId?: StringNullableFilter | String | Null,
+?     slug?: StringNullableFilter | String | Null,
+?     title?: StringFilter | String,
+?     description?: StringNullableFilter | String | Null,
+?     status?: EnumAuction_statusFilter | Auction_status,
+?     auctionDate?: DateTimeNullableFilter | DateTime | Null,
+?     endDate?: DateTimeNullableFilter | DateTime | Null,
+?     totalLots?: IntFilter | Int,
+?     visits?: IntFilter | Int,
+?     totalHabilitatedUsers?: IntFilter | Int,
+?     initialOffer?: DecimalNullableFilter | Decimal | Null,
+?     auctionType?: EnumAuction_auctionTypeNullableFilter | Auction_auctionType | Null,
+?     auctionMethod?: EnumAuction_auctionMethodNullableFilter | Auction_auctionMethod | Null,
+?     participation?: EnumAuction_participationNullableFilter | Auction_participation | Null,
+?     onlineUrl?: StringNullableFilter | String | Null,
+?     address?: StringNullableFilter | String | Null,
+?     zipCode?: StringNullableFilter | String | Null,
+?     latitude?: DecimalNullableFilter | Decimal | Null,
+?     longitude?: DecimalNullableFilter | Decimal | Null,
+?     documentsUrl?: StringNullableFilter | String | Null,
+?     isFeaturedOnMarketplace?: BoolFilter | Boolean,
+?     softCloseEnabled?: BoolNullableFilter | Boolean | Null,
+?     softCloseMinutes?: IntNullableFilter | Int | Null,
+?     achievedRevenue?: DecimalNullableFilter | Decimal | Null,
+?     evaluationReportUrl?: StringNullableFilter | String | Null,
+?     auctionCertificateUrl?: StringNullableFilter | String | Null,
+?     floorPrice?: DecimalNullableFilter | Decimal | Null,
+?     decrementAmount?: DecimalNullableFilter | Decimal | Null,
+?     decrementIntervalSeconds?: IntNullableFilter | Int | Null,
+?     sellingBranch?: StringNullableFilter | String | Null,
+?     additionalTriggers?: JsonNullableFilter,
+?     createdAt?: DateTimeFilter | DateTime,
+?     updatedAt?: DateTimeFilter | DateTime,
+?     tenantId?: BigIntFilter | BigInt,
+?     auctioneerId?: BigIntNullableFilter | BigInt | Null,
+?     sellerId?: BigIntNullableFilter | BigInt | Null,
+?     imageMediaId?: BigIntNullableFilter | BigInt | Null,
+?     isRelisted?: BoolFilter | Boolean,
+?     relistCount?: IntFilter | Int,
+?     originalAuctionId?: BigIntNullableFilter | BigInt | Null,
+?     cityId?: BigIntNullableFilter | BigInt | Null,
+?     stateId?: BigIntNullableFilter | BigInt | Null,
+?     judicialProcessId?: BigIntNullableFilter | BigInt | Null,
+?     categoryId?: BigIntNullableFilter | BigInt | Null,
+?     complement?: StringNullableFilter | String | Null,
+?     neighborhood?: StringNullableFilter | String | Null,
+?     number?: StringNullableFilter | String | Null,
+?     street?: StringNullableFilter | String | Null,
+?     Auctioneer?: AuctioneerNullableRelationFilter | AuctioneerWhereInput | Null,
+?     LotCategory?: LotCategoryNullableRelationFilter | LotCategoryWhereInput | Null,
+?     City?: CityNullableRelationFilter | CityWhereInput | Null,
+?     JudicialProcess?: JudicialProcessNullableRelationFilter | JudicialProcessWhereInput | Null,
+?     Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     other_Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     Seller?: SellerNullableRelationFilter | SellerWhereInput | Null,
+?     State?: StateNullableRelationFilter | StateWhereInput | Null,
+?     Tenant?: TenantRelationFilter | TenantWhereInput,
+?     AuctionHabilitation?: AuctionHabilitationListRelationFilter,
+?     Bid?: BidListRelationFilter,
+?     Lot?: LotListRelationFilter,
+?     LotQuestion?: LotQuestionListRelationFilter,
+?     LotStagePrice?: LotStagePriceListRelationFilter,
+?     Notification?: NotificationListRelationFilter,
+?     Review?: ReviewListRelationFilter,
+?     Court?: CourtListRelationFilter,
+?     JudicialBranch?: JudicialBranchListRelationFilter,
+?     JudicialDistrict?: JudicialDistrictListRelationFilter
+    },
+    LotCategory: {
+      isNot: null
+    },
+    City: {
+      isNot: null
+    },
+    State: {
+      isNot: null
+    }
+  },
+  include: {
+    Auction: {
+      include: {
+        AuctionStage: {
+          orderBy: {
+            endDate: "desc"
+          }
+        }
+      }
+    },
+    LotCategory: true,
+    Subcategory: true,
+    City: true,
+    State: true,
+    Seller: true,
+    Auctioneer: true,
+    AssetsOnLots: {
+      include: {
+        Asset: true
+      }
+    },
+    _count: {
+      select: {
+        Bid: true
+      }
+    }
+  },
+  take: 16
+}
+
+Unknown argument `isNot`. Did you mean `Lot`? Available options are marked with ?.
+[STDERR]  ⨯ PrismaClientValidationError: 
+Invalid `prisma.lot.findMany()` invocation:
+
+{
+  where: {
+    status: "ABERTO_PARA_LANCES",
+    Auction: {
+      isNot: null,
+      ~~~~~
+      AuctionStage: {
+        some: {}
+      },
+?     AND?: AuctionWhereInput | AuctionWhereInput[],
+?     OR?: AuctionWhereInput[],
+?     NOT?: AuctionWhereInput | AuctionWhereInput[],
+?     id?: BigIntFilter | BigInt,
+?     publicId?: StringNullableFilter | String | Null,
+?     slug?: StringNullableFilter | String | Null,
+?     title?: StringFilter | String,
+?     description?: StringNullableFilter | String | Null,
+?     status?: EnumAuction_statusFilter | Auction_status,
+?     auctionDate?: DateTimeNullableFilter | DateTime | Null,
+?     endDate?: DateTimeNullableFilter | DateTime | Null,
+?     totalLots?: IntFilter | Int,
+?     visits?: IntFilter | Int,
+?     totalHabilitatedUsers?: IntFilter | Int,
+?     initialOffer?: DecimalNullableFilter | Decimal | Null,
+?     auctionType?: EnumAuction_auctionTypeNullableFilter | Auction_auctionType | Null,
+?     auctionMethod?: EnumAuction_auctionMethodNullableFilter | Auction_auctionMethod | Null,
+?     participation?: EnumAuction_participationNullableFilter | Auction_participation | Null,
+?     onlineUrl?: StringNullableFilter | String | Null,
+?     address?: StringNullableFilter | String | Null,
+?     zipCode?: StringNullableFilter | String | Null,
+?     latitude?: DecimalNullableFilter | Decimal | Null,
+?     longitude?: DecimalNullableFilter | Decimal | Null,
+?     documentsUrl?: StringNullableFilter | String | Null,
+?     isFeaturedOnMarketplace?: BoolFilter | Boolean,
+?     softCloseEnabled?: BoolNullableFilter | Boolean | Null,
+?     softCloseMinutes?: IntNullableFilter | Int | Null,
+?     achievedRevenue?: DecimalNullableFilter | Decimal | Null,
+?     evaluationReportUrl?: StringNullableFilter | String | Null,
+?     auctionCertificateUrl?: StringNullableFilter | String | Null,
+?     floorPrice?: DecimalNullableFilter | Decimal | Null,
+?     decrementAmount?: DecimalNullableFilter | Decimal | Null,
+?     decrementIntervalSeconds?: IntNullableFilter | Int | Null,
+?     sellingBranch?: StringNullableFilter | String | Null,
+?     additionalTriggers?: JsonNullableFilter,
+?     createdAt?: DateTimeFilter | DateTime,
+?     updatedAt?: DateTimeFilter | DateTime,
+?     tenantId?: BigIntFilter | BigInt,
+?     auctioneerId?: BigIntNullableFilter | BigInt | Null,
+?     sellerId?: BigIntNullableFilter | BigInt | Null,
+?     imageMediaId?: BigIntNullableFilter | BigInt | Null,
+?     isRelisted?: BoolFilter | Boolean,
+?     relistCount?: IntFilter | Int,
+?     originalAuctionId?: BigIntNullableFilter | BigInt | Null,
+?     cityId?: BigIntNullableFilter | BigInt | Null,
+?     stateId?: BigIntNullableFilter | BigInt | Null,
+?     judicialProcessId?: BigIntNullableFilter | BigInt | Null,
+?     categoryId?: BigIntNullableFilter | BigInt | Null,
+?     complement?: StringNullableFilter | String | Null,
+?     neighborhood?: StringNullableFilter | String | Null,
+?     number?: StringNullableFilter | String | Null,
+?     street?: StringNullableFilter | String | Null,
+?     Auctioneer?: AuctioneerNullableRelationFilter | AuctioneerWhereInput | Null,
+?     LotCategory?: LotCategoryNullableRelationFilter | LotCategoryWhereInput | Null,
+?     City?: CityNullableRelationFilter | CityWhereInput | Null,
+?     JudicialProcess?: JudicialProcessNullableRelationFilter | JudicialProcessWhereInput | Null,
+?     Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     other_Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     Seller?: SellerNullableRelationFilter | SellerWhereInput | Null,
+?     State?: StateNullableRelationFilter | StateWhereInput | Null,
+?     Tenant?: TenantRelationFilter | TenantWhereInput,
+?     AuctionHabilitation?: AuctionHabilitationListRelationFilter,
+?     Bid?: BidListRelationFilter,
+?     Lot?: LotListRelationFilter,
+?     LotQuestion?: LotQuestionListRelationFilter,
+?     LotStagePrice?: LotStagePriceListRelationFilter,
+?     Notification?: NotificationListRelationFilter,
+?     Review?: ReviewListRelationFilter,
+?     Court?: CourtListRelationFilter,
+?     JudicialBranch?: JudicialBranchListRelationFilter,
+?     JudicialDistrict?: JudicialDistrictListRelationFilter
+    },
+    LotCategory: {
+      isNot: null
+    },
+    City: {
+      isNot: null
+    },
+    State: {
+      isNot: null
+    }
+  },
+  include: {
+    Auction: {
+      include: {
+        AuctionStage: {
+          orderBy: {
+            endDate: "desc"
+          }
+        }
+      }
+    },
+    LotCategory: true,
+    Subcategory: true,
+    City: true,
+    State: true,
+    Seller: true,
+    Auctioneer: true,
+    AssetsOnLots: {
+      include: {
+        Asset: true
+      }
+    },
+    _count: {
+      select: {
+        Bid: true
+      }
+    }
+  },
+  take: 16
+}
+
+Unknown argument `isNot`. Did you mean `Lot`? Available options are marked with ?.
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:56:38)
+    at async getSuperOpportunitiesLots (./src/services/super-opportunities.service.ts:35:31)
+    at async HomePage (./src/app/page.tsx:129:29)
+[STDERR] digest: "2761891743"
+[STDOUT] prisma:error 
+Invalid `prisma.lot.findMany()` invocation:
+
+{
+  where: {
+    status: "ABERTO_PARA_LANCES",
+    Auction: {
+      isNot: null,
+      ~~~~~
+      AuctionStage: {
+        some: {}
+      },
+?     AND?: AuctionWhereInput | AuctionWhereInput[],
+?     OR?: AuctionWhereInput[],
+?     NOT?: AuctionWhereInput | AuctionWhereInput[],
+?     id?: BigIntFilter | BigInt,
+?     publicId?: StringNullableFilter | String | Null,
+?     slug?: StringNullableFilter | String | Null,
+?     title?: StringFilter | String,
+?     description?: StringNullableFilter | String | Null,
+?     status?: EnumAuction_statusFilter | Auction_status,
+?     auctionDate?: DateTimeNullableFilter | DateTime | Null,
+?     endDate?: DateTimeNullableFilter | DateTime | Null,
+?     totalLots?: IntFilter | Int,
+?     visits?: IntFilter | Int,
+?     totalHabilitatedUsers?: IntFilter | Int,
+?     initialOffer?: DecimalNullableFilter | Decimal | Null,
+?     auctionType?: EnumAuction_auctionTypeNullableFilter | Auction_auctionType | Null,
+?     auctionMethod?: EnumAuction_auctionMethodNullableFilter | Auction_auctionMethod | Null,
+?     participation?: EnumAuction_participationNullableFilter | Auction_participation | Null,
+?     onlineUrl?: StringNullableFilter | String | Null,
+?     address?: StringNullableFilter | String | Null,
+?     zipCode?: StringNullableFilter | String | Null,
+?     latitude?: DecimalNullableFilter | Decimal | Null,
+?     longitude?: DecimalNullableFilter | Decimal | Null,
+?     documentsUrl?: StringNullableFilter | String | Null,
+?     isFeaturedOnMarketplace?: BoolFilter | Boolean,
+?     softCloseEnabled?: BoolNullableFilter | Boolean | Null,
+?     softCloseMinutes?: IntNullableFilter | Int | Null,
+?     achievedRevenue?: DecimalNullableFilter | Decimal | Null,
+?     evaluationReportUrl?: StringNullableFilter | String | Null,
+?     auctionCertificateUrl?: StringNullableFilter | String | Null,
+?     floorPrice?: DecimalNullableFilter | Decimal | Null,
+?     decrementAmount?: DecimalNullableFilter | Decimal | Null,
+?     decrementIntervalSeconds?: IntNullableFilter | Int | Null,
+?     sellingBranch?: StringNullableFilter | String | Null,
+?     additionalTriggers?: JsonNullableFilter,
+?     createdAt?: DateTimeFilter | DateTime,
+?     updatedAt?: DateTimeFilter | DateTime,
+?     tenantId?: BigIntFilter | BigInt,
+?     auctioneerId?: BigIntNullableFilter | BigInt | Null,
+?     sellerId?: BigIntNullableFilter | BigInt | Null,
+?     imageMediaId?: BigIntNullableFilter | BigInt | Null,
+?     isRelisted?: BoolFilter | Boolean,
+?     relistCount?: IntFilter | Int,
+?     originalAuctionId?: BigIntNullableFilter | BigInt | Null,
+?     cityId?: BigIntNullableFilter | BigInt | Null,
+?     stateId?: BigIntNullableFilter | BigInt | Null,
+?     judicialProcessId?: BigIntNullableFilter | BigInt | Null,
+?     categoryId?: BigIntNullableFilter | BigInt | Null,
+?     complement?: StringNullableFilter | String | Null,
+?     neighborhood?: StringNullableFilter | String | Null,
+?     number?: StringNullableFilter | String | Null,
+?     street?: StringNullableFilter | String | Null,
+?     Auctioneer?: AuctioneerNullableRelationFilter | AuctioneerWhereInput | Null,
+?     LotCategory?: LotCategoryNullableRelationFilter | LotCategoryWhereInput | Null,
+?     City?: CityNullableRelationFilter | CityWhereInput | Null,
+?     JudicialProcess?: JudicialProcessNullableRelationFilter | JudicialProcessWhereInput | Null,
+?     Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     other_Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     Seller?: SellerNullableRelationFilter | SellerWhereInput | Null,
+?     State?: StateNullableRelationFilter | StateWhereInput | Null,
+?     Tenant?: TenantRelationFilter | TenantWhereInput,
+?     AuctionHabilitation?: AuctionHabilitationListRelationFilter,
+?     Bid?: BidListRelationFilter,
+?     Lot?: LotListRelationFilter,
+?     LotQuestion?: LotQuestionListRelationFilter,
+?     LotStagePrice?: LotStagePriceListRelationFilter,
+?     Notification?: NotificationListRelationFilter,
+?     Review?: ReviewListRelationFilter,
+?     Court?: CourtListRelationFilter,
+?     JudicialBranch?: JudicialBranchListRelationFilter,
+?     JudicialDistrict?: JudicialDistrictListRelationFilter
+    },
+    LotCategory: {
+      isNot: null
+    },
+    City: {
+      isNot: null
+    },
+    State: {
+      isNot: null
+    }
+  },
+  include: {
+    Auction: {
+      include: {
+        AuctionStage: {
+          orderBy: {
+            endDate: "desc"
+          }
+        }
+      }
+    },
+    LotCategory: true,
+    Subcategory: true,
+    City: true,
+    State: true,
+    Seller: true,
+    Auctioneer: true,
+    AssetsOnLots: {
+      include: {
+        Asset: true
+      }
+    },
+    _count: {
+      select: {
+        Bid: true
+      }
+    }
+  },
+  take: 16
+}
+
+Unknown argument `isNot`. Did you mean `Lot`? Available options are marked with ?.
+[STDOUT]  GET /?_rsc=r3yhw 200 in 401ms
+[STDERR]  ⨯ PrismaClientValidationError: 
+Invalid `prisma.lot.findMany()` invocation:
+
+{
+  where: {
+    status: "ABERTO_PARA_LANCES",
+    Auction: {
+      isNot: null,
+      ~~~~~
+      AuctionStage: {
+        some: {}
+      },
+?     AND?: AuctionWhereInput | AuctionWhereInput[],
+?     OR?: AuctionWhereInput[],
+?     NOT?: AuctionWhereInput | AuctionWhereInput[],
+?     id?: BigIntFilter | BigInt,
+?     publicId?: StringNullableFilter | String | Null,
+?     slug?: StringNullableFilter | String | Null,
+?     title?: StringFilter | String,
+?     description?: StringNullableFilter | String | Null,
+?     status?: EnumAuction_statusFilter | Auction_status,
+?     auctionDate?: DateTimeNullableFilter | DateTime | Null,
+?     endDate?: DateTimeNullableFilter | DateTime | Null,
+?     totalLots?: IntFilter | Int,
+?     visits?: IntFilter | Int,
+?     totalHabilitatedUsers?: IntFilter | Int,
+?     initialOffer?: DecimalNullableFilter | Decimal | Null,
+?     auctionType?: EnumAuction_auctionTypeNullableFilter | Auction_auctionType | Null,
+?     auctionMethod?: EnumAuction_auctionMethodNullableFilter | Auction_auctionMethod | Null,
+?     participation?: EnumAuction_participationNullableFilter | Auction_participation | Null,
+?     onlineUrl?: StringNullableFilter | String | Null,
+?     address?: StringNullableFilter | String | Null,
+?     zipCode?: StringNullableFilter | String | Null,
+?     latitude?: DecimalNullableFilter | Decimal | Null,
+?     longitude?: DecimalNullableFilter | Decimal | Null,
+?     documentsUrl?: StringNullableFilter | String | Null,
+?     isFeaturedOnMarketplace?: BoolFilter | Boolean,
+?     softCloseEnabled?: BoolNullableFilter | Boolean | Null,
+?     softCloseMinutes?: IntNullableFilter | Int | Null,
+?     achievedRevenue?: DecimalNullableFilter | Decimal | Null,
+?     evaluationReportUrl?: StringNullableFilter | String | Null,
+?     auctionCertificateUrl?: StringNullableFilter | String | Null,
+?     floorPrice?: DecimalNullableFilter | Decimal | Null,
+?     decrementAmount?: DecimalNullableFilter | Decimal | Null,
+?     decrementIntervalSeconds?: IntNullableFilter | Int | Null,
+?     sellingBranch?: StringNullableFilter | String | Null,
+?     additionalTriggers?: JsonNullableFilter,
+?     createdAt?: DateTimeFilter | DateTime,
+?     updatedAt?: DateTimeFilter | DateTime,
+?     tenantId?: BigIntFilter | BigInt,
+?     auctioneerId?: BigIntNullableFilter | BigInt | Null,
+?     sellerId?: BigIntNullableFilter | BigInt | Null,
+?     imageMediaId?: BigIntNullableFilter | BigInt | Null,
+?     isRelisted?: BoolFilter | Boolean,
+?     relistCount?: IntFilter | Int,
+?     originalAuctionId?: BigIntNullableFilter | BigInt | Null,
+?     cityId?: BigIntNullableFilter | BigInt | Null,
+?     stateId?: BigIntNullableFilter | BigInt | Null,
+?     judicialProcessId?: BigIntNullableFilter | BigInt | Null,
+?     categoryId?: BigIntNullableFilter | BigInt | Null,
+?     complement?: StringNullableFilter | String | Null,
+?     neighborhood?: StringNullableFilter | String | Null,
+?     number?: StringNullableFilter | String | Null,
+?     street?: StringNullableFilter | String | Null,
+?     Auctioneer?: AuctioneerNullableRelationFilter | AuctioneerWhereInput | Null,
+?     LotCategory?: LotCategoryNullableRelationFilter | LotCategoryWhereInput | Null,
+?     City?: CityNullableRelationFilter | CityWhereInput | Null,
+?     JudicialProcess?: JudicialProcessNullableRelationFilter | JudicialProcessWhereInput | Null,
+?     Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     other_Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     Seller?: SellerNullableRelationFilter | SellerWhereInput | Null,
+?     State?: StateNullableRelationFilter | StateWhereInput | Null,
+?     Tenant?: TenantRelationFilter | TenantWhereInput,
+?     AuctionHabilitation?: AuctionHabilitationListRelationFilter,
+?     Bid?: BidListRelationFilter,
+?     Lot?: LotListRelationFilter,
+?     LotQuestion?: LotQuestionListRelationFilter,
+?     LotStagePrice?: LotStagePriceListRelationFilter,
+?     Notification?: NotificationListRelationFilter,
+?     Review?: ReviewListRelationFilter,
+?     Court?: CourtListRelationFilter,
+?     JudicialBranch?: JudicialBranchListRelationFilter,
+?     JudicialDistrict?: JudicialDistrictListRelationFilter
+    },
+    LotCategory: {
+      isNot: null
+    },
+    City: {
+      isNot: null
+    },
+    State: {
+      isNot: null
+    }
+  },
+  include: {
+    Auction: {
+      include: {
+        AuctionStage: {
+          orderBy: {
+            endDate: "desc"
+          }
+        }
+      }
+    },
+    LotCategory: true,
+    Subcategory: true,
+    City: true,
+    State: true,
+    Seller: true,
+    Auctioneer: true,
+    AssetsOnLots: {
+      include: {
+        Asset: true
+      }
+    },
+    _count: {
+      select: {
+        Bid: true
+      }
+    }
+  },
+  take: 16
+}
+
+Unknown argument `isNot`. Did you mean `Lot`? Available options are marked with ?.
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:56:38)
+    at async getSuperOpportunitiesLots (./src/services/super-opportunities.service.ts:35:31)
+    at async HomePage (./src/app/page.tsx:129:29)
+[STDOUT]  GET /?_rsc=r3yhw 200 in 408ms
+[STDERR] digest: "2761891743"
+[STDERR]  ⚠ ./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
+
+./src/services/auction.service.ts
+Attempted import error: 'createManualAuditLog' is not exported from '@/lib/audit-context' (imported as 'createManualAuditLog').
+
+Import trace for requested module:
+./src/services/auction.service.ts
+./src/app/admin/auctions/actions.ts
+./src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: tenantId='3', userId='651'
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT] prisma:error 
+Invalid `prisma.lot.findMany()` invocation:
+
+{
+  where: {
+    status: "ABERTO_PARA_LANCES",
+    Auction: {
+      isNot: null,
+      ~~~~~
+      AuctionStage: {
+        some: {}
+      },
+?     AND?: AuctionWhereInput | AuctionWhereInput[],
+?     OR?: AuctionWhereInput[],
+?     NOT?: AuctionWhereInput | AuctionWhereInput[],
+?     id?: BigIntFilter | BigInt,
+?     publicId?: StringNullableFilter | String | Null,
+?     slug?: StringNullableFilter | String | Null,
+?     title?: StringFilter | String,
+?     description?: StringNullableFilter | String | Null,
+?     status?: EnumAuction_statusFilter | Auction_status,
+?     auctionDate?: DateTimeNullableFilter | DateTime | Null,
+?     endDate?: DateTimeNullableFilter | DateTime | Null,
+?     totalLots?: IntFilter | Int,
+?     visits?: IntFilter | Int,
+?     totalHabilitatedUsers?: IntFilter | Int,
+?     initialOffer?: DecimalNullableFilter | Decimal | Null,
+?     auctionType?: EnumAuction_auctionTypeNullableFilter | Auction_auctionType | Null,
+?     auctionMethod?: EnumAuction_auctionMethodNullableFilter | Auction_auctionMethod | Null,
+?     participation?: EnumAuction_participationNullableFilter | Auction_participation | Null,
+?     onlineUrl?: StringNullableFilter | String | Null,
+?     address?: StringNullableFilter | String | Null,
+?     zipCode?: StringNullableFilter | String | Null,
+?     latitude?: DecimalNullableFilter | Decimal | Null,
+?     longitude?: DecimalNullableFilter | Decimal | Null,
+?     documentsUrl?: StringNullableFilter | String | Null,
+?     isFeaturedOnMarketplace?: BoolFilter | Boolean,
+?     softCloseEnabled?: BoolNullableFilter | Boolean | Null,
+?     softCloseMinutes?: IntNullableFilter | Int | Null,
+?     achievedRevenue?: DecimalNullableFilter | Decimal | Null,
+?     evaluationReportUrl?: StringNullableFilter | String | Null,
+?     auctionCertificateUrl?: StringNullableFilter | String | Null,
+?     floorPrice?: DecimalNullableFilter | Decimal | Null,
+?     decrementAmount?: DecimalNullableFilter | Decimal | Null,
+?     decrementIntervalSeconds?: IntNullableFilter | Int | Null,
+?     sellingBranch?: StringNullableFilter | String | Null,
+?     additionalTriggers?: JsonNullableFilter,
+?     createdAt?: DateTimeFilter | DateTime,
+?     updatedAt?: DateTimeFilter | DateTime,
+?     tenantId?: BigIntFilter | BigInt,
+?     auctioneerId?: BigIntNullableFilter | BigInt | Null,
+?     sellerId?: BigIntNullableFilter | BigInt | Null,
+?     imageMediaId?: BigIntNullableFilter | BigInt | Null,
+?     isRelisted?: BoolFilter | Boolean,
+?     relistCount?: IntFilter | Int,
+?     originalAuctionId?: BigIntNullableFilter | BigInt | Null,
+?     cityId?: BigIntNullableFilter | BigInt | Null,
+?     stateId?: BigIntNullableFilter | BigInt | Null,
+?     judicialProcessId?: BigIntNullableFilter | BigInt | Null,
+?     categoryId?: BigIntNullableFilter | BigInt | Null,
+?     complement?: StringNullableFilter | String | Null,
+?     neighborhood?: StringNullableFilter | String | Null,
+?     number?: StringNullableFilter | String | Null,
+?     street?: StringNullableFilter | String | Null,
+?     Auctioneer?: AuctioneerNullableRelationFilter | AuctioneerWhereInput | Null,
+?     LotCategory?: LotCategoryNullableRelationFilter | LotCategoryWhereInput | Null,
+?     City?: CityNullableRelationFilter | CityWhereInput | Null,
+?     JudicialProcess?: JudicialProcessNullableRelationFilter | JudicialProcessWhereInput | Null,
+?     Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     other_Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     Seller?: SellerNullableRelationFilter | SellerWhereInput | Null,
+?     State?: StateNullableRelationFilter | StateWhereInput | Null,
+?     Tenant?: TenantRelationFilter | TenantWhereInput,
+?     AuctionHabilitation?: AuctionHabilitationListRelationFilter,
+?     Bid?: BidListRelationFilter,
+?     Lot?: LotListRelationFilter,
+?     LotQuestion?: LotQuestionListRelationFilter,
+?     LotStagePrice?: LotStagePriceListRelationFilter,
+?     Notification?: NotificationListRelationFilter,
+?     Review?: ReviewListRelationFilter,
+?     Court?: CourtListRelationFilter,
+?     JudicialBranch?: JudicialBranchListRelationFilter,
+?     JudicialDistrict?: JudicialDistrictListRelationFilter
+    },
+    LotCategory: {
+      isNot: null
+    },
+    City: {
+      isNot: null
+    },
+    State: {
+      isNot: null
+    }
+  },
+  include: {
+    Auction: {
+      include: {
+        AuctionStage: {
+          orderBy: {
+            endDate: "desc"
+          }
+        }
+      }
+    },
+    LotCategory: true,
+    Subcategory: true,
+    City: true,
+    State: true,
+    Seller: true,
+    Auctioneer: true,
+    AssetsOnLots: {
+      include: {
+        Asset: true
+      }
+    },
+    _count: {
+      select: {
+        Bid: true
+      }
+    }
+  },
+  take: 16
+}
+
+Unknown argument `isNot`. Did you mean `Lot`? Available options are marked with ?.
+[STDERR]  ⨯ PrismaClientValidationError: 
+Invalid `prisma.lot.findMany()` invocation:
+
+{
+  where: {
+    status: "ABERTO_PARA_LANCES",
+    Auction: {
+      isNot: null,
+      ~~~~~
+      AuctionStage: {
+        some: {}
+      },
+?     AND?: AuctionWhereInput | AuctionWhereInput[],
+?     OR?: AuctionWhereInput[],
+?     NOT?: AuctionWhereInput | AuctionWhereInput[],
+?     id?: BigIntFilter | BigInt,
+?     publicId?: StringNullableFilter | String | Null,
+?     slug?: StringNullableFilter | String | Null,
+?     title?: StringFilter | String,
+?     description?: StringNullableFilter | String | Null,
+?     status?: EnumAuction_statusFilter | Auction_status,
+?     auctionDate?: DateTimeNullableFilter | DateTime | Null,
+?     endDate?: DateTimeNullableFilter | DateTime | Null,
+?     totalLots?: IntFilter | Int,
+?     visits?: IntFilter | Int,
+?     totalHabilitatedUsers?: IntFilter | Int,
+?     initialOffer?: DecimalNullableFilter | Decimal | Null,
+?     auctionType?: EnumAuction_auctionTypeNullableFilter | Auction_auctionType | Null,
+?     auctionMethod?: EnumAuction_auctionMethodNullableFilter | Auction_auctionMethod | Null,
+?     participation?: EnumAuction_participationNullableFilter | Auction_participation | Null,
+?     onlineUrl?: StringNullableFilter | String | Null,
+?     address?: StringNullableFilter | String | Null,
+?     zipCode?: StringNullableFilter | String | Null,
+?     latitude?: DecimalNullableFilter | Decimal | Null,
+?     longitude?: DecimalNullableFilter | Decimal | Null,
+?     documentsUrl?: StringNullableFilter | String | Null,
+?     isFeaturedOnMarketplace?: BoolFilter | Boolean,
+?     softCloseEnabled?: BoolNullableFilter | Boolean | Null,
+?     softCloseMinutes?: IntNullableFilter | Int | Null,
+?     achievedRevenue?: DecimalNullableFilter | Decimal | Null,
+?     evaluationReportUrl?: StringNullableFilter | String | Null,
+?     auctionCertificateUrl?: StringNullableFilter | String | Null,
+?     floorPrice?: DecimalNullableFilter | Decimal | Null,
+?     decrementAmount?: DecimalNullableFilter | Decimal | Null,
+?     decrementIntervalSeconds?: IntNullableFilter | Int | Null,
+?     sellingBranch?: StringNullableFilter | String | Null,
+?     additionalTriggers?: JsonNullableFilter,
+?     createdAt?: DateTimeFilter | DateTime,
+?     updatedAt?: DateTimeFilter | DateTime,
+?     tenantId?: BigIntFilter | BigInt,
+?     auctioneerId?: BigIntNullableFilter | BigInt | Null,
+?     sellerId?: BigIntNullableFilter | BigInt | Null,
+?     imageMediaId?: BigIntNullableFilter | BigInt | Null,
+?     isRelisted?: BoolFilter | Boolean,
+?     relistCount?: IntFilter | Int,
+?     originalAuctionId?: BigIntNullableFilter | BigInt | Null,
+?     cityId?: BigIntNullableFilter | BigInt | Null,
+?     stateId?: BigIntNullableFilter | BigInt | Null,
+?     judicialProcessId?: BigIntNullableFilter | BigInt | Null,
+?     categoryId?: BigIntNullableFilter | BigInt | Null,
+?     complement?: StringNullableFilter | String | Null,
+?     neighborhood?: StringNullableFilter | String | Null,
+?     number?: StringNullableFilter | String | Null,
+?     street?: StringNullableFilter | String | Null,
+?     Auctioneer?: AuctioneerNullableRelationFilter | AuctioneerWhereInput | Null,
+?     LotCategory?: LotCategoryNullableRelationFilter | LotCategoryWhereInput | Null,
+?     City?: CityNullableRelationFilter | CityWhereInput | Null,
+?     JudicialProcess?: JudicialProcessNullableRelationFilter | JudicialProcessWhereInput | Null,
+?     Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     other_Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     Seller?: SellerNullableRelationFilter | SellerWhereInput | Null,
+?     State?: StateNullableRelationFilter | StateWhereInput | Null,
+?     Tenant?: TenantRelationFilter | TenantWhereInput,
+?     AuctionHabilitation?: AuctionHabilitationListRelationFilter,
+?     Bid?: BidListRelationFilter,
+?     Lot?: LotListRelationFilter,
+?     LotQuestion?: LotQuestionListRelationFilter,
+?     LotStagePrice?: LotStagePriceListRelationFilter,
+?     Notification?: NotificationListRelationFilter,
+?     Review?: ReviewListRelationFilter,
+?     Court?: CourtListRelationFilter,
+?     JudicialBranch?: JudicialBranchListRelationFilter,
+?     JudicialDistrict?: JudicialDistrictListRelationFilter
+    },
+    LotCategory: {
+      isNot: null
+    },
+    City: {
+      isNot: null
+    },
+    State: {
+      isNot: null
+    }
+  },
+  include: {
+    Auction: {
+      include: {
+        AuctionStage: {
+          orderBy: {
+            endDate: "desc"
+          }
+        }
+      }
+    },
+    LotCategory: true,
+    Subcategory: true,
+    City: true,
+    State: true,
+    Seller: true,
+    Auctioneer: true,
+    AssetsOnLots: {
+      include: {
+        Asset: true
+      }
+    },
+    _count: {
+      select: {
+        Bid: true
+      }
+    }
+  },
+  take: 16
+}
+
+Unknown argument `isNot`. Did you mean `Lot`? Available options are marked with ?.
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:56:38)
+    at async getSuperOpportunitiesLots (./src/services/super-opportunities.service.ts:35:31)
+    at async HomePage (./src/app/page.tsx:124:29)
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[getPlatformSettings Action] Fetching settings via service...
+[STDERR] digest: "559174098"
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDOUT]  GET /?_rsc=r3yhw 200 in 340ms
+[STDOUT] prisma:error 
+Invalid `prisma.lot.findMany()` invocation:
+
+{
+  where: {
+    status: "ABERTO_PARA_LANCES",
+    Auction: {
+      isNot: null,
+      ~~~~~
+      AuctionStage: {
+        some: {}
+      },
+?     AND?: AuctionWhereInput | AuctionWhereInput[],
+?     OR?: AuctionWhereInput[],
+?     NOT?: AuctionWhereInput | AuctionWhereInput[],
+?     id?: BigIntFilter | BigInt,
+?     publicId?: StringNullableFilter | String | Null,
+?     slug?: StringNullableFilter | String | Null,
+?     title?: StringFilter | String,
+?     description?: StringNullableFilter | String | Null,
+?     status?: EnumAuction_statusFilter | Auction_status,
+?     auctionDate?: DateTimeNullableFilter | DateTime | Null,
+?     endDate?: DateTimeNullableFilter | DateTime | Null,
+?     totalLots?: IntFilter | Int,
+?     visits?: IntFilter | Int,
+?     totalHabilitatedUsers?: IntFilter | Int,
+?     initialOffer?: DecimalNullableFilter | Decimal | Null,
+?     auctionType?: EnumAuction_auctionTypeNullableFilter | Auction_auctionType | Null,
+?     auctionMethod?: EnumAuction_auctionMethodNullableFilter | Auction_auctionMethod | Null,
+?     participation?: EnumAuction_participationNullableFilter | Auction_participation | Null,
+?     onlineUrl?: StringNullableFilter | String | Null,
+?     address?: StringNullableFilter | String | Null,
+?     zipCode?: StringNullableFilter | String | Null,
+?     latitude?: DecimalNullableFilter | Decimal | Null,
+?     longitude?: DecimalNullableFilter | Decimal | Null,
+?     documentsUrl?: StringNullableFilter | String | Null,
+?     isFeaturedOnMarketplace?: BoolFilter | Boolean,
+?     softCloseEnabled?: BoolNullableFilter | Boolean | Null,
+?     softCloseMinutes?: IntNullableFilter | Int | Null,
+?     achievedRevenue?: DecimalNullableFilter | Decimal | Null,
+?     evaluationReportUrl?: StringNullableFilter | String | Null,
+?     auctionCertificateUrl?: StringNullableFilter | String | Null,
+?     floorPrice?: DecimalNullableFilter | Decimal | Null,
+?     decrementAmount?: DecimalNullableFilter | Decimal | Null,
+?     decrementIntervalSeconds?: IntNullableFilter | Int | Null,
+?     sellingBranch?: StringNullableFilter | String | Null,
+?     additionalTriggers?: JsonNullableFilter,
+?     createdAt?: DateTimeFilter | DateTime,
+?     updatedAt?: DateTimeFilter | DateTime,
+?     tenantId?: BigIntFilter | BigInt,
+?     auctioneerId?: BigIntNullableFilter | BigInt | Null,
+?     sellerId?: BigIntNullableFilter | BigInt | Null,
+?     imageMediaId?: BigIntNullableFilter | BigInt | Null,
+?     isRelisted?: BoolFilter | Boolean,
+?     relistCount?: IntFilter | Int,
+?     originalAuctionId?: BigIntNullableFilter | BigInt | Null,
+?     cityId?: BigIntNullableFilter | BigInt | Null,
+?     stateId?: BigIntNullableFilter | BigInt | Null,
+?     judicialProcessId?: BigIntNullableFilter | BigInt | Null,
+?     categoryId?: BigIntNullableFilter | BigInt | Null,
+?     complement?: StringNullableFilter | String | Null,
+?     neighborhood?: StringNullableFilter | String | Null,
+?     number?: StringNullableFilter | String | Null,
+?     street?: StringNullableFilter | String | Null,
+?     Auctioneer?: AuctioneerNullableRelationFilter | AuctioneerWhereInput | Null,
+?     LotCategory?: LotCategoryNullableRelationFilter | LotCategoryWhereInput | Null,
+?     City?: CityNullableRelationFilter | CityWhereInput | Null,
+?     JudicialProcess?: JudicialProcessNullableRelationFilter | JudicialProcessWhereInput | Null,
+?     Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     other_Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     Seller?: SellerNullableRelationFilter | SellerWhereInput | Null,
+?     State?: StateNullableRelationFilter | StateWhereInput | Null,
+?     Tenant?: TenantRelationFilter | TenantWhereInput,
+?     AuctionHabilitation?: AuctionHabilitationListRelationFilter,
+?     Bid?: BidListRelationFilter,
+?     Lot?: LotListRelationFilter,
+?     LotQuestion?: LotQuestionListRelationFilter,
+?     LotStagePrice?: LotStagePriceListRelationFilter,
+?     Notification?: NotificationListRelationFilter,
+?     Review?: ReviewListRelationFilter,
+?     Court?: CourtListRelationFilter,
+?     JudicialBranch?: JudicialBranchListRelationFilter,
+?     JudicialDistrict?: JudicialDistrictListRelationFilter
+    },
+    LotCategory: {
+      isNot: null
+    },
+    City: {
+      isNot: null
+    },
+    State: {
+      isNot: null
+    }
+  },
+  include: {
+    Auction: {
+      include: {
+        AuctionStage: {
+          orderBy: {
+            endDate: "desc"
+          }
+        }
+      }
+    },
+    LotCategory: true,
+    Subcategory: true,
+    City: true,
+    State: true,
+    Seller: true,
+    Auctioneer: true,
+    AssetsOnLots: {
+      include: {
+        Asset: true
+      }
+    },
+    _count: {
+      select: {
+        Bid: true
+      }
+    }
+  },
+  take: 16
+}
+
+Unknown argument `isNot`. Did you mean `Lot`? Available options are marked with ?.
+[STDERR]  ⨯ PrismaClientValidationError: 
+Invalid `prisma.lot.findMany()` invocation:
+
+{
+  where: {
+    status: "ABERTO_PARA_LANCES",
+    Auction: {
+      isNot: null,
+      ~~~~~
+      AuctionStage: {
+        some: {}
+      },
+?     AND?: AuctionWhereInput | AuctionWhereInput[],
+?     OR?: AuctionWhereInput[],
+?     NOT?: AuctionWhereInput | AuctionWhereInput[],
+?     id?: BigIntFilter | BigInt,
+?     publicId?: StringNullableFilter | String | Null,
+?     slug?: StringNullableFilter | String | Null,
+?     title?: StringFilter | String,
+?     description?: StringNullableFilter | String | Null,
+?     status?: EnumAuction_statusFilter | Auction_status,
+?     auctionDate?: DateTimeNullableFilter | DateTime | Null,
+?     endDate?: DateTimeNullableFilter | DateTime | Null,
+?     totalLots?: IntFilter | Int,
+?     visits?: IntFilter | Int,
+?     totalHabilitatedUsers?: IntFilter | Int,
+?     initialOffer?: DecimalNullableFilter | Decimal | Null,
+?     auctionType?: EnumAuction_auctionTypeNullableFilter | Auction_auctionType | Null,
+?     auctionMethod?: EnumAuction_auctionMethodNullableFilter | Auction_auctionMethod | Null,
+?     participation?: EnumAuction_participationNullableFilter | Auction_participation | Null,
+?     onlineUrl?: StringNullableFilter | String | Null,
+?     address?: StringNullableFilter | String | Null,
+?     zipCode?: StringNullableFilter | String | Null,
+?     latitude?: DecimalNullableFilter | Decimal | Null,
+?     longitude?: DecimalNullableFilter | Decimal | Null,
+?     documentsUrl?: StringNullableFilter | String | Null,
+?     isFeaturedOnMarketplace?: BoolFilter | Boolean,
+?     softCloseEnabled?: BoolNullableFilter | Boolean | Null,
+?     softCloseMinutes?: IntNullableFilter | Int | Null,
+?     achievedRevenue?: DecimalNullableFilter | Decimal | Null,
+?     evaluationReportUrl?: StringNullableFilter | String | Null,
+?     auctionCertificateUrl?: StringNullableFilter | String | Null,
+?     floorPrice?: DecimalNullableFilter | Decimal | Null,
+?     decrementAmount?: DecimalNullableFilter | Decimal | Null,
+?     decrementIntervalSeconds?: IntNullableFilter | Int | Null,
+?     sellingBranch?: StringNullableFilter | String | Null,
+?     additionalTriggers?: JsonNullableFilter,
+?     createdAt?: DateTimeFilter | DateTime,
+?     updatedAt?: DateTimeFilter | DateTime,
+?     tenantId?: BigIntFilter | BigInt,
+?     auctioneerId?: BigIntNullableFilter | BigInt | Null,
+?     sellerId?: BigIntNullableFilter | BigInt | Null,
+?     imageMediaId?: BigIntNullableFilter | BigInt | Null,
+?     isRelisted?: BoolFilter | Boolean,
+?     relistCount?: IntFilter | Int,
+?     originalAuctionId?: BigIntNullableFilter | BigInt | Null,
+?     cityId?: BigIntNullableFilter | BigInt | Null,
+?     stateId?: BigIntNullableFilter | BigInt | Null,
+?     judicialProcessId?: BigIntNullableFilter | BigInt | Null,
+?     categoryId?: BigIntNullableFilter | BigInt | Null,
+?     complement?: StringNullableFilter | String | Null,
+?     neighborhood?: StringNullableFilter | String | Null,
+?     number?: StringNullableFilter | String | Null,
+?     street?: StringNullableFilter | String | Null,
+?     Auctioneer?: AuctioneerNullableRelationFilter | AuctioneerWhereInput | Null,
+?     LotCategory?: LotCategoryNullableRelationFilter | LotCategoryWhereInput | Null,
+?     City?: CityNullableRelationFilter | CityWhereInput | Null,
+?     JudicialProcess?: JudicialProcessNullableRelationFilter | JudicialProcessWhereInput | Null,
+?     Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     other_Auction?: AuctionNullableRelationFilter | AuctionWhereInput | Null,
+?     Seller?: SellerNullableRelationFilter | SellerWhereInput | Null,
+?     State?: StateNullableRelationFilter | StateWhereInput | Null,
+?     Tenant?: TenantRelationFilter | TenantWhereInput,
+?     AuctionHabilitation?: AuctionHabilitationListRelationFilter,
+?     Bid?: BidListRelationFilter,
+?     Lot?: LotListRelationFilter,
+?     LotQuestion?: LotQuestionListRelationFilter,
+?     LotStagePrice?: LotStagePriceListRelationFilter,
+?     Notification?: NotificationListRelationFilter,
+?     Review?: ReviewListRelationFilter,
+?     Court?: CourtListRelationFilter,
+?     JudicialBranch?: JudicialBranchListRelationFilter,
+?     JudicialDistrict?: JudicialDistrictListRelationFilter
+    },
+    LotCategory: {
+      isNot: null
+    },
+    City: {
+      isNot: null
+    },
+    State: {
+      isNot: null
+    }
+  },
+  include: {
+    Auction: {
+      include: {
+        AuctionStage: {
+          orderBy: {
+            endDate: "desc"
+          }
+        }
+      }
+    },
+    LotCategory: true,
+    Subcategory: true,
+    City: true,
+    State: true,
+    Seller: true,
+    Auctioneer: true,
+    AssetsOnLots: {
+      include: {
+        Asset: true
+      }
+    },
+    _count: {
+      select: {
+        Bid: true
+      }
+    }
+  },
+  take: 16
+}
+
+Unknown argument `isNot`. Did you mean `Lot`? Available options are marked with ?.
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:56:38)
+    at async getSuperOpportunitiesLots (./src/services/super-opportunities.service.ts:35:31)
+    at async HomePage (./src/app/page.tsx:124:29)
+[STDOUT]  GET /?_rsc=r3yhw 200 in 396ms
+[STDERR] digest: "559174098"

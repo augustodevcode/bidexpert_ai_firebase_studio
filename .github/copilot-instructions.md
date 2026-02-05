@@ -914,6 +914,13 @@ Since the codebase is a template, you should not assume they have set up anythin
 # General IA Rules
 - Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
 
+# Inicialização da Aplicação (OBRIGATÓRIO)
+**REGRA:** Para iniciar a aplicação BidExpert, SEMPRE utilize a task do VSCode:
+- **Task Padrão:** `BidExpert App - Porta 9005 (Full Logging)`
+- **Comando:** Execute via VSCode Tasks ou `node .vscode/start-9005.js`
+- **Nunca use:** `npm run dev` diretamente, pois não garante logging completo e configuração de porta
+- **Acesso:** Após iniciar, sempre abra `http://demo.localhost:9005` no Simple Browser
+
 # Usuários para testes 
 - Sempre crie usuários para testes com diferentes perfis (admin, user comum, user premium, etc) conforme a necessidade do sistema que está sendo desenvolvido toda vez que ver credenciais inválidas. Documente e incremente no seed-master-data.ts sempre que criar novos usuários para testes. Documente também para que outros desenvolvedores saibam quais usuários existem para testes.
 
@@ -922,6 +929,30 @@ Since the codebase is a template, you should not assume they have set up anythin
 
 # Nomear e identificar todos os elementos html
 - Sempre nomear e identificar com nomes de contexto do que o elemento html faz para todos os elementos html com atributos classname data-ai-id para todos os elementos para facilitar a identificação dos elementos nos testes automatizados com Vitest UI e Playwright ou para localizar fácil no console do browser.
+
+# Regra de Integridade Referencial em Super Oportunidades
+**OBRIGATÓRIO:** A seção Super Oportunidades (carousel de lotes encerrando em breve) DEVE validar toda a cadeia referencial antes de exibir qualquer lote:
+1. ✅ **Cadeia de Validação**: Leilão → Lote → Loteamento → Ativos → Cidades → Estado → Categorias
+2. ✅ **Praças Obrigatórias**: Leilões SEM praças (AuctionStage) NÃO devem aparecer na seção
+3. ✅ **Status do Lote**: Apenas lotes com status `ABERTO_PARA_LANCES`
+4. ✅ **Prazo Configurável**: Usar `marketingSiteAdsSuperOpportunitiesDaysBeforeClosing` (padrão: 7 dias)
+5. ✅ **Testabilidade**: Componente DEVE ter `data-ai-id="super-opportunities-section"`
+6. ✅ **Service Dedicado**: Sempre usar `getSuperOpportunitiesLots()` de `src/services/super-opportunities.service.ts`
+
+**Validações Obrigatórias no Service**:
+- Leilão existe e está vinculado ao lote
+- Leilão possui pelo menos uma praça (AuctionStage)
+- Categoria do lote existe
+- Cidade do lote existe
+- Estado do lote existe
+- Data de encerramento válida e não passou
+- Data de encerramento dentro do prazo configurado
+- Se houver loteamento (AssetsOnLots), validar que todos os ativos existem
+
+**Teste Obrigatório**: Ao criar/modificar funcionalidades relacionadas a listagens de lotes/leilões, sempre validar:
+- Não exibir items sem integridade referencial completa
+- Respeitar configurações de prazo
+- Adicionar `data-ai-id` para testabilidade
 
 # usuarios de testes
 ao tentar logar verificar os usuários que estão nos arquivos de seed ou fazer select diretamente na base para saber o usuário, sua senha e seu perfil, pois lá podem estar os usuários que precisa para teste.

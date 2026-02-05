@@ -13,7 +13,10 @@ import type { DirectSaleOffer } from '@/types';
 const offerService = new DirectSaleOfferService();
 
 export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
-    return offerService.getDirectSaleOffers();
+    const offers = await offerService.getDirectSaleOffers();
+    return JSON.parse(JSON.stringify(offers, (key, value) => 
+        typeof value === 'bigint' ? value.toString() : value
+    ));
 }
 
 export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
