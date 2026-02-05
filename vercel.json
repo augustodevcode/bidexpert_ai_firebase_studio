@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "projectId": "prj_4tz3zXk6sCgHUJg1TTSNnLQ9UgIs",
   "framework": "nextjs",
   "buildCommand": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build",
   "devCommand": "npm run dev",
