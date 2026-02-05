@@ -170,6 +170,9 @@ const LANDLORD_DOMAINS = [
   'localhost:9002',
   'localhost:9005',
   'localhost:3000',
+  // Vercel domains
+  'bidexpertaifirebasestudio.vercel.app',
+  'bidexpertaifirebasestudio-augustos-projects-d51a961f.vercel.app',
 ];
 
 /**

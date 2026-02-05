@@ -54,6 +54,9 @@ const LANDLORD_DOMAINS = [
   '127.0.0.1:9002',
   '127.0.0.1:9005',
   '127.0.0.1:3000',
+  // Vercel domains
+  'bidexpertaifirebasestudio.vercel.app',
+  'bidexpertaifirebasestudio-augustos-projects-d51a961f.vercel.app',
 ];
 
 // ============================================================================
