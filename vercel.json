@@ -6,11 +6,6 @@
   "installCommand": "npm install",
   "outputDirectory": ".next",
   "regions": ["gru1"],
-  "functions": {
-    "api/**/*.ts": {
-      "maxDuration": 30
-    }
-  },
   "env": {
     "PRISMA_SCHEMA": "prisma/schema.postgresql.prisma"
   },
