@@ -105,34 +105,46 @@ function MapSearchPageContent() {
     }
 
     try {
+      // Call actions with correct signatures for public access
+      // getAuctions(isPublicCall: boolean)
+      // getLots(filter, isPublicCall: boolean)
+      // getDirectSaleOffers() - no args in definition
       const [auctionsResult, lotsResult, settingsResult, directSalesResult] = await Promise.all([
-        getAuctions({ filter: { status: 'PUBLISHED' } }),
-        getLots({ filter: { status: 'active' } }),
+        getAuctions(true), 
+        getLots(undefined, true),
         getPlatformSettings(),
-        getDirectSaleOffers({ filter: { status: 'active' } }),
+        getDirectSaleOffers(),
       ]);
 
-      if (auctionsResult.success && auctionsResult.auctions) {
-        setAllAuctions(auctionsResult.auctions);
-      }
-      if (lotsResult.success && lotsResult.lots) {
-        setAllLots(lotsResult.lots);
-      }
-      if (settingsResult.success && settingsResult.settings) {
-        setPlatformSettings(settingsResult.settings);
-      }
-      if (directSalesResult.success && directSalesResult.offers) {
-        setAllDirectSales(directSalesResult.offers);
-      }
+      // Handle potential serialized responses or direct arrays
+      // Note: Actions might return arrays directly or { success, data } depending on implementation update.
+      // Based on current analysis, getAuctions returns Auction[] directly.
+      // But _client code handles { success, auctions } wrapper?
+      // Wait, _client.tsx lines 114-123 check for .success and .auctions.
+      // BUT getAuctions action returns Promise<Auction[]>.
+      // THIS IS A MAJOR BUG in _client.tsx. It expects { success: true, auctions: [...] } but gets [...].
+      
+      // I must fix _client.tsx to handle the actual return types of the actions.
+      
+      const auctions = Array.isArray(auctionsResult) ? auctionsResult : (auctionsResult as any).auctions ?? [];
+      const lots = Array.isArray(lotsResult) ? lotsResult : (lotsResult as any).lots ?? [];
+      const settings = (settingsResult as any).success ? (settingsResult as any).settings : settingsResult; 
+      const directSales = Array.isArray(directSalesResult) ? directSalesResult : (directSalesResult as any).offers ?? [];
 
+      if (auctions) setAllAuctions(auctions);
+      if (lots) setAllLots(lots);
+      if (settings) setPlatformSettings(settings); // Settings might be object
+      if (directSales) setAllDirectSales(directSales);
+
+      // Also persist to cache with correct structure
       const now = Date.now();
       setLastUpdatedAt(now);
 
       persistMapCacheSnapshot({
-        auctions: auctionsResult.auctions ?? [],
-        lots: lotsResult.lots ?? [],
-        directSales: directSalesResult.offers ?? [],
-        settings: settingsResult.settings ?? null,
+        auctions: auctions,
+        lots: lots,
+        directSales: directSales,
+        settings: settings || null,
         lastUpdatedAt: now,
       });
     } catch (err) {

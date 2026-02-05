@@ -63,7 +63,7 @@
             }
         },
         {
-            "label": "Run BidExpert App (Port 9005 with Logging)",
+            "label": "BidExpert App - Porta 9005 (Full Logging)",
             "type": "shell",
             "command": "node .vscode/start-9005.js",
             "group": "build",
@@ -71,8 +71,11 @@
                 "echo": true,
                 "reveal": "always",
                 "focus": true,
-                "panel": "new"
+                "panel": "dedicated",
+                "showReuseMessage": false,
+                "clear": false
             },
+            "problemMatcher": [],
             "isBackground": true,
             "options": {
                 "cwd": "${workspaceFolder}"

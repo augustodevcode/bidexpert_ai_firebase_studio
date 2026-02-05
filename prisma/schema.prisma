@@ -955,6 +955,7 @@ model PlatformSettings {
   defaultListItemsPerPage    Int?                                   @default(10)
   marketingSiteAdsSuperOpportunitiesEnabled Boolean                 @default(true)
   marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds Int?      @default(6)
+  marketingSiteAdsSuperOpportunitiesDaysBeforeClosing Int?          @default(7)
   auditTrailConfig           Json?
   updatedAt                  DateTime?
   supportAddress             String?

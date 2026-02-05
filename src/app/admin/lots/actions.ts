@@ -21,7 +21,10 @@ const assetService = new AssetService();
 export async function getLots(filter?: { auctionId?: string; judicialProcessId?: string }, isPublicCall: boolean = false, limit?: number): Promise<Lot[]> {
   const tenantId = await getTenantIdFromRequest(isPublicCall);
   console.log(`[Action getLots] Tenant: ${tenantId}, Filter:`, filter);
-  return lotService.getLots(filter, tenantId, limit, isPublicCall);
+  const lots = await lotService.getLots(filter, tenantId, limit, isPublicCall);
+  return JSON.parse(JSON.stringify(lots, (key, value) => 
+    typeof value === 'bigint' ? value.toString() : value
+  ));
 }
 
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {

@@ -37,7 +37,10 @@ const decimalToNumber = (value?: Prisma.Decimal | number | bigint | null): numbe
 
 export async function getAuctions(isPublicCall: boolean = false, limit?: number): Promise<Auction[]> {
     const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-    return auctionService.getAuctions(tenantIdToUse, limit, isPublicCall);
+    const auctions = await auctionService.getAuctions(tenantIdToUse, limit, isPublicCall);
+    return JSON.parse(JSON.stringify(auctions, (key, value) => 
+        typeof value === 'bigint' ? value.toString() : value
+    ));
 }
 
 export async function getAuction(id: string, isPublicCall: boolean = false): Promise<Auction | null> {

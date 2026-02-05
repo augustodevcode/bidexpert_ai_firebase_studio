@@ -291,7 +291,74 @@ Proibir mix de `cuid()` em novos docs/código
 - Restaurar estado ao voltar à lista  
 - Limpar filtros com um clique
 
-### RN-023: Links Cruzados entre Entidades
+### RN-023: Marketing > Publicidade do Site (Super Oportunidades)
+✅ A seção Super Oportunidades DEVE ser habilitada/desabilitada via módulo Marketing > Publicidade do Site  
+✅ A frequência de rolagem do carousel DEVE ser configurável no mesmo submódulo  
+✅ NÃO exibir contador regressivo acima dos cards (apenas nos cards)  
+
+**BDD - Cenários principais**
+- **Dado** que a configuração está habilitada  
+  **Quando** a home é carregada  
+  **Então** a seção Super Oportunidades é exibida  
+- **Dado** que a configuração está desabilitada  
+  **Quando** a home é carregada  
+  **Então** a seção Super Oportunidades não é exibida  
+- **Dado** que a frequência de rolagem foi ajustada  
+  **Quando** o carousel é exibido  
+  **Então** a rolagem automática usa o intervalo configurado  
+
+**TDD - Cobertura mínima exigida**
+- Teste unitário do carousel confirmando ausência de contador superior  
+- Teste UI E2E validando toggle e ajuste de intervalo  
+- Teste visual com screenshot da página de Publicidade do Site
+
+### RN-024: Integridade Referencial em Super Oportunidades
+✅ **Validação Obrigatória da Cadeia Completa**: A seção Super Oportunidades DEVE validar toda a cadeia referencial antes de exibir lotes  
+✅ **Cadeia de Validação**: Leilão → Lote → Loteamento (AssetsOnLots) → Ativos → Cidades → Estado → Categorias  
+✅ **Praças Obrigatórias**: Leilões SEM praças (AuctionStage) NÃO devem ser exibidos  
+✅ **Configuração de Prazo**: Dias para encerramento DEVE ser configurável via `marketingSiteAdsSuperOpportunitiesDaysBeforeClosing` (padrão: 7 dias)  
+✅ **Atributo data-ai-id**: Componente DEVE ter `data-ai-id="super-opportunities-section"` para testabilidade  
+
+**Validações Obrigatórias**:
+1. Status do lote = `ABERTO_PARA_LANCES`
+2. Leilão existe e está vinculado
+3. Leilão possui pelo menos uma praça (AuctionStage)
+4. Categoria do lote existe
+5. Cidade do lote existe
+6. Estado do lote existe
+7. Data de encerramento não passou
+8. Data de encerramento está dentro do prazo configurado (maxDaysUntilClosing)
+9. Se houver loteamento (AssetsOnLots), validar que todos os ativos existem
+
+**BDD - Cenários de Teste**
+- **Dado** que existem lotes com integridade completa e prazo válido  
+  **Quando** a home é carregada com Super Oportunidades habilitado  
+  **Então** os lotes válidos são exibidos na seção  
+  
+- **Dado** que existem leilões sem praças cadastradas  
+  **Quando** a home é carregada  
+  **Então** esses leilões NÃO devem aparecer na seção Super Oportunidades  
+  
+- **Dado** que existem lotes sem categoria ou cidade  
+  **Quando** a home é carregada  
+  **Então** esses lotes NÃO devem aparecer na seção Super Oportunidades  
+  
+- **Dado** que o prazo configurado é de 5 dias  
+  **Quando** existem lotes encerrando em 3 dias e lotes encerrando em 10 dias  
+  **Então** apenas os lotes encerrando em 3 dias devem aparecer  
+
+**TDD - Cobertura Mínima Exigida**
+- Teste unitário do service `getSuperOpportunitiesLots` validando todas as 9 validações
+- Teste E2E verificando exibição correta com dados válidos e inválidos
+- Teste visual com screenshot da seção Super Oportunidades
+- Teste de configuração de prazo (alterar `marketingSiteAdsSuperOpportunitiesDaysBeforeClosing`)
+
+**Implementação**:
+- Service: `src/services/super-opportunities.service.ts`
+- Componente: `src/components/closing-soon-carousel.tsx`
+- Uso: `src/app/page.tsx`
+
+### RN-025: Links Cruzados entre Entidades
 ✅ **Navegação Hierárquica**: Permitir navegação entre entidades relacionadas através de links diretos nas tabelas CRUD  
 ✅ **Relações Suportadas**:  
 - **Auction → Lot**: Coluna "Lotes" na tabela de leilões com link para `/admin/lots?auctionId={auctionId}`  

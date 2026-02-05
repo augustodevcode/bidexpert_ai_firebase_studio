@@ -17,6 +17,14 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 ## Regras Específicas
 - Sempre ao terminar qualquer implementação, correção ou criação de scripts, tabelas, campos, alterações, execute um teste e2e para validar o que foi feito e documente.
 
+## 🚀 Inicialização da Aplicação (OBRIGATÓRIO)
+
+**REGRA:** Para iniciar a aplicação BidExpert, SEMPRE utilize a task do VSCode:
+- **Task Padrão:** `BidExpert App - Porta 9005 (Full Logging)`
+- **Comando Alternativo:** `node .vscode/start-9005.js`
+- **❌ NUNCA use:** `npm run dev` diretamente (não garante logging completo)
+- **Acesso:** Após iniciar, sempre abra `http://demo.localhost:9005` no Simple Browser
+
 ## Estratégia de Observabilidade (Logs do Browser + Servidor)
 Os agentes devem sempre buscar a visão completa do problema:
 1. **Logs do Browser**: Execute scripts Playwright (como `tests/e2e/console-error-detection.spec.ts`) para ver erros de console (`TypeError`, `404`, `500 network`) que não aparecem no terminal do servidor.
