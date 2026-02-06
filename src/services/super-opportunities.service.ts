@@ -44,26 +44,19 @@ export async function getSuperOpportunitiesLots(
     where: {
       status: 'ABERTO_PARA_LANCES',
       ...(tenantId ? { tenantId } : {}),
-      // Garantir que o lote tem auction
+      // Garantir que o lote tem auction com praças (AuctionStage)
+      // Nota: Auction é relação obrigatória em Lot, não precisa de isNot: null
       Auction: {
-        isNot: null,
-        // Garantir que o leilão tem pelo menos uma praça (AuctionStage)
         AuctionStage: {
           some: {},
         },
       },
-      // Garantir que tem categoria
-      LotCategory: {
-        isNot: null,
-      },
-      // Garantir que tem cidade
-      City: {
-        isNot: null,
-      },
-      // Garantir que tem estado
-      State: {
-        isNot: null,
-      },
+      // Garantir que tem categoria (relação opcional, usar isNot corretamente)
+      categoryId: { not: null },
+      // Garantir que tem cidade (relação opcional)
+      cityId: { not: null },
+      // Garantir que tem estado (relação opcional)
+      stateId: { not: null },
     },
     include: {
       Auction: {

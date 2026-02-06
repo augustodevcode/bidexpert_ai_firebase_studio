@@ -88,26 +88,26 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
         prisma.asset.findMany({
             where: assetWhere,
             include: {
-                category: true,
-                seller: true,
-                judicialProcess: true,
+                LotCategory: true,
+                Seller: true,
+                JudicialProcess: true,
             },
             orderBy: { updatedAt: 'desc' },
             take: 50,
         }),
         prisma.auctionHabilitation.findMany({
             where: { auctionId: numericAuctionId },
-            include: { user: true },
+            include: { User: true },
             orderBy: { habilitatedAt: 'desc' },
         }),
         prisma.bid.findMany({
             where: { auctionId: numericAuctionId },
-            include: { bidder: true, lot: true },
+            include: { User: true, Lot: true },
             orderBy: { timestamp: 'desc' },
         }),
         prisma.userWin.findMany({
-            where: { lot: { auctionId: numericAuctionId } },
-            include: { user: true, lot: true, installmentPayment: true },
+            where: { Lot: { auctionId: numericAuctionId } },
+            include: { User: true, Lot: true, InstallmentPayment: true },
             orderBy: { winDate: 'desc' },
         }),
     ]);
@@ -115,11 +115,11 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
     const availableAssets: AuctionPreparationAssetSummary[] = rawAssets.map((asset) => ({
         id: asset.id.toString(),
         title: asset.title,
-        categoryName: asset.category?.name ?? undefined,
+        categoryName: asset.LotCategory?.name ?? undefined,
         evaluationValue: decimalToNumber(asset.evaluationValue),
         status: asset.status,
-        sellerName: asset.seller?.name ?? null,
-        judicialProcessNumber: asset.judicialProcess?.processNumber ?? null,
+        sellerName: asset.Seller?.name ?? null,
+        judicialProcessNumber: asset.JudicialProcess?.processNumber ?? null,
         source: asset.judicialProcessId ? 'PROCESS' : 'CONSIGNOR',
         locationLabel: asset.locationCity
             ? asset.locationState
@@ -131,10 +131,10 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
 
     const habilitations: AuctionPreparationHabilitation[] = rawHabilitations.map((hab) => ({
         userId: hab.userId.toString(),
-        userName: hab.user?.fullName ?? 'Usuário',
-        documentNumber: hab.user?.cpf ?? hab.user?.cnpj ?? null,
-        email: hab.user?.email ?? undefined,
-        phone: hab.user?.cellPhone ?? hab.user?.homePhone ?? undefined,
+        userName: hab.User?.fullName ?? 'Usuário',
+        documentNumber: hab.User?.cpf ?? hab.User?.cnpj ?? null,
+        email: hab.User?.email ?? undefined,
+        phone: hab.User?.cellPhone ?? hab.User?.homePhone ?? undefined,
         status: 'APPROVED',
         createdAt: hab.habilitatedAt ? hab.habilitatedAt.toISOString() : new Date().toISOString(),
     }));
@@ -142,10 +142,10 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
     const bids: AuctionPreparationBid[] = rawBids.map((bid) => ({
         id: bid.id.toString(),
         lotId: bid.lotId.toString(),
-        lotTitle: bid.lot?.title ?? `Lote ${bid.lotId}`,
-        lotNumber: bid.lot?.number ?? undefined,
+        lotTitle: bid.Lot?.title ?? `Lote ${bid.lotId}`,
+        lotNumber: bid.Lot?.number ?? undefined,
         bidderId: bid.bidderId.toString(),
-        bidderName: bid.bidder?.fullName ?? 'Participante',
+        bidderName: bid.User?.fullName ?? 'Participante',
         amount: decimalToNumber(bid.amount),
         timestamp: bid.timestamp.toISOString(),
     }));
@@ -153,14 +153,14 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
     const userWins: AuctionPreparationWin[] = rawWins.map((win) => ({
         id: win.id.toString(),
         lotId: win.lotId.toString(),
-        lotTitle: win.lot?.title ?? `Lote ${win.lotId}`,
-        lotNumber: win.lot?.number ?? undefined,
+        lotTitle: win.Lot?.title ?? `Lote ${win.lotId}`,
+        lotNumber: win.Lot?.number ?? undefined,
         userId: win.userId.toString(),
-        userName: win.user?.fullName ?? 'Arrematante',
+        userName: win.User?.fullName ?? 'Arrematante',
         value: decimalToNumber(win.winningBidAmount),
         paymentStatus: win.paymentStatus,
         winDate: win.winDate ? win.winDate.toISOString() : new Date().toISOString(),
-        installments: (win.installmentPayment || []).map((installment) => ({
+        installments: (win.InstallmentPayment || []).map((installment) => ({
             id: installment.id.toString(),
             amount: decimalToNumber(installment.amount),
             dueDate: installment.dueDate.toISOString(),

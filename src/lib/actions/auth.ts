@@ -69,6 +69,7 @@ async function ensureDefaultTenant(): Promise<string> {
                         data: {
                             name: defaultTenantName,
                             subdomain: 'www',
+                            updatedAt: new Date(),
                         },
                     });
                     console.log(`Tenant padrão criado com sucesso. ID: ${tenant.id}`);

@@ -87,6 +87,7 @@ export class PlatformSettingsService {
                             id: tenantId,
                             name: 'BidExpert Tenant',
                             subdomain: 'default',
+                            updatedAt: new Date(),
                         },
                     });
                     console.log(`[PlatformSettingsService] Tenant padrão criado com sucesso: ${newTenant.id}`);
