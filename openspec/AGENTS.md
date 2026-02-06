@@ -454,3 +454,17 @@ openspec archive <change-id> [--yes|-y]  # Mark complete (add --yes for automati
 ```
 
 Remember: Specs are truth. Changes are proposals. Keep them in sync.
+
+## Deploy Vercel + PostgreSQL: Regras Obrigatórias
+
+Ao criar ou modificar specs que envolvam deploy, database, ou API routes no Vercel, SEMPRE considere estas regras (detalhes em `.github/skills/vercel-postgresql-deploy/SKILL.md`):
+
+1. **Build command** no `vercel.json` NUNCA deve conectar ao banco (sem `prisma db push` ou `migrate deploy`)
+2. **Raw SQL** DEVE usar aspas duplas em colunas camelCase: `"errorMessage"`, `"createdAt"`
+3. **Prisma filters** NÃO podem misturar `isNot: null` (RelationFilter) com `some: {}` (WhereInput) no mesmo nível
+4. **`create()`** em models com `@updatedAt` DEVE incluir `updatedAt: new Date()`
+5. **Nomes de relação** Prisma são case-sensitive — usar EXATAMENTE o nome do schema
+6. **Middleware** deve tratar `*.vercel.app` como landlord domain e NUNCA redirecionar para subdomínios
+7. **API routes dinâmicas** DEVEM ter `export const dynamic = 'force-dynamic'`
+8. **Schemas Prisma duais**: alterar `schema.prisma` (MySQL) E `schema.postgresql.prisma` (PostgreSQL) simultaneamente
+9. **Deploy** SOMENTE via `git push origin main` — NUNCA via deploy direto

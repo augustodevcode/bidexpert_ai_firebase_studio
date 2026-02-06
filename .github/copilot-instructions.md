@@ -1040,3 +1040,53 @@ ao tentar logar verificar os usuários que estão nos arquivos de seed ou fazer 
 # Finalização da task do chat
  - Sempre que finalizar uma task do chat, informe todas as alterações que foram feitas no código de forma sucinta e objetiva para o usuário. 
  - nunca mostre a mensagem: "Reinicie o servidor e teste novamente." ao invés disso, sempre reinicie o servidor você mesmo e teste antes de informar ao usuário que a task foi finalizada.
+
+# 🚀 Regras de Deploy Vercel + PostgreSQL (OBRIGATÓRIO)
+
+> **SKILL DETALHADA:** `.github/skills/vercel-postgresql-deploy/SKILL.md`
+
+**Estas regras foram aprendidas com bugs reais em produção e DEVEM ser seguidas:**
+
+### Build Command no Vercel
+- **NUNCA** incluir `prisma db push`, `prisma migrate deploy` ou qualquer comando que conecte ao banco no `buildCommand` do `vercel.json`
+- O build command correto: `cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build`
+- Migrações e seeds devem ser executados separadamente (scripts locais ou API routes)
+
+### Deploy via Git (NUNCA via MCP direto)
+```powershell
+# ✅ CORRETO
+git push origin main
+
+# ❌ INCORRETO - Nunca usar deploy direto
+```
+
+### Raw SQL + PostgreSQL
+- **SEMPRE** usar aspas duplas em nomes de colunas camelCase: `"errorMessage"`, `"createdAt"`
+- PostgreSQL converte identificadores sem aspas para lowercase
+
+### Prisma Queries Compatíveis
+1. **NÃO misturar** `isNot: null` com outros filtros no mesmo nível (Prisma XOR type)
+2. Verificar NOT NULL via campo escalar: `categoryId: { not: null }` em vez de `LotCategory: { isNot: null }`
+3. **SEMPRE incluir** `updatedAt: new Date()` em todo `create()` de models com `@updatedAt`
+4. Nomes de relação são **case-sensitive** — usar EXATAMENTE o nome do schema Prisma
+
+### Middleware Multi-Tenant no Vercel
+- Match dinâmico para `*.vercel.app` como landlord domain (Vercel gera URLs únicas por deploy)
+- **NUNCA** redirecionar para subdomínios (`crm.`, `admin.`) em hosts `.vercel.app`
+- API routes dinâmicas DEVEM ter `export const dynamic = 'force-dynamic'`
+
+### Schemas Prisma Duais
+- `prisma/schema.prisma` → MySQL (dev local)
+- `prisma/schema.postgresql.prisma` → PostgreSQL (Vercel)
+- **SEMPRE alterar AMBOS** ao modificar o schema
+- Validar ambos: `npx prisma validate`
+
+### Checklist Pré-Deploy
+- [ ] buildCommand no vercel.json NÃO conecta ao banco
+- [ ] Raw SQL usa aspas duplas em colunas camelCase
+- [ ] Queries Prisma não misturam RelationFilter com WhereInput
+- [ ] `create()` inclui `updatedAt: new Date()`
+- [ ] Relações usam nomes exatos do schema
+- [ ] Middleware trata `*.vercel.app` dinamicamente
+- [ ] API routes dinâmicas têm `force-dynamic`
+- [ ] Build local passa: `npx prisma generate && npm run build`

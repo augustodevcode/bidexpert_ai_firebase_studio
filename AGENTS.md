@@ -204,5 +204,26 @@ This agent handles:
 - Prisma Audit Extensions.
 - Structural Logging and Diffing.
 
+## Vercel + PostgreSQL Deploy Skill
+Para tarefas relacionadas a deploy no Vercel, configuração de build, compatibilidade PostgreSQL, e middleware multi-tenant:
+`E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\skills\vercel-postgresql-deploy\SKILL.md`
+
+Este agente lida com:
+- Configuração do `vercel.json` (build command, regions, headers)
+- Compatibilidade MySQL ↔ PostgreSQL (raw SQL, Prisma filters)
+- Middleware multi-tenant para domínios `.vercel.app`
+- Schemas Prisma duais (`schema.prisma` vs `schema.postgresql.prisma`)
+- API routes com `force-dynamic`
+
+### Regras Críticas de Deploy (resumo)
+1. **NUNCA** incluir `prisma db push` ou `prisma migrate deploy` no buildCommand do vercel.json
+2. **SEMPRE** quotar nomes camelCase em raw SQL PostgreSQL: `"errorMessage"`
+3. **NÃO** misturar `isNot: null` com outros filtros Prisma no mesmo nível (XOR type)
+4. **SEMPRE** incluir `updatedAt: new Date()` em `create()` de models com `@updatedAt`
+5. **SEMPRE** usar nomes de relação exatos do schema Prisma (case-sensitive)
+6. **NUNCA** redirecionar para subdomínios CRM em URLs `.vercel.app`
+7. **SEMPRE** adicionar `export const dynamic = 'force-dynamic'` em API routes dinâmicas
+8. Deploy **SOMENTE** via `git push origin main` — NUNCA via Vercel MCP direto
+
 ## Conflitos de regras
  - Sempre que houver conflito de instruções, peça para o usuário clarificar antes de proceguir.

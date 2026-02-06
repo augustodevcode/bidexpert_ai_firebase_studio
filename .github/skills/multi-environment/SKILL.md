@@ -266,3 +266,4 @@ npx prisma validate
 - [AGENTS.md](../../../AGENTS.md) - Diretrizes globais para agentes
 - [copilot-instructions.md](../../copilot-instructions.md) - Instruções detalhadas
 - [query-helpers.ts](../../../src/lib/prisma/query-helpers.ts) - Helpers de compatibilidade
+- [Vercel + PostgreSQL Deploy SKILL](../vercel-postgresql-deploy/SKILL.md) - Regras de deploy e compatibilidade PostgreSQL
