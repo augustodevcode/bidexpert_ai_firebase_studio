@@ -14,6 +14,21 @@ Esta skill documenta todas as regras, armadilhas e soluções aprendidas ao faze
 - Ao adicionar novas rotas de API
 - Ao alterar o Prisma schema
 
+## ⚠️ REGRA CRÍTICA: Prisma Relation Names (PascalCase)
+
+**O PostgreSQL schema usa PascalCase para TODAS as relações Prisma.** 
+Consulte `PRISMA_RELATION_NAMING.md` neste diretório para a tabela completa de mapeamentos.
+
+**Exemplos:**
+- `include: { Lot: true }` (NÃO `lot: true`)
+- `_count: { select: { Bid: true } }` (NÃO `bids: true`)
+- `connect: { Tenant: { connect: { id } } }` (NÃO `tenant:`)
+
+**Validação obrigatória antes do deploy:**
+```powershell
+cp prisma/schema.postgresql.prisma prisma/schema.prisma; npx prisma generate; npm run build
+```
+
 ## Regras de Deploy Vercel (OBRIGATÓRIAS)
 
 ### 1. NUNCA usar `prisma db push` no Build Command
