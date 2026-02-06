@@ -78,7 +78,7 @@ function createPrismaClient(databaseUrl?: string) {
                     // The schema @@map("itsm_query_logs") means the table is `itsm_query_logs`.
                     
                     await client.$executeRaw`
-                      INSERT INTO itsm_query_logs (query, duration, success, errorMessage, timestamp)
+                      INSERT INTO itsm_query_logs ("query", "duration", "success", "errorMessage", "timestamp")
                       VALUES (${queryString}, ${duration}, ${success}, ${errorMessage}, NOW())
                     `;
                   }

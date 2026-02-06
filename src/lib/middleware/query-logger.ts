@@ -33,7 +33,7 @@ export function createQueryLoggerMiddleware(prismaClient: any) {
 
             // Use raw query to avoid triggering middleware again
             await prismaClient.$executeRaw`
-              INSERT INTO itsm_query_logs (query, duration, success, errorMessage, timestamp)
+              INSERT INTO itsm_query_logs ("query", "duration", "success", "errorMessage", "timestamp")
               VALUES (${query}, ${duration}, ${success}, ${errorMessage}, NOW())
             `;
           }
