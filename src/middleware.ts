@@ -117,7 +117,9 @@ async function resolveTenantFromRequest(
   }
 
   // 2. Check if it's a plain Landlord domain (no subdomain)
-  if (LANDLORD_DOMAINS.some(d => hostWithoutPort === d.toLowerCase().replace(/:\d+$/, ''))) {
+  // Also match any *.vercel.app deployment URLs dynamically (Vercel generates unique URLs per deployment)
+  const isVercelDomain = /\.vercel\.app$/i.test(hostWithoutPort);
+  if (isVercelDomain || LANDLORD_DOMAINS.some(d => hostWithoutPort === d.toLowerCase().replace(/:\d+$/, ''))) {
     // Check for path-based routing on landlord domain: /app/[slug]
     const pathMatch = pathname.match(/^\/app\/([a-z0-9-]+)/i);
     if (pathMatch) {
@@ -190,6 +192,11 @@ export async function middleware(req: NextRequest) {
 
     // Skip redirect if accessing via IP address (avoids malformed URL crm.127.0.0.1)
     if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(baseDomain)) {
+      return NextResponse.next();
+    }
+
+    // Skip redirect for .vercel.app domains (Vercel does NOT support wildcard subdomains)
+    if (/\.vercel\.app$/i.test(baseDomain)) {
       return NextResponse.next();
     }
     
