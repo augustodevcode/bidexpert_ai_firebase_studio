@@ -397,9 +397,9 @@ export class LotService {
       actionDescription: primaryProcess?.actionDescription || null,
       actionCnjCode: primaryProcess?.actionCnjCode || null,
       // UI Fields mapping
-      totalArea: lot.assets?.reduce((acc: number, curr: any) => acc + (Number(curr.asset.totalArea) || 0), 0) || null,
-      type: lot.type || (lot.assets?.[0]?.asset?.categoryId ? 'IMOVEL' : 'OUTRO'),
-      occupancyStatus: lot.occupancyStatus || lot.assets?.[0]?.asset?.occupationStatus || null
+      totalArea: assetsOnLots?.reduce((acc: number, curr: any) => acc + (Number((curr.Asset ?? curr.asset)?.totalArea) || 0), 0) || null,
+      type: lot.type || ((assetsOnLots?.[0] as any)?.Asset?.categoryId ?? (assetsOnLots?.[0] as any)?.asset?.categoryId ? 'IMOVEL' : 'OUTRO'),
+      occupancyStatus: lot.occupancyStatus || (assetsOnLots?.[0] as any)?.Asset?.occupationStatus || (assetsOnLots?.[0] as any)?.asset?.occupationStatus || null
     } as Lot;
   }
 
@@ -640,12 +640,12 @@ export class LotService {
       await this.prisma.$transaction(async (tx) => {
         const bid = await tx.bid.create({
           data: {
-            lot: { connect: { id: internalLotId } },
-            auction: { connect: { id: lot.auctionId } },
-            bidder: { connect: { id: BigInt(userId) } },
+            Lot: { connect: { id: internalLotId } },
+            Auction: { connect: { id: lot.auctionId } },
+            User: { connect: { id: BigInt(userId) } },
             amount: new Prisma.Decimal(amount),
             bidderDisplay: bidderDisplay || null,
-            tenant: { connect: { id: lot.tenantId } }
+            Tenant: { connect: { id: lot.tenantId } }
           },
           select: {
             id: true,
@@ -660,10 +660,10 @@ export class LotService {
           data: {
             price: new Prisma.Decimal(amount),
             bidsCount: { increment: 1 },
-            bids: {
+            Bid: {
               connect: { id: bid.id }
             },
-            winner: { connect: { id: BigInt(userId) }},
+            User: { connect: { id: BigInt(userId) }},
             updatedAt: new Date()
           },
           select: {

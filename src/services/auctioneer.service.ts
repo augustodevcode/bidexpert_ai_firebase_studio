@@ -79,11 +79,11 @@ export class AuctioneerService {
         address: fullAddress,
         slug: slugify(data.name),
         publicId,
-        tenant: { connect: { id: BigInt(tenantId) } },
+        Tenant: { connect: { id: BigInt(tenantId) } },
       };
 
       if (userId) {
-        dataToCreate.user = { connect: { id: BigInt(userId) } };
+        (dataToCreate as any).User = { connect: { id: BigInt(userId) } };
       }
 
       if (cityId) {
@@ -200,16 +200,16 @@ export class AuctioneerService {
       where: { id: BigInt(auctioneerId), tenantId: BigInt(tenantId) },
       include: {
         _count: {
-          select: { auctions: true },
+          select: { Auction: true },
         },
-        auctions: {
+        Auction: {
           include: {
-            lots: {
+            Lot: {
               where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
               select: { price: true, updatedAt: true }
             },
             _count: {
-              select: { lots: true },
+              select: { Lot: true },
             },
           }
         }
@@ -218,8 +218,8 @@ export class AuctioneerService {
 
     if (!auctioneerData) return null;
 
-    const allLotsFromAuctions = (auctioneerData as any).auctions.flatMap((auc: any) => auc.lots);
-    const totalLots = (auctioneerData as any).auctions.reduce((sum: number, auc: any) => sum + auc._count.lots, 0);
+    const allLotsFromAuctions = (auctioneerData as any).Auction.flatMap((auc: any) => auc.Lot);
+    const totalLots = (auctioneerData as any).Auction.reduce((sum: number, auc: any) => sum + auc._count.Lot, 0);
     
     const totalRevenue = allLotsFromAuctions.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
     const lotsSoldCount = allLotsFromAuctions.length;
@@ -245,7 +245,7 @@ export class AuctioneerService {
 
     return {
       totalRevenue,
-      totalAuctions: (auctioneerData as any)._count.auctions,
+      totalAuctions: (auctioneerData as any)._count.Auction,
       totalLots,
       lotsSoldCount,
       salesRate,
@@ -259,16 +259,16 @@ export class AuctioneerService {
       where: { tenantId: BigInt(tenantId) },
       include: {
         _count: {
-          select: { auctions: true },
+          select: { Auction: true },
         },
-        auctions: {
+        Auction: {
           include: {
-            lots: {
+            Lot: {
               where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
               select: { price: true },
             },
             _count: {
-              select: { lots: true },
+              select: { Lot: true },
             },
           },
         },
@@ -276,17 +276,17 @@ export class AuctioneerService {
     });
 
     return auctioneers.map((auctioneer: any) => {
-      const allLotsFromAuctions = auctioneer.auctions.flatMap((auc: any) => auc.lots);
+      const allLotsFromAuctions = auctioneer.Auction.flatMap((auc: any) => auc.Lot);
       const totalRevenue = allLotsFromAuctions.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const lotsSoldCount = allLotsFromAuctions.length;
-      const totalLotsInAuctions = auctioneer.auctions.reduce((acc: number, auc: any) => acc + auc._count.lots, 0);
+      const totalLotsInAuctions = auctioneer.Auction.reduce((acc: number, auc: any) => acc + auc._count.Lot, 0);
       const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
       const salesRate = totalLotsInAuctions > 0 ? (lotsSoldCount / totalLotsInAuctions) * 100 : 0;
 
       return {
         id: auctioneer.id.toString(),
         name: auctioneer.name,
-        totalAuctions: auctioneer._count.auctions,
+        totalAuctions: auctioneer._count.Auction,
         totalLots: totalLotsInAuctions,
         lotsSoldCount,
         totalRevenue,

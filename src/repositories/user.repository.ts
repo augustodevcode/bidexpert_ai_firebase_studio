@@ -8,14 +8,14 @@ export class UserRepository {
   async findAll() {
     return prisma.user.findMany({
       include: {
-        roles: {
+        UsersOnRoles: {
           include: {
-            role: true,
+            Role: true,
           },
         },
-        tenants: {
+        UsersOnTenants: {
             include: {
-                tenant: true
+                Tenant: true
             }
         }
       },

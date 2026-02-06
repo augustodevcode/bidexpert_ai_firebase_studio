@@ -28,9 +28,9 @@ export async function getBidsForUserAction(userId: string): Promise<UserBid[]> {
     orderBy: { timestamp: 'desc' },
     distinct: ['lotId'], // Get only the latest bid from the user for each lot
     include: {
-        lot: {
+        Lot: {
             include: {
-                auction: {
+                Auction: {
                     select: { title: true }
                 }
             }
@@ -41,21 +41,21 @@ export async function getBidsForUserAction(userId: string): Promise<UserBid[]> {
   return userBidsRaw.map(bid => {
     let bidStatus: UserBid['bidStatus'] = 'PERDENDO';
 
-    if (bid.lot.status === 'ABERTO_PARA_LANCES') {
-        if (bid.amount === bid.lot.price) {
+    if (bid.Lot.status === 'ABERTO_PARA_LANCES') {
+        if (bid.amount === bid.Lot.price) {
             bidStatus = 'GANHANDO';
         } else {
             bidStatus = 'PERDENDO';
         }
-    } else if (bid.lot.status === 'VENDIDO') {
-        if (bid.lot.winnerId === userId) {
+    } else if (bid.Lot.status === 'VENDIDO') {
+        if (bid.Lot.winnerId === userId) {
             bidStatus = 'ARREMATADO';
         } else {
             bidStatus = 'NAO_ARREMATADO';
         }
-    } else if (bid.lot.status === 'ENCERRADO' || bid.lot.status === 'NAO_VENDIDO') {
+    } else if (bid.Lot.status === 'ENCERRADO' || bid.Lot.status === 'NAO_VENDIDO') {
         bidStatus = 'ENCERRADO';
-    } else if (bid.lot.status === 'CANCELADO') {
+    } else if (bid.Lot.status === 'CANCELADO') {
         bidStatus = 'CANCELADO';
     }
 
@@ -65,7 +65,7 @@ export async function getBidsForUserAction(userId: string): Promise<UserBid[]> {
         amount: bid.amount,
         date: bid.timestamp,
         // @ts-ignore
-        lot: { ...bid.lot, auctionName: bid.lot.auction.title },
+        lot: { ...bid.Lot, auctionName: bid.Lot.Auction?.title },
         bidStatus: bidStatus,
         userBidAmount: bid.amount,
     };

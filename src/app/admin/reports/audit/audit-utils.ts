@@ -35,18 +35,18 @@ export interface AuditData {
 }
 
 type AuditAuction = Auction & {
-  _count: { lots: number; stages: number };
-  lots: { id: string | number | bigint; title: string; status: string; publicId?: string | null }[];
-  stages?: { startDate: Date | null; endDate: Date | null }[];
+  _count: { Lot: number; AuctionStage: number };
+  Lot: { id: string | number | bigint; title: string; status: string; publicId?: string | null }[];
+  AuctionStage?: { startDate: Date | null; endDate: Date | null }[];
 };
 
 type AuditLot = Lot & {
-  _count: { assets: number; bids: number; questions: number; reviews: number; lotPrices?: number };
+  _count: { AssetsOnLots: number; Bid: number; LotQuestion: number; Review: number; LotStagePrice?: number };
 };
 
-type AuditAsset = Asset & { _count?: { lots?: number } };
+type AuditAsset = Asset & { _count?: { AssetsOnLots?: number } };
 
-type AuditUser = UserProfileWithPermissions & { _count: { documents: number } };
+type AuditUser = UserProfileWithPermissions & { _count: { UserDocument: number } };
 
 type AuditSeller = SellerProfileInfo & { isJudicial?: boolean | null; judicialBranchId?: string | number | bigint | null };
 
@@ -67,7 +67,7 @@ const hasImage = (item: { imageUrl?: string | null; imageMediaId?: unknown; gall
 
 const hasAuctionSchedule = (auction: AuditAuction): boolean => {
   if (auction.auctionDate && auction.endDate) return true;
-  return Boolean(auction.stages?.some(stage => stage.startDate && stage.endDate));
+  return Boolean(auction.AuctionStage?.some(stage => stage.startDate && stage.endDate));
 };
 
 export function buildAuditData(source: AuditSourceData): AuditData {
@@ -84,24 +84,24 @@ export function buildAuditData(source: AuditSourceData): AuditData {
   const openAuctionStatuses = ['EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES'];
 
   const auctionsWithoutLots = auctions
-    .filter(a => a._count.lots === 0 && !['RASCUNHO', 'EM_PREPARACAO'].includes(a.status))
+    .filter(a => a._count.Lot === 0 && !['RASCUNHO', 'EM_PREPARACAO'].includes(a.status))
     .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
 
   const lotsWithoutAssets = lots
-    .filter(l => l._count.assets === 0)
+    .filter(l => l._count.AssetsOnLots === 0)
     .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
 
   const auctionsWithoutStages = auctions
-    .filter(a => a._count.stages === 0 && !['RASCUNHO', 'EM_PREPARACAO'].includes(a.status))
+    .filter(a => a._count.AuctionStage === 0 && !['RASCUNHO', 'EM_PREPARACAO'].includes(a.status))
     .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
 
   const closedAuctionsWithOpenLots = auctions
-    .filter(a => (a.status === 'ENCERRADO' || a.status === 'FINALIZADO') && a.lots.length > 0)
-    .map(a => ({ auction: { id: a.id, title: a.title, status: a.status, publicId: a.publicId }, lots: a.lots }));
+    .filter(a => (a.status === 'ENCERRADO' || a.status === 'FINALIZADO') && a.Lot.length > 0)
+    .map(a => ({ auction: { id: a.id, title: a.title, status: a.status, publicId: a.publicId }, lots: a.Lot }));
 
   const canceledAuctionsWithOpenLots = auctions
-    .filter(a => a.status === 'CANCELADO' && a.lots.length > 0)
-    .map(a => ({ auction: { id: a.id, title: a.title, status: a.status, publicId: a.publicId }, lots: a.lots }));
+    .filter(a => a.status === 'CANCELADO' && a.Lot.length > 0)
+    .map(a => ({ auction: { id: a.id, title: a.title, status: a.status, publicId: a.publicId }, lots: a.Lot }));
 
   const auctionsWithoutLocation = auctions
     .filter(a => !a.cityId && !a.stateId && !a.zipCode && !a.street)
@@ -120,7 +120,7 @@ export function buildAuditData(source: AuditSourceData): AuditData {
     .map(b => ({ id: b.id, title: b.title, status: b.status, publicId: b.publicId }));
 
   const endedLotsWithoutBids = lots
-    .filter(l => l.status === 'ENCERRADO' && l._count.bids === 0)
+    .filter(l => l.status === 'ENCERRADO' && l._count.Bid === 0)
     .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
 
   const directSalesWithMissingData = directSales
@@ -136,15 +136,15 @@ export function buildAuditData(source: AuditSourceData): AuditData {
     .map(d => ({ id: d.id, title: d.title, status: d.status, publicId: d.publicId }));
 
   const lotsWithoutQuestions = lots
-    .filter(l => l._count.questions === 0 && (l.status === 'ABERTO_PARA_LANCES' || l.status === 'VENDIDO'))
+    .filter(l => l._count.LotQuestion === 0 && (l.status === 'ABERTO_PARA_LANCES' || l.status === 'VENDIDO'))
     .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
 
   const lotsWithoutReviews = lots
-    .filter(l => l._count.reviews === 0 && l.status === 'VENDIDO')
+    .filter(l => l._count.Review === 0 && l.status === 'VENDIDO')
     .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
 
   const habilitatedUsersWithoutDocs = users
-    .filter(u => u.habilitationStatus === 'HABILITADO' && u._count.documents === 0)
+    .filter(u => u.habilitationStatus === 'HABILITADO' && u._count.UserDocument === 0)
     .map(u => ({ id: u.id, fullName: u.fullName, email: u.email }));
 
   const lotsWithoutImages = lots
@@ -180,11 +180,11 @@ export function buildAuditData(source: AuditSourceData): AuditData {
     .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
 
   const assetsLoteadoWithoutLots = assets
-    .filter(a => a.status === 'LOTEADO' && (a._count?.lots ?? 0) === 0)
+    .filter(a => a.status === 'LOTEADO' && (a._count?.AssetsOnLots ?? 0) === 0)
     .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
 
   const assetsDisponivelWithLots = assets
-    .filter(a => a.status === 'DISPONIVEL' && (a._count?.lots ?? 0) > 0)
+    .filter(a => a.status === 'DISPONIVEL' && (a._count?.AssetsOnLots ?? 0) > 0)
     .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
 
   return {

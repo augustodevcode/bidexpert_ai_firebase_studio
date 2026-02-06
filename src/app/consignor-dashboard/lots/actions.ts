@@ -29,10 +29,10 @@ export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]
       sellerId: sellerId,
       tenantId: tenantId,
     },
-    include: { auction: { select: { title: true } } },
+    include: { Auction: { select: { title: true } } },
     orderBy: { createdAt: 'desc' }
   });
 
   // @ts-ignore
-  return lots.map(lot => ({ ...lot, auctionName: lot.auction?.title }));
+  return lots.map(lot => ({ ...lot, auctionName: (lot as any).Auction?.title }));
 }

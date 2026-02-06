@@ -172,15 +172,15 @@ export class AssetService {
         title: assetData.title,
         ...normalizedAssetData,
         publicId,
-        tenant: { connect: { id: BigInt(tenantId) } },
+        Tenant: { connect: { id: BigInt(tenantId) } },
         mediaItemIds: mediaItemIds ? (mediaItemIds as any) : undefined, // Save to JSON field as well
       };
 
       // Conecta relacionamentos
-      if (categoryId) dataToCreate.category = { connect: { id: BigInt(categoryId) } };
-      if (subcategoryId) dataToCreate.subcategory = { connect: { id: BigInt(subcategoryId) } };
-      if (judicialProcessId) dataToCreate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
-      if (sellerId) dataToCreate.seller = { connect: { id: BigInt(sellerId) } };
+      if (categoryId) (dataToCreate as any).LotCategory = { connect: { id: BigInt(categoryId) } };
+      if (subcategoryId) (dataToCreate as any).Subcategory = { connect: { id: BigInt(subcategoryId) } };
+      if (judicialProcessId) (dataToCreate as any).JudicialProcess = { connect: { id: BigInt(judicialProcessId) } };
+      if (sellerId) (dataToCreate as any).Seller = { connect: { id: BigInt(sellerId) } };
       
       // Atualiza locationCity e locationState baseado nos IDs se fornecidos
       if (cityId) {
@@ -298,17 +298,17 @@ export class AssetService {
       const activeLinks = await this.prisma.assetsOnLots.findMany({
         where: { 
           assetId: BigInt(id),
-          lot: {
+          Lot: {
             status: { in: LOT_ACTIVE_STATUSES }
           }
         },
         include: {
-          lot: { select: { title: true, status: true, publicId: true } }
+          Lot: { select: { title: true, status: true, publicId: true } }
         }
       });
 
       if (activeLinks.length > 0) {
-        const lotNames = activeLinks.map(l => `"${l.lot.title}" (${l.lot.status})`).join(', ');
+        const lotNames = activeLinks.map(l => `"${(l as any).Lot.title}" (${(l as any).Lot.status})`).join(', ');
         return { 
           success: false, 
           message: `Não é possível excluir. Ativo está vinculado a Lotes ativos: ${lotNames}`
@@ -319,7 +319,7 @@ export class AssetService {
       const soldLinks = await this.prisma.assetsOnLots.findMany({
         where: { 
           assetId: BigInt(id),
-          lot: {
+          Lot: {
             status: { in: LOT_SOLD_STATUSES }
           }
         }
@@ -354,9 +354,9 @@ export class AssetService {
       const asset = await this.prisma.asset.findUnique({
         where: { id: BigInt(assetId) },
         include: {
-          lots: {
+          AssetsOnLots: {
             include: {
-              lot: { select: { status: true } }
+              Lot: { select: { status: true } }
             }
           }
         }
@@ -369,13 +369,13 @@ export class AssetService {
       let newStatus: AssetStatus = asset.status;
 
       // Se não está vinculado a nenhum Lote, deve ser DISPONIVEL (ou CADASTRO se nunca foi usado)
-      if (asset.lots.length === 0) {
+      if ((asset as any).AssetsOnLots.length === 0) {
         if (asset.status === 'LOTEADO') {
           newStatus = 'DISPONIVEL';
         }
       } else {
         // Verificar se algum Lote foi vendido
-        const hasSoldLot = asset.lots.some(l => LOT_SOLD_STATUSES.includes(l.lot.status as LotStatus));
+        const hasSoldLot = (asset as any).AssetsOnLots.some((l: any) => LOT_SOLD_STATUSES.includes(l.Lot.status as LotStatus));
         if (hasSoldLot) {
           newStatus = 'VENDIDO';
         } else {
@@ -411,13 +411,13 @@ export class AssetService {
       const asset = await this.prisma.asset.findUnique({
         where: { id: BigInt(assetId) },
         include: {
-          lots: {
+          AssetsOnLots: {
             include: {
-              lot: { 
+              Lot: { 
                 select: { 
                   status: true, 
                   auctionId: true,
-                  auction: { select: { title: true, publicId: true } }
+                  Auction: { select: { title: true, publicId: true } }
                 } 
               }
             }
@@ -439,12 +439,12 @@ export class AssetService {
       }
 
       // Verificar se já está em Lote ativo de outro Leilão
-      for (const link of asset.lots) {
-        if (LOT_ACTIVE_STATUSES.includes(link.lot.status as LotStatus)) {
-          if (targetAuctionId && link.lot.auctionId.toString() !== targetAuctionId) {
+      for (const link of (asset as any).AssetsOnLots) {
+        if (LOT_ACTIVE_STATUSES.includes(link.Lot.status as LotStatus)) {
+          if (targetAuctionId && link.Lot.auctionId.toString() !== targetAuctionId) {
             return { 
               allowed: false, 
-              reason: `Ativo já está em um Lote ativo no Leilão "${link.lot.auction.title}"`
+              reason: `Ativo já está em um Lote ativo no Leilão "${link.Lot.Auction.title}"`
             };
           }
         }

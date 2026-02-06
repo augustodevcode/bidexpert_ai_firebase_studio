@@ -13,9 +13,9 @@ export class JudicialBranchRepository {
   async findAll(): Promise<any[]> {
     return this.prisma.judicialBranch.findMany({
       include: {
-        district: {
+        JudicialDistrict: {
           include: {
-            state: true,
+            State: true,
           }
         }
       },
@@ -27,9 +27,9 @@ export class JudicialBranchRepository {
     return this.prisma.judicialBranch.findUnique({
       where: { id },
       include: {
-        district: {
+        JudicialDistrict: {
           include: {
-            state: true
+            State: true
           }
         }
       }

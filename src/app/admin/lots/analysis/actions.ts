@@ -25,16 +25,16 @@ export async function getLotsPerformanceAction(): Promise<LotPerformanceData[]> 
   try {
     const lots = await prisma.lot.findMany({
       include: {
-        auction: { select: { title: true } },
-        category: { select: { name: true } },
-        seller: { select: { name: true } },
+        Auction: { select: { title: true } },
+        LotCategory: { select: { name: true } },
+        Seller: { select: { name: true } },
         _count: {
-          select: { bids: true },
+          select: { Bid: true },
         },
       },
       orderBy: [
         {
-          bids: {
+          Bid: {
             _count: 'desc',
           },
         },
@@ -46,10 +46,10 @@ export async function getLotsPerformanceAction(): Promise<LotPerformanceData[]> 
 
     return lots.map(lot => ({
       ...lot,
-      auctionName: lot.auction?.title || 'N/A',
-      categoryName: lot.category?.name || 'N/A',
-      sellerName: lot.seller?.name || 'N/A',
-      bidsCount: lot._count.bids,
+      auctionName: (lot as any).Auction?.title || 'N/A',
+      categoryName: (lot as any).LotCategory?.name || 'N/A',
+      sellerName: (lot as any).Seller?.name || 'N/A',
+      bidsCount: (lot as any)._count.Bid,
     })) as LotPerformanceData[];
   } catch (error: any) {
     console.error("[Action - getLotsPerformanceAction] Error fetching lot performance:", error);

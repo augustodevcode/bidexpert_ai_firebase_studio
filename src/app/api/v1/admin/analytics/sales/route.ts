@@ -90,13 +90,13 @@ export async function GET(request: NextRequest) {
         },
       },
       include: {
-        lot: {
+        Lot: {
           select: {
             id: true,
             publicId: true,
             title: true,
             price: true,
-            auction: {
+            Auction: {
               select: {
                 id: true,
                 publicId: true,
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        user: {
+        User: {
           select: {
             id: true,
             fullName: true,
@@ -175,15 +175,15 @@ export async function GET(request: NextRequest) {
     // 8. Formatar vendas para resposta
     const sales = confirmedSales.map((sale: typeof confirmedSales[number]) => ({
       id: sale.id.toString(),
-      lotId: sale.lot.id.toString(),
-      lotPublicId: sale.lot.publicId,
-      lotTitle: sale.lot.title,
-      auctionId: sale.lot.auction?.id.toString(),
-      auctionPublicId: sale.lot.auction?.publicId,
-      auctionTitle: sale.lot.auction?.title,
-      winnerId: sale.user.id.toString(),
-      winnerName: sale.user.fullName,
-      winnerEmail: sale.user.email,
+      lotId: (sale.Lot || (sale as any).lot).id.toString(),
+      lotPublicId: (sale.Lot || (sale as any).lot).publicId,
+      lotTitle: (sale.Lot || (sale as any).lot).title,
+      auctionId: (sale.Lot || (sale as any).lot).Auction?.id.toString() || (sale.Lot || (sale as any).lot).auction?.id.toString(),
+      auctionPublicId: (sale.Lot || (sale as any).lot).Auction?.publicId || (sale.Lot || (sale as any).lot).auction?.publicId,
+      auctionTitle: (sale.Lot || (sale as any).lot).Auction?.title || (sale.Lot || (sale as any).lot).auction?.title,
+      winnerId: (sale.User || (sale as any).user).id.toString(),
+      winnerName: (sale.User || (sale as any).user).fullName,
+      winnerEmail: (sale.User || (sale as any).user).email,
       saleAmount: Number(sale.winningBidAmount),
       commission: Number((Number(sale.winningBidAmount) * commissionRate).toFixed(2)),
       paymentStatus: sale.paymentStatus,

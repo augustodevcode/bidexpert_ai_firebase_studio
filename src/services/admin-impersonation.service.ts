@@ -65,18 +65,18 @@ export class AdminImpersonationService {
     // Busca usuários com role de advogado
     const lawyers = await prisma.user.findMany({
       where: {
-        roles: {
+        UsersOnRoles: {
           some: {
-            role: {
+            Role: {
               nameNormalized: { in: ['LAWYER', 'ADVOGADO'] },
             },
           },
         },
       },
       include: {
-        roles: {
+        UsersOnRoles: {
           include: {
-            role: true,
+            Role: true,
           },
         },
       },
@@ -91,7 +91,7 @@ export class AdminImpersonationService {
         if (lawyer.cpf) {
           const processesCount = await prisma.judicialProcess.count({
             where: {
-              parties: {
+              JudicialParty: {
                 some: {
                   documentNumber: lawyer.cpf,
                   partyType: { in: ['ADVOGADO_AUTOR', 'ADVOGADO_REU'] },

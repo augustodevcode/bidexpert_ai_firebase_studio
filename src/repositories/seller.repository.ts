@@ -53,7 +53,7 @@ export class SellerRepository {
       // @ts-ignore
       return this.prisma.lot.findMany({
         where: { sellerId: BigInt(sellerId), tenantId: BigInt(tenantId) },
-        include: { auction: true }
+        include: { Auction: true }
       });
   }
 

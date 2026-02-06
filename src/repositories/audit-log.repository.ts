@@ -63,7 +63,7 @@ export class AuditLogRepository {
         },
       },
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             fullName: true,

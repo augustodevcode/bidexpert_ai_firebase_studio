@@ -127,15 +127,15 @@ export class UserService {
         const dataToCreate: Prisma.UserCreateInput = {
             ...(userData as any),
             password: hashedPassword,
-            roles: {
+            UsersOnRoles: {
                 create: finalRoleIds.map(roleId => ({
-                    role: { connect: { id: BigInt(roleId) } },
+                    Role: { connect: { id: BigInt(roleId) } },
                     assignedBy: 'system-signup'
                 }))
             },
-            tenants: {
+            UsersOnTenants: {
                 create: tenantId ? [{
-                    tenant: { connect: { id: BigInt(tenantId) } },
+                    Tenant: { connect: { id: BigInt(tenantId) } },
                     assignedBy: 'system-signup'
                 }] : []
             }

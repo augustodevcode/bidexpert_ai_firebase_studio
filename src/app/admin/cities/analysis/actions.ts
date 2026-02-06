@@ -28,15 +28,15 @@ export async function getCitiesPerformanceAction(): Promise<CityPerformanceData[
   try {
     const citiesWithLots = await prisma.city.findMany({
       where: {
-        lots: {
+        Lot: {
           some: {}, // Ensure the city has at least one lot
         },
       },
       include: {
         _count: {
-          select: { lots: true },
+          select: { Lot: true },
         },
-        lots: {
+        Lot: {
           where: { status: 'VENDIDO' },
           select: { price: true },
         },
@@ -44,9 +44,9 @@ export async function getCitiesPerformanceAction(): Promise<CityPerformanceData[
     });
 
     return citiesWithLots.map(city => {
-      const lotsSoldCount = city.lots.length;
-      const totalRevenue = city.lots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
-      const totalLots = city._count.lots;
+      const lotsSoldCount = (city as any).Lot.length;
+      const totalRevenue = (city as any).Lot.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
+      const totalLots = (city as any)._count.Lot;
       const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
       const latitude = city.latitude ? Number(city.latitude) : null;
       const longitude = city.longitude ? Number(city.longitude) : null;

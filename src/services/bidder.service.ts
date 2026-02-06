@@ -519,14 +519,14 @@ export class BidderService {
           isActive: true
         },
         include: {
-          lot: {
+          Lot: {
             select: {
               id: true,
               publicId: true,
               title: true,
               price: true,
               status: true,
-              auction: {
+              Auction: {
                 select: {
                   id: true,
                   title: true
@@ -541,12 +541,12 @@ export class BidderService {
       return maxBids.map(mb => ({
         id: mb.id.toString(),
         lotId: mb.lotId.toString(),
-        lotPublicId: mb.lot?.publicId,
-        lotTitle: mb.lot?.title || 'Lote',
-        auctionId: mb.lot?.auction?.id.toString(),
-        auctionTitle: mb.lot?.auction?.title || 'Leilão',
+        lotPublicId: (mb as any).Lot?.publicId,
+        lotTitle: (mb as any).Lot?.title || 'Lote',
+        auctionId: (mb as any).Lot?.Auction?.id.toString(),
+        auctionTitle: (mb as any).Lot?.Auction?.title || 'Leilão',
         maxAmount: Number(mb.maxAmount),
-        currentBid: mb.lot?.price ? Number(mb.lot.price) : null,
+        currentBid: (mb as any).Lot?.price ? Number((mb as any).Lot.price) : null,
         isActive: mb.isActive,
         lotStatus: mb.lot?.status || 'DESCONHECIDO',
         createdAt: mb.createdAt,

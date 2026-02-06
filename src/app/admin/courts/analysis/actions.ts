@@ -28,11 +28,11 @@ export async function getCourtsPerformanceAction(): Promise<CourtPerformanceData
     const courts = await prisma.court.findMany({
       include: {
         _count: {
-          select: { judicialProcesses: true, auctions: true },
+          select: { JudicialProcess: true, Auction: true },
         },
-        auctions: {
+        Auction: {
           include: {
-            lots: {
+            Lot: {
               where: { status: 'VENDIDO' },
               select: { price: true },
             },
@@ -42,16 +42,16 @@ export async function getCourtsPerformanceAction(): Promise<CourtPerformanceData
     });
 
     return courts.map(court => {
-      const allLotsFromAuctions = court.auctions.flatMap(auc => auc.lots);
-      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const allLotsFromAuctions = (court as any).Auction.flatMap((auc: any) => auc.Lot);
+      const totalRevenue = allLotsFromAuctions.reduce((acc: number, lot: any) => acc + (lot.price || 0), 0);
       const totalLotsSold = allLotsFromAuctions.length;
       const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
 
       return {
         id: court.id,
         name: court.name,
-        totalProcesses: court._count.judicialProcesses,
-        totalAuctions: court._count.auctions,
+        totalProcesses: (court as any)._count.JudicialProcess,
+        totalAuctions: (court as any)._count.Auction,
         totalLotsSold,
         totalRevenue: Number(totalRevenue),
         averageTicket: Number(averageTicket),

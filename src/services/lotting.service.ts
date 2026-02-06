@@ -66,9 +66,9 @@ export class LottingService {
     }
 
     if (filters.judicialProcessId) {
-      whereClause.assets = {
+      whereClause.AssetsOnLots = {
         some: {
-          asset: {
+          Asset: {
             judicialProcessId: BigInt(filters.judicialProcessId)
           }
         }
@@ -78,10 +78,10 @@ export class LottingService {
     const lots = await prisma.lot.findMany({
       where: whereClause,
       include: {
-        auction: { select: { id: true, title: true } },
-        assets: {
+        Auction: { select: { id: true, title: true } },
+        AssetsOnLots: {
           include: {
-            asset: {
+            Asset: {
               select: { evaluationValue: true }
             }
           }
@@ -95,11 +95,11 @@ export class LottingService {
       id: lot.id.toString(),
       title: lot.title,
       status: lot.status as LotStatus,
-      assetCount: lot.assets.length,
-      valuation: lot.assets.reduce((acc: number, curr: any) => acc + Number(curr.asset.evaluationValue || 0), 0),
+      assetCount: lot.AssetsOnLots.length,
+      valuation: lot.AssetsOnLots.reduce((acc: number, curr: any) => acc + Number(curr.Asset.evaluationValue || 0), 0),
       number: lot.number,
-      auctionTitle: lot.auction?.title ?? null,
-      auctionId: lot.auction?.id ? lot.auction.id.toString() : null,
+      auctionTitle: lot.Auction?.title ?? null,
+      auctionId: lot.Auction?.id ? lot.Auction.id.toString() : null,
       updatedAt: lot.updatedAt?.toISOString(),
     }));
   }
@@ -115,8 +115,8 @@ export class LottingService {
         id: true,
         processNumber: true,
         updatedAt: true,
-        lots: { select: { id: true } },
-        assets: { select: { id: true, evaluationValue: true } }
+        Lot: { select: { id: true } },
+        Asset: { select: { id: true, evaluationValue: true } }
       }
     });
   }

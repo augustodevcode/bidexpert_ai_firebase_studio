@@ -23,22 +23,22 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
     const auctions = await prisma.auction.findMany({
       include: {
         _count: {
-          select: { lots: true },
+          select: { Lot: true },
         },
-        lots: {
+        Lot: {
           where: { status: 'VENDIDO' },
           select: { price: true },
         },
-        seller: { select: { name: true } },
-        auctioneer: { select: { name: true } },
-        stages: true, // Incluir os estágios
+        Seller: { select: { name: true } },
+        Auctioneer: { select: { name: true } },
+        AuctionStage: true, // Incluir os estágios
       },
     });
 
     return auctions.map(auction => {
-      const totalRevenue = auction.lots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
-      const lotsSoldCount = auction.lots.length;
-      const totalLots = auction._count.lots;
+      const totalRevenue = (auction as any).Lot.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
+      const lotsSoldCount = (auction as any).Lot.length;
+      const totalLots = (auction as any)._count.Lot;
       const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
       const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
 
@@ -52,10 +52,10 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
         totalRevenue,
         averageTicket,
         salesRate,
-        sellerName: auction.seller?.name,
-        auctioneerName: auction.auctioneer?.name,
+        sellerName: (auction as any).Seller?.name,
+        auctioneerName: (auction as any).Auctioneer?.name,
         auctionDate: auction.auctionDate, 
-        auctionStages: auction.stages,
+        auctionStages: (auction as any).AuctionStage,
       };
     });
   } catch (error: any) {
@@ -84,12 +84,12 @@ export async function getAuctionDashboardDataAction(auctionId: string): Promise<
         const auction = await prisma.auction.findFirst({
             where: whereClause,
             include: {
-                lots: {
+                Lot: {
                     include: {
-                        bids: {
+                        Bid: {
                             orderBy: { timestamp: 'asc' }
                         },
-                        category: {
+                        LotCategory: {
                             select: { name: true }
                         }
                     }
@@ -101,16 +101,16 @@ export async function getAuctionDashboardDataAction(auctionId: string): Promise<
             return null;
         }
 
-        const soldLots = auction.lots.filter(lot => lot.status === 'VENDIDO');
-        const totalRevenue = soldLots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
-        const totalBids = auction.lots.reduce((acc, lot) => acc + lot.bids.length, 0);
-        const uniqueBidders = new Set(auction.lots.flatMap(lot => lot.bids.map(bid => bid.bidderId))).size;
-        const salesRate = auction.lots.length > 0 ? (soldLots.length / auction.lots.length) * 100 : 0;
+        const soldLots = (auction as any).Lot.filter((lot: any) => lot.status === 'VENDIDO');
+        const totalRevenue = soldLots.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
+        const totalBids = (auction as any).Lot.reduce((acc: number, lot: any) => acc + lot.Bid.length, 0);
+        const uniqueBidders = new Set((auction as any).Lot.flatMap((lot: any) => lot.Bid.map((bid: any) => bid.bidderId))).size;
+        const salesRate = (auction as any).Lot.length > 0 ? (soldLots.length / (auction as any).Lot.length) * 100 : 0;
 
         // Revenue by Category
         const revenueByCategoryMap = new Map<string, number>();
-        soldLots.forEach(lot => {
-            const categoryName = lot.category?.name || 'Sem Categoria';
+        soldLots.forEach((lot: any) => {
+            const categoryName = lot.LotCategory?.name || 'Sem Categoria';
             const currentRevenue = revenueByCategoryMap.get(categoryName) || 0;
             revenueByCategoryMap.set(categoryName, currentRevenue + (lot.price ? Number(lot.price) : 0));
         });
@@ -119,7 +119,7 @@ export async function getAuctionDashboardDataAction(auctionId: string): Promise<
 
         // Bids over Time
         const bidsOverTimeMap = new Map<string, number>();
-        const allBids = auction.lots.flatMap(lot => lot.bids);
+        const allBids = (auction as any).Lot.flatMap((lot: any) => lot.Bid);
         allBids.forEach(bid => {
             const dayKey = formatInSaoPaulo(bid.timestamp, 'dd/MM'); // Use timezone-aware function
             bidsOverTimeMap.set(dayKey, (bidsOverTimeMap.get(dayKey) || 0) + 1);

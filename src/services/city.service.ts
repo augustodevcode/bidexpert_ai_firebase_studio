@@ -68,7 +68,7 @@ export class CityService {
       const dataToUpsert: Prisma.CityCreateInput = {
         name: data.name,
         slug: slugify(data.name),
-        state: { connect: { id: BigInt(data.stateId) } },
+        State: { connect: { id: BigInt(data.stateId) } },
         ibgeCode: data.ibgeCode || null,
       };
 

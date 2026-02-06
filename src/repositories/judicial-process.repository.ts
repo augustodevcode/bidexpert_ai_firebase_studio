@@ -17,7 +17,6 @@ export class JudicialProcessRepository {
             id: true,
             title: true,
             status: true,
-            isJudicial: true,
             publicId: true
           }
         },

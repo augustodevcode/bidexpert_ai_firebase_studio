@@ -39,7 +39,7 @@ export async function GET(
       prisma.auditLog.findMany({
         where,
         include: {
-          user: {
+          User: {
             select: {
               id: true,
               email: true,
@@ -77,8 +77,8 @@ export async function GET(
       return {
         id: log.id.toString(),
         userId: log.userId.toString(),
-        userName: log.user.fullName || log.user.email,
-        userEmail: log.user.email,
+        userName: (log.User || (log as any).user)?.fullName || (log.User || (log as any).user)?.email,
+        userEmail: (log.User || (log as any).user)?.email,
         modifiedOn: log.timestamp.toISOString(),
         operationType: log.action,
         changes: fieldChanges,

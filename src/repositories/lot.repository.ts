@@ -17,11 +17,11 @@ export class LotRepository {
         where: finalWhere,
         take: limit,
         include: {
-            assets: { include: { asset: true } },
-            auction: { select: { title: true, status: true } },
-            category: { select: { name: true } },
-            subcategory: { select: { name: true } },
-            seller: { select: { name: true } },
+            AssetsOnLots: { include: { Asset: true } },
+            Auction: { select: { title: true, status: true } },
+            LotCategory: { select: { name: true } },
+            Subcategory: { select: { name: true } },
+            Seller: { select: { name: true } },
         },
         orderBy: { number: 'asc' }
     });
@@ -42,11 +42,11 @@ export class LotRepository {
     return prisma.lot.findFirst({
       where: whereClause,
       include: {
-        assets: { include: { asset: true } },
-        auction: true,
-        seller: { select: { name: true } },
-        category: { select: { name: true } },
-        subcategory: { select: { name: true } },
+        AssetsOnLots: { include: { Asset: true } },
+        Auction: true,
+        Seller: { select: { name: true } },
+        LotCategory: { select: { name: true } },
+        Subcategory: { select: { name: true } },
       },
     });
   }
@@ -55,7 +55,7 @@ export class LotRepository {
     if (!ids || ids.length === 0) return [];
     return prisma.lot.findMany({
         where: { id: { in: ids } },
-        include: { auction: true }
+        include: { Auction: true }
     });
   }
 

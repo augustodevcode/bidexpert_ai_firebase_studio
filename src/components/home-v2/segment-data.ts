@@ -73,7 +73,7 @@ export async function getSegmentEvents(
         },
         OR: [
           {
-            category: {
+            LotCategory: {
               name: {
                 contains: patterns[0],
               },
@@ -87,10 +87,10 @@ export async function getSegmentEvents(
         ],
       },
       include: {
-        seller: true,
-        auctioneer: true,
+        Seller: true,
+        Auctioneer: true,
         _count: {
-          select: { lots: true },
+          select: { Lot: true },
         },
       },
       orderBy: { auctionDate: 'asc' },
@@ -100,14 +100,14 @@ export async function getSegmentEvents(
     return auctions.map((auction) => ({
       id: auction.id.toString(),
       title: auction.title,
-      consignor: auction.seller?.name || auction.auctioneer?.name || 'BidExpert',
-      consignorLogo: auction.seller?.logoUrl || auction.auctioneer?.logoUrl || undefined,
+      consignor: (auction as any).Seller?.name || (auction as any).seller?.name || (auction as any).Auctioneer?.name || (auction as any).auctioneer?.name || 'BidExpert',
+      consignorLogo: (auction as any).Seller?.logoUrl || (auction as any).seller?.logoUrl || (auction as any).Auctioneer?.logoUrl || (auction as any).auctioneer?.logoUrl || undefined,
       eventType: mapAuctionTypeToEventType(auction.auctionType),
       startDate: auction.auctionDate || new Date(),
       endDate: auction.endDate || new Date(),
       status: mapAuctionStatusToEventStatus(auction.status),
-      lotsCount: auction._count.lots,
-      imageUrl: auction.seller?.logoUrl || undefined,
+      lotsCount: (auction._count as any).Lot ?? (auction._count as any).lots ?? 0,
+      imageUrl: (auction as any).Seller?.logoUrl || (auction as any).seller?.logoUrl || undefined,
       location: auction.address || undefined,
     }));
   } catch (error) {
@@ -131,21 +131,21 @@ export async function getSegmentLots(
         OR: patterns.map(pattern => ({
           OR: [
             { title: { contains: pattern } },
-            { category: { name: { contains: pattern } } },
+            { LotCategory: { name: { contains: pattern } } },
             { type: { contains: pattern } },
           ],
         })),
       },
       include: {
-        category: true,
-        auction: {
+        LotCategory: true,
+        Auction: {
           include: {
-            seller: true,
-            auctioneer: true,
-            stages: true,
+            Seller: true,
+            Auctioneer: true,
+            AuctionStage: true,
           }
         },
-        lotPrices: true,
+        LotStagePrice: true,
       },
       orderBy: [
         { isFeatured: 'desc' },
@@ -202,7 +202,7 @@ export async function getSegmentDealOfTheDay(
         OR: patterns.map(pattern => ({
           OR: [
             { title: { contains: pattern } },
-            { category: { name: { contains: pattern } } },
+            { LotCategory: { name: { contains: pattern } } },
           ],
         })),
       },
@@ -256,7 +256,7 @@ export async function getSegmentStats(segment: SegmentType): Promise<{
           OR: patterns.map(pattern => ({
             OR: [
               { title: { contains: pattern } },
-              { category: { name: { contains: pattern } } },
+              { LotCategory: { name: { contains: pattern } } },
             ],
           })),
         },
@@ -267,7 +267,7 @@ export async function getSegmentStats(segment: SegmentType): Promise<{
           OR: patterns.map(pattern => ({
             OR: [
               { title: { contains: pattern } },
-              { category: { name: { contains: pattern } } },
+              { LotCategory: { name: { contains: pattern } } },
             ],
           })),
         },

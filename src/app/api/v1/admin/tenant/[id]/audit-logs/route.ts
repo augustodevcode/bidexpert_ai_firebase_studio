@@ -81,7 +81,7 @@ export async function GET(
     const logs = await prisma.auditLog.findMany({
       where,
       include: {
-        user: {
+        User: {
           select: { id: true, email: true, fullName: true },
         },
       },
@@ -101,10 +101,10 @@ export async function GET(
       newValues: log.newValues,
       ipAddress: log.ipAddress,
       userAgent: log.userAgent,
-      user: log.user ? {
-        id: log.user.id.toString(),
-        email: log.user.email,
-        fullName: log.user.fullName,
+      user: (log as any).User ? {
+        id: (log as any).User.id.toString(),
+        email: (log as any).User.email,
+        fullName: (log as any).User.fullName,
       } : null,
       createdAt: log.createdAt,
     }));

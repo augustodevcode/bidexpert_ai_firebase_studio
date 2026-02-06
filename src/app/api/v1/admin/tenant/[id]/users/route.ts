@@ -47,7 +47,7 @@ export async function GET(
 
     // 4. Construir filtros
     const where: any = {
-      usersOnTenants: {
+      UsersOnTenants: {
         some: { tenantId },
       },
     };
@@ -61,8 +61,8 @@ export async function GET(
     }
 
     if (queryParams.role) {
-      where.usersOnRoles = {
-        some: { role: { name: queryParams.role } },
+      where.UsersOnRoles = {
+        some: { Role: { name: queryParams.role } },
       };
     }
 
@@ -72,14 +72,14 @@ export async function GET(
     const users = await prisma.user.findMany({
       where,
       include: {
-        usersOnRoles: {
-          include: { role: { select: { name: true } } },
+        UsersOnRoles: {
+          include: { Role: { select: { name: true } } },
         },
-        usersOnTenants: {
+        UsersOnTenants: {
           where: { tenantId },
           select: { 
             isActive: true, 
-            createdAt: true,
+            assignedAt: true,
           },
         },
       },
@@ -94,14 +94,12 @@ export async function GET(
       email: user.email,
       fullName: user.fullName,
       cpf: user.cpf,
-      phone: user.phone,
-      isEmailVerified: user.isEmailVerified,
+      cellPhone: user.cellPhone,
       createdAt: user.createdAt,
-      lastLoginAt: user.lastLoginAt,
-      roles: user.usersOnRoles.map(ur => ur.role.name),
+      roles: (user as any).UsersOnRoles.map((ur: any) => ur.Role.name),
       tenantMembership: {
-        isActive: user.usersOnTenants[0]?.isActive ?? true,
-        joinedAt: user.usersOnTenants[0]?.createdAt,
+        isActive: (user as any).UsersOnTenants[0]?.isActive ?? true,
+        joinedAt: (user as any).UsersOnTenants[0]?.assignedAt,
       },
     }));
 

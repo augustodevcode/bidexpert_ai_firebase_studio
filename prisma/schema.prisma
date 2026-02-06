@@ -1,9 +1,22 @@
+// =============================================================================
+// PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
+// =============================================================================
+// Este schema é uma cópia do schema.prisma principal, com provider alterado
+// para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
+// 
+// USO: Este schema é usado automaticamente pelo workflow de deploy para Vercel
+//      através do script prepare-vercel-demo.ps1 ou GitHub Action
+//
+// NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
+//       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
+// =============================================================================
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -152,7 +165,7 @@ model Asset {
 
   @@index([categoryId])
   @@index([judicialProcessId])
-  @@index([occupationUpdatedBy], map: "Asset_occupationUpdatedBy_fkey")
+  @@index([occupationUpdatedBy], map: "Asset_occupationUpdatedBy_idx")
   @@index([sellerId])
   @@index([subcategoryId])
   @@index([tenantId])
@@ -783,7 +796,7 @@ model LotRisk {
   @@index([riskLevel])
   @@index([riskType])
   @@index([tenantId])
-  @@index([verifiedBy], map: "LotRisk_verifiedBy_fkey")
+  @@index([verifiedBy], map: "LotRisk_verifiedBy_idx")
 }
 
 model LotStagePrice {
@@ -979,7 +992,7 @@ model PlatformSettings {
   ThemeSettings              ThemeSettings[]
   VariableIncrementRule      VariableIncrementRule[]
 
-  @@index([logoMediaId], map: "PlatformSettings_logoMediaId_fkey")
+  @@index([logoMediaId], map: "PlatformSettings_logoMediaId_idx")
 }
 
 model RealtimeSettings {
@@ -1815,6 +1828,10 @@ model won_lots {
   @@index([tenantId])
 }
 
+// =============================================================================
+// ENUMS - Idênticos ao schema MySQL (compatíveis entre ambos os bancos)
+// =============================================================================
+
 enum UserDocument_status {
   NOT_SENT
   SUBMITTED
@@ -2165,15 +2182,12 @@ enum Asset_occupationStatus {
 }
 
 // AUDIT & OBSERVABILITY 360
-// =========================================================
-
 model AuditConfig {
   id        String   @id @default(uuid())
-  entity    String   @unique // Ex: 'Auction', 'Bid' (Table name)
+  entity    String   @unique
   enabled   Boolean  @default(true)
-  fields    Json?    // Ex: ["status", "price"] - null means "all"
+  fields    Json?
   createdAt DateTime @default(now())
 
   @@map("audit_configs")
 }
-
