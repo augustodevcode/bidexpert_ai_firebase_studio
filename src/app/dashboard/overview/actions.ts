@@ -39,7 +39,7 @@ export async function getDashboardOverviewDataAction(userId: string): Promise<Da
   const activeBids = await prisma.bid.findMany({
     where: {
       bidderId: userId,
-      lot: {
+      Lot: {
         status: 'ABERTO_PARA_LANCES'
       }
     },
@@ -65,7 +65,7 @@ export async function getDashboardOverviewDataAction(userId: string): Promise<Da
     },
     take: 3,
     include: {
-        auction: { select: { title: true }}
+        Auction: { select: { title: true }}
     }
   });
 
@@ -76,11 +76,11 @@ export async function getDashboardOverviewDataAction(userId: string): Promise<Da
       },
       take: 3,
       include: {
-          auction: { select: { title: true }}
+          Auction: { select: { title: true }}
       }
   });
 
-  const upcomingLots = lotsEndingSoon.map(l => ({ ...l, auctionName: l.auction.title })) as Lot[];
+  const upcomingLots = lotsEndingSoon.map(l => ({ ...l, auctionName: (l as any).Auction?.title })) as Lot[];
 
   return {
     upcomingLots,

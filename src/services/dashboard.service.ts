@@ -47,7 +47,7 @@ export class DashboardService {
             this.prisma.auction.count({ where: { status: 'ABERTO_PARA_LANCES' } }),
             this.prisma.lot.count({ where: { status: 'VENDIDO' } }),
             this.prisma.bid.findMany({ select: { amount: true } }),
-            this.prisma.auction.findMany({ include: { _count: { select: { lots: true } } } }),
+            this.prisma.auction.findMany({ include: { _count: { select: { Lot: true } } } }),
             this.prisma.lot.findMany({
                 where: { status: 'VENDIDO', categoryId: { not: null } },
                 select: { categoryId: true, price: true },
@@ -101,8 +101,8 @@ export class DashboardService {
             salesData,
             categoryData,
             averageBidValue,
-            auctionSuccessRate: auctionCount > 0 ? (auctionsWithLots.filter((a: any) => a._count.lots > 0).length / auctionCount) * 100 : 0,  
-            averageLotsPerAuction: auctionCount > 0 ? auctionsWithLots.reduce((sum: number, a: any) => sum + a._count.lots, 0) / auctionCount : 0,
+            auctionSuccessRate: auctionCount > 0 ? (auctionsWithLots.filter((a: any) => a._count.Lot > 0).length / auctionCount) * 100 : 0,  
+            averageLotsPerAuction: auctionCount > 0 ? auctionsWithLots.reduce((sum: number, a: any) => sum + a._count.Lot, 0) / auctionCount : 0,
         };
     }
 }

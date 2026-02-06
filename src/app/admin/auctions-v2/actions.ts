@@ -26,11 +26,11 @@ import { Prisma } from '@prisma/client';
 // Tipo para Lot com includes do Prisma
 type PrismaLotWithIncludes = Prisma.LotGetPayload<{
     include: {
-        category: true;
-        subcategory: true;
-        assets: {
+        LotCategory: true;
+        Subcategory: true;
+        AssetsOnLots: {
             include: {
-                asset: true;
+                Asset: true;
             };
         };
     };
@@ -39,7 +39,7 @@ type PrismaLotWithIncludes = Prisma.LotGetPayload<{
 // Tipo para AuditLog com includes do Prisma
 type PrismaAuditLogWithUser = Prisma.AuditLogGetPayload<{
     include: {
-        user: {
+        User: {
             select: { fullName: true; email: true };
         };
     };
@@ -97,11 +97,11 @@ export async function getAuctionLotsV2(auctionId: string): Promise<Lot[]> {
             tenantId: BigInt(tenantId),
         },
         include: {
-            category: true,
-            subcategory: true,
-            assets: {
+            LotCategory: true,
+            Subcategory: true,
+            AssetsOnLots: {
                 include: {
-                    asset: true,
+                    Asset: true,
                 },
             },
         },
@@ -128,17 +128,17 @@ export async function getAuctionLotsV2(auctionId: string): Promise<Lot[]> {
         bidIncrementStep: decimalToNumber(lot.bidIncrementStep),
         latitude: decimalToNumber(lot.latitude),
         longitude: decimalToNumber(lot.longitude),
-        categoryName: lot.category?.name,
-        subcategoryName: lot.subcategory?.name ?? null,
-        assets: lot.assets.map((la: { asset: Prisma.AssetGetPayload<object> }) => ({
-            ...la.asset,
-            id: la.asset.id.toString(),
-            categoryId: la.asset.categoryId?.toString() ?? null,
-            subcategoryId: la.asset.subcategoryId?.toString() ?? null,
-            judicialProcessId: la.asset.judicialProcessId?.toString() ?? null,
-            sellerId: la.asset.sellerId?.toString() ?? null,
-            tenantId: la.asset.tenantId.toString(),
-            evaluationValue: decimalToNumber(la.asset.evaluationValue),
+        categoryName: lot.LotCategory?.name,
+        subcategoryName: lot.Subcategory?.name ?? null,
+        assets: lot.AssetsOnLots.map((la: { Asset: Prisma.AssetGetPayload<object> }) => ({
+            ...la.Asset,
+            id: la.Asset.id.toString(),
+            categoryId: la.Asset.categoryId?.toString() ?? null,
+            subcategoryId: la.Asset.subcategoryId?.toString() ?? null,
+            judicialProcessId: la.Asset.judicialProcessId?.toString() ?? null,
+            sellerId: la.Asset.sellerId?.toString() ?? null,
+            tenantId: la.Asset.tenantId.toString(),
+            evaluationValue: decimalToNumber(la.Asset.evaluationValue),
         })),
     })) as Lot[];
 }
@@ -257,7 +257,7 @@ export async function getAuctionAuditHistoryV2(auctionId: string): Promise<{
             tenantId: BigInt(tenantId),
         },
         include: {
-            user: {
+            User: {
                 select: { fullName: true, email: true },
             },
         },
@@ -268,7 +268,7 @@ export async function getAuctionAuditHistoryV2(auctionId: string): Promise<{
     return auditLogs.map((log: PrismaAuditLogWithUser) => ({
         id: log.id.toString(),
         action: log.action,
-        changedBy: log.user?.fullName || log.user?.email || 'Sistema',
+        changedBy: log.User?.fullName || log.User?.email || 'Sistema',
         changedAt: log.timestamp,
         changes: log.changes as AuditChanges,
     }));

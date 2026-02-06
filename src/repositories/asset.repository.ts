@@ -33,13 +33,13 @@ export class AssetRepository {
     return this.prisma.asset.findMany({ 
         where: whereClause,
         include: {
-            category: { select: { name: true } },
-            subcategory: { select: { name: true } },
-            judicialProcess: { select: { processNumber: true } },
-            seller: { select: { name: true } },
-            lots: {
+            LotCategory: { select: { name: true } },
+            Subcategory: { select: { name: true } },
+            JudicialProcess: { select: { processNumber: true } },
+            Seller: { select: { name: true } },
+            AssetsOnLots: {
               include: {
-                lot: {
+                Lot: {
                   select: {
                     id: true,
                     number: true,
@@ -66,13 +66,13 @@ export class AssetRepository {
     return this.prisma.asset.findFirst({ 
         where: whereClause,
         include: {
-            category: { select: { name: true } },
-            subcategory: { select: { name: true } },
-            judicialProcess: { select: { processNumber: true } },
-            seller: { select: { name: true } },
-            lots: {
+            LotCategory: { select: { name: true } },
+            Subcategory: { select: { name: true } },
+            JudicialProcess: { select: { processNumber: true } },
+            Seller: { select: { name: true } },
+            AssetsOnLots: {
               include: {
-                lot: {
+                Lot: {
                   select: { id: true, number: true, title: true }
                 }
               }
@@ -86,13 +86,13 @@ export class AssetRepository {
     return this.prisma.asset.findMany({ 
         where: { id: { in: ids } },
         include: {
-            category: { select: { name: true } },
-            subcategory: { select: { name: true } },
-            judicialProcess: { select: { processNumber: true } },
-            seller: { select: { name: true } },
-            lots: {
+            LotCategory: { select: { name: true } },
+            Subcategory: { select: { name: true } },
+            JudicialProcess: { select: { processNumber: true } },
+            Seller: { select: { name: true } },
+            AssetsOnLots: {
               include: {
-                lot: {
+                Lot: {
                   select: { id: true, number: true, title: true }
                 }
               }

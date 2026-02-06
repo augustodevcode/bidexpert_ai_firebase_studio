@@ -29,10 +29,10 @@ export class LotQuestionService {
     return this.repository.create({
       userDisplayName: authorName,
       questionText: question,
-      lot: { connect: { id: BigInt(lotId) } },
-      user: { connect: { id: BigInt(userId) } },
-      auction: { connect: { id: lot.auctionId } },
-      tenant: { connect: { id: BigInt(tenantId) } }
+      Lot: { connect: { id: BigInt(lotId) } },
+      User: { connect: { id: BigInt(userId) } },
+      Auction: { connect: { id: lot.auctionId } },
+      Tenant: { connect: { id: BigInt(tenantId) } }
     });
   }
 

@@ -28,15 +28,15 @@ export async function getFinancialDataForConsignor(sellerId: string): Promise<Us
 
   const wins = await prisma.userWin.findMany({
       where: {
-          lot: {
+          Lot: {
               sellerId: sellerId,
               tenantId: tenantId, // Ensure we only get wins from the correct tenant
           }
       },
       include: {
-          lot: {
+          Lot: {
             include: {
-              auction: { select: { title: true } }
+              Auction: { select: { title: true } }
             }
           },
       },
@@ -49,8 +49,8 @@ export async function getFinancialDataForConsignor(sellerId: string): Promise<Us
   return wins.map(win => ({
       ...win,
       lot: {
-        ...win.lot,
-        auctionName: win.lot.auction?.title
+        ...(win as any).Lot,
+        auctionName: (win as any).Lot?.Auction?.title
       }
   }));
 }

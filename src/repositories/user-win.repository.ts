@@ -21,9 +21,9 @@ export class UserWinRepository {
     return this.prisma.userWin.findUnique({
       where: { id: winId },
       include: {
-        lot: {
+        Lot: {
           include: {
-            auction: {
+            Auction: {
               select: {
                 title: true,
               },
@@ -38,9 +38,9 @@ export class UserWinRepository {
      const wins = await this.prisma.userWin.findMany({
         where: { userId },
         include: {
-            lot: {
+            Lot: {
                 include: {
-                    auction: {
+                    Auction: {
                         select: {
                             title: true,
                         }
@@ -57,8 +57,8 @@ export class UserWinRepository {
       return wins.map(win => ({
           ...win,
           lot: {
-              ...win.lot,
-              auctionName: win.lot.auction.title
+              ...(win as any).Lot,
+              auctionName: (win as any).Lot?.Auction?.title
           }
       })) as unknown as UserWin[];
   }

@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         },
         take: 10,
         include: {
-          user: {
+          User: {
             select: {
               id: true,
               email: true,
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
         recentLogs: recentLogs.map(log => ({
           id: log.id.toString(),
           userId: log.userId.toString(),
-          userName: log.user.fullName || log.user.email,
+          userName: (log.User || (log as any).user)?.fullName || (log.User || (log as any).user)?.email,
           entityType: log.entityType,
           entityId: log.entityId.toString(),
           action: log.action,

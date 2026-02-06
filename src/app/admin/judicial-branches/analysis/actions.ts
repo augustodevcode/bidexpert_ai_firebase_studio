@@ -34,16 +34,16 @@ export async function getBranchesPerformanceAction(): Promise<BranchPerformanceD
     const branches = await prisma.judicialBranch.findMany({
       include: {
         _count: {
-          select: { judicialProcesses: true, auctions: true },
+          select: { JudicialProcess: true, Auction: true },
         },
-        auctions: {
+        Auction: {
           include: {
-            lots: {
+            Lot: {
               where: { status: 'VENDIDO' },
               select: { price: true, updatedAt: true }
             },
             _count: {
-              select: { lots: true },
+              select: { Lot: true },
             },
           },
         },
@@ -51,18 +51,18 @@ export async function getBranchesPerformanceAction(): Promise<BranchPerformanceD
     });
 
     return branches.map(branch => {
-      const allLotsFromAuctions = branch.auctions.flatMap(auc => auc.lots);
-      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
+      const allLotsFromAuctions = (branch as any).Auction.flatMap((auc: any) => auc.Lot);
+      const totalRevenue = allLotsFromAuctions.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const totalLotsSold = allLotsFromAuctions.length;
       const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
-      const totalLotsInAuctions = branch.auctions.reduce((sum, auc) => sum + auc._count.lots, 0);
+      const totalLotsInAuctions = (branch as any).Auction.reduce((sum: number, auc: any) => sum + auc._count.Lot, 0);
       const salesRate = totalLotsInAuctions > 0 ? (totalLotsSold / totalLotsInAuctions) * 100 : 0;
 
       return {
         id: branch.id,
         name: branch.name,
-        totalProcesses: branch._count.judicialProcesses,
-        totalAuctions: branch._count.auctions,
+        totalProcesses: (branch as any)._count.JudicialProcess,
+        totalAuctions: (branch as any)._count.Auction,
         totalLots: totalLotsInAuctions,
         totalLotsSold,
         totalRevenue,

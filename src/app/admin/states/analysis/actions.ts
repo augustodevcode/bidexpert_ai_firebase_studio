@@ -29,12 +29,12 @@ export async function getStatesPerformanceAction(): Promise<StatePerformanceData
   try {
     const statesWithLots = await prisma.state.findMany({
       where: {
-        lots: {
+        Lot: {
           some: {}, // Ensure the state has at least one lot
         },
       },
       include: {
-        lots: {
+        Lot: {
           select: {
             id: true,
             status: true,
@@ -44,9 +44,9 @@ export async function getStatesPerformanceAction(): Promise<StatePerformanceData
           },
         },
         _count: {
-          select: { lots: true },
+          select: { Lot: true },
         },
-        cities: {
+        City: {
             select: { id: true, name: true }
         }
       },
@@ -57,17 +57,17 @@ export async function getStatesPerformanceAction(): Promise<StatePerformanceData
     const categoryMap = new Map(allCategories.map(c => [c.id, c.name]));
 
     return statesWithLots.map(state => {
-      const soldLots = state.lots.filter(lot => lot.status === 'VENDIDO');
+      const soldLots = (state as any).Lot.filter((lot: any) => lot.status === 'VENDIDO');
       const lotsSoldCount = soldLots.length;
-      const totalRevenue = soldLots.reduce((acc, lot) => acc + (lot.price || 0), 0);
-      const totalLots = state._count.lots;
+      const totalRevenue = soldLots.reduce((acc: number, lot: any) => acc + (lot.price || 0), 0);
+      const totalLots = (state as any)._count.Lot;
       const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
 
       // Find city with highest revenue
       const revenueByCity = new Map<string, number>();
       soldLots.forEach(lot => {
         if (lot.cityId) {
-            const cityName = state.cities.find(c => c.id === lot.cityId)?.name || 'Desconhecida';
+            const cityName = (state as any).City.find((c: any) => c.id === lot.cityId)?.name || 'Desconhecida';
             revenueByCity.set(cityName, (revenueByCity.get(cityName) || 0) + (lot.price || 0));
         }
       });

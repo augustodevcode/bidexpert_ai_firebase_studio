@@ -23,15 +23,15 @@ export async function getAuditDataAction(): Promise<AuditData> {
       where: { tenantId },
       include: {
         _count: {
-          select: { lots: true, stages: true },
+          select: { Lot: true, AuctionStage: true },
         },
-        lots: {
+        Lot: {
           where: {
             status: { in: ['EM_BREVE', 'ABERTO_PARA_LANCES'] },
           },
           select: { id: true, title: true, status: true, publicId: true },
         },
-        stages: {
+        AuctionStage: {
           select: { startDate: true, endDate: true },
         },
       },
@@ -41,7 +41,7 @@ export async function getAuditDataAction(): Promise<AuditData> {
       where: { tenantId },
       include: {
         _count: {
-          select: { assets: true, bids: true, questions: true, reviews: true, lotPrices: true },
+          select: { AssetsOnLots: true, Bid: true, LotQuestion: true, Review: true, LotStagePrice: true },
         },
       },
     });
@@ -50,7 +50,7 @@ export async function getAuditDataAction(): Promise<AuditData> {
         where: { tenantId },
         include: {
           _count: {
-            select: { lots: true },
+            select: { AssetsOnLots: true },
           },
         },
     });
@@ -60,10 +60,10 @@ export async function getAuditDataAction(): Promise<AuditData> {
     });
 
     const allUsers = await prisma.user.findMany({
-        where: { tenants: { some: { tenantId: tenantId } } },
+        where: { UsersOnTenants: { some: { tenantId: tenantId } } },
         include: {
             _count: {
-                select: { documents: true }
+                select: { UserDocument: true }
             }
         }
     });

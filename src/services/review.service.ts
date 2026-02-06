@@ -29,10 +29,10 @@ export class ReviewService {
     
     return this.repository.create({
       ...rest,
-      lot: { connect: { id: BigInt(lotId) } },
-      user: { connect: { id: BigInt(userId) } },
-      auction: { connect: { id: lot.auctionId } },
-      tenant: { connect: { id: BigInt(tenantId) } }
+      Lot: { connect: { id: BigInt(lotId) } },
+      User: { connect: { id: BigInt(userId) } },
+      Auction: { connect: { id: lot.auctionId } },
+      Tenant: { connect: { id: BigInt(tenantId) } }
     });
   }
 

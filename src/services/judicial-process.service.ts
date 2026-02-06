@@ -115,18 +115,18 @@ export class JudicialProcessService {
       const dataToCreate: Prisma.JudicialProcessCreateInput = {
         ...processData,
         publicId: `PROC-${uuidv4()}`,
-        parties: {
+        JudicialParty: {
           create: parties as any,
         },
-        tenant: { connect: { id: BigInt(tenantId) } },
+        Tenant: { connect: { id: BigInt(tenantId) } },
       };
 
-      if (courtId) dataToCreate.court = { connect: { id: BigInt(courtId) } };
-      if (districtId) dataToCreate.district = { connect: { id: BigInt(districtId) } };
-      if (branchId) dataToCreate.branch = { connect: { id: BigInt(branchId) } };
+      if (courtId) (dataToCreate as any).Court = { connect: { id: BigInt(courtId) } };
+      if (districtId) (dataToCreate as any).JudicialDistrict = { connect: { id: BigInt(districtId) } };
+      if (branchId) (dataToCreate as any).JudicialBranch = { connect: { id: BigInt(branchId) } };
 
       if (finalSellerId) {
-        dataToCreate.seller = { connect: { id: BigInt(finalSellerId) } };
+        (dataToCreate as any).Seller = { connect: { id: BigInt(finalSellerId) } };
       }
 
       const newProcess = await prisma.judicialProcess.upsert({

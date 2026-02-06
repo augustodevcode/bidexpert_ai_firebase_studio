@@ -45,9 +45,9 @@ export async function getSellersPerformanceAction(): Promise<SellerPerformanceDa
       where: { tenantId },
       include: {
         _count: {
-          select: { auctions: true, lots: true },
+          select: { Auction: true, Lot: true },
         },
-        lots: {
+        Lot: {
           where: { status: 'VENDIDO', tenantId },
           select: { price: true },
         },
@@ -55,15 +55,15 @@ export async function getSellersPerformanceAction(): Promise<SellerPerformanceDa
     });
 
     return sellers.map(seller => {
-      const totalRevenue = seller.lots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
-      const totalLotsSold = seller.lots.length;
+      const totalRevenue = (seller as any).Lot.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
+      const totalLotsSold = (seller as any).Lot.length;
       const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
 
       return {
         id: seller.id,
         name: seller.name,
-        totalAuctions: seller._count.auctions,
-        totalLots: seller._count.lots,
+        totalAuctions: (seller as any)._count.Auction,
+        totalLots: (seller as any)._count.Lot,
         totalRevenue,
         averageTicket,
       };

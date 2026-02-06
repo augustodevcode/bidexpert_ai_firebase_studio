@@ -99,10 +99,10 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
                      password: hashedPassword,
                      habilitationStatus: 'HABILITADO',
                      accountType: 'LEGAL',
-                     roles: {
+                     UsersOnRoles: {
                          create: { roleId: adminRole.id, assignedBy: 'system-setup' }
                      },
-                     tenants: {
+                     UsersOnTenants: {
                          create: { tenantId: landlordTenantIdBigInt, assignedBy: 'system-setup' }
                      }
                  }

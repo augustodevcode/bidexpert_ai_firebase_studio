@@ -26,11 +26,11 @@ export async function getDistrictsPerformanceAction(): Promise<DistrictPerforman
     const districts = await prisma.judicialDistrict.findMany({
       include: {
         _count: {
-          select: { judicialProcesses: true, auctions: true },
+          select: { JudicialProcess: true, Auction: true },
         },
-        auctions: {
+        Auction: {
           include: {
-            lots: {
+            Lot: {
               where: { status: 'VENDIDO' },
               select: { price: true },
             },
@@ -40,16 +40,16 @@ export async function getDistrictsPerformanceAction(): Promise<DistrictPerforman
     });
 
     return districts.map(district => {
-      const allLotsFromAuctions = district.auctions.flatMap(auc => auc.lots);
-      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
+      const allLotsFromAuctions = (district as any).Auction.flatMap((auc: any) => auc.Lot);
+      const totalRevenue = allLotsFromAuctions.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const totalLotsSold = allLotsFromAuctions.length;
       const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
 
       return {
         id: district.id,
         name: district.name,
-        totalProcesses: district._count.judicialProcesses,
-        totalAuctions: district._count.auctions,
+        totalProcesses: (district as any)._count.JudicialProcess,
+        totalAuctions: (district as any)._count.Auction,
         totalLotsSold,
         totalRevenue,
         averageTicket,

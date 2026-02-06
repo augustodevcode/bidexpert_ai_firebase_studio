@@ -68,9 +68,9 @@ export class InstallmentPaymentService {
       const payment = await this.prisma.installmentPayment.findUnique({
         where: { id: paymentId },
         include: {
-          userWin: {
+          UserWin: {
             include: {
-              lot: {
+              Lot: {
                 select: { tenantId: true }
               }
             }
@@ -82,7 +82,7 @@ export class InstallmentPaymentService {
         throw new Error('Pagamento não encontrado');
       }
 
-      if (payment.userWin.lot.tenantId.toString() !== tenantId) {
+      if ((payment as any).UserWin.Lot.tenantId.toString() !== tenantId) {
         throw new Error('Forbidden: Payment does not belong to this tenant');
       }
     }

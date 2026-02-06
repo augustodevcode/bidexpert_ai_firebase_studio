@@ -46,8 +46,8 @@ export class JudicialDistrictService {
         name: data.name,
         slug: slugify(data.name),
         zipCode: data.zipCode,
-        ...(data.courtId && { court: { connect: { id: BigInt(data.courtId) } } }),
-        ...(data.stateId && { state: { connect: { id: BigInt(data.stateId) } } })
+        ...(data.courtId && { Court: { connect: { id: BigInt(data.courtId) } } }),
+        ...(data.stateId && { State: { connect: { id: BigInt(data.stateId) } } })
       };
       
       const newDistrict = await this.prisma.judicialDistrict.upsert({

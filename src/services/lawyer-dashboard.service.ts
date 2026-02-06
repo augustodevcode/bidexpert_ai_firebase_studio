@@ -112,8 +112,8 @@ export class LawyerDashboardService {
     const user = await prisma.user.findUnique({
       where: { id: userPrimaryKey },
       include: {
-        documents: true,
-        tenants: {
+        UserDocument: true,
+        UsersOnTenants: {
           select: {
             tenantId: true,
           },
@@ -125,8 +125,8 @@ export class LawyerDashboardService {
       throw new Error('Usuário advogado não encontrado.');
     }
 
-    const userDocuments = user.documents ?? [];
-    const tenantId = user.tenants?.[0]?.tenantId ? String(user.tenants[0].tenantId) : '1';
+    const userDocuments = (user as any).UserDocument ?? [];
+    const tenantId = (user as any).UsersOnTenants?.[0]?.tenantId ? String((user as any).UsersOnTenants[0].tenantId) : '1';
     const lawyerCpf = user.cpf ?? null;
 
     const emptyOverview: LawyerDashboardOverview = {
@@ -156,7 +156,7 @@ export class LawyerDashboardService {
     const processes = await prisma.judicialProcess.findMany({
       where: {
         tenantId: BigInt(tenantId),
-        parties: {
+        JudicialParty: {
           some: {
             documentNumber: lawyerCpf,
             partyType: { in: ['ADVOGADO_AUTOR', 'ADVOGADO_REU'] },
@@ -164,14 +164,14 @@ export class LawyerDashboardService {
         },
       },
       include: {
-        court: true,
-        branch: true,
-        seller: true,
-        parties: true,
-        assets: true,
-        lots: {
+        Court: true,
+        JudicialBranch: true,
+        Seller: true,
+        JudicialParty: true,
+        Asset: true,
+        Lot: {
           include: {
-            auction: true,
+            Auction: true,
           },
         },
       },
@@ -182,11 +182,11 @@ export class LawyerDashboardService {
     sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
 
     const cases: LawyerCaseSummary[] = processes.map((process): LawyerCaseSummary => {
-      const relevantParty = process.parties.find((party: any) => party.documentNumber === lawyerCpf);
+      const relevantParty = (process as any).JudicialParty.find((party: any) => party.documentNumber === lawyerCpf);
       const role = (relevantParty?.partyType || 'ADVOGADO_AUTOR') as LawyerCaseRole;
 
-      const auctions = process.lots
-        .map((lot: any) => lot.auction)
+      const auctions = (process as any).Lot
+        .map((lot: any) => lot.Auction)
         .filter((auction: any): auction is NonNullable<typeof auction> => Boolean(auction));
 
       const nextEventDate = auctions
@@ -195,11 +195,11 @@ export class LawyerDashboardService {
         .sort((a: any, b: any) => a.getTime() - b.getTime())[0] ?? null;
 
       const auctionStatuses = auctions.map((auction: any) => auction.status).filter(Boolean) as string[];
-      const lotsCount = process.lots.length;
-      const assetsCount = process.assets.length;
+      const lotsCount = (process as any).Lot.length;
+      const assetsCount = (process as any).Asset.length;
 
-      const lotsValue = process.lots.reduce((total: any, lot: any) => total + toNumber(lot.price ?? lot.initialPrice ?? 0), 0);
-      const assetsValue = process.assets.reduce((total: any, asset: any) => total + toNumber(asset.evaluationValue ?? 0), 0);
+      const lotsValue = (process as any).Lot.reduce((total: any, lot: any) => total + toNumber(lot.price ?? lot.initialPrice ?? 0), 0);
+      const assetsValue = (process as any).Asset.reduce((total: any, asset: any) => total + toNumber(asset.evaluationValue ?? 0), 0);
       const estimatedValue = Math.max(lotsValue, assetsValue);
 
       const status = deriveCaseStatus(nextEventDate, auctionStatuses, lotsCount);
@@ -213,9 +213,9 @@ export class LawyerDashboardService {
       const caseSummary: LawyerCaseSummary = {
         id: process.id.toString(),
         processNumber: process.processNumber,
-        courtName: process.court?.name ?? null,
-        branchName: process.branch?.name ?? null,
-        sellerName: process.seller?.name ?? null,
+        courtName: (process as any).Court?.name ?? null,
+        branchName: (process as any).JudicialBranch?.name ?? null,
+        sellerName: (process as any).Seller?.name ?? null,
         role,
         status,
         lotsCount,

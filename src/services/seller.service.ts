@@ -146,10 +146,10 @@ export class SellerService {
           address: fullAddress,
           slug: slugify(data.name),
           publicId,
-          tenant: { connect: { id: BigInt(tenantId) } },
+          Tenant: { connect: { id: BigInt(tenantId) } },
         };
   
-        if (userId) dataToCreate.user = { connect: { id: BigInt(userId) } };
+        if (userId) (dataToCreate as any).User = { connect: { id: BigInt(userId) } };
         if (cityId) {
           const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }});
           if (city) dataToCreate.city = city.name;
@@ -159,7 +159,7 @@ export class SellerService {
           if (state) dataToCreate.state = state.uf;
         }
         if (judicialBranchId) {
-            dataToCreate.judicialBranch = { connect: { id: BigInt(judicialBranchId) } };
+            (dataToCreate as any).JudicialBranch = { connect: { id: BigInt(judicialBranchId) } };
         }
         console.log('Data to create seller in service:', dataToCreate);
         const newSeller = await this.sellerRepository.create(dataToCreate);
@@ -269,9 +269,9 @@ export class SellerService {
       where: { id: BigInt(sellerId), tenantId: BigInt(tenantId) },
       include: {
         _count: {
-          select: { auctions: true, lots: true },
+          select: { Auction: true, Lot: true },
         },
-        lots: {
+        Lot: {
           where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
           select: { price: true, updatedAt: true }
         },
@@ -280,10 +280,14 @@ export class SellerService {
 
     if (!sellerData) return null;
 
-    const totalRevenue = sellerData.lots.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
-    const lotsSoldCount = sellerData.lots.length;
+    const soldLots = (sellerData as any).Lot;
+    const totalRevenue = soldLots.reduce((acc: number, lot: any) => acc + (lot.price ? Number(lot.price) : 0), 0);
+    const lotsSoldCount = soldLots.length;
+    const countLots = (sellerData._count as any).Lot;
+    const countAuctions = (sellerData._count as any).Auction;
+    const salesRate = countLots > 0 ? (lotsSoldCount / countLots) * 100 : 0;
+
     const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
-    const salesRate = sellerData._count.lots > 0 ? (lotsSoldCount / sellerData._count.lots) * 100 : 0;
 
     const salesByMonthMap = new Map<string, number>();
     const now = nowInSaoPaulo(); // Use timezone-aware function
@@ -293,7 +297,7 @@ export class SellerService {
       salesByMonthMap.set(monthKey, 0);
     }
 
-    sellerData.lots.forEach((lot: any) => {
+    soldLots.forEach((lot: any) => {
       const monthKey = formatInSaoPaulo(lot.updatedAt, 'MMM/yy'); // Use timezone-aware function
       if (salesByMonthMap.has(monthKey)) {
         salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price ? Number(lot.price) : 0));
@@ -304,8 +308,8 @@ export class SellerService {
 
     return {
       totalRevenue,
-      totalAuctions: sellerData._count.auctions,
-      totalLots: sellerData._count.lots,
+      totalAuctions: countAuctions,
+      totalLots: countLots,
       lotsSoldCount,
       salesRate,
       averageTicket,

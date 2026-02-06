@@ -45,9 +45,9 @@ export class DirectSaleOfferService {
         const publicId = `DSO-${uuidv4()}`;
         const dataToCreate: Omit<Prisma.DirectSaleOfferCreateInput, 'publicId'> = {
             ...rest,
-            category: { connect: { id: BigInt(categoryId) } },
-            seller: { connect: { id: BigInt(sellerId) } },
-            tenant: { connect: { id: BigInt(tenantId) } },
+            LotCategory: { connect: { id: BigInt(categoryId) } },
+            Seller: { connect: { id: BigInt(sellerId) } },
+            Tenant: { connect: { id: BigInt(tenantId) } },
         };
         const newOffer = await this.repository.create(dataToCreate, publicId);
         return { success: true, message: 'Oferta criada com sucesso.', offerId: newOffer.id.toString() };

@@ -13,7 +13,7 @@ export class PlatformSettingsRepository {
     return prisma.platformSettings.create({
       data: {
         ...data,
-        tenant: { connect: { id: tenantId } },
+        Tenant: { connect: { id: tenantId } },
       },
     });
   }
