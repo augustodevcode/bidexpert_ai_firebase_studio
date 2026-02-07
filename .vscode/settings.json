@@ -51,5 +51,9 @@
   "chat.useNestedAgentsMdFiles": true,
   "chat.viewProgressBadge.enabled": true,
   "inlineChat.enableV2": true,
-  "inlineChat.notebookAgent": true
+  "inlineChat.notebookAgent": true,
+  
+  "github.copilot.features.customInstructions": true,
+  "github.copilot.chat.customInstructions": "🕵️ AUCTION SNIPER & QA AUTO-ACTIVATION PROTOCOL\n\n=== DETECTION LOGIC ===\nSempre que detectar QUALQUER menção de:\n• Leilão, auction, arrematação, lote, lot, bid, bidding, lance, lancer\n• Deságio, desconto, percentual, discount, ROI, rentabilidade, lucro\n• Search, filtro, busca, query, encontrar, dashboard, carteira, portfolio\n• WebSocket, sync, sincronização, Real-time, latency, race condition\n• Concorrência, simultâneo, paralelo, audit, auditoria, log, compliance\n• BDD, Gherkin, cenário, scenario, teste, test, security, segurança\n• CSRF, XSS, vulnerabilidade, performance, lento, slow, timeout\n• E2E, end-to-end, automation, automatização\n\n=== AUTO-ACTIVATION TRIGGER ===\nSE (detecção acima) ENTÃO invoke AUTOMATICAMENTE: runSubagent({agentName: 'auction-sniper-qa', prompt: '[user request]'})\n\n=== RESPONSE BEHAVIOR ===\nAo ativar:\n✓ Aplique Protocolo de Auditoria (7 Blocos)\n✓ Exija prova de sincronização, segurança, performance\n✓ Não aceite aproximações - exija stack trace\n✓ Retorne com tom crítico\n✓ Inclua BDD Gherkin scenarios se relevante\n✓ Valide contra 115+ checkpoints\n✓ Forneça code diff + testes se for fix",
+  "chat.customAgentInSubagent.enabled": true
 }

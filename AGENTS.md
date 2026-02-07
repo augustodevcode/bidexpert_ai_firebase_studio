@@ -176,6 +176,48 @@ docker compose -f docker-compose.dev.yml up -d --build
 3. **Não modificar** containers em produção sem autorização explícita
 4. **Documentar** qualquer alteração em configurações de containers
 
+## 🕵️ Auction Sniper & QA Architect (CRITICAL AGENT)
+
+**Invoque este agent para tarefas de auditoria, segurança financeira e QA de leilões.**
+
+Para tarefas relacionadas a análise crítica de plataforma de leilão (bidding, search, segurança, ROI):
+`.agent/agents/auction-sniper-qa.agent.md`
+
+### Como Invocar
+```powershell
+# Method 1: Direct mention em chat
+🕵️ Auction Sniper & QA: [sua pergunta]. Protocolo: [Blocos X,Y]. Tom: Crítico.
+
+# Method 2: SubAgent (recomendado para tasks complexas)
+runSubagent {
+  "agentName": "auction-sniper-qa",
+  "prompt": "Auditar [descrição]. Valide protocolo blocos [X,Y,Z]"
+}
+```
+
+### Documentação
+- **Main**: `.agent/agents/auction-sniper-qa.agent.md` (115+ atribuições)
+- **Quick Ref**: `.agent/agents/auction-sniper-qa.quick-reference.md`
+- **Usage Guide**: `.agent/agents/auction-sniper-qa.USAGE.md`
+
+### Responsabilidades
+- ✅ Audit de lógica de bidding (race conditions, segurança)
+- ✅ Validação de UI/UX (conversão, gatilhos mentais)
+- ✅ Search/filters (deságio, geolocalização, persistência)
+- ✅ Performance (< 500ms latency, WebSocket sync)
+- ✅ Segurança (audit trail, CSRF, timestamp sync)
+- ✅ BDD Testing (Gherkin scenarios, E2E)
+- ✅ ROI accuracy (cálculos sem arredondamentos)
+
+### Tone (Crítico)
+- 🚫 Nunca: "Parece correto", aproximações, achômetro
+- ✅ Sempre: Stack trace, prova de sincronização, testes
+- 🎯 Obcecado por: Consistência visual, integridade de dados, compliance
+
+**Quando invocar**: Qualquer mudança em auctions, bidding, search, carteira, ou segurança financeira.
+
+---
+
 ## Report Builder Architect (GrapesJS + Puppeteer + Handlebars)
 Para tarefas relacionadas a criação de templates de relatórios, editais, laudos e cartas de arrematação, siga as diretrizes em:
 `E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\skills\report-builder\SKILL.md`
