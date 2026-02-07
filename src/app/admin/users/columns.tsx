@@ -8,15 +8,36 @@ import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader, ClientOnlyDate } from '@/components/ui/data-table-column-header';
 import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import Link from 'next/link';
-import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Trash2, Ban, ShieldAlert } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<UserProfileWithPermissions>[] => [
+interface ColumnsProps {
+  handleDelete: (id: string) => void;
+  handleShadowBan?: (userId: string, applyBan: boolean) => void;
+  onEdit?: (user: UserProfileWithPermissions) => void;
+  onAssignRoles?: (user: UserProfileWithPermissions) => void;
+}
+
+export const createColumns = ({ handleDelete, handleShadowBan, onEdit, onAssignRoles }: ColumnsProps): ColumnDef<UserProfileWithPermissions>[] => [
    {
     id: "select",
     header: ({ table }) => (
       <Checkbox
-        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+        checked={
+          table.getIsAllPageRowsSelected() 
+            ? true 
+            : table.getIsSomePageRowsSelected() 
+              ? "indeterminate" 
+              : false
+        }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Selecionar todos"
       />
@@ -86,28 +107,72 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     cell: ({ row }) => <ClientOnlyDate date={row.getValue("createdAt")} />,
   },
   {
+    id: "shadowBanStatus",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+    cell: ({ row }) => {
+      const badges = row.original.badges as Record<string, unknown> | null;
+      const isShadowBanned = badges?.shadowBanned === true;
+      
+      if (isShadowBanned) {
+        return (
+          <Badge variant="destructive" className="flex items-center gap-1" data-ai-id="shadow-ban-badge">
+            <ShieldAlert className="h-3 w-3" />
+            Shadow Ban
+          </Badge>
+        );
+      }
+      return <Badge variant="outline" className="text-green-600">Ativo</Badge>;
+    },
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
       const user = row.original;
+      const badges = user.badges as Record<string, unknown> | null;
+      const isShadowBanned = badges?.shadowBanned === true;
+      
       return (
-        <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/habilitations/${user.id}`} title="Ver Documentos/Habilitação">
-              <Eye className="h-4 w-4" />
-              <span className="sr-only">Ver Habilitação</span>
-            </Link>
-          </Button>
-           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/users/${user.id}/edit`}>
-              <Pencil className="h-4 w-4" />
-               <span className="sr-only">Editar</span>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(user.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-            <span className="sr-only">Excluir</span>
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8" data-ai-id={`user-actions-${user.id}`}>
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Ações</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/habilitations/${user.id}`}>
+                <Eye className="mr-2 h-4 w-4" />
+                Ver Habilitação
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/users/${user.id}/edit`}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {handleShadowBan && (
+              <DropdownMenuItem 
+                onClick={() => handleShadowBan(user.id, !isShadowBanned)}
+                className={isShadowBanned ? 'text-green-600' : 'text-orange-600'}
+              >
+                <Ban className="mr-2 h-4 w-4" />
+                {isShadowBanned ? 'Remover Shadow Ban' : 'Aplicar Shadow Ban'}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem 
+              onClick={() => handleDelete(user.id)}
+              className="text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },

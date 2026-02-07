@@ -26,6 +26,7 @@ import BidExpertListItem from '@/components/BidExpertListItem';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
 import UserForm from './user-form';
 import UserRoleForm from './user-role-form';
+import { applyShadowBan, removeShadowBan } from '@/services/shadow-ban.service';
 
 const sortOptions = [
   { value: 'createdAt_desc', label: 'Mais Recentes' },
@@ -103,8 +104,31 @@ export default function AdminUsersPage() {
       toast({ title: "Sucesso!", description: `${selectedItems.length} usuário(s) excluído(s).` });
       onUpdate();
   }, [onUpdate, toast]);
+
+  const handleShadowBan = useCallback(async (userId: string, applyBan: boolean) => {
+    try {
+      if (applyBan) {
+        const result = await applyShadowBan(userId, 'MANUAL_FLAG', 'admin', 'Aplicado via admin panel');
+        toast({ 
+          title: result.success ? 'Shadow Ban Aplicado' : 'Erro',
+          description: result.message,
+          variant: result.success ? 'default' : 'destructive'
+        });
+      } else {
+        const result = await removeShadowBan(userId, 'admin');
+        toast({ 
+          title: result.success ? 'Shadow Ban Removido' : 'Erro',
+          description: result.message,
+          variant: result.success ? 'default' : 'destructive'
+        });
+      }
+      onUpdate();
+    } catch (error) {
+      toast({ title: 'Erro', description: 'Falha ao processar shadow ban', variant: 'destructive' });
+    }
+  }, [toast, onUpdate]);
   
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick, onAssignRoles: handleRolesClick }), [handleDelete, handleEditClick, handleRolesClick]);
+  const columns = useMemo(() => createColumns({ handleDelete, handleShadowBan, onEdit: handleEditClick, onAssignRoles: handleRolesClick }), [handleDelete, handleShadowBan, handleEditClick, handleRolesClick]);
   const renderGridItem = (item: UserProfileWithPermissions) => <BidExpertCard item={item} type="user" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: UserProfileWithPermissions) => <BidExpertListItem item={item} type="user" platformSettings={platformSettings!} onUpdate={onUpdate} />;
 

@@ -63,7 +63,7 @@ export async function recordEntityView(
       create: {
         entityType,
         entityId: entityIdBigInt,
-        tenantId: tenant?.id || null,
+        tenantId: tenant?.tenantId ? BigInt(tenant.tenantId) : null,
         totalViews: 1,
         uniqueViews: isUnique ? 1 : 0,
         viewsLast24h: 1,
@@ -267,7 +267,7 @@ export async function getTopViewedLots(
     const metrics = await prisma.entity_view_metrics.findMany({
       where: {
         entityType: 'Lot',
-        tenantId: tenant?.id
+        tenantId: tenant?.tenantId ? BigInt(tenant.tenantId) : undefined
       },
       orderBy: {
         [orderByField]: 'desc'
@@ -275,13 +275,19 @@ export async function getTopViewedLots(
       take: limit,
       select: {
         entityId: true,
-        [orderByField]: true
+        totalViews: true,
+        viewsLast24h: true,
+        viewsLast7d: true,
+        viewsLast30d: true
       }
     });
 
     return metrics.map(m => ({
       entityId: m.entityId.toString(),
-      views: (m as any)[orderByField] || 0
+      views: period === '24h' ? m.viewsLast24h
+        : period === '7d' ? m.viewsLast7d
+        : period === '30d' ? m.viewsLast30d
+        : m.totalViews
     }));
   } catch (error) {
     console.error('[ViewMetricsService] Erro ao obter top lotes:', error);

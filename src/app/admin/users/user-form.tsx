@@ -28,18 +28,22 @@ interface UserFormProps {
   initialData?: UserProfileData | null;
   roles: Role[];
   onSubmitAction: (data: UserFormValues) => Promise<{ success: boolean; message: string; userId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  formTitle?: string;
+  formDescription?: string;
+  submitButtonText?: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 export default function UserForm({
   initialData, 
   roles,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
+  formTitle = initialData ? 'Editar Usuário' : 'Novo Usuário',
+  formDescription = initialData ? 'Atualize os dados do usuário.' : 'Cadastre um novo usuário na plataforma.',
+  submitButtonText = initialData ? 'Salvar Alterações' : 'Criar Usuário',
+  onSuccess,
+  onCancel,
 }: UserFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -70,8 +74,12 @@ export default function UserForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/users');
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/admin/users');
+          router.refresh();
+        }
       } else {
         toast({
           title: 'Erro',
@@ -150,7 +158,7 @@ export default function UserForm({
             </div>
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={() => onCancel ? onCancel() : router.push('/admin/users')} disabled={isSubmitting}>Cancelar</Button>
             <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {submitButtonText}
