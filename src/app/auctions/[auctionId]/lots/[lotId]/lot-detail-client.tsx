@@ -46,6 +46,7 @@ import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugif
 
 import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction, getLotDocuments, getBidsForLot } from './actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
+import { recordEntityView } from '@/services/view-metrics.service';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LotDescriptionTab from '@/components/auction/lot-description-tab';
@@ -70,6 +71,7 @@ import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctio
 import BidExpertCard from '@/components/BidExpertCard';
 import { InvestorAnalysisSection } from '@/components/lots';
 import { ptBR } from 'date-fns/locale';
+import StickyBidBar from '@/components/auction/sticky-bid-bar';
 
 
 const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
@@ -430,6 +432,9 @@ export default function LotDetailClientContent({
     if (lot?.id) {
       addRecentlyViewedId(lot.id.toString());
       setCurrentImageIndex(0);
+      
+      // Registrar visualização para métricas (Monitor de Visualizações - audit gap 2.5)
+      recordEntityView('Lot', lot.id).catch(console.error);
 
       const fetchData = async () => {
         setIsLoadingData(true);
@@ -908,6 +913,9 @@ export default function LotDetailClientContent({
 
       <LotPreviewModal lot={lot} auction={auction} platformSettings={platformSettings} isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} />
       <LotMapPreviewModal lot={lot} platformSettings={platformSettings!} isOpen={isMapModalOpen} onClose={() => setIsMapModalOpen(false)} />
+
+      {/* GAP 3.2: Sticky Mobile Bid Bar */}
+      <StickyBidBar lot={lot} auction={auction} />
     </>
     );
 }

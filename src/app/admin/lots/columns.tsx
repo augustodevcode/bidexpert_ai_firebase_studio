@@ -8,7 +8,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Eye, Pencil, Trash2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -82,6 +82,19 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string, auc
   {
     accessorKey: "type",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Categoria" />,
+  },
+  {
+    accessorKey: "views",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Visualizações" />,
+    cell: ({ row }) => {
+      const views = row.getValue("views") as number | null | undefined;
+      return (
+        <div className="flex items-center gap-1 text-muted-foreground" data-ai-id="lot-views-cell">
+          <TrendingUp className="h-3 w-3" />
+          <span>{views ?? 0}</span>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "endDate",
