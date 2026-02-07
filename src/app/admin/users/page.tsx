@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getUsersWithRoles, deleteUser, createUser, updateUserRoles } from './actions';
 import type { UserProfileWithPermissions, Role, PlatformSettings, UserCreationData } from '@/types';
-import { PlusCircle, Users as UsersIcon } from 'lucide-react';
+import { PlusCircle, Users as UsersIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getRoles } from '../roles/actions';
 import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
@@ -116,6 +116,31 @@ export default function AdminUsersPage() {
     { id: 'roleNames', title: 'Perfil', options: roleOptions },
     { id: 'habilitationStatus', title: 'Habilitação', options: habilitationOptions },
   ], [roleOptions, habilitationOptions]);
+
+  if (error) {
+    return (
+        <div className="space-y-6" data-ai-id="admin-users-error">
+            <Card className="shadow-lg max-w-md mx-auto mt-10">
+                <CardHeader>
+                    <CardTitle className="text-destructive flex items-center gap-2">
+                        <UsersIcon className="h-6 w-6" />
+                        Erro ao Carregar Usuários
+                    </CardTitle>
+                    <CardDescription>Não foi possível carregar a lista de usuários.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="p-3 bg-destructive/10 rounded-md text-sm text-destructive">
+                        {error}
+                    </div>
+                    <Button onClick={() => fetchPageData()} className="w-full" data-ai-id="users-retry-btn">
+                        <Loader2 className="mr-2 h-4 w-4" />
+                        Tentar Novamente
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   if (isLoading || !platformSettings) {
     return (

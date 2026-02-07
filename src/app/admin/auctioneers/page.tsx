@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctioneers as getAuctioneersAction, deleteAuctioneer, createAuctioneer, updateAuctioneer } from '@/app/admin/auctioneers/actions';
 import type { AuctioneerProfileInfo, PlatformSettings, AuctioneerFormData, StateInfo, CityInfo } from '@/types';
-import { PlusCircle, Landmark } from 'lucide-react';
+import { PlusCircle, Landmark, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
@@ -129,6 +129,31 @@ export default function AdminAuctioneersPage() {
           { id: 'state', title: 'Estado', options: stateOptions },
       ];
   }, [allAuctioneers]);
+  
+  if (error) {
+    return (
+        <div className="space-y-6" data-ai-id="admin-auctioneers-error">
+            <Card className="shadow-lg max-w-md mx-auto mt-10">
+                <CardHeader>
+                    <CardTitle className="text-destructive flex items-center gap-2">
+                        <Landmark className="h-6 w-6" />
+                        Erro ao Carregar Leiloeiros
+                    </CardTitle>
+                    <CardDescription>Não foi possível carregar a lista de leiloeiros.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="p-3 bg-destructive/10 rounded-md text-sm text-destructive">
+                        {error}
+                    </div>
+                    <Button onClick={() => fetchPageData()} className="w-full" data-ai-id="auctioneers-retry-btn">
+                        <Loader2 className="mr-2 h-4 w-4" />
+                        Tentar Novamente
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
   
   if (isLoading || !platformSettings || !dependencies) {
     return (

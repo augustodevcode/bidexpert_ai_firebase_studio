@@ -109,3 +109,80 @@ export async function updateLotTitle(id: string, title: string): Promise<{ succe
 export async function updateLotImage(id: string, mediaItemId: string, imageUrl: string): Promise<{ success: boolean, message: string }> {
   return updateLot(id, { imageMediaId: mediaItemId, imageUrl });
 }
+
+/**
+ * Atualiza o status de múltiplos lotes de uma vez (Mass Action).
+ * @param lotIds Array de IDs dos lotes a serem atualizados
+ * @param newStatus Novo status a ser aplicado (ex: 'SUSPENSO', 'ABERTO_PARA_LANCES')
+ * @returns Resultado da operação em massa
+ */
+export async function updateLotsStatusBulk(
+  lotIds: string[], 
+  newStatus: string
+): Promise<{ success: boolean; message: string; updatedCount: number; failedCount: number }> {
+  const tenantId = await getTenantIdFromRequest();
+  let updatedCount = 0;
+  let failedCount = 0;
+  
+  for (const lotId of lotIds) {
+    try {
+      const result = await lotService.updateLot(lotId, { status: newStatus as any });
+      if (result.success) {
+        updatedCount++;
+      } else {
+        failedCount++;
+      }
+    } catch (error) {
+      console.error(`[Mass Action] Falha ao atualizar lote ${lotId}:`, error);
+      failedCount++;
+    }
+  }
+  
+  if (process.env.NODE_ENV !== 'test') {
+    revalidatePath('/admin/lots');
+  }
+  
+  return {
+    success: failedCount === 0,
+    message: `${updatedCount} lote(s) atualizado(s), ${failedCount} falha(s).`,
+    updatedCount,
+    failedCount,
+  };
+}
+
+/**
+ * Deleta múltiplos lotes de uma vez (Mass Action).
+ * @param lotIds Array de IDs dos lotes a serem deletados
+ * @returns Resultado da operação em massa
+ */
+export async function deleteLotsInBulk(
+  lotIds: string[]
+): Promise<{ success: boolean; message: string; deletedCount: number; failedCount: number }> {
+  let deletedCount = 0;
+  let failedCount = 0;
+  
+  for (const lotId of lotIds) {
+    try {
+      const result = await lotService.deleteLot(lotId);
+      if (result.success) {
+        deletedCount++;
+      } else {
+        failedCount++;
+      }
+    } catch (error) {
+      console.error(`[Mass Action] Falha ao deletar lote ${lotId}:`, error);
+      failedCount++;
+    }
+  }
+  
+  if (process.env.NODE_ENV !== 'test') {
+    revalidatePath('/admin/lots');
+  }
+  
+  return {
+    success: failedCount === 0,
+    message: `${deletedCount} lote(s) excluído(s), ${failedCount} falha(s).`,
+    deletedCount,
+    failedCount,
+  };
+}

@@ -10,6 +10,7 @@ import type { PlatformSettings } from '@/types';
 import { cn } from '@/lib/utils';
 import { DataTableToolbar } from './ui/data-table-toolbar'; // Importando a nova toolbar
 import { DataTable } from './ui/data-table';
+import type { BulkAction } from './ui/data-table-toolbar';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface PaginationControlsProps {
@@ -104,6 +105,7 @@ interface BidExpertSearchResultsFrameProps<TItem> {
   onItemsPerPageChange?: (size: number) => void;
   onDeleteSelected?: (selectedItems: TItem[]) => Promise<void>;
   dataTestId?: string;
+  bulkActions?: BulkAction<TItem>[];
 }
 
 export default function BidExpertSearchResultsFrame<TItem extends { id: string }>({
@@ -130,6 +132,7 @@ export default function BidExpertSearchResultsFrame<TItem extends { id: string }
   onItemsPerPageChange,
   onDeleteSelected,
   dataTestId,
+  bulkActions,
 }: BidExpertSearchResultsFrameProps<TItem>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('table');
   const [currentSortBy, setCurrentSortBy] = useState(initialSortBy);
@@ -213,6 +216,7 @@ export default function BidExpertSearchResultsFrame<TItem extends { id: string }
                 searchPlaceholder={searchPlaceholder}
                 facetedFilterColumns={facetedFilterColumns}
                 onDeleteSelected={onDeleteSelected}
+                bulkActions={bulkActions}
                 dataTestId={dataTestId}
               />
             </div>

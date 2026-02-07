@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AlertCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
-import { DataTableToolbar } from "./data-table-toolbar";
+import { DataTableToolbar, type BulkAction } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
 import { Button } from "./button";
 
@@ -76,6 +76,7 @@ interface DataTableProps<TData, TValue> {
   rowSelection?: {};
   setRowSelection?: React.Dispatch<React.SetStateAction<{}>>;
   onDeleteSelected?: (selectedRows: TData[]) => Promise<void>;
+  bulkActions?: BulkAction<TData>[];
   tableInstance?: any;
   renderChildrenAboveTable?: (table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode;
   dataTestId?: string;
@@ -92,6 +93,7 @@ export function DataTable<TData, TValue>({
   rowSelection: controlledRowSelection,
   setRowSelection: setControlledRowSelection,
   onDeleteSelected,
+  bulkActions,
   tableInstance,
   renderChildrenAboveTable,
   dataTestId,
@@ -150,6 +152,7 @@ export function DataTable<TData, TValue>({
         searchPlaceholder={searchPlaceholder}
         facetedFilterColumns={facetedFilterColumns}
         onDeleteSelected={onDeleteSelected}
+        bulkActions={bulkActions}
       />
       {renderChildrenAboveTable && renderChildrenAboveTable(table)}
       <div className="rounded-md border md:border-0">
