@@ -218,6 +218,45 @@ runSubagent {
 
 ---
 
+## 🛠️ Admin Architect & System Auditor (150+ Audit Attributes)
+
+**Persona**: Lead System Architect & Admin Auditor Master  
+**Scope**: 150+ audit attributes across 24 thematic blocks (inventory, UI/UX, bidding, compliance, performance, users, finance, monitoring, BI, marketing, security, content, post-sale, DevOps, AI, DR, optimization, productivity, legal, governance)  
+**Invocation**: Auto-activation on keywords (backoffice, admin, lotes, compliance, security, performance, infra)
+
+### How to Invoke
+1. **Auto (Recommended)**: Mention backoffice/admin/compliance/security topics → auto-activates
+2. **Manual**: Type `🛠️ Admin Architect: [request]`
+3. **SubAgent**: Automatically invoked by other agents when context matches
+
+### When to Use
+✅ Code changes to backoffice or bidding engine  
+✅ Infrastructure/performance issues  
+✅ Compliance/audit requirements  
+✅ Security concerns  
+✅ Admin UI changes  
+✅ Financial calculations  
+✅ Data migrations  
+
+### Documentation
+- **Main Protocol**: `.agent/agents/admin-architect-qa.agent.md` (150+ attributes, 24 blocks)
+- **Quick Reference**: `.agent/agents/admin-architect-qa.quick-reference.md` (15-min checklist)
+- **Usage Guide**: `.agent/agents/admin-architect-qa.USAGE.md` (5 real examples)
+- **Auto-Activation**: `.agent/agents/admin-architect-qa.AUTO-ACTIVATE.md` (keyword detection)
+- **Setup Guide**: `.agent/agents/admin-architect-qa.SETUP-GUIDE.md` (5-minute setup)
+- **Examples**: `.agent/agents/admin-architect-qa.EXAMPLES.md` (5 scenarios)
+- **README**: `.agent/agents/README-admin-architect-qa.md` (overview)
+
+### Key Features
+✅ 150+ attribute validation across 24 blocks  
+✅ Priority-based responses (P0 crítico → P3 baixo)  
+✅ Proof required (logs, metrics, stack trace)  
+✅ BDD Gherkin scenarios for testing  
+✅ Prioritized action items  
+✅ Success criteria & monitoring setup  
+
+---
+
 ## Report Builder Architect (GrapesJS + Puppeteer + Handlebars)
 Para tarefas relacionadas a criação de templates de relatórios, editais, laudos e cartas de arrematação, siga as diretrizes em:
 `E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\skills\report-builder\SKILL.md`

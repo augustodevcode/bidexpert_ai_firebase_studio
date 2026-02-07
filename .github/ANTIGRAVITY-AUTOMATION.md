@@ -153,7 +153,63 @@ jobs:
 
 ---
 
-## 4. Firestore Rules Integration
+## 3. Admin Architect & System Auditor Integration
+
+### 3.1 Automated Admin Architect Step
+
+**File**: `.gemini/admin-architect-qa.config.yaml` (NEW)  
+**When**: Before deployment for admin/backoffice/compliance changes
+
+**Cloud Build integration:**
+```yaml
+- name: "gcr.io/cloud-builders/gcloud"
+  id: "admin-architect-audit"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      gcloud beta run jobs execute admin-architect-qa-job \
+        --region=us-central1 \
+        --wait \
+        --args="--context=cloudbuild" \
+        --args="--files=$CHANGED_FILES" \
+        --args="--priority=high"
+  condition: ["changed_files_match_backoffice_pattern"]
+  waitFor: ["code-scan"]
+```
+
+### 3.2 Automation Rules (Admin Architect)
+
+```yaml
+triggers:
+  - type: "on-code-change"
+    pattern: "src/**/*(backoffice|admin|lotes)*.ts(x)?"
+    action: "invoke-admin-architect-audit"
+    priority: "high"
+  
+  - type: "on-code-change"
+    pattern: "src/**/*(payment|financial|commission)*.ts(x)?"
+    action: "invoke-admin-architect-financial-audit"
+    priority: "critical"
+  
+  - type: "on-infrastructure-alert"
+    pattern: "latency > 2000ms OR error_rate > 5%"
+    action: "invoke-admin-architect-infra-audit"
+    priority: "critical"
+  
+  - type: "on-security-alert"
+    action: "invoke-admin-architect-security-audit"
+    priority: "critical"
+  
+  - type: "on-compliance-check"
+    pattern: "LGPD OR data-retention OR GDPR"
+    action: "invoke-admin-architect-compliance-audit"
+    priority: "high"
+```
+
+---
+
+## 4. Firestore Rules and Admin Architect Integration (UPDATED)
 
 ### 4.1 Audit Trail for Bid Synchronization
 
