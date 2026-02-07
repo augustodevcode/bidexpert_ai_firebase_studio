@@ -1,9 +1,14 @@
-import { Prisma, LotStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { LotService } from './lot.service';
+import logger from '@/lib/logger';
 
-// Definir o status ATIVO já que não está no enum original
-const ACTIVE_STATUS = 'ATIVO' as LotStatus;
+/**
+ * GAP-FIX: Status corrigido de 'ATIVO' para 'ABERTO_PARA_LANCES' que é o status real
+ * utilizado pelo sistema. O status 'ATIVO' nunca existiu no enum, tornando
+ * o auto-bid completamente não funcional.
+ */
+const ACTIVE_STATUS = 'ABERTO_PARA_LANCES';
 
 export class AutoBidService {
   private lotService: LotService;
@@ -67,6 +72,7 @@ export class AutoBidService {
       });
 
       if (!lot || lot.status !== ACTIVE_STATUS) {
+        logger.warn('[AutoBid] Lote não encontrado ou não está ABERTO_PARA_LANCES', { lotId, status: lot?.status });
         return false; // Lote não está mais ativo
       }
 
@@ -91,7 +97,7 @@ export class AutoBidService {
 
       return true;
     } catch (error) {
-      console.error('Erro ao verificar/executar lances automáticos:', error);
+      logger.error('[AutoBid] Erro ao verificar/executar lances automáticos:', { error: String(error), lotId });
       return false;
     }
   }

@@ -196,6 +196,12 @@ export async function getSuperOpportunitiesLots(
       };
     })
     .filter((lot): lot is any => lot !== null)
+    // GAP-FIX: Ordenação por urgência - lotes mais próximos do encerramento primeiro
+    .sort((a, b) => {
+      const dateA = new Date(a.endDate).getTime();
+      const dateB = new Date(b.endDate).getTime();
+      return dateA - dateB; // Mais urgente primeiro
+    })
     .slice(0, limit);
 
   return validatedLots as Lot[];

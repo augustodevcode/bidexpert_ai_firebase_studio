@@ -172,7 +172,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 alt={lot.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
                 data-ai-hint={lot.dataAiHint || 'imagem lote'}
                 data-ai-id="lot-card-main-image"
               />
@@ -267,14 +267,20 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           )}
 
 
-          {/* Price Display - ADDED PER FIX */}
+          {/* Price Display - GAP-FIX: Monospaced font + next bid calculator */}
           <div className="flex flex-col mt-2 mb-1" data-ai-id="lot-card-price">
             <p className="text-xs text-muted-foreground uppercase font-semibold">
               {getLotDisplayPrice(lot, auction).label}
             </p>
-            <p className="text-xl font-bold text-primary">
+            <p className="text-xl font-bold text-primary font-mono tabular-nums">
               R$ {getLotDisplayPrice(lot, auction).value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
+            {/* GAP-FIX: Next Bid Calculator - mostra próximo lance mínimo */}
+            {lot.status === 'ABERTO_PARA_LANCES' && lot.bidIncrementStep && (
+              <p className="text-[10px] text-muted-foreground font-mono mt-0.5" data-ai-id="lot-card-next-bid">
+                Próximo lance: R$ {((getLotDisplayPrice(lot, auction).value || 0) + Number(lot.bidIncrementStep || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            )}
           </div>
 
           <div className="mt-2 border-t pt-2" data-ai-id="lot-card-timeline">

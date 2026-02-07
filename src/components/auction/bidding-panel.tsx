@@ -1,7 +1,11 @@
 
+/**
+ * @fileoverview Painel de lances para leilões. Inclui proteção contra double-click,
+ * botões de lance rápido, sanitização de input monetário e anonimização de lances.
+ */
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Lot, UserLotMaxBid, BidInfo, Auction, AuctionStage } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,6 +55,10 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
   const [isLoadingLocalHistory, setIsLoadingLocalHistory] = useState(true);
   const [isAllBidsModalOpen, setIsAllBidsModalOpen] = useState(false);
   const [isHabilitando, setIsHabilitando] = useState(false);
+
+  // GAP-FIX: Double-Click Shield - timestamp guard para evitar lances duplicados (<2s)
+  const lastBidTimestampRef = useRef<number>(0);
+  const DOUBLE_CLICK_GUARD_MS = 2000;
 
   // Usar histórico compartilhado se disponível, caso contrário usar local
   const bidHistory = sharedBidHistory ?? localBidHistory;
@@ -133,12 +141,40 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
       setIsHabilitando(false);
   };
 
+  /** GAP-FIX: Sanitiza input de valor monetário removendo caracteres inválidos */
+  const sanitizeBidInput = (value: string): number => {
+    const cleaned = value.replace(/[^0-9.,]/g, '').replace(',', '.');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) || parsed <= 0 ? 0 : parsed;
+  };
+
+  /** GAP-FIX: Anonimiza nome do licitante no formato "A***1" */
+  const anonymizeBidderName = (name: string): string => {
+    if (!name || name.length < 2) return '***';
+    return `${name.charAt(0).toUpperCase()}***${name.charAt(name.length - 1).toUpperCase()}`;
+  };
+
   const handlePlaceBid = async () => {
     if (!canUserBid || !userProfileWithPermissions) return;
-    const bidValue = parseFloat(bidAmountInput) || nextMinimumBid;
+
+    // GAP-FIX: Double-Click Shield (<2s guard)
+    const now = Date.now();
+    if (now - lastBidTimestampRef.current < DOUBLE_CLICK_GUARD_MS) {
+      toast({ title: 'Aguarde', description: 'Por favor, aguarde antes de enviar outro lance.', variant: 'destructive' });
+      return;
+    }
+    lastBidTimestampRef.current = now;
+
+    // GAP-FIX: Sanitização de input monetário
+    const bidValue = sanitizeBidInput(bidAmountInput) || nextMinimumBid;
 
     if (bidValue < nextMinimumBid) {
       toast({ title: 'Valor Inválido', description: `Seu lance deve ser de no mínimo R$ ${nextMinimumBid.toLocaleString('pt-br')}`, variant: 'destructive' });
+      return;
+    }
+
+    if (bidValue > 999999999) {
+      toast({ title: 'Valor Inválido', description: 'O valor do lance excede o limite máximo permitido.', variant: 'destructive' });
       return;
     }
 
@@ -243,20 +279,52 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
     
     return (
         <>
-            <div className="relative">
+            <div className="relative" data-ai-id="bid-amount-input-wrapper">
                 <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input 
-                  type="number" 
+                  type="text" 
+                  inputMode="decimal"
                   placeholder={`Próximo lance R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} 
                   value={bidAmountInput} 
-                  onChange={(e) => setBidAmountInput(e.target.value)} 
-                  className="pl-9 h-11 text-base" 
+                  onChange={(e) => {
+                    // GAP-FIX: Sanitização - apenas números, ponto e vírgula
+                    const sanitized = e.target.value.replace(/[^0-9.,]/g, '');
+                    setBidAmountInput(sanitized);
+                  }} 
+                  className="pl-9 h-11 text-base font-mono" 
                   min={nextMinimumBid} 
                   step={bidIncrement} 
                   disabled={isPlacingBid} 
+                  data-ai-id="bid-amount-input"
                 />
             </div>
-            <Button onClick={() => handlePlaceBid()} disabled={isPlacingBid} className="w-full h-11 text-base">
+
+            {/* GAP-FIX: Quick Bid Buttons - incrementos rápidos sem digitação */}
+            <div className="grid grid-cols-3 gap-1.5" data-ai-id="quick-bid-buttons">
+              {[1, 2, 5].map((multiplier) => {
+                const quickAmount = nextMinimumBid + (bidIncrement * multiplier);
+                return (
+                  <Button
+                    key={multiplier}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs font-mono h-8"
+                    disabled={isPlacingBid}
+                    onClick={() => setBidAmountInput(quickAmount.toString())}
+                    data-ai-id={`quick-bid-btn-${multiplier}`}
+                  >
+                    +R$ {(bidIncrement * multiplier).toLocaleString('pt-BR')}
+                  </Button>
+                );
+              })}
+            </div>
+
+            <Button 
+              onClick={() => handlePlaceBid()} 
+              disabled={isPlacingBid} 
+              className="w-full h-11 text-base"
+              data-ai-id="place-bid-button"
+            >
                 {isPlacingBid ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : bidButtonLabel}
             </Button>
             
@@ -357,9 +425,10 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
               <div className="p-2 space-y-1.5 text-xs">
                 {isLoadingHistory ? (<div className="flex items-center justify-center p-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>)
                 : bidHistory.length > 0 ? (bidHistory.slice(0, 3).map((bid, index) => (
-                    <div key={bid.id} className={`flex justify-between items-center p-1.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-800/30 font-semibold' : ''}`}>
-                        <span>{bid.bidderDisplay}</span>
-                        <span className="text-right">R$ {bid.amount.toLocaleString('pt-BR')} <span className="text-muted-foreground/70">({bid.timestamp ? format(new Date(bid.timestamp), 'HH:mm:ss') : ''})</span></span>
+                    <div key={bid.id} className={`flex justify-between items-center p-1.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-800/30 font-semibold' : ''}`} data-ai-id={`bid-history-item-${index}`}>
+                        {/* GAP-FIX: Anonymização de lances - formato "A***1" */}
+                        <span>{anonymizeBidderName(bid.bidderDisplay)}</span>
+                        <span className="text-right font-mono">R$ {bid.amount.toLocaleString('pt-BR')} <span className="text-muted-foreground/70">({bid.timestamp ? format(new Date(bid.timestamp), 'HH:mm:ss') : ''})</span></span>
                     </div>
                 )))
                 : (<p className="text-center text-muted-foreground p-2">Nenhum lance ainda.</p>)}
