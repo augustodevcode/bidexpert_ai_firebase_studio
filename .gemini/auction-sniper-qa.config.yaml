@@ -1,0 +1,135 @@
+# Gemini/Antigravity Configuration for Auction Sniper & QA Agent
+# Enables automatic Auction Sniper agent invocation in Google Cloud automations
+
+agentName: "auction-sniper-qa"
+provider: "gemini"
+environment: "google-cloud"
+
+# Auto-activation configuration for Antigravity workflows
+autoActivation:
+  enabled: true
+  triggers:
+    - name: "automatic-on-keywords"
+      keywords:
+        - "leilão"
+        - "auction"
+        - "bid"
+        - "bidding"
+        - "deságio"
+        - "ROI"
+        - "race-condition"
+        - "security-audit"
+        - "performance-optimization"
+        - "e2e-testing"
+      action: "invoke-subagent"
+      priority: "critical"
+
+# Google Cloud specific configurations
+googleCloud:
+  project: "bidexpert-630df"
+  regions:
+    - "us-central1"
+    - "us-east1"
+  
+  # Antigravity automation integration
+  antigravity:
+    enabled: true
+    rules: 
+      - type: "workflow-trigger"
+        condition: "on-code-change"
+        pattern: "src/**/*auction*"
+        action: "run-auction-sniper-audit"
+      
+      - type: "workflow-trigger"
+        condition: "on-code-change"
+        pattern: "src/**/*bid*"
+        action: "run-auction-sniper-audit"
+      
+      - type: "workflow-trigger"
+        condition: "on-security-alert"
+        action: "run-auction-sniper-security-audit"
+      
+      - type: "workflow-trigger"
+        condition: "on-performance-issue"
+        pattern: "latency > 2s"
+        action: "run-auction-sniper-performance-audit"
+
+# Gemini-specific settings
+gemini:
+  model: "gemini-2.0-flash"
+  temperature: 0.1  # Low temperature for critical audits
+  maxTokens: 4096
+  
+  customInstructions:
+    tone: "critical"
+    includeProofs: true
+    requireStackTrace: true
+    validateAgainstCheckpoints: 115
+    auditBlocks:
+      - "search-filters"
+      - "ui-ux"
+      - "lot-page"
+      - "dashboard"
+      - "security"
+      - "bdd-testing"
+      - "tone-validation"
+
+# API integration
+api:
+  endpoint: "/api/agents/auction-sniper-qa"
+  webhookUrl: "${GEMINI_WEBHOOK_URL}"
+  authentication: "oauth2"
+  scopes:
+    - "cloud.googleapis.com"
+    - "firestore.googleapis.com"
+    - "cloudbuild.googleapis.com"
+
+# Logging and monitoring
+logging:
+  enabled: true
+  level: "DEBUG"
+  destination: "stderr"
+  includeAuditTrail: true
+  
+monitoring:
+  enabled: true
+  metrics:
+    - "agent-invocation-count"
+    - "audit-duration"
+    - "issue-detection-count"
+    - "fix-success-rate"
+
+# Notification settings
+notifications:
+  enabled: true
+  channels:
+    - type: "slack"
+      webhook: "${SLACK_WEBHOOK_AUCTION_SNIPER}"
+      events:
+        - "critical-issue-found"
+        - "security-vulnerability"
+        - "performance-degradation"
+    
+    - type: "email"
+      recipients:
+        - "${TEAM_LEAD_EMAIL}"
+      events:
+        - "critical-issue-found"
+        - "security-vulnerability"
+
+# Documentation and guidelines
+documentation:
+  agentFile: ".agent/agents/auction-sniper-qa.agent.md"
+  setupGuide: ".agent/agents/auction-sniper-qa.SETUP-GUIDE.md"
+  usageGuide: ".agent/agents/auction-sniper-qa.USAGE.md"
+  quickReference: ".agent/agents/auction-sniper-qa.quick-reference.md"
+  autoActivationDocs: ".agent/agents/auction-sniper-qa.AUTO-ACTIVATE.md"
+
+# Feature flags
+features:
+  autoActivationEnabled: true
+  criticalIssueDetection: true
+  securityAuditEnabled: true
+  performanceOptimization: true
+  bddScenarioGeneration: true
+  automaticFixSuggestion: true
