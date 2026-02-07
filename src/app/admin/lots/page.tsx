@@ -13,8 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLots as getLotsAction, deleteLot, updateLotsStatusBulk, deleteLotsInBulk } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
+import { exportLotsToCSV, exportLotsToJSON } from '@/services/export-lots.service';
 import type { Auction, Lot, PlatformSettings } from '@/types';
-import { PlusCircle, Package, Loader2 } from 'lucide-react';
+import { PlusCircle, Package, Loader2, Download, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
@@ -125,8 +126,61 @@ export default function AdminLotsPage() {
     onUpdate();
   }, [toast, onUpdate]);
 
+  // Export handlers
+  const handleExportCSV = useCallback(async (selectedItems: Lot[]) => {
+    const lotIds = selectedItems.map(item => item.id);
+    const result = await exportLotsToCSV(lotIds);
+    if (result.success && result.data) {
+      // Download CSV
+      const blob = new Blob([result.data], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.filename || 'lotes_export.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: 'Sucesso', description: result.message });
+    } else {
+      toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+    }
+  }, [toast]);
+
+  const handleExportExcel = useCallback(async (selectedItems: Lot[]) => {
+    const lotIds = selectedItems.map(item => item.id);
+    const result = await exportLotsToJSON(lotIds);
+    if (result.success && result.data) {
+      // Download JSON (can be imported to Excel)
+      const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.filename || 'lotes_export.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: 'Sucesso', description: `${result.message} (JSON - importe no Excel)` });
+    } else {
+      toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+    }
+  }, [toast]);
+
   // Bulk Actions disponíveis
   const bulkActions = useMemo(() => [
+    { 
+      label: 'Exportar CSV', 
+      icon: Download,
+      onClick: handleExportCSV, 
+      variant: 'outline' as const,
+    },
+    { 
+      label: 'Exportar Excel', 
+      icon: FileSpreadsheet,
+      onClick: handleExportExcel, 
+      variant: 'outline' as const,
+    },
     { 
       label: 'Suspender Selecionados', 
       onClick: handleSuspendSelected, 
@@ -148,7 +202,7 @@ export default function AdminLotsPage() {
       confirmTitle: 'Confirmar Exclusão em Massa',
       confirmDescription: 'Esta ação é permanente e não pode ser desfeita. Deseja excluir os lotes selecionados?'
     },
-  ], [handleSuspendSelected, handleActivateSelected, handleDeleteSelected]);
+  ], [handleExportCSV, handleExportExcel, handleSuspendSelected, handleActivateSelected, handleDeleteSelected]);
 
   const renderGridItem = (item: Lot) => (
     <BidExpertCard
