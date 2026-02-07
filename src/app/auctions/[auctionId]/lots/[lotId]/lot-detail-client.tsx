@@ -341,7 +341,11 @@ export default function LotDetailClientContent({
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (lot?.id) {
+      addRecentlyViewedId(lot.id);
+      recordEntityView(lot.id);
+    }
+  }, [lot?.id]);
 
   const checkHabilitationStatus = useCallback(async () => {
     if (userProfileWithPermissions?.id && auction.id) {

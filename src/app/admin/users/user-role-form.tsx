@@ -48,7 +48,7 @@ export default function UserRoleForm({
     resolver: zodResolver(userRoleFormSchema),
     mode: 'onChange',
     defaultValues: {
-      roleIds: user?.roles?.map(r => r.id) || [],
+      roleIds: user?.roles?.map(r => r.role.id) || [],
     },
   });
 
@@ -71,7 +71,7 @@ export default function UserRoleForm({
     console.log('[UserRoleForm] Iniciando submissão do formulário de perfis');
     console.log('[UserRoleForm] Usuário ID:', user.id);
     console.log('[UserRoleForm] Perfis selecionados:', values.roleIds);
-    console.log('[UserRoleForm] Perfis anteriores:', user?.roles?.map(r => ({ id: r.id, name: r.name })));
+    console.log('[UserRoleForm] Perfis anteriores:', user?.roles?.map(r => ({ id: r.role.id, name: r.role.name })));
     
     setIsSubmitting(true);
     try {

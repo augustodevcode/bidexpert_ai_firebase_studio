@@ -19,13 +19,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { userFormSchema, type UserFormValues } from './user-form-schema';
-import type { UserProfileData, Role } from '@/types';
+import type { UserProfileWithPermissions, Role } from '@/types';
 import { Loader2, Save, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface UserFormProps {
-  initialData?: UserProfileData | null;
+  initialData?: UserProfileWithPermissions | null;
   roles: Role[];
   onSubmitAction: (data: UserFormValues) => Promise<{ success: boolean; message: string; userId?: string }>;
   formTitle?: string;
