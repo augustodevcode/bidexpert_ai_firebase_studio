@@ -42,12 +42,14 @@ const sortOptionsAuctions = [
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
+  { value: 'discount_desc', label: '🔥 Maior Deságio (%)' },
+  { value: 'discount_asc', label: 'Menor Deságio (%)' },
   { value: 'lotNumber_asc', label: 'Nº Lote: Menor ao Maior' },
   { value: 'lotNumber_desc', label: 'Nº Lote: Maior ao Menor' },
   { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
   { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
   { value: 'price_asc', label: 'Preço: Menor para Maior' },
-  { value: 'price_desc', label: 'Preço: Maior para Maior' },
+  { value: 'price_desc', label: 'Preço: Maior para Menor' },
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
@@ -126,26 +128,32 @@ function SearchPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
 
-  // Fetch ALL data on mount to ensure counts are accurate and data is available
+  // Fetch data on mount with limits to avoid infinite loading (FIX 5.29 CRÍTICO)
   useEffect(() => {
     async function fetchAllData() {
       setIsFilterDataLoading(true);
       setIsLoading(true);
       try {
-        // Fetch all data in parallel for performance
-        const [categories, offers, sellers, settings, auctions, lots] = await Promise.all([
+        // Phase 1: Fetch critical UI data first (filters + settings)
+        const [categories, sellers, settings] = await Promise.all([
           getCategories(),
-          getDirectSaleOffers(),
           getSellers(true),
           getPlatformSettings(),
-          getAuctions(true),
-          getLots(undefined, true),
         ]);
-
-        // Set all data states
-        setAllDirectSales(offers);
         setAllCategoriesForFilter(categories);
         setPlatformSettings(settings as PlatformSettings);
+        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
+        setIsFilterDataLoading(false);
+
+        // Phase 2: Fetch actual data with limits to prevent timeout
+        const [offers, auctions, lots] = await Promise.all([
+          getDirectSaleOffers().catch(() => []),
+          getAuctions(true, 200).catch(() => []),
+          getLots(undefined, true, 200).catch(() => []),
+        ]);
+
+        // Set data states
+        setAllDirectSales(offers);
         setAllAuctions(auctions);
         setAllLots(lots);
 
@@ -164,12 +172,9 @@ function SearchPageContent() {
         });
         setUniqueLocationsForFilter(Array.from(locations).sort());
 
-        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
-
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching search data:", error);
       } finally {
-        setIsFilterDataLoading(false);
         setIsLoading(false);
       }
     }
@@ -336,7 +341,21 @@ function SearchPageContent() {
     });
 
     // 3. Apply sorting
+    // Helper: compute discount % for lots (GAP 1.1 - Filtro Deságio)
+    const getDiscountPct = (item: any): number => {
+      const eval_ = Number(item.evaluationValue || item.marketValue || 0);
+      const price = Number(item.initialOffer || item.price || 0);
+      if (eval_ > 0 && price > 0 && price < eval_) return ((eval_ - price) / eval_) * 100;
+      return 0;
+    };
+
     switch (sortBy) {
+      case 'discount_desc':
+        filteredItems.sort((a, b) => getDiscountPct(b) - getDiscountPct(a));
+        break;
+      case 'discount_asc':
+        filteredItems.sort((a, b) => getDiscountPct(a) - getDiscountPct(b));
+        break;
       case 'id_desc':
         filteredItems.sort((a, b) => String(b.id).localeCompare(String(a.id)));
         break;

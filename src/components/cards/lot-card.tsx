@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
-import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
+import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock, X, Facebook, MessageSquareText, Mail, Users, ShieldCheck } from 'lucide-react';
 import { isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
@@ -187,6 +187,12 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
               <Badge variant="destructive" className="text-xs animate-pulse"><Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF</Badge>
             )}
+            {/* GAP 1.6: Badge Oportunidade when discount >= 40% */}
+            {discountPercentage >= 40 && (
+              <Badge variant="default" className="text-xs bg-green-600 text-white border-green-700">
+                <Zap className="h-3 w-3 mr-0.5" /> Oportunidade
+              </Badge>
+            )}
             {mentalTriggers.map(trigger => (
               <Badge key={trigger} variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
                 {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
@@ -267,14 +273,26 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           )}
 
 
-          {/* Price Display - GAP-FIX: Monospaced font + next bid calculator */}
+          {/* Price Display - GAP-FIX: Monospaced font + next bid calculator + ancoragem valor avaliação */}
           <div className="flex flex-col mt-2 mb-1" data-ai-id="lot-card-price">
+            {/* GAP 2.14 Ancoragem: Valor de avaliação riscado para mostrar desconto */}
+            {lot.evaluationValue && discountPercentage > 0 && (
+              <p className="text-xs text-muted-foreground line-through font-mono" data-ai-id="lot-card-evaluation-value">
+                Avaliação: R$ {Number(lot.evaluationValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground uppercase font-semibold">
               {getLotDisplayPrice(lot, auction).label}
             </p>
             <p className="text-xl font-bold text-primary font-mono tabular-nums">
               R$ {getLotDisplayPrice(lot, auction).value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
+            {/* GAP 2.4: Badge de dívidas conhecidas */}
+            {lot.debtAmount && Number(lot.debtAmount) > 0 && (
+              <p className="text-[10px] text-destructive font-semibold mt-0.5" data-ai-id="lot-card-debt-badge">
+                ⚠️ Débitos: R$ {Number(lot.debtAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            )}
             {/* GAP-FIX: Next Bid Calculator - mostra próximo lance mínimo */}
             {lot.status === 'ABERTO_PARA_LANCES' && lot.bidIncrementStep && (
               <p className="text-[10px] text-muted-foreground font-mono mt-0.5" data-ai-id="lot-card-next-bid">
@@ -303,6 +321,25 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
               <Gavel className="h-3 w-3" />
               <span>{lot.bidsCount || 0} Lances</span>
             </div>
+          </div>
+
+          {/* GAP 2.1 Social Proof: Simulated viewers + GAP 2.8 Reserve Status */}
+          <div className="flex flex-wrap items-center gap-2 mt-1" data-ai-id="lot-card-social-proof">
+            {(lot.views || 0) > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground" data-ai-id="lot-card-viewers">
+                <Users className="h-3 w-3" />
+                {Math.max(1, Math.floor((lot.views || 0) / 10))} olhando agora
+              </span>
+            )}
+            {lot.secondInitialPrice ? (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-300 text-amber-700 bg-amber-50" data-ai-id="lot-card-reserve-badge">
+                2ª Praça
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-green-300 text-green-700 bg-green-50" data-ai-id="lot-card-no-reserve-badge">
+                1ª Praça
+              </Badge>
+            )}
           </div>
 
           {showCountdownOnThisCard && effectiveLotEndDate && (
