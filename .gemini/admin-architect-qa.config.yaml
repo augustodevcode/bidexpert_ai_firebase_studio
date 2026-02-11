@@ -1,0 +1,230 @@
+# Admin Architect & System Auditor - Gemini/Antigravity Configuration
+# Enables automatic Admin Architect agent invocation in Google Cloud automations
+
+agentName: "admin-architect-qa"
+provider: "gemini"
+environment: "google-cloud"
+version: "1.0-master-architect"
+
+# Auto-activation configuration for Antigravity workflows
+autoActivation:
+  enabled: true
+  triggers:
+    - name: "automatic-on-backoffice-keywords"
+      keywords:
+        - "backoffice"
+        - "admin"
+        - "lotes"
+        - "lot"
+        - "integridade"
+        - "audit"
+        - "compliance"
+        - "LGPD"
+      action: "invoke-subagent"
+      priority: "high"
+    
+    - name: "automatic-on-infrastructure-keywords"
+      keywords:
+        - "performance"
+        - "latência"
+        - "infra"
+        - "database"
+        - "cache"
+        - "WebSocket"
+      action: "invoke-subagent"
+      priority: "high"
+    
+    - name: "critical-on-security-keywords"
+      keywords:
+        - "segurança"
+        - "security"
+        - "vulnerabilidade"
+        - "race-condition"
+        - "data-loss"
+      action: "invoke-subagent"
+      priority: "critical"
+
+# Google Cloud specific configurations
+googleCloud:
+  project: "bidexpert-630df"
+  regions:
+    - "us-central1"
+    - "us-east1"
+  
+  # Antigravity automation integration
+  antigravity:
+    enabled: true
+    rules: 
+      - type: "workflow-trigger"
+        condition: "on-code-change"
+        pattern: "src/**/*(backoffice|admin|lotes|auction)*.ts(x)?"
+        action: "run-admin-architect-audit"
+        priority: "high"
+      
+      - type: "workflow-trigger"
+        condition: "on-code-change"
+        pattern: "src/**/*(payment|financial|commission)*.ts(x)?"
+        action: "run-admin-architect-financial-audit"
+        priority: "critical"
+      
+      - type: "workflow-trigger"
+        condition: "on-infrastructure-alert"
+        pattern: "latency > 2000ms OR error_rate > 5%"
+        action: "run-admin-architect-infra-audit"
+        priority: "critical"
+      
+      - type: "workflow-trigger"
+        condition: "on-security-alert"
+        action: "run-admin-architect-security-audit"
+        priority: "critical"
+      
+      - type: "workflow-trigger"
+        condition: "on-compliance-check"
+        pattern: "LGPD OR data-retention OR GDPR"
+        action: "run-admin-architect-compliance-audit"
+        priority: "high"
+
+# Gemini-specific settings
+gemini:
+  model: "gemini-2.0-flash"
+  temperature: 0.1  # Low temperature for critical audits
+  maxTokens: 8192   # Larger context for 150+ attributes
+  
+  customInstructions:
+    tone: "architectural"
+    demandProof: true
+    requireStackTrace: true
+    validateAgainstCheckpoints: 150
+    auditBlocks: 24
+    blocksList:
+      - "inventory-management"
+      - "admin-ui-ux"
+      - "bidding-engine"
+      - "compliance-docs"
+      - "performance-infra"
+      - "user-management"
+      - "financial-engine"
+      - "realtime-monitoring"
+      - "bi-intelligence"
+      - "marketing-automation"
+      - "security-lgpd"
+      - "content-seo"
+      - "post-sale-workflow"
+      - "developer-tools"
+      - "elite-features"
+      - "performance-optimization"
+      - "backoffice-productivity"
+      - "legal-blindage"
+      - "ai-automation"
+      - "disaster-recovery"
+      - "admin-ux-refinement"
+      - "business-metrics"
+      - "technical-governance"
+      - "master-architecture"
+
+# API integration
+api:
+  endpoint: "/api/agents/admin-architect-qa"
+  webhookUrl: "${GEMINI_WEBHOOK_URL}"
+  authentication: "oauth2"
+  scopes:
+    - "cloud.googleapis.com"
+    - "firestore.googleapis.com"
+    - "cloudbuild.googleapis.com"
+
+# Logging and monitoring
+logging:
+  enabled: true
+  level: "DEBUG"
+  destination: "stderr"
+  includeAuditTrail: true
+  logFormat: "json"
+  
+monitoring:
+  enabled: true
+  metrics:
+    - "agent-invocation-count"
+    - "audit-completion-time"
+    - "critical-issues-detected"
+    - "blocks-validated"
+    - "p95-response-time"
+
+# Notification settings
+notifications:
+  enabled: true
+  channels:
+    - type: "slack"
+      webhook: "${SLACK_WEBHOOK_ADMIN_ARCHITECT}"
+      events:
+        - "critical-issue-found"
+        - "compliance-violation"
+        - "data-integrity-error"
+        - "security-vulnerability"
+        - "infra-degradation"
+    
+    - type: "email"
+      recipients:
+        - "${TEAM_LEAD_EMAIL}"
+        - "${COMPLIANCE_OFFICER_EMAIL}"
+      events:
+        - "critical-issue-found"
+        - "compliance-violation"
+        - "security-vulnerability"
+    
+    - type: "pagerduty"
+      serviceKey: "${PAGERDUTY_SERVICE_KEY}"
+      events:
+        - "critical-issue-found"
+
+# Documentation and guidelines
+documentation:
+  agentFile: ".agent/agents/admin-architect-qa.agent.md"
+  setupGuide: ".agent/agents/admin-architect-qa.SETUP-GUIDE.md"
+  usageGuide: ".agent/agents/admin-architect-qa.USAGE.md"
+  quickReference: ".agent/agents/admin-architect-qa.quick-reference.md"
+  autoActivationDocs: ".agent/agents/admin-architect-qa.AUTO-ACTIVATE.md"
+  examplesFile: ".agent/agents/admin-architect-qa.EXAMPLES.md"
+  readmeFile: ".agent/agents/README-admin-architect-qa.md"
+
+# Feature flags
+features:
+  autoActivationEnabled: true
+  backofficeAuditEnabled: true
+  financialAuditEnabled: true
+  infraAuditEnabled: true
+  securityAuditEnabled: true
+  complianceAuditEnabled: true
+  bddScenarioGeneration: true
+  automaticFixSuggestion: true
+  proofValidationRequired: true
+  criticalEscalationEnabled: true
+
+# Priority thresholds and response times
+priorities:
+  P0:
+    condition: "data-loss OR security-breach OR race-condition"
+    responseTime: "5 minutes"
+    escalation: "immediate"
+  P1:
+    condition: "performance-degradation OR infrastructure-issue OR compliance-concern"
+    responseTime: "1 hour"
+    escalation: "30 minutes"
+  P2:
+    condition: "code-quality OR documentation OR ui-improvement"
+    responseTime: "4 hours"
+    escalation: "2 hours"
+  P3:
+    condition: "nice-to-have OR enhancement OR refactoring"
+    responseTime: "1 business day"
+    escalation: "none"
+
+# Validation rules
+validation:
+  requireBddScenarios: true
+  requireStackTraces: true
+  requireMetrics: true
+  requireProof: true
+  requireAuditTrail: true
+  prohibitApproximations: true
+  prohibitGuesses: true
+  mandatoryFactsOnly: true
