@@ -128,7 +128,7 @@ export class AuctionRepository {
         include: { 
             _count: { select: { Lot: true } },
             Seller: true,
-            stages: true,
+            AuctionStage: true,
         }
     });
   }
