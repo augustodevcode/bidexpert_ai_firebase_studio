@@ -246,23 +246,33 @@ function WizardContent({
 function WizardPageContent() {
     const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const { setWizardData } = useWizard(); // useWizard must be used within WizardProvider
 
     const loadData = useCallback(async (newProcessIdToSelect?: string) => {
         setIsLoadingData(true);
-        const result = await getWizardInitialData();
-        if (result.success) {
-            const data = result.data as WizardDataForFetching;
-            setFetchedData(data);
-            
-            if (newProcessIdToSelect) {
-                const newProcess = data.judicialProcesses.find(p => p.id.toString() === newProcessIdToSelect);
-                if (newProcess) {
-                    setWizardData(prev => ({...prev, judicialProcess: newProcess}));
+        setLoadError(null);
+        try {
+            const result = await getWizardInitialData();
+            if (result.success) {
+                const data = result.data as WizardDataForFetching;
+                setFetchedData(data);
+                
+                if (newProcessIdToSelect) {
+                    const newProcess = data.judicialProcesses.find(p => p.id.toString() === newProcessIdToSelect);
+                    if (newProcess) {
+                        setWizardData(prev => ({...prev, judicialProcess: newProcess}));
+                    }
                 }
+            } else {
+                const errorMsg = result.message || 'Falha desconhecida ao carregar dados';
+                console.error("Failed to load wizard data:", errorMsg);
+                setLoadError(errorMsg);
             }
-        } else {
-            console.error("Failed to load wizard data:", result.message);
+        } catch (error: any) {
+            const errorMsg = error?.message || 'Erro de conexão ao carregar dados';
+            console.error("Exception loading wizard data:", error);
+            setLoadError(errorMsg);
         }
         setIsLoadingData(false);
     }, [setWizardData]);
@@ -279,8 +289,27 @@ function WizardPageContent() {
       );
     }
     
-    if (!fetchedData) {
-        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
+    if (loadError || !fetchedData) {
+        return (
+            <Card className="shadow-lg max-w-md mx-auto mt-10" data-ai-id="wizard-error-card">
+                <CardHeader>
+                    <CardTitle className="text-destructive flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                        Erro ao Carregar Assistente
+                    </CardTitle>
+                    <CardDescription>Não foi possível inicializar o assistente de criação de leilão.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="p-3 bg-destructive/10 rounded-md text-sm text-destructive" data-ai-id="wizard-error-message">
+                        {loadError || 'Erro desconhecido'}
+                    </div>
+                    <Button onClick={() => loadData()} className="w-full" data-ai-id="wizard-retry-btn">
+                        <Loader2 className="mr-2 h-4 w-4" />
+                        Tentar Novamente
+                    </Button>
+                </CardContent>
+            </Card>
+        );
     }
 
     return (

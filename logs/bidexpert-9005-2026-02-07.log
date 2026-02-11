@@ -1,0 +1,253 @@
+
+================================================================================
+[2026-02-07T14:01:10.628Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+[STDOUT]   - Local:        http://localhost:9005
+  - Network:      http://0.0.0.0:9005
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+[STDOUT]  ✓ Ready in 17.9s
+[STDOUT]  ○ Compiling /api/server-time ...
+[STDOUT]  ✓ Compiled /api/server-time in 1651ms (100 modules)
+[STDOUT]  GET /api/server-time 200 in 2167ms
+[STDOUT]  ○ Compiling /api/session/heartbeat ...
+[STDOUT]  ✓ Compiled /api/session/heartbeat in 3.1s (329 modules)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /api/session/heartbeat 401 in 3415ms
+[STDOUT]  ✓ Compiled /api/[[...slug]] in 174ms (338 modules)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [api catch-all] segments [ 'realtime-bids' ]
+[STDOUT]  GET /api/realtime-bids 200 in 1460ms
+[STDOUT]  ○ Compiling /_not-found ...
+[STDOUT]  ✓ Compiled /_not-found in 40.5s (5280 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:82:41)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:122:20)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:29:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR] Erro durante ensureDefaultTenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:56:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:122:20)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:29:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findUnique()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:82:41)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:86:32)
+    at async PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:202:13)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[PlatformSettingsService] Erro ao verificar/criar tenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findUnique()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:56:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:86:32)
+    at async PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:202:13)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[PlatformSettingsService] Error getting settings for tenant 1: Error: Falha ao verificar/criar tenant
+    at eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:107:23)
+    at async PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:202:13)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[STDERR] [getPlatformSettings Action] Error fetching or creating settings: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:224:19)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[Layout Data Fetch] Could not fetch platform settings (this is expected on first run): Error: [getPlatformSettings Action] Error: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:35:15)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[STDOUT]  GET /api/server-time 404 in 43745ms
+[STDOUT]  ✓ Compiled in 3.4s (1996 modules)
+[STDOUT]  ○ Compiling /api/session/heartbeat ...
+[STDOUT]  ✓ Compiled /api/session/heartbeat in 1650ms (3286 modules)
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /api/session/heartbeat 401 in 1977ms
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] [api catch-all] segments [ 'realtime-bids' ]
+[STDOUT]  GET /api/realtime-bids 200 in 124ms
+
+================================================================================
+[2026-02-07T14:11:38.326Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+  - Local:        http://localhost:9005
+[STDOUT]   - Network:      http://0.0.0.0:9005
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+[STDOUT]  ✓ Ready in 7.5s
+[STDOUT]  ○ Compiling /src/middleware ...
+[STDOUT]  ✓ Compiled /src/middleware in 516ms (212 modules)
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  ○ Compiling / ...
+[STDERR] ^C[STDERR] ^C

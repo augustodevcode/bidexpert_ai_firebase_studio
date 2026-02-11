@@ -11,10 +11,11 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLots as getLotsAction, deleteLot } from './actions';
+import { getLots as getLotsAction, deleteLot, updateLotsStatusBulk, deleteLotsInBulk } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
+import { exportLotsToCSV, exportLotsToJSON } from '@/services/export-lots.service';
 import type { Auction, Lot, PlatformSettings } from '@/types';
-import { PlusCircle, Package, Loader2 } from 'lucide-react';
+import { PlusCircle, Package, Loader2, Download, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
@@ -91,6 +92,118 @@ export default function AdminLotsPage() {
     setRefetchTrigger(c => c + 1);
   }, []);
 
+  // Mass Action Handlers
+  const handleDeleteSelected = useCallback(async (selectedItems: Lot[]) => {
+    const lotIds = selectedItems.map(item => item.id);
+    const result = await deleteLotsInBulk(lotIds);
+    toast({ 
+      title: result.success ? 'Sucesso' : 'Atenção',
+      description: result.message,
+      variant: result.success ? 'default' : 'destructive'
+    });
+    onUpdate();
+  }, [toast, onUpdate]);
+
+  const handleSuspendSelected = useCallback(async (selectedItems: Lot[]) => {
+    const lotIds = selectedItems.map(item => item.id);
+    const result = await updateLotsStatusBulk(lotIds, 'SUSPENSO');
+    toast({ 
+      title: result.success ? 'Sucesso' : 'Atenção',
+      description: result.message,
+      variant: result.success ? 'default' : 'destructive'
+    });
+    onUpdate();
+  }, [toast, onUpdate]);
+
+  const handleActivateSelected = useCallback(async (selectedItems: Lot[]) => {
+    const lotIds = selectedItems.map(item => item.id);
+    const result = await updateLotsStatusBulk(lotIds, 'ABERTO_PARA_LANCES');
+    toast({ 
+      title: result.success ? 'Sucesso' : 'Atenção',
+      description: result.message,
+      variant: result.success ? 'default' : 'destructive'
+    });
+    onUpdate();
+  }, [toast, onUpdate]);
+
+  // Export handlers
+  const handleExportCSV = useCallback(async (selectedItems: Lot[]) => {
+    const lotIds = selectedItems.map(item => item.id);
+    const result = await exportLotsToCSV(lotIds);
+    if (result.success && result.data) {
+      // Download CSV
+      const blob = new Blob([result.data], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.filename || 'lotes_export.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: 'Sucesso', description: result.message });
+    } else {
+      toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+    }
+  }, [toast]);
+
+  const handleExportExcel = useCallback(async (selectedItems: Lot[]) => {
+    const lotIds = selectedItems.map(item => item.id);
+    const result = await exportLotsToJSON(lotIds);
+    if (result.success && result.data) {
+      // Download JSON (can be imported to Excel)
+      const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.filename || 'lotes_export.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast({ title: 'Sucesso', description: `${result.message} (JSON - importe no Excel)` });
+    } else {
+      toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+    }
+  }, [toast]);
+
+  // Bulk Actions disponíveis
+  const bulkActions = useMemo(() => [
+    { 
+      label: 'Exportar CSV', 
+      icon: Download,
+      onClick: handleExportCSV, 
+      variant: 'outline' as const,
+    },
+    { 
+      label: 'Exportar Excel', 
+      icon: FileSpreadsheet,
+      onClick: handleExportExcel, 
+      variant: 'outline' as const,
+    },
+    { 
+      label: 'Suspender Selecionados', 
+      onClick: handleSuspendSelected, 
+      variant: 'outline' as const,
+      confirmTitle: 'Confirmar Suspensão em Massa',
+      confirmDescription: 'Esta ação irá suspender todos os lotes selecionados. Deseja continuar?'
+    },
+    { 
+      label: 'Ativar Selecionados', 
+      onClick: handleActivateSelected, 
+      variant: 'outline' as const,
+      confirmTitle: 'Confirmar Ativação em Massa',
+      confirmDescription: 'Esta ação irá reativar todos os lotes selecionados. Deseja continuar?'
+    },
+    { 
+      label: 'Excluir Selecionados', 
+      onClick: handleDeleteSelected, 
+      variant: 'destructive' as const,
+      confirmTitle: 'Confirmar Exclusão em Massa',
+      confirmDescription: 'Esta ação é permanente e não pode ser desfeita. Deseja excluir os lotes selecionados?'
+    },
+  ], [handleExportCSV, handleExportExcel, handleSuspendSelected, handleActivateSelected, handleDeleteSelected]);
+
   const renderGridItem = (item: Lot) => (
     <BidExpertCard
       item={item}
@@ -119,6 +232,31 @@ export default function AdminLotsPage() {
           { id: 'auctionName', title: 'Leilão', options: auctionOptions }
       ];
   }, [lots, auctions]);
+  
+  if (error) {
+    return (
+        <div className="space-y-6" data-ai-id="admin-lots-error">
+            <Card className="shadow-lg max-w-md mx-auto mt-10">
+                <CardHeader>
+                    <CardTitle className="text-destructive flex items-center gap-2">
+                        <Package className="h-6 w-6" />
+                        Erro ao Carregar Lotes
+                    </CardTitle>
+                    <CardDescription>Não foi possível carregar a lista de lotes.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="p-3 bg-destructive/10 rounded-md text-sm text-destructive">
+                        {error}
+                    </div>
+                    <Button onClick={() => fetchPageData()} className="w-full" data-ai-id="lots-retry-btn">
+                        <Loader2 className="mr-2 h-4 w-4" />
+                        Tentar Novamente
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
   
   if (isLoading || !platformSettings) {
     return (
@@ -173,6 +311,8 @@ export default function AdminLotsPage() {
         searchColumnId='title'
         searchPlaceholder='Buscar por título...'
         dataTestId="lots-table"
+        onDeleteSelected={handleDeleteSelected}
+        bulkActions={bulkActions}
       />
     </div>
   );

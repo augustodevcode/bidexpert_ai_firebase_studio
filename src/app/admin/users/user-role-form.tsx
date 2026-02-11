@@ -29,12 +29,16 @@ interface UserRoleFormProps {
   user: UserProfileWithPermissions;
   roles: Role[];
   onSubmitAction: (userId: string, roleIds: string[]) => Promise<{ success: boolean; message: string }>;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 export default function UserRoleForm({
   user,
   roles,
   onSubmitAction,
+  onSuccess,
+  onCancel,
 }: UserRoleFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -44,7 +48,7 @@ export default function UserRoleForm({
     resolver: zodResolver(userRoleFormSchema),
     mode: 'onChange',
     defaultValues: {
-      roleIds: user?.roles?.map(r => r.id) || [],
+      roleIds: user?.roles?.map(r => r.role.id) || [],
     },
   });
 
@@ -67,7 +71,7 @@ export default function UserRoleForm({
     console.log('[UserRoleForm] Iniciando submissão do formulário de perfis');
     console.log('[UserRoleForm] Usuário ID:', user.id);
     console.log('[UserRoleForm] Perfis selecionados:', values.roleIds);
-    console.log('[UserRoleForm] Perfis anteriores:', user?.roles?.map(r => ({ id: r.id, name: r.name })));
+    console.log('[UserRoleForm] Perfis anteriores:', user?.roles?.map(r => ({ id: r.role.id, name: r.role.name })));
     
     setIsSubmitting(true);
     try {
@@ -82,8 +86,12 @@ export default function UserRoleForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/users');
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/admin/users');
+          router.refresh();
+        }
       } else {
         console.error('[UserRoleForm] Falha ao atualizar perfis:', result.message);
         toast({
@@ -174,7 +182,7 @@ export default function UserRoleForm({
             />
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => onCancel ? onCancel() : router.push('/admin/users')} disabled={isSubmitting}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting || !hasSelectedRoles}>

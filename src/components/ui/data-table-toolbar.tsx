@@ -27,6 +27,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+/**
+ * Interface para ações em massa (bulk actions)
+ * Permite definir múltiplas ações que podem ser executadas sobre itens selecionados
+ */
+export interface BulkAction<TData> {
+  label: string;
+  icon?: React.ReactNode;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  onClick: (selectedRows: TData[]) => Promise<void>;
+  confirmTitle?: string;
+  confirmDescription?: string;
+}
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -42,6 +54,7 @@ interface DataTableToolbarProps<TData> {
     }[];
   }[];
   onDeleteSelected?: (selectedRows: TData[]) => Promise<void>;
+  bulkActions?: BulkAction<TData>[];
 }
 
 export function DataTableToolbar<TData>({
@@ -50,16 +63,24 @@ export function DataTableToolbar<TData>({
   searchPlaceholder = "Buscar...",
   facetedFilterColumns = [],
   onDeleteSelected,
+  bulkActions = [],
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
   const groupableColumns = table.getAllColumns().filter(c => c.getCanGroup());
   const groupingState = table.getState().grouping;
   const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
+  const selectedRows = table.getFilteredSelectedRowModel().rows.map(r => r.original);
 
   const handleDelete = () => {
     if (onDeleteSelected) {
       onDeleteSelected(table.getFilteredSelectedRowModel().rows.map(r => r.original));
     }
+  }
+
+  const handleBulkAction = async (action: BulkAction<TData>) => {
+    await action.onClick(selectedRows);
+    // Limpa seleção após ação
+    table.resetRowSelection();
   }
 
   // Helper function to extract a readable header name
@@ -133,6 +154,60 @@ export function DataTableToolbar<TData>({
         )}
       </div>
        <div className="flex w-full sm:w-auto items-center justify-end gap-2">
+          {/* Bulk Actions - aparecem quando há itens selecionados */}
+          {selectedRowsCount > 0 && bulkActions.length > 0 && (
+            <div className="flex items-center gap-1" data-ai-id="bulk-actions-container">
+              <span className="text-sm text-muted-foreground mr-2">
+                {selectedRowsCount} selecionado(s)
+              </span>
+              {bulkActions.map((action, index) => (
+                action.confirmTitle ? (
+                  <AlertDialog key={index}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant={action.variant || 'outline'} 
+                        size="sm" 
+                        className="h-8"
+                        data-ai-id={`bulk-action-${index}`}
+                      >
+                        {action.icon}
+                        {action.label}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{action.confirmTitle}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {action.confirmDescription || `Esta ação será aplicada a ${selectedRowsCount} itens selecionados.`}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => handleBulkAction(action)}
+                          className={action.variant === 'destructive' ? 'bg-destructive hover:bg-destructive/90' : ''}
+                        >
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : (
+                  <Button 
+                    key={index}
+                    variant={action.variant || 'outline'} 
+                    size="sm" 
+                    className="h-8"
+                    onClick={() => handleBulkAction(action)}
+                    data-ai-id={`bulk-action-${index}`}
+                  >
+                    {action.icon}
+                    {action.label}
+                  </Button>
+                )
+              ))}
+            </div>
+          )}
           {selectedRowsCount > 0 && onDeleteSelected && (
             <AlertDialog>
                 <AlertDialogTrigger asChild>

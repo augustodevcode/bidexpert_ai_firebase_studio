@@ -46,6 +46,7 @@ import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugif
 
 import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction, getLotDocuments, getBidsForLot } from './actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
+import { recordEntityView } from '@/services/view-metrics.service';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LotDescriptionTab from '@/components/auction/lot-description-tab';
@@ -70,6 +71,7 @@ import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctio
 import BidExpertCard from '@/components/BidExpertCard';
 import { InvestorAnalysisSection } from '@/components/lots';
 import { ptBR } from 'date-fns/locale';
+import StickyBidBar from '@/components/auction/sticky-bid-bar';
 
 
 const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
@@ -339,7 +341,11 @@ export default function LotDetailClientContent({
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (lot?.id) {
+      addRecentlyViewedId(lot.id);
+      recordEntityView(lot.id);
+    }
+  }, [lot?.id]);
 
   const checkHabilitationStatus = useCallback(async () => {
     if (userProfileWithPermissions?.id && auction.id) {
@@ -430,6 +436,9 @@ export default function LotDetailClientContent({
     if (lot?.id) {
       addRecentlyViewedId(lot.id.toString());
       setCurrentImageIndex(0);
+      
+      // Registrar visualização para métricas (Monitor de Visualizações - audit gap 2.5)
+      recordEntityView('Lot', lot.id).catch(console.error);
 
       const fetchData = async () => {
         setIsLoadingData(true);
@@ -857,7 +866,7 @@ export default function LotDetailClientContent({
                     isLoadingSharedHistory={isLoadingBidHistory}
                     onRefreshBidHistory={fetchSharedBidHistory}
                   />
-                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{!activeLotPrices?.initialBid && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
+                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.secondInitialPrice && <div className="flex justify-between"><span className="text-muted-foreground">2ª Praça (Lance Inicial):</span> <span className="font-semibold text-foreground">R$ {Number(lot.secondInitialPrice).toLocaleString('pt-BR')}</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{!activeLotPrices?.initialBid && !lot.secondInitialPrice && !lot.debtAmount && !lot.itbiValue && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
                   
                   {/* Contact Info */}
                   <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Phone className="h-5 w-5 mr-2 text-muted-foreground"/>Contato e Suporte</CardTitle></CardHeader><CardContent className="space-y-3 text-sm">
@@ -908,6 +917,9 @@ export default function LotDetailClientContent({
 
       <LotPreviewModal lot={lot} auction={auction} platformSettings={platformSettings} isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} />
       <LotMapPreviewModal lot={lot} platformSettings={platformSettings!} isOpen={isMapModalOpen} onClose={() => setIsMapModalOpen(false)} />
+
+      {/* GAP 3.2: Sticky Mobile Bid Bar */}
+      <StickyBidBar lot={lot} auction={auction} />
     </>
     );
 }

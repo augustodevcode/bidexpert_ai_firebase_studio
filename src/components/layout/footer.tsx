@@ -82,7 +82,12 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-8 flex flex-col items-center">
+        <div className="border-t border-border pt-8 flex flex-col items-center gap-2">
+          {/* GAP 5.28: SSL Trust Badge */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground" data-ai-id="footer-ssl-badge">
+            <ShieldCheck className="h-4 w-4 text-green-600" />
+            <span>Ambiente Seguro · Conexão Criptografada SSL/TLS · Dados Protegidos</span>
+          </div>
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} BidExpert. Todos os direitos reservados.
           </p>
