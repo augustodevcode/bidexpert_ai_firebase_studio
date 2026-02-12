@@ -36,6 +36,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
+import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 
 // Sort options for auctions (similar to search page)
 const sortOptionsAuctions = [
@@ -71,6 +72,7 @@ export default function AuctioneerDetailsPage() {
   const auctioneerSlug = typeof params.auctioneerSlug === 'string' ? params.auctioneerSlug : '';
 
   const { userProfileWithPermissions } = useAuth();
+  const { setPageActions } = useFloatingActions();
   const [auctioneerProfile, setAuctioneerProfile] = useState<AuctioneerProfileInfo | null>(null);
   const [relatedAuctions, setRelatedAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +92,25 @@ export default function AuctioneerDetailsPage() {
     hasAnyPermission(userProfileWithPermissions, ['manage_all', 'auctioneers:update']),
     [userProfileWithPermissions]
   );
+
+  useEffect(() => {
+    if (!hasEditPermissions || !auctioneerProfile?.id) {
+      setPageActions([]);
+      return;
+    }
+
+    setPageActions([
+      {
+        id: 'edit-auctioneer',
+        label: 'Editar Leiloeiro',
+        href: `/admin/auctioneers/${auctioneerProfile.id}/edit`,
+        icon: Pencil,
+        dataAiId: 'floating-action-edit-auctioneer',
+      },
+    ]);
+
+    return () => setPageActions([]);
+  }, [auctioneerProfile?.id, hasEditPermissions, setPageActions]);
 
   useEffect(() => {
     async function fetchAuctioneerDetails() {
@@ -232,7 +253,6 @@ export default function AuctioneerDetailsPage() {
   const placeholderTeamReviews = Math.floor(Math.random() * 500 + 50);
   const placeholderAveragePrice = ((Math.random() * 500 + 100) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '');
   const placeholderPriceRange = `${((Math.random() * 50 + 10) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')} - ${((Math.random() * 2000 + 500) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')}`;
-  const editUrl = `/admin/auctioneers/${auctioneerProfile.id}/edit`;
   const validLogoUrl = isValidImageUrl(auctioneerProfile.logoUrl) ? auctioneerProfile.logoUrl! : `https://placehold.co/160x160.png?text=${auctioneerInitial}`;
   const fullAddress = [auctioneerProfile.street, auctioneerProfile.number, auctioneerProfile.complement, auctioneerProfile.neighborhood, auctioneerProfile.city, auctioneerProfile.state, auctioneerProfile.zipCode].filter(Boolean).join(', ');
 
@@ -360,23 +380,6 @@ export default function AuctioneerDetailsPage() {
       </div>
     </TooltipProvider>
 
-    {hasEditPermissions && auctioneerProfile?.id && (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon" data-ai-id="auctioneer-edit-fab">
-              <Link href={editUrl}>
-                <Pencil className="h-6 w-6" />
-                <span className="sr-only">Editar Leiloeiro</span>
-              </Link>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>Editar Leiloeiro</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )}
   </>
   );
 }
