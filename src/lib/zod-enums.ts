@@ -7,10 +7,13 @@
 import { z } from 'zod';
 
 export const auctionStatusValues: [string, ...string[]] = [
-  'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
+  'RASCUNHO', 'EM_PREPARACAO', 'EM_VALIDACAO', 'EM_AJUSTE', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'EM_PREGAO', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
 ];
 export const lotStatusValues: [string, ...string[]] = [
-  'RASCUNHO', 'EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'RELISTADO', 'CANCELADO'
+  'RASCUNHO', 'AGUARDANDO', 'EM_BREVE', 'ABERTO_PARA_LANCES', 'EM_PREGAO', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'RELISTADO', 'CANCELADO', 'RETIRADO'
+];
+export const bidStatusValues: [string, ...string[]] = [
+  'ATIVO', 'CANCELADO', 'VENCEDOR', 'EXPIRADO'
 ];
 export const userHabilitationStatusValues: [string, ...string[]] = [
   'PENDING_DOCUMENTS', 'PENDING_ANALYSIS', 'HABILITADO', 'REJECTED_DOCUMENTS', 'BLOCKED'

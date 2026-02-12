@@ -6,6 +6,9 @@ import { revalidatePath } from 'next/cache';
 import type { Subcategory, SubcategoryFormData } from '@/types';
 import { SubcategoryService } from '@/services/subcategory.service';
 
+// Re-export SubcategoryFormData para uso em páginas
+export type { SubcategoryFormData };
+
 const subcategoryService = new SubcategoryService();
 
 export async function createSubcategoryAction(

@@ -1,4 +1,9 @@
 // src/app/admin/subcategories/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Subcategorias.
+ * Utiliza o componente DataTable para exibir os dados com funcionalidade
+ * completa de CRUD (criar, editar, excluir).
+ */
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -6,12 +11,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getSubcategoriesByParentIdAction } from './actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import type { Subcategory, LotCategory } from '@/types';
-import { Layers } from 'lucide-react';
+import { Layers, PlusCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function AdminSubcategoriesPage() {
   const [allParentCategories, setAllParentCategories] = useState<LotCategory[]>([]);
@@ -20,6 +27,7 @@ export default function AdminSubcategoriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     let isMounted = true;
@@ -87,11 +95,14 @@ export default function AdminSubcategoriesPage() {
     return () => { isMounted = false; };
   }, [selectedParentCategoryId, toast, allParentCategories]);
 
+  const handleDelete = useCallback((id: string) => {
+    setSubcategories(prev => prev.filter(sub => sub.id !== id));
+  }, []);
   
-  const columns = useMemo(() => createColumns(), []);
+  const columns = useMemo(() => createColumns({ onDelete: handleDelete }), [handleDelete]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-subcategories-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -100,9 +111,14 @@ export default function AdminSubcategoriesPage() {
               Subcategorias
             </CardTitle>
             <CardDescription>
-              Visualize as subcategorias. A criação e edição foram desativadas.
+              Gerencie as subcategorias da plataforma. Adicione, edite ou exclua subcategorias.
             </CardDescription>
           </div>
+          <Button asChild data-ai-id="new-subcategory-button">
+            <Link href="/admin/subcategories/new">
+              <PlusCircle className="mr-2 h-4 w-4" /> Nova Subcategoria
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
             <div className="mb-4">

@@ -218,6 +218,20 @@ model Auction {
   auctionType              Auction_auctionType?
   auctionMethod            Auction_auctionMethod? @default(STANDARD)
   participation            Auction_participation? @default(ONLINE)
+  
+  // State Machine Fields
+  createdByUserId      BigInt?
+  submittedAt          DateTime?
+  validatedAt          DateTime?
+  validatedBy          BigInt?
+  validationNotes      String?                @db.Text
+  openDate             DateTime?
+  actualOpenDate       DateTime?
+  closedAt             DateTime?
+  cancelledAt          DateTime?
+  cancelledBy          BigInt?
+  cancellationReason   String?                @db.Text
+
   onlineUrl                String?                @db.VarChar(500)
   address                  String?
   zipCode                  String?                @db.VarChar(10)
@@ -344,18 +358,24 @@ model Auctioneer {
 }
 
 model Bid {
-  id            BigInt   @id @default(autoincrement())
+  id            BigInt     @id @default(autoincrement())
   lotId         BigInt
   auctionId     BigInt
   bidderId      BigInt
-  amount        Decimal  @db.Decimal(15, 2)
-  timestamp     DateTime @default(now())
+  amount        Decimal    @db.Decimal(15, 2)
+  timestamp     DateTime   @default(now())
+  
+  // Status Fields
+  status        Bid_status @default(ATIVO)
+  cancelledAt   DateTime?
+  isAutoBid     Boolean    @default(false)
+  
   bidderDisplay String?
   tenantId      BigInt
-  Auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  User          User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
-  Lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  Tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  Auction       Auction    @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  User          User       @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+  Lot           Lot        @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  Tenant        Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([auctionId])
   @@index([bidderId])
@@ -625,6 +645,13 @@ model Lot {
   secondInitialPrice       Decimal?             @db.Decimal(15, 2)
   bidIncrementStep         Decimal?             @db.Decimal(10, 2)
   status                   Lot_status           @default(EM_BREVE)
+  
+  // State Machine Fields
+  openedAt                 DateTime?
+  lotClosedAt              DateTime?
+  soldAt                   DateTime?
+  soldPrice                Decimal?             @db.Decimal(15, 2)
+  
   bidsCount                Int?                 @default(0)
   views                    Int?                 @default(0)
   isFeatured               Boolean?             @default(false)
@@ -1946,10 +1973,13 @@ enum visitor_events_eventType {
 
 enum Auction_status {
   RASCUNHO
+  EM_VALIDACAO
+  EM_AJUSTE
   EM_PREPARACAO
   EM_BREVE
   ABERTO
   ABERTO_PARA_LANCES
+  EM_PREGAO
   ENCERRADO
   FINALIZADO
   CANCELADO
@@ -2092,14 +2122,23 @@ enum bidder_profiles_documentStatus {
 
 enum Lot_status {
   RASCUNHO
+  AGUARDANDO
   EM_BREVE
   ABERTO_PARA_LANCES
+  EM_PREGAO
   ENCERRADO
   VENDIDO
   NAO_VENDIDO
   RELISTADO
   CANCELADO
   RETIRADO
+}
+
+enum Bid_status {
+  ATIVO
+  CANCELADO
+  VENCEDOR
+  EXPIRADO
 }
 
 enum TenantInvoice_status {
