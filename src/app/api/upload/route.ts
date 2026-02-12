@@ -1,35 +1,31 @@
 // src/app/api/upload/route.ts
 /**
- * @fileoverview Rota de API para o upload de arquivos de mídia.
- * Este endpoint lida com a recepção de arquivos via POST, realiza validações
- * de tamanho e tipo, salva os arquivos fisicamente no servidor em um diretório
- * público e cria um registro correspondente no banco de dados através do MediaService.
- * Ele é projetado para ser chamado por componentes de front-end como o `AdvancedMediaUploadPage`.
+ * @fileoverview Rota de API para upload de arquivos de mídia.
+ * Usa StorageAdapter para salvar em local (dev) ou Vercel Blob (prod).
+ * Cria registros MediaItem no banco de dados via MediaService.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { MediaService } from '@/services/media.service';
 import type { MediaItem } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
+import { getStorageAdapter } from '@/lib/storage';
 import path from 'path';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 50;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
-  'image/jpeg', 
-  'image/png', 
-  'image/webp', 
-  'image/gif', 
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
   'application/pdf',
-  'image/svg+xml'
+  'image/svg+xml',
 ];
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
-    const uploadPath = formData.get('path') as string || 'media';
+    const uploadPath = (formData.get('path') as string) || 'media';
     const userId = formData.get('userId') as string | null;
     const judicialProcessId = formData.get('judicialProcessId') as string | null;
 
@@ -39,66 +35,55 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     if (!userId) {
-        return NextResponse.json(
-            { success: false, message: 'Usuário não autenticado. O ID do usuário é obrigatório.'},
-            { status: 401 }
-        );
+      return NextResponse.json(
+        { success: false, message: 'Usuário não autenticado. O ID do usuário é obrigatório.' },
+        { status: 401 }
+      );
     }
-    
+
+    const storage = getStorageAdapter();
     const mediaService = new MediaService();
     const uploadedItems: Partial<MediaItem>[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
     const publicUrls: string[] = [];
 
-    const relativeUploadDir = path.join('public', 'uploads', uploadPath);
-    const absoluteUploadDir = path.join(process.cwd(), relativeUploadDir);
-
-    if (!existsSync(absoluteUploadDir)) {
-        await mkdir(absoluteUploadDir, { recursive: true });
-    }
-
     for (const file of files) {
-       if (file.size > MAX_FILE_SIZE_BYTES) {
-          uploadErrors.push({ fileName: file.name, message: `Arquivo excede ${MAX_FILE_SIZE_MB}MB.` });
-          continue;
-        }
-        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-          uploadErrors.push({ fileName: file.name, message: `Tipo '${file.type}' não permitido.` });
-          continue;
-        }
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        uploadErrors.push({ fileName: file.name, message: `Arquivo excede ${MAX_FILE_SIZE_MB}MB.` });
+        continue;
+      }
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        uploadErrors.push({ fileName: file.name, message: `Tipo '${file.type}' não permitido.` });
+        continue;
+      }
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
 
-        const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-        const uniqueFilename = `${uuidv4()}-${sanitizedFileName}`;
-        
-        await writeFile(path.join(absoluteUploadDir, uniqueFilename), buffer);
-        
-        const publicUrl = path.join('/uploads', uploadPath, uniqueFilename).replace(/\\/g, '/');
-        publicUrls.push(publicUrl);
+      const uploadResult = await storage.upload(buffer, file.name, uploadPath, file.type);
+      publicUrls.push(uploadResult.url);
 
-        const itemData: Partial<Omit<MediaItem, 'id'>> = {
-            fileName: file.name,
-            storagePath: publicUrl,
-            title: path.basename(file.name, path.extname(file.name)),
-            altText: path.basename(file.name, path.extname(file.name)),
-            mimeType: file.type,
-            sizeBytes: file.size,
-            dataAiHint: 'upload usuario',
-            judicialProcessId: judicialProcessId || undefined,
-        };
-        
-        const createResult = await mediaService.createMediaItem(itemData, publicUrl, userId);
-        if (createResult.success && createResult.item) {
-            uploadedItems.push(createResult.item);
-        } else {
-            uploadErrors.push({ fileName: file.name, message: createResult.message });
-        }
+      const itemData: Partial<Omit<MediaItem, 'id'>> = {
+        fileName: file.name,
+        storagePath: uploadResult.storagePath,
+        title: path.basename(file.name, path.extname(file.name)),
+        altText: path.basename(file.name, path.extname(file.name)),
+        mimeType: file.type,
+        sizeBytes: file.size,
+        dataAiHint: 'upload usuario',
+        judicialProcessId: judicialProcessId || undefined,
+      };
+
+      const createResult = await mediaService.createMediaItem(itemData, uploadResult.url, userId);
+      if (createResult.success && createResult.item) {
+        uploadedItems.push(createResult.item);
+      } else {
+        uploadErrors.push({ fileName: file.name, message: createResult.message });
+      }
     }
-    
+
     let message = '';
     if (publicUrls.length > 0) {
       message += `${publicUrls.length} arquivo(s) enviado(s) com sucesso. `;
@@ -108,15 +93,18 @@ export async function POST(request: NextRequest) {
     }
 
     const success = uploadErrors.length === 0;
-    const statusCode = success ? 200 : (publicUrls.length > 0 ? 207 : 400);
+    const statusCode = success ? 200 : publicUrls.length > 0 ? 207 : 400;
 
-    return NextResponse.json({
-      success,
-      message,
-      items: uploadedItems,
-      urls: publicUrls,
-      errors: uploadErrors.length > 0 ? uploadErrors : undefined,
-    }, { status: statusCode });
+    return NextResponse.json(
+      {
+        success,
+        message,
+        items: uploadedItems,
+        urls: publicUrls,
+        errors: uploadErrors.length > 0 ? uploadErrors : undefined,
+      },
+      { status: statusCode }
+    );
 
   } catch (error: any) {
     console.error('[API Upload Route Handler] Erro geral:', error);

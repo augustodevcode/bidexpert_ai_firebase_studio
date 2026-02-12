@@ -257,6 +257,33 @@ runSubagent {
 
 ---
 
+## Media Library Architect (Google Photos-like)
+Para tarefas relacionadas à biblioteca de mídia, galeria, upload, editor de imagem, e entidades vinculadas:
+`.github/skills/media-library/SKILL.md`
+
+Este agente lida com:
+- Galeria responsiva (grid/rows/list) com seleção multi e entity badges
+- Editor de imagem Canvas API (crop, rotate, flip, brightness/contrast/saturation)
+- Lightbox com zoom, thumbnails, fullscreen, download
+- Entity links (reverse FK: quais entidades referenciam um MediaItem)
+- Storage dual-adapter (local dev / Vercel Blob prod)
+- Upload drag-and-drop com progress
+
+### Regras Críticas
+1. **NUNCA** usar `Asset.name` — o campo correto é `Asset.title`
+2. **NUNCA** usar `@imgly/background-removal` (licença AGPL)
+3. **SEMPRE** usar `getStorageAdapter()` para operações de arquivo
+4. **SEMPRE** serializar BigInt→string antes de retornar ao client
+
+### Arquivos Principais
+- `src/app/admin/media/page.tsx` - Página principal composta
+- `src/components/admin/media/` - Todos os componentes visuais
+- `src/services/media-entity-links.service.ts` - Reverse FK lookup
+- `src/lib/storage/` - Storage adapters
+- `src/app/api/media/edit/route.ts` - API de edição de imagem
+
+---
+
 ## Report Builder Architect (GrapesJS + Puppeteer + Handlebars)
 Para tarefas relacionadas a criação de templates de relatórios, editais, laudos e cartas de arrematação, siga as diretrizes em:
 `E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\skills\report-builder\SKILL.md`
@@ -305,6 +332,7 @@ Este agente lida com:
 6. **NUNCA** redirecionar para subdomínios CRM em URLs `.vercel.app`
 7. **SEMPRE** adicionar `export const dynamic = 'force-dynamic'` em API routes dinâmicas
 8. Deploy **SOMENTE** via `git push origin main` — NUNCA via Vercel MCP direto
+9. **AUTOMAÇÃO OBRIGATÓRIA:** Seed DEVE executar automaticamente após deploys via GitHub Actions (`.github/workflows/vercel-post-deploy-seed.yml`). Configurar `VERCEL_SEED_SECRET_TOKEN` no GitHub Secrets antes do primeiro deploy DEMO.
 
 ## Conflitos de regras
  - Sempre que houver conflito de instruções, peça para o usuário clarificar antes de proceguir.
