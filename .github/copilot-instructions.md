@@ -85,6 +85,7 @@ Eu sou programado para seguir estritamente as diretrizes definidas no arquivo `R
 -   **Componentização Universal** (uso de `BidExpertCard` e `BidExpertListItem`).
 -   **Validação de Formulários** com `zod` e `react-hook-form`.
 -   **Gerenciamento de Dependências** e **Integridade de Links**.
+-   **Unificação de Busca**: Todas as buscas do site DEVEM cair na página de search (`/search`) com seus devidos filtros aplicados. NÃO devem existir páginas individuais de resultados de busca por categoria (ex: `/veiculos`, `/imoveis`) com layouts customizados diferentes da busca principal. Caso existam rotas específicas (como `/veiculos`), elas DEVEM fazer redirect automático para `/search?category=slug-da-categoria`.
 
 ## 5. Princípio da Não-Regressão e Autorização Humana
 

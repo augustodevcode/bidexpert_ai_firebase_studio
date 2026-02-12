@@ -1,0 +1,89 @@
+
+================================================================================
+[2026-02-12T01:37:51.090Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+[STDOUT]   - Local:        http://localhost:9005
+  - Network:      http://0.0.0.0:9005
+  - Environments: .env.local, .env
+
+[STDOUT]  ✓ Starting...
+[STDOUT]  ✓ Ready in 13.8s
+
+================================================================================
+[2026-02-12T02:18:34.551Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+[STDOUT]   - Local:        http://localhost:9005
+  - Network:      http://0.0.0.0:9005
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+[STDOUT]  ✓ Ready in 9.8s
+[STDOUT]  ○ Compiling /src/middleware ...
+[STDOUT]  ✓ Compiled /src/middleware in 3.6s (212 modules)
+[STDOUT] [resolveTenantFromRequest] hostname='localhost:9005', forwardedHost='localhost:9005', effectiveHost='localhost:9005', hostWithoutPort='localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: null
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='1', subdomain='null'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: '1'
+[STDOUT]  ○ Compiling /category/[categorySlug] ...
+[STDOUT]  ✓ Compiled /category/[categorySlug] in 38s (5323 modules)
+[STDOUT]  ✓ Compiled in 2.8s (2000 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT]  HEAD /category/veiculos 307 in 46631ms
+[STDOUT] [resolveTenantFromRequest] hostname='localhost:9005', forwardedHost='localhost:9005', effectiveHost='localhost:9005', hostWithoutPort='localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: null
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='1', subdomain='null'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: '1'
+[STDOUT]  ○ Compiling /search ...
+[STDOUT] [resolveTenantFromRequest] hostname='127.0.0.1:9005', forwardedHost='127.0.0.1:9005', effectiveHost='127.0.0.1:9005', hostWithoutPort='127.0.0.1'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: null
+
+================================================================================
+[2026-02-12T02:21:36.324Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+  - Local:        http://localhost:9005
+[STDOUT]   - Network:      http://0.0.0.0:9005
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+[STDOUT]  ✓ Ready in 9s
+[STDOUT] [?25h
+
+[2026-02-12T02:22:15.984Z] Processo encerrado com código 0

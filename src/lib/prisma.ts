@@ -77,10 +77,18 @@ function createPrismaClient(databaseUrl?: string) {
                     // We also need to map the table correcty.
                     // The schema @@map("itsm_query_logs") means the table is `itsm_query_logs`.
                     
-                    await client.$executeRaw`
-                      INSERT INTO itsm_query_logs ("query", "duration", "success", "errorMessage", "timestamp")
-                      VALUES (${queryString}, ${duration}, ${success}, ${errorMessage}, NOW())
-                    `;
+                    const isPostgres = process.env.DATABASE_URL?.includes('postgres');
+                    if (isPostgres) {
+                      await client.$executeRaw`
+                        INSERT INTO itsm_query_logs ("query", "duration", "success", "errorMessage", "timestamp")
+                        VALUES (${queryString}, ${duration}, ${success}, ${errorMessage}, NOW())
+                      `;
+                    } else {
+                      await client.$executeRaw`
+                        INSERT INTO itsm_query_logs (\`query\`, \`duration\`, \`success\`, \`errorMessage\`, \`timestamp\`)
+                        VALUES (${queryString}, ${duration}, ${success}, ${errorMessage}, NOW())
+                      `;
+                    }
                   }
                 } catch (logError) {
                   // Silently fail logging - don't break the main query
