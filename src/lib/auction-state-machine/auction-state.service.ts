@@ -197,6 +197,17 @@ export class AuctionStateMachineService {
         },
       });
 
+      // CASCATA: Aprovar todos os lotes RASCUNHO -> SCHEDULED (EM_BREVE)
+      // Quando o leilão é aprovado, seus lotes também ficam prontos/agendados
+      const lotCascade = await tx.lot.updateMany({
+        where: {
+          auctionId,
+          status: LotStatus.DRAFT,
+        },
+        data: { status: LotStatus.SCHEDULED },
+      });
+      logger.info(`[StateMachine] Cascade: ${lotCascade.count} lotes atualizados para ${LotStatus.SCHEDULED}`);
+
       await createStateAuditLog(tx as any, {
         entityType: 'AUCTION',
         entityId: auctionId,

@@ -11,7 +11,10 @@ async function main() {
 
   // 1. Setup Context
   const tenantId = BigInt(1); // Assuming tenant 1 exists
-  const userId = BigInt(1);   // Assuming user 1 exists (Admin/System)
+  
+  const dbUser = await prisma.user.findFirst();
+  const userId = dbUser ? dbUser.id : BigInt(99999);
+  console.log(`Using User ID: ${userId}`);
 
   // Verify Tenant Exists
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
@@ -25,6 +28,7 @@ async function main() {
   const auction = await prisma.auction.create({
     data: {
       title: 'Leilão Teste State Machine ' + Date.now(),
+      description: 'Descrição válida do leilão para teste de state machine (min 10 chars)',
       status: 'RASCUNHO', // legacy/current mapping
       tenantId,
       slug: 'test-auction-' + Date.now(),
@@ -65,6 +69,11 @@ async function main() {
     process.exit(1);
   }
 
+  const adminUser = {
+      id: userId,
+      permissions: ['CAN_VALIDATE_AUCTION', 'CAN_VALIDATE_OWN_AUCTION']
+  };
+  
   // 5. Approve Auction (-> SCHEDULED)
   console.log('\n👉 Transition: Approve Auction (Schedule)...');
   const openDate = new Date(Date.now() + 1000 * 60 * 60); // 1 hour from now
@@ -73,10 +82,9 @@ async function main() {
     const res = await auctionStateMachine.approveAuction({
         auctionId: auction.id,
         tenantId,
-        userId,
+        validatorUserId: userId,
         openDate,
-        endDate
-    });
+    }, adminUser as any);
     if(!res.success) throw new Error(res.error);
     console.log(`✅ Success! New Status: ${res.data?.status}`);
     // Check Lot Status (Should be SCHEDULED/EM_BREVE)

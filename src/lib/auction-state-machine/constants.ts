@@ -23,13 +23,17 @@ export const AuctionStatus = {
 export type AuctionStatusType = typeof AuctionStatus[keyof typeof AuctionStatus];
 
 export const LotStatus = {
+  DRAFT: 'RASCUNHO',
   PENDING: 'AGUARDANDO',
+  SCHEDULED: 'EM_BREVE',
   OPEN: 'ABERTO_PARA_LANCES',
   IN_AUCTION: 'EM_PREGAO',
   SOLD: 'VENDIDO',
   UNSOLD: 'NAO_VENDIDO',
   CLOSED: 'ENCERRADO',
   CANCELLED: 'CANCELADO',
+  RELISTED: 'RELISTADO',
+  WITHDRAWN: 'RETIRADO',
 } as const;
 
 export type LotStatusType = typeof LotStatus[keyof typeof LotStatus];
