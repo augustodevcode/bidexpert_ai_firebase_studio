@@ -1,82 +1,151 @@
+/**
+ * @fileoverview Menu lateral flutuante (ações rápidas).
+ * Resolve sobreposição de botões (FAB) ao centralizar ações em um único drawer.
+ */
+
 'use client';
 
 import React, { useState } from 'react';
-import { MessageCircle, HelpCircle, Bug, X } from 'lucide-react';
+import Link from 'next/link';
+import { Bug, HelpCircle, Menu, MessageCircle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 import SupportChatModal from './support-chat-modal';
+import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 
 export default function FloatingSupportButtons() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { pageActions } = useFloatingActions();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMode, setChatMode] = useState<'chat' | 'ticket' | 'faq'>('chat');
 
   const handleOpenChat = (mode: 'chat' | 'ticket' | 'faq') => {
     setChatMode(mode);
     setIsChatOpen(true);
-    setIsOpen(false);
+    setIsSheetOpen(false);
   };
+
+  const supportActions = [
+    {
+      id: 'support-faq',
+      label: 'FAQ',
+      icon: HelpCircle,
+      onSelect: () => handleOpenChat('faq'),
+      dataAiId: 'floating-action-faq',
+    },
+    {
+      id: 'support-chat',
+      label: 'Chat AI',
+      icon: MessageCircle,
+      onSelect: () => handleOpenChat('chat'),
+      dataAiId: 'floating-action-chat-ai',
+    },
+    {
+      id: 'support-ticket',
+      label: 'Reportar Issue',
+      icon: Bug,
+      onSelect: () => handleOpenChat('ticket'),
+      dataAiId: 'floating-action-report-issue',
+    },
+  ];
+
+  const hasPageActions = pageActions.length > 0;
 
   return (
     <>
-      {/* Botão Principal */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-        {/* Botões Expandidos */}
-        <div
-          className={cn(
-            'flex flex-col gap-3 transition-all duration-300',
-            isOpen
-              ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 translate-y-4 pointer-events-none'
-          )}
-        >
-          {/* FAQ */}
-          <Button
-            onClick={() => handleOpenChat('faq')}
-            className="h-12 px-4 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-          >
-            <HelpCircle className="h-5 w-5" />
-            <span className="font-medium">FAQ</span>
-          </Button>
+      <div className="fixed bottom-6 right-6 z-40">
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+            <Button
+              size="icon"
+              className="h-14 w-14 rounded-full shadow-xl"
+              aria-label="Abrir menu lateral"
+              data-ai-id="floating-actions-trigger"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
 
-          {/* Chat com IA */}
-          <Button
-            onClick={() => handleOpenChat('chat')}
-            className="h-12 px-4 rounded-full shadow-lg bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="font-medium">Chat AI</span>
-          </Button>
+          <SheetContent side="right" className="p-0" data-ai-id="floating-actions-sheet">
+            <div className="p-6">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>Ações rápidas</SheetDescription>
+              </SheetHeader>
+            </div>
 
-          {/* Abrir Ticket */}
-          <Button
-            onClick={() => handleOpenChat('ticket')}
-            className="h-12 px-4 rounded-full shadow-lg bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2"
-          >
-            <Bug className="h-5 w-5" />
-            <span className="font-medium">Reportar Issue</span>
-          </Button>
-        </div>
+            {hasPageActions && (
+              <div className="px-4 pb-4" data-ai-id="floating-actions-page-actions">
+                <div className="flex flex-col gap-2">
+                  {pageActions.map((action) => {
+                    const Icon = action.icon ?? Pencil;
 
-        {/* Botão Toggle */}
-        <Button
-          onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            'h-14 w-14 rounded-full shadow-xl transition-all duration-300',
-            isOpen
-              ? 'bg-red-600 hover:bg-red-700 rotate-90'
-              : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
-          )}
-        >
-          {isOpen ? (
-            <X className="h-6 w-6 text-white" />
-          ) : (
-            <MessageCircle className="h-6 w-6 text-white" />
-          )}
-        </Button>
+                    if (action.href) {
+                      return (
+                        <Button
+                          key={action.id}
+                          asChild
+                          variant="secondary"
+                          className="w-full justify-start"
+                          onClick={() => setIsSheetOpen(false)}
+                          data-ai-id={action.dataAiId}
+                        >
+                          <Link href={action.href}>
+                            <Icon className="mr-2 h-4 w-4" />
+                            {action.label}
+                          </Link>
+                        </Button>
+                      );
+                    }
+
+                    return (
+                      <Button
+                        key={action.id}
+                        type="button"
+                        variant="secondary"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          action.onSelect?.();
+                          setIsSheetOpen(false);
+                        }}
+                        data-ai-id={action.dataAiId}
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        {action.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {hasPageActions && <Separator />}
+
+            <div className="px-4 py-4" data-ai-id="floating-actions-support-actions">
+              <div className="flex flex-col gap-2">
+                {supportActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Button
+                      key={action.id}
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => action.onSelect?.()}
+                      data-ai-id={action.dataAiId}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      {action.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
-      {/* Modal de Chat/Ticket */}
       {isChatOpen && (
         <SupportChatModal
           isOpen={isChatOpen}

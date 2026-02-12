@@ -29,6 +29,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
+import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -44,6 +45,7 @@ export default function SellerDetailsPage() {
   const sellerIdSlug = typeof params.sellerId === 'string' ? params.sellerId : '';
 
   const { userProfileWithPermissions } = useAuth();
+  const { setPageActions } = useFloatingActions();
   const [sellerProfile, setSellerProfile] = useState<SellerProfileInfo | null>(null);
   const [relatedAuctions, setRelatedAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +60,25 @@ export default function SellerDetailsPage() {
     hasAnyPermission(userProfileWithPermissions, ['manage_all', 'sellers:update']),
     [userProfileWithPermissions]
   );
+
+  useEffect(() => {
+    if (!hasEditPermissions || !sellerProfile?.id) {
+      setPageActions([]);
+      return;
+    }
+
+    setPageActions([
+      {
+        id: 'edit-seller',
+        label: 'Editar Comitente',
+        href: `/admin/sellers/${sellerProfile.id}/edit`,
+        icon: Pencil,
+        dataAiId: 'floating-action-edit-seller',
+      },
+    ]);
+
+    return () => setPageActions([]);
+  }, [hasEditPermissions, sellerProfile?.id, setPageActions]);
   
   useEffect(() => {
     async function fetchSellerDetails() {
@@ -187,7 +208,6 @@ export default function SellerDetailsPage() {
   }
 
   const sellerInitial = sellerProfile.name ? sellerProfile.name.charAt(0).toUpperCase() : 'S';
-  const editUrl = `/admin/sellers/${sellerProfile.id}/edit`;
   const validLogoUrl = isValidImageUrl(sellerProfile.logoUrl) ? sellerProfile.logoUrl : `https://placehold.co/128x128.png?text=${sellerInitial}`;
   const fullAddress = [sellerProfile.street, sellerProfile.number, sellerProfile.complement, sellerProfile.neighborhood, sellerProfile.city, sellerProfile.state, sellerProfile.zipCode].filter(Boolean).join(', ');
 
@@ -263,23 +283,6 @@ export default function SellerDetailsPage() {
         </div>
       </TooltipProvider>
 
-      {hasEditPermissions && sellerProfile?.id && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon">
-                <Link href={editUrl}>
-                  <Pencil className="h-6 w-6" />
-                  <span className="sr-only">Editar Comitente</span>
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>Editar Comitente</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
     </>
   );
 }
