@@ -1,0 +1,193 @@
+﻿[2m[WebServer] [22m
+[2m[WebServer] [22m> bid-expert@0.1.0 dev:9005
+[2m[WebServer] [22m> next dev --port 9005 --hostname 0.0.0.0
+[2m[WebServer] [22m
+[2m[WebServer] [22m[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[2m[WebServer] [22m[next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[2m[WebServer] [22m[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[2m[WebServer] [22m[next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[2m[WebServer] [22m  [1m[38;2;173;127;168mÔû▓ Next.js 14.2.3[39m[22m
+[2m[WebServer] [22m  - Local:        http://localhost:9005
+[2m[WebServer] [22m  - Network:      http://0.0.0.0:9005
+[2m[WebServer] [22m  - Environments: .env.local, .env
+[2m[WebServer] [22m
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Starting...
+
+Running 10 tests using 1 worker
+
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Ready in 10.4s
+[2m[WebServer] [22m [37m[1mÔùï[22m[39m Compiling /src/middleware ...
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled /src/middleware in 5.2s (212 modules)
+[2m[WebServer] [22m[resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[2m[WebServer] [22m[resolveTenantFromRequest] localhostSubdomainMatch: [
+[2m[WebServer] [22m  'demo.localhost',
+[2m[WebServer] [22m  'demo',
+[2m[WebServer] [22m  index: 0,
+[2m[WebServer] [22m  input: 'demo.localhost',
+[2m[WebServer] [22m  groups: undefined
+[2m[WebServer] [22m]
+[2m[WebServer] [22m[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[2m[WebServer] [22m[Get Session] Cookies disponiveis: (nenhum)
+[2m[WebServer] [22m[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[2m[WebServer] [22m[Middleware] Session: null
+[2m[WebServer] [22m[Middleware] Active Tenant ID set to: 'demo'
+[2m[WebServer] [22m [37m[1mÔùï[22m[39m Compiling /auth/login ...
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled /auth/login in 34s (5334 modules)
+[2m[WebServer] [22m[layout.tsx] LOG: RootLayout component is rendering/executing.
+[2m[WebServer] [22m[getPlatformSettings Action] Fetching settings via service...
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled in 2.7s (2016 modules)
+[2m[WebServer] [22m GET /auth/login [32m200[39m in 45565ms
+[2m[WebServer] [22m[resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[2m[WebServer] [22m[resolveTenantFromRequest] localhostSubdomainMatch: [
+[2m[WebServer] [22m  'demo.localhost',
+[2m[WebServer] [22m  'demo',
+[2m[WebServer] [22m  index: 0,
+[2m[WebServer] [22m  input: 'demo.localhost',
+[2m[WebServer] [22m  groups: undefined
+[2m[WebServer] [22m]
+[2m[WebServer] [22m[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[2m[WebServer] [22m[Get Session] Cookies disponiveis: (nenhum)
+[2m[WebServer] [22m[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[2m[WebServer] [22m[Middleware] Session: null
+[2m[WebServer] [22m[Middleware] Active Tenant ID set to: 'demo'
+[2m[WebServer] [22m[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[2m[WebServer] [22m[Get Session] Cookies disponiveis: (nenhum)
+[2m[WebServer] [22m POST /auth/login [32m200[39m in 508ms
+[2m[WebServer] [22m[resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[2m[WebServer] [22m[resolveTenantFromRequest] localhostSubdomainMatch: [
+[2m[WebServer] [22m  'demo.localhost',
+[2m[WebServer] [22m  'demo',
+[2m[WebServer] [22m  index: 0,
+[2m[WebServer] [22m  input: 'demo.localhost',
+[2m[WebServer] [22m  groups: undefined
+[2m[WebServer] [22m]
+[2m[WebServer] [22m[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[2m[WebServer] [22m[Get Session] Cookies disponiveis: (nenhum)
+[2m[WebServer] [22m[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[2m[WebServer] [22m[Middleware] Session: null
+[2m[WebServer] [22m[Middleware] Active Tenant ID set to: 'demo'
+[2m[WebServer] [22m[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[2m[WebServer] [22m[Get Session] Cookies disponiveis: (nenhum)
+[2m[WebServer] [22m POST /auth/login [32m200[39m in 151ms
+[2m[WebServer] [22m[resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[2m[WebServer] [22m[resolveTenantFromRequest] localhostSubdomainMatch: [
+[2m[WebServer] [22m  'demo.localhost',
+[2m[WebServer] [22m  'demo',
+[2m[WebServer] [22m  index: 0,
+[2m[WebServer] [22m  input: 'demo.localhost',
+[2m[WebServer] [22m  groups: undefined
+[2m[WebServer] [22m]
+[2m[WebServer] [22m[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[2m[WebServer] [22m[Get Session] Cookies disponiveis: (nenhum)
+[2m[WebServer] [22m[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[2m[WebServer] [22m[Middleware] Session: null
+[2m[WebServer] [22m[Middleware] Active Tenant ID set to: 'demo'
+[2m[WebServer] [22m POST /auth/login [32m200[39m in 3890ms
+[Browser Error]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[Browser Error]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled in 1846ms (2016 modules)
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled in 1340ms (2016 modules)
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled in 1275ms (2016 modules)
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled in 1471ms (2016 modules)
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled in 1298ms (2016 modules)
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled in 1700ms (2016 modules)
+  Ô£ÿ   1 [chromium] ÔÇ║ tests\e2e\media-library.spec.ts:61:7 ÔÇ║ Biblioteca de M├¡dia - Google Photos-like ÔÇ║ T01 - Deve renderizar a p├ígina principal da biblioteca de m├¡dia (2.1m)
+[2m[WebServer] [22m[resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[2m[WebServer] [22m[resolveTenantFromRequest] localhostSubdomainMatch: [
+[2m[WebServer] [22m  'demo.localhost',
+[2m[WebServer] [22m  'demo',
+[2m[WebServer] [22m  index: 0,
+[2m[WebServer] [22m  input: 'demo.localhost',
+[2m[WebServer] [22m  groups: undefined
+[2m[WebServer] [22m]
+[2m[WebServer] [22m[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[2m[WebServer] [22m[Get Session] Cookies disponiveis: (nenhum)
+[2m[WebServer] [22m[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[2m[WebServer] [22m[Middleware] Session: null
+[2m[WebServer] [22m[Middleware] Active Tenant ID set to: 'demo'
+[2m[WebServer] [22m [37m[1mÔùï[22m[39m Compiling /_not-found ...
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled /_not-found in 3.6s (5323 modules)
+[2m[WebServer] [22m [37m[1mÔùï[22m[39m Compiling /_error ...
+[2m[WebServer] [22m [32m[1mÔ£ô[22m[39m Compiled /_error in 7.5s (5546 modules)
+[2m[WebServer] [22m GET /auth/login [33m404[39m in 11707ms
+[2m[WebServer] [22m[layout.tsx] LOG: RootLayout component is rendering/executing.
+[2m[WebServer] [22m[getPlatformSettings Action] Fetching settings via service...
+[2m[WebServer] [22m GET /_next/static/webpack/d8de6ccb4b10ff9a.webpack.hot-update.json [33m404[39m in 5460ms
+[2m[WebServer] [22m[resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[2m[WebServer] [22m[resolveTenantFromRequest] localhostSubdomainMatch: [
+[2m[WebServer] [22m  'demo.localhost',
+[2m[WebServer] [22m  'demo',
+[2m[WebServer] [22m  index: 0,
+[2m[WebServer] [22m  input: 'demo.localhost',
+[2m[WebServer] [22m  groups: undefined
+[2m[WebServer] [22m]
+[2m[WebServer] [22m[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[2m[WebServer] [22m[Get Session] Cookies disponiveis: (nenhum)
+[2m[WebServer] [22m[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[2m[WebServer] [22m[Middleware] Session: null
+[2m[WebServer] [22m[Middleware] Active Tenant ID set to: 'demo'
+[2m[WebServer] [22m GET /auth/login [33m404[39m in 143ms
+node.exe : [2m[WebServer] [22m<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 
+'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\vendor-chunks\util-deprecate.js'
+No linha:1 caractere:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([2m[WebServer]...l-deprecate.js':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[2m[WebServer] [22m<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/util-deprecate' in 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server for build dependencies doesn't lead to expected result 
+'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\vendor-chunks\util-deprecate.js', but to 'Error: Can't 
+resolve './vendor-chunks/util-deprecate' in 'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server'' instead. 
+Resolving dependencies are ignored for this path.
+[2m[WebServer] [22m<w>  at resolve commonjs file ./vendor-chunks/util-deprecate (expected 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\vendor-chunks\util-deprecate.js)
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\webpack-runtime.js
+[2m[WebServer] [22m<w>  at file E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\webpack-runtime.js
+[2m[WebServer] [22m<w>  at file dependencies E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\pages\_error.js
+[2m[WebServer] [22m<w>  at file E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\pages\_error.js
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\require.js
+[2m[WebServer] [22m<w>  at file E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\require.js
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\load-components.js
+[2m[WebServer] [22m<w>  at file 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\load-components.js
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\utils.js
+[2m[WebServer] [22m<w>  at file E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\utils.js
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+[2m[WebServer] [22m<w>  at file 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+[2m[WebServer] [22m<w>  at resolve commonjs 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+[2m[WebServer] [22m<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/get-nonce' in 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server for build dependencies doesn't lead to expected result 
+'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\vendor-chunks\get-nonce.js', but to 'Error: Can't resolve 
+'./vendor-chunks/get-nonce' in 'E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server'' instead. Resolving 
+dependencies are ignored for this path.
+[2m[WebServer] [22m<w>  at resolve commonjs file ./vendor-chunks/get-nonce (expected 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\vendor-chunks\get-nonce.js)
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\webpack-runtime.js
+[2m[WebServer] [22m<w>  at file E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\webpack-runtime.js
+[2m[WebServer] [22m<w>  at file dependencies E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\pages\_error.js
+[2m[WebServer] [22m<w>  at file E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.next\server\pages\_error.js
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\require.js
+[2m[WebServer] [22m<w>  at file E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\require.js
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\load-components.js
+[2m[WebServer] [22m<w>  at file 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\load-components.js
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\utils.js
+[2m[WebServer] [22m<w>  at file E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\utils.js
+[2m[WebServer] [22m<w>  at file dependencies 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+[2m[WebServer] [22m<w>  at file 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+[2m[WebServer] [22m<w>  at resolve commonjs 
+E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js

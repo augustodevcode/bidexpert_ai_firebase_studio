@@ -1,18 +1,11 @@
-// src/app/category/[categorySlug]/page.tsx
-/**
- * @fileoverview Página de servidor que serve como ponto de entrada para a exibição de uma categoria.
- * Este componente é responsável por receber o slug da categoria da URL, buscar
- * os dados iniciais do lado do servidor (se necessário) e renderizar o componente
- * de cliente `CategoryDisplay`, que lida com toda a lógica interativa e de busca de dados.
- */
-import CategoryDisplay from './category-display'; 
+﻿import { redirect } from 'next/navigation';
 import { getLotCategories } from '@/app/admin/categories/actions';
+
+export const dynamic = 'force-dynamic';
 
 // This page component is a Server Component
 export default function CategoryPage({ params }: { params: { categorySlug: string } }) {
-  // O componente DynamicBreadcrumbs no Header cuidará de mostrar os breadcrumbs.
-  // Não precisamos mais passar breadcrumbItems daqui.
-  return <CategoryDisplay params={params} />;
+  redirect(`/search?category=${params.categorySlug}`);
 }
 
 export async function generateStaticParams() {

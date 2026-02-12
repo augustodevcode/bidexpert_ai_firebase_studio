@@ -1,9 +1,8 @@
 // src/app/admin/categories/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Categorias de Lotes.
- * Utiliza o componente DataTable para exibir os dados, mas com a funcionalidade
- * de CRUD desativada, servindo como uma tela de visualização para manter
- * a consistência dos dados da plataforma.
+ * Utiliza o componente DataTable para exibir os dados com funcionalidade 
+ * completa de CRUD (criar, editar, excluir).
  */
 'use client';
 
@@ -20,47 +19,40 @@ import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter } from 'next/navigation';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<LotCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
+
+  const fetchCategories = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedCategories = await getLotCategories();
+      setCategories(fetchedCategories);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar categorias.";
+      console.error("Error fetching categories:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchCategories = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedCategories = await getLotCategories();
-        if (isMounted) {
-          setCategories(fetchedCategories);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar categorias.";
-        console.error("Error fetching categories:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
     fetchCategories();
+  }, [fetchCategories]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [toast]);
+  const handleDelete = useCallback((id: string) => {
+    setCategories(prev => prev.filter(cat => cat.id !== id));
+  }, []);
   
-  const columns = useMemo(() => createColumns(), []);
+  const columns = useMemo(() => createColumns({ onDelete: handleDelete }), [handleDelete]);
 
   const renderSkeleton = () => (
      <div className="space-y-6">
@@ -89,14 +81,21 @@ export default function AdminCategoriesPage() {
               Categorias de Lotes
             </CardTitle>
             <CardDescription>
-              Visualize as categorias da plataforma. Para adicionar ou editar, contate o administrador.
+              Gerencie as categorias de lotes da plataforma. Adicione, edite ou exclua categorias.
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/categories/analysis">
-              <BarChart3 className="mr-2 h-4 w-4" /> Ver Análise
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link href="/admin/categories/analysis" data-ai-id="categories-analysis-link">
+                <BarChart3 className="mr-2 h-4 w-4" /> Ver Análise
+              </Link>
+            </Button>
+            <Button asChild data-ai-id="new-category-button">
+              <Link href="/admin/categories/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Nova Categoria
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <DataTable
