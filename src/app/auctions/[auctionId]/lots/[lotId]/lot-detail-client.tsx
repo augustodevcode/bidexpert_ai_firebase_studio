@@ -58,6 +58,7 @@ import LotQuestionsTab from '@/components/auction/lot-questions-tab';
 import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasAnyPermission, hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
+import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 import LotAllBidsModal from '@/components/auction/lot-all-bids-modal';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -315,6 +316,7 @@ export default function LotDetailClientContent({
   const { toast } = useToast();
   const [currentUrl, setCurrentUrl] = useState('');
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
+  const { setPageActions } = useFloatingActions();
   const [lotReviews, setLotReviews] = useState<Review[]>([]);
   const [lotQuestions, setLotQuestions] = useState<LotQuestion[]>([]);
   const [lotDocuments, setLotDocuments] = useState<LotDocument[]>([]);
@@ -391,7 +393,25 @@ export default function LotDetailClientContent({
     hasAnyPermission(userProfileWithPermissions, ['manage_all', 'lots:update']),
     [userProfileWithPermissions]
   );
-  const editUrl = `/admin/lots/${lot.id}/edit`;
+
+  useEffect(() => {
+    if (!hasEditPermissions) {
+      setPageActions([]);
+      return;
+    }
+
+    setPageActions([
+      {
+        id: 'edit-lot',
+        label: 'Editar Lote',
+        href: `/admin/lots/${lot.id}/edit`,
+        icon: Pencil,
+        dataAiId: 'floating-action-edit-lot',
+      },
+    ]);
+
+    return () => setPageActions([]);
+  }, [hasEditPermissions, lot.id, setPageActions]);
   
   const gallery = useMemo(() => {
     if (!lot) return [];
@@ -896,23 +916,6 @@ export default function LotDetailClientContent({
             </section>
           )}
         </div>
-        {hasEditPermissions && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon">
-                  <Link href={editUrl}>
-                    <Pencil className="h-6 w-6" />
-                    <span className="sr-only">Editar Lote</span>
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left">
-                <p>Editar Lote</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
       </TooltipProvider>
 
       <LotPreviewModal lot={lot} auction={auction} platformSettings={platformSettings} isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} />

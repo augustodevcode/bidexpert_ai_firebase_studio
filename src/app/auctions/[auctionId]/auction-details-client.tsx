@@ -35,6 +35,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
+import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 
 
 const SidebarFilter = dynamic(() => import('@/components/BidExpertFilter'), {
@@ -82,11 +83,30 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const { userProfileWithPermissions } = useAuth();
+  const { setPageActions } = useFloatingActions();
   const hasEditPermissions = useMemo(() => 
     hasAnyPermission(userProfileWithPermissions, ['manage_all', 'auctions:update']),
     [userProfileWithPermissions]
   );
-  const editUrl = `/admin/auctions/${auction.id}/edit`;
+
+  useEffect(() => {
+    if (!hasEditPermissions) {
+      setPageActions([]);
+      return;
+    }
+
+    setPageActions([
+      {
+        id: 'edit-auction',
+        label: 'Editar Leilão',
+        href: `/admin/auctions/${auction.id}/edit`,
+        icon: Pencil,
+        dataAiId: 'floating-action-edit-auction',
+      },
+    ]);
+
+    return () => setPageActions([]);
+  }, [auction.id, hasEditPermissions, setPageActions]);
 
   // State for lot filtering and sorting
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(initialFiltersState);
@@ -364,23 +384,6 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
         </div>
 
       </div>
-      {hasEditPermissions && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon">
-                <Link href={editUrl}>
-                  <Pencil className="h-6 w-6" />
-                  <span className="sr-only">Editar Leilão</span>
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>Editar Leilão</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
     </>
   );
 }
