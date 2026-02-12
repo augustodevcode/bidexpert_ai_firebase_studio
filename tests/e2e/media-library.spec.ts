@@ -19,32 +19,32 @@ test.setTimeout(180_000);
 
 /** Helper: Login as admin */
 async function loginAsAdmin(page: Page) {
+  // Capture console errors for debugging (register early)
+  page.on('console', msg => {
+    if (msg.type() === 'error') console.log(`[Browser Error]: ${msg.text()}`);
+  });
+
   await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'networkidle', timeout: 120000 });
 
   // Wait for login form to fully render (Next.js lazy compilation + Suspense)
   await page.waitForSelector('[data-ai-id="auth-login-email-input"]', { timeout: 120000 });
-  await page.waitForTimeout(1000); // Extra time for hydration
+
+  // Wait for tenant context and tenant list to load
+  await page.waitForTimeout(5000);
 
   const emailInput = page.locator('[data-ai-id="auth-login-email-input"]');
   const passwordInput = page.locator('[data-ai-id="auth-login-password-input"]');
   const submitButton = page.locator('[data-ai-id="auth-login-submit-button"]');
 
-  // Wait for tenant context to be resolved (lockedTenantId set by getCurrentTenantContext)
-  await page.waitForTimeout(2000);
-
   // Demo tenant admin (from seed: ultimate-master-seed.ts)
   await emailInput.fill('admin@bidexpert.com.br');
   await passwordInput.fill('Admin@123');
 
-  // Capture console errors for debugging
-  page.on('console', msg => {
-    if (msg.type() === 'error') console.log(`[Browser Error]: ${msg.text()}`);
-  });
-
-  await submitButton.click();
-
-  // Wait for redirect away from login page (may go to /admin or /dashboard)
-  await page.waitForURL(/\/(admin|dashboard)/i, { timeout: 60000 });
+  // Use Promise.all to avoid actionTimeout issue with server actions
+  await Promise.all([
+    page.waitForURL(/\/(admin|dashboard)/i, { timeout: 60000 }),
+    submitButton.click({ timeout: 60000 }),
+  ]);
   console.log('✅ Login admin concluído:', page.url());
 }
 
