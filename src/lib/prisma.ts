@@ -1,12 +1,14 @@
 /**
  * @fileoverview Instâncias Prisma com seleção dinâmica por tenant/subdomínio.
  * Inclui suporte a banco demo e proxy para roteamento automático por slug.
+ * Suporte a Prisma Accelerate para deployments Vercel.
  *
  * BDD: Garantir que subdomínios como "demo" usem o banco correto sem alterar chamadas existentes.
  * TDD: Cobrir seleção de cliente Prisma por subdomínio com testes unitários.
  */
 
 import { PrismaClient } from '@prisma/client';
+import { withAccelerate } from '@prisma/extension-accelerate';
 import { headers } from 'next/headers';
 import { auditMiddleware } from './audit-middleware';
 
@@ -16,14 +18,27 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /**
+ * Detecta se a URL usa Prisma Accelerate (prisma+postgres://)
+ */
+function isPrismaAccelerateUrl(url?: string): boolean {
+  return url?.startsWith('prisma+postgres://') || url?.startsWith('prisma://') || false;
+}
+
+/**
  * Cria uma instância do Prisma Client com suporte a extensões e logs.
+ * Automaticamente usa Prisma Accelerate quando detectado pela DATABASE_URL.
  */
 function createPrismaClient(databaseUrl?: string) {
+  const effectiveUrl = databaseUrl || process.env.DATABASE_URL;
+  const useAccelerate = isPrismaAccelerateUrl(effectiveUrl);
+  
   const options: any = {
     log: process.env.PRISMA_QUERY_LOG === 'true' ? ['query', 'error', 'warn'] : ['error', 'warn'],
   };
 
-  if (databaseUrl) {
+  // Para Accelerate, a URL é passada automaticamente via env
+  // Para conexão direta, podemos sobrescrever
+  if (databaseUrl && !useAccelerate) {
     options.datasources = {
       db: {
         url: databaseUrl,
@@ -32,6 +47,12 @@ function createPrismaClient(databaseUrl?: string) {
   }
 
   let client = new PrismaClient(options);
+  
+  // Aplicar Prisma Accelerate extension se necessário
+  if (useAccelerate) {
+    console.log('[Prisma] Using Prisma Accelerate adapter');
+    client = client.$extends(withAccelerate()) as any;
+  }
 
   // Enable ITSM query monitoring unless explicitly disabled
   if (process.env.ITSM_QUERY_MONITOR_ENABLED !== 'false') {
