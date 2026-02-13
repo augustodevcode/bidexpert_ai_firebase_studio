@@ -37,13 +37,13 @@ test.describe('Cadastro Hierárquico de Contatos em Leilões', () => {
   
   test.beforeEach(async ({ page }) => {
     // Configurar base URL com o tenant correto
-    await page.goto('http://demo.localhost:9005');
+    await page.goto('http://localhost:9005');
   });
 
   test('deve exibir contatos específicos do leilão quando cadastrados', async ({ page }) => {
     // Given: Leilão com contatos próprios (conforme seed)
     // When: Navegar para página de lote do leilão 1 (que tem contatos próprios)
-    await page.goto('http://demo.localhost:9005/auctions/auction-judicial-imovel-1/lots');
+    await page.goto('http://localhost:9005/auctions/auction-judicial-imovel-1/lots');
     
     // Aguardar carregar a listagem de lotes
     await page.waitForSelector('[data-ai-id^="lot-card-"]', { timeout: 10000 });
@@ -83,7 +83,7 @@ test.describe('Cadastro Hierárquico de Contatos em Leilões', () => {
   test('deve exibir contatos do leiloeiro quando leilão não tem contatos', async ({ page }) => {
     // Given: Leilão sem contatos próprios, mas leiloeiro com contatos
     // When: Navegar para página de lote do leilão 2 (sem contatos próprios)
-    await page.goto('http://demo.localhost:9005/auctions/auction-extrajudicial-veiculo-2/lots');
+    await page.goto('http://localhost:9005/auctions/auction-extrajudicial-veiculo-2/lots');
     
     // Aguardar carregar a listagem de lotes
     await page.waitForSelector('[data-ai-id^="lot-card-"]', { timeout: 10000 });
@@ -114,7 +114,7 @@ test.describe('Cadastro Hierárquico de Contatos em Leilões', () => {
     
     // Simular um cenário onde nenhum contato está disponível seria complexo no seed atual
     // Então vamos apenas verificar que o elemento de fallback existe no código
-    await page.goto('http://demo.localhost:9005/auctions/auction-particular-maquinario-3/lots');
+    await page.goto('http://localhost:9005/auctions/auction-particular-maquinario-3/lots');
     
     // Aguardar carregar
     const hasLots = await page.locator('[data-ai-id^="lot-card-"]').count() > 0;
@@ -141,7 +141,7 @@ test.describe('Cadastro Hierárquico de Contatos em Leilões', () => {
 
   test('deve validar links de WhatsApp e Email são clicáveis', async ({ page }) => {
     // Navegar para leilão com contatos
-    await page.goto('http://demo.localhost:9005/auctions/auction-judicial-imovel-1/lots');
+    await page.goto('http://localhost:9005/auctions/auction-judicial-imovel-1/lots');
     await page.waitForSelector('[data-ai-id^="lot-card-"]', { timeout: 10000 });
     
     const firstLot = page.locator('[data-ai-id^="lot-card-"]').first();
@@ -167,7 +167,7 @@ test.describe('Cadastro Hierárquico de Contatos em Leilões', () => {
 
   test('deve capturar screenshot do card de contato para validação visual', async ({ page }) => {
     // Navegar para leilão com contatos
-    await page.goto('http://demo.localhost:9005/auctions/auction-judicial-imovel-1/lots');
+    await page.goto('http://localhost:9005/auctions/auction-judicial-imovel-1/lots');
     await page.waitForSelector('[data-ai-id^="lot-card-"]', { timeout: 10000 });
     
     const firstLot = page.locator('[data-ai-id^="lot-card-"]').first();
