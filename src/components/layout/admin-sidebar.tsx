@@ -35,6 +35,7 @@ const managementNavGroups = [
         groupTitle: 'Gestão de Leilões',
         items: [
             { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
+            { title: 'Leilões SuperGrid', href: '/admin/auctions-supergrid', icon: Database },
             { title: 'Lotes', href: '/admin/lots', icon: ListChecks },
             { title: 'Ativos (Bens)', href: '/admin/assets', icon: Package },
             { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
