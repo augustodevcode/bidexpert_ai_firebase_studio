@@ -5,6 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import type { Subcategory, SubcategoryFormData } from '@/types';
 import { SubcategoryService } from '@/services/subcategory.service';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 // Re-export SubcategoryFormData para uso em páginas
 export type { SubcategoryFormData };
@@ -14,7 +15,8 @@ const subcategoryService = new SubcategoryService();
 export async function createSubcategoryAction(
   data: SubcategoryFormData
 ): Promise<{ success: boolean; message: string; subcategoryId?: string }> {
-  const result = await subcategoryService.createSubcategory(data);
+  const tenantId = await getTenantIdFromRequest();
+  const result = await subcategoryService.createSubcategory(data, tenantId);
   if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/subcategories');
     revalidatePath('/admin/categories');
@@ -23,18 +25,21 @@ export async function createSubcategoryAction(
 }
 
 export async function getSubcategoriesByParentIdAction(parentCategoryId: string): Promise<Subcategory[]> {
-  return subcategoryService.getSubcategoriesByParentId(parentCategoryId);
+  const tenantId = await getTenantIdFromRequest();
+  return subcategoryService.getSubcategoriesByParentId(parentCategoryId, tenantId);
 }
 
 export async function getSubcategoryByIdAction(subcategoryId: string): Promise<Subcategory | null> {
-  return subcategoryService.getSubcategoryById(subcategoryId);
+  const tenantId = await getTenantIdFromRequest();
+  return subcategoryService.getSubcategoryById(subcategoryId, tenantId);
 }
 
 export async function updateSubcategoryAction(
   subcategoryId: string,
   data: Partial<SubcategoryFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const result = await subcategoryService.updateSubcategory(subcategoryId, data);
+  const tenantId = await getTenantIdFromRequest();
+  const result = await subcategoryService.updateSubcategory(subcategoryId, data, tenantId);
   if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/subcategories');
     revalidatePath(`/admin/subcategories/${subcategoryId}/edit`);
@@ -46,7 +51,8 @@ export async function updateSubcategoryAction(
 export async function deleteSubcategoryAction(
   subcategoryId: string
 ): Promise<{ success: boolean; message: string }> {
-  const result = await subcategoryService.deleteSubcategory(subcategoryId);
+  const tenantId = await getTenantIdFromRequest();
+  const result = await subcategoryService.deleteSubcategory(subcategoryId, tenantId);
   if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/subcategories');
     revalidatePath('/admin/categories');

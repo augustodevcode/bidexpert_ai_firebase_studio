@@ -21,8 +21,12 @@ export class SubcategoryService {
     this.categoryRepository = new CategoryRepository();
   }
 
-  async getSubcategoriesByParentId(parentCategoryId: string): Promise<Subcategory[]> {
-    const subcategories = await this.repository.findAllByParentId(parentCategoryId);
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Erro desconhecido';
+  }
+
+  async getSubcategoriesByParentId(parentCategoryId: string, tenantId: string): Promise<Subcategory[]> {
+    const subcategories = await this.repository.findAllByParentId(parentCategoryId, tenantId);
     return subcategories.map(s => ({
       ...s,
       id: s.id.toString(),
@@ -31,20 +35,20 @@ export class SubcategoryService {
     }));
   }
 
-  async getSubcategoryById(id: string): Promise<Subcategory | null> {
-    const subcategory = await this.repository.findById(id);
+  async getSubcategoryById(id: string, tenantId: string): Promise<Subcategory | null> {
+    const subcategory = await this.repository.findById(id, tenantId);
     if (!subcategory) return null;
     return { ...subcategory, id: subcategory.id.toString(), parentCategoryId: subcategory.parentCategoryId.toString() };
   }
 
-  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
+  async createSubcategory(data: SubcategoryFormData, tenantId: string): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
     try {
-      const parentCategory = await this.categoryRepository.findById(BigInt(data.parentCategoryId));
+      const parentCategory = await this.categoryRepository.findById(BigInt(data.parentCategoryId), tenantId);
       if (!parentCategory) {
         return { success: false, message: 'A categoria principal selecionada não existe.' };
       }
       if (!parentCategory.hasSubcategories) {
-        await this.categoryRepository.update(BigInt(parentCategory.id), { hasSubcategories: true });
+        await this.categoryRepository.update(BigInt(parentCategory.id), tenantId, { hasSubcategories: true });
       }
       
       const dataToUpsert: Prisma.SubcategoryCreateInput = {
@@ -55,52 +59,56 @@ export class SubcategoryService {
         iconUrl: data.iconUrl,
         iconMediaId: data.iconMediaId,
         dataAiHintIcon: data.dataAiHintIcon,
-        parentCategory: { connect: { id: BigInt(data.parentCategoryId) } },
+        LotCategory: { connect: { id: BigInt(data.parentCategoryId) } },
       };
 
-      const newSubcategory = await this.repository.upsert(dataToUpsert);
+      const newSubcategory = await this.repository.upsert(dataToUpsert, tenantId);
       return { success: true, message: 'Subcategoria criada/atualizada com sucesso.', subcategoryId: newSubcategory.id.toString() };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error in SubcategoryService.create:", error);
-      return { success: false, message: `Falha ao criar subcategoria: ${error.message}` };
+      return { success: false, message: `Falha ao criar subcategoria: ${this.getErrorMessage(error)}` };
     }
   }
 
-  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
+  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>, tenantId: string): Promise<{ success: boolean; message: string; }> {
     try {
         const dataToUpdate: Prisma.SubcategoryUpdateInput = { ...data };
         if (data.name) {
             dataToUpdate.slug = slugify(data.name);
         }
         if (data.parentCategoryId) {
-             dataToUpdate.parentCategory = { connect: { id: BigInt(data.parentCategoryId) } };
+             const parentCategory = await this.categoryRepository.findById(BigInt(data.parentCategoryId), tenantId);
+             if (!parentCategory) {
+              return { success: false, message: 'A categoria principal selecionada não existe para o tenant atual.' };
+             }
+             dataToUpdate.LotCategory = { connect: { id: BigInt(data.parentCategoryId) } };
         }
       
-      await this.repository.update(id, dataToUpdate);
+      await this.repository.update(id, tenantId, dataToUpdate);
       return { success: true, message: 'Subcategoria atualizada com sucesso.' };
-    } catch (error: any)
+    } catch (error: unknown)
         {
       console.error(`Error in SubcategoryService.update for id ${id}:`, error);
-      return { success: false, message: `Falha ao atualizar subcategoria: ${error.message}` };
+      return { success: false, message: `Falha ao atualizar subcategoria: ${this.getErrorMessage(error)}` };
     }
   }
 
-  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteSubcategory(id: string, tenantId: string): Promise<{ success: boolean; message: string; }> {
     try {
       // In a real app, check for lots linked to this subcategory
-      await this.repository.delete(id);
+      await this.repository.delete(id, tenantId);
       return { success: true, message: 'Subcategoria excluída com sucesso.' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error in SubcategoryService.delete for id ${id}:`, error);
-      return { success: false, message: `Falha ao excluir subcategoria: ${error.message}` };
+      return { success: false, message: `Falha ao excluir subcategoria: ${this.getErrorMessage(error)}` };
     }
   }
 
-  async deleteAllSubcategories(): Promise<{ success: boolean; message: string; }> {
+  async deleteAllSubcategories(tenantId: string): Promise<{ success: boolean; message: string; }> {
     try {
-      await this.repository.deleteAll();
+      await this.repository.deleteAll(tenantId);
       return { success: true, message: 'Todas as subcategorias foram excluídas.' };
-    } catch (error: any) {
+    } catch (_error: unknown) {
       return { success: false, message: 'Falha ao excluir todas as subcategorias.' };
     }
   }

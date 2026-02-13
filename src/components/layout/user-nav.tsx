@@ -103,7 +103,7 @@ export default function UserNav() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/profile/edit" className="flex items-center">
+            <Link href="/dashboard/profile/edit" className="flex items-center">
               <UserCircle2 className="mr-2 h-4 w-4" /> Meu Perfil
             </Link>
           </DropdownMenuItem>

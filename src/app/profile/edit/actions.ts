@@ -39,6 +39,7 @@ export async function updateUserProfile(
     
     if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/profile/edit'); 
+      revalidatePath('/dashboard/profile/edit');
       revalidatePath(`/profile`); 
     }
     

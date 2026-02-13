@@ -1,14 +1,9 @@
 // =============================================================================
-// PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
+// PRISMA SCHEMA - MYSQL VERSION (Local Development)
 // =============================================================================
-// Este schema é uma cópia do schema.prisma principal, com provider alterado
-// para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
-// 
-// USO: Este schema é usado automaticamente pelo workflow de deploy para Vercel
-//      através do script prepare-vercel-demo.ps1 ou GitHub Action
-//
-// NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
-//       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
+// Este schema é usado para desenvolvimento local com MySQL.
+// Para deploy no Vercel (PostgreSQL), use schema.postgresql.prisma ou 
+// configure o buildCommand no vercel.json para usar o schema correto.
 // =============================================================================
 
 generator client {
@@ -16,7 +11,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
