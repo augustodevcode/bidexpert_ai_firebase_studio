@@ -8,6 +8,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 export interface CategoryPerformanceData {
   id: string;
@@ -23,10 +24,13 @@ export interface CategoryPerformanceData {
  */
 export async function getCategoriesPerformanceAction(): Promise<CategoryPerformanceData[]> {
   try {
+    const tenantId = await getTenantIdFromRequest();
+
     const categories = await prisma.lotCategory.findMany({
+      where: { tenantId: BigInt(tenantId) },
       include: {
         Lot: {
-          where: { status: 'VENDIDO' },
+          where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
           select: { price: true },
         },
       },

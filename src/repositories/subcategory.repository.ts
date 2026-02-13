@@ -3,10 +3,14 @@ import { prisma } from '@/lib/prisma';
 import type { Subcategory } from '@/types';
 import type { Prisma } from '@prisma/client';
 
+function parseTenantId(tenantId: string): bigint {
+  return BigInt(tenantId);
+}
+
 export class SubcategoryRepository {
-  async findAllByParentId(parentCategoryId: string): Promise<any[]> {
+  async findAllByParentId(parentCategoryId: string, tenantId: string): Promise<any[]> {
     return prisma.subcategory.findMany({
-      where: { parentCategoryId },
+      where: { parentCategoryId, tenantId: parseTenantId(tenantId) },
       orderBy: { displayOrder: 'asc' },
       include: {
         parentCategory: { select: { name: true } },
@@ -14,32 +18,48 @@ export class SubcategoryRepository {
     });
   }
 
-  async findById(id: string): Promise<Subcategory | null> {
-    return prisma.subcategory.findUnique({ where: { id: id } });
+  async findById(id: string, tenantId: string): Promise<Subcategory | null> {
+    return prisma.subcategory.findFirst({ where: { id: id, tenantId: parseTenantId(tenantId) } });
   }
 
   async create(data: Prisma.SubcategoryCreateInput): Promise<Subcategory> {
     return prisma.subcategory.create({ data });
   }
 
-  async update(id: string, data: Prisma.SubcategoryUpdateInput): Promise<Subcategory> {
-    return prisma.subcategory.update({ where: { id: id }, data });
+  async update(id: string, tenantId: string, data: Prisma.SubcategoryUpdateInput): Promise<Subcategory> {
+    const subcategory = await prisma.subcategory.findFirst({ where: { id: id, tenantId: parseTenantId(tenantId) }, select: { id: true } });
+    if (!subcategory) {
+      throw new Error('Subcategoria não encontrada para o tenant informado.');
+    }
+    return prisma.subcategory.update({ where: { id: subcategory.id }, data });
   }
 
-  async upsert(data: Prisma.SubcategoryCreateInput): Promise<Subcategory> {
+  async upsert(data: Prisma.SubcategoryCreateInput, tenantId: string): Promise<Subcategory> {
     const parentId = (data.parentCategory?.connect?.id) as bigint;
-    return prisma.subcategory.upsert({
-      where: { name_parentCategoryId: { name: data.name, parentCategoryId: parentId } },
-      update: data,
-      create: data,
+    const currentTenant = parseTenantId(tenantId);
+
+    const existing = await prisma.subcategory.findFirst({
+      where: { name: data.name, parentCategoryId: parentId, tenantId: currentTenant },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return prisma.subcategory.update({ where: { id: existing.id }, data });
+    }
+
+    return prisma.subcategory.create({
+      data: {
+        ...data,
+        tenantId: currentTenant,
+      },
     });
   }
 
-  async delete(id: string): Promise<void> {
-    await prisma.subcategory.delete({ where: { id: id } });
+  async delete(id: string, tenantId: string): Promise<void> {
+    await prisma.subcategory.deleteMany({ where: { id: id, tenantId: parseTenantId(tenantId) } });
   }
 
-  async deleteAll(): Promise<void> {
-    await prisma.subcategory.deleteMany({});
+  async deleteAll(tenantId: string): Promise<void> {
+    await prisma.subcategory.deleteMany({ where: { tenantId: parseTenantId(tenantId) } });
   }
 }
