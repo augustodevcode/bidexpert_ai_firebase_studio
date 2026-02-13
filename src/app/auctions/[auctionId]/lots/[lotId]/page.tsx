@@ -16,6 +16,8 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { notFound } from 'next/navigation';
+import { getAuctionContact, type AuctionContactInfo } from '@/services/auction-contact.service';
+import prisma from '@/lib/prisma';
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
   lot: Lot | null,
@@ -28,7 +30,8 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   totalLotsInAuction?: number,
   allCategories: LotCategory[],
   allSellers: SellerProfileInfo[],
-  auctioneer: AuctioneerProfileInfo | null
+  auctioneer: AuctioneerProfileInfo | null,
+  auctionContact: AuctionContactInfo | null
 }> {
   console.log(`[getLotPageData] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
@@ -51,7 +54,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
     // @ts-ignore
-    return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null };
+    return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null, auctionContact: null };
   }
 
   // Verify that the lot actually belongs to the auction requested in the URL.
@@ -59,7 +62,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     // TENTATIVA DE RECUPERAÇÃO: Se o ID do leilão no banco bater com o ID da URL (caso seja ID interno), permitir.
     if (lotFromDb.auctionId !== currentAuctionId) {
          // @ts-ignore
-         return { lot: null, auction: null, platformSettings, allCategories, allSellers, auctioneer: null };
+         return { lot: null, auction: null, platformSettings, allCategories, allSellers, auctioneer: null, auctionContact: null };
     }
   }
   
@@ -88,6 +91,23 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 
   const auctioneer = allAuctioneers.find(a => a.id === auctionFromDb.auctioneerId) || null;
   
+  // Buscar informações de contato do leilão com herança (Auction -> Auctioneer -> PlatformSettings)
+  let auctionContact: AuctionContactInfo | null = null;
+  try {
+    const auctionIdBigInt = typeof auctionFromDb.id === 'string' ? BigInt(auctionFromDb.id) : BigInt(auctionFromDb.id);
+    const tenantIdBigInt = typeof platformSettings.tenantId === 'string' ? BigInt(platformSettings.tenantId) : BigInt(platformSettings.tenantId);
+    auctionContact = await getAuctionContact(prisma, auctionIdBigInt, tenantIdBigInt);
+  } catch (error) {
+    console.error('[getLotPageData] Erro ao buscar contatos do leilão:', error);
+    // Em caso de erro, definir fallback com contatos do PlatformSettings
+    auctionContact = {
+      phone: platformSettings.supportPhone || null,
+      email: platformSettings.supportEmail || null,
+      whatsapp: platformSettings.supportWhatsApp || null,
+      source: 'platform',
+    };
+  }
+  
   return { 
     lot: JSON.parse(JSON.stringify(lotFromDb, (key, value) => typeof value === 'bigint' ? value.toString() : value)), 
     auction: JSON.parse(JSON.stringify(auctionFromDb, (key, value) => typeof value === 'bigint' ? value.toString() : value)), 
@@ -100,6 +120,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     allCategories,
     allSellers,
     auctioneer,
+    auctionContact,
   };
 }
 
@@ -115,7 +136,8 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
     totalLotsInAuction,
     allCategories,
     allSellers,
-    auctioneer
+    auctioneer,
+    auctionContact
   } = await getLotPageData(params.auctionId, params.lotId);
 
   if (!lot || !auction) {
@@ -136,6 +158,7 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
             allCategories={allCategories}
             allSellers={allSellers}
             auctioneer={auctioneer}
+            auctionContact={auctionContact}
         />
     </div>
   );
