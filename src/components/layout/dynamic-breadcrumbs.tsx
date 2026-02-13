@@ -146,9 +146,17 @@ export default function DynamicBreadcrumbs() {
         label = 'Editar Perfil';
         href = '/profile/edit';
         i++;
-      } else if (segment === 'dashboard' && i + 1 < pathSegments.length) {
+        } else if (segment === 'dashboard' && i + 1 < pathSegments.length) {
           breadcrumbItems.push({label: 'Meu Painel', href: '/dashboard/overview'});
           const subPage = pathSegments[i+1];
+          if (subPage === 'profile' && i + 2 < pathSegments.length && pathSegments[i + 2] === 'edit') {
+           breadcrumbItems.push({ label: 'Meu Perfil', href: '/profile' });
+           label = 'Editar Perfil';
+           href = '/dashboard/profile/edit';
+           i += 2;
+           breadcrumbItems.push({ label, href });
+           continue;
+          }
           const subPageLabelMap: Record<string, string> = {
              overview: 'Visão Geral', bids: 'Meus Lances', wins: 'Meus Arremates',
              documents: 'Meus Documentos', history: 'Histórico', notifications: 'Notificações',

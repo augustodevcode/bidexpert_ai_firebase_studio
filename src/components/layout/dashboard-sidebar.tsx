@@ -36,7 +36,7 @@ const mainNavItems = [
   { href: '/dashboard/documents', title: 'Meus Documentos', icon: FileText },
   { href: '/dashboard/reports', title: 'Relatórios', icon: BarChart },
   { href: '/dashboard/notifications', title: 'Notificações', icon: Bell },
-  { href: '/profile/edit', title: 'Configurações do Perfil', icon: Settings },
+  { href: '/dashboard/profile/edit', title: 'Configurações do Perfil', icon: Settings },
 ];
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType }; pathname: string; onLinkClick?: () => void }) => (

@@ -102,7 +102,7 @@ export default function ProfilePage() {
               <CardDescription className="text-lg mt-1">{email}</CardDescription>
             </div>
              <Button asChild>
-                <Link href="/profile/edit"><Edit className="mr-2 h-4 w-4" /> Editar Perfil</Link>
+               <Link href="/dashboard/profile/edit"><Edit className="mr-2 h-4 w-4" /> Editar Perfil</Link>
             </Button>
           </div>
         </CardHeader>
