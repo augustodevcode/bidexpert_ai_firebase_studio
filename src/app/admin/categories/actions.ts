@@ -12,20 +12,24 @@ import { revalidatePath } from 'next/cache';
 import type { LotCategory } from '@/types';
 import { CategoryService } from '@/services/category.service';
 import { sanitizeResponse } from '@/lib/serialization-helper';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const categoryService = new CategoryService();
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  const result = await categoryService.getCategories();
+  const tenantId = await getTenantIdFromRequest();
+  const result = await categoryService.getCategories(tenantId);
   return sanitizeResponse(result);
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
-    return categoryService.getCategoryById(id);
+    const tenantId = await getTenantIdFromRequest();
+    return categoryService.getCategoryById(BigInt(id), tenantId);
 }
 
 export async function updateLotCategory(id: string, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean, message: string }> {
-    const result = await categoryService.updateCategory(id, data);
+    const tenantId = await getTenantIdFromRequest();
+    const result = await categoryService.updateCategory(BigInt(id), data, tenantId);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/categories');
         revalidatePath(`/admin/categories/${id}/edit`);
@@ -34,7 +38,8 @@ export async function updateLotCategory(id: string, data: Partial<Pick<LotCatego
 }
 
 export async function createLotCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean, message: string }> {
-    const result = await categoryService.createCategory(data);
+    const tenantId = await getTenantIdFromRequest();
+    const result = await categoryService.createCategory(data, tenantId);
     if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/categories');
     }
@@ -42,7 +47,8 @@ export async function createLotCategory(data: Pick<LotCategory, 'name' | 'descri
 }
 
 export async function deleteLotCategory(id: string): Promise<{ success: boolean, message: string }> {
-    const result = await categoryService.deleteCategory(id);
+    const tenantId = await getTenantIdFromRequest();
+    const result = await categoryService.deleteCategory(BigInt(id), tenantId);
     if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/categories');
     }
