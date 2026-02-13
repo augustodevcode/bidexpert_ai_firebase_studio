@@ -3,10 +3,15 @@ import { prisma } from '@/lib/prisma';
 import type { LotCategory } from '@/types';
 import type { Prisma } from '@prisma/client';
 
+function parseTenantId(tenantId: string): bigint {
+  return BigInt(tenantId);
+}
+
 export class CategoryRepository {
-  async findAll(): Promise<any[]> {
+  async findAll(tenantId: string): Promise<any[]> {
     try {
       return await prisma.lotCategory.findMany({ 
+        where: { tenantId: parseTenantId(tenantId) },
         orderBy: { name: 'asc' },
         include: {
           _count: {
@@ -20,27 +25,27 @@ export class CategoryRepository {
     }
   }
 
-  async findById(id: bigint): Promise<LotCategory | null> {
+  async findById(id: bigint, tenantId: string): Promise<LotCategory | null> {
     try {
-      return await prisma.lotCategory.findUnique({ where: { id: id } });
+      return await prisma.lotCategory.findFirst({ where: { id: id, tenantId: parseTenantId(tenantId) } });
     } catch (error) {
       console.error('[CategoryRepository.findById]', error);
       throw error;
     }
   }
 
-  async findBySlug(slug: string): Promise<LotCategory | null> {
+  async findBySlug(slug: string, tenantId: string): Promise<LotCategory | null> {
     try {
-      return await prisma.lotCategory.findUnique({ where: { slug } });
+      return await prisma.lotCategory.findFirst({ where: { slug, tenantId: parseTenantId(tenantId) } });
     } catch (error) {
       console.error('[CategoryRepository.findBySlug]', error);
       throw error;
     }
   }
 
-  async findByName(name: string): Promise<LotCategory | null> {
+  async findByName(name: string, tenantId: string): Promise<LotCategory | null> {
     try {
-      return await prisma.lotCategory.findUnique({ where: { name } });
+      return await prisma.lotCategory.findFirst({ where: { name, tenantId: parseTenantId(tenantId) } });
     } catch (error) {
       console.error('[CategoryRepository.findByName]', error);
       throw error;
@@ -56,27 +61,31 @@ export class CategoryRepository {
     }
   }
 
-  async update(id: bigint, data: Prisma.LotCategoryUpdateInput): Promise<LotCategory> {
+  async update(id: bigint, tenantId: string, data: Prisma.LotCategoryUpdateInput): Promise<LotCategory> {
     try {
-      return await prisma.lotCategory.update({ where: { id: id }, data });
+      const category = await prisma.lotCategory.findFirst({ where: { id: id, tenantId: parseTenantId(tenantId) }, select: { id: true } });
+      if (!category) {
+        throw new Error('Categoria não encontrada para o tenant informado.');
+      }
+      return await prisma.lotCategory.update({ where: { id: category.id }, data });
     } catch (error) {
       console.error('[CategoryRepository.update]', error);
       throw error;
     }
   }
 
-  async delete(id: bigint): Promise<void> {
+  async delete(id: bigint, tenantId: string): Promise<void> {
     try {
-      await prisma.lotCategory.delete({ where: { id: id } });
+      await prisma.lotCategory.deleteMany({ where: { id: id, tenantId: parseTenantId(tenantId) } });
     } catch (error) {
       console.error('[CategoryRepository.delete]', error);
       throw error;
     }
   }
 
-  async deleteAll(): Promise<void> {
+  async deleteAll(tenantId: string): Promise<void> {
     try {
-      await prisma.lotCategory.deleteMany({});
+      await prisma.lotCategory.deleteMany({ where: { tenantId: parseTenantId(tenantId) } });
     } catch (error) {
       console.error('[CategoryRepository.deleteAll]', error);
       throw error;
