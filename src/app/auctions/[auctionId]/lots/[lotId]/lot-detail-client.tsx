@@ -54,6 +54,7 @@ import LotSpecificationTab from '@/components/auction/lot-specification-tab';
 import LotSellerTab from '@/components/auction/lot-seller-tab';
 import LotReviewsTab from '@/components/auction/lot-reviews-tab';
 import LotQuestionsTab from '@/components/auction/lot-questions-tab';
+import type { AuctionContactInfo } from '@/services/auction-contact.service';
 
 import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasAnyPermission, hasPermission } from '@/lib/permissions';
@@ -239,6 +240,7 @@ interface LotDetailClientContentProps {
   allCategories: LotCategory[];
   allSellers: SellerProfileInfo[];
   auctioneer: AuctioneerProfileInfo | null;
+  auctionContact: AuctionContactInfo | null;
 }
 
 function hasProcessInfo(lot: Lot): boolean {
@@ -310,6 +312,7 @@ export default function LotDetailClientContent({
   allCategories,
   allSellers,
   auctioneer,
+  auctionContact,
 }: LotDetailClientContentProps) {
   const [lot, setLot] = useState<Lot>(initialLot);
   const [isLotFavorite, setIsLotFavorite] = useState(false);
@@ -888,13 +891,55 @@ export default function LotDetailClientContent({
                   />
                   <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.secondInitialPrice && <div className="flex justify-between"><span className="text-muted-foreground">2ª Praça (Lance Inicial):</span> <span className="font-semibold text-foreground">R$ {Number(lot.secondInitialPrice).toLocaleString('pt-BR')}</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{!activeLotPrices?.initialBid && !lot.secondInitialPrice && !lot.debtAmount && !lot.itbiValue && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
                   
-                  {/* Contact Info */}
-                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Phone className="h-5 w-5 mr-2 text-muted-foreground"/>Contato e Suporte</CardTitle></CardHeader><CardContent className="space-y-3 text-sm">
-                    {platformSettings.supportPhone && <div className="flex items-center"><Phone className="h-4 w-4 mr-2 text-primary"/><span>{platformSettings.supportPhone}</span></div>}
-                    {platformSettings.supportWhatsApp && <div className="flex items-center"><Smartphone className="h-4 w-4 mr-2 text-green-500"/><span>{platformSettings.supportWhatsApp}</span></div>}
-                    {platformSettings.supportEmail && <div className="flex items-center"><Mail className="h-4 w-4 mr-2 text-primary"/><span>{platformSettings.supportEmail}</span></div>}
-                    {!platformSettings.supportPhone && !platformSettings.supportWhatsApp && !platformSettings.supportEmail && <p className="text-muted-foreground">Contatos não disponíveis.</p>}
-                  </CardContent></Card>
+                  {/* Contact Info - Hierarquical: Auction -> Auctioneer -> Platform */}
+                  <Card className="shadow-md" data-ai-id="auction-contact-info-card">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-semibold flex items-center">
+                        <Phone className="h-5 w-5 mr-2 text-muted-foreground"/>
+                        Contato e Suporte
+                      </CardTitle>
+                      {auctionContact && auctionContact.source !== 'platform' && (
+                        <CardDescription className="text-xs">
+                          {auctionContact.source === 'auction' && '📋 Contato específico deste leilão'}
+                          {auctionContact.source === 'auctioneer' && `👤 Contato do leiloeiro${auctioneer?.name ? ` - ${auctioneer.name}` : ''}`}
+                        </CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      {auctionContact?.phone && (
+                        <div className="flex items-center" data-ai-id="contact-phone">
+                          <Phone className="h-4 w-4 mr-2 text-primary"/>
+                          <span>{auctionContact.phone}</span>
+                        </div>
+                      )}
+                      {auctionContact?.whatsapp && (
+                        <div className="flex items-center" data-ai-id="contact-whatsapp">
+                          <Smartphone className="h-4 w-4 mr-2 text-green-500"/>
+                          <a 
+                            href={`https://wa.me/${auctionContact.whatsapp.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
+                            {auctionContact.whatsapp}
+                          </a>
+                        </div>
+                      )}
+                      {auctionContact?.email && (
+                        <div className="flex items-center" data-ai-id="contact-email">
+                          <Mail className="h-4 w-4 mr-2 text-primary"/>
+                          <a href={`mailto:${auctionContact.email}`} className="hover:underline">
+                            {auctionContact.email}
+                          </a>
+                        </div>
+                      )}
+                      {!auctionContact?.phone && !auctionContact?.whatsapp && !auctionContact?.email && (
+                        <p className="text-muted-foreground" data-ai-id="contact-unavailable">
+                          Contatos não disponíveis.
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
               </div>
             </div>
           </section>

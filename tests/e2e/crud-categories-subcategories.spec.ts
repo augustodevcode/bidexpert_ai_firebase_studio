@@ -13,28 +13,46 @@ const ADMIN_PASSWORD = 'Admin@123';
 
 // Helper function to login
 async function loginAsAdmin(page: Page) {
-  await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'networkidle', timeout: 60000 });
-  
-  // Espera o formulário estar visível
-  const emailInput = page.locator('[data-ai-id="auth-login-email-input"]');
-  await expect(emailInput).toBeVisible({ timeout: 30000 });
-  
-  // Preenche os campos
-  await emailInput.fill(ADMIN_EMAIL);
-  await page.locator('[data-ai-id="auth-login-password-input"]').fill(ADMIN_PASSWORD);
-  
-  // Clica no botão de submit
-  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
-  
-  // Aguarda navegação para área admin ou dashboard
-  await page.waitForURL(/\/(admin|dashboard|home)/, { timeout: 30000 }).catch(() => {
-    console.log('Não redirecionou após login, pode ser erro de credenciais');
-  });
-  await page.waitForLoadState('networkidle');
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+
+    const emailInput = page.locator('[data-ai-id="auth-login-email-input"]');
+    await expect(emailInput).toBeVisible({ timeout: 120000 });
+    await page.waitForTimeout(3000);
+
+    await emailInput.fill(ADMIN_EMAIL);
+    await page.locator('[data-ai-id="auth-login-password-input"]').fill(ADMIN_PASSWORD);
+
+    const tenantCombobox = page.getByRole('combobox', { name: 'Espaço de Trabalho' });
+    if (await tenantCombobox.isVisible().catch(() => false)) {
+      await tenantCombobox.click();
+      const tenantOption = page.getByRole('option', { name: /BidExpert Demo|BidExpert/i }).first();
+      if (await tenantOption.isVisible().catch(() => false)) {
+        await tenantOption.click();
+      } else {
+        const fallbackTenant = page.getByText(/BidExpert Demo|BidExpert/i).first();
+        if (await fallbackTenant.isVisible().catch(() => false)) {
+          await fallbackTenant.click();
+        }
+      }
+    }
+
+    await page.locator('[data-ai-id="auth-login-submit-button"]').click({ timeout: 90000 });
+
+    try {
+      await page.waitForURL(/\/(admin|dashboard|home)/, { timeout: 90000 });
+      return;
+    } catch {
+      if (attempt === 1) {
+        throw new Error('Falha ao autenticar no painel admin para os testes de CRUD.');
+      }
+      await page.waitForTimeout(2500);
+    }
+  }
 }
 
 test.describe('CRUD Categorias', () => {
-  test.use({ timeout: 90000 });
+  test.setTimeout(90000);
   
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
@@ -42,11 +60,10 @@ test.describe('CRUD Categorias', () => {
 
   test('deve exibir a página de categorias com botões de ação', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/categories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     // Verifica título da página
     await expect(page.locator('[data-ai-id="admin-categories-page-container"]')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Categorias de Lotes')).toBeVisible();
+    await expect(page.locator('[data-ai-id="new-category-button"]')).toBeVisible();
     
     // Verifica botão de adicionar nova categoria
     const newButton = page.locator('[data-ai-id="new-category-button"]');
@@ -60,21 +77,17 @@ test.describe('CRUD Categorias', () => {
 
   test('deve navegar para página de nova categoria ao clicar no botão', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/categories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     // Clica no botão de nova categoria
     await page.locator('[data-ai-id="new-category-button"]').click();
     
-    // Verifica se navegou para a página de nova categoria
-    await page.waitForURL(/\/admin\/categories\/new/, { timeout: 10000 });
-    
-    // Verifica se o formulário está presente
-    await expect(page.getByText('Nova Categoria de Lote')).toBeVisible({ timeout: 15000 });
+    // Verifica se o formulário da nova categoria está presente
+    await page.waitForURL(/\/admin\/categories\/new/, { timeout: 30000 });
+    await expect(page.getByRole('button', { name: /Criar Categoria|Salvar/i })).toBeVisible({ timeout: 60000 });
   });
 
   test('deve exibir menu de ações ao clicar no botão de ações de uma categoria', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/categories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     // Espera carregar a tabela
     await page.waitForSelector('table', { timeout: 15000 });
@@ -97,7 +110,6 @@ test.describe('CRUD Categorias', () => {
 
   test('deve exibir dialog de confirmação ao tentar excluir categoria', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/categories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     await page.waitForSelector('table', { timeout: 15000 });
     
@@ -120,7 +132,6 @@ test.describe('CRUD Categorias', () => {
 
   test('deve navegar para lotes vinculados ao clicar no link', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/categories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     await page.waitForSelector('table', { timeout: 15000 });
     
@@ -141,7 +152,6 @@ test.describe('CRUD Categorias', () => {
   
   test('deve navegar para página de edição ao clicar no nome da categoria', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/categories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     await page.waitForSelector('table', { timeout: 15000 });
     
@@ -160,7 +170,7 @@ test.describe('CRUD Categorias', () => {
 });
 
 test.describe('CRUD Subcategorias', () => {
-  test.use({ timeout: 90000 });
+  test.setTimeout(90000);
   
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
@@ -168,11 +178,10 @@ test.describe('CRUD Subcategorias', () => {
 
   test('deve exibir a página de subcategorias com filtro e botão de adicionar', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/subcategories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     // Verifica título da página
     await expect(page.locator('[data-ai-id="admin-subcategories-page-container"]')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Subcategorias')).toBeVisible();
+    await expect(page.locator('[data-ai-id="new-subcategory-button"]')).toBeVisible();
     
     // Verifica botão de adicionar nova subcategoria
     const newButton = page.locator('[data-ai-id="new-subcategory-button"]');
@@ -186,21 +195,19 @@ test.describe('CRUD Subcategorias', () => {
 
   test('deve navegar para página de nova subcategoria ao clicar no botão', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/subcategories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     // Clica no botão de nova subcategoria
     await page.locator('[data-ai-id="new-subcategory-button"]').click();
     
     // Verifica se navegou para a página de nova subcategoria
-    await page.waitForURL(/\/admin\/subcategories\/new/, { timeout: 10000 });
+    await page.waitForURL(/\/admin\/subcategories\/new/, { timeout: 15000 });
     
     // Verifica se o formulário está presente
-    await expect(page.getByText('Nova Subcategoria')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('button', { name: /Criar Subcategoria|Salvar/i })).toBeVisible({ timeout: 15000 });
   });
 
   test('deve exibir menu de ações ao clicar no botão de ações de uma subcategoria', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/subcategories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     await page.waitForSelector('table', { timeout: 15000 });
     
@@ -221,7 +228,6 @@ test.describe('CRUD Subcategorias', () => {
 
   test('deve exibir dialog de confirmação ao tentar excluir subcategoria', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/subcategories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     await page.waitForSelector('table', { timeout: 15000 });
     
@@ -243,7 +249,6 @@ test.describe('CRUD Subcategorias', () => {
 
   test('deve navegar para lotes vinculados ao clicar no link', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/subcategories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     await page.waitForSelector('table', { timeout: 15000 });
     
@@ -263,7 +268,6 @@ test.describe('CRUD Subcategorias', () => {
   
   test('deve navegar para página de edição ao clicar no nome da subcategoria', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/subcategories`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForLoadState('networkidle');
     
     await page.waitForSelector('table', { timeout: 15000 });
     

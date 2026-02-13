@@ -49,6 +49,7 @@ import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { seedWonLotsWithServices } from './seed-won-lots-lib';
 import { seedMin50ZeroTables } from './seed-min-50-lib';
+import { seedHabilitacoes } from './seed-habilitacoes-lib';
 
 // =============================================================================
 // DATABASE TYPE DETECTION - Compatibilidade MySQL/PostgreSQL
@@ -84,6 +85,23 @@ console.log('='.repeat(60) + '\n');
 // const vehicleModelService = new VehicleModelService();
 
 const prisma = new PrismaClient();
+
+// =============================================================================
+// DB COMPATIBILITY LAYER - Model Name Aliases
+// =============================================================================
+// PostgreSQL: model UserOnTenant mapeado para tabela "UsersOnTenants"
+// MySQL: model usersOnTenants para tabela "usersOnTenants"
+// Ambos acessados via prisma.userOnTenant (o Prisma usa o model name, não table name)
+const UsersOnTenantsModel = (prisma as any).userOnTenant;
+
+if (!UsersOnTenantsModel) {
+  console.error('❌ ERRO: Model userOnTenant não encontrado!');
+  console.error(`   Tipo de banco: ${DB_TYPE}`);
+  console.error(`   Verifique se o Prisma Client foi gerado corretamente.`);
+  process.exit(1);
+}
+console.log(`✅ Model de associação User-Tenant: userOnTenant\n`);
+// =============================================================================
 
 // Helper slugify
 function slugify(text: string) {
@@ -567,6 +585,7 @@ async function fixAuctionsWithoutResponsible(tenantId: bigint) {
           registrationNumber: `JUCESP-${faker.string.numeric(6)}`,
           email: faker.internet.email(),
           phone: faker.phone.number(),
+          supportWhatsApp: faker.phone.number(), // Campo de contato WhatsApp para hierarquia
           address: faker.location.streetAddress(),
           city: faker.location.city(),
           state: 'SP',
@@ -1825,7 +1844,7 @@ async function main() {
     console.log('🧹 Limpeza parcial (mantendo tables base)...');
 
     // Deletar dependências primeiro (tabelas de relação N:N)
-    // await prisma.usersOnTenants.deleteMany({});
+    // await UsersOnTenantsModel.deleteMany({});
     // await prisma.usersOnRoles.deleteMany({});
 
     // Deletar usuários (exceto seeds essenciais se necessário, aqui limpamos tudo para recriar)
@@ -1952,7 +1971,7 @@ async function main() {
                     assignedBy: 'system',
                 },
             });
-            await prisma.usersOnTenants.create({
+            await UsersOnTenantsModel.create({
                 data: {
                     userId: fixedAdmin.id,
                     tenantId: tenants[0].id,
@@ -1967,11 +1986,11 @@ async function main() {
                  data: { password: adminHash }
              });
              // Ensure tenant association exists
-             const tenantAssociation = await prisma.usersOnTenants.findUnique({
+             const tenantAssociation = await UsersOnTenantsModel.findUnique({
                  where: { userId_tenantId: { userId: fixedAdmin.id, tenantId: tenants[0].id } }
              });
              if (!tenantAssociation) {
-                 await prisma.usersOnTenants.create({
+                 await UsersOnTenantsModel.create({
                      data: {
                          userId: fixedAdmin.id,
                          tenantId: tenants[0].id,
@@ -2311,7 +2330,7 @@ async function main() {
     });
 
     // Associar Analista ao Tenant padrão também
-    await prisma.usersOnTenants.upsert({
+    await UsersOnTenantsModel.upsert({
       where: { userId_tenantId: { userId: analistaUser.id, tenantId: tenants[0].id } },
       update: {},
       create: {
@@ -2324,7 +2343,7 @@ async function main() {
 
     // Associar usuários aos tenants
     await Promise.all([
-      prisma.usersOnTenants.upsert({
+      UsersOnTenantsModel.upsert({
         where: { userId_tenantId: { userId: leiloeiroUser.id, tenantId: tenants[0].id } },
         update: {},
         create: {
@@ -2332,7 +2351,7 @@ async function main() {
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.upsert({
+      UsersOnTenantsModel.upsert({
         where: { userId_tenantId: { userId: compradorUser.id, tenantId: tenants[0].id } },
         update: {},
         create: {
@@ -2340,7 +2359,7 @@ async function main() {
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.upsert({
+      UsersOnTenantsModel.upsert({
         where: { userId_tenantId: { userId: advogadoUser.id, tenantId: tenants[0].id } },
         update: {},
         create: {
@@ -2348,7 +2367,7 @@ async function main() {
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.upsert({
+      UsersOnTenantsModel.upsert({
         where: { userId_tenantId: { userId: vendedorUser.id, tenantId: tenants[0].id } },
         update: {},
         create: {
@@ -2356,7 +2375,7 @@ async function main() {
           tenantId: tenants[0].id,
         },
       }),
-      prisma.usersOnTenants.upsert({
+      UsersOnTenantsModel.upsert({
         where: { userId_tenantId: { userId: avaliadorUser.id, tenantId: tenants[0].id } },
         update: {},
         create: {
@@ -2540,6 +2559,9 @@ async function main() {
           sellerId: seller.id,
           address: 'Av. Paulista, 1000 - Bela Vista',
           zipCode: capitalZipCodes['São Paulo'],
+          supportPhone: '(11) 3000-1000', // Contato específico do leilão (prioridade 1)
+          supportEmail: 'suporte.leilao1@bidexpert.com.br', // Email específico do leilão
+          supportWhatsApp: '(11) 99000-1000', // WhatsApp específico do leilão
           updatedAt: new Date(),
         },
       }),
@@ -3241,7 +3263,7 @@ async function main() {
         },
       });
 
-      await prisma.usersOnTenants.create({
+      await UsersOnTenantsModel.create({
         data: {
           userId: auctioneer.id,
           tenantId: tenants[0].id,
@@ -4505,6 +4527,10 @@ async function main() {
     await seedCriticalGlobalTables(mainTenantId);
     
     await populateMissingData(mainTenantId);
+
+    // SEED DE HABILITAÇÕES - Grid de Documentos e Status
+    // Cria 35 usuários com diferentes status de habilitação
+    await seedHabilitacoes(prisma, mainTenantId, UsersOnTenantsModel);
 
     // EXECUTAR CORREÇÃO DE INCONSISTÊNCIAS DE AUDITORIA
     // Garante que todas as tabelas estejam completas e sem inconsistências
