@@ -6,9 +6,9 @@ name: P0 CI Pipeline
 
 on:
   push:
-    branches: [development]
+    branches: [demo-stable]
   pull_request:
-    branches: [development]
+    branches: [demo-stable]
 
 env:
   NODE_VERSION: '20'

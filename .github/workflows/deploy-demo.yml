@@ -2,12 +2,17 @@
 # Follows Production logic but to a separate Demo folder
 # Includes massive Demo seeding logic
 
-name: Deploy Demo
+# ⚠️ OBSOLETO: Deploy Locaweb FTP — Substituído por deploy-demo-vercel.yml (Vercel + PostgreSQL)
+# Mantido desabilitado para referência histórica. NÃO reativar.
+name: '[DISABLED] Deploy Demo (Locaweb)'
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch: # Permite disparar manualmente
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'ATENÇÃO: Este workflow é OBSOLETO. Use deploy-demo-vercel.yml'
+        required: true
+        type: boolean
 
 env:
   NODE_VERSION: '20'
