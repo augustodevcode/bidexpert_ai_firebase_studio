@@ -71,6 +71,27 @@ if (IS_POSTGRES) {
   console.log('ℹ️  MySQL mode: Default collation handles case-insensitivity');
 }
 console.log('='.repeat(60) + '\n');
+
+// =============================================================================
+// CROSS-DATABASE TABLE CHECK HELPER
+// =============================================================================
+async function tableExists(prismaClient: PrismaClient, tableName: string): Promise<boolean> {
+  try {
+    if (IS_MYSQL) {
+      const result = await prismaClient.$queryRawUnsafe(`SHOW TABLES LIKE '${tableName}'`);
+      return (result as any[]).length > 0;
+    } else if (IS_POSTGRES) {
+      const result = await prismaClient.$queryRawUnsafe(
+        `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename = '${tableName}'`
+      );
+      return (result as any[]).length > 0;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 // =============================================================================
 // Imports removed to avoid module resolution issues
 // import { AuctionHabilitationService } from '../src/services/auction-habilitation.service';
@@ -1706,8 +1727,8 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
 
   // 6. SECTION BADGE VISIBILITY (se existe no schema)
   console.log('[GLOBAL-TABLES] 🏷️  Populando Section Badge Visibility...');
-  const sectionExists = await prisma.$queryRaw`SHOW TABLES LIKE 'SectionBadgeVisibility'`.catch(() => []);
-  if ((sectionExists as any[]).length > 0) {
+  const sectionExistsFlag = await tableExists(prisma, 'SectionBadgeVisibility');
+  if (sectionExistsFlag) {
     const sections = ['super-opportunities', 'featured-auctions', 'ending-soon', 'new-arrivals'];
     for (const section of sections) {
       try {
@@ -1730,8 +1751,8 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
 
   // 7. REALTIME SETTINGS (se existe no schema)
   console.log('[GLOBAL-TABLES] ⚡ Populando Realtime Settings...');
-  const realtimeExists = await prisma.$queryRaw`SHOW TABLES LIKE 'RealtimeSettings'`.catch(() => []);
-  if ((realtimeExists as any[]).length > 0) {
+  const realtimeExistsFlag = await tableExists(prisma, 'RealtimeSettings');
+  if (realtimeExistsFlag) {
     try {
       await (prisma as any).realtimeSettings.create({
         data: {
@@ -1750,8 +1771,8 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
 
   // 8. ENTITY VIEW METRICS (se existe no schema)
   console.log('[GLOBAL-TABLES] 📊 Populando Entity View Metrics...');
-  const metricsExists = await prisma.$queryRaw`SHOW TABLES LIKE 'entity_view_metrics'`.catch(() => []);
-  if ((metricsExists as any[]).length > 0) {
+  const metricsExistsFlag = await tableExists(prisma, 'entity_view_metrics');
+  if (metricsExistsFlag) {
     const auctions = await prisma.auction.findMany({ take: 10 });
     for (const auction of auctions) {
       try {
@@ -1776,8 +1797,8 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
 
   // 9. AUDIT CONFIGS (se existe no schema)
   console.log('[GLOBAL-TABLES] 🔍 Populando Audit Configs...');
-  const auditConfigsExists = await prisma.$queryRaw`SHOW TABLES LIKE 'audit_configs'`.catch(() => []);
-  if ((auditConfigsExists as any[]).length > 0) {
+  const auditConfigsExistsFlag = await tableExists(prisma, 'audit_configs');
+  if (auditConfigsExistsFlag) {
     const auditConfigs = [
       { tableName: 'User', isEnabled: true, retentionDays: 365 },
       { tableName: 'Auction', isEnabled: true, retentionDays: 730 },
