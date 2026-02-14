@@ -94,8 +94,11 @@ jobs:
       - name: 🔄 Copy PostgreSQL schema
         run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
         
-      - name: 🔗 Pull Vercel Environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: 🔗 Link & Pull Vercel Environment
+        run: |
+          mkdir -p .vercel
+          echo '{"orgId":"${{ secrets.VERCEL_ORG_ID }}","projectId":"${{ secrets.VERCEL_PROJECT_ID }}"}' > .vercel/project.json
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         
       - name: 🏗️ Build with Vercel
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
