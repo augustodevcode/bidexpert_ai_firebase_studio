@@ -1042,6 +1042,45 @@ ao tentar logar verificar os usuários que estão nos arquivos de seed ou fazer 
  - Sempre que finalizar uma task do chat, informe todas as alterações que foram feitas no código de forma sucinta e objetiva para o usuário. 
  - nunca mostre a mensagem: "Reinicie o servidor e teste novamente." ao invés disso, sempre reinicie o servidor você mesmo e teste antes de informar ao usuário que a task foi finalizada.
 
+# Verificação Automática de Status (OBRIGATÓRIO)
+**REGRA CRÍTICA:** NUNCA pergunte ao usuário "Quer que eu verifique o status?". O agente DEVE verificar automaticamente.
+
+### Comandos de Verificação Automática
+```powershell
+# Status do deploy Vercel
+vercel ls --scope [team-slug]
+vercel inspect [deployment-url]
+
+# Status do servidor local
+netstat -ano | findstr ":9005"
+Get-Process -Name node -ErrorAction SilentlyContinue
+
+# Status do banco de dados
+$env:DATABASE_URL='...'; npx prisma db execute --stdin <<< "SELECT 1"
+
+# Verificar tabelas criadas
+$env:DATABASE_URL='...'; npx prisma db execute --stdin <<< "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'"
+
+# Status do build
+Test-Path .next/BUILD_ID
+Get-Content .next/BUILD_ID
+```
+
+### Quando Verificar Automaticamente
+- ✅ Após `git push` → Verificar status do deploy
+- ✅ Após adicionar env vars → Verificar se foram aplicadas
+- ✅ Após executar migrations → Verificar tabelas criadas
+- ✅ Após executar seed → Verificar contagem de registros
+- ✅ Após iniciar servidor → Verificar porta em uso
+- ✅ Após build → Verificar BUILD_ID e erros
+
+### Fluxo Padrão
+1. **Executar ação** (push, migration, seed, etc.)
+2. **Aguardar 5-10 segundos** (se necessário)
+3. **Verificar status automaticamente** com comandos apropriados
+4. **Reportar resultado** ao usuário com evidências (logs, contagens, etc.)
+5. **NUNCA perguntar** "Quer que eu verifique?" - SEMPRE verificar
+
 # 🚀 Regras de Deploy Vercel + PostgreSQL (OBRIGATÓRIO)
 
 > **SKILL DETALHADA:** `.github/skills/vercel-postgresql-deploy/SKILL.md`
