@@ -1,3 +1,8 @@
+---
+name: multi-environment
+description: Workflow de isolamento de ambientes DEV, DEMO e PROD com regras de branch, portas e compatibilidade de banco para o BidExpert.
+---
+
 # 🔀 Skill: Multi-Environment Workflow (DEV ↔ DEMO ↔ PROD)
 
 ## Descrição
