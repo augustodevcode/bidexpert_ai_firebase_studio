@@ -1,4 +1,9 @@
-﻿# Media Library (Google Photos-like) ÔÇö Skill
+﻿---
+name: media-library
+description: Biblioteca de mídia administrativa com galeria, vínculos de entidades, editor de imagem e storage dual-adapter no BidExpert.
+---
+
+# Media Library (Google Photos-like) ÔÇö Skill
 
 > **Scope**: Biblioteca de M├¡dia admin com galeria responsiva, entidades vinculadas, editor de imagem Canvas API, lightbox, e storage dual-adapter.
 

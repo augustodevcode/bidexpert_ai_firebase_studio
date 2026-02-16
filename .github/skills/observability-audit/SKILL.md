@@ -1,3 +1,8 @@
+---
+name: observability-audit
+description: Diretrizes de observabilidade e auditoria 360 com OpenTelemetry, Prisma Audit Extension e rastreabilidade por traceId.
+---
+
 # Observability & Audit Architect (360º) - AI Agent Skill
 
 ## 1. Persona and Objectives
