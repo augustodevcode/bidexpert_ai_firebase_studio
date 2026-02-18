@@ -53,7 +53,7 @@ export function GridPagination({
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>
           {totalCount > 0
-            ? locale.pagination.showing(startRow, endRow, totalCount)
+            ? locale.pagination.rangeLabel(startRow, endRow, totalCount)
             : locale.pagination.noRecords}
         </span>
       </div>
@@ -86,7 +86,7 @@ export function GridPagination({
 
         {/* Page info */}
         <span className="text-sm text-muted-foreground">
-          {locale.pagination.pageOf(pageCount > 0 ? pageIndex + 1 : 0, pageCount)}
+          {locale.pagination.pageLabel(pageCount > 0 ? pageIndex + 1 : 0, pageCount)}
         </span>
 
         {/* Navigation buttons */}
