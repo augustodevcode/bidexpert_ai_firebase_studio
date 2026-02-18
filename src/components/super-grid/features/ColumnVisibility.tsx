@@ -16,17 +16,20 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { VisibilityState } from '@tanstack/react-table';
 import type { GridColumn } from '../SuperGrid.types';
+import type { GridLocale } from '../SuperGrid.i18n';
 
 interface ColumnVisibilityProps {
   columns: GridColumn[];
   columnVisibility: VisibilityState;
   onColumnVisibilityChange: (visibility: VisibilityState) => void;
+  locale: GridLocale;
 }
 
 export function ColumnVisibility({
   columns,
   columnVisibility,
   onColumnVisibilityChange,
+  locale,
 }: ColumnVisibilityProps) {
   const toggleColumn = (columnId: string) => {
     const isCurrentlyVisible = columnVisibility[columnId] !== false;
@@ -74,13 +77,13 @@ export function ColumnVisibility({
         data-ai-id="supergrid-column-visibility-panel"
       >
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <span className="text-sm font-medium">Colunas visíveis</span>
+          <span className="text-sm font-medium">{locale.columnVisibility.visibleColumns}</span>
           <div className="flex gap-1">
             <Button variant="ghost" size="sm" onClick={showAll} className="h-7 text-xs px-2">
-              Todas
+              {locale.columnVisibility.showAll}
             </Button>
             <Button variant="ghost" size="sm" onClick={hideAll} className="h-7 text-xs px-2">
-              Nenhuma
+              {locale.columnVisibility.hideAll}
             </Button>
           </div>
         </div>

@@ -71,6 +71,16 @@ export const DEFAULT_GRID_CONFIG: DeepPartial<SuperGridConfig> = {
     reorderableColumns: false,
     autoRefresh: 0,
   },
+  freezePanes: {
+    enabled: true,
+    showDividerShadow: true,
+  },
+  highlight: {
+    activeRow: false,
+    stripedRows: false,
+    columnHover: false,
+    rules: [],
+  },
 };
 
 /** Mescla config parcial do usuário com defaults */

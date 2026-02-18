@@ -38,9 +38,17 @@ export class CityRepository {
   }
 
   async upsert(data: Prisma.CityCreateInput): Promise<CityInfo> {
+    const stateConnect = (data as any).State?.connect ?? (data as any).state?.connect;
+    if (!stateConnect?.id) {
+      throw new Error('State connection is required for city upsert');
+    }
     return prisma.city.upsert({
-      where: { name_stateId: { name: data.name, stateId: data.state.connect.id } },
-      update: data,
+      where: { name_stateId: { name: data.name, stateId: stateConnect.id } },
+      update: {
+        name: data.name,
+        slug: data.slug,
+        ibgeCode: data.ibgeCode,
+      },
       create: data,
     });
   }
