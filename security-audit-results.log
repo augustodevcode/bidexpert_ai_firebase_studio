@@ -1,0 +1,109 @@
+# npm audit report
+
+@isaacs/brace-expansion  5.0.0
+Severity: high
+@isaacs/brace-expansion has Uncontrolled Resource Consumption - https://github.com/advisories/GHSA-7h2j-956f-4vf2
+fix available via `npm audit fix`
+node_modules/@isaacs/brace-expansion
+
+@modelcontextprotocol/sdk  1.10.0 - 1.25.3
+Severity: high
+@modelcontextprotocol/sdk has cross-client data leak via shared server/transport instance reuse - https://github.com/advisories/GHSA-345p-7cg4-v4c7
+fix available via `npm audit fix`
+node_modules/@modelcontextprotocol/sdk
+
+ai  <=5.0.51
+Severity: moderate
+Vercel’s AI SDK's filetype whitelists can be bypassed when uploading files - https://github.com/advisories/GHSA-rwvc-j5jr-mgvh
+Depends on vulnerable versions of jsondiffpatch
+fix available via `npm audit fix --force`
+Will install ai@6.0.90, which is a breaking change
+node_modules/ai
+
+ajv  <8.18.0
+Severity: moderate
+ajv has ReDoS when using `$data` option - https://github.com/advisories/GHSA-2g4f-4pwh-qvx6
+fix available via `npm audit fix --force`
+Will install eslint@4.1.1, which is a breaking change
+node_modules/@genkit-ai/core/node_modules/ajv
+node_modules/@modelcontextprotocol/sdk/node_modules/ajv
+node_modules/ajv
+node_modules/ajv-formats/node_modules/ajv
+node_modules/exegesis/node_modules/ajv
+node_modules/firebase-tools/node_modules/ajv
+  @eslint/eslintrc  *
+  Depends on vulnerable versions of ajv
+  node_modules/@eslint/eslintrc
+    eslint  >=4.2.0
+    Depends on vulnerable versions of @eslint/eslintrc
+    Depends on vulnerable versions of ajv
+    node_modules/eslint
+
+axios  <=1.13.4
+Severity: high
+Axios is Vulnerable to Denial of Service via __proto__ Key in mergeConfig - https://github.com/advisories/GHSA-43fc-jf86-j433
+fix available via `npm audit fix`
+node_modules/axios
+
+cookie  <0.7.0
+cookie accepts cookie name, path, and domain with out of bounds characters - https://github.com/advisories/GHSA-pxg6-pf52-xh8x
+fix available via `npm audit fix --force`
+Will install @auth/core@0.41.1, which is a breaking change
+node_modules/cookie
+  @auth/core  <=0.35.3
+  Depends on vulnerable versions of cookie
+  node_modules/@auth/core
+
+jsondiffpatch  <0.7.2
+Severity: moderate
+jsondiffpatch is vulnerable to Cross-site Scripting (XSS) via HtmlFormatter::nodeBegin - https://github.com/advisories/GHSA-33vc-wfww-vjfv
+fix available via `npm audit fix --force`
+Will install ai@6.0.90, which is a breaking change
+node_modules/jsondiffpatch
+
+next  0.9.9 - 15.5.9
+Severity: critical
+Next.js Cache Poisoning - https://github.com/advisories/GHSA-gp8f-8m3g-qvj9
+Denial of Service condition in Next.js image optimization - https://github.com/advisories/GHSA-g77x-44xx-532m
+Next.js Allows a Denial of Service (DoS) with Server Actions - https://github.com/advisories/GHSA-7m27-7ghc-44w9
+Information exposure in Next.js dev server due to lack of origin verification - https://github.com/advisories/GHSA-3h52-269p-cp9r
+Next.js Affected by Cache Key Confusion for Image Optimization API Routes - https://github.com/advisories/GHSA-g5qg-72qw-gw5v
+Next.js authorization bypass vulnerability - https://github.com/advisories/GHSA-7gfc-8cq8-jh5f
+Next.js Improper Middleware Redirect Handling Leads to SSRF - https://github.com/advisories/GHSA-4342-x723-ch2f
+Next.js Content Injection Vulnerability for Image Optimization - https://github.com/advisories/GHSA-xv57-4mr9-wg8v
+Next.js Race Condition to Cache Poisoning - https://github.com/advisories/GHSA-qpjv-v59x-3qc4
+Authorization Bypass in Next.js Middleware - https://github.com/advisories/GHSA-f82v-jwr5-mffw
+Next Vulnerable to Denial of Service with Server Components - https://github.com/advisories/GHSA-mwv6-3258-q52c
+Next has a Denial of Service with Server Components - Incomplete Fix Follow-Up - https://github.com/advisories/GHSA-5j59-xgg2-r9c4
+Next.js self-hosted applications vulnerable to DoS via Image Optimizer remotePatterns configuration - https://github.com/advisories/GHSA-9g9p-9gw9-jx7f
+Next.js HTTP request deserialization can lead to DoS when using insecure React Server Components - https://github.com/advisories/GHSA-h25m-26qc-wcjf
+fix available via `npm audit fix --force`
+Will install next@14.2.35, which is outside the stated dependency range
+node_modules/next
+
+qs  6.7.0 - 6.14.1
+qs's arrayLimit bypass in comma parsing allows denial of service - https://github.com/advisories/GHSA-w7fw-mjwx-w883
+fix available via `npm audit fix`
+node_modules/qs
+
+tar  <=7.5.7
+Severity: high
+node-tar is Vulnerable to Arbitrary File Overwrite and Symlink Poisoning via Insufficient Path Sanitization - https://github.com/advisories/GHSA-8qq5-rm4j-mr97
+Race Condition in node-tar Path Reservations via Unicode Ligature Collisions on macOS APFS - https://github.com/advisories/GHSA-r6q2-hw4h-h46w
+node-tar Vulnerable to Arbitrary File Creation/Overwrite via Hardlink Path Traversal - https://github.com/advisories/GHSA-34x7-hfp2-rc4v
+Arbitrary File Read/Write via Hardlink Target Escape Through Symlink Chain in node-tar Extraction - https://github.com/advisories/GHSA-83g3-92jg-28cx
+fix available via `npm audit fix --force`
+Will install firebase-tools@15.6.0, which is a breaking change
+node_modules/node-gyp/node_modules/tar
+node_modules/tar
+  firebase-tools  <=14.27.0
+  Depends on vulnerable versions of tar
+  node_modules/firebase-tools
+
+14 vulnerabilities (3 low, 5 moderate, 5 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
