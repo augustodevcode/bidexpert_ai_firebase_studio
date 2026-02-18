@@ -106,52 +106,53 @@ export default function HeroSection() {
   }, [emblaApi]);
 
   return (
-    <div className="w-full bg-gradient-to-b from-gray-50 to-white">
+    <div className="wrapper-hero-section" data-ai-id="hero-section">
       {/* Main Hero Banner */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="container-hero-main" data-ai-id="hero-main-container">
+        <div className="grid-hero-main" data-ai-id="hero-main-grid">
           {/* Main Carousel - Left Side */}
-          <div className="lg:col-span-8">
-            <div className="relative rounded-2xl overflow-hidden shadow-xl bg-white">
-              <div className="embla" ref={emblaRef}>
+          <div className="wrapper-hero-carousel" data-ai-id="hero-carousel-section">
+            <div className="container-carousel-relative" data-ai-id="hero-carousel-container">
+              <div className="embla" ref={emblaRef} data-ai-id="hero-embla-root">
                 <div className="embla__container flex">
                   {mainSlides.map((slide, index) => (
-                    <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
-                      <div className="relative h-[400px] md:h-[500px] bg-gradient-to-r from-blue-50 to-purple-50">
+                    <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index} data-ai-id={`hero-slide-${index}`}>
+                      <div className="wrapper-hero-slide-content">
                         {/* Background Image */}
-                        <div className="absolute inset-0">
+                        <div className="wrapper-hero-bg-image" data-ai-id={`hero-slide-bg-${index}`}>
                           <Image
                             src={slide.imageUrl}
                             alt={slide.imageAlt}
                             fill
-                            className="object-cover opacity-90"
+                            className="img-hero-slide"
                             priority={index === 0}
                             sizes="(max-width: 1024px) 100vw, 66vw"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-white/40 to-transparent" />
+                          <div className="overlay-hero-slide" />
                         </div>
 
                         {/* Content */}
-                        <div className="relative h-full flex items-center">
-                          <div className="px-8 md:px-16 max-w-2xl">
+                        <div className="container-hero-slide-text">
+                          <div className="wrapper-hero-text-content">
                             {slide.badge && (
-                              <span className="inline-block px-4 py-1 bg-blue-500 text-white text-sm font-medium rounded-full mb-4">
+                              <span className="badge-hero-slide" data-ai-id={`hero-slide-badge-${index}`}>
                                 {slide.badge}
                               </span>
                             )}
-                            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-2">
+                            <h2 className="header-hero-slide-title" data-ai-id={`hero-slide-title-${index}`}>
                               {slide.title}
                             </h2>
-                            <h3 className="text-2xl md:text-4xl font-semibold text-gray-700 mb-2">
+                            <h3 className="header-hero-slide-subtitle" data-ai-id={`hero-slide-subtitle-${index}`}>
                               {slide.subtitle}
                             </h3>
-                            <p className="text-3xl md:text-5xl font-bold text-green-600 mb-6">
+                            <p className="text-hero-slide-highlight" data-ai-id={`hero-slide-highlight-${index}`}>
                               {slide.highlight}
                             </p>
-                            <Link href={slide.buttonLink}>
+                            <Link href={slide.buttonLink} data-ai-id={`hero-slide-link-${index}`}>
                               <Button 
                                 size="lg" 
-                                className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
+                                className="btn-hero-slide-action"
+                                data-ai-id={`hero-slide-button-${index}`}
                               >
                                 {slide.buttonText}
                               </Button>
@@ -169,33 +170,35 @@ export default function HeroSection() {
                 variant="ghost"
                 size="icon"
                 onClick={scrollPrev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full shadow-lg w-12 h-12 z-10"
+                className="btn-hero-carousel-prev"
                 aria-label="Previous slide"
+                data-ai-id="hero-carousel-prev"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="icon-hero-carousel-nav" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={scrollNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full shadow-lg w-12 h-12 z-10"
+                className="btn-hero-carousel-next"
                 aria-label="Next slide"
+                data-ai-id="hero-carousel-next"
               >
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight className="icon-hero-carousel-nav" />
               </Button>
 
               {/* Dots */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              <div className="wrapper-hero-carousel-dots" data-ai-id="hero-carousel-dots">
                 {mainSlides.map((_, index) => (
                   <button
                     key={index}
-                    className={`w-3 h-3 rounded-full transition-all ${
-                      index === selectedIndex 
-                        ? 'bg-yellow-500 w-8' 
-                        : 'bg-white/60 hover:bg-white/80'
-                    }`}
+                    className={cn(
+                      "btn-carousel-dot",
+                      index === selectedIndex ? "btn-carousel-dot-active" : "btn-carousel-dot-inactive"
+                    )}
                     onClick={() => scrollTo(index)}
                     aria-label={`Go to slide ${index + 1}`}
+                    data-ai-id={`hero-carousel-dot-${index}`}
                   />
                 ))}
               </div>
@@ -203,33 +206,34 @@ export default function HeroSection() {
           </div>
 
           {/* Side Promotions - Right Side */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
+          <div className="wrapper-hero-promotions" data-ai-id="hero-promotions-section">
             {sidePromotions.map((promo, index) => (
               <Link 
                 href={promo.link} 
                 key={index}
-                className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all bg-white flex-1"
+                className="link-hero-promotion"
+                data-ai-id={`hero-promotion-${index}`}
               >
-                <div className="relative h-[190px] md:h-[240px]">
+                <div className="container-hero-promotion">
                   <Image
                     src={promo.imageUrl}
                     alt={promo.title}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="img-hero-promotion"
                     sizes="(max-width: 1024px) 100vw, 33vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+                  <div className="overlay-hero-promotion" />
                   
                   {/* Content */}
-                  <div className="absolute inset-0 p-6 flex flex-col justify-center">
-                    <div className="relative">
-                      <span className="inline-block px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full mb-2">
+                  <div className="wrapper-hero-promotion-text">
+                    <div className="container-hero-promotion-label">
+                      <span className="badge-hero-promotion-discount" data-ai-id={`hero-promotion-discount-${index}`}>
                         {promo.discount}
                       </span>
-                      <h3 className="text-xl md:text-2xl font-bold text-white mb-1">
+                      <h3 className="header-hero-promotion-title" data-ai-id={`hero-promotion-title-${index}`}>
                         {promo.title}
                       </h3>
-                      <p className="text-sm text-gray-200">
+                      <p className="text-hero-promotion-desc" data-ai-id={`hero-promotion-desc-${index}`}>
                         {promo.description}
                       </p>
                     </div>
@@ -242,23 +246,23 @@ export default function HeroSection() {
       </div>
 
       {/* Features Bar */}
-      <div className="bg-white border-t border-b border-gray-200 py-6">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div className="section-hero-features" data-ai-id="hero-features-section">
+        <div className="container-hero-features" data-ai-id="hero-features-container">
+          <div className="grid-hero-features" data-ai-id="hero-features-grid">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div key={index} className="flex items-center gap-3 group">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
-                      <Icon className="w-6 h-6 text-yellow-600" />
+                <div key={index} className="wrapper-hero-feature" data-ai-id={`hero-feature-${index}`}>
+                  <div className="wrapper-hero-feature-icon-container">
+                    <div className="wrapper-hero-feature-icon">
+                      <Icon className="icon-hero-feature" />
                     </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900 text-sm">
+                  <div className="wrapper-hero-feature-text">
+                    <h4 className="header-hero-feature-title">
                       {feature.title}
                     </h4>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-hero-feature-desc">
                       {feature.description}
                     </p>
                   </div>

@@ -75,70 +75,70 @@ export default function UserNav() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className="h-10 w-10">
+          <Button variant="ghost" className="btn-user-profile-trigger" data-ai-id="user-nav-trigger">
+            <Avatar className="avatar-user-nav" data-ai-id="user-nav-avatar">
               {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="profile avatar small" />}
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
             {unreadNotificationsCount > 0 && (
-              <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]">
+              <Badge variant="destructive" className="badge-notification-count" data-ai-id="user-nav-notification-badge">
                 {unreadNotificationsCount}
               </Badge>
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-64" align="end" forceMount>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{displayName}</p>
-              <p className="text-xs leading-none text-muted-foreground">
+        <DropdownMenuContent className="menu-user-profile-content" align="end" forceMount data-ai-id="user-nav-dropdown">
+          <DropdownMenuLabel className="header-user-profile-info" data-ai-id="user-nav-header">
+            <div className="wrapper-user-info-text">
+              <p className="text-user-display-name">{displayName}</p>
+              <p className="text-user-email">
                 {email}
               </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/overview" className="flex items-center">
-              <LayoutDashboard className="mr-2 h-4 w-4" /> Visão Geral
+          <DropdownMenuItem asChild data-ai-id="user-nav-item-overview">
+            <Link href="/dashboard/overview" className="link-menu-user">
+              <LayoutDashboard className="icon-menu-user" /> Visão Geral
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/profile/edit" className="flex items-center">
-              <UserCircle2 className="mr-2 h-4 w-4" /> Meu Perfil
+          <DropdownMenuItem asChild data-ai-id="user-nav-item-profile">
+            <Link href="/dashboard/profile/edit" className="link-menu-user">
+              <UserCircle2 className="icon-menu-user" /> Meu Perfil
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/bids" className="flex items-center">
-              <Gavel className="mr-2 h-4 w-4" /> Meus Lances
+          <DropdownMenuItem asChild data-ai-id="user-nav-item-bids">
+            <Link href="/dashboard/bids" className="link-menu-user">
+              <Gavel className="icon-menu-user" /> Meus Lances
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/wins" className="flex items-center">
-              <ShoppingBag className="mr-2 h-4 w-4" /> Meus Arremates
+          <DropdownMenuItem asChild data-ai-id="user-nav-item-wins">
+            <Link href="/dashboard/wins" className="link-menu-user">
+              <ShoppingBag className="icon-menu-user" /> Meus Arremates
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/favorites" className="flex items-center">
-              <Heart className="mr-2 h-4 w-4" /> Lotes Favoritos
+          <DropdownMenuItem asChild data-ai-id="user-nav-item-favorites">
+            <Link href="/dashboard/favorites" className="link-menu-user">
+              <Heart className="icon-menu-user" /> Lotes Favoritos
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/documents" className="flex items-center">
-              <FileText className="mr-2 h-4 w-4" /> Meus Documentos
+          <DropdownMenuItem asChild data-ai-id="user-nav-item-documents">
+            <Link href="/dashboard/documents" className="link-menu-user">
+              <FileText className="icon-menu-user" /> Meus Documentos
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/history" className="flex items-center">
-              <History className="mr-2 h-4 w-4" /> Histórico de Navegação
+          <DropdownMenuItem asChild data-ai-id="user-nav-item-history">
+            <Link href="/dashboard/history" className="link-menu-user">
+              <History className="icon-menu-user" /> Histórico de Navegação
             </Link>
           </DropdownMenuItem>
 
           {canSeeConsignorDashboardLink && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/consignor-dashboard/overview" className="flex items-center">
-                  <ConsignorIcon className="mr-2 h-4 w-4" /> Painel do Comitente
+              <DropdownMenuItem asChild data-ai-id="user-nav-item-consignor">
+                <Link href="/consignor-dashboard/overview" className="link-menu-user">
+                  <ConsignorIcon className="icon-menu-user" /> Painel do Comitente
                 </Link>
               </DropdownMenuItem>
             </>
@@ -147,18 +147,18 @@ export default function UserNav() {
           {showAdminSectionLinks && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs text-muted-foreground px-2">Administração</DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/dashboard" className="flex items-center">
-                  <ShieldCheck className="mr-2 h-4 w-4" /> Painel Admin
+              <DropdownMenuLabel className="header-admin-section" data-ai-id="user-nav-admin-header">Administração</DropdownMenuLabel>
+              <DropdownMenuItem asChild data-ai-id="user-nav-item-admin">
+                <Link href="/admin/dashboard" className="link-menu-user">
+                  <ShieldCheck className="icon-menu-user" /> Painel Admin
                 </Link>
               </DropdownMenuItem>
             </>
           )}
 
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>
-            <LogOut className="mr-2 h-4 w-4" /> Sair
+          <DropdownMenuItem onClick={logout} data-ai-id="user-nav-item-logout">
+            <LogOut className="icon-menu-user" /> Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -167,12 +167,12 @@ export default function UserNav() {
 
   return (
     <TooltipProvider>
-      <div className="flex items-center space-x-1">
+      <div className="wrapper-auth-buttons" data-ai-id="user-nav-auth-section">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+            <Button asChild variant="ghost" size="icon" className="btn-auth-action" data-ai-id="user-nav-login-btn">
               <Link href="/auth/login" aria-label="Login" data-testid="login-link">
-                <LogIn className="h-4 w-4 sm:h-5 sm:w-5" />
+                <LogIn className="icon-auth-action" />
                 <span className="sr-only">Login</span>
               </Link>
             </Button>
@@ -183,9 +183,9 @@ export default function UserNav() {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+            <Button asChild variant="ghost" size="icon" className="btn-auth-action" data-ai-id="user-nav-register-btn">
               <Link href="/auth/register" aria-label="Registrar">
-                <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <UserPlus className="icon-auth-action" />
                 <span className="sr-only">Registrar</span>
               </Link>
             </Button>

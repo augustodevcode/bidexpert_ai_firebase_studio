@@ -48,24 +48,24 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   }
 
   return (
-    <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
-          <ChevronLeft className="h-4 w-4" /> Anterior
+    <div className="wrapper-pagination-controls" data-ai-id="pagination-controls">
+      <div className="wrapper-pagination-buttons">
+        <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} data-ai-id="pagination-btn-prev">
+          <ChevronLeft className="icon-pagination" /> Anterior
         </Button>
-        <div className="flex items-center gap-1">
+        <div className="wrapper-page-numbers" data-ai-id="pagination-page-numbers">
           {pageNumbers.map((page, index) =>
             page === -1
-              ? <span key={`ellipsis-${index}`} className="px-1">...</span>
-              : <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="icon" className="h-8 w-8 text-xs" onClick={() => onPageChange(page)}>{page}</Button>
+              ? <span key={`ellipsis-${index}`} className="text-pagination-ellipsis">...</span>
+              : <Button key={page} variant={currentPage === page ? 'default' : 'outline'} size="icon" className="btn-pagination-page" onClick={() => onPageChange(page)} data-ai-id={`pagination-page-${page}`}>{page}</Button>
           )}
         </div>
-        <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-          Próxima <ChevronRight className="h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} data-ai-id="pagination-btn-next">
+          Próxima <ChevronRight className="icon-pagination" />
         </Button>
       </div>
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <p>Página {currentPage} de {totalPages}</p>
+      <div className="wrapper-pagination-info">
+        <p className="text-pagination-info">Página {currentPage} de {totalPages}</p>
       </div>
     </div>
   );
@@ -174,40 +174,42 @@ export default function BidExpertSearchResultsFrame<TItem extends { id: string }
   const finalTotalItemsCount = totalItemsCount ?? items.length;
 
   return (
-    <div className="space-y-6" data-ai-id="bid-expert-search-results-frame">
-      <Card className="p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground w-full sm:w-auto text-center sm:text-left">
+    <div className="wrapper-search-results-frame" data-ai-id="bid-expert-search-results-frame">
+      <Card className="card-search-results-toolbar" data-ai-id="search-results-toolbar">
+        <div className="wrapper-toolbar-content">
+          <p className="text-results-count" data-ai-id="search-results-count">
             {isLoading ? `Buscando ${searchTypeLabel}...` : `${finalTotalItemsCount} ${searchTypeLabel} encontrado(s)`}
           </p>
-          <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-center">
+          <div className="wrapper-toolbar-controls" data-ai-id="search-results-controls">
             <Select value={currentSortBy} onValueChange={handleSortChangeInternal}>
-              <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
+              <SelectTrigger className="select-search-sort" data-ai-id="search-sort-select">
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="select-content-search-sort">
                 {sortOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  <SelectItem key={option.value} value={option.value} className="item-search-sort">{option.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex items-center gap-1">
-              {renderGridItem && <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')} aria-label="Visualização em Grade"><LayoutGrid className="h-4 w-4" /></Button>}
-              {renderListItem && <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('list')} aria-label="Visualização em Lista"><List className="h-4 w-4" /></Button>}
-              {dataTableColumns && <Button variant={viewMode === 'table' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('table')} aria-label="Visualização em Tabela"><TableIcon className="h-4 w-4" /></Button>}
+            <div className="wrapper-view-mode-buttons" data-ai-id="search-view-mode-buttons">
+              {renderGridItem && <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="btn-view-mode" onClick={() => setViewMode('grid')} aria-label="Visualização em Grade" data-ai-id="btn-view-grid"><LayoutGrid className="icon-view-mode" /></Button>}
+              {renderListItem && <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="btn-view-mode" onClick={() => setViewMode('list')} aria-label="Visualização em Lista" data-ai-id="btn-view-list"><List className="icon-view-mode" /></Button>}
+              {dataTableColumns && <Button variant={viewMode === 'table' ? 'secondary' : 'ghost'} size="icon" className="btn-view-mode" onClick={() => setViewMode('table')} aria-label="Visualização em Tabela" data-ai-id="btn-view-table"><TableIcon className="icon-view-mode" /></Button>}
             </div>
           </div>
         </div>
       </Card>
 
       {isLoading ? (
-        <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
+        <div className="wrapper-results-loading" data-ai-id="search-results-loading">
+          <Loader2 className="icon-results-loading" />
+        </div>
       ) : (items.length > 0 || (viewMode === 'table' && dataTableColumns)) ? ( // A tabela deve sempre ser renderizada para que seus próprios estados internos funcionem
         <>
-          {viewMode === 'grid' && renderGridItem && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-ai-id="search-results-grid">{paginatedItems.map((item, index) => <div key={item.id}>{renderGridItem(item, index)}</div>)}</div>}
-          {viewMode === 'list' && renderListItem && <div className="space-y-4">{paginatedItems.map((item, index) => <div key={item.id}>{renderListItem(item, index)}</div>)}</div>}
+          {viewMode === 'grid' && renderGridItem && <div className="grid-lots-grid-mode" data-ai-id="search-results-grid">{paginatedItems.map((item, index) => <div key={item.id}>{renderGridItem(item, index)}</div>)}</div>}
+          {viewMode === 'list' && renderListItem && <div className="list-search-results-items" data-ai-id="search-results-list">{paginatedItems.map((item, index) => <div key={item.id}>{renderListItem(item, index)}</div>)}</div>}
           {dataTableColumns && (
-            <div className="block">
+            <div className="wrapper-data-table-results" data-ai-id="search-results-table">
               <DataTable
                 columns={dataTableColumns}
                 data={items} // A tabela gerencia sua própria paginação
@@ -231,11 +233,11 @@ export default function BidExpertSearchResultsFrame<TItem extends { id: string }
           )}
         </>
       ) : (
-        <Card>
-          <CardContent className="text-center py-12">
-            <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-            <h2 className="text-xl font-semibold mb-2">Nenhum Resultado</h2>
-            <p className="text-muted-foreground">{emptyStateMessage}</p>
+        <Card className="card-no-results" data-ai-id="search-results-empty">
+          <CardContent className="content-no-results">
+            <AlertCircle className="icon-no-results" />
+            <h2 className="header-no-results">Nenhum Resultado</h2>
+            <p className="text-no-results-desc">{emptyStateMessage}</p>
           </CardContent>
         </Card>
       )}

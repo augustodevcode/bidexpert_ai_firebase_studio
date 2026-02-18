@@ -145,7 +145,7 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
   }
 
   return (
-    <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8">
+    <div className="container-lot-detail-page" data-ai-id="lot-detail-page-container">
          <LotDetailClientContent
             lot={lot}
             auction={auction}

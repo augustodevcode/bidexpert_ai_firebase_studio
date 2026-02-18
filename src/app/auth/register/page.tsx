@@ -192,35 +192,35 @@ export default function RegisterPage() {
   }
 
   return (
-    <div data-ai-id="auth-register-page-container" className="flex items-center justify-center min-h-screen py-12">
-      <Card data-ai-id="auth-register-card" className="w-full max-w-3xl shadow-xl">
-        <CardHeader className="text-center">
-          <UserPlus className="mx-auto h-12 w-12 text-primary mb-2" />
-          <CardTitle className="text-2xl font-bold font-headline">Criar uma Conta</CardTitle>
-          <CardDescription>Junte-se ao BidExpert para começar a dar lances e vender.</CardDescription>
+    <div data-ai-id="auth-register-page-container" className="wrapper-auth-page-large">
+      <Card data-ai-id="auth-register-card" className="card-auth-large">
+        <CardHeader className="header-auth">
+          <UserPlus className="icon-auth-header" />
+          <CardTitle className="title-auth">Criar uma Conta</CardTitle>
+          <CardDescription className="desc-auth">Junte-se ao BidExpert para começar a dar lances e vender.</CardDescription>
         </CardHeader>
         <Form {...form}>
-          <form data-ai-id="auth-register-form" onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6 bg-secondary/30 p-6">
+          <form data-ai-id="auth-register-form" onSubmit={form.handleSubmit(onSubmit)} className="form-auth">
+            <CardContent className="content-auth-shaded">
               <FormField
                 control={form.control}
                 name="accountType"
                 render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel className="text-base">Tipo de Cadastro<span className="text-destructive">*</span></FormLabel>
+                  <FormItem className="wrapper-account-type-selection">
+                    <FormLabel className="label-account-type">Tipo de Cadastro<span className="text-auth-required">*</span></FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row gap-4">
-                        <FormItem className="flex items-center space-x-3 space-y-0">
+                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="group-account-type-radio">
+                        <FormItem className="wrapper-account-type-option">
                           <FormControl><RadioGroupItem value="PHYSICAL" /></FormControl>
-                          <FormLabel className="font-normal cursor-pointer">Pessoa Física</FormLabel>
+                          <FormLabel className="label-account-type-option">Pessoa Física</FormLabel>
                         </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormItem className="wrapper-account-type-option">
                           <FormControl><RadioGroupItem value="LEGAL" /></FormControl>
-                          <FormLabel className="font-normal cursor-pointer">Pessoa Jurídica</FormLabel>
+                          <FormLabel className="label-account-type-option">Pessoa Jurídica</FormLabel>
                         </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormItem className="wrapper-account-type-option">
                           <FormControl><RadioGroupItem value="DIRECT_SALE_CONSIGNOR" /></FormControl>
-                          <FormLabel className="font-normal cursor-pointer">Comitente Venda Direta</FormLabel>
+                          <FormLabel className="label-account-type-option">Comitente Venda Direta</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -230,82 +230,82 @@ export default function RegisterPage() {
               />
 
               {accountType === 'PHYSICAL' && (
-                <div data-ai-id="register-physical-person-section">
-                  <Separator />
-                  <h3 className="text-md font-semibold text-muted-foreground pt-4">Dados Pessoais</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem><FormLabel>Nome Completo<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Nome Completo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <div data-ai-id="register-physical-person-section" className="wrapper-register-section">
+                  <Separator className="separator-auth" />
+                  <h3 className="header-register-section">Dados Pessoais</h3>
+                  <div className="grid-register-fields">
+                    <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Nome Completo<span className="text-auth-required">*</span></FormLabel><FormControl><Input placeholder="Nome Completo" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">CPF<span className="text-auth-required">*</span></FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                   </div>
-                  <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Nascimento<span className="text-destructive">*</span></FormLabel><FormControl><DatePicker date={field.value} onSelect={field.onChange} placeholder="Selecione uma data" fromYear={1900} toYear={new Date().getFullYear() - 18} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="wrapper-form-item-column"><FormLabel className="label-auth-field">Data de Nascimento<span className="text-auth-required">*</span></FormLabel><FormControl><DatePicker date={field.value} onSelect={field.onChange} placeholder="Selecione uma data" fromYear={1900} toYear={new Date().getFullYear() - 18} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
               )}
 
               {(accountType === 'LEGAL' || accountType === 'DIRECT_SALE_CONSIGNOR') && (
-                <div data-ai-id="register-legal-person-section">
-                  <Separator />
-                  <h3 className="text-md font-semibold text-muted-foreground pt-4">Dados da Empresa</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="razaoSocial" render={({ field }) => (<FormItem><FormLabel>Razão Social<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Nome da Empresa Ltda." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="cnpj" render={({ field }) => (<FormItem><FormLabel>CNPJ<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <div data-ai-id="register-legal-person-section" className="wrapper-register-section">
+                  <Separator className="separator-auth" />
+                  <h3 className="header-register-section">Dados da Empresa</h3>
+                  <div className="grid-register-fields">
+                    <FormField control={form.control} name="razaoSocial" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Razão Social<span className="text-auth-required">*</span></FormLabel><FormControl><Input placeholder="Nome da Empresa Ltda." {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="cnpj" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">CNPJ<span className="text-auth-required">*</span></FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                   </div>
-                  <FormField control={form.control} name="inscricaoEstadual" render={({ field }) => (<FormItem><FormLabel>Inscrição Estadual (Opcional)</FormLabel><FormControl><Input placeholder="Número da Inscrição Estadual" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                  {accountType === 'DIRECT_SALE_CONSIGNOR' && (<FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="www.suaempresa.com.br" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />)}
-                  <Separator />
-                  <h3 className="text-md font-semibold text-muted-foreground pt-4">Responsável Legal</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <FormField control={form.control} name="responsibleName" render={({ field }) => (<FormItem><FormLabel>Nome Completo<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                     <FormField control={form.control} name="responsibleCpf" render={({ field }) => (<FormItem><FormLabel>CPF<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="inscricaoEstadual" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Inscrição Estadual (Opcional)</FormLabel><FormControl><Input placeholder="Número da Inscrição Estadual" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                  {accountType === 'DIRECT_SALE_CONSIGNOR' && (<FormField control={form.control} name="website" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="www.suaempresa.com.br" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />)}
+                  <Separator className="separator-auth" />
+                  <h3 className="header-register-section">Responsável Legal</h3>
+                  <div className="grid-register-fields">
+                     <FormField control={form.control} name="responsibleName" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Nome Completo<span className="text-auth-required">*</span></FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                     <FormField control={form.control} name="responsibleCpf" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">CPF<span className="text-auth-required">*</span></FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                   </div>
                 </div>
               )}
 
-              <div data-ai-id="register-contact-section">
-                <Separator />
-                <h3 className="text-md font-semibold text-muted-foreground pt-4">Informações de Contato e Acesso</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="cellPhone" render={({ field }) => (<FormItem><FormLabel>Telefone Celular<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="cellPhoneConfirmation" render={({ field }) => (<FormItem><FormLabel>Confirmar Celular<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Repita o celular" {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <div data-ai-id="register-contact-section" className="wrapper-register-section">
+                <Separator className="separator-auth" />
+                <h3 className="header-register-section">Informações de Contato e Acesso</h3>
+                <div className="grid-register-fields">
+                  <FormField control={form.control} name="cellPhone" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Telefone Celular<span className="text-auth-required">*</span></FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="cellPhoneConfirmation" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Confirmar Celular<span className="text-auth-required">*</span></FormLabel><FormControl><Input placeholder="Repita o celular" {...field} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email<span className="text-destructive">*</span></FormLabel><FormControl><Input type="email" placeholder="seu@email.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="emailConfirmation" render={({ field }) => (<FormItem><FormLabel>Confirmar Email<span className="text-destructive">*</span></FormLabel><FormControl><Input type="email" placeholder="Repita o email" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid-register-fields">
+                  <FormField control={form.control} name="email" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Email<span className="text-auth-required">*</span></FormLabel><FormControl><Input type="email" placeholder="seu@email.com" {...field} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="emailConfirmation" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Confirmar Email<span className="text-auth-required">*</span></FormLabel><FormControl><Input type="email" placeholder="Repita o email" {...field} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Senha<span className="text-destructive">*</span></FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="passwordConfirmation" render={({ field }) => (<FormItem><FormLabel>Confirmar Senha<span className="text-destructive">*</span></FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid-register-fields">
+                  <FormField control={form.control} name="password" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Senha<span className="text-auth-required">*</span></FormLabel><FormControl><Input type="password" {...field} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="passwordConfirmation" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Confirmar Senha<span className="text-auth-required">*</span></FormLabel><FormControl><Input type="password" {...field} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
               </div>
               
-              <div data-ai-id="register-address-section">
-                <Separator />
-                <h3 className="text-md font-semibold text-muted-foreground pt-4">Endereço</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="sm:col-span-2"><FormLabel>Logradouro (Rua/Avenida)</FormLabel><FormControl><Input placeholder="Ex: Rua das Palmeiras" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              <div data-ai-id="register-address-section" className="wrapper-register-section">
+                <Separator className="separator-auth" />
+                <h3 className="header-register-section">Endereço</h3>
+                <div className="grid-register-fields">
+                  <FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="street" render={({ field }) => (<FormItem className="wrapper-form-item-span"><FormLabel className="label-auth-field">Logradouro (Rua/Avenida)</FormLabel><FormControl><Input placeholder="Ex: Rua das Palmeiras" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <FormField control={form.control} name="number" render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input placeholder="Ex: 123" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="complement" render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input placeholder="Ex: Ap 101, Bloco B" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="neighborhood" render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input placeholder="Ex: Centro" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid-register-fields-three">
+                  <FormField control={form.control} name="number" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Número</FormLabel><FormControl><Input placeholder="Ex: 123" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="complement" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Complemento</FormLabel><FormControl><Input placeholder="Ex: Ap 101, Bloco B" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="neighborhood" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Bairro</FormLabel><FormControl><Input placeholder="Ex: Centro" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="Ex: Salvador" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado (UF)</FormLabel><FormControl><Input placeholder="Ex: BA" maxLength={2} {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid-register-fields">
+                  <FormField control={form.control} name="city" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Cidade</FormLabel><FormControl><Input placeholder="Ex: Salvador" {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="state" render={({ field }) => (<FormItem className="wrapper-form-item"><FormLabel className="label-auth-field">Estado (UF)</FormLabel><FormControl><Input placeholder="Ex: BA" maxLength={2} {...field} value={field.value ?? ''} className="input-auth-field" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
               </div>
 
-              <div data-ai-id="register-terms-section">
-                <Separator />
-                <div className="space-y-2 pt-4">
-                  <FormField control={form.control} name="termsAccepted" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel className="text-xs cursor-pointer">Li e aceito os <Link href="/terms" className="underline text-primary hover:text-primary/80">Termos de Uso</Link> e a <Link href="/privacy" className="underline text-primary hover:text-primary/80">Política de Privacidade</Link>.<span className="text-destructive">*</span></FormLabel></div></FormItem>)} />
-                  <FormField control={form.control} name="optInMarketing" render={({ field }) => (<FormItem className="flex flex-row items-center space-x-3 space-y-0"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel className="text-xs cursor-pointer">Desejo receber e-mails sobre promoções e novidades do BidExpert.</FormLabel></div></FormItem>)} />
+              <div data-ai-id="register-terms-section" className="wrapper-register-section">
+                <Separator className="separator-auth" />
+                <div className="wrapper-terms-options">
+                  <FormField control={form.control} name="termsAccepted" render={({ field }) => (<FormItem className="item-terms-checkbox"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} className="checkbox-auth-terms" /></FormControl><div className="wrapper-terms-label"><FormLabel className="label-terms-text">Li e aceito os <Link href="/terms" className="link-terms-primary">Termos de Uso</Link> e a <Link href="/privacy" className="link-terms-primary">Política de Privacidade</Link>.<span className="text-auth-required">*</span></FormLabel></div></FormItem>)} />
+                  <FormField control={form.control} name="optInMarketing" render={({ field }) => (<FormItem className="item-terms-checkbox"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} className="checkbox-auth-marketing" /></FormControl><div className="wrapper-terms-label"><FormLabel className="label-terms-text">Desejo receber e-mails sobre promoções e novidades do BidExpert.</FormLabel></div></FormItem>)} />
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col space-y-4 p-6 border-t">
-              <Button type="submit" className="w-full" disabled={isLoading || !formState.isValid}>
-                {isLoading ? <Loader2 className="animate-spin" /> : 'Registrar'}
+            <CardFooter className="footer-auth-register">
+              <Button type="submit" className="btn-auth-submit" disabled={isLoading || !formState.isValid} data-ai-id="auth-register-submit-btn">
+                {isLoading ? <Loader2 className="icon-btn-spinner" /> : 'Registrar'}
               </Button>
               <p className="text-sm text-center text-muted-foreground">
                 Já tem uma conta?{' '}

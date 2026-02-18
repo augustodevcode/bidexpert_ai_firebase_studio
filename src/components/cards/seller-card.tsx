@@ -28,35 +28,35 @@ export default function SellerCard({ seller, onUpdate }: SellerCardProps) {
   const SellerIcon = seller.isJudicial ? Scale : Building;
 
   return (
-      <Card className="shadow-md hover:shadow-xl transition-shadow flex flex-col h-full">
-        <CardHeader className="items-center text-center p-4">
-          <Avatar className="h-24 w-24 mb-3 border-2 border-primary/30">
+      <Card className="card-seller" data-ai-id={`seller-card-${seller.id}`}>
+        <CardHeader className="header-card-seller" data-ai-id="seller-card-header">
+          <Avatar className="avatar-card-seller" data-ai-id="seller-card-avatar">
             <AvatarImage src={validLogoUrl} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || "logo comitente"} />
             <AvatarFallback>{getSellerInitial(seller.name)}</AvatarFallback>
           </Avatar>
-          <CardTitle className="text-xl font-semibold">{seller.name}</CardTitle>
-          <CardDescription className="text-xs text-primary flex items-center gap-1">
-            <SellerIcon className="h-3.5 w-3.5" />
+          <CardTitle className="header-card-seller-title" data-ai-id="seller-card-title">{seller.name}</CardTitle>
+          <CardDescription className="desc-card-seller-type" data-ai-id="seller-card-type">
+            <SellerIcon className="icon-card-seller-type" />
             {seller.isJudicial ? 'Comitente Judicial' : 'Comitente Verificado'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex-grow px-4 pb-4 space-y-1 text-sm text-muted-foreground text-center">
+        <CardContent className="content-card-seller" data-ai-id="seller-card-content">
           {seller.city && seller.state && (
-            <p className="text-xs">{seller.city} - {seller.state}</p>
+            <p className="text-card-seller-location">{seller.city} - {seller.state}</p>
           )}
-          <div className="text-xs">
-            <span className="font-medium text-foreground">{seller.activeLotsCount || 0}</span> lotes ativos
+          <div className="text-card-seller-stats">
+            <span className="text-card-seller-stats-value">{seller.activeLotsCount || 0}</span> lotes ativos
           </div>
           {formattedDate && (
-            <div className="text-xs">
+            <div className="text-card-seller-member-since">
               Membro desde: {formattedDate}
             </div>
           )}
         </CardContent>
-        <CardFooter className="p-4 border-t">
-          <Button asChild variant="outline" className="w-full">
+        <CardFooter className="footer-card-seller" data-ai-id="seller-card-footer">
+          <Button asChild variant="outline" className="btn-card-seller-view-profile" data-ai-id="seller-card-view-btn">
             <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`}>
-              Ver Perfil e Lotes <ArrowRight className="ml-2 h-4 w-4" />
+              Ver Perfil e Lotes <ArrowRight className="icon-btn-action" />
             </Link>
           </Button>
         </CardFooter>

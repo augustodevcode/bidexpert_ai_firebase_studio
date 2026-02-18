@@ -179,12 +179,12 @@ function LoginPageContent() {
     };
 
     return (
-        <div data-ai-id="auth-login-page-container" className="flex items-center justify-center min-h-[calc(100vh-20rem)] py-12">
-            <Card data-ai-id="auth-login-card" className="w-full max-w-md shadow-xl">
-                <CardHeader className="text-center">
-                    <LogIn className="mx-auto h-12 w-12 text-primary mb-2" />
-                    <CardTitle className="text-2xl font-bold font-headline">Bem-vindo de Volta!</CardTitle>
-                    <CardDescription>Insira suas credenciais para acessar sua conta.</CardDescription>
+        <div data-ai-id="auth-login-page-container" className="wrapper-auth-page">
+            <Card data-ai-id="auth-login-card" className="card-auth">
+                <CardHeader className="header-auth">
+                    <LogIn className="icon-auth-header" />
+                    <CardTitle className="title-auth">Bem-vindo de Volta!</CardTitle>
+                    <CardDescription className="desc-auth">Insira suas credenciais para acessar sua conta.</CardDescription>
                 </CardHeader>
 
                 {/* DEV ONLY: User Selector */}
@@ -212,19 +212,19 @@ function LoginPageContent() {
                 }} />
 
                 <Form {...form}>
-                    <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin)}>
-                        <CardContent className="space-y-4">
+                    <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin)} className="form-auth">
+                        <CardContent className="content-auth">
                             <FormField
                                 control={form.control}
                                 name="tenantId"
                                 render={() => (
-                                    <FormItem>
-                                        <Label htmlFor="tenant-select" className="flex items-center justify-between text-sm font-medium">
-                                            <span className="flex items-center gap-1">
+                                    <FormItem className="wrapper-form-item">
+                                        <Label htmlFor="tenant-select" className="label-auth-tenant">
+                                            <span className="wrapper-tenant-label-content">
                                                 Espaço de Trabalho
-                                                {lockedTenantId && <Lock className="h-3 w-3 text-blue-500" />}
+                                                {lockedTenantId && <Lock className="icon-auth-locked" />}
                                             </span>
-                                            {isFetchingTenants && <span className="text-xs text-muted-foreground">Carregando...</span>}
+                                            {isFetchingTenants && <span className="text-auth-loading">Carregando...</span>}
                                         </Label>
                                         <FormControl>
                                             <Select
@@ -235,15 +235,16 @@ function LoginPageContent() {
                                                 }}
                                                 disabled={isLoading || isFetchingTenants || tenantOptions.length === 0 || !!lockedTenantId}
                                             >
-                                                <SelectTrigger id="tenant-select" data-testid="tenant-select" data-ai-id="auth-login-tenant-select">
+                                                <SelectTrigger id="tenant-select" data-testid="tenant-select" data-ai-id="auth-login-tenant-select" className="select-auth-tenant">
                                                     <SelectValue placeholder={isFetchingTenants ? 'Carregando espaços...' : 'Selecione um tenant'} />
                                                 </SelectTrigger>
-                                                <SelectContent>
+                                                <SelectContent className="select-content-auth">
                                                     {tenantOptions.map((tenant) => (
                                                         <SelectItem
                                                             key={tenant.id}
                                                             value={tenant.id}
                                                             data-testid={`tenant-option-${tenant.slug || tenant.id}`}
+                                                            className="item-auth-tenant"
                                                         >
                                                             {tenant.name}
                                                         </SelectItem>
@@ -252,15 +253,15 @@ function LoginPageContent() {
                                             </Select>
                                         </FormControl>
                                         {lockedTenantId ? (
-                                            <p className="text-xs text-blue-600 font-medium mt-1">
+                                            <p className="text-auth-locked-info">
                                                 Você está acessando: <strong>{lockedTenantName || 'Este espaço exclusivo'}</strong>
                                             </p>
                                         ) : userWithMultipleTenants ? (
-                                            <p className="text-xs text-muted-foreground">Escolha em qual espaço de trabalho deseja entrar.</p>
+                                            <p className="text-auth-helper">Escolha em qual espaço de trabalho deseja entrar.</p>
                                         ) : (
-                                            <p className="text-xs text-muted-foreground">Selecione o tenant com o qual deseja autenticar.</p>
+                                            <p className="text-auth-helper">Selecione o tenant com o qual deseja autenticar.</p>
                                         )}
-                                        {tenantsError && <p className="text-xs text-destructive">{tenantsError}</p>}
+                                        {tenantsError && <p className="text-auth-error">{tenantsError}</p>}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -272,8 +273,8 @@ function LoginPageContent() {
                                         control={form.control}
                                         name="email"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <Label htmlFor="email">Email</Label>
+                                            <FormItem className="wrapper-form-item">
+                                                <Label htmlFor="email" className="label-auth-field">Email</Label>
                                                 <FormControl>
                                                     <Input
                                                         id="email"
@@ -283,6 +284,7 @@ function LoginPageContent() {
                                                         disabled={isLoading}
                                                         {...field}
                                                         data-ai-id="auth-login-email-input"
+                                                        className="input-auth-field"
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
@@ -293,10 +295,10 @@ function LoginPageContent() {
                                         control={form.control}
                                         name="password"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <Label htmlFor="password">Senha</Label>
+                                            <FormItem className="wrapper-form-item">
+                                                <Label htmlFor="password" className="label-auth-field">Senha</Label>
                                                 <FormControl>
-                                                    <div className="relative">
+                                                    <div className="wrapper-auth-password">
                                                         <Input
                                                             id="password"
                                                             type={showPassword ? "text" : "password"}
@@ -304,12 +306,12 @@ function LoginPageContent() {
                                                             disabled={isLoading}
                                                             {...field}
                                                             data-ai-id="auth-login-password-input"
-                                                            className="pr-10"
+                                                            className="input-auth-password"
                                                         />
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowPassword(!showPassword)}
-                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                                            className="btn-toggle-password"
                                                             data-ai-id="auth-login-toggle-password"
                                                             tabIndex={-1}
                                                         >
@@ -328,22 +330,22 @@ function LoginPageContent() {
                                 </>
                             )}
 
-                            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+                            {error && <p className="text-auth-error-center">{error}</p>}
                         </CardContent>
-                        <CardFooter className="flex flex-col space-y-4">
-                            <Button type="submit" className="w-full" disabled={isLoading} data-ai-id="auth-login-submit-button">
-                                {isLoading ? <Loader2 className="animate-spin" /> : userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login'}
+                        <CardFooter className="footer-auth">
+                            <Button type="submit" className="btn-auth-submit" disabled={isLoading} data-ai-id="auth-login-submit-button">
+                                {isLoading ? <Loader2 className="icon-btn-spinner" /> : userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login'}
                             </Button>
                         </CardFooter>
                     </form>
                 </Form>
-                <div className="text-center text-sm pb-6 px-6">
-                    <Link href="/auth/forgot-password" className="text-primary hover:underline">
+                <div className="wrapper-auth-links">
+                    <Link href="/auth/forgot-password" className="link-auth-forgot-password" data-ai-id="auth-login-forgot-link">
                         Esqueceu a senha?
                     </Link>
-                    <p className="text-muted-foreground mt-4">
+                    <p className="text-auth-no-account">
                         Não tem uma conta?{' '}
-                        <Link href="/auth/register" className="font-medium text-primary hover:underline">
+                        <Link href="/auth/register" className="link-auth-register" data-ai-id="auth-login-register-link">
                             Registre-se
                         </Link>
                     </p>

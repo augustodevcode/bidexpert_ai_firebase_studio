@@ -446,49 +446,50 @@ function SearchPageContent() {
 
   if (isFilterDataLoading || !platformSettings) {
     return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="wrapper-search-loading-full" data-ai-id="search-page-loading">
+        <Loader2 className="icon-search-loading-spinner-large" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <Card className="shadow-lg p-6 bg-secondary/30">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold font-headline">Busca Avançada</h1>
-          <p className="text-muted-foreground mt-2">
+    <div className="container-search-page" data-ai-id="search-page-main">
+      <Card className="card-search-header" data-ai-id="search-page-header-card">
+        <div className="wrapper-search-title-section" data-ai-id="search-page-title-wrapper">
+          <h1 className="header-search-page-title" data-ai-id="search-page-title">Busca Avançada</h1>
+          <p className="text-search-page-subtitle" data-ai-id="search-page-subtitle">
             Encontre leilões, lotes e ofertas de venda direta.
           </p>
         </div>
-        <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl mx-auto">
-          <div className="relative flex-grow w-full">
-            <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+        <form onSubmit={handleSearchFormSubmit} className="form-search-advanced" data-ai-id="search-page-form">
+          <div className="wrapper-search-input-with-icon" data-ai-id="search-page-input-wrapper">
+            <SearchIcon className="icon-search-input-prefix" />
             <Input
               type="search"
               placeholder="O que você está procurando?"
-              className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
+              className="input-search-advanced"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              data-ai-id="search-page-input"
             />
           </div>
-          <Button type="submit" className="h-12 w-full md:w-auto">
-            <SearchIcon className="mr-2 h-4 w-4 md:hidden" /> Buscar
+          <Button type="submit" className="btn-search-submit-advanced" data-ai-id="search-page-submit">
+            <SearchIcon className="icon-search-btn-mobile" /> Buscar
           </Button>
         </form>
       </Card>
 
-      <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full" data-ai-id="search-tabs">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2">
-          <TabsTrigger value="auctions" data-ai-id="tab-auctions">Leilões ({allAuctions.filter(a => a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>
-          <TabsTrigger value="lots" data-ai-id="tab-lots">Lotes ({allLots.length})</TabsTrigger>
-          <TabsTrigger value="direct_sale" data-ai-id="tab-direct-sale">Venda Direta ({allDirectSales.length})</TabsTrigger>
-          <TabsTrigger value="tomada_de_precos" data-ai-id="tab-tomada-precos">Tomada de Preços ({allAuctions.filter(a => a.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
+      <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="wrapper-search-tabs" data-ai-id="search-page-tabs">
+        <TabsList className="list-search-tabs" data-ai-id="search-page-tabs-list">
+          <TabsTrigger value="auctions" className="trigger-search-tab" data-ai-id="tab-auctions">Leilões ({allAuctions.filter(a => a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>
+          <TabsTrigger value="lots" className="trigger-search-tab" data-ai-id="tab-lots">Lotes ({allLots.length})</TabsTrigger>
+          <TabsTrigger value="direct_sale" className="trigger-search-tab" data-ai-id="tab-direct-sale">Venda Direta ({allDirectSales.length})</TabsTrigger>
+          <TabsTrigger value="tomada_de_precos" className="trigger-search-tab" data-ai-id="tab-tomada-precos">Tomada de Preços ({allAuctions.filter(a => a.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
-        <aside className="hidden md:block sticky top-24 h-fit">
+      <div className="grid-search-layout" data-ai-id="search-page-layout">
+        <aside className="wrapper-search-sidebar" data-ai-id="search-page-sidebar">
           <BidExpertFilter
             categories={allCategoriesForFilter}
             locations={uniqueLocationsForFilter}
@@ -500,7 +501,7 @@ function SearchPageContent() {
           />
         </aside>
 
-        <main className="min-w-0 space-y-6 md:ml-4">
+        <main className="wrapper-search-results-main" data-ai-id="search-page-results">
           <BidExpertSearchResultsFrame
             items={filteredAndSortedItems}
             totalItemsCount={filteredAndSortedItems.length}

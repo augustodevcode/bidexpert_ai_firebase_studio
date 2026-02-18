@@ -18,24 +18,24 @@ import { LineChart, PieChart, Pie, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Le
 
 function StatCard({ title, value, icon: Icon, description, isLoading, colorClass = 'bg-primary text-primary-foreground', link }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean, colorClass?: string, link?: string }) {
     const cardContent = (
-      <Card className={`${colorClass} shadow-lg transition-transform hover:scale-105`}>
-        <CardContent className="p-4">
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col space-y-1">
-              <span className="text-sm font-medium">{title}</span>
+      <Card className={cn("card-admin-stat", colorClass)} data-ai-id={`admin-stat-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+        <CardContent className="content-card-admin-stat">
+          <div className="wrapper-admin-stat-content">
+            <div className="wrapper-admin-stat-text">
+              <span className="text-admin-stat-title">{title}</span>
                {isLoading ? (
-                <Skeleton className="h-9 w-24 bg-white/20" />
+                <Skeleton className="skeleton-admin-stat-value" />
             ) : (
-                <span className="text-4xl font-bold">{value}</span>
+                <span className="text-admin-stat-value">{value}</span>
             )}
             </div>
-            <Icon className="h-10 w-10 opacity-80" />
+            <Icon className="icon-admin-stat-card" />
           </div>
         </CardContent>
       </Card>
     );
 
-     return link ? <Link href={link} className="block hover:no-underline">{cardContent}</Link> : cardContent;
+     return link ? <Link href={link} className="link-admin-stat">{cardContent}</Link> : cardContent;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
@@ -62,10 +62,10 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-6" data-ai-id="admin-dashboard-page-container">
+    <div className="container-admin-dashboard" data-ai-id="admin-dashboard-page-container">
       {/* O cabeçalho com título foi movido para o AdminHeader e AdminLayout */}
 
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-ai-id="admin-dashboard-stats-grid">
+       <div className="grid-admin-dashboard-stats" data-ai-id="admin-dashboard-stats-grid">
             {isWidgetVisible('totalRevenue') && (
               <StatCard 
                   title="Faturamento Total" 
@@ -112,13 +112,13 @@ export default function AdminDashboardPage() {
             )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <Card className="col-span-1 lg:col-span-3">
-            <CardHeader>
-                <CardTitle className="flex items-center"><LineChartIcon className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
+      <div className="grid-admin-dashboard-charts" data-ai-id="admin-dashboard-charts-grid">
+        <Card className="card-admin-chart-large" data-ai-id="admin-chart-sales">
+            <CardHeader className="header-admin-chart">
+                <CardTitle className="title-admin-chart"><LineChartIcon className="icon-admin-chart-header"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
             </CardHeader>
-            <CardContent className="h-80">
-                {isLoading ? <Skeleton className="w-full h-full" /> : (
+            <CardContent className="content-admin-chart">
+                {isLoading ? <Skeleton className="skeleton-admin-chart" /> : (
                 <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={stats?.salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -132,12 +132,12 @@ export default function AdminDashboardPage() {
                 )}
             </CardContent>
         </Card>
-         <Card className="col-span-1 lg:col-span-2">
-            <CardHeader>
-                <CardTitle className="flex items-center"><PieChartIcon className="mr-2 h-5 w-5"/> Lotes Vendidos por Categoria</CardTitle>
+         <Card className="card-admin-chart-small" data-ai-id="admin-chart-categories">
+            <CardHeader className="header-admin-chart">
+                <CardTitle className="title-admin-chart"><PieChartIcon className="icon-admin-chart-header"/> Lotes Vendidos por Categoria</CardTitle>
             </CardHeader>
-            <CardContent className="h-80">
-                {isLoading ? <Skeleton className="w-full h-full" /> : (
+            <CardContent className="content-admin-chart">
+                {isLoading ? <Skeleton className="skeleton-admin-chart" /> : (
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie data={stats?.categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
