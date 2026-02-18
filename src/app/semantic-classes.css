@@ -1,0 +1,1038 @@
+@layer components {
+  /* Buttons */
+  .btn-primary { @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90; }
+  .btn-secondary { @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80; }
+  .btn-outline { @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-border bg-background hover:bg-accent hover:text-accent-foreground; }
+  .btn-ghost { @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground; }
+  .btn-save-auction { @apply btn-primary; }
+  .btn-delete-lot { @apply btn-secondary bg-destructive text-destructive-foreground hover:bg-destructive/90; }
+  .btn-go-back { @apply btn-outline; }
+  .btn-filter-lots { @apply btn-outline; }
+
+  /* Forms & Inputs */
+  .form-container { @apply space-y-6; }
+  .input-field { @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50; }
+  .select-field { @apply input-field; }
+  .checkbox-field { @apply h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground; }
+
+  /* Grids & Lists */
+  .grid-lots-grid-mode { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6; }
+  .list-sellers { @apply space-y-4; }
+  .grid-auctioneer-cards { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6; }
+
+  /* Cards & Items */
+  .card-lot { @apply flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group relative bg-card text-card-foreground border; }
+  .card-auctioneer-profile { @apply rounded-xl border bg-card text-card-foreground shadow; }
+  .item-bid-history { @apply flex items-center justify-between p-3 border-b last:border-0; }
+
+  /* Containers & Sections */
+  .container-auction-details { @apply container mx-auto px-4 py-8; }
+  .section-lot-info { @apply space-y-4 py-6; }
+  .wrapper-filters { @apply sticky top-24 space-y-6; }
+
+  /* Headers & Footers */
+  .header-main-sticky { @apply sticky top-0 z-header w-full backdrop-blur-2xl border-b border-border/30 bg-surface/80 shadow-glow print:hidden; }
+  .wrapper-promo-bar { @apply bg-gradient-radar text-primary-foreground text-xs sm:text-sm; }
+  .container-promo-bar { @apply container mx-auto px-4 h-10 flex items-center justify-center sm:justify-between; }
+  .text-promo-message { @apply text-center sm:text-left; }
+  .icon-promo-percent { @apply inline h-4 w-4 mr-1.5; }
+  .btn-promo-action { @apply text-primary-foreground hover:text-primary-foreground/80 hidden sm:inline-flex h-auto py-1 px-2; }
+  .wrapper-top-bar { @apply bg-surface/40 backdrop-blur text-secondary-foreground text-xs border-b border-border/20; }
+  .container-top-bar { @apply container mx-auto px-4 h-10 flex items-center justify-between; }
+  .wrapper-welcome-msg { @apply hidden sm:block; }
+  .skeleton-welcome-msg { @apply h-4 w-64; }
+  .nav-top-links { @apply flex items-center space-x-3 sm:space-x-4; }
+  .link-top-nav { @apply hover:text-primary transition-colors flex items-center gap-1; }
+  .icon-top-nav { @apply h-3.5 w-3.5; }
+  .wrapper-logo-search-bar { @apply bg-surface/80 text-foreground border-b border-border/20; }
+  .container-logo-search { @apply container mx-auto px-4 flex h-20 items-center justify-between; }
+  .wrapper-header-brand-mobile { @apply flex items-center; }
+  .wrapper-mobile-menu-trigger { @apply md:hidden mr-2; }
+  .btn-mobile-menu { @apply hover:bg-accent focus-visible:ring-accent-foreground; }
+  .icon-mobile-menu { @apply h-6 w-6; }
+  .sheet-mobile-menu { @apply w-[300px] sm:w-[400px] p-0 bg-card text-card-foreground flex flex-col; }
+  .header-mobile-sheet { @apply p-4 border-b flex-shrink-0; }
+  .title-mobile-sheet { @apply flex items-center space-x-2 text-lg font-semibold; }
+  .img-mobile-logo { @apply object-contain; }
+  .avatar-mobile-logo { @apply h-8 w-8 bg-primary text-primary-foreground; }
+  .text-mobile-brand { @apply text-primary; }
+  .scroll-mobile-menu { @apply flex-grow; }
+  .nav-mobile-links { @apply flex flex-col gap-1 p-4; }
+  .footer-mobile-sheet { @apply p-4 border-t flex-shrink-0; }
+  .link-header-logo-main { @apply mr-4 flex flex-col items-start sm:items-center sm:flex-row sm:space-x-3 hover:no-underline; }
+  .wrapper-logo-text { @apply flex items-center space-x-2 sm:space-x-3; }
+  .img-header-logo { @apply object-contain; }
+  .icon-header-logo-main { @apply h-8 w-8 sm:h-10 sm:w-10 text-primary; }
+  .text-header-title { @apply font-bold text-xl sm:text-3xl; }
+  .skeleton-header-title { @apply h-8 w-32; }
+  .text-header-tagline { @apply text-xs sm:text-sm text-muted-foreground mt-0 sm:mt-1 hidden md:block; }
+  .skeleton-header-tagline { @apply h-4 w-48; }
+  .wrapper-header-search-desktop { @apply hidden md:flex flex-1 justify-center items-center px-4; }
+  .form-header-search { @apply w-full max-w-xl; }
+  .container-header-search-input { @apply relative flex w-full bg-background rounded-md shadow-sm border border-input; }
+  .select-header-search-category { @apply w-[150px] h-10 text-sm text-muted-foreground border-r border-input rounded-l-md rounded-r-none focus:ring-0 focus:ring-offset-0 bg-secondary/20 truncate; }
+  .select-content-search { @apply bg-card border border-border; }
+  .item-search-category { @apply text-sm; }
+  .text-search-loading { @apply p-2 text-xs text-muted-foreground; }
+  .input-header-search { @apply h-10 pl-3 pr-10 flex-1 rounded-l-none rounded-r-md border-0 focus:ring-0 focus:ring-offset-0 text-foreground placeholder:text-muted-foreground; }
+  .btn-header-search-submit { @apply absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground; }
+  .icon-search-submit { @apply h-4 w-4; }
+  .wrapper-search-dropdown { @apply absolute top-full left-0 right-0 mt-1.5 bg-card border border-border shadow-lg rounded-md z-50 max-h-96 overflow-y-auto; }
+  .wrapper-search-loading { @apply p-4 text-center text-muted-foreground flex items-center justify-center; }
+  .icon-search-loading-spinner { @apply h-5 w-5 animate-spin mr-2; }
+  .text-search-no-results { @apply p-4 text-center text-muted-foreground; }
+  .list-search-results { @apply divide-y divide-border; }
+  .item-search-result { @apply list-none; }
+  .link-search-result { @apply flex items-center p-3 hover:bg-accent transition-colors hover:no-underline; }
+  .wrapper-search-result-image { @apply relative h-12 w-16 flex-shrink-0 bg-muted rounded-sm overflow-hidden mr-3; }
+  .img-search-result { @apply object-cover; }
+  .wrapper-search-result-info { @apply flex-grow overflow-hidden; }
+  .text-search-result-title { @apply text-sm font-medium text-foreground truncate; }
+  .text-search-result-price { @apply text-xs text-primary font-semibold; }
+  .item-search-view-all { @apply p-2 border-t border-border list-none; }
+  .btn-search-view-all { @apply w-full text-sm text-primary; }
+  .wrapper-header-actions { @apply flex items-center space-x-0.5 sm:space-x-1; }
+  .btn-header-action { @apply h-9 w-9 sm:h-10 sm:w-10; }
+  .icon-header-action { @apply h-4 w-4 sm:h-5 sm:w-5; }
+  .btn-header-action-mobile { @apply md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10; }
+  .wrapper-main-navigation { @apply border-b bg-background text-foreground hidden md:block; }
+  .container-main-navigation { @apply container mx-auto px-4 flex h-12 items-center justify-between; }
+  .menu-navigation-categories { @apply relative z-10 flex items-center justify-start; }
+  .trigger-nav-categories { @apply font-semibold; }
+  .trigger-nav-active { @apply bg-accent text-primary font-semibold; }
+  .icon-nav-categories { @apply mr-1.5 h-4 w-4; }
+  .content-nav-categories { @apply bg-card border border-border; }
+  .wrapper-main-nav-items { @apply flex-grow flex justify-start pl-4; }
+  .nav-main-desktop { @apply hidden md:flex; }
+  .btn-user-profile-trigger { @apply relative h-10 w-10 rounded-full; }
+  .avatar-user-nav { @apply h-10 w-10; }
+  .badge-notification-count { @apply absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]; }
+  .menu-user-profile-content { @apply w-64; }
+  .header-user-profile-info { @apply font-normal; }
+  .wrapper-user-info-text { @apply flex flex-col space-y-1; }
+  .text-user-display-name { @apply text-sm font-medium leading-none; }
+  .text-user-email { @apply text-xs leading-none text-muted-foreground; }
+  .link-menu-user { @apply flex items-center hover:no-underline; }
+  .icon-menu-user { @apply mr-2 h-4 w-4; }
+  .header-admin-section { @apply text-xs text-muted-foreground px-2; }
+  .wrapper-auth-buttons { @apply flex items-center space-x-1; }
+  .btn-auth-action { @apply h-9 w-9 sm:h-10 sm:w-10; }
+  .icon-auth-action { @apply h-4 w-4 sm:h-5 sm:w-5; }
+  .link-history-item { @apply flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground hover:no-underline; }
+  .wrapper-history-item-image { @apply relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden; }
+  .img-history-item { @apply object-cover; }
+  .text-history-item-title { @apply truncate flex-grow text-foreground/90; }
+  .nav-mobile-container { @apply flex flex-col gap-1; }
+  .link-mobile-nav { @apply text-md font-medium transition-colors hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md hover:no-underline; }
+  .link-mobile-active { @apply bg-accent text-primary; }
+  .link-mobile-inactive { @apply text-muted-foreground hover:bg-accent/50; }
+  .icon-mobile-nav { @apply h-4 w-4; }
+  .wrapper-mobile-megamenu { @apply py-1; }
+  .link-mobile-megamenu-trigger { @apply text-md font-medium transition-colors hover:text-primary flex items-center justify-between gap-2 py-2.5 px-3 rounded-md hover:no-underline; }
+  .wrapper-mobile-megamenu-label { @apply flex items-center gap-2; }
+  .icon-mobile-chevron { @apply h-4 w-4; }
+  .wrapper-mobile-megamenu-content { @apply pl-6 mt-1 space-y-0.5; }
+  .link-mobile-subitem { @apply block text-sm text-muted-foreground hover:text-primary py-1 hover:no-underline; }
+  .link-mobile-view-all { @apply block text-sm text-primary hover:underline py-1; }
+  .wrapper-mobile-history { @apply mt-2 space-y-1 max-h-60 overflow-y-auto; }
+  .text-history-empty { @apply text-xs text-muted-foreground text-center py-2; }
+  .link-mobile-history-view-all { @apply block text-xs text-primary hover:underline text-center pt-1; }
+  .icon-nav-desktop { @apply mr-1.5 h-4 w-4 flex-shrink-0; }
+  .wrapper-history-dropdown { @apply w-80 p-2; }
+  .header-history-dropdown { @apply flex justify-between items-center p-2 border-b mb-1; }
+  .text-history-dropdown-header { @apply text-sm font-medium text-foreground flex items-center; }
+  .icon-history-dropdown { @apply mr-1.5 h-4 w-4; }
+  .text-history-empty-dropdown { @apply text-xs text-muted-foreground text-center py-3; }
+  .list-history-dropdown { @apply max-h-80 overflow-y-auto space-y-0.5; }
+  .item-history-dropdown { @apply list-none; }
+  .footer-history-dropdown { @apply border-t mt-1 pt-1; }
+  .link-history-view-all { @apply w-full justify-center text-primary hover:underline text-xs py-1 h-auto bg-transparent hover:bg-accent flex items-center; }
+  .link-nav-desktop-active { @apply bg-accent text-primary font-semibold; }
+  .link-nav-desktop-inactive { @apply text-foreground/80 hover:text-primary hover:bg-accent/70 focus:bg-accent/70; }
+  .header-admin-sticky { @apply sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-sidebar px-4 text-sidebar-foreground shadow-md sm:px-6; }
+  .btn-admin-mobile-menu { @apply md:hidden h-9 w-9; }
+  .icon-admin-header { @apply h-5 w-5; }
+  .wrapper-admin-search { @apply relative flex-1 md:grow-0; }
+  .btn-admin-search-command { @apply group w-full justify-start text-left text-sm text-sidebar-foreground/80 md:w-[250px] lg:w-[350px] h-9 bg-sidebar-accent/50 hover:bg-sidebar-accent; }
+  .icon-admin-search { @apply mr-2 h-4 w-4 shrink-0; }
+  .text-admin-search-placeholder { @apply truncate; }
+  .kbd-admin-search { @apply pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar-accent/80 px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex; }
+  .text-kbd-symbol { @apply text-xs; }
+  .wrapper-admin-header-spacer { @apply flex-1; }
+  .wrapper-admin-header-actions { @apply flex items-center gap-1.5; }
+  .btn-admin-header-action-view-site { @apply h-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground; }
+  .link-admin-header-action { @apply flex items-center hover:no-underline; }
+  .icon-admin-header-with-text { @apply h-4 w-4 mr-2; }
+  .text-admin-action-label { @apply hidden sm:inline; }
+  .btn-admin-header-action { @apply h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground; }
+  .btn-admin-header-action-relative { @apply h-9 w-9 relative text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground; }
+  .badge-admin-notification { @apply absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]; }
+
+  /* Homepage & Hero */
+  .wrapper-homepage-experience-classic { @apply space-y-12 md:space-y-16 lg:space-y-20; }
+  .section-featured-lots { @apply space-y-6; }
+  .wrapper-section-header { @apply flex justify-between items-center mb-6; }
+  .header-section-title { @apply text-2xl md:text-3xl font-bold font-headline; }
+  .wrapper-section-actions { @apply flex items-center gap-2; }
+  .btn-view-all { @apply hover:no-underline; }
+  .icon-arrow-right { @apply ml-2 h-4 w-4; }
+  .grid-promo-cards { @apply grid md:grid-cols-2 gap-6; }
+  .section-featured-auctions { @apply space-y-6; }
+  .section-browse-categories { @apply space-y-6; }
+  .header-section-title-centered { @apply text-2xl md:text-3xl font-bold font-headline text-center; }
+  .grid-categories-featured { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6; }
+  .wrapper-homepage-experience-beta { @apply space-y-10; }
+  .section-hero-beta { @apply rounded-3xl glass-panel px-6 sm:px-8 py-8 sm:py-10; }
+  .container-hero-beta { @apply flex flex-col lg:flex-row gap-8 lg:gap-10 items-start; }
+  .wrapper-hero-beta-content { @apply flex-1 space-y-4; }
+  .badge-hero-beta { @apply uppercase tracking-wide text-xs; }
+  .header-hero-beta { @apply text-2xl sm:text-3xl md:text-4xl font-semibold font-headline text-foreground; }
+  .text-hero-beta-desc { @apply text-muted-foreground text-base sm:text-lg max-w-2xl; }
+  .text-hero-beta-subdesc { @apply text-muted-foreground/80 text-sm sm:text-base max-w-2xl; }
+  .wrapper-hero-beta-actions { @apply flex flex-wrap gap-3; }
+  .btn-hero-beta-primary { @apply hover:no-underline; }
+  .btn-hero-beta-secondary { @apply hover:no-underline; }
+  .icon-hero-beta-btn { @apply h-4 w-4 mr-2; }
+  .wrapper-hero-beta-features { @apply flex flex-wrap gap-4 pt-4 text-sm text-muted-foreground; }
+  .item-hero-beta-feature { @apply flex items-center gap-2; }
+  .icon-hero-beta-feature { @apply h-4 w-4; }
+  .grid-hero-beta-stats { @apply grid grid-cols-2 gap-3 sm:gap-4 w-full lg:w-[380px]; }
+  .card-hero-beta-stat { @apply bg-secondary/50 border-border; }
+  .header-hero-beta-stat { @apply pb-2 p-3 sm:p-4; }
+  .desc-hero-beta-stat { @apply text-xs flex items-center gap-1; }
+  .icon-hero-beta-stat { @apply h-3.5 w-3.5; }
+  .title-hero-beta-stat { @apply text-xl sm:text-2xl text-foreground; }
+  .content-hero-beta-stat { @apply p-3 sm:p-4 pt-0; }
+  .helper-hero-beta-stat { @apply text-muted-foreground text-xs sm:text-sm; }
+  .card-cta-auth { @apply bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/20; }
+  .content-cta-auth { @apply flex flex-col sm:flex-row items-center justify-between gap-4 py-6; }
+  .wrapper-cta-auth-text { @apply text-center sm:text-left; }
+  .header-cta-auth { @apply font-semibold text-lg; }
+  .desc-cta-auth { @apply text-muted-foreground text-sm; }
+  .btn-cta-auth { @apply hover:no-underline; }
+  .icon-cta-auth { @apply h-4 w-4 mr-2; }
+  .section-radar-opportunities { @apply space-y-6; }
+  .desc-section-subtitle { @apply text-muted-foreground; }
+  .wrapper-empty-state { @apply text-center py-12 bg-muted/30 rounded-xl; }
+  .icon-empty-state { @apply h-12 w-12 mx-auto text-muted-foreground mb-4; }
+  .text-empty-state { @apply text-muted-foreground; }
+  .btn-empty-state-action { @apply mt-4; }
+  .grid-radar-opportunities { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6; }
+  .section-trending-segments { @apply space-y-6; }
+  .grid-trending-segments { @apply grid sm:grid-cols-2 lg:grid-cols-3 gap-4; }
+  .card-trending-segment { @apply group hover:shadow-lg transition-shadow overflow-hidden; }
+  .link-card-trending { @apply hover:no-underline; }
+  .wrapper-trending-image { @apply relative h-32 bg-gradient-to-br from-primary/20 to-primary/5; }
+  .img-trending-bg { @apply absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity; }
+  .wrapper-trending-label { @apply absolute inset-0 p-4 flex flex-col justify-end; }
+  .badge-trending-count { @apply w-fit mb-2; }
+  .header-trending-name { @apply font-semibold text-lg text-foreground; }
+  .content-trending-segment { @apply p-4; }
+  .text-trending-desc { @apply text-sm text-muted-foreground line-clamp-2; }
+  .wrapper-trending-footer { @apply flex items-center justify-between mt-3 text-xs text-muted-foreground; }
+  .text-trending-footer-label { @apply inline; }
+  .badge-trending-label { @apply text-xs; }
+  .card-cta-footer { @apply bg-muted/40; }
+  .content-cta-footer { @apply py-8 text-center; }
+  .header-cta-footer { @apply text-xl font-semibold mb-2; }
+  .desc-cta-footer { @apply text-muted-foreground mb-4 max-w-xl mx-auto; }
+  .btn-cta-footer { @apply hover:no-underline; }
+  .wrapper-hero-section { @apply w-full bg-gradient-to-b from-gray-50 to-white; }
+  .container-hero-main { @apply container mx-auto px-4 py-6; }
+  .grid-hero-main { @apply grid grid-cols-1 lg:grid-cols-12 gap-4; }
+  .wrapper-hero-carousel { @apply lg:col-span-8; }
+  .container-carousel-relative { @apply relative rounded-2xl overflow-hidden shadow-xl bg-white; }
+  .wrapper-hero-slide-content { @apply relative h-[400px] md:h-[500px] bg-gradient-to-r from-blue-50 to-purple-50; }
+  .wrapper-hero-bg-image { @apply absolute inset-0; }
+  .img-hero-slide { @apply object-cover opacity-90; }
+  .overlay-hero-slide { @apply absolute inset-0 bg-gradient-to-r from-white/80 via-white/40 to-transparent; }
+  .container-hero-slide-text { @apply relative h-full flex items-center; }
+  .wrapper-hero-text-content { @apply px-8 md:px-16 max-w-2xl; }
+  .badge-hero-slide { @apply inline-block px-4 py-1 bg-blue-500 text-white text-sm font-medium rounded-full mb-4; }
+  .header-hero-slide-title { @apply text-4xl md:text-6xl font-bold text-gray-900 mb-2; }
+  .header-hero-slide-subtitle { @apply text-2xl md:text-4xl font-semibold text-gray-700 mb-2; }
+  .text-hero-slide-highlight { @apply text-3xl md:text-5xl font-bold text-green-600 mb-6; }
+  .btn-hero-slide-action { @apply bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all; }
+  .btn-hero-carousel-prev { @apply absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full shadow-lg w-12 h-12 z-10; }
+  .btn-hero-carousel-next { @apply absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full shadow-lg w-12 h-12 z-10; }
+  .icon-hero-carousel-nav { @apply w-6 h-6; }
+  .wrapper-hero-carousel-dots { @apply absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10; }
+  .btn-carousel-dot { @apply h-3 rounded-full transition-all; }
+  .btn-carousel-dot-active { @apply bg-yellow-500 w-8; }
+  .btn-carousel-dot-inactive { @apply bg-white/60 hover:bg-white/80 w-3; }
+  .wrapper-hero-promotions { @apply lg:col-span-4 flex flex-col gap-4; }
+  .link-hero-promotion { @apply group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all bg-white flex-1 hover:no-underline; }
+  .container-hero-promotion { @apply relative h-[190px] md:h-[240px]; }
+  .img-hero-promotion { @apply object-cover group-hover:scale-105 transition-transform duration-300; }
+  .overlay-hero-promotion { @apply absolute inset-0 bg-gradient-to-r from-black/60 to-transparent; }
+  .wrapper-hero-promotion-text { @apply absolute inset-0 p-6 flex flex-col justify-center; }
+  .container-hero-promotion-label { @apply relative; }
+  .badge-hero-promotion-discount { @apply inline-block px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full mb-2; }
+  .header-hero-promotion-title { @apply text-xl md:text-2xl font-bold text-white mb-1; }
+  .text-hero-promotion-desc { @apply text-sm text-gray-200; }
+  .section-hero-features { @apply bg-white border-t border-b border-gray-200 py-6; }
+  .container-hero-features { @apply container mx-auto px-4; }
+  .grid-hero-features { @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6; }
+  .wrapper-hero-feature { @apply flex items-center gap-3 group; }
+  .wrapper-hero-feature-icon-container { @apply flex-shrink-0; }
+  .wrapper-hero-feature-icon { @apply w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center group-hover:bg-yellow-200 transition-colors; }
+  .icon-hero-feature { @apply w-6 h-6 text-yellow-600; }
+  .wrapper-hero-feature-text { @apply flex-1 min-w-0; }
+  .header-hero-feature-title { @apply font-semibold text-gray-900 text-sm; }
+  .text-hero-feature-desc { @apply text-xs text-gray-500 truncate; }
+
+  /* Search Page */
+  .wrapper-search-loading-full { @apply flex justify-center items-center min-h-[calc(100vh-20rem)]; }
+  .icon-search-loading-spinner-large { @apply h-12 w-12 animate-spin text-primary; }
+  .container-search-page { @apply space-y-8; }
+  .card-search-header { @apply shadow-lg p-6 bg-secondary/30; }
+  .wrapper-search-title-section { @apply text-center mb-6; }
+  .header-search-page-title { @apply text-3xl font-bold font-headline; }
+  .text-search-page-subtitle { @apply text-muted-foreground mt-2; }
+  .form-search-advanced { @apply flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl mx-auto; }
+  .wrapper-search-input-with-icon { @apply relative flex-grow w-full; }
+  .icon-search-input-prefix { @apply absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground; }
+  .input-search-advanced { @apply h-12 pl-12 text-md rounded-lg shadow-sm w-full; }
+  .btn-search-submit-advanced { @apply h-12 w-full md:w-auto; }
+  .icon-search-btn-mobile { @apply mr-2 h-4 w-4 md:hidden; }
+  .wrapper-search-tabs { @apply w-full; }
+  .list-search-tabs { @apply grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2; }
+  .trigger-search-tab { @apply list-none; }
+  .grid-search-layout { @apply grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8; }
+  .wrapper-search-sidebar { @apply hidden md:block sticky top-24 h-fit; }
+  .wrapper-search-results-main { @apply min-w-0 space-y-6 md:ml-4; }
+
+  /* Filter Sidebar */
+  .wrapper-filter-header { @apply flex justify-between items-center mb-4; }
+  .header-filter-title { @apply text-xl font-semibold flex items-center; }
+  .icon-filter-title { @apply mr-2 h-5 w-5 text-primary; }
+  .btn-filter-reset { @apply text-xs text-muted-foreground hover:text-primary h-auto p-0; }
+  .icon-filter-reset { @apply mr-1 h-3 w-3; }
+  .accordion-filters { @apply w-full; }
+  .item-filter-accordion { @apply border-b; }
+  .trigger-filter-accordion { @apply text-md font-medium hover:no-underline; }
+  .content-filter-accordion { @apply pt-1 pb-3; }
+  .group-filter-radio { @apply space-y-1; }
+  .group-filter-radio-scroll { @apply space-y-1 max-h-60 overflow-y-auto pr-2; }
+  .wrapper-filter-option { @apply flex items-center space-x-2 py-1; }
+  .label-filter-option { @apply text-sm font-normal cursor-pointer; }
+  .text-filter-current-category { @apply text-xs text-muted-foreground ml-1; }
+  .content-filter-accordion-price { @apply pt-2 pb-4 space-y-3; }
+  .wrapper-filter-price-display { @apply flex justify-between text-xs text-muted-foreground; }
+  .text-filter-price-min { @apply inline; }
+  .text-filter-price-max { @apply inline; }
+  .content-filter-accordion-scroll { @apply space-y-2 max-h-60 overflow-y-auto pr-2 pb-3; }
+  .content-filter-accordion-dates { @apply space-y-3 pt-1 pb-3; }
+  .wrapper-filter-date-field { @apply space-y-1; }
+  .label-filter-date { @apply text-xs text-muted-foreground; }
+  .btn-filter-date-picker { @apply w-full justify-start text-left font-normal h-9; }
+  .icon-filter-date { @apply mr-2 h-4 w-4; }
+  .content-filter-date-popover { @apply w-auto p-0; }
+  .btn-filter-apply { @apply w-full mt-6; }
+
+  /* Legacy Filters */
+  .wrapper-auction-filters-legacy { @apply mb-8 p-6 bg-secondary/50 rounded-lg shadow; }
+  .grid-auction-filters-legacy { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end; }
+  .wrapper-filter-field-legacy { @apply space-y-1; }
+  .label-filter-field-legacy { @apply text-sm font-medium text-muted-foreground; }
+  .wrapper-input-icon-legacy { @apply relative; }
+  .icon-filter-field-legacy { @apply absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground; }
+  .input-filter-field-legacy { @apply pl-10; }
+  .trigger-filter-select-legacy { @apply bg-background; }
+  .content-filter-select-legacy { @apply bg-card; }
+  .item-filter-select-legacy { @apply list-none; }
+  .btn-filter-apply-legacy { @apply w-full md:w-auto lg:mt-0 mt-4; }
+  .icon-filter-apply-legacy { @apply mr-2 h-4 w-4; }
+
+  /* Cards - Shared & Specific */
+  .wrapper-card-media { @apply relative; }
+  .link-card-media-overlay { @apply block hover:no-underline; }
+  .container-card-image { @apply aspect-video relative bg-muted overflow-hidden; }
+  .img-card-lot { @apply object-cover transition-transform duration-300 group-hover:scale-105; }
+  .wrapper-card-status-badges { @apply absolute top-2 left-2 flex flex-col items-start gap-1 z-10; }
+  .badge-lot-status { @apply text-xs px-2 py-1; }
+  .wrapper-card-mental-triggers { @apply absolute top-2 right-2 flex flex-col items-end gap-1 z-10; }
+  .badge-trigger-discount { @apply text-xs animate-pulse; }
+  .icon-trigger { @apply h-3 w-3 mr-1; }
+  .badge-trigger-opportunity { @apply text-xs bg-green-600 text-white border-green-700; }
+  .icon-trigger-small { @apply h-3 w-3 mr-0.5; }
+  .badge-trigger-mental { @apply text-xs bg-amber-100 text-amber-700 border-amber-300; }
+  .icon-trigger-small-red { @apply h-3 w-3 mr-0.5 text-red-500 fill-red-500; }
+  .icon-trigger-small-purple { @apply h-3 w-3 mr-0.5 text-purple-600; }
+  .badge-consignor-logo-overlay { @apply absolute bottom-2 left-2; }
+  .wrapper-card-actions-overlay { @apply absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center items-center gap-2 pointer-events-none; }
+  .btn-card-action-overlay { @apply h-8 w-8 bg-background/80 hover:bg-background pointer-events-auto; }
+  .icon-card-action { @apply h-4 w-4 text-muted-foreground; }
+  .icon-favorite-active { @apply text-red-500 fill-red-500; }
+  .menu-share-content { @apply w-48; }
+  .item-share-link { @apply flex items-center gap-2 cursor-pointer; }
+  .icon-share-platform { @apply h-3.5 w-3.5; }
+  .wrapper-edit-menu-overlay { @apply pointer-events-auto; }
+  .content-card-lot { @apply p-3 flex-grow space-y-2; }
+  .link-card-content { @apply hover:no-underline block; }
+  .wrapper-card-lot-info-header { @apply flex items-center gap-1.5 mb-0.5; }
+  .text-card-auction-id { @apply text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded font-mono; }
+  .header-card-lot-title { @apply text-base font-bold text-zinc-900 dark:text-white hover:text-primary transition-colors leading-tight line-clamp-2; }
+  .text-card-lot-subtitle { @apply text-sm text-muted-foreground line-clamp-2 mt-1 font-normal; }
+  .wrapper-card-location { @apply flex items-center text-xs text-muted-foreground; }
+  .icon-card-location { @apply h-3 w-3 mr-1 flex-shrink-0; }
+  .text-card-location { @apply truncate; }
+  .wrapper-card-property-details { @apply flex items-center gap-3 text-xs text-muted-foreground my-1; }
+  .item-property-detail { @apply flex items-center gap-1; }
+  .icon-property-detail { @apply h-3.5 w-3.5; }
+  .badge-property-occupancy { @apply flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border; }
+  .badge-occupancy-occupied { @apply bg-orange-50 text-orange-700 border-orange-200; }
+  .badge-occupancy-vacant { @apply bg-green-50 text-green-700 border-green-200; }
+  .wrapper-card-price-section { @apply flex flex-col mt-2 mb-1; }
+  .text-card-evaluation-value { @apply text-xs text-muted-foreground line-through font-mono; }
+  .text-card-price-label { @apply text-xs text-muted-foreground uppercase font-semibold; }
+  .text-card-price-value { @apply text-xl font-bold text-primary font-mono tabular-nums; }
+  .text-card-debt-badge { @apply text-[10px] text-destructive font-semibold mt-0.5; }
+  .text-card-next-bid { @apply text-[10px] text-muted-foreground font-mono mt-0.5; }
+  .wrapper-card-timeline-section { @apply mt-2 border-t pt-2; }
+  .wrapper-card-footer-info { @apply flex justify-between items-center text-xs text-muted-foreground mt-1 pt-1; }
+  .item-card-footer-info { @apply flex items-center gap-1; }
+  .icon-card-footer { @apply h-3 w-3; }
+  .wrapper-card-social-proof { @apply flex flex-wrap items-center gap-2 mt-1; }
+  .text-card-social-viewers { @apply inline-flex items-center gap-1 text-[10px] text-muted-foreground; }
+  .icon-social-small { @apply h-3 w-3; }
+  .badge-lot-praça-1 { @apply text-[10px] px-1.5 py-0 h-4 border-green-300 text-green-700 bg-green-50; }
+  .badge-lot-praça-2 { @apply text-[10px] px-1.5 py-0 h-4 border-amber-300 text-amber-700 bg-amber-50; }
+  .footer-card-lot { @apply p-3 border-t; }
+  .btn-card-bid-action { @apply w-full bg-green-600 hover:bg-green-700 text-white; }
+  .icon-btn-bid { @apply mr-2 h-4 w-4; }
+
+  /* Auction Card Specific */
+  .card-auction { @apply flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group bg-card text-card-foreground border; }
+  .img-card-auction { @apply object-cover; }
+  .badge-auction-status { @apply text-xs px-2 py-1; }
+  .badge-consignor-logo-overlay-right { @apply absolute bottom-2 right-2; }
+  .content-card-auction { @apply p-3 flex-grow space-y-3; }
+  .text-card-auction-public-id { @apply truncate pr-2; }
+  .wrapper-card-auction-type { @apply flex items-center gap-1 flex-shrink-0; }
+  .text-card-auction-type-label { @apply font-medium; }
+  .header-card-auction-title { @apply text-base font-bold text-zinc-900 dark:text-white hover:text-primary transition-colors leading-tight min-h-[2.5em] line-clamp-2; }
+  .grid-auction-stats { @apply grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground; }
+  .item-auction-stat { @apply list-none; }
+  .icon-auction-stat { @apply mx-auto h-4 w-4 mb-0.5; }
+  .text-auction-stat-value { @apply font-semibold text-foreground; }
+  .footer-card-auction { @apply p-3 border-t flex items-end justify-between; }
+  .wrapper-card-auction-price { @apply block; }
+  .text-card-price-value-primary { @apply text-lg font-bold text-primary; }
+  .btn-card-view-lots { @apply shrink-0; }
+
+  /* Seller Card Specific */
+  .card-seller { @apply shadow-md hover:shadow-xl transition-shadow flex flex-col h-full bg-card text-card-foreground border; }
+  .header-card-seller { @apply items-center text-center p-4 space-y-1; }
+  .avatar-card-seller { @apply h-24 w-24 mb-3 border-2 border-primary/30; }
+  .header-card-seller-title { @apply text-xl font-semibold; }
+  .desc-card-seller-type { @apply text-xs text-primary flex items-center justify-center gap-1; }
+  .icon-card-seller-type { @apply h-3.5 w-3.5; }
+  .content-card-seller { @apply flex-grow px-4 pb-4 space-y-1 text-sm text-muted-foreground text-center; }
+  .text-card-seller-location { @apply text-xs; }
+  .text-card-seller-stats { @apply text-xs; }
+  .text-card-seller-stats-value { @apply font-medium text-foreground; }
+  .text-card-seller-member-since { @apply text-xs; }
+  .footer-card-seller { @apply p-4 border-t; }
+  .btn-card-seller-view-profile { @apply w-full; }
+  .icon-btn-action { @apply ml-2 h-4 w-4; }
+
+  /* Auction Info Panel */
+  .card-auction-info { @apply shadow-md bg-card text-card-foreground border; }
+  .header-card-auction-info { @apply p-3 border-b; }
+  .header-card-auction-info-title { @apply text-md font-semibold flex items-center; }
+  .icon-auction-info-header { @apply h-4 w-4 mr-2 text-primary; }
+  .content-card-auction-info { @apply p-3 space-y-2 text-xs; }
+  .wrapper-auctioneer-info { @apply block; }
+  .text-auction-info-label { @apply font-medium text-muted-foreground; }
+  .wrapper-auctioneer-details { @apply flex items-center gap-2 mt-0.5; }
+  .avatar-auctioneer-info { @apply h-7 w-7; }
+  .text-auction-info-value { @apply text-foreground; }
+  .wrapper-seller-info { @apply block; }
+  .wrapper-auction-info-actions { @apply pt-1 space-y-1.5; }
+  .btn-auction-info-action { @apply w-full justify-start text-left; }
+  .icon-auction-info-action { @apply h-3.5 w-3.5 mr-2; }
+
+  /* Sticky Bid Bar */
+  .wrapper-sticky-bid-bar { @apply fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background/95 backdrop-blur-sm border-t shadow-lg px-4 py-3 animate-in slide-in-from-bottom-4 duration-300; }
+  .container-sticky-bid-bar { @apply flex items-center justify-between max-w-lg mx-auto gap-4; }
+  .wrapper-sticky-bid-info { @apply flex flex-col min-w-0; }
+  .text-sticky-bid-label { @apply text-xs text-muted-foreground truncate; }
+  .text-sticky-bid-value { @apply text-lg font-bold text-primary font-mono tabular-nums; }
+  .btn-sticky-bid-action { @apply bg-green-600 hover:bg-green-700 text-white shrink-0 gap-2; }
+  .icon-sticky-bid { @apply h-4 w-4; }
+  .icon-sticky-bid-small { @apply h-3 w-3; }
+
+  /* Lot Detail Page */
+  .container-lot-detail-page { @apply container mx-auto px-0 sm:px-4 py-2 sm:py-8; }
+  .card-bidding-panel { @apply flex flex-col shadow-lg rounded-lg h-full bg-card text-card-foreground border; }
+  .header-card-bidding-panel { @apply p-3 md:p-4 border-b; }
+  .header-card-bidding-panel-title { @apply text-lg md:text-xl font-bold flex items-center; }
+  .icon-bidding-panel-header { @apply h-5 w-5 mr-2 text-primary; }
+  .content-card-bidding-panel { @apply p-3 md:p-4 flex-1 flex flex-col gap-3 md:gap-4 overflow-y-auto; }
+  .wrapper-bid-history-summary { @apply flex-1 flex flex-col min-h-0; }
+  .wrapper-bid-history-header { @apply flex justify-between items-center mb-1.5; }
+  .header-bid-history-title { @apply text-sm font-semibold text-muted-foreground flex items-center; }
+  .icon-bid-history-title { @apply h-4 w-4 mr-1.5; }
+  .wrapper-bid-history-actions { @apply flex items-center gap-1; }
+  .btn-refresh-history { @apply h-6 w-6; }
+  .icon-refresh-history { @apply h-3 w-3; }
+  .icon-spin { @apply animate-spin; }
+  .btn-view-all-bids { @apply h-auto p-0 text-xs; }
+  .scroll-bid-history { @apply border rounded-md bg-secondary/20; }
+  .container-bid-history-items { @apply p-2 space-y-1.5 text-xs; }
+  .wrapper-history-loading { @apply flex items-center justify-center p-4; }
+  .icon-history-loading { @apply h-4 w-4 animate-spin text-primary; }
+  .item-bid-history-row { @apply flex justify-between items-center p-1.5 rounded; }
+  .item-bid-history-row-active { @apply bg-green-100 dark:bg-green-800/30 font-semibold; }
+  .text-bidder-name { @apply inline; }
+  .text-bid-value { @apply text-right font-mono; }
+  .text-bid-timestamp { @apply text-muted-foreground/70; }
+  .text-history-empty-msg { @apply text-center text-muted-foreground p-2; }
+
+  /* UI Primitives */
+  .card-base { @apply rounded-lg border bg-card text-card-foreground shadow-sm; }
+  .card-header-base { @apply flex flex-col space-y-1.5 p-6; }
+  .card-title-base { @apply text-2xl font-semibold leading-none tracking-tight; }
+  .card-description-base { @apply text-sm text-muted-foreground; }
+  .card-content-base { @apply p-6 pt-0; }
+  .card-footer-base { @apply flex items-center p-6 pt-0; }
+
+  /* UI Buttons */
+  .btn-base { @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50; }
+  .btn-variant-default { @apply bg-primary text-primary-foreground hover:bg-primary/90; }
+  .btn-variant-destructive { @apply bg-destructive text-destructive-foreground hover:bg-destructive/90; }
+  .btn-variant-outline { @apply border border-border bg-background hover:bg-accent hover:text-accent-foreground; }
+  .btn-variant-secondary { @apply bg-secondary text-secondary-foreground hover:bg-secondary/80; }
+  .btn-variant-ghost { @apply hover:bg-accent hover:text-accent-foreground; }
+  .btn-variant-link { @apply text-primary underline-offset-4 hover:underline; }
+  .btn-variant-map-ghost { @apply border border-border/60 bg-surface/70 text-surface-foreground shadow-ambient hover:bg-surface/80 hover:text-foreground/90; }
+  .btn-variant-map-solid { @apply bg-gradient-map-panel text-primary-foreground shadow-haze border border-border/30 hover:opacity-95; }
+  .btn-variant-glass { @apply bg-background/30 text-foreground border border-border/40 backdrop-blur-xl shadow-glow hover:bg-background/40; }
+  .btn-size-default { @apply h-10 px-4 py-2; }
+  .btn-size-sm { @apply h-9 rounded-md px-3; }
+  .btn-size-lg { @apply h-11 rounded-md px-8; }
+  .btn-size-icon { @apply h-10 w-10; }
+
+  /* UI Badges */
+  .badge-base { @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2; }
+  .badge-variant-default { @apply border-transparent bg-primary text-primary-foreground hover:bg-primary/80; }
+  .badge-variant-secondary { @apply border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80; }
+  .badge-variant-destructive { @apply border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80; }
+  .badge-variant-outline { @apply text-foreground; }
+
+  /* Entity Edit Menu */
+  .btn-entity-edit-trigger { @apply h-7 w-7 bg-background/80 hover:bg-primary/10 border rounded-md; }
+  .icon-entity-edit-trigger { @apply h-3.5 w-3.5 text-primary; }
+  .menu-entity-edit-content { @apply w-56; }
+  .header-entity-edit { @apply block font-semibold; }
+  .item-entity-edit { @apply flex items-center; }
+  .icon-entity-edit { @apply mr-2 h-4 w-4; }
+  .link-entity-edit { @apply flex items-center hover:no-underline w-full; }
+
+  /* Entity Selector */
+  .wrapper-entity-selector { @apply flex items-center gap-2; }
+  .btn-entity-selector-trigger { @apply w-full justify-between flex-grow; }
+  .text-entity-selector-label { @apply truncate; }
+  .icon-entity-selector-chevron { @apply ml-2 h-4 w-4 shrink-0 opacity-50; }
+  .content-entity-selector-dialog { @apply max-w-[90vw] w-full lg:max-w-4xl h-[80vh] flex flex-col p-0 bg-card; }
+  .header-entity-selector-dialog { @apply p-4 border-b; }
+  .title-entity-selector-dialog { @apply flex items-center gap-2; }
+  .icon-entity-selector-title { @apply h-6 w-6 text-primary; }
+  .desc-entity-selector-dialog { @apply block; }
+  .wrapper-entity-selector-table { @apply flex-grow overflow-hidden p-4; }
+  .footer-entity-selector-dialog { @apply p-4 border-t flex justify-between; }
+  .btn-entity-selector-add { @apply flex items-center; }
+  .wrapper-entity-selector-footer-actions { @apply flex items-center gap-2; }
+  .btn-entity-selector-refresh { @apply flex items-center; }
+  .btn-entity-selector-close { @apply border rounded-md; }
+  .btn-entity-selector-edit { @apply h-10 w-10 flex-shrink-0; }
+  .link-entity-selector-edit { @apply flex items-center justify-center; }
+  .btn-entity-selector-clear { @apply h-10 w-10 flex-shrink-0; }
+
+  /* Deal of the Day */
+  .section-deal-of-the-day { @apply py-10 md:py-14 bg-gradient-to-r from-primary/5 via-background to-primary/5; }
+  .container-deal-of-the-day { @apply container mx-auto px-4; }
+  .wrapper-deal-header { @apply flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8; }
+  .wrapper-deal-title-section { @apply flex items-center gap-3; }
+  .wrapper-deal-icon { @apply p-2 bg-destructive/10 rounded-lg; }
+  .icon-deal-flame { @apply h-6 w-6 text-destructive; }
+  .wrapper-deal-text { @apply block; }
+  .header-deal-title { @apply text-2xl md:text-3xl font-bold; }
+  .text-deal-urgency { @apply text-muted-foreground text-sm; }
+  .wrapper-deal-countdown { @apply flex items-center gap-2; }
+  .icon-deal-clock { @apply h-5 w-5 text-destructive; }
+  .wrapper-countdown-segments { @apply flex gap-1; }
+  .wrapper-countdown-item { @apply text-center; }
+  .container-countdown-value { @apply min-w-[3rem] px-2 py-1 rounded-md font-mono font-bold text-xl; }
+  .bg-muted-expired { @apply bg-muted text-muted-foreground; }
+  .bg-active-expired { @apply bg-destructive text-destructive-foreground; }
+  .text-countdown-label { @apply text-xs text-muted-foreground; }
+  .card-deal-large { @apply overflow-hidden bg-card text-card-foreground border; }
+  .card-deal-expired { @apply opacity-60; }
+  .content-card-deal { @apply p-0; }
+  .grid-deal-card-layout { @apply grid md:grid-cols-2 gap-0; }
+  .wrapper-deal-image-container { @apply relative aspect-[4/3] md:aspect-auto bg-muted overflow-hidden; }
+  .img-deal-featured { @apply object-cover; }
+  .wrapper-deal-image-placeholder { @apply absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5; }
+  .icon-deal-placeholder { @apply h-16 w-16 text-primary/40; }
+  .wrapper-deal-discount-badge { @apply absolute top-4 left-4; }
+  .badge-deal-discount { @apply bg-destructive text-lg px-3 py-1 font-bold; }
+  .wrapper-deal-status-badges { @apply absolute top-4 right-4 flex flex-col gap-2; }
+  .badge-deal-status-overlay { @apply bg-background/90; }
+  .wrapper-deal-content-info { @apply p-6 md:p-8 flex flex-col justify-between; }
+  .wrapper-deal-title-pricing { @apply block; }
+  .header-deal-lot-title { @apply text-2xl md:text-3xl font-bold mb-4 line-clamp-2; }
+  .wrapper-deal-pricing { @apply space-y-2 mb-6; }
+  .wrapper-original-savings { @apply flex items-center gap-3; }
+  .text-deal-original-price { @apply text-muted-foreground line-through text-lg; }
+  .badge-deal-savings { @apply text-green-600 border-green-600; }
+  .icon-deal-savings { @apply h-3 w-3 mr-1; }
+  .text-deal-current-price { @apply text-4xl md:text-5xl font-bold text-primary; }
+  .text-deal-minimum-price { @apply text-sm text-muted-foreground; }
+  .wrapper-deal-progress { @apply space-y-2 mb-6; }
+  .wrapper-progress-labels { @apply flex items-center justify-between text-sm; }
+  .text-deal-bids-count { @apply text-muted-foreground; }
+  .text-deal-demand-high { @apply font-medium text-destructive; }
+  .progress-deal-demand { @apply h-2; }
+  .wrapper-deal-actions { @apply flex flex-col sm:flex-row gap-3; }
+  .btn-deal-bid-now { @apply flex-1; }
+  .icon-deal-btn-arrow { @apply h-4 w-4 ml-2; }
+  .btn-deal-view-more { @apply flex-1; }
+
+  /* Auth Pages */
+  .wrapper-auth-page { @apply flex items-center justify-center min-h-[calc(100vh-20rem)] py-12 px-4; }
+  .card-auth { @apply w-full max-w-md shadow-xl bg-card text-card-foreground border; }
+  .header-auth { @apply text-center pb-2; }
+  .icon-auth-header { @apply mx-auto h-12 w-12 text-primary mb-2; }
+  .title-auth { @apply text-2xl font-bold font-headline; }
+  .desc-auth { @apply text-sm text-muted-foreground; }
+  .form-auth { @apply block; }
+  .content-auth { @apply space-y-4 p-6; }
+  .footer-auth { @apply flex flex-col space-y-4 p-6 pt-0; }
+  .wrapper-form-item { @apply space-y-2; }
+  .label-auth-tenant { @apply flex items-center justify-between text-sm font-medium; }
+  .wrapper-tenant-label-content { @apply flex items-center gap-1; }
+  .icon-auth-locked { @apply h-3 w-3 text-blue-500; }
+  .text-auth-loading { @apply text-xs text-muted-foreground; }
+  .select-auth-tenant { @apply w-full; }
+  .select-content-auth { @apply bg-card border border-border; }
+  .item-auth-tenant { @apply list-none; }
+  .text-auth-locked-info { @apply text-xs text-blue-600 font-medium mt-1; }
+  .text-auth-helper { @apply text-xs text-muted-foreground; }
+  .text-auth-error { @apply text-xs text-destructive; }
+  .label-auth-field { @apply block; }
+  .input-auth-field { @apply w-full; }
+  .wrapper-auth-password { @apply relative; }
+  .input-auth-password { @apply pr-10 w-full; }
+  .btn-toggle-password { @apply absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors; }
+  .text-auth-error-center { @apply text-sm text-destructive text-center; }
+  .btn-auth-submit { @apply w-full; }
+  .wrapper-auth-links { @apply text-center text-sm pb-6 px-6; }
+  .link-auth-forgot-password { @apply text-primary hover:underline; }
+  .text-auth-no-account { @apply text-muted-foreground mt-4; }
+  .link-auth-register { @apply font-medium text-primary hover:underline; }
+  .wrapper-auth-page-large { @apply flex items-center justify-center min-h-screen py-12 px-4; }
+  .card-auth-large { @apply w-full max-w-3xl shadow-xl bg-card text-card-foreground border; }
+  .content-auth-shaded { @apply space-y-6 bg-secondary/30 p-6; }
+  .wrapper-account-type-selection { @apply space-y-3; }
+  .label-account-type { @apply text-base; }
+  .text-auth-required { @apply text-destructive; }
+  .group-account-type-radio { @apply flex flex-col sm:flex-row gap-4; }
+  .wrapper-account-type-option { @apply flex items-center space-x-3 space-y-0; }
+  .label-account-type-option { @apply font-normal cursor-pointer; }
+  .wrapper-register-section { @apply block; }
+  .separator-auth { @apply my-4; }
+  .header-register-section { @apply text-md font-semibold text-muted-foreground pt-4; }
+  .grid-register-fields { @apply grid grid-cols-1 sm:grid-cols-2 gap-4; }
+  .wrapper-form-item-column { @apply flex flex-col; }
+  .wrapper-form-item-span { @apply sm:col-span-2; }
+  .grid-register-fields-three { @apply grid grid-cols-1 sm:grid-cols-3 gap-4; }
+  .wrapper-terms-options { @apply space-y-2 pt-4; }
+  .item-terms-checkbox { @apply flex flex-row items-center space-x-3 space-y-0; }
+  .checkbox-auth-terms { @apply h-4 w-4; }
+  .checkbox-auth-marketing { @apply h-4 w-4; }
+  .wrapper-terms-label { @apply space-y-1 leading-none; }
+  .label-terms-text { @apply text-xs cursor-pointer; }
+  .link-terms-primary { @apply underline text-primary hover:text-primary/80; }
+  .footer-auth-register { @apply flex flex-col space-y-4 p-6 border-t; }
+
+  /* Admin Dashboard */
+  .container-admin-dashboard { @apply space-y-6; }
+  .grid-admin-dashboard-stats { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6; }
+  .card-admin-stat { @apply shadow-lg transition-transform hover:scale-105 border-0; }
+  .content-card-admin-stat { @apply p-4; }
+  .wrapper-admin-stat-content { @apply flex justify-between items-center; }
+  .wrapper-admin-stat-text { @apply flex flex-col space-y-1; }
+  .text-admin-stat-title { @apply text-sm font-medium; }
+  .skeleton-admin-stat-value { @apply h-9 w-24 bg-white/20; }
+  .text-admin-stat-value { @apply text-4xl font-bold; }
+  .icon-admin-stat-card { @apply h-10 w-10 opacity-80; }
+  .link-admin-stat { @apply block hover:no-underline; }
+  .grid-admin-dashboard-charts { @apply grid grid-cols-1 lg:grid-cols-5 gap-6; }
+  .card-admin-chart-large { @apply col-span-1 lg:col-span-3 bg-card text-card-foreground border; }
+  .card-admin-chart-small { @apply col-span-1 lg:col-span-2 bg-card text-card-foreground border; }
+  .header-admin-chart { @apply block; }
+  .title-admin-chart { @apply flex items-center; }
+  .icon-admin-chart-header { @apply mr-2 h-5 w-5; }
+  .content-admin-chart { @apply h-80; }
+  .skeleton-admin-chart { @apply w-full h-full; }
+
+  /* Public Pages Common */
+  .wrapper-page-loading-center { @apply flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]; }
+  .icon-page-loading { @apply h-10 w-10 animate-spin text-primary; }
+  .text-page-loading { @apply text-muted-foreground; }
+  .wrapper-page-error-center { @apply text-center py-12 min-h-[calc(100vh-20rem)]; }
+  .header-page-error { @apply text-xl font-semibold text-destructive; }
+  .btn-error-back { @apply mt-4; }
+  .wrapper-page-not-found-center { @apply text-center py-12 min-h-[calc(100vh-20rem)]; }
+  .header-page-not-found { @apply text-xl font-semibold text-muted-foreground; }
+
+  /* Seller Profile Page */
+  .container-seller-profile { @apply space-y-10 py-6; }
+  .section-seller-profile-header { @apply grid grid-cols-1 lg:grid-cols-3 gap-8 items-start border-b pb-10; }
+  .wrapper-seller-brand { @apply lg:col-span-1 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4; }
+  .avatar-seller-profile { @apply h-40 w-40 border-4 border-primary/30 shadow-lg; }
+  .text-fallback-large { @apply text-5xl; }
+  .wrapper-seller-title-info { @apply block; }
+  .header-seller-name { @apply text-3xl font-bold font-headline; }
+  .text-seller-type-label { @apply text-sm text-muted-foreground; }
+  .wrapper-seller-profile-info-cards { @apply lg:col-span-2 space-y-4; }
+  .card-seller-profile-section { @apply shadow-md bg-card text-card-foreground border; }
+  .header-card-title-with-icon { @apply text-xl font-semibold flex items-center; }
+  .icon-card-header-primary { @apply h-5 w-5 mr-2 text-primary; }
+  .content-card-seller-profile { @apply block; }
+  .text-seller-description { @apply text-sm text-muted-foreground whitespace-pre-line; }
+  .text-seller-empty-desc { @apply text-sm text-muted-foreground; }
+  .content-card-seller-contact { @apply space-y-3 text-sm; }
+  .item-seller-contact { @apply flex items-center; }
+  .icon-seller-contact { @apply h-4 w-4 mr-2 text-muted-foreground; }
+  .link-seller-contact { @apply hover:text-primary hover:no-underline truncate; }
+  .item-seller-contact-start { @apply flex items-start; }
+  .icon-seller-contact-start { @apply h-4 w-4 mr-2 mt-0.5 text-muted-foreground flex-shrink-0; }
+  .text-seller-address { @apply inline; }
+  .separator-print-hidden { @apply print:hidden; }
+  .section-seller-lots { @apply pt-6; }
+  .header-seller-lots-title { @apply text-2xl font-bold mb-6 font-headline flex items-center; }
+  .icon-seller-lots-header { @apply h-6 w-6 mr-2 text-primary; }
+  .card-seller-empty-lots { @apply shadow-sm mt-8 bg-card text-card-foreground border; }
+  .content-card-seller-empty { @apply text-center py-10; }
+  .text-seller-empty-lots-msg { @apply text-muted-foreground; }
+
+  /* 404 Not Found Page */
+  .wrapper-not-found-page { @apply min-h-[60vh] flex flex-col items-center justify-center px-4 py-16; }
+  .container-not-found-content { @apply text-center max-w-2xl mx-auto; }
+  .text-not-found-code { @apply text-8xl font-bold text-primary/20 mb-4 font-mono; }
+  .header-not-found-title { @apply text-3xl font-bold mb-3; }
+  .text-not-found-desc { @apply text-muted-foreground mb-8 text-lg; }
+  .grid-not-found-actions { @apply grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10; }
+  .card-not-found-action { @apply hover:shadow-md transition-shadow bg-card text-card-foreground border; }
+  .content-not-found-action { @apply p-4 text-center; }
+  .icon-not-found-action { @apply h-8 w-8 mx-auto mb-2 text-primary; }
+  .title-not-found-action { @apply font-semibold mb-1; }
+  .desc-not-found-action { @apply text-xs text-muted-foreground mb-3; }
+  .btn-not-found-action { @apply w-full; }
+  .wrapper-not-found-security { @apply flex items-center justify-center gap-2 text-xs text-muted-foreground; }
+  .icon-security-check { @apply h-4 w-4 text-green-600; }
+  .text-security-info { @apply inline; }
+  .wrapper-not-found-footer { @apply mt-6; }
+  .btn-not-found-back { @apply flex items-center gap-2; }
+  .link-not-found-back { @apply flex items-center gap-2 hover:no-underline; }
+
+  /* Promo Card */
+  .link-promo-card { @apply block h-full group hover:no-underline; }
+  .card-promo { @apply overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full border; }
+  .content-card-promo { @apply p-6 flex flex-col md:flex-row items-center gap-6 h-full; }
+  .wrapper-promo-text { @apply flex-1 text-center md:text-left; }
+  .header-promo-title { @apply text-xl font-semibold text-foreground mb-1 font-headline group-hover:text-primary transition-colors; }
+  .text-promo-description { @apply text-sm text-muted-foreground mb-3; }
+  .wrapper-promo-action-link { @apply text-xs text-primary font-medium flex items-center justify-center md:justify-start group-hover:underline; }
+  .icon-promo-arrow { @apply h-3 w-3 ml-1 transition-transform group-hover:translate-x-1; }
+  .wrapper-promo-image { @apply relative w-32 h-32 md:w-36 md:h-36 flex-shrink-0; }
+  .img-promo-graphic { @apply object-contain; }
+
+  /* Filter Skeleton */
+  .wrapper-filters-skeleton { @apply w-full md:w-72 lg:w-80 space-y-6 p-1; }
+  .skeleton-filter-reset-btn { @apply h-8 w-20; }
+  .wrapper-filter-skeleton-list { @apply space-y-4; }
+  .wrapper-filter-skeleton-item { @apply space-y-2 border-b pb-4; }
+  .skeleton-filter-item-title { @apply h-6 w-3/4; }
+  .wrapper-filter-skeleton-fields { @apply space-y-1.5 pt-2; }
+  .skeleton-filter-field-full { @apply h-4 w-full; }
+  .skeleton-filter-field-partial { @apply h-4 w-5/6; }
+  .skeleton-filter-apply-btn { @apply h-10 w-full mt-6; }
+
+  /* Admin Common Pages */
+  .wrapper-admin-page-loading { @apply space-y-6; }
+  .card-admin-page-header-skeleton { @apply shadow-lg bg-card text-card-foreground border; }
+  .header-card-admin-skeleton { @apply flex flex-row items-center justify-between; }
+  .wrapper-skeleton-title { @apply block; }
+  .skeleton-admin-title { @apply h-8 w-64 mb-2; }
+  .skeleton-admin-desc { @apply h-4 w-80; }
+  .skeleton-admin-btn-action { @apply h-10 w-36; }
+  .content-card-admin-skeleton { @apply block; }
+  .skeleton-admin-content-full { @apply h-96 w-full; }
+  .container-admin-page { @apply space-y-6; }
+  .card-admin-page-header { @apply shadow-lg bg-card text-card-foreground border; }
+  .header-card-admin { @apply flex flex-row items-center justify-between; }
+  .wrapper-admin-page-title-section { @apply block; }
+  .header-admin-page-title { @apply text-2xl font-bold font-headline flex items-center; }
+  .icon-admin-page-header { @apply h-6 w-6 mr-2 text-primary; }
+  .text-admin-page-description { @apply block; }
+  .btn-admin-page-primary-action { @apply flex items-center; }
+  .icon-admin-btn-start { @apply mr-2 h-4 w-4; }
+
+  /* Map Search Page */
+  .content-map-search-dialog { @apply h-[100vh] w-[100vw] max-w-none border-0 bg-background/95 p-0 shadow-2xl; }
+  .wrapper-map-search-layout { @apply flex h-full flex-col; }
+  .header-map-search { @apply relative h-[160px] w-full overflow-hidden; }
+  .img-map-search-header { @apply object-cover; }
+  .overlay-map-search-header { @apply absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent; }
+  .container-map-search-header-content { @apply relative z-10 flex h-full items-center justify-between px-8; }
+  .wrapper-map-search-title-section { @apply flex flex-col gap-3; }
+  .header-map-search-title { @apply text-3xl font-bold text-foreground; }
+  .wrapper-map-search-badges { @apply flex flex-wrap gap-2; }
+  .badge-map-search-info { @apply border-border/40 bg-surface/80; }
+  .icon-badge-zap { @apply mr-1 h-3.5 w-3.5; }
+  .btn-close-map-search { @apply h-12 w-12; }
+  .icon-close-map { @apply h-5 w-5; }
+  .wrapper-map-filters-bar { @apply border-t border-border/40 bg-panel/70 px-8 py-5; }
+  .grid-map-filters { @apply grid grid-cols-1 md:grid-cols-4 gap-4; }
+  .wrapper-filter-input { @apply relative; }
+  .icon-filter-prefix { @apply absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground; }
+  .icon-filter-prefix-z { @apply absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10; }
+  .input-filter-map { @apply pl-9 bg-background/50 border-border/60; }
+  .select-trigger-map-filter { @apply pl-9 bg-background/50 border-border/60; }
+  .select-content-map-filter { @apply bg-card border border-border; }
+  .wrapper-price-filters { @apply flex gap-2; }
+  .wrapper-filter-input-flex { @apply relative flex-1; }
+  .btn-clear-map-filters { @apply border-border/60 bg-background/50; }
+  .icon-filter-action { @apply mr-2 h-4 w-4; }
+  .wrapper-map-main-content { @apply flex-1 overflow-hidden p-6; }
+  .grid-map-sidebar-layout { @apply grid h-full gap-6 xl:grid-cols-[7fr_3fr]; }
+  .wrapper-map-display-section { @apply relative order-2 xl:order-1 flex min-h-[560px] flex-1 rounded-[2.5rem] border border-border/40 bg-surface/60 shadow-haze; }
+  .overlay-map-gradient { @apply absolute inset-0 rounded-[2.5rem] bg-gradient-map-panel opacity-50; }
+  .wrapper-map-overlay-controls { @apply absolute top-5 right-5 z-10 flex flex-wrap gap-3; }
+  .btn-recenter-map { @apply h-10; }
+  .icon-map-control { @apply mr-2 h-4 w-4; }
+  .wrapper-map-status-badge { @apply absolute bottom-5 left-6 z-10 flex flex-wrap gap-2 text-xs text-muted-foreground; }
+  .badge-map-sync-status { @apply border-border/40 bg-background/40; }
+  .icon-status-signal { @apply mr-1 h-3.5 w-3.5; }
+  .wrapper-map-container-root { @apply relative z-0 h-full w-full rounded-[2.5rem] overflow-hidden; }
+
+  /* Search Results Frame */
+  .wrapper-pagination-controls { @apply mt-6 flex flex-col sm:flex-row justify-center items-center gap-4; }
+  .wrapper-pagination-buttons { @apply flex items-center gap-2; }
+  .icon-pagination { @apply h-4 w-4; }
+  .wrapper-page-numbers { @apply flex items-center gap-1; }
+  .text-pagination-ellipsis { @apply px-1; }
+  .btn-pagination-page { @apply h-8 w-8 text-xs; }
+  .wrapper-pagination-info { @apply flex items-center gap-2 text-sm text-muted-foreground; }
+  .text-pagination-info { @apply inline; }
+  .wrapper-search-results-frame { @apply space-y-6; }
+  .card-search-results-toolbar { @apply p-4 shadow-sm bg-card text-card-foreground border; }
+  .wrapper-toolbar-content { @apply flex flex-col sm:flex-row justify-between items-center gap-4; }
+  .text-results-count { @apply text-sm text-muted-foreground w-full sm:w-auto text-center sm:text-left; }
+  .wrapper-toolbar-controls { @apply flex items-center gap-3 w-full sm:w-auto flex-wrap justify-center; }
+  .select-search-sort { @apply w-full sm:w-[180px] h-9 text-xs; }
+  .select-content-search-sort { @apply bg-card border border-border; }
+  .item-search-sort { @apply text-xs; }
+  .wrapper-view-mode-buttons { @apply flex items-center gap-1; }
+  .btn-view-mode { @apply h-8 w-8; }
+  .icon-view-mode { @apply h-4 w-4; }
+  .wrapper-results-loading { @apply flex justify-center items-center py-12; }
+  .icon-results-loading { @apply h-12 w-12 animate-spin text-primary; }
+  .list-search-results-items { @apply space-y-4; }
+  .wrapper-data-table-results { @apply block; }
+  .card-no-results { @apply bg-card text-card-foreground border; }
+  .content-no-results { @apply text-center py-12; }
+  .icon-no-results { @apply mx-auto h-12 w-12 text-muted-foreground mb-3; }
+  .header-no-results { @apply text-xl font-semibold mb-2; }
+  .text-no-results-desc { @apply text-muted-foreground; }
+  .wrapper-lot-detail-main { @apply space-y-8; }
+  .section-lot-detail-header { @apply space-y-4; }
+  .wrapper-lot-title-actions { @apply flex flex-col sm:flex-row justify-between items-start gap-2; }
+  .wrapper-lot-title-info { @apply flex-grow; }
+  .header-lot-title { @apply text-2xl md:text-3xl font-bold font-headline text-left; }
+  .wrapper-lot-status-badge { @apply flex items-center gap-2 mt-1; }
+  .badge-lot-detail-status { @apply text-xs px-2 py-0.5; }
+  .wrapper-lot-legal-badges { @apply flex flex-wrap gap-2 mt-2; }
+  .badge-legal-info { @apply border-primary/40 text-primary; }
+  .badge-legal-action { @apply border-blue-400 text-blue-700; }
+  .badge-legal-occupancy { @apply border; }
+  .badge-legal-risk { @apply border; }
+  .wrapper-header-action-buttons { @apply flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0; }
+  .icon-header-action { @apply h-4 w-4; }
+  .btn-header-share { @apply border rounded-md; }
+  .btn-header-back { @apply border rounded-md; }
+  .wrapper-lot-navigation { @apply flex items-center justify-between text-sm text-muted-foreground; }
+  .text-lot-number-display { @apply font-medium text-foreground; }
+  .wrapper-nav-buttons { @apply flex items-center gap-2; }
+  .btn-lot-nav { @apply h-8 w-8; }
+  .icon-nav-action { @apply h-4 w-4; }
+  .text-lot-pagination { @apply text-sm text-muted-foreground mx-1; }
+  .grid-lot-detail-content { @apply grid grid-cols-1 lg:grid-cols-3 gap-6 items-start; }
+  .wrapper-lot-media-and-info { @apply lg:col-span-2 space-y-6; }
+  .card-lot-gallery { @apply shadow-lg; }
+  .content-card-gallery { @apply p-4; }
+  .wrapper-gallery-main { @apply relative w-full mb-4; }
+  .wrapper-gallery-footer-info { @apply flex justify-between items-center mt-4 text-sm text-muted-foreground; }
+  .item-gallery-info { @apply flex items-center; }
+  .icon-gallery-info { @apply h-4 w-4 mr-1 text-primary; }
+  .card-auction-details-summary { @apply shadow-lg; }
+  .header-card-auction-summary { @apply pb-2; }
+  .header-card-auction-summary-title { @apply text-xl font-semibold flex items-center; }
+  .icon-card-header-summary { @apply h-5 w-5 mr-2 text-muted-foreground; }
+  .content-card-auction-summary { @apply p-4 md:p-6 pt-0; }
+  .wrapper-auction-summary-main { @apply flex items-start gap-4; }
+  .avatar-auctioneer-summary { @apply h-16 w-16 border-2 border-primary/20 flex-shrink-0; }
+  .wrapper-auction-summary-info { @apply flex-grow; }
+  .link-auction-summary-title { @apply hover:text-primary hover:no-underline; }
+  .text-auction-summary-title { @apply font-bold text-lg text-foreground; }
+  .grid-auction-summary-details { @apply grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-2 text-sm; }
+  .item-auction-summary-detail { @apply flex items-center text-muted-foreground; }
+  .icon-summary-detail { @apply h-4 w-4 mr-2; }
+  .text-summary-detail-value { @apply font-medium text-foreground; }
+  .badge-summary-status { @apply ml-2 text-xs border-current; }
+  .wrapper-auction-summary-timeline { @apply mt-6 pt-6 border-t; }
+  .header-summary-timeline-title { @apply text-sm font-semibold mb-4 flex items-center; }
+  .icon-summary-timeline { @apply h-4 w-4 mr-2 text-muted-foreground; }
+  .wrapper-summary-timeline-content { @apply pt-8 pb-2 px-2; }
+  .footer-card-auction-summary { @apply p-4 md:p-6 pt-0; }
+  .btn-summary-view-all { @apply border rounded-md; }
+  .icon-summary-btn-action { @apply h-4 w-4 ml-2; }
+
+  /* Admin Form Layout */
+  .wrapper-form-toolbar-view { @apply flex justify-between items-center w-full; }
+  .wrapper-nav-controls { @apply flex items-center gap-1; }
+  .btn-nav-prev { @apply border rounded-md; }
+  .btn-nav-next { @apply border rounded-md; }
+  .icon-nav-control { @apply h-4 w-4; }
+  .btn-enter-edit { @apply flex items-center; }
+  .icon-btn-start { @apply mr-2 h-4 w-4; }
+  .wrapper-form-toolbar-edit { @apply flex flex-col sm:flex-row justify-between items-center w-full gap-2; }
+  .wrapper-toolbar-actions-left { @apply flex items-center gap-2; }
+  .btn-delete-record { @apply flex items-center; }
+  .content-alert-dialog { @apply bg-card; }
+  .header-alert-dialog { @apply pb-2; }
+  .title-alert-dialog { @apply text-lg font-bold; }
+  .desc-alert-dialog { @apply text-sm text-muted-foreground; }
+  .footer-alert-dialog { @apply pt-4; }
+  .btn-alert-cancel { @apply border rounded-md; }
+  .btn-alert-confirm { @apply bg-destructive text-destructive-foreground hover:bg-destructive/90; }
+  .btn-print-record { @apply flex items-center; }
+  .wrapper-toolbar-actions-right { @apply flex items-center gap-2; }
+  .btn-save-new-record { @apply flex items-center; }
+  .btn-save-record { @apply flex items-center; }
+  .icon-btn-spinner { @apply mr-2 h-4 w-4 animate-spin; }
+  .wrapper-form-loading { @apply flex justify-center items-center h-full; }
+  .icon-form-loading-spinner { @apply h-8 w-8 animate-spin; }
+  .card-form-page { @apply shadow-lg w-full bg-card text-card-foreground; }
+  .header-card-form { @apply border-b; }
+  .wrapper-form-header-content { @apply flex flex-col sm:flex-row justify-between sm:items-start gap-4; }
+  .wrapper-form-title-section { @apply flex items-center gap-3; }
+  .icon-form-header { @apply h-8 w-8 text-primary; }
+  .wrapper-form-title-text { @apply block; }
+  .header-form-title { @apply text-2xl font-bold font-headline; }
+  .desc-form-subtitle { @apply text-sm text-muted-foreground; }
+  .wrapper-form-header-actions { @apply flex items-center gap-2; }
+  .wrapper-desktop-toolbar { @apply hidden sm:block; }
+  .group-form-fieldset { @apply group; }
+  .content-card-form { @apply p-6 bg-secondary/20 group-disabled:bg-background/20 group-disabled:cursor-not-allowed; }
+  .footer-card-form { @apply flex flex-col sm:flex-row justify-between items-center gap-2 p-6 border-t; }
+  .wrapper-mobile-toolbar { @apply sm:hidden w-full; }
+  .wrapper-cancel-action { @apply w-full flex justify-end; }
+  .btn-form-cancel { @apply flex items-center; }
+
+  /* Bidder Dashboard */
+  .wrapper-bidder-dashboard { @apply space-y-6; }
+  .wrapper-dashboard-header { @apply flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4; }
+  .wrapper-header-title { @apply block; }
+  .header-dashboard-title { @apply text-3xl font-bold; }
+  .text-dashboard-subtitle { @apply text-muted-foreground; }
+  .wrapper-header-badge { @apply flex items-center gap-2; }
+  .badge-user-role { @apply text-sm; }
+  .icon-badge-small { @apply h-3 w-3 mr-1; }
+  .grid-dashboard-overview { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4; }
+  .card-overview-item { @apply bg-card text-card-foreground; }
+  .header-overview-item { @apply flex flex-row items-center justify-between space-y-0 pb-2; }
+  .title-overview-item { @apply text-sm font-medium; }
+  .icon-overview-item { @apply h-4 w-4 text-muted-foreground; }
+  .content-overview-item { @apply block; }
+  .text-overview-value { @apply text-2xl font-bold; }
+  .text-overview-helper { @apply text-xs text-muted-foreground; }
+  .text-highlight-warning { @apply text-orange-600; }
+  .grid-dashboard-sections { @apply grid grid-cols-1 lg:grid-cols-2 gap-4; }
+  .card-dashboard-section { @apply bg-card text-card-foreground; }
+  .header-dashboard-section { @apply pb-3; }
+  .title-dashboard-section { @apply flex items-center gap-2 text-lg; }
+  .icon-section-title { @apply h-5 w-5 text-primary; }
+  .icon-section-title-alt { @apply h-5 w-5 text-amber-500; }
+  .desc-dashboard-section { @apply block; }
+  .content-dashboard-section { @apply block; }
+  .list-dashboard-items { @apply space-y-3; }
+  .item-dashboard-row { @apply flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors; }
+  .wrapper-item-info { @apply flex-1 min-w-0; }
+  .text-item-title { @apply font-medium text-sm truncate; }
+  .text-item-subtitle { @apply text-xs text-muted-foreground truncate; }
+  .wrapper-item-badges { @apply flex items-center gap-2 mt-1; }
+  .badge-item-status { @apply text-xs; }
+  .text-item-date { @apply text-xs text-muted-foreground; }
+  .btn-item-action { @apply h-8 w-8; }
+  .icon-item-action { @apply h-4 w-4; }
+  .wrapper-empty-state-dashboard { @apply text-center py-6 text-muted-foreground; }
+  .icon-empty-state-dashboard { @apply h-10 w-10 mx-auto mb-3 opacity-50; }
+  .text-empty-state-title { @apply text-sm; }
+  .text-empty-state-desc { @apply text-xs mt-1; }
+  .wrapper-item-values { @apply flex items-center gap-3 mt-1; }
+  .text-item-highlight { @apply text-xs font-semibold text-amber-600 dark:text-amber-400; }
+  .text-item-secondary { @apply text-xs text-muted-foreground; }
+  .card-quick-actions { @apply bg-card text-card-foreground; }
+  .header-quick-actions { @apply block; }
+  .title-quick-actions { @apply block; }
+  .desc-quick-actions { @apply block; }
+  .content-quick-actions { @apply block; }
+  .grid-quick-actions { @apply grid grid-cols-2 md:grid-cols-4 gap-4; }
+  .btn-quick-action { @apply h-20 flex flex-col items-center justify-center space-y-2; }
+  .icon-quick-action { @apply h-6 w-6; }
+  .text-quick-action { @apply text-sm; }
+  .wrapper-dashboard-tabs { @apply block; }
+  .list-dashboard-tabs { @apply grid w-full grid-cols-6; }
+  .trigger-dashboard-tab { @apply list-none; }
+
+  /* Misc */
+  .header-auction-page { @apply mb-8; }
+  .footer-platform { @apply border-t bg-secondary/50 text-secondary-foreground mt-auto; }
+  .container-footer-content { @apply container mx-auto px-4 py-10 md:py-12; }
+  .grid-footer-links { @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8; }
+  .wrapper-footer-brand { @apply sm:col-span-2 md:col-span-1; }
+  .link-footer-logo { @apply flex items-center space-x-2 mb-3 hover:no-underline; }
+  .icon-footer-logo { @apply h-8 w-8 text-primary; }
+  .text-footer-brand { @apply font-bold text-2xl text-foreground; }
+  .text-footer-slogan { @apply text-sm text-muted-foreground; }
+  .wrapper-footer-quick-links { @apply space-y-3; }
+  .wrapper-footer-legal-links { @apply space-y-3; }
+  .wrapper-footer-social-links { @apply space-y-3; }
+  .header-footer-section { @apply text-md font-semibold text-foreground mb-3; }
+  .list-footer-links { @apply space-y-2; }
+  .item-footer-link { @apply list-none; }
+  .link-footer-item { @apply text-sm text-muted-foreground hover:text-primary transition-colors hover:no-underline; }
+  .icon-footer-legal { @apply mr-1.5; }
+  .list-footer-social { @apply flex space-x-4; }
+  .link-footer-social { @apply text-muted-foreground hover:text-primary transition-colors; }
+  .section-footer-bottom { @apply border-t border-border pt-8 flex flex-col items-center gap-2; }
+  .wrapper-footer-ssl-badge { @apply flex items-center gap-2 text-xs text-muted-foreground; }
+  .icon-footer-ssl { @apply h-4 w-4 text-green-600; }
+  .text-footer-ssl { @apply inline; }
+  .text-footer-copy { @apply text-sm text-muted-foreground; }
+
+  /* Tables */
+  .table-lots { @apply w-full caption-bottom text-sm; }
+  .row-bid { @apply border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted; }
+  .col-auctioneer { @apply p-4 align-middle [&:has([role=checkbox])]:pr-0; }
+
+  /* Navigation */
+  .nav-main { @apply flex items-center space-x-4 lg:space-x-6; }
+  .link-home { @apply text-sm font-medium transition-colors hover:text-primary; }
+  .menu-user-profile { @apply relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50; }
+}

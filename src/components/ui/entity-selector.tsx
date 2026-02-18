@@ -80,7 +80,7 @@ export default function EntitySelector({
   const tableColumns = React.useMemo(() => createEntitySelectorColumns(handleSelectAndClose), [handleSelectAndClose]);
 
   return (
-    <div className="flex items-center gap-2" data-ai-id={`entity-selector-container-${entityName}`}>
+    <div className="wrapper-entity-selector" data-ai-id={`entity-selector-container-${entityName}`}>
       <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
           <DialogTrigger asChild>
               <Button
@@ -88,27 +88,27 @@ export default function EntitySelector({
                   variant="outline"
                   role="combobox"
                   aria-expanded={isListModalOpen}
-                  className="w-full justify-between flex-grow"
+                  className="btn-entity-selector-trigger"
                   disabled={disabled}
                   data-ai-id={`entity-selector-trigger-${entityName}`}
               >
-                  <span className="truncate">
+                  <span className="text-entity-selector-label">
                   {selectedOption ? selectedOption.label : placeholder}
                   </span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <ChevronsUpDown className="icon-entity-selector-chevron" />
               </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-[90vw] w-full lg:max-w-4xl h-[80vh] flex flex-col p-0" data-ai-id={`entity-selector-modal-${entityName}`}>
-              <DialogHeader className="p-4 border-b">
-                  <DialogTitle className="flex items-center gap-2">
-                  <ListChecks className="h-6 w-6 text-primary"/>
+          <DialogContent className="content-entity-selector-dialog" data-ai-id={`entity-selector-modal-${entityName}`}>
+              <DialogHeader className="header-entity-selector-dialog">
+                  <DialogTitle className="title-entity-selector-dialog">
+                  <ListChecks className="icon-entity-selector-title"/>
                   Selecionar {entityName}
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="desc-entity-selector-dialog">
                   Pesquise, visualize e selecione um registro. Você também pode criar um novo, se necessário.
                   </DialogDescription>
               </DialogHeader>
-              <div className="flex-grow overflow-hidden p-4">
+              <div className="wrapper-entity-selector-table">
                   <DataTable
                       columns={tableColumns}
                       data={options.map(opt => ({...opt, id: opt.value.toString()}))}
@@ -118,21 +118,21 @@ export default function EntitySelector({
                       emptyStateMessage={emptyStateMessage}
                   />
               </div>
-              <DialogFooter className="p-4 border-t flex justify-between">
+              <DialogFooter className="footer-entity-selector-dialog">
                   {onAddNew && (
-                      <Button variant="secondary" onClick={onAddNew} data-ai-id={`entity-selector-add-new-${entityName}`}>
-                          <PlusCircle className="mr-2 h-4 w-4"/>
+                      <Button variant="secondary" onClick={onAddNew} data-ai-id={`entity-selector-add-new-${entityName}`} className="btn-entity-selector-add">
+                          <PlusCircle className="icon-btn-start"/>
                           Criar Novo
                       </Button>
                   )}
-                  <div className="flex items-center gap-2">
+                  <div className="wrapper-entity-selector-footer-actions">
                     {onRefetch && (
-                    <Button variant="outline" onClick={onRefetch} disabled={isFetching} data-ai-id={`entity-selector-refetch-${entityName}`}>
-                        <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+                    <Button variant="outline" onClick={onRefetch} disabled={isFetching} data-ai-id={`entity-selector-refetch-${entityName}`} className="btn-entity-selector-refresh">
+                        <RefreshCw className={cn("icon-btn-start", isFetching && "icon-spin")} />
                         Atualizar Lista
                     </Button>
                     )}
-                    <Button variant="outline" onClick={() => setIsListModalOpen(false)}>
+                    <Button variant="outline" onClick={() => setIsListModalOpen(false)} className="btn-entity-selector-close">
                     Fechar
                     </Button>
                   </div>
@@ -141,15 +141,15 @@ export default function EntitySelector({
       </Dialog>
       
       {value && editUrlPrefix && (
-           <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" disabled={disabled} title="Editar registro selecionado" asChild>
-              <Link href={`${editUrlPrefix}/${value}`} target="_blank">
-                  <Pencil className="h-4 w-4" />
+           <Button type="button" variant="outline" size="icon" className="btn-entity-selector-edit" disabled={disabled} title="Editar registro selecionado" asChild data-ai-id={`entity-selector-edit-${entityName}`}>
+              <Link href={`${editUrlPrefix}/${value}`} target="_blank" className="link-entity-selector-edit">
+                  <Pencil className="icon-btn-action" />
               </Link>
           </Button>
       )}
       
-      <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => onChange(null)} disabled={!value || disabled} title="Limpar seleção">
-          <X className="h-4 w-4" />
+      <Button type="button" variant="outline" size="icon" className="btn-entity-selector-clear" onClick={() => onChange(null)} disabled={!value || disabled} title="Limpar seleção" data-ai-id={`entity-selector-clear-${entityName}`}>
+          <X className="icon-btn-action" />
       </Button>
     </div>
   );

@@ -26,44 +26,44 @@ export default function AdminHeader({ onSearchClick, onSettingsClick, onMobileMe
   const { unreadNotificationsCount } = useAuth();
   
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-sidebar px-4 text-sidebar-foreground shadow-md sm:px-6">
+    <header className="header-admin-sticky" data-ai-id="admin-header-main">
       
       {onMobileMenuClick && (
-        <Button variant="ghost" size="icon" className="md:hidden h-9 w-9" onClick={onMobileMenuClick}>
-            <Menu className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="btn-admin-mobile-menu" onClick={onMobileMenuClick} data-ai-id="admin-header-mobile-trigger">
+            <Menu className="icon-admin-header" />
             <span className="sr-only">Abrir menu</span>
         </Button>
       )}
 
       {/* Botão de Busca / Command Palette */}
-      <div className="relative flex-1 md:grow-0">
+      <div className="wrapper-admin-search" data-ai-id="admin-header-search-wrapper">
           <Button 
             variant="ghost" 
-            className="group w-full justify-start text-left text-sm text-sidebar-foreground/80 md:w-[250px] lg:w-[350px] h-9 bg-sidebar-accent/50 hover:bg-sidebar-accent"
+            className="btn-admin-search-command"
             onClick={onSearchClick}
             data-ai-id="admin-header-search-button"
           >
-            <Search className="mr-2 h-4 w-4 shrink-0" />
-            <span className="truncate">Buscar leilões, lotes...</span>
-            <kbd className="pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar-accent/80 px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-              <span className="text-xs">⌘</span>K
+            <Search className="icon-admin-search" />
+            <span className="text-admin-search-placeholder">Buscar leilões, lotes...</span>
+            <kbd className="kbd-admin-search" data-ai-id="admin-header-kbd">
+              <span className="text-kbd-symbol">⌘</span>K
             </kbd>
           </Button>
       </div>
 
-      <div className="flex-1">
+      <div className="wrapper-admin-header-spacer">
         {/* Espaço para Breadcrumbs ou Título da Página, se desejado no futuro */}
       </div>
 
       {/* Ícones de Ação e Menu do Usuário */}
-      <div className="flex items-center gap-1.5">
+      <div className="wrapper-admin-header-actions" data-ai-id="admin-header-actions">
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button variant="ghost" size="sm" className="h-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
-                      <Link href="/">
-                         <Globe className="h-4 w-4 mr-2" />
-                         <span className="hidden sm:inline">Ver Site</span>
+                     <Button variant="ghost" size="sm" className="btn-admin-header-action-view-site" asChild data-ai-id="admin-header-action-view-site">
+                      <Link href="/" className="link-admin-header-action">
+                         <Globe className="icon-admin-header-with-text" />
+                         <span className="text-admin-action-label">Ver Site</span>
                       </Link>
                     </Button>
                 </TooltipTrigger>
@@ -74,9 +74,9 @@ export default function AdminHeader({ onSearchClick, onSettingsClick, onMobileMe
 
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
+                    <Button variant="ghost" size="icon" className="btn-admin-header-action" asChild data-ai-id="admin-header-action-messages">
                     <Link href="/admin/contact-messages">
-                        <MessageSquare className="h-4 w-4" />
+                        <MessageSquare className="icon-admin-header" />
                         <span className="sr-only">Mensagens</span>
                     </Link>
                     </Button>
@@ -85,11 +85,11 @@ export default function AdminHeader({ onSearchClick, onSettingsClick, onMobileMe
             </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" className="h-9 w-9 relative text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
+                     <Button variant="ghost" size="icon" className="btn-admin-header-action-relative" asChild data-ai-id="admin-header-action-notifications">
                        <Link href="/dashboard/notifications">
-                        <Bell className="h-4 w-4" />
+                        <Bell className="icon-admin-header" />
                         {unreadNotificationsCount > 0 && (
-                            <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]">
+                            <Badge variant="destructive" className="badge-admin-notification" data-ai-id="admin-header-notification-badge">
                                 {unreadNotificationsCount}
                             </Badge>
                         )}
@@ -101,8 +101,8 @@ export default function AdminHeader({ onSearchClick, onSettingsClick, onMobileMe
              </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={onSettingsClick}>
-                       <Settings className="h-4 w-4" />
+                     <Button variant="ghost" size="icon" className="btn-admin-header-action" onClick={onSettingsClick} data-ai-id="admin-header-action-settings">
+                       <Settings className="icon-admin-header" />
                        <span className="sr-only">Configurações</span>
                     </Button>
                 </TooltipTrigger>

@@ -565,62 +565,62 @@ export default function LotDetailClientContent({
  return (
     <>
       <TooltipProvider>
-        <div className="space-y-8">
-          <section className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
-              <div className="flex-grow">
-                <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>{getAuctionStatusText(lot.status)}</Badge>
+        <div className="wrapper-lot-detail-main" data-ai-id="lot-detail-main">
+          <section className="section-lot-detail-header" data-ai-id="lot-detail-header">
+            <div className="wrapper-lot-title-actions" data-ai-id="lot-title-section">
+              <div className="wrapper-lot-title-info">
+                <h1 className="header-lot-title" data-ai-id="lot-detail-title">{lotTitle}</h1>
+                <div className="wrapper-lot-status-badge">
+                  <Badge className={cn("badge-lot-detail-status", getLotStatusColor(lot.status))} data-ai-id="lot-detail-status">{getAuctionStatusText(lot.status)}</Badge>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2" data-ai-id="lot-legal-badges">
+                <div className="wrapper-lot-legal-badges" data-ai-id="lot-legal-badges">
                   { (lot.propertyMatricula || lot.propertyRegistrationNumber) && (
-                    <Badge variant="outline" className="border-primary/40 text-primary">
+                    <Badge variant="outline" className="badge-legal-info" data-ai-id="lot-legal-matricula">
                       Matrícula {lot.propertyMatricula || lot.propertyRegistrationNumber}
                     </Badge>
                   )}
                   {lot.actionType && (
-                    <Badge variant="outline" className="border-blue-400 text-blue-700">
+                    <Badge variant="outline" className="badge-legal-action" data-ai-id="lot-legal-action">
                       {actionTypeLabels[lot.actionType as JudicialActionType] || lot.actionType}
                     </Badge>
                   )}
                   {lot.occupancyStatus && (
-                    <Badge variant="outline" className={occupancyStyles[lot.occupancyStatus as OccupationStatus]}>
+                    <Badge variant="outline" className={cn("badge-legal-occupancy", occupancyStyles[lot.occupancyStatus as OccupationStatus])} data-ai-id="lot-legal-occupancy">
                       Ocupação: {occupancyLabels[lot.occupancyStatus as OccupationStatus]}
                     </Badge>
                   )}
                   {highestRisk && (
-                    <Badge variant="outline" className={riskLevelStyles[highestRisk.riskLevel as LotRiskLevel]}>
+                    <Badge variant="outline" className={cn("badge-legal-risk", riskLevelStyles[highestRisk.riskLevel as LotRiskLevel])} data-ai-id="lot-legal-risk">
                       Risco {highestRisk.riskLevel} · {riskTypeLabels[highestRisk.riskType] || highestRisk.riskType}
                     </Badge>
                   )}
                 </div>
               </div>
-              <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
+              <div className="wrapper-header-action-buttons" data-ai-id="lot-header-actions">
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
+                  <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar" className="btn-header-share" data-ai-id="lot-share-btn"><Share2 className="icon-header-action" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="menu-share-content">
+                    <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="item-share-link"><X className="icon-share-platform" /> X (Twitter)</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="item-share-link"><Facebook className="icon-share-platform" /> Facebook</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="item-share-link"><MessageSquareText className="icon-share-platform" /> WhatsApp</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="item-share-link"><Mail className="icon-share-platform" /> Email</a></DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.publicId || auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
+                <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão" className="btn-header-back" data-ai-id="lot-back-btn"><Link href={`/auctions/${auction.publicId || auction.id}`}><ArrowLeft className="icon-header-action" /></Link></Button>
               </div>
             </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}</Button>
-                <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button>
+            <div className="wrapper-lot-navigation" data-ai-id="lot-navigation">
+              <span className="text-lot-number-display">Lote Nº: {actualLotNumber}</span>
+              <div className="wrapper-nav-buttons" data-ai-id="lot-nav-controls">
+                <Button variant="outline" size="icon" className="btn-lot-nav" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior" data-ai-id="lot-nav-prev">{previousLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${previousLotId}`}><ChevronLeft className="icon-nav-action" /></Link> : <ChevronLeft className="icon-nav-action" />}</Button>
+                <span className="text-lot-pagination">Lote {displayLotPosition} de {displayTotalLots}</span>
+                <Button variant="outline" size="icon" className="btn-lot-nav" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote" data-ai-id="lot-nav-next">{nextLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${nextLotId}`}><ChevronRight className="icon-nav-action" /></Link> : <ChevronRight className="icon-nav-action" />}</Button>
               </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-              <div className="lg:col-span-2 space-y-6">
-                <Card className="shadow-lg"><CardContent className="p-4">
-                  <div className="relative w-full mb-4">
+            <div className="grid-lot-detail-content" data-ai-id="lot-detail-grid">
+              <div className="wrapper-lot-media-and-info" data-ai-id="lot-main-column">
+                <Card className="card-lot-gallery" data-ai-id="lot-gallery-card"><CardContent className="content-card-gallery">
+                  <div className="wrapper-gallery-main" data-ai-id="lot-gallery-main">
                      {gallery.length > 0 ? (
                         <Carousel className="w-full" setApi={setApi}>
                           <CarouselContent>
@@ -672,9 +672,9 @@ export default function LotDetailClientContent({
                   )}
                   {gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}
                   
-                  <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
-                    {lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}
-                    <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span>
+                  <div className="wrapper-gallery-footer-info" data-ai-id="lot-gallery-info">
+                    {lot.hasKey && <span className="item-gallery-info" data-ai-id="lot-has-key"><Key className="icon-gallery-info"/> Chave Presente</span>}
+                    <span className="item-gallery-info" data-ai-id="lot-location"><MapPin className="icon-gallery-info"/> Localização: {lotLocation}</span>
                   </div>
                 </CardContent></Card>
                 
@@ -694,46 +694,46 @@ export default function LotDetailClientContent({
                   />
                 </div>
 
-                <Card id="auction-details-section" className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-xl font-semibold flex items-center">
-                      <Gavel className="h-5 w-5 mr-2 text-muted-foreground" />
+                <Card id="auction-details-section" className="card-auction-details-summary" data-ai-id="lot-auction-summary-card">
+                  <CardHeader className="header-card-auction-summary">
+                    <CardTitle className="header-card-auction-summary-title">
+                      <Gavel className="icon-card-header-summary" />
                       Informações do Leilão
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-4 md:p-6 pt-0">
-                    <div className="flex items-start gap-4">
+                  <CardContent className="content-card-auction-summary" data-ai-id="lot-auction-summary-content">
+                    <div className="wrapper-auction-summary-main">
                       {auctioneer?.logoUrl && (
-                        <Avatar className="h-16 w-16 border-2 border-primary/20 flex-shrink-0">
+                        <Avatar className="avatar-auctioneer-summary" data-ai-id="lot-auctioneer-avatar">
                           <AvatarImage src={auctioneer.logoUrl} alt={auctioneerName || ''} data-ai-hint={auctioneer.dataAiHintLogo || 'logo leiloeiro'} />
                           <AvatarFallback>{auctioneerInitial}</AvatarFallback>
                         </Avatar>
                       )}
-                      <div className="flex-grow">
-                        <Link href={`/auctions/${auction.publicId || auction.id}`} className="hover:text-primary">
-                          <p className="font-bold text-lg text-foreground">{auction.title}</p>
+                      <div className="wrapper-auction-summary-info">
+                        <Link href={`/auctions/${auction.publicId || auction.id}`} className="link-auction-summary-title" data-ai-id="lot-auction-summary-link">
+                          <p className="text-auction-summary-title">{auction.title}</p>
                         </Link>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-2 text-sm">
-                          <div className="flex items-center text-muted-foreground">
-                            <UserCircle className="h-4 w-4 mr-2" />
-                            <span>Leiloeiro: <span className="font-medium text-foreground">{auctioneerName}</span></span>
+                        <div className="grid-auction-summary-details" data-ai-id="lot-auction-summary-grid">
+                          <div className="item-auction-summary-detail">
+                            <UserCircle className="icon-summary-detail" />
+                            <span>Leiloeiro: <span className="text-summary-detail-value">{auctioneerName}</span></span>
                           </div>
-                          <div className="flex items-center text-muted-foreground">
-                            <Tag className="h-4 w-4 mr-2" />
-                            <span>Categoria: <span className="font-medium text-foreground">{auction.category?.name || 'Não informada'}</span></span>
+                          <div className="item-auction-summary-detail">
+                            <Tag className="icon-summary-detail" />
+                            <span>Categoria: <span className="text-summary-detail-value">{auction.category?.name || 'Não informada'}</span></span>
                           </div>
-                          <div className="flex items-center text-muted-foreground">
-                            <Gavel className="h-4 w-4 mr-2" />
-                            <span>Modalidade: <span className="font-medium text-foreground">{auction.auctionType || 'Não especificada'}</span></span>
+                          <div className="item-auction-summary-detail">
+                            <Gavel className="icon-summary-detail" />
+                            <span>Modalidade: <span className="text-summary-detail-value">{auction.auctionType || 'Não especificada'}</span></span>
                           </div>
-                          <div className="flex items-center text-muted-foreground">
-                            <Info className="h-4 w-4 mr-2" />
-                            <span>Status:<Badge variant="outline" className={`ml-2 text-xs ${getAuctionStatusColor(auction.status)} border-current`}>{getAuctionStatusText(auction.status)}</Badge></span>
+                          <div className="item-auction-summary-detail">
+                            <Info className="icon-summary-detail" />
+                            <span>Status:<Badge variant="outline" className={cn("badge-summary-status", getAuctionStatusColor(auction.status))}>{getAuctionStatusText(auction.status)}</Badge></span>
                           </div>
                           {auction.endDate && (
-                            <div className="flex items-center text-muted-foreground">
-                              <CalendarDays className="h-4 w-4 mr-2" />
-                              <span>Fim: <span className="font-medium text-foreground">{formattedAuctionEndDate ? formattedAuctionEndDate : '...'}</span></span>
+                            <div className="item-auction-summary-detail">
+                              <CalendarDays className="icon-summary-detail" />
+                              <span>Fim: <span className="text-summary-detail-value">{formattedAuctionEndDate ? formattedAuctionEndDate : '...'}</span></span>
                             </div>
                           )}
                         </div>
@@ -742,21 +742,21 @@ export default function LotDetailClientContent({
                     
                     {/* Timeline Section */}
                     {auction?.auctionStages && auction.auctionStages.length > 0 && (
-                      <div className="mt-6 pt-6 border-t">
-                        <h3 className="text-sm font-semibold mb-4 flex items-center">
-                          <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <div className="wrapper-auction-summary-timeline" data-ai-id="lot-auction-summary-timeline">
+                        <h3 className="header-summary-timeline-title">
+                          <CalendarDays className="icon-summary-timeline" />
                           Cronograma de Praças
                         </h3>
-                        <div className="pt-8 pb-2 px-2">
+                        <div className="wrapper-summary-timeline-content">
                            <BidExpertAuctionStagesTimeline auction={auction} lot={lot} />
                         </div>
                       </div>
                     )}
                   </CardContent>
-                  <CardFooter className="p-4 md:p-6 pt-0">
-                    <Button asChild variant="outline" size="sm">
+                  <CardFooter className="footer-card-auction-summary">
+                    <Button asChild variant="outline" size="sm" className="btn-summary-view-all" data-ai-id="lot-auction-view-all-lots">
                       <Link href={`/auctions/${auction.publicId || auction.id}`}>
-                        Ver todos os lotes do leilão <ChevronRight className="h-4 w-4 ml-2" />
+                        Ver todos os lotes do leilão <ChevronRight className="icon-summary-btn-action" />
                       </Link>
                     </Button>
                   </CardFooter>

@@ -178,18 +178,18 @@ export default function SellerDetailsPage() {
 
   if (isLoading || !platformSettings) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]" data-ai-id="seller-details-loading">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-muted-foreground">Carregando informações do comitente...</p>
+      <div className="wrapper-page-loading-center" data-ai-id="seller-details-loading">
+        <Loader2 className="icon-page-loading" />
+        <p className="text-page-loading">Carregando informações do comitente...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12 min-h-[calc(100vh-20rem)]" data-ai-id="seller-details-error">
-        <h2 className="text-xl font-semibold text-destructive">{error}</h2>
-        <Button asChild className="mt-4">
+      <div className="wrapper-page-error-center" data-ai-id="seller-details-error">
+        <h2 className="header-page-error">{error}</h2>
+        <Button asChild className="btn-error-back">
           <Link href="/sellers">Voltar para Comitentes</Link>
         </Button>
       </div>
@@ -198,9 +198,9 @@ export default function SellerDetailsPage() {
   
   if (!sellerProfile) {
     return (
-      <div className="text-center py-12 min-h-[calc(100vh-20rem)]" data-ai-id="seller-details-not-found">
-        <h2 className="text-xl font-semibold text-muted-foreground">Comitente não encontrado.</h2>
-        <Button asChild className="mt-4">
+      <div className="wrapper-page-not-found-center" data-ai-id="seller-details-not-found">
+        <h2 className="header-page-not-found">Comitente não encontrado.</h2>
+        <Button asChild className="btn-error-back">
           <Link href="/sellers">Voltar para Comitentes</Link>
         </Button>
       </div>
@@ -215,47 +215,47 @@ export default function SellerDetailsPage() {
   return (
     <>
       <TooltipProvider>
-        <div className="space-y-10 py-6" data-ai-id="seller-details-page-container">
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start border-b pb-10" data-ai-id="seller-details-profile-header">
-            <div className="lg:col-span-1 flex flex-col items-center lg:items-start text-center lg:text-left space-y-4">
-                <Avatar className="h-40 w-40 border-4 border-primary/30 shadow-lg">
+        <div className="container-seller-profile" data-ai-id="seller-details-page-container">
+          <section className="section-seller-profile-header" data-ai-id="seller-details-profile-header">
+            <div className="wrapper-seller-brand">
+                <Avatar className="avatar-seller-profile">
                     <AvatarImage src={validLogoUrl} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo || "logo comitente"} />
-                    <AvatarFallback className="text-5xl">{sellerInitial}</AvatarFallback>
+                    <AvatarFallback className="text-fallback-large">{sellerInitial}</AvatarFallback>
                 </Avatar>
-                 <div>
-                    <h1 className="text-3xl font-bold font-headline">{sellerProfile.name}</h1>
-                    <p className="text-sm text-muted-foreground">{sellerProfile.isJudicial ? 'Comitente Judicial' : 'Vendedor Verificado'}</p>
+                 <div className="wrapper-seller-title-info">
+                    <h1 className="header-seller-name">{sellerProfile.name}</h1>
+                    <p className="text-seller-type-label">{sellerProfile.isJudicial ? 'Comitente Judicial' : 'Vendedor Verificado'}</p>
                  </div>
             </div>
             
-             <div className="lg:col-span-2 space-y-4">
-                <Card className="shadow-md">
-                   <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><Briefcase className="h-5 w-5 mr-2 text-primary" /> Sobre {sellerProfile.name}</CardTitle></CardHeader>
-                   <CardContent>
+             <div className="wrapper-seller-profile-info-cards">
+                <Card className="card-seller-profile-section">
+                   <CardHeader><CardTitle className="header-card-title-with-icon"><Briefcase className="icon-card-header-primary" /> Sobre {sellerProfile.name}</CardTitle></CardHeader>
+                   <CardContent className="content-card-seller-profile">
                     {sellerProfile.description ? (
-                        <p className="text-sm text-muted-foreground whitespace-pre-line">{sellerProfile.description}</p>
+                        <p className="text-seller-description">{sellerProfile.description}</p>
                     ) : (
-                        <p className="text-sm text-muted-foreground">Nenhuma descrição fornecida por este comitente.</p>
+                        <p className="text-seller-empty-desc">Nenhuma descrição fornecida por este comitente.</p>
                     )}
                    </CardContent>
                 </Card>
-                 <Card className="shadow-md">
-                   <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><MessageSquare className="h-5 w-5 mr-2 text-primary" /> Contato</CardTitle></CardHeader>
-                   <CardContent className="space-y-3 text-sm">
-                       {sellerProfile.email && (<div className="flex items-center"><Mail className="h-4 w-4 mr-2 text-muted-foreground" /><a href={`mailto:${sellerProfile.email}`} className="hover:text-primary">{sellerProfile.email}</a></div>)}
-                       {sellerProfile.phone && (<div className="flex items-center"><Phone className="h-4 w-4 mr-2 text-muted-foreground" /><a href={`tel:${sellerProfile.phone}`} className="hover:text-primary">{sellerProfile.phone}</a></div>)}
-                       {fullAddress && (<div className="flex items-start"><Landmark className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" /><p>{fullAddress}</p></div>)}
-                       {sellerProfile.website && (<div className="flex items-center"><Globe className="h-4 w-4 mr-2 text-muted-foreground" /><a href={sellerProfile.website.startsWith('http') ? sellerProfile.website : `https://${sellerProfile.website}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">{sellerProfile.website.replace(/^https?:\/\//, '')}</a></div>)}
+                 <Card className="card-seller-profile-section">
+                   <CardHeader><CardTitle className="header-card-title-with-icon"><MessageSquare className="icon-card-header-primary" /> Contato</CardTitle></CardHeader>
+                   <CardContent className="content-card-seller-contact">
+                       {sellerProfile.email && (<div className="item-seller-contact"><Mail className="icon-seller-contact" /><a href={`mailto:${sellerProfile.email}`} className="link-seller-contact">{sellerProfile.email}</a></div>)}
+                       {sellerProfile.phone && (<div className="item-seller-contact"><Phone className="icon-seller-contact" /><a href={`tel:${sellerProfile.phone}`} className="link-seller-contact">{sellerProfile.phone}</a></div>)}
+                       {fullAddress && (<div className="item-seller-contact-start"><Landmark className="icon-seller-contact-start" /><p className="text-seller-address">{fullAddress}</p></div>)}
+                       {sellerProfile.website && (<div className="item-seller-contact"><Globe className="icon-seller-contact" /><a href={sellerProfile.website.startsWith('http') ? sellerProfile.website : `https://${sellerProfile.website}`} target="_blank" rel="noopener noreferrer" className="link-seller-contact">{sellerProfile.website.replace(/^https?:\/\//, '')}</a></div>)}
                    </CardContent>
                 </Card>
             </div>
           </section>
 
-          <Separator className="print:hidden"/>
+          <Separator className="separator-print-hidden"/>
 
           {sortedLots.length > 0 && (
-            <section className="pt-6" data-ai-id="seller-details-related-lots-section">
-              <h2 className="text-2xl font-bold mb-6 font-headline flex items-center"><TrendingUp className="h-6 w-6 mr-2 text-primary" /> Lotes de {sellerProfile.name}</h2>
+            <section className="section-seller-lots" data-ai-id="seller-details-related-lots-section">
+              <h2 className="header-seller-lots-title"><TrendingUp className="icon-seller-lots-header" /> Lotes de {sellerProfile.name}</h2>
               <BidExpertSearchResultsFrame
                   items={paginatedLots}
                   totalItemsCount={sortedLots.length}
@@ -276,8 +276,8 @@ export default function SellerDetailsPage() {
           )}
 
           {sortedLots.length === 0 && !isLoading && (
-            <Card className="shadow-sm mt-8" data-ai-id="seller-details-no-lots">
-              <CardContent className="text-center py-10"><p className="text-muted-foreground">Nenhum lote ativo encontrado para este comitente no momento.</p></CardContent>
+            <Card className="card-seller-empty-lots" data-ai-id="seller-details-no-lots">
+              <CardContent className="content-card-seller-empty"><p className="text-seller-empty-lots-msg">Nenhum lote ativo encontrado para este comitente no momento.</p></CardContent>
             </Card>
           )}
         </div>

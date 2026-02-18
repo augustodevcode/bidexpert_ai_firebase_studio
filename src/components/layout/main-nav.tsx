@@ -36,16 +36,17 @@ export const HistoryListItem = forwardRef<
       href={`/auctions/${item.auctionId}/lots/${item.publicId || item.id}`}
       ref={ref}
       className={cn(
-        "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
+        "link-history-item",
         className
       )}
       onClick={onClick}
+      data-ai-id={`history-item-${item.id}`}
       {...props}
     >
-      <div className="relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
-        <Image src={item.imageUrl || 'https://placehold.co/120x100.png'} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
+      <div className="wrapper-history-item-image" data-ai-id="history-item-image-wrapper">
+        <Image src={item.imageUrl || 'https://placehold.co/120x100.png'} alt={item.title} fill className="img-history-item" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
       </div>
-      <span className="truncate flex-grow text-foreground/90">{item.title}</span>
+      <span className="text-history-item-title">{item.title}</span>
     </Link>
   );
 });
@@ -123,7 +124,7 @@ export default function MainNav({
 
   if (isMobile) {
     return (
-      <nav className={cn('flex flex-col gap-1', className)} {...props}>
+      <nav className={cn('nav-mobile-container', className)} {...props} data-ai-id="nav-mobile">
         {items.map((item) => (
           item.href && !item.isMegaMenu ? (
             <Link
@@ -131,15 +132,16 @@ export default function MainNav({
               href={item.href}
               onClick={onLinkClick}
               className={cn(
-                'text-md font-medium transition-colors hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md',
-                pathname === item.href ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent/50'
+                'link-mobile-nav',
+                pathname === item.href ? 'link-mobile-active' : 'link-mobile-inactive'
               )}
+              data-ai-id={`nav-mobile-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
             >
-              {item.icon && <item.icon className="h-4 w-4" />}
+              {item.icon && <item.icon className="icon-mobile-nav" />}
               <span>{item.label}</span>
             </Link>
           ) : item.isMegaMenu && item.contentKey ? (
-            <div key={item.label} className="py-1">
+            <div key={item.label} className="wrapper-mobile-megamenu" data-ai-id={`nav-mobile-megamenu-${item.contentKey}`}>
                 <Link
                     href={item.href || '#'}
                     onClick={(e) => {
@@ -149,45 +151,46 @@ export default function MainNav({
                         }
                     }}
                     className={cn(
-                        'text-md font-medium transition-colors hover:text-primary flex items-center justify-between gap-2 py-2.5 px-3 rounded-md',
-                        pathname === item.href ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent/50'
+                        'link-mobile-megamenu-trigger',
+                        pathname === item.href ? 'link-mobile-active' : 'link-mobile-inactive'
                     )}
+                    data-ai-id={`nav-mobile-megamenu-trigger-${item.contentKey}`}
                 >
-                    <div className="flex items-center gap-2">
-                        {item.icon && <item.icon className="h-4 w-4" />}
+                    <div className="wrapper-mobile-megamenu-label">
+                        {item.icon && <item.icon className="icon-mobile-nav" />}
                         <span>{item.label}</span>
                     </div>
-                    {item.contentKey !== 'history' && <ChevronDown className="h-4 w-4"/>}
+                    {item.contentKey !== 'history' && <ChevronDown className="icon-mobile-chevron"/>}
                 </Link>
-                <div className="pl-6 mt-1 space-y-0.5">
+                <div className="wrapper-mobile-megamenu-content" data-ai-id={`nav-mobile-megamenu-content-${item.contentKey}`}>
                     {item.contentKey === 'categories' && searchCategories.slice(0,3).map(cat => (
-                        <Link key={cat.slug} href={`/category/${cat.slug}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{cat.name}</Link>
+                        <Link key={cat.slug} href={`/category/${cat.slug}`} onClick={onLinkClick} className="link-mobile-subitem" data-ai-id={`nav-mobile-category-${cat.slug}`}>{cat.name}</Link>
                     ))}
-                    {item.contentKey === 'categories' && <Link href="/search?type=lots&tab=categories" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todas categorias</Link>}
+                    {item.contentKey === 'categories' && <Link href="/search?type=lots&tab=categories" onClick={onLinkClick} className="link-mobile-view-all" data-ai-id="nav-mobile-categories-view-all">Ver todas categorias</Link>}
 
                     {item.contentKey === 'modalities' && modalityMegaMenuGroups[0].items.map(mod => (
-                          <Link key={mod.href} href={mod.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{mod.label}</Link>
+                          <Link key={mod.href} href={mod.href} onClick={onLinkClick} className="link-mobile-subitem" data-ai-id={`nav-mobile-modality-${mod.label.toLowerCase().replace(/\s+/g, '-')}`}>{mod.label}</Link>
                     ))}
                       {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).slice(0,4).map(con => (
-                          <Link key={con.href} href={con.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{con.label}</Link>
+                          <Link key={con.href} href={con.href} onClick={onLinkClick} className="link-mobile-subitem" data-ai-id={`nav-mobile-consignor-${con.label.toLowerCase().replace(/\s+/g, '-')}`}>{con.label}</Link>
                     ))}
-                    {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).length > 4 && <Link href="/sellers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos comitentes</Link>}
+                    {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).length > 4 && <Link href="/sellers" onClick={onLinkClick} className="link-mobile-view-all" data-ai-id="nav-mobile-consignors-view-all">Ver todos comitentes</Link>}
 
                     {item.contentKey === 'auctioneers' && auctioneers.slice(0,3).map(auc => (
-                        <Link key={auc.id} href={`/auctioneers/${auc.slug || auc.publicId || auc.id}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{auc.name}</Link>
+                        <Link key={auc.id} href={`/auctioneers/${auc.slug || auc.publicId || auc.id}`} onClick={onLinkClick} className="link-mobile-subitem" data-ai-id={`nav-mobile-auctioneer-${auc.id}`}>{auc.name}</Link>
                     ))}
-                      {item.contentKey === 'auctioneers' && auctioneers.length > 3 && <Link href="/auctioneers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos leiloeiros</Link>}
+                      {item.contentKey === 'auctioneers' && auctioneers.length > 3 && <Link href="/auctioneers" onClick={onLinkClick} className="link-mobile-view-all" data-ai-id="nav-mobile-auctioneers-view-all">Ver todos leiloeiros</Link>}
 
                      {item.contentKey === 'history' && HistoryListItemComponent && (
-                        <div className="mt-2 space-y-1 max-h-60 overflow-y-auto">
+                        <div className="wrapper-mobile-history" data-ai-id="nav-mobile-history-list">
                             {recentlyViewedItems.length === 0 ? (
-                                <p className="text-xs text-muted-foreground text-center py-2">Nenhum item visto recentemente.</p>
+                                <p className="text-history-empty">Nenhum item visto recentemente.</p>
                             ) : (
                                 recentlyViewedItems.slice(0, 5).map(rvItem => (
                                     <HistoryListItemComponent key={rvItem.id} item={rvItem} onClick={onLinkClick} />
                                 ))
                             )}
-                             <Link href="/dashboard/history" onClick={onLinkClick} className="block text-xs text-primary hover:underline text-center pt-1">Ver Histórico Completo</Link>
+                             <Link href="/dashboard/history" onClick={onLinkClick} className="link-mobile-history-view-all" data-ai-id="nav-mobile-history-view-all">Ver Histórico Completo</Link>
                         </div>
                     )}
                 </div>
@@ -266,17 +269,18 @@ export default function MainNav({
 
 
             return (
-              <NavigationMenuItem key={item.label} value={item.label}>
+              <NavigationMenuItem key={item.label} value={item.label} data-ai-id={`nav-desktop-item-${item.contentKey}`}>
                  <NavigationMenuTrigger
                   className={cn(
                     navigationMenuTriggerStyle(),
-                    isActiveTrigger && 'bg-accent text-primary font-semibold'
+                    isActiveTrigger && 'trigger-nav-active'
                   )}
+                  data-ai-id={`nav-desktop-trigger-${item.contentKey}`}
                 >
-                  {item.icon && <item.icon className="mr-1.5 h-4 w-4" /> }
+                  {item.icon && <item.icon className="icon-nav-desktop" /> }
                   {item.label}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent align={item.megaMenuAlign || "start"}>
+                <NavigationMenuContent align={item.megaMenuAlign || "start"} data-ai-id={`nav-desktop-content-${item.contentKey}`}>
                   {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
 
                   {megaMenuPropsForTwoColumn && (item.contentKey === 'modalities' || item.contentKey === 'consignors' || item.contentKey === 'auctioneers') && (
@@ -284,27 +288,28 @@ export default function MainNav({
                   )}
 
                   {item.contentKey === 'history' && HistoryListItemComponent && (
-                     <div className="w-80 p-2">
-                        <div className="flex justify-between items-center p-2 border-b mb-1">
-                            <span className="text-sm font-medium text-foreground flex items-center"><History className="mr-1.5 h-4 w-4"/> Histórico</span>
+                     <div className="wrapper-history-dropdown" data-ai-id="nav-desktop-history-dropdown">
+                        <div className="header-history-dropdown" data-ai-id="nav-desktop-history-header">
+                            <span className="text-history-dropdown-header"><History className="icon-history-dropdown"/> Histórico</span>
                         </div>
                         {recentlyViewedItems.length === 0 ? (
-                            <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
+                            <p className="text-history-empty-dropdown">Nenhum item visto recentemente.</p>
                         ) : (
-                            <ul className="max-h-80 overflow-y-auto space-y-0.5">
+                            <ul className="list-history-dropdown" data-ai-id="nav-desktop-history-list">
                                 {recentlyViewedItems.slice(0, 5).map(rvItem => (
-                                <li key={rvItem.id}>
+                                <li key={rvItem.id} className="item-history-dropdown">
                                     <HistoryListItemComponent item={rvItem} onClick={onLinkClick} />
                                 </li>
                                 ))}
                             </ul>
                         )}
-                        <div className="border-t mt-1 pt-1">
+                        <div className="footer-history-dropdown" data-ai-id="nav-desktop-history-footer">
                             <NavigationMenuLink asChild>
                                 <Link
                                     href="/dashboard/history"
-                                    className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto bg-transparent hover:bg-accent")}
+                                    className="link-history-view-all"
                                     onClick={onLinkClick}
+                                    data-ai-id="nav-desktop-history-view-all"
                                 >
                                 Ver Histórico Completo
                                 </Link>
@@ -318,19 +323,20 @@ export default function MainNav({
           }
           return (
             item.href ? (
-              <NavigationMenuItem key={item.href}>
+              <NavigationMenuItem key={item.href} data-ai-id={`nav-desktop-item-${item.label.toLowerCase().replace(/\s+/g, '-')}`}>
                 <NavigationMenuLink asChild>
                   <Link
                     href={item.href}
                     className={cn(
                       navigationMenuTriggerStyle(),
                       pathname === item.href
-                        ? 'bg-accent text-primary font-semibold'
-                        : 'text-foreground/80 hover:text-primary hover:bg-accent/70 focus:bg-accent/70'
+                        ? 'link-nav-desktop-active'
+                        : 'link-nav-desktop-inactive'
                     )}
                     onClick={onLinkClick}
+                    data-ai-id={`nav-desktop-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    {item.icon && <item.icon className="mr-1.5 h-4 w-4 flex-shrink-0" />}
+                    {item.icon && <item.icon className="icon-nav-desktop" />}
                     {item.label}
                   </Link>
                 </NavigationMenuLink>

@@ -48,25 +48,25 @@ export default function StickyBidBar({ lot, auction, onBidClick, isOpen }: Stick
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-background/95 backdrop-blur-sm border-t shadow-lg px-4 py-3 animate-in slide-in-from-bottom-4 duration-300"
+      className="wrapper-sticky-bid-bar"
       data-ai-id="sticky-bid-bar"
     >
-      <div className="flex items-center justify-between max-w-lg mx-auto gap-4">
-        <div className="flex flex-col min-w-0">
-          <span className="text-xs text-muted-foreground truncate">{displayPrice.label}</span>
-          <span className="text-lg font-bold text-primary font-mono tabular-nums">
+      <div className="container-sticky-bid-bar" data-ai-id="sticky-bid-container">
+        <div className="wrapper-sticky-bid-info" data-ai-id="sticky-bid-info">
+          <span className="text-sticky-bid-label">{displayPrice.label}</span>
+          <span className="text-sticky-bid-value">
             R$ {displayPrice.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
         <Button
           onClick={handleClick}
           size="lg"
-          className="bg-green-600 hover:bg-green-700 text-white shrink-0 gap-2"
+          className="btn-sticky-bid-action"
           data-ai-id="sticky-bid-button"
         >
-          <Gavel className="h-4 w-4" />
+          <Gavel className="icon-sticky-bid" />
           Fazer Lance
-          <ChevronUp className="h-3 w-3" />
+          <ChevronUp className="icon-sticky-bid-small" />
         </Button>
       </div>
     </div>

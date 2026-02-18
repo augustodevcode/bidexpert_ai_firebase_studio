@@ -91,40 +91,40 @@ export default function DealOfTheDay({
   const soldPercentage = Math.min((lot.bidsCount / 20) * 100, 95); // Simulated progress
 
   return (
-    <section className="py-10 md:py-14 bg-gradient-to-r from-primary/5 via-background to-primary/5" data-testid="deal-of-the-day">
-      <div className="container mx-auto px-4">
+    <section className="section-deal-of-the-day" data-ai-id="deal-of-the-day">
+      <div className="container-deal-of-the-day">
         {/* Section header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-destructive/10 rounded-lg">
-              <Flame className="h-6 w-6 text-destructive" />
+        <div className="wrapper-deal-header" data-ai-id="deal-header">
+          <div className="wrapper-deal-title-section">
+            <div className="wrapper-deal-icon">
+              <Flame className="icon-deal-flame" />
             </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold">{title}</h2>
+            <div className="wrapper-deal-text">
+              <h2 className="header-deal-title">{title}</h2>
               {deal.urgencyMessage && (
-                <p className="text-muted-foreground text-sm">{deal.urgencyMessage}</p>
+                <p className="text-deal-urgency">{deal.urgencyMessage}</p>
               )}
             </div>
           </div>
 
           {/* Countdown */}
-          <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-destructive" />
-            <div className="flex gap-1">
+          <div className="wrapper-deal-countdown" data-ai-id="deal-countdown">
+            <Clock className="icon-deal-clock" />
+            <div className="wrapper-countdown-segments">
               {[
                 { value: countdown.days, label: 'dias' },
                 { value: countdown.hours, label: 'hrs' },
                 { value: countdown.minutes, label: 'min' },
                 { value: countdown.seconds, label: 'seg' },
               ].map((item, index) => (
-                <div key={index} className="text-center">
+                <div key={index} className="wrapper-countdown-item">
                   <div className={cn(
-                    "min-w-[3rem] px-2 py-1 rounded-md font-mono font-bold text-xl",
-                    isExpired ? "bg-muted text-muted-foreground" : "bg-destructive text-destructive-foreground"
+                    "container-countdown-value",
+                    isExpired ? "bg-muted-expired" : "bg-active-expired"
                   )}>
                     {String(item.value).padStart(2, '0')}
                   </div>
-                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                  <span className="text-countdown-label">{item.label}</span>
                 </div>
               ))}
             </div>
@@ -133,38 +133,38 @@ export default function DealOfTheDay({
 
         {/* Deal card */}
         <Card className={cn(
-          "overflow-hidden",
-          isExpired && "opacity-60"
-        )}>
-          <CardContent className="p-0">
-            <div className="grid md:grid-cols-2 gap-0">
+          "card-deal-large",
+          isExpired && "card-deal-expired"
+        )} data-ai-id="deal-card">
+          <CardContent className="content-card-deal">
+            <div className="grid-deal-card-layout">
               {/* Image */}
-              <div className="relative aspect-[4/3] md:aspect-auto bg-muted">
+              <div className="wrapper-deal-image-container" data-ai-id="deal-image-wrapper">
                 {lot.imageUrl ? (
                   <Image
                     src={lot.imageUrl}
                     alt={lot.title}
                     fill
-                    className="object-cover"
+                    className="img-deal-featured"
                     priority
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                    <Eye className="h-16 w-16 text-primary/40" />
+                  <div className="wrapper-deal-image-placeholder">
+                    <Eye className="icon-deal-placeholder" />
                   </div>
                 )}
 
                 {/* Discount badge */}
-                <div className="absolute top-4 left-4">
-                  <Badge className="bg-destructive text-lg px-3 py-1 font-bold">
+                <div className="wrapper-deal-discount-badge" data-ai-id="deal-discount">
+                  <Badge className="badge-deal-discount">
                     -{deal.discountPercentage}%
                   </Badge>
                 </div>
 
                 {/* Status badges */}
-                <div className="absolute top-4 right-4 flex flex-col gap-2">
+                <div className="wrapper-deal-status-badges" data-ai-id="deal-badges">
                   {lot.badges.slice(0, 2).map((badge, index) => (
-                    <Badge key={index} variant="secondary" className="bg-background/90">
+                    <Badge key={index} variant="secondary" className="badge-deal-status-overlay">
                       {badge.label}
                     </Badge>
                   ))}
@@ -172,64 +172,67 @@ export default function DealOfTheDay({
               </div>
 
               {/* Content */}
-              <div className="p-6 md:p-8 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-2xl md:text-3xl font-bold mb-4 line-clamp-2">
+              <div className="wrapper-deal-content-info" data-ai-id="deal-info">
+                <div className="wrapper-deal-title-pricing">
+                  <h3 className="header-deal-lot-title">
                     {lot.title}
                   </h3>
 
                   {/* Pricing */}
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground line-through text-lg">
+                  <div className="wrapper-deal-pricing" data-ai-id="deal-pricing">
+                    <div className="wrapper-original-savings">
+                      <span className="text-deal-original-price">
                         {formatCurrency(deal.originalPrice)}
                       </span>
-                      <Badge variant="outline" className="text-green-600 border-green-600">
-                        <TrendingDown className="h-3 w-3 mr-1" />
+                      <Badge variant="outline" className="badge-deal-savings">
+                        <TrendingDown className="icon-deal-savings" />
                         Economize {formatCurrency(savingsAmount)}
                       </Badge>
                     </div>
-                    <p className="text-4xl md:text-5xl font-bold text-primary">
+                    <p className="text-deal-current-price">
                       {formatCurrency(lot.currentPrice)}
                     </p>
                     {lot.minimumPrice && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-deal-minimum-price">
                         Lance mínimo: {formatCurrency(lot.minimumPrice)}
                       </p>
                     )}
                   </div>
 
                   {/* Progress */}
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
+                  <div className="wrapper-deal-progress" data-ai-id="deal-progress">
+                    <div className="wrapper-progress-labels">
+                      <span className="text-deal-bids-count">
                         {lot.bidsCount} lances realizados
                       </span>
-                      <span className="font-medium text-destructive">
+                      <span className="text-deal-demand-high">
                         Alta demanda!
                       </span>
                     </div>
-                    <Progress value={soldPercentage} className="h-2" />
+                    <Progress value={soldPercentage} className="progress-deal-demand" />
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="wrapper-deal-actions" data-ai-id="deal-actions">
                   <Button
                     size="lg"
-                    className="flex-1"
+                    className="btn-deal-bid-now"
                     disabled={isExpired}
                     asChild
+                    data-ai-id="deal-bid-btn"
                   >
                     <Link href={`/lots/${lot.id}`}>
                       {isExpired ? 'Oferta encerrada' : 'Dar um lance'}
-                      {!isExpired && <ArrowRight className="h-4 w-4 ml-2" />}
+                      {!isExpired && <ArrowRight className="icon-deal-btn-arrow" />}
                     </Link>
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
                     asChild
+                    className="btn-deal-view-more"
+                    data-ai-id="deal-view-more-btn"
                   >
                     <Link href={`/${segmentId}?urgente=true`}>
                       Ver mais ofertas

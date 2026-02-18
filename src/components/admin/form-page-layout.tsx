@@ -55,52 +55,52 @@ function FormToolbar({
   
   if (isViewMode) {
     return (
-        <div className="flex justify-between items-center w-full" data-ai-id="form-page-toolbar-view-mode">
-             <div className="flex items-center gap-1">
-                <Button size="icon" variant="outline" onClick={onNavigatePrev} disabled={!hasPrev} data-ai-id="form-page-btn-prev"><ChevronLeft className="h-4 w-4" /></Button>
-                <Button size="icon" variant="outline" onClick={onNavigateNext} disabled={!hasNext} data-ai-id="form-page-btn-next"><ChevronRight className="h-4 w-4" /></Button>
+        <div className="wrapper-form-toolbar-view" data-ai-id="form-page-toolbar-view-mode">
+             <div className="wrapper-nav-controls">
+                <Button size="icon" variant="outline" onClick={onNavigatePrev} disabled={!hasPrev} data-ai-id="form-page-btn-prev" className="btn-nav-prev"><ChevronLeft className="icon-nav-control" /></Button>
+                <Button size="icon" variant="outline" onClick={onNavigateNext} disabled={!hasNext} data-ai-id="form-page-btn-next" className="btn-nav-next"><ChevronRight className="icon-nav-control" /></Button>
              </div>
-             <Button onClick={onEnterEditMode} data-ai-id="form-page-btn-edit-mode">
-                <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
+             <Button onClick={onEnterEditMode} data-ai-id="form-page-btn-edit-mode" className="btn-enter-edit">
+                <Edit className="icon-btn-start" /> Entrar em Modo de Edição
              </Button>
         </div>
     )
   }
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-2" data-ai-id="form-page-toolbar-edit-mode">
-      <div className="flex items-center gap-2">
+    <div className="wrapper-form-toolbar-edit" data-ai-id="form-page-toolbar-edit-mode">
+      <div className="wrapper-toolbar-actions-left">
         {onDelete && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isSubmitting} data-ai-id="form-page-btn-delete-trigger"><Trash2 className="mr-2 h-4 w-4" /> Excluir</Button>
+                <Button variant="destructive" size="sm" disabled={isSubmitting} data-ai-id="form-page-btn-delete-trigger" className="btn-delete-record"><Trash2 className="icon-btn-start" /> Excluir</Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                  <AlertDialogDescription>
+              <AlertDialogContent className="content-alert-dialog">
+                <AlertDialogHeader className="header-alert-dialog">
+                  <AlertDialogTitle className="title-alert-dialog">Você tem certeza?</AlertDialogTitle>
+                  <AlertDialogDescription className="desc-alert-dialog">
                     Esta ação não pode ser desfeita. Isso irá excluir permanentemente este registro do banco de dados.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90" data-ai-id="form-page-btn-delete-confirm">Confirmar Exclusão</AlertDialogAction>
+                <AlertDialogFooter className="footer-alert-dialog">
+                  <AlertDialogCancel className="btn-alert-cancel">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDelete} className="btn-alert-confirm" data-ai-id="form-page-btn-delete-confirm">Confirmar Exclusão</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
         )}
-        <Button variant="outline" size="sm" disabled={true}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
+        <Button variant="outline" size="sm" disabled={true} className="btn-print-record"><Printer className="icon-btn-start" /> Imprimir</Button>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="wrapper-toolbar-actions-right">
         {onSaveAndNew && (
-            <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting || !isValid} data-ai-id="form-page-btn-save-new">
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+            <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting || !isValid} data-ai-id="form-page-btn-save-new" className="btn-save-new-record">
+                {isSubmitting ? <Loader2 className="icon-btn-spinner"/> : <Save className="icon-btn-start" />}
                 Salvar e Novo
             </Button>
         )}
         {onSave && (
-            <Button onClick={onSave} disabled={isSubmitting || !isValid} data-ai-id="form-page-btn-save">
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+            <Button onClick={onSave} disabled={isSubmitting || !isValid} data-ai-id="form-page-btn-save" className="btn-save-record">
+                {isSubmitting ? <Loader2 className="icon-btn-spinner"/> : <Save className="icon-btn-start" />}
                 Salvar
             </Button>
         )}
@@ -135,26 +135,26 @@ export default function FormPageLayout({
 
   if (isLoading) {
     return (
-        <div className="flex justify-center items-center h-full" data-ai-id="form-page-loading-spinner">
-            <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="wrapper-form-loading" data-ai-id="form-page-loading-spinner">
+            <Loader2 className="icon-form-loading-spinner" />
         </div>
     );
   }
 
   return (
-    <Card className="shadow-lg w-full" data-ai-id="form-page-layout-card">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-            <div className="flex items-center gap-3">
-              {Icon && <Icon className="h-8 w-8 text-primary" />}
-              <div>
-                <CardTitle className="text-2xl font-bold font-headline">{formTitle}</CardTitle>
-                <CardDescription>{formDescription}</CardDescription>
+    <Card className="card-form-page" data-ai-id="form-page-layout-card">
+      <CardHeader className="header-card-form">
+        <div className="wrapper-form-header-content">
+            <div className="wrapper-form-title-section">
+              {Icon && <Icon className="icon-form-header" />}
+              <div className="wrapper-form-title-text">
+                <CardTitle className="header-form-title">{formTitle}</CardTitle>
+                <CardDescription className="desc-form-subtitle">{formDescription}</CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="wrapper-form-header-actions">
                 {headerActions}
-                <div className="hidden sm:block">
+                <div className="wrapper-desktop-toolbar">
                      <FormToolbar 
                         isViewMode={isViewMode} 
                         isSubmitting={isSubmitting}
@@ -172,12 +172,12 @@ export default function FormPageLayout({
             </div>
         </div>
       </CardHeader>
-      <fieldset disabled={isViewMode || isSubmitting} className="group" data-ai-id="form-page-fieldset">
-        <CardContent className="p-6 bg-secondary/20 group-disabled:bg-background/20 group-disabled:cursor-not-allowed">
+      <fieldset disabled={isViewMode || isSubmitting} className="group-form-fieldset" data-ai-id="form-page-fieldset">
+        <CardContent className="content-card-form" data-ai-id="form-page-content">
             {children}
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-2 p-6 border-t">
-             <div className="sm:hidden w-full">
+        <CardFooter className="footer-card-form" data-ai-id="form-page-footer">
+             <div className="wrapper-mobile-toolbar">
                  <FormToolbar 
                     isViewMode={isViewMode} 
                     isSubmitting={isSubmitting}
@@ -193,9 +193,9 @@ export default function FormPageLayout({
                  />
             </div>
             {!isViewMode && (
-                <div className="w-full flex justify-end">
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting} data-ai-id="form-page-btn-cancel">
-                        <XCircle className="mr-2 h-4 w-4"/> Cancelar
+                <div className="wrapper-cancel-action">
+                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting} data-ai-id="form-page-btn-cancel" className="btn-form-cancel">
+                        <XCircle className="icon-btn-start"/> Cancelar
                     </Button>
                 </div>
             )}

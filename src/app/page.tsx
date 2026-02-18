@@ -16,17 +16,17 @@ export const dynamic = 'force-dynamic';
 function HomePageSkeleton() {
     return (
         <div className="container-homepage-skeleton" data-ai-id="homepage-skeleton">
-            <Skeleton className="skeleton-hero-banner" />
-            <div className="section-skeleton-category">
-                <Skeleton className="skeleton-section-title" />
-                <div className="grid-skeleton-items">
-                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="card-skeleton-item" />)}
+            <Skeleton className="skeleton-hero-banner" data-ai-id="homepage-skeleton-hero" />
+            <div className="section-skeleton-category" data-ai-id="homepage-skeleton-section-1">
+                <Skeleton className="skeleton-section-title" data-ai-id="homepage-skeleton-title-1" />
+                <div className="grid-skeleton-items" data-ai-id="homepage-skeleton-grid-1">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="card-skeleton-item" data-ai-id={`homepage-skeleton-card-1-${i}`} />)}
                 </div>
             </div>
-            <div className="section-skeleton-category">
-                <Skeleton className="skeleton-section-title" />
-                <div className="grid-skeleton-items">
-                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="card-skeleton-item" />)}
+            <div className="section-skeleton-category" data-ai-id="homepage-skeleton-section-2">
+                <Skeleton className="skeleton-section-title" data-ai-id="homepage-skeleton-title-2" />
+                <div className="grid-skeleton-items" data-ai-id="homepage-skeleton-grid-2">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="card-skeleton-item" data-ai-id={`homepage-skeleton-card-2-${i}`} />)}
                 </div>
             </div>
         </div>

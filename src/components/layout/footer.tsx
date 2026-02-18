@@ -26,27 +26,27 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="border-t bg-secondary/50 text-secondary-foreground mt-auto">
-      <div className="container mx-auto px-4 py-10 md:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+    <footer className="footer-platform" data-ai-id="footer-main">
+      <div className="container-footer-content" data-ai-id="footer-container">
+        <div className="grid-footer-links" data-ai-id="footer-links-grid">
           {/* Coluna 1: Logo e Slogan */}
-          <div className="sm:col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center space-x-2 mb-3">
-              <Coins className="h-8 w-8 text-primary" />
-              <span className="font-bold text-2xl text-foreground">BidExpert</span>
+          <div className="wrapper-footer-brand" data-ai-id="footer-brand-column">
+            <Link href="/" className="link-footer-logo" data-ai-id="footer-logo-link">
+              <Coins className="icon-footer-logo" data-ai-id="footer-logo-icon" />
+              <span className="text-footer-brand" data-ai-id="footer-brand-name">BidExpert</span>
             </Link>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-footer-slogan" data-ai-id="footer-slogan">
               Sua plataforma especialista em leilões online. Encontre itens raros e faça seus lances com confiança.
             </p>
           </div>
 
           {/* Coluna 2: Links Rápidos */}
-          <div>
-            <h3 className="text-md font-semibold text-foreground mb-3">Links Rápidos</h3>
-            <ul className="space-y-2">
+          <div className="wrapper-footer-quick-links" data-ai-id="footer-quick-links-column">
+            <h3 className="header-footer-section" data-ai-id="footer-quick-links-header">Links Rápidos</h3>
+            <ul className="list-footer-links" data-ai-id="footer-quick-links-list">
               {quickLinks.map(link => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <li key={link.href} className="item-footer-link" data-ai-id={`footer-quick-link-${link.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                  <Link href={link.href} className="link-footer-item">
                     {link.label}
                   </Link>
                 </li>
@@ -55,13 +55,13 @@ export default function Footer() {
           </div>
 
           {/* Coluna 3: Legal */}
-          <div>
-            <h3 className="text-md font-semibold text-foreground mb-3">Legal</h3>
-            <ul className="space-y-2">
+          <div className="wrapper-footer-legal-links" data-ai-id="footer-legal-links-column">
+            <h3 className="header-footer-section" data-ai-id="footer-legal-header">Legal</h3>
+            <ul className="list-footer-links" data-ai-id="footer-legal-links-list">
               {legalLinks.map(link => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center">
-                    {link.icon && <span className="mr-1.5">{link.icon}</span>}
+                <li key={link.href} className="item-footer-link" data-ai-id={`footer-legal-link-${link.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                  <Link href={link.href} className="link-footer-item">
+                    {link.icon && <span className="icon-footer-legal" data-ai-id="footer-legal-icon">{link.icon}</span>}
                     {link.label}
                   </Link>
                 </li>
@@ -70,11 +70,11 @@ export default function Footer() {
           </div>
 
           {/* Coluna 4: Redes Sociais */}
-          <div>
-             <h3 className="text-md font-semibold text-foreground mb-3">Siga-nos</h3>
-             <div className="flex space-x-4">
+          <div className="wrapper-footer-social-links" data-ai-id="footer-social-column">
+             <h3 className="header-footer-section" data-ai-id="footer-social-header">Siga-nos</h3>
+             <div className="list-footer-social" data-ai-id="footer-social-list">
                 {socialLinks.map(social => (
-                    <Link key={social.label} href={social.href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors" aria-label={social.label}>
+                    <Link key={social.label} href={social.href} target="_blank" rel="noopener noreferrer" className="link-footer-social" aria-label={social.label} data-ai-id={`footer-social-link-${social.label.toLowerCase()}`}>
                         {social.icon}
                     </Link>
                 ))}
@@ -82,13 +82,13 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-8 flex flex-col items-center gap-2">
+        <div className="section-footer-bottom" data-ai-id="footer-bottom-section">
           {/* GAP 5.28: SSL Trust Badge */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground" data-ai-id="footer-ssl-badge">
-            <ShieldCheck className="h-4 w-4 text-green-600" />
-            <span>Ambiente Seguro · Conexão Criptografada SSL/TLS · Dados Protegidos</span>
+          <div className="wrapper-footer-ssl-badge" data-ai-id="footer-ssl-badge">
+            <ShieldCheck className="icon-footer-ssl" />
+            <span className="text-footer-ssl">Ambiente Seguro · Conexão Criptografada SSL/TLS · Dados Protegidos</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-footer-copy" data-ai-id="footer-copyright">
             &copy; {new Date().getFullYear()} BidExpert. Todos os direitos reservados.
           </p>
           {/* O DevInfoIndicator agora é renderizado dentro de cada layout de painel */}

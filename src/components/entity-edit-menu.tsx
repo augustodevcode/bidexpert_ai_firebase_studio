@@ -119,41 +119,41 @@ export default function EntityEditMenu({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-primary/10" aria-label="Editar Entidade">
-                <Pencil className="h-3.5 w-3.5 text-primary" />
+              <Button variant="outline" size="icon" className="btn-entity-edit-trigger" aria-label="Editar Entidade" data-ai-id="entity-edit-trigger">
+                <Pencil className="icon-entity-edit-trigger" />
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent><p>Opções de Edição</p></TooltipContent>
         </Tooltip>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Edição Rápida</DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="menu-entity-edit-content" data-ai-id="entity-edit-dropdown">
+          <DropdownMenuLabel className="header-entity-edit">Edição Rápida</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsMediaModalOpen(true)}>
-            <ImageIcon className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={() => setIsMediaModalOpen(true)} className="item-entity-edit" data-ai-id="entity-edit-image">
+            <ImageIcon className="icon-entity-edit" />
             <span>Editar Imagem Principal</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsTitleModalOpen(true)}>
-            <TextCursorInput className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={() => setIsTitleModalOpen(true)} className="item-entity-edit" data-ai-id="entity-edit-title">
+            <TextCursorInput className="icon-entity-edit" />
             <span>Alterar Título</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleToggleFeatured}>
-            <Star className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={handleToggleFeatured} className="item-entity-edit" data-ai-id="entity-edit-featured">
+            <Star className="icon-entity-edit" />
             <span>{isFeatured ? 'Remover Destaque' : 'Destacar no Marketplace'}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {controlCenterUrl && (
-            <DropdownMenuItem asChild>
-              <Link href={controlCenterUrl}>
-                <LayoutDashboard className="mr-2 h-4 w-4" />
+            <DropdownMenuItem asChild className="item-entity-edit" data-ai-id="entity-edit-control-center">
+              <Link href={controlCenterUrl} className="link-entity-edit">
+                <LayoutDashboard className="icon-entity-edit" />
                 <span>Central do Leilão</span>
               </Link>
             </DropdownMenuItem>
           )}
           {controlCenterUrl && <DropdownMenuSeparator />}
-          <DropdownMenuItem asChild>
-            <Link href={adminEditUrl}>
-              <ExternalLink className="mr-2 h-4 w-4" />
+          <DropdownMenuItem asChild className="item-entity-edit" data-ai-id="entity-edit-full-edit">
+            <Link href={adminEditUrl} className="link-entity-edit">
+              <ExternalLink className="icon-entity-edit" />
               <span>Edição Completa</span>
             </Link>
           </DropdownMenuItem>

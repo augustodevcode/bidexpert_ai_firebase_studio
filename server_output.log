@@ -1,0 +1,11 @@
+
+🚀 Iniciando BidExpert na porta 9005...
+📝 Logs sendo registrados em: /app/logs/bidexpert-9005-2026-02-18.log
+
+
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+sh: 1: next: not found
+
+[2026-02-18T15:05:55.333Z] Processo encerrado com código 127

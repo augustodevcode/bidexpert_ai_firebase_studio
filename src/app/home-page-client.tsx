@@ -42,8 +42,8 @@ export default function HomePageClient(props: HomePageClientProps) {
 
   if (!platformSettings) {
     return (
-      <div className="text-center py-10">
-        <p className="text-destructive">Erro ao carregar as configurações da plataforma.</p>
+      <div className="wrapper-error-msg" data-ai-id="homepage-error-boundary">
+        <p className="text-error-msg" data-ai-id="homepage-error-text">Erro ao carregar as configurações da plataforma.</p>
       </div>
     );
   }
@@ -99,7 +99,7 @@ function HomeExperienceClassic({
   const isSuperOpportunitiesEnabled = platformSettings.marketingSiteAdsSuperOpportunitiesEnabled ?? true;
 
   return (
-    <div className="space-y-12 md:space-y-16 lg:space-y-20">
+    <div className="wrapper-homepage-experience-classic" data-ai-id="homepage-classic">
       <HeroSection />
 
       {closingSoonLots.length > 0 && isSuperOpportunitiesEnabled && (
@@ -118,18 +118,18 @@ function HomeExperienceClassic({
         />
       )}
 
-      <section className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl md:text-3xl font-bold font-headline">{lotsTitle}</h2>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
+      <section className="section-featured-lots" data-ai-id="homepage-featured-lots-section">
+        <div className="wrapper-section-header" data-ai-id="homepage-featured-lots-header">
+          <h2 className="header-section-title" data-ai-id="homepage-featured-lots-title">{lotsTitle}</h2>
+          <div className="wrapper-section-actions" data-ai-id="homepage-featured-lots-actions">
+            <Button variant="outline" size="sm" asChild className="btn-view-all" data-ai-id="homepage-view-all-lots">
               <Link href="/search?type=lots">
-                Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
+                Ver Todos <ArrowRight className="icon-arrow-right" />
               </Link>
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid-lots-grid-mode" data-ai-id="homepage-lots-grid">
           {lotsToDisplay.map(item => (
             <BidExpertCard
               key={item.id}
@@ -144,7 +144,7 @@ function HomeExperienceClassic({
 
       <TopCategories categories={categories.slice(0, 8)} />
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid-promo-cards" data-ai-id="homepage-promo-grid">
         <PromoCard
           title="Venda seus Ativos Conosco"
           description="Transforme seus bens em liquidez de forma rápida e segura. Nossa plataforma conecta você a milhares de compradores qualificados."
@@ -164,16 +164,16 @@ function HomeExperienceClassic({
         />
       </div>
 
-      <section className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl md:text-3xl font-bold font-headline">{auctionsTitle}</h2>
-          <Button variant="outline" size="sm" asChild>
+      <section className="section-featured-auctions" data-ai-id="homepage-featured-auctions-section">
+        <div className="wrapper-section-header" data-ai-id="homepage-featured-auctions-header">
+          <h2 className="header-section-title" data-ai-id="homepage-featured-auctions-title">{auctionsTitle}</h2>
+          <Button variant="outline" size="sm" asChild className="btn-view-all" data-ai-id="homepage-view-all-auctions">
             <Link href="/search?type=auctions">
-              Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
+              Ver Todos <ArrowRight className="icon-arrow-right" />
             </Link>
           </Button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid-lots-grid-mode" data-ai-id="homepage-auctions-grid">
           {auctionsToDisplay.map(item => (
             <BidExpertCard key={item.id} item={item} type="auction" platformSettings={platformSettings} />
           ))}
@@ -182,9 +182,9 @@ function HomeExperienceClassic({
 
       <FeaturedSellers sellers={featuredSellers} />
 
-      <section className="space-y-6">
-        <h2 className="text-2xl md:text-3xl font-bold font-headline text-center">Navegue por Categorias</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <section className="section-browse-categories" data-ai-id="homepage-categories-section">
+        <h2 className="header-section-title-centered" data-ai-id="homepage-categories-title">Navegue por Categorias</h2>
+        <div className="grid-categories-featured" data-ai-id="homepage-categories-grid">
           {featuredCategories.map(category => {
             const assets = getCategoryAssets(category.name);
             return (
@@ -275,23 +275,23 @@ function HomeExperienceBeta({
   };
 
   return (
-    <div className="space-y-10">
+    <div className="wrapper-homepage-experience-beta" data-ai-id="homepage-beta">
       {/* Hero Section com Stats */}
-      <section className="rounded-3xl glass-panel px-6 sm:px-8 py-8 sm:py-10">
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
-          <div className="flex-1 space-y-4">
-            <Badge variant="secondary" className="uppercase tracking-wide text-xs">
+      <section className="section-hero-beta" data-ai-id="homepage-beta-hero-section">
+        <div className="container-hero-beta" data-ai-id="homepage-beta-hero-container">
+          <div className="wrapper-hero-beta-content" data-ai-id="homepage-beta-hero-content">
+            <Badge variant="secondary" className="badge-hero-beta" data-ai-id="homepage-beta-badge">
               Radar de Leilões
             </Badge>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold font-headline text-foreground">
+            <h1 className="header-hero-beta" data-ai-id="homepage-beta-hero-title">
               Inteligência de mercado para decidir rápido e negociar melhor.
             </h1>
-            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl">{heroSupportCopy}</p>
-            <p className="text-muted-foreground/80 text-sm sm:text-base max-w-2xl">
+            <p className="text-hero-beta-desc" data-ai-id="homepage-beta-hero-desc">{heroSupportCopy}</p>
+            <p className="text-hero-beta-subdesc" data-ai-id="homepage-beta-hero-subdesc">
               Monitoramos seus leilões preferidos, alertas de estoque e a agenda da semana para que você foque apenas nos lances estratégicos.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Button size="lg" variant="secondary" asChild>
+            <div className="wrapper-hero-beta-actions" data-ai-id="homepage-beta-hero-actions">
+              <Button size="lg" variant="secondary" asChild className="btn-hero-beta-primary" data-ai-id="homepage-beta-hero-explore">
                 <Link href="/search?type=lots&sort=trending">Explorar oportunidades</Link>
               </Button>
               <RadarPreferencesModal 
@@ -299,30 +299,30 @@ function HomeExperienceBeta({
                 isLoggedIn={isLoggedIn}
                 onRequestLogin={handleRequestLogin}
                 trigger={
-                  <Button size="lg" variant="outline">
-                    <Settings className="h-4 w-4 mr-2" />
+                  <Button size="lg" variant="outline" className="btn-hero-beta-secondary" data-ai-id="homepage-beta-hero-alerts">
+                    <Settings className="icon-hero-beta-btn" />
                     Configurar Alertas
                   </Button>
                 }
               />
             </div>
-            <div className="flex flex-wrap gap-4 pt-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><Clock3 className="h-4 w-4" /> Atualizado em tempo real</div>
-              <div className="flex items-center gap-2"><Layers className="h-4 w-4" /> Curadoria inteligente de lotes</div>
-              <div className="flex items-center gap-2"><Bell className="h-4 w-4" /> Alertas personalizados</div>
+            <div className="wrapper-hero-beta-features" data-ai-id="homepage-beta-hero-features">
+              <div className="item-hero-beta-feature"><Clock3 className="icon-hero-beta-feature" /> Atualizado em tempo real</div>
+              <div className="item-hero-beta-feature"><Layers className="icon-hero-beta-feature" /> Curadoria inteligente de lotes</div>
+              <div className="item-hero-beta-feature"><Bell className="icon-hero-beta-feature" /> Alertas personalizados</div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full lg:w-[380px]">
+          <div className="grid-hero-beta-stats" data-ai-id="homepage-beta-stats-grid">
             {quickStats.map(stat => (
-              <Card key={stat.label} className="bg-secondary/50 border-border">
-                <CardHeader className="pb-2 p-3 sm:p-4">
-                  <CardDescription className="text-xs flex items-center gap-1">
-                    <stat.icon className="h-3.5 w-3.5" /> {stat.label}
+              <Card key={stat.label} className="card-hero-beta-stat" data-ai-id={`homepage-beta-stat-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                <CardHeader className="header-hero-beta-stat">
+                  <CardDescription className="desc-hero-beta-stat">
+                    <stat.icon className="icon-hero-beta-stat" /> {stat.label}
                   </CardDescription>
-                  <CardTitle className="text-xl sm:text-2xl text-foreground">{stat.value}</CardTitle>
+                  <CardTitle className="title-hero-beta-stat">{stat.value}</CardTitle>
                 </CardHeader>
-                <CardContent className="p-3 sm:p-4 pt-0">
-                  <p className="text-muted-foreground text-xs sm:text-sm">{stat.helper}</p>
+                <CardContent className="content-hero-beta-stat">
+                  <p className="helper-hero-beta-stat">{stat.helper}</p>
                 </CardContent>
               </Card>
             ))}
@@ -332,15 +332,15 @@ function HomeExperienceBeta({
 
       {/* CTA para usuários não logados */}
       {!isLoggedIn && (
-        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-primary/20">
-          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
-            <div className="text-center sm:text-left">
-              <h3 className="font-semibold text-lg">Configure seus alertas personalizados</h3>
-              <p className="text-muted-foreground text-sm">Crie uma conta gratuita e receba notificações sobre lotes que combinam com seu perfil.</p>
+        <Card className="card-cta-auth" data-ai-id="homepage-beta-cta-auth">
+          <CardContent className="content-cta-auth">
+            <div className="wrapper-cta-auth-text">
+              <h3 className="header-cta-auth">Configure seus alertas personalizados</h3>
+              <p className="desc-cta-auth">Crie uma conta gratuita e receba notificações sobre lotes que combinam com seu perfil.</p>
             </div>
-            <Button asChild>
+            <Button asChild className="btn-cta-auth" data-ai-id="homepage-beta-cta-auth-button">
               <Link href="/auth/register">
-                <LogIn className="h-4 w-4 mr-2" />
+                <LogIn className="icon-cta-auth" />
                 Criar conta grátis
               </Link>
             </Button>
@@ -349,34 +349,34 @@ function HomeExperienceBeta({
       )}
 
       {/* Radar de Oportunidades com fotos */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold font-headline">Radar de Oportunidades</h2>
-            <p className="text-muted-foreground">Lotes com maior competição e tempo crítico</p>
+      <section className="section-radar-opportunities" data-ai-id="homepage-beta-radar-section">
+        <div className="wrapper-section-header" data-ai-id="homepage-beta-radar-header">
+          <div className="wrapper-section-title">
+            <h2 className="header-section-title" data-ai-id="homepage-beta-radar-title">Radar de Oportunidades</h2>
+            <p className="desc-section-subtitle">Lotes com maior competição e tempo crítico</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="wrapper-section-actions">
             <RadarPreferencesModal 
               categories={categories} 
               isLoggedIn={isLoggedIn}
               onRequestLogin={handleRequestLogin}
             />
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild className="btn-view-all" data-ai-id="homepage-beta-radar-view-all">
               <Link href="/search?type=lots&sort=ending">Ver todos</Link>
             </Button>
           </div>
         </div>
         
         {highDemandLots.length === 0 ? (
-          <div className="text-center py-12 bg-muted/30 rounded-xl">
-            <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Nenhum lote ativo encontrado para o radar.</p>
-            <Button variant="outline" size="sm" className="mt-4" asChild>
+          <div className="wrapper-empty-state" data-ai-id="homepage-beta-radar-empty">
+            <Target className="icon-empty-state" />
+            <p className="text-empty-state">Nenhum lote ativo encontrado para o radar.</p>
+            <Button variant="outline" size="sm" className="btn-empty-state-action" asChild data-ai-id="homepage-beta-radar-empty-action">
               <Link href="/search?type=lots">Explorar todos os lotes</Link>
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid-radar-opportunities" data-ai-id="homepage-beta-radar-grid">
             {highDemandLots.map(lot => {
               const auction = allAuctions.find(a => a.id === lot.auctionId);
               return (
@@ -396,43 +396,43 @@ function HomeExperienceBeta({
       <RadarCalendar auctions={pipelineAuctions} />
 
       {/* Segmentos em Alta */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold font-headline">Segmentos em Alta</h2>
-            <p className="text-muted-foreground">Categorias com maior liquidez nos últimos dias</p>
+      <section className="section-trending-segments" data-ai-id="homepage-beta-segments-section">
+        <div className="wrapper-section-header" data-ai-id="homepage-beta-segments-header">
+          <div className="wrapper-section-title">
+            <h2 className="header-section-title" data-ai-id="homepage-beta-segments-title">Segmentos em Alta</h2>
+            <p className="desc-section-subtitle">Categorias com maior liquidez nos últimos dias</p>
           </div>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="btn-view-all" data-ai-id="homepage-beta-segments-view-all">
             <Link href="/search?type=lots&tab=categories">Ver todas</Link>
           </Button>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid-trending-segments" data-ai-id="homepage-beta-segments-grid">
           {strategicCategories.map(category => {
             const assets = getCategoryAssets(category.name);
             return (
-              <Card key={category.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
-                <Link href={`/category/${category.slug}`}>
-                  <div className="relative h-32 bg-gradient-to-br from-primary/20 to-primary/5">
+              <Card key={category.id} className="card-trending-segment" data-ai-id={`homepage-beta-segment-${category.slug}`}>
+                <Link href={`/category/${category.slug}`} className="link-card-trending">
+                  <div className="wrapper-trending-image" data-ai-id="homepage-beta-segment-image-wrapper">
                     {category.coverImageUrl && (
                       <div 
-                        className="absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity"
+                        className="img-trending-bg"
                         style={{ backgroundImage: `url(${category.coverImageUrl})` }}
                       />
                     )}
-                    <div className="absolute inset-0 p-4 flex flex-col justify-end">
-                      <Badge variant="secondary" className="w-fit mb-2">
+                    <div className="wrapper-trending-label">
+                      <Badge variant="secondary" className="badge-trending-count" data-ai-id="homepage-beta-segment-count">
                         {category.itemCount || 0} lotes disponíveis
                       </Badge>
-                      <h3 className="font-semibold text-lg">{category.name}</h3>
+                      <h3 className="header-trending-name">{category.name}</h3>
                     </div>
                   </div>
-                  <CardContent className="p-4">
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                  <CardContent className="content-trending-segment">
+                    <p className="text-trending-desc">
                       {category.description || 'Segmento com oportunidades em destaque.'}
                     </p>
-                    <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
-                      <span>Tendência</span>
-                      <Badge variant="outline" className="text-xs">
+                    <div className="wrapper-trending-footer">
+                      <span className="text-trending-footer-label">Tendência</span>
+                      <Badge variant="outline" className="badge-trending-label" data-ai-id="homepage-beta-segment-trend">
                         {category.trendLabel || 'Estável'}
                       </Badge>
                     </div>
@@ -445,13 +445,13 @@ function HomeExperienceBeta({
       </section>
 
       {/* CTA Final */}
-      <Card className="bg-muted/40">
-        <CardContent className="py-8 text-center">
-          <h3 className="text-xl font-semibold mb-2">Quer vender com protagonismo?</h3>
-          <p className="text-muted-foreground mb-4 max-w-xl mx-auto">
+      <Card className="card-cta-footer" data-ai-id="homepage-beta-cta-footer">
+        <CardContent className="content-cta-footer">
+          <h3 className="header-cta-footer">Quer vender com protagonismo?</h3>
+          <p className="desc-cta-footer">
             Ative o modo consignor para acompanhar propostas de liquidez e conecte-se com milhares de compradores qualificados.
           </p>
-          <Button size="lg" asChild>
+          <Button size="lg" asChild className="btn-cta-footer" data-ai-id="homepage-beta-cta-footer-button">
             <Link href="/sell-with-us">Publicar ativo</Link>
           </Button>
         </CardContent>
