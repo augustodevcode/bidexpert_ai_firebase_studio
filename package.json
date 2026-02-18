@@ -129,6 +129,7 @@
         "@tanstack/react-table": "^8.20.8",
         "@tanstack/react-virtual": "^3.13.18",
         "@types/papaparse": "^5.5.2",
+        "@vercel/analytics": "^1.6.1",
         "ai": "^4.0.25",
         "bcrypt": "^6.0.0",
         "bcryptjs": "^2.4.3",
