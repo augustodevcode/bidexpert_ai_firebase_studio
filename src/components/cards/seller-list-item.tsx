@@ -19,36 +19,41 @@ interface SellerListItemProps {
 }
 
 export default function SellerListItem({ seller, onUpdate }: SellerListItemProps) {
+  if (!seller || !seller.id) {
+    console.warn('SellerListItem recebeu dados inválidos:', seller);
+    return null;
+  }
+
   const displayLocation = seller.city && seller.state ? `${seller.city} - ${seller.state}` : seller.state || seller.city || 'N/A';
   const logoUrl = isValidImageUrl(seller.logoUrl) ? seller.logoUrl! : `https://placehold.co/120x90.png?text=${seller.name.charAt(0)}`;
   const SellerIcon = seller.isJudicial ? Scale : Building;
 
   return (
-    <Card className="w-full shadow-sm hover:shadow-md transition-shadow duration-300 rounded-lg group overflow-hidden">
-        <div className="flex items-center p-4 gap-4">
+    <Card className="w-full shadow-sm hover:shadow-md transition-shadow duration-300 rounded-lg group overflow-hidden" data-ai-id={`seller-list-item-${seller.id}`}>
+        <div className="flex items-center p-4 gap-4" data-ai-id={`seller-list-item-content-${seller.id}`}>
             <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`}>
-                <Avatar className="h-20 w-20 border-2">
+                <Avatar className="h-20 w-20 border-2" data-ai-id={`seller-list-item-avatar-${seller.id}`}>
                     <AvatarImage src={logoUrl} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || 'logo comitente'} />
                     <AvatarFallback>{seller.name.charAt(0)}</AvatarFallback>
                 </Avatar>
             </Link>
             <div className="flex-grow">
                  <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`} className="group/link">
-                    <h3 className="text-base font-semibold text-foreground group-hover/link:text-primary transition-colors">{seller.name}</h3>
+                    <h3 className="text-base font-semibold text-foreground group-hover/link:text-primary transition-colors" data-ai-id={`seller-list-item-name-${seller.id}`}>{seller.name}</h3>
                  </Link>
-                 <div className="flex items-center gap-2 mt-1 mb-1.5">
+                 <div className="flex items-center gap-2 mt-1 mb-1.5" data-ai-id={`seller-list-item-badge-${seller.id}`}>
                     <Badge variant={seller.isJudicial ? 'outline' : 'secondary'} className={seller.isJudicial ? "border-blue-500/60" : ""}>
                         <SellerIcon className="mr-1.5 h-3.5 w-3.5"/>
                         {seller.isJudicial ? 'Judicial' : 'Outros'}
                     </Badge>
                  </div>
-                 <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                 <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" data-ai-id={`seller-list-item-info-${seller.id}`}>
                     <div className="flex items-center"><MapPin className="h-3.5 w-3.5 mr-1 text-primary/80"/> {displayLocation}</div>
                     <div className="flex items-center"><Gavel className="h-3.5 w-3.5 mr-1 text-primary/80"/> {seller.auctionsFacilitatedCount || 0} leilões</div>
                  </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-2">
-                <Button asChild size="sm" variant="outline">
+            <div className="flex flex-col sm:flex-row items-center gap-2" data-ai-id={`seller-list-item-actions-${seller.id}`}>
+                <Button asChild size="sm" variant="outline" data-ai-id={`seller-list-item-view-btn-${seller.id}`}>
                     <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`}><Eye className="mr-2 h-4 w-4"/>Ver Perfil</Link>
                 </Button>
                 <EntityEditMenu
@@ -56,8 +61,9 @@ export default function SellerListItem({ seller, onUpdate }: SellerListItemProps
                     entityId={seller.id}
                     publicId={seller.publicId}
                     currentTitle={seller.name}
-                    isFeatured={false} // Sellers don't have a featured status
+                    isFeatured={false}
                     onUpdate={onUpdate}
+                    data-ai-id={`seller-list-item-edit-menu-${seller.id}`}
                 />
             </div>
         </div>

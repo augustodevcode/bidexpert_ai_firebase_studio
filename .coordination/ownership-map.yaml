@@ -1,0 +1,75 @@
+# ============================================================
+# Mapa de Ownership por Área - BidExpert
+# ============================================================
+# Define quem é responsável por cada área do código.
+# O Agent Master usa isso para detectar conflitos de ownership
+# e rotear reviews para as pessoas certas.
+# ============================================================
+
+areas:
+  # Frontend - Componentes de busca e listagem
+  search:
+    paths:
+      - src/components/search/**
+      - src/app/(site)/search/**
+      - tests/e2e/search*.spec.ts
+    owners: []
+
+  # Frontend - Páginas de leilão e lote
+  auction:
+    paths:
+      - src/components/auction/**
+      - src/app/(site)/auction/**
+      - src/services/auction*.ts
+      - tests/e2e/*auction*.spec.ts
+    owners: []
+
+  # Backend - APIs e Server Actions
+  api:
+    paths:
+      - src/app/api/**
+      - src/actions/**
+    owners: []
+
+  # Admin / Backoffice
+  admin:
+    paths:
+      - src/app/(admin)/**
+      - src/components/admin/**
+      - tests/e2e/*admin*.spec.ts
+    owners: []
+
+  # Prisma / Database
+  database:
+    paths:
+      - prisma/**
+      - src/lib/prisma/**
+      - scripts/seed*.ts
+      - scripts/ultimate*.ts
+    owners: []
+
+  # Auth / Login
+  auth:
+    paths:
+      - src/app/(auth)/**
+      - src/lib/auth/**
+      - src/middleware.ts
+    owners: []
+
+  # Infraestrutura / CI-CD
+  infra:
+    paths:
+      - .github/workflows/**
+      - docker-compose*.yml
+      - Dockerfile*
+      - scripts/ci-cd/**
+      - .coordination/**
+    owners: []
+
+  # Testes E2E
+  tests:
+    paths:
+      - tests/**
+      - playwright*.config.ts
+      - vitest*.config.ts
+    owners: []

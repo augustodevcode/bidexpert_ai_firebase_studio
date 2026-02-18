@@ -39,6 +39,7 @@ model Asset {
   locationCity               String?
   locationState              String?
   address                    String?
+  addressLink                String?                 @db.VarChar(500)
   latitude                   Decimal?
   longitude                  Decimal?
   lotId                      BigInt?
@@ -237,6 +238,7 @@ model Auction {
 
   onlineUrl                String?                @db.VarChar(500)
   address                  String?
+  addressLink              String?                @db.VarChar(500)
   zipCode                  String?                @db.VarChar(10)
   latitude                 Decimal?               @db.Decimal(10, 8)
   longitude                Decimal?               @db.Decimal(11, 8)
@@ -349,6 +351,7 @@ model Auctioneer {
   supportWhatsApp    String?
   contactName        String?
   address            String?
+  addressLink        String?   @db.VarChar(500)
   city               String?
   state              String?
   zipCode            String?
@@ -703,6 +706,7 @@ model Lot {
   latitude                 Decimal?
   longitude                Decimal?
   mapAddress               String?
+  addressLink              String?              @db.VarChar(500)
   tenantId                 BigInt
   depositGuaranteeAmount   Decimal?             @db.Decimal(15, 2)
   depositGuaranteeInfo     String?              @db.Text
@@ -1119,6 +1123,7 @@ model Seller {
   phone            String?           @db.Text
   contactName      String?
   address          String?           @db.Text
+  addressLink      String?           @db.VarChar(500)
   city             String?
   state            String?
   zipCode          String?

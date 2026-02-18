@@ -1,0 +1,102 @@
+# ============================================================
+# docker-compose.dev-isolated.yml
+# Container isolado por desenvolvedor - BidExpert
+# ============================================================
+# USO:
+#   $env:DEV_ID="augusto"; $env:APP_PORT="9101"; $env:DB_PORT="3401"; $env:MAIL_PORT="8201"
+#   docker compose -f docker-compose.dev-isolated.yml -p bidexpert-augusto up -d
+#
+# Ou com env file:
+#   docker compose -f docker-compose.dev-isolated.yml --env-file .env.dev.augusto -p bidexpert-augusto up -d
+# ============================================================
+
+services:
+  mysql:
+    image: mysql:8.0
+    # SEM container_name fixo - usa COMPOSE_PROJECT_NAME
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-DevPassword2026}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-bidexpert_dev}
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+    ports:
+      - "${DB_PORT:-3401}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./scripts/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-u', 'root', '-pDevPassword2026']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - devnet
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+        reservations:
+          memory: 2g
+    environment:
+      NODE_ENV: development
+      NODE_OPTIONS: "--max-old-space-size=3072"
+      PORT: 3000
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-DevPassword2026}@mysql:3306/${MYSQL_DATABASE:-bidexpert_dev}
+      TENANT_SLUG: demo
+      TENANT_ID: "1"
+      DEV_ID: ${DEV_ID:-dev1}
+      BASE_URL: http://demo.localhost:${APP_PORT:-9101}
+      PLAYWRIGHT_BASE_URL: http://demo.localhost:3000
+      SESSION_SECRET: "s3cr3t_s3ss10n_k3y_f0r_b1d3xp3rt_pl4tf0rm_4uth"
+      NEXTAUTH_SECRET: "s3cr3t_s3ss10n_k3y_f0r_b1d3xp3rt_pl4tf0rm_4uth_n3xt4uth_2024"
+      AUTH_SECRET: "s3cr3t_s3ss10n_k3y_f0r_b1d3xp3rt_pl4tf0rm_4uth_n3xt4uth_2024"
+      LANDLORD_URL: "bidexpert.com.br"
+      NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM: "MYSQL"
+      NEXT_PUBLIC_FORCE_SETUP: "false"
+      STORAGE_PROVIDER: "LOCAL"
+      WORKSPACE_SLUG: "bidexpert"
+    ports:
+      - "${APP_PORT:-9101}:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - devnet
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./prisma:/app/prisma
+      - ./scripts:/app/scripts
+      - ./playwright.e2e.config.ts:/app/playwright.e2e.config.ts
+      - ./playwright.smoke.config.ts:/app/playwright.smoke.config.ts
+      - ./playwright.config.local.ts:/app/playwright.config.local.ts
+      - ./playwright.container.config.ts:/app/playwright.container.config.ts
+      - ./.coordination:/app/.coordination
+      - test-results:/app/test-results
+      - playwright-reports:/app/playwright-report
+
+  smtp4dev:
+    image: rnwood/smtp4dev:latest
+    ports:
+      - "${MAIL_PORT:-8201}:80"
+      - "${SMTP_PORT:-2601}:25"
+    environment:
+      ServerOptions__Port: "25"
+      ServerOptions__HostName: "localhost"
+    restart: unless-stopped
+    networks:
+      - devnet
+
+networks:
+  devnet:
+    driver: bridge
+
+volumes:
+  mysql-data: {}
+  test-results: {}
+  playwright-reports: {}

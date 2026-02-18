@@ -1,0 +1,81 @@
+# ============================================================
+# Mapa de Impacto de Testes - BidExpert
+# ============================================================
+# Mapeia paths de código para suites de teste Playwright/Vitest.
+# Quando um dev altera arquivos em um path, os testes listados
+# são obrigatórios antes de avançar para HML.
+# ============================================================
+
+mappings:
+  # Mudanças em busca → rodar testes de search e smoke
+  - paths:
+      - src/components/search/**
+      - src/app/(site)/search/**
+    suites:
+      - tests/e2e/smoke-test.spec.ts
+      - tests/e2e/category-redirects.spec.ts
+    priority: high
+
+  # Mudanças em leilão → rodar testes de auction
+  - paths:
+      - src/components/auction/**
+      - src/app/(site)/auction/**
+      - src/services/auction*.ts
+      - src/services/super-opportunities*.ts
+    suites:
+      - tests/e2e/smoke-test.spec.ts
+      - tests/e2e/hot-deal-card.spec.ts
+    priority: high
+
+  # Mudanças em auth/login → rodar testes de login
+  - paths:
+      - src/app/(auth)/**
+      - src/lib/auth/**
+      - src/middleware.ts
+    suites:
+      - tests/e2e/smoke-test.spec.ts
+      - tests/e2e/login-diag.spec.ts
+    priority: critical
+
+  # Mudanças em admin → rodar testes admin
+  - paths:
+      - src/app/(admin)/**
+      - src/components/admin/**
+    suites:
+      - tests/e2e/smoke-test.spec.ts
+      - tests/e2e/demo-tenant-crud-pages.spec.ts
+    priority: high
+
+  # Mudanças em API → rodar testes de API
+  - paths:
+      - src/app/api/**
+      - src/actions/**
+    suites:
+      - tests/e2e/smoke-test.spec.ts
+      - tests/e2e/tenant-admin-api.spec.ts
+    priority: high
+
+  # Mudanças em database/prisma → rodar testes de integridade
+  - paths:
+      - prisma/**
+      - src/lib/prisma/**
+    suites:
+      - tests/e2e/smoke-test.spec.ts
+      - tests/e2e/database-multitenant-validation.spec.ts
+    priority: critical
+
+  # Mudanças em componentes visuais → rodar visual regression
+  - paths:
+      - src/components/**
+      - src/app/(site)/**
+    suites:
+      - tests/e2e/smoke-test.spec.ts
+      - tests/e2e/cross-links.spec.ts
+    priority: medium
+
+  # Fallback: qualquer mudança → smoke obrigatório
+  - paths:
+      - "**/*"
+    suites:
+      - tests/e2e/smoke-test.spec.ts
+    priority: low

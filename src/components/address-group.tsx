@@ -1,22 +1,19 @@
-// src/components/address-group.tsx
+/**
+ * @fileoverview Wrapper de compatibilidade retroativa para o AddressGroup.
+ * 
+ * @deprecated Use `import { AddressComponent } from '@/components/address'` diretamente.
+ * Este arquivo re-exporta o novo AddressComponent, aceitando as props legadas
+ * (allCities, allStates) e mapeando-as para as novas (initialCities, initialStates).
+ * 
+ * Mantido apenas para que os 5+ formulários existentes que importam
+ * `@/components/address-group` continuem funcionando sem alteração imediata.
+ */
 'use client';
 
 import * as React from 'react';
-import dynamic from 'next/dynamic';
-import { UseFormReturn, useWatch } from 'react-hook-form';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
-import { Input } from './ui/input';
+import { UseFormReturn } from 'react-hook-form';
 import type { CityInfo, StateInfo } from '@/types';
-import EntitySelector from './ui/entity-selector';
-import { getStates } from '@/app/admin/states/actions';
-import { getCities } from '@/app/admin/cities/actions';
-import { Skeleton } from './ui/skeleton';
-
-const MapPicker = dynamic(() => import('./map-picker'), {
-  ssr: false,
-  loading: () => <Skeleton className="h-72 w-full rounded-md" />,
-});
-
+import AddressComponent from './address/AddressComponent';
 
 interface AddressGroupProps {
   form: UseFormReturn<any>;
@@ -24,189 +21,17 @@ interface AddressGroupProps {
   allStates: StateInfo[];
 }
 
+/**
+ * @deprecated Migrar para `<AddressComponent form={form} />`.
+ * O novo componente busca states/cities automaticamente.
+ */
 export default function AddressGroup({ form, allCities = [], allStates = [] }: AddressGroupProps) {
-  const [states, setStates] = React.useState(allStates);
-  const [cities, setCities] = React.useState(allCities);
-  const [isFetchingStates, setIsFetchingStates] = React.useState(false);
-  const [isFetchingCities, setIsFetchingCities] = React.useState(false);
-
-  const selectedStateId = useWatch({
-    control: form.control,
-    name: 'stateId',
-  });
-
-  const filteredCities = React.useMemo(() => {
-    if (!selectedStateId) {
-      return [];
-    }
-    return cities.filter(city => String(city.stateId) === String(selectedStateId));
-  }, [selectedStateId, cities]);
-
-  // Effect to reset city when state changes
-  React.useEffect(() => {
-    // When the filtered cities update (because the state changed),
-    // check if the currently selected city is still valid.
-    const currentCityId = form.getValues('cityId');
-    if (currentCityId && !filteredCities.some(city => String(city.id) === String(currentCityId))) {
-      form.setValue('cityId', null, { shouldValidate: true });
-    }
-  }, [filteredCities, form]);
-
-
-  const handleRefetchStates = React.useCallback(async () => {
-    setIsFetchingStates(true);
-    const data = await getStates();
-    setStates(data);
-    setIsFetchingStates(false);
-  }, []);
-  
-  const handleRefetchCities = React.useCallback(async () => {
-    setIsFetchingCities(true);
-    const data = await getCities();
-    setCities(data);
-    setIsFetchingCities(false);
-  }, []);
-  
-  const latitude = form.watch('latitude');
-  const longitude = form.watch('longitude');
-  const zipCode = form.watch('zipCode');
-
   return (
-    <div className="space-y-4" data-ai-id="address-group-container">
-      <MapPicker 
-        latitude={latitude} 
-        longitude={longitude} 
-        zipCode={zipCode}
-        control={form.control}
-        setValue={form.setValue} 
-        allCities={cities} 
-        allStates={states} 
-      />
-       <FormField
-        control={form.control}
-        name="street"
-        render={({ field }) => (
-          <FormItem data-ai-id="address-group-street">
-            <FormLabel>Logradouro (Rua/Avenida)</FormLabel>
-            <FormControl>
-              <Input placeholder="Ex: Avenida Paulista" {...field} value={field.value ?? ''} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <FormField
-          control={form.control}
-          name="number"
-          render={({ field }) => (
-            <FormItem data-ai-id="address-group-number">
-              <FormLabel>Número</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: 1578" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="complement"
-          render={({ field }) => (
-            <FormItem data-ai-id="address-group-complement">
-              <FormLabel>Complemento</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: Andar 4, Sala 10" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="neighborhood"
-          render={({ field }) => (
-            <FormItem data-ai-id="address-group-neighborhood">
-              <FormLabel>Bairro</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: Bela Vista" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-         <FormField
-          control={form.control}
-          name="stateId"
-          render={({ field }) => (
-            <FormItem data-ai-id="address-group-state">
-              <FormLabel>Estado</FormLabel>
-              <EntitySelector
-                entityName="state"
-                value={field.value}
-                onChange={field.onChange}
-                options={states.map(s => ({ value: String(s.id), label: s.name }))}
-                placeholder="Selecione o estado"
-                searchPlaceholder="Buscar estado..."
-                emptyStateMessage="Nenhum estado."
-                onRefetch={handleRefetchStates}
-                isFetching={isFetchingStates}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="cityId"
-          render={({ field }) => (
-            <FormItem data-ai-id="address-group-city">
-              <FormLabel>Cidade</FormLabel>
-              <EntitySelector
-                entityName="city"
-                value={field.value}
-                onChange={field.onChange}
-                options={filteredCities.map(c => ({ value: String(c.id), label: c.name }))}
-                placeholder={!selectedStateId ? "Selecione um estado primeiro" : "Selecione a cidade"}
-                searchPlaceholder="Buscar cidade..."
-                emptyStateMessage="Nenhuma cidade encontrada para este estado."
-                onRefetch={handleRefetchCities}
-                isFetching={isFetchingCities}
-                disabled={!selectedStateId}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="latitude"
-          render={({ field }) => (
-            <FormItem data-ai-id="address-group-latitude">
-              <FormLabel>Latitude</FormLabel>
-              <FormControl>
-                <Input type="number" step="any" placeholder="-23.550520" {...field} value={field.value ?? ''} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="longitude"
-          render={({ field }) => (
-            <FormItem data-ai-id="address-group-longitude">
-              <FormLabel>Longitude</FormLabel>
-              <FormControl>
-                <Input type="number" step="any" placeholder="-46.633308" {...field} value={field.value ?? ''} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-      </div>
-    </div>
+    <AddressComponent
+      form={form}
+      mode="relational"
+      initialStates={allStates}
+      initialCities={allCities}
+    />
   );
 }

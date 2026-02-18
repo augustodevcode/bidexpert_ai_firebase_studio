@@ -428,6 +428,11 @@ export class AuctionService {
         : nowInSaoPaulo();
 
       const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, imageUrl: _imageUrl, ...restOfData } = data;
+
+      // Gerar addressLink a partir de lat/lng
+      const addressLink = (restOfData.latitude && restOfData.longitude)
+        ? `https://www.google.com/maps?q=${restOfData.latitude},${restOfData.longitude}`
+        : null;
       
       // Gera o publicId FORA da transação para evitar timeout por nested transactions
       const publicId = await generatePublicId(tenantId, 'auction');
@@ -440,6 +445,7 @@ export class AuctionService {
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
+            addressLink,
             Auctioneer: { connect: { id: BigInt(auctioneerId) } },
             Seller: { connect: { id: BigInt(sellerId) } },
             LotCategory: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
@@ -499,6 +505,11 @@ export class AuctionService {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
             ...(restOfData as any),
         };
+
+        // Gerar addressLink automaticamente
+        if (restOfData.latitude && restOfData.longitude) {
+          dataToUpdate.addressLink = `https://www.google.com/maps?q=${restOfData.latitude},${restOfData.longitude}`;
+        }
         
         if (data.title) dataToUpdate.slug = slugify(data.title);
         

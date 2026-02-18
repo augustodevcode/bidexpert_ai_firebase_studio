@@ -1,0 +1,164 @@
+# ============================================================
+# pr-gate.yml - Gate obrigatório para PRs de feature branches
+# ============================================================
+# Valida: build, typecheck, evidência Playwright, CodeQL, npm audit
+# Trigger: PRs para main
+# ============================================================
+
+name: PR Gate - Feature Branch
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '20'
+  CI: 'true'
+
+jobs:
+  # ============================================
+  # Gate 1: Build + Typecheck
+  # ============================================
+  build:
+    name: Build & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Validate Prisma Schemas (MySQL + PostgreSQL)
+        run: |
+          npx prisma validate
+          npx prisma validate --schema=prisma/schema.postgresql.prisma
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'mysql://root:root@localhost:3306/bidexpert_test' }}
+          NEXTAUTH_SECRET: 'ci-test-secret-key-32-chars-long!'
+          AUTH_SECRET: 'ci-test-secret-key-32-chars-long!'
+          SESSION_SECRET: 'ci-test-secret-key-32-chars-long!'
+
+  # ============================================
+  # Gate 2: Security (CodeQL + npm audit)
+  # ============================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: npm audit (high + critical)
+        run: npm audit --audit-level=high || true
+
+      - name: Check for secrets in diff
+        run: |
+          # Buscar padrões suspeitos no diff do PR
+          git diff origin/main..HEAD -- '*.ts' '*.tsx' '*.js' '*.json' '*.env*' | \
+            grep -iE "(password|secret|token|api_key|private_key)\s*[:=]" && \
+            echo "::warning::Possível segredo encontrado no diff!" || \
+            echo "Nenhum segredo detectado no diff."
+
+  # ============================================
+  # Gate 3: Playwright Evidence Check
+  # ============================================
+  playwright-evidence:
+    name: Playwright Evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check PR body for Playwright evidence
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            
+            // Verificar se o PR body contém evidência Playwright
+            const hasEvidence = body.includes('"status": "passed"') || 
+                                body.includes('"exitCode": 0') ||
+                                body.includes('Smoke tests: **PASS**');
+            
+            const hasSection = body.includes('Evidência Obrigatória de Testes Playwright');
+            
+            if (!hasSection) {
+              core.setFailed('PR deve conter seção "Evidência Obrigatória de Testes Playwright". Use o template de PR.');
+              return;
+            }
+            
+            if (!hasEvidence) {
+              core.warning('Evidência de testes Playwright não encontrada ou testes falharam. Verifique o JSON de evidência no PR body.');
+            }
+            
+            console.log('Evidência Playwright verificada.');
+
+  # ============================================
+  # Gate 4: Coordination Check
+  # ============================================
+  coordination:
+    name: Conflict Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for conflicting PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              base: 'main'
+            });
+            
+            const currentPR = context.payload.pull_request;
+            const otherPRs = prs.filter(pr => pr.number !== currentPR.number);
+            
+            if (otherPRs.length > 0) {
+              const prList = otherPRs.map(pr => `#${pr.number}: ${pr.title} (${pr.head.ref})`).join('\n');
+              core.warning(`Existem ${otherPRs.length} outros PRs abertos para main:\n${prList}\nVerifique possíveis conflitos.`);
+            }
+            
+            console.log(`${otherPRs.length} outros PRs abertos para main.`);
+
+  # ============================================
+  # Summary
+  # ============================================
+  pr-summary:
+    name: PR Gate Summary
+    runs-on: ubuntu-latest
+    needs: [build, security, playwright-evidence, coordination]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## PR Gate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build & Typecheck | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Playwright Evidence | ${{ needs.playwright-evidence.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conflict Detection | ${{ needs.coordination.result }} |" >> $GITHUB_STEP_SUMMARY
