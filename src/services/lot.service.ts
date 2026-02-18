@@ -320,8 +320,46 @@ export class LotService {
     const documents = lot.LotDocument ?? lot.documents;
     const bidsCount = lot._count?.Bid ?? lot._count?.bids ?? lot.bidsCount ?? 0;
 
+    // Image Mapping Logic
+    const coverImage = lot.CoverImage ?? lot.coverImage;
+    let imageUrl = lot.imageUrl || null;
+    if (coverImage?.urlOriginal) {
+        imageUrl = coverImage.urlOriginal;
+    }
+
+    // Gallery Mapping Logic
+    let galleryImageUrls: string[] = [];
+    if (Array.isArray(lot.galleryImageUrls)) {
+        galleryImageUrls = [...lot.galleryImageUrls];
+    }
+    
+    // If we have AssetsOnLots with deeply nested Media, use them
+    if (assetsOnLots) {
+        assetsOnLots.forEach((assetLink: any) => {
+            const asset = assetLink.Asset ?? assetLink.asset;
+            if (asset && Array.isArray(asset.AssetMedia)) {
+                 asset.AssetMedia.forEach((media: any) => {
+                     const mediaItem = media.MediaItem ?? media.mediaItem;
+                     if (mediaItem?.urlOriginal) {
+                         galleryImageUrls.push(mediaItem.urlOriginal);
+                     }
+                 });
+            }
+        });
+    }
+    // De-duplicate gallery
+    galleryImageUrls = Array.from(new Set(galleryImageUrls));
+    if (!imageUrl && galleryImageUrls.length > 0) {
+        imageUrl = galleryImageUrls[0];
+    }
+    if (imageUrl && !galleryImageUrls.includes(imageUrl)) {
+        galleryImageUrls.unshift(imageUrl);
+    }
+
     return {
       ...lot,
+      imageUrl,
+      galleryImageUrls,
       id: lot.id.toString(),
       bidsCount: bidsCount,
       auctionId: lot.auctionId.toString(),
@@ -425,9 +463,21 @@ export class LotService {
                 LotStagePrice: true,
                 AssetsOnLots: {
                     include: {
-                        Asset: true
+                        Asset: {
+                            include: {
+                                AssetMedia: {
+                                    include: {
+                                        MediaItem: true
+                                    },
+                                    orderBy: {
+                                        displayOrder: 'asc'
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
+                CoverImage: true,
                 LotRisk: true,
                 LotDocument: {
                     orderBy: { displayOrder: 'asc' }

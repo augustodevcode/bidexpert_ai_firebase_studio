@@ -33,6 +33,7 @@ model Asset {
   evaluationValue            Decimal?                @db.Decimal(15, 2)
   imageUrl                   String?
   imageMediaId               BigInt?
+  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   galleryImageUrls           Json?
   mediaItemIds               Json?
   dataAiHint                 String?
@@ -258,6 +259,7 @@ model Auction {
   auctioneerId             BigInt?
   sellerId                 BigInt?
   imageMediaId             BigInt?
+  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   isRelisted               Boolean                @default(false)
   relistCount              Int                    @default(0)
   originalAuctionId        BigInt?                @unique
@@ -674,6 +676,7 @@ model Lot {
   discountPercentage       Int?
   additionalTriggers       Json?
   imageUrl                 String?              @db.Text
+  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   imageMediaId             BigInt?
   galleryImageUrls         Json?
   mediaItemIds             Json?
@@ -888,6 +891,9 @@ model MediaItem {
   judicialProcessId BigInt?
   linkedLotIds      Json?
   tenantId          BigInt?
+  AssetCovers       Asset[]            @relation("AssetCoverImage")
+  AuctionCovers     Auction[]          @relation("AuctionCoverImage")
+  LotCovers         Lot[]              @relation("LotCoverImage")
   AssetMedia        AssetMedia[]
   JudicialProcess   JudicialProcess?   @relation(fields: [judicialProcessId], references: [id])
   Tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
