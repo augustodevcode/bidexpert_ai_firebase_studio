@@ -540,6 +540,22 @@ Deve ser configurada em `src/app/globals.css` como variável `--primary`
 
 **Propósito:** Exibição visual rica dos participantes selecionados (Leiloeiro, Comitente, Processo Judicial) no formulário de cadastro de leilões.
 
+### 10. ConsignorLogoBadge
+**Localização:** `src/components/consignor-logo-badge.tsx`
+
+**Regra (Obrigatória):** Todos os componentes padrão de cards (`BidExpertCard` → `AuctionCard`, `LotCard`) e itens de lista (`BidExpertListItem`) **DEVEM** exibir o logotipo do comitente sobre a imagem destacada.
+- **Visualização:** Apenas o logotipo é mostrado inicialmente; o nome do comitente aparece somente no hover via tooltip.
+- **Mídia:** Utiliza `Seller.logoUrl` ou `logoMediaId`. Se não houver logo válido, nada é renderizado.
+- **Componente:** OBRIGATÓRIO usar `ConsignorLogoBadge` para garantir consistência de fallback e posicionamento.
+
+### 11. HotDealCard
+**Localização:** `src/components/hot-deal-card.tsx`
+
+**Propósito:** Exibir lotes "quentes" (encerramento iminente e alto engajamento) na home com layout expandido.
+- **Seleção:** Lotes `ABERTO_PARA_LANCES` encerrando em até 7 dias, limitados aos 5 primeiros.
+- **Características:** Galeria com thumbnails verticais, countdown em tempo real, badge de economia automática e barra de progresso de lances.
+- **Configuração:** Respeita `showCountdownOnCards` e `defaultUrgencyTimerHours` das `PlatformSettings`.
+
 **Props:**
 ```typescript
 interface ParticipantCardProps {
@@ -639,6 +655,15 @@ Feature: Cards de Participantes no Cadastro de Leilões
 
 ---
 
+## DIRETRIZES DE MARKETING E CONVERSÃO (Pitch)
+
+### Princípios de Venda (RN-028)
+✅ **Transparência Total:** Reduzir fricção exibindo histórico de lances, documentos claros e regras de praças.
+✅ **Senso de Urgência:** Uso estratégico de contadores (countdown) e gatilhos mentais (mental triggers) para acelerar a decisão.
+✅ **Identidade Profissional:** Uso de IDs públicos mascarados (`publicId`) para transmitir credibilidade e facilitar suporte.
+✅ **Foco no Investidor:** Seções específicas como "Radar de Oportunidades" e "Segmentos em Alta" para usuários profissionais.
+
+---
 
 ## FUNCIONALIDADES EM DESENVOLVIMENTO
 
