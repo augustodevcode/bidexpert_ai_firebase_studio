@@ -15,6 +15,7 @@ import { QueryBuilderPanel } from './QueryBuilderPanel';
 import { GroupingPanel } from './GroupingPanel';
 import type { VisibilityState } from '@tanstack/react-table';
 import type { SuperGridConfig, GridDensity, ExportConfig, QueryBuilderConfig, GridColumn } from '../SuperGrid.types';
+import type { GridLocale } from '../SuperGrid.i18n';
 
 interface GridToolbarProps {
   config: SuperGridConfig;
@@ -47,6 +48,7 @@ interface GridToolbarProps {
   // Permissions
   canCreate: boolean;
   canExport: boolean;
+  locale: GridLocale;
 }
 
 export function GridToolbar({
@@ -71,6 +73,7 @@ export function GridToolbar({
   isFetching,
   canCreate,
   canExport,
+  locale,
 }: GridToolbarProps) {
   const features = config.features;
 
@@ -88,7 +91,7 @@ export function GridToolbar({
             </h2>
           )}
           <span className="text-sm text-muted-foreground" data-ai-id="supergrid-total-count">
-            {totalCount.toLocaleString('pt-BR')} {totalCount === 1 ? 'registro' : 'registros'}
+            {locale.toolbar.recordCount(totalCount)}
           </span>
           {isFetching && (
             <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -103,7 +106,7 @@ export function GridToolbar({
               data-ai-id="supergrid-add-new-btn"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Novo
+              {locale.toolbar.addNew}
             </Button>
           )}
 
@@ -112,6 +115,7 @@ export function GridToolbar({
               config={features.export}
               onExport={onExport}
               isExporting={isExporting}
+              locale={locale}
             />
           )}
 
@@ -119,11 +123,13 @@ export function GridToolbar({
             columns={config.columns as GridColumn[]}
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={onColumnVisibilityChange}
+            locale={locale}
           />
 
           <DensitySelector
             density={density}
             onDensityChange={onDensityChange}
+            locale={locale}
           />
 
           <Button
@@ -144,7 +150,7 @@ export function GridToolbar({
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar em todos os campos..."
+              placeholder={locale.toolbar.searchPlaceholder}
               value={globalFilter}
               onChange={e => onGlobalFilterChange(e.target.value)}
               className="pl-9 h-9"
@@ -160,6 +166,7 @@ export function GridToolbar({
             onOpenChange={onQueryBuilderOpenChange}
             query={queryBuilderState}
             onQueryChange={onQueryBuilderChange}
+            locale={locale}
           />
         )}
       </div>
@@ -171,6 +178,7 @@ export function GridToolbar({
           grouping={grouping}
           onGroupingChange={onGroupingChange}
           enabled={features.grouping.enabled}
+          locale={locale}
         />
       )}
     </div>

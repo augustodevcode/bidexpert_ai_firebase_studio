@@ -13,12 +13,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { ExportConfig } from '../SuperGrid.types';
+import type { GridLocale } from '../SuperGrid.i18n';
 
 interface ExportMenuProps {
   config: ExportConfig;
   onExport: (format: 'excel' | 'csv') => void;
   isExporting: boolean;
   disabled?: boolean;
+  locale: GridLocale;
 }
 
 export function ExportMenu({
@@ -26,6 +28,7 @@ export function ExportMenu({
   onExport,
   isExporting,
   disabled,
+  locale,
 }: ExportMenuProps) {
   const formats = config.formats || ['csv', 'excel'];
 
@@ -41,7 +44,7 @@ export function ExportMenu({
           data-ai-id="supergrid-export-btn"
         >
           <Download className="mr-2 h-4 w-4" />
-          {isExporting ? 'Exportando...' : 'Exportar'}
+          {isExporting ? locale.export.exporting : locale.export.exportButton}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" data-ai-id="supergrid-export-menu">
@@ -51,7 +54,7 @@ export function ExportMenu({
             data-ai-id="supergrid-export-excel"
           >
             <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />
-            Excel (.xlsx)
+            {locale.export.excel}
           </DropdownMenuItem>
         )}
         {formats.includes('csv') && (
@@ -60,7 +63,7 @@ export function ExportMenu({
             data-ai-id="supergrid-export-csv"
           >
             <FileText className="mr-2 h-4 w-4 text-blue-600" />
-            CSV (.csv)
+            {locale.export.csv}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

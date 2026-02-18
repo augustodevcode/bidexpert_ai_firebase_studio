@@ -13,12 +13,14 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import type { GridColumn } from '../SuperGrid.types';
+import type { GridLocale } from '../SuperGrid.i18n';
 
 interface GroupingPanelProps {
   columns: GridColumn[];
   grouping: string[];
   onGroupingChange: (grouping: string[]) => void;
   enabled: boolean;
+  locale: GridLocale;
 }
 
 export function GroupingPanel({
@@ -26,6 +28,7 @@ export function GroupingPanel({
   grouping,
   onGroupingChange,
   enabled,
+  locale,
 }: GroupingPanelProps) {
   if (!enabled) return null;
 
@@ -62,7 +65,7 @@ export function GroupingPanel({
 
       {grouping.length === 0 && (
         <span className="text-sm text-muted-foreground italic">
-          Nenhum agrupamento
+          {locale.grouping.noGrouping}
         </span>
       )}
 
@@ -77,6 +80,7 @@ export function GroupingPanel({
           <button
             onClick={() => removeGroup(columnId)}
             className="ml-1 rounded-full hover:bg-muted-foreground/20 p-0.5"
+            title={locale.clearGrouping}
           >
             <X className="h-3 w-3" />
           </button>
@@ -93,7 +97,7 @@ export function GroupingPanel({
               data-ai-id="supergrid-add-group-btn"
             >
               <Plus className="h-3 w-3 mr-1" />
-              Adicionar
+              {locale.grouping.addGroup}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-48 p-1" align="start">
@@ -120,7 +124,7 @@ export function GroupingPanel({
           data-ai-id="supergrid-clear-groups-btn"
         >
           <X className="h-3 w-3 mr-1" />
-          Limpar
+          {locale.grouping.clearGrouping}
         </Button>
       )}
     </div>

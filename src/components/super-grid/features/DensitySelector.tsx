@@ -13,25 +13,28 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import type { GridDensity } from '../SuperGrid.types';
+import type { GridLocale } from '../SuperGrid.i18n';
 
 interface DensitySelectorProps {
   density: GridDensity;
   onDensityChange: (density: GridDensity) => void;
+  locale: GridLocale;
 }
 
-const densityOptions: Array<{
+const densityKeys: Array<{
   value: GridDensity;
-  label: string;
+  localeKey: 'compact' | 'normal' | 'comfortable';
   icon: typeof AlignJustify;
 }> = [
-  { value: 'compact', label: 'Compacto', icon: AlignJustify },
-  { value: 'normal', label: 'Normal', icon: AlignCenter },
-  { value: 'comfortable', label: 'Confortável', icon: AlignLeft },
+  { value: 'compact', localeKey: 'compact', icon: AlignJustify },
+  { value: 'normal', localeKey: 'normal', icon: AlignCenter },
+  { value: 'comfortable', localeKey: 'comfortable', icon: AlignLeft },
 ];
 
 export function DensitySelector({
   density,
   onDensityChange,
+  locale,
 }: DensitySelectorProps) {
   return (
     <TooltipProvider>
@@ -39,9 +42,10 @@ export function DensitySelector({
         className="flex items-center rounded-md border"
         data-ai-id="supergrid-density-selector"
       >
-        {densityOptions.map(opt => {
+        {densityKeys.map(opt => {
           const Icon = opt.icon;
           const isActive = density === opt.value;
+          const label = locale.density[opt.localeKey];
           return (
             <Tooltip key={opt.value}>
               <TooltipTrigger asChild>
@@ -56,7 +60,7 @@ export function DensitySelector({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{opt.label}</p>
+                <p>{label}</p>
               </TooltipContent>
             </Tooltip>
           );

@@ -19,6 +19,7 @@ import QueryBuilder, {
 } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 import type { QueryBuilderConfig } from '../SuperGrid.types';
+import type { GridLocale } from '../SuperGrid.i18n';
 
 interface QueryBuilderPanelProps {
   config: QueryBuilderConfig;
@@ -26,10 +27,11 @@ interface QueryBuilderPanelProps {
   onOpenChange: (open: boolean) => void;
   query: Record<string, unknown>;
   onQueryChange: (query: Record<string, unknown>) => void;
+  locale: GridLocale;
 }
 
 /** Converte fields da config para formato do react-querybuilder */
-function toQBFields(config: QueryBuilderConfig): Field[] {
+function toQBFields(config: QueryBuilderConfig, locale?: GridLocale): Field[] {
   return config.fields.map(f => ({
     name: f.name,
     label: f.label,
@@ -37,7 +39,7 @@ function toQBFields(config: QueryBuilderConfig): Field[] {
     valueEditorType: f.valueEditorType as Field['valueEditorType'],
     values: f.values,
     operators: f.operators
-      ? f.operators.map(op => ({ name: op, label: getOperatorLabel(op) }))
+      ? f.operators.map(op => ({ name: op, label: getOperatorLabel(op, locale) }))
       : undefined,
   }));
 }
@@ -56,7 +58,10 @@ function mapInputType(type: string): string {
   }
 }
 
-function getOperatorLabel(op: string): string {
+function getOperatorLabel(op: string, locale?: GridLocale): string {
+  if (locale?.queryBuilder.operators[op]) {
+    return locale.queryBuilder.operators[op];
+  }
   const labels: Record<string, string> = {
     '=': 'Igual a',
     '!=': 'Diferente de',
@@ -94,10 +99,11 @@ export function QueryBuilderPanel({
   onOpenChange,
   query,
   onQueryChange,
+  locale,
 }: QueryBuilderPanelProps) {
   if (!config.enabled) return null;
 
-  const fields = toQBFields(config);
+  const fields = toQBFields(config, locale);
   const activeRuleCount = countActiveRules(query);
 
   const clearQuery = () => {
@@ -118,7 +124,7 @@ export function QueryBuilderPanel({
             data-ai-id="supergrid-query-builder-toggle"
           >
             <Filter className="mr-2 h-4 w-4" />
-            Filtro Avançado
+            {locale.queryBuilder.advancedFilter}
             {activeRuleCount > 0 && (
               <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                 {activeRuleCount}
@@ -140,7 +146,7 @@ export function QueryBuilderPanel({
             data-ai-id="supergrid-query-builder-clear"
           >
             <X className="h-4 w-4" />
-            Limpar
+            {locale.queryBuilder.clear}
           </Button>
         )}
       </div>

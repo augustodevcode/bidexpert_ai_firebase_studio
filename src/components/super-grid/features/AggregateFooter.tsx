@@ -7,6 +7,7 @@
 import type { Table as TanStackTable } from '@tanstack/react-table';
 import { TableFooter, TableRow, TableCell } from '@/components/ui/table';
 import type { GridColumn, GridDensity } from '../SuperGrid.types';
+import type { GridLocale } from '../SuperGrid.i18n';
 import { formatCellValue, getDensityClasses, getAlignClass } from '../utils/columnHelpers';
 
 interface AggregateFooterProps {
@@ -14,6 +15,7 @@ interface AggregateFooterProps {
   columns: GridColumn[];
   density: GridDensity;
   hasSelection: boolean;
+  locale: GridLocale;
 }
 
 export function AggregateFooter({
@@ -21,6 +23,7 @@ export function AggregateFooter({
   columns,
   density,
   hasSelection,
+  locale,
 }: AggregateFooterProps) {
   const aggregableColumns = columns.filter(
     col => col.aggregable && col.aggregationFn
@@ -48,7 +51,7 @@ export function AggregateFooter({
               >
                 {col === columns[0] ? (
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                    Totais ({allRows.length} registros)
+                    {locale.aggregates.totals(allRows.length)}
                   </span>
                 ) : null}
               </TableCell>
