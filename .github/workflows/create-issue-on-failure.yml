@@ -1,0 +1,195 @@
+# ==============================================================================
+# GitHub Action: Create Issue on CI/CD Failure
+# ==============================================================================
+# Trigger: Automatically when workflows fail
+# Action: Creates detailed issue with logs and context
+# Labels: ai-fix, ci-cd, priority:high, automated
+# ==============================================================================
+
+name: Create Issue on CI/CD Failure
+
+on:
+  workflow_run:
+    workflows: ["P0 CI Pipeline", "Deploy DEMO to Vercel", "Deploy HML to Vercel", "Deploy to Production"]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Collect failure logs
+        id: logs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const runId = context.payload.workflow_run.id;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Get logs URL
+            const logsUrl = `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
+
+            // Try to get job logs
+            let jobLogs = '';
+            try {
+              const jobs = await github.rest.actions.listJobsForWorkflowRun({
+                owner,
+                repo,
+                run_id: runId
+              });
+
+              // Get failed jobs
+              const failedJobs = jobs.data.jobs.filter(job =>
+                job.conclusion === 'failure' || job.conclusion === 'cancelled'
+              );
+
+              if (failedJobs.length > 0) {
+                jobLogs = '### Failed Jobs:\n\n';
+                for (const job of failedJobs) {
+                  jobLogs += `**${job.name}** (${job.conclusion})\n`;
+                  jobLogs += `- Started: ${job.started_at}\n`;
+                  jobLogs += `- Completed: ${job.completed_at}\n`;
+
+                  // Get failed steps
+                  const failedSteps = job.steps.filter(step =>
+                    step.conclusion === 'failure'
+                  );
+
+                  if (failedSteps.length > 0) {
+                    jobLogs += `- Failed steps:\n`;
+                    for (const step of failedSteps) {
+                      jobLogs += `  - ${step.name} (${step.conclusion})\n`;
+                    }
+                  }
+                  jobLogs += `\n`;
+                }
+              }
+            } catch (error) {
+              jobLogs = `Error collecting job logs: ${error.message}`;
+            }
+
+            // Limit log size
+            if (jobLogs.length > 5000) {
+              jobLogs = jobLogs.substring(0, 5000) + '\n\n... (truncated, see full logs at link above)';
+            }
+
+            core.setOutput('logs', jobLogs);
+            core.setOutput('logs_url', logsUrl);
+            return { logs: jobLogs, logsUrl };
+
+      - name: Create issue
+        id: create-issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const workflowName = context.payload.workflow_run.name;
+            const runNumber = context.payload.workflow_run.run_number;
+            const branch = context.payload.workflow_run.head_branch;
+            const commitSha = context.payload.workflow_run.head_sha.substring(0, 7);
+            const actor = context.payload.workflow_run.actor.login;
+            const createdAt = context.payload.workflow_run.created_at;
+            const logsUrl = '${{ steps.logs.outputs.logs_url }}';
+            const logs = `${{ steps.logs.outputs.logs }}`;
+
+            const title = `🚨 CI/CD Failure: ${workflowName} - Run #${runNumber}`;
+
+            const bodyParts = [
+              '## 🚨 CI/CD Workflow Failed',
+              '',
+              '### 📊 Failure Information',
+              '',
+              '| Field | Value |',
+              '|-------|-------|',
+              `| **Workflow** | ${workflowName} |`,
+              `| **Run Number** | [#${runNumber}](${logsUrl}) |`,
+              `| **Branch** | \`${branch}\` |`,
+              `| **Commit** | \`${commitSha}\` |`,
+              `| **Triggered by** | @${actor} |`,
+              `| **Failed at** | ${createdAt} |`,
+              '',
+              '### 📋 Logs',
+              '',
+              '<details>',
+              '<summary>Click to expand failed job logs</summary>',
+              '',
+              '```',
+              logs,
+              '```',
+              '',
+              '</details>',
+              '',
+              `[View full logs in GitHub Actions](${logsUrl})`,
+              '',
+              '---',
+              '',
+              '### 🔄 Next Steps',
+              '',
+              '1. **AI Agent** will analyze the logs and attempt to fix the issue automatically',
+              '2. If the AI Agent succeeds, this issue will be closed with a PR link',
+              '3. If the AI Agent fails after 3 attempts, the issue will be escalated for human review',
+              '',
+              '### 🏷️ Labels Explanation',
+              '',
+              '- `ai-fix`: Triggers AI Agent for automatic analysis and correction',
+              '- `ci-cd`: Indicates CI/CD related issue',
+              '- `priority:high`: High priority issue requiring quick resolution',
+              '- `automated`: Issue was created automatically by the system',
+              '',
+              '---',
+              '',
+              '_This issue was created automatically by the AI-ITSM Queue system._'
+            ];
+            const body = bodyParts.join('\n');
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['ai-fix', 'ci-cd', 'priority:high', 'automated']
+            });
+
+            core.setOutput('issue_number', issue.data.number);
+            core.setOutput('issue_url', issue.data.html_url);
+
+            return issue.data;
+
+      - name: Add initial comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = ${{ steps.create-issue.outputs.issue_number }};
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: '🤖 AI Agent será acionado automaticamente para analisar e corrigir este problema.\n\nAguarde enquanto o sistema processa esta falha...'
+            });
+
+      - name: Create summary
+        run: |
+          echo "## 🚨 CI/CD Failure Issue Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow:** ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Run:** #${{ github.event.workflow_run.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.event.workflow_run.head_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Issue Created:** ${{ steps.create-issue.outputs.issue_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 AI Agent will be triggered automatically to analyze and fix this issue." >> $GITHUB_STEP_SUMMARY

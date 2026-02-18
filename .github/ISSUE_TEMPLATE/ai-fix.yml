@@ -1,0 +1,136 @@
+name: 🤖 AI Fix Request
+description: Solicitar correção automática via AI Agent para problemas no código ou CI/CD
+title: "[AI-FIX] "
+labels: ["ai-fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🤖 Solicitação de Correção Automática via AI Agent
+
+        Use este template para solicitar que o AI Agent analise e corrija automaticamente um problema no código ou CI/CD.
+
+        **Como funciona:**
+        1. Preencha os campos abaixo com o máximo de detalhes possível
+        2. O AI Agent será acionado automaticamente ao criar a issue
+        3. O agente tentará corrigir o problema em até 3 tentativas
+        4. Após 3 tentativas sem sucesso, a issue será escalada para revisão humana
+
+        ---
+
+  - type: dropdown
+    id: failure_type
+    attributes:
+      label: Tipo de Falha
+      description: Selecione o tipo de problema que está enfrentando
+      options:
+        - Teste Falhando
+        - Erro de Build
+        - Erro de Deploy
+        - Lint/Type Check
+        - Bug em Runtime
+        - Outro
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      description: Selecione a prioridade desta correção
+      options:
+        - Crítica (Sistema não funcional)
+        - Alta (Funcionalidade importante quebrada)
+        - Média (Funcionalidade secundária afetada)
+        - Baixa (Melhoria ou problema menor)
+      default: 1
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs de Erro
+      description: Cole os logs completos do erro aqui
+      placeholder: |
+        Cole aqui os logs do console, erro de build, stack trace, etc.
+
+        Exemplo:
+        Error: Cannot find module '@/components/Button'
+        at require (internal/modules/cjs/loader.js:883:19)
+        ...
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto Adicional
+      description: Forneça informações adicionais que possam ajudar o AI Agent
+      placeholder: |
+        - Branch: main
+        - Commit: abc1234
+        - Workflow Run: #123
+        - Tentativas anteriores de correção: Nenhuma
+        - Outras informações relevantes: ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passos para Reproduzir (opcional)
+      description: Se aplicável, descreva como reproduzir o problema
+      placeholder: |
+        1. Execute `npm run build`
+        2. Observe o erro em...
+        3. O problema ocorre quando...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: approval
+    attributes:
+      label: Confirmação
+      description: Leia e confirme antes de criar a issue
+      options:
+        - label: Entendo que o AI Agent tentará corrigir este problema automaticamente
+          required: true
+        - label: Forneci todos os logs e contexto necessários para análise
+          required: true
+        - label: Este problema realmente precisa de correção (não é um falso positivo)
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        ## 📋 Próximos Passos
+
+        Após criar esta issue:
+
+        1. ✅ **AI Agent será acionado automaticamente**
+        2. 🔍 **O agente analisará os logs e contexto**
+        3. 🔧 **Tentará implementar uma correção**
+        4. 🧪 **Validará a correção com testes**
+        5. 📝 **Criará um Pull Request se bem-sucedido**
+
+        ### Limites e Escalação
+
+        - Máximo de **3 tentativas** de correção automática
+        - Após 3 tentativas, a issue será marcada como `escalated` e `needs-human-review`
+        - Você será notificado em cada tentativa e no resultado final
+
+        ### Monitoramento
+
+        Você pode acompanhar o progresso nos comentários desta issue. O AI Agent documentará:
+        - Análise realizada
+        - Estratégia de correção
+        - Mudanças implementadas
+        - Resultados dos testes
+
+        ---
+
+        _Sistema AI-ITSM Queue - Correção Automática de Falhas_
