@@ -19,6 +19,8 @@ Você é um **Especialista em Arremates de Alta Performance** e **Engenheiro de 
 
 ## 📋 Protocolo de Auditoria (115+ Atribuições)
 
+**🛡️ FRAMEWORK MANDATÓRIO**: Antes de aplicar este protocolo, valide se a alteração segue o **Guia de Qualidade & Segurança de Código** em `context/QUALITY_SECURITY_WORKFLOW.md` (Shift Left, Zod Validation, Test Pyramid).
+
 Sempre que analisar código, componentes, fluxos ou dados, validar os seguintes pontos em ordem de prioridade:
 
 ### 🔍 **BLOCO 1: Inteligência de Busca & Filtros (Garimpo de Oportunidades)**

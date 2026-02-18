@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-const ADMIN_EMAIL = process.env.SMOKE_TEST_ADMIN_EMAIL || 'admin@bidexpert.com.br';
-const ADMIN_PASSWORD = process.env.SMOKE_TEST_ADMIN_PASSWORD || 'Admin@123';
+const ADMIN_EMAIL = process.env.SMOKE_TEST_ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.SMOKE_TEST_ADMIN_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  throw new Error('SMOKE_TEST_ADMIN_EMAIL and SMOKE_TEST_ADMIN_PASSWORD must be set');
+}
 
 const ADMIN_ROUTES = [
   '/admin/dashboard',
