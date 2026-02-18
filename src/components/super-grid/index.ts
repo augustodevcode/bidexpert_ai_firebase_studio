@@ -19,5 +19,10 @@ export type {
   RowAction,
   GridFetchParams,
   GridFetchResult,
+  FreezePanesConfig,
+  HighlightConfig,
+  HighlightRule,
 } from './SuperGrid.types';
 export { mergeWithDefaults, DEFAULT_GRID_CONFIG } from './SuperGrid.config';
+export { PT_BR_LOCALE, EN_US_LOCALE } from './SuperGrid.i18n';
+export type { GridLocale } from './SuperGrid.i18n';

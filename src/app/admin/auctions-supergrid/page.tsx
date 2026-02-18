@@ -2,8 +2,9 @@
  * @fileoverview Página de teste do SuperGrid com entidade Auction.
  * Demonstra TODAS as funcionalidades do componente:
  * paginação, multi-sort, busca, query builder, agrupamento,
- * exportação, edição modal, seleção em lote, visibilidade de colunas,
- * densidade, row actions, formatação por tipo, e RBAC.
+ * exportação, edição modal/inline, seleção em lote, visibilidade de colunas,
+ * densidade, row actions, formatação por tipo, RBAC, freeze panes,
+ * destaque de linhas/colunas e internacionalização (pt-BR).
  */
 'use client';
 
@@ -68,6 +69,7 @@ const auctionsGridConfig: SuperGridConfig = {
       width: 120,
       sortable: true,
       filterable: true,
+      pinned: 'left',
     },
     {
       id: 'title',
@@ -78,6 +80,7 @@ const auctionsGridConfig: SuperGridConfig = {
       sortable: true,
       filterable: true,
       editable: true,
+      pinned: 'left',
     },
     {
       id: 'status',
@@ -317,7 +320,7 @@ const auctionsGridConfig: SuperGridConfig = {
     },
     editing: {
       enabled: true,
-      mode: 'modal',
+      mode: 'cell',
       allowAdd: true,
       allowDelete: true,
       allowBulkDelete: true,
@@ -362,6 +365,29 @@ const auctionsGridConfig: SuperGridConfig = {
     resizableColumns: true,
     reorderableColumns: false,
     autoRefresh: 0,
+  },
+
+  // Freeze panes (colunas fixadas à esquerda)
+  freezePanes: {
+    enabled: true,
+    showDividerShadow: true,
+  },
+
+  // Destaque de linhas/colunas
+  highlight: {
+    activeRow: true,
+    stripedRows: true,
+    columnHover: true,
+    rules: [
+      {
+        condition: (row: Record<string, unknown>) => row.status === 'CANCELADO' || row.status === 'SUSPENSO',
+        className: 'bg-destructive/5',
+      },
+      {
+        condition: (row: Record<string, unknown>) => row.status === 'ABERTO_PARA_LANCES',
+        className: 'bg-green-50 dark:bg-green-950/20',
+      },
+    ],
   },
 
   permissions: {

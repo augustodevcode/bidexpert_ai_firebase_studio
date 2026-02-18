@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import type { GridLocale } from '../SuperGrid.i18n';
 
 interface BulkActionsBarProps {
   selectedCount: number;
@@ -25,6 +26,7 @@ interface BulkActionsBarProps {
   isDeleting: boolean;
   canDelete: boolean;
   confirmDelete: boolean;
+  locale: GridLocale;
 }
 
 export function BulkActionsBar({
@@ -34,6 +36,7 @@ export function BulkActionsBar({
   isDeleting,
   canDelete,
   confirmDelete,
+  locale,
 }: BulkActionsBarProps) {
   if (selectedCount === 0) return null;
 
@@ -44,7 +47,7 @@ export function BulkActionsBar({
     >
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium">
-          {selectedCount} {selectedCount === 1 ? 'registro selecionado' : 'registros selecionados'}
+          {locale.bulkActions.selectedCount(selectedCount)}
         </span>
         <Button
           variant="ghost"
@@ -53,7 +56,7 @@ export function BulkActionsBar({
           data-ai-id="supergrid-clear-selection-btn"
         >
           <X className="mr-1 h-4 w-4" />
-          Limpar seleção
+          {locale.bulkActions.clearSelection}
         </Button>
       </div>
 
@@ -69,28 +72,26 @@ export function BulkActionsBar({
                   data-ai-id="supergrid-bulk-delete-btn"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir selecionados
+                  {locale.bulkActions.deleteSelected}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent data-ai-id="supergrid-bulk-delete-confirm">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-destructive" />
-                    Confirmar exclusão
+                    {locale.bulkActions.confirmTitle}
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Tem certeza que deseja excluir {selectedCount}{' '}
-                    {selectedCount === 1 ? 'registro' : 'registros'}?
-                    Esta ação não pode ser desfeita.
+                    {locale.bulkActions.confirmMessage(selectedCount)}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogCancel>{locale.bulkActions.cancel}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={onDelete}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    Excluir
+                    {locale.bulkActions.delete}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -104,7 +105,7 @@ export function BulkActionsBar({
               data-ai-id="supergrid-bulk-delete-btn"
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Excluir selecionados
+              {locale.bulkActions.deleteSelected}
             </Button>
           )
         )}
