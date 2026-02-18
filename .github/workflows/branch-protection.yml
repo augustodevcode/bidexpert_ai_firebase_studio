@@ -18,7 +18,7 @@ on:
       - demo-stable
 
 env:
-  PRISMA_SCHEMA: prisma/schema.prisma
+  PRISMA_SCHEMA: prisma/schema.postgresql.prisma
 
 jobs:
   # ============================================================================
@@ -41,7 +41,10 @@ jobs:
       - name: 📚 Install dependencies
         run: npm ci
         
-      - name: 🗄️ Generate Prisma Client
+      - name: � Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+
+      - name: �🗄️ Generate Prisma Client
         run: npx prisma generate
         
       - name: 🔍 Type Check
@@ -69,6 +72,9 @@ jobs:
           
       - name: 📚 Install dependencies
         run: npm ci
+
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
         
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -77,7 +83,7 @@ jobs:
         run: npm run build
         env:
           # Dummy values for build (não acessa DB)
-          DATABASE_URL: "mysql://root:password@localhost:3306/dummy"
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           NEXTAUTH_SECRET: "dummy-secret-for-build-only"
 
   # ============================================================================
@@ -99,6 +105,9 @@ jobs:
           
       - name: 📚 Install dependencies
         run: npm ci
+
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
         
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate

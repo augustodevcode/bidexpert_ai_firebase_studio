@@ -1,9 +1,14 @@
-name: Seed Verify CI
+# ⚠️ OBSOLETO: Seed Verify com MySQL — Precisa ser atualizado para PostgreSQL
+# Desabilitado para evitar conflitos com deploy-demo-vercel.yml
+name: '[DISABLED] Seed Verify CI (MySQL)'
 
 on:
-  pull_request:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'ATENÇÃO: Este workflow usa MySQL. Atualize para PostgreSQL antes de reativar.'
+        required: true
+        type: boolean
 
 jobs:
   seed-verify:

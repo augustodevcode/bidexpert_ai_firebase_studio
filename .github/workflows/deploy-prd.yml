@@ -2,11 +2,17 @@
 # Triggered on push to main branch
 # Requires manual approval via GitHub Environments
 
-name: Deploy Production
+# ⚠️ OBSOLETO: Deploy Firebase App Hosting — Substituído por deploy via Vercel Git Integration
+# Mantido desabilitado para referência histórica. NÃO reativar.
+name: '[DISABLED] Deploy Production (Firebase)'
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'ATENÇÃO: Este workflow é OBSOLETO. Deploy PRD é via Vercel Git Integration (push to main)'
+        required: true
+        type: boolean
 
 env:
   NODE_VERSION: '20'

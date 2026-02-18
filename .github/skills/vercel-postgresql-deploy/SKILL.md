@@ -1,3 +1,8 @@
+---
+name: vercel-postgresql-deploy
+description: Regras críticas de deploy Vercel com PostgreSQL e Prisma para evitar falhas de build, middleware e compatibilidade de queries.
+---
+
 # 🚀 Skill: Vercel + PostgreSQL Deploy & Compatibility
 
 ## Descrição

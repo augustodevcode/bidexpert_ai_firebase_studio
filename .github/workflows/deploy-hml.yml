@@ -2,11 +2,17 @@
 # Triggered on push to homolog branch
 # Includes DB migrations and seeds
 
-name: Deploy Homologation
+# ⚠️ OBSOLETO: Deploy Locaweb FTP para HML — Substituído por Vercel
+# Mantido desabilitado para referência histórica. NÃO reativar.
+name: '[DISABLED] Deploy Homologation (Locaweb)'
 
 on:
-  push:
-    branches: [homolog]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'ATENÇÃO: Este workflow é OBSOLETO. HML agora é via Vercel (demo-stable branch).'
+        required: true
+        type: boolean
 
 env:
   NODE_VERSION: '20'

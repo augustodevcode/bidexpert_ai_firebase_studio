@@ -1,3 +1,8 @@
+---
+name: report-builder
+description: Implementação e evolução do módulo Report Builder com GrapesJS, Handlebars e renderização PDF via Puppeteer.
+---
+
 # Skill: Report Builder (GrapesJS + Puppeteer + Handlebars)
 
 ## Descrição
