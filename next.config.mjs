@@ -44,8 +44,8 @@ const config = {
       },
     ];
   },
-  // Output standalone para Docker/Cloud Run
-  output: 'standalone',
+  // Output standalone para Docker/Cloud Run — desabilitado no Vercel
+  ...(process.env.VERCEL ? {} : { output: 'standalone' }),
   typescript: {
     // TECH DEBT: src/ai/ tem erros de tipo que precisam ser corrigidos
     // TODO: Corrigir erros em src/ai/flows/*.ts e mudar para false
