@@ -126,6 +126,12 @@ export async function login(values: { email: string, password?: string, tenantId
          }
     }
 
+    // GAP-FIX: Early return if user not found to avoid null pointer exceptions later
+    if (!user || !user.password) {
+      console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado.`);
+      return { success: false, message: 'Credenciais inválidas.' };
+    }
+
     // Validate strict tenant isolation
     // NOTE: Prisma returns UsersOnTenants, not tenants
     const userTenants = user.UsersOnTenants || user.tenants || [];
