@@ -43,10 +43,11 @@ export class AuctionRepository {
     return this.prisma.auction.findFirst({
       where: whereClause,
       include: {
-        Lot: { include: { AssetsOnLots: { include: { Asset: true } } } }, 
+        Lot: { include: { AssetsOnLots: { include: { Asset: { include: { AssetMedia: { include: { MediaItem: true } } } } } } } }, 
         Auctioneer: true,
         Seller: true,
         AuctionStage: true,
+        CoverImage: true,
       },
     });
   }

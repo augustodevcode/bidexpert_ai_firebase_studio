@@ -268,6 +268,7 @@ export class AuctionService {
             LotCategory, category, 
             AuctionStage, stages, auctionStages,
             _count, 
+            CoverImage,
             ...rest
         } = a;
 
@@ -281,6 +282,7 @@ export class AuctionService {
 
         return {
             ...rest,
+            imageUrl: rest.imageUrl || CoverImage?.urlOriginal || CoverImage?.urlThumbnail || null,
             id: a.id.toString(),
             initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
             estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
