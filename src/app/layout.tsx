@@ -15,6 +15,7 @@ import { AppContentWrapper } from './app-content-wrapper';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import SubscriptionPopup from '@/components/subscription-popup';
 import { generateThemeCssFromSettings } from '@/lib/theme-injector';
+import { Analytics } from '@vercel/analytics/next';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +95,7 @@ export default async function RootLayout({
             <Toaster />
           </TooltipProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
