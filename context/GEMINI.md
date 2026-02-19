@@ -40,9 +40,15 @@ Eu sou programado para seguir estritamente as diretrizes definidas no arquivo `R
 
 **Regra:** Todo arquivo de código-fonte (`.ts`, `.tsx`) **deve** começar com um comentário em bloco (docblock) que explica de forma clara e concisa o propósito do arquivo.
 
-## 7. Estratégia de Testes
+## 7. Estratégia de Testes e Segurança (MANDATÓRIO)
 
-A estratégia de testes está documentada no `README.md` e deve ser seguida para garantir a qualidade do código. Eu posso ser instruído a criar ou modificar testes que sigam essa estratégia.
+A estratégia de testes segue o **Guia de Qualidade & Segurança de Código** (`context/QUALITY_SECURITY_WORKFLOW.md`).
+
+### 7.1 Framework de Qualidade "Shift Left"
+- **Zod Validation**: Obrigatório em TODA entrada de Service ou API Route.
+- **Testes Estáticos**: `npm run typecheck` e `npm run lint` devem passar 100%.
+- **Pirâmide de Testes**: Priorizar testes unitários e integração com banco real (Docker).
+- **Segurança**: Headers CSP e HSTS configurados em `next.config.mjs`.
 
 ## 7.1 Diretriz Crítica: Credenciais e Seleção de Tenant no Login
 

@@ -306,5 +306,24 @@ Este agente lida com:
 7. **SEMPRE** adicionar `export const dynamic = 'force-dynamic'` em API routes dinâmicas
 8. Deploy **SOMENTE** via `git push origin main` — NUNCA via Vercel MCP direto
 
+## 🛡️ Framework de Qualidade & Segurança (OBRIGATÓRIO)
+
+Todos os agentes DEVEM seguir o **Guia de Qualidade & Segurança de Código** localizado em `context/QUALITY_SECURITY_WORKFLOW.md`.
+
+### Princípios Fundamentais
+1. **Shift Left**: Detectar erros no estágio mais inicial possível.
+2. **Validação Rigorosa**: Toda entrada externa via API ou Service DEVE usar schemas **Zod**.
+3. **Pirâmide de Testes**:
+   - Unitários (Vitest) > 65%
+   - Integração (Banco Real) > 25%
+   - E2E (Playwright) > 10%
+4. **Segurança**: Bloqueio de secrets via Gitleaks e headers CSP obrigatórios.
+
+### Workflow por Task
+- Antes de codar: Validar schemas e contratos.
+- Durante: Implementar TDD/BDD.
+- Depois: Rodar `npm run typecheck`, `npm run lint` e testes unitários.
+- Smoke Test: Executar `npx playwright test --config=playwright.report.config.ts` para validar navegação em Vercel.
+
 ## Conflitos de regras
  - Sempre que houver conflito de instruções, peça para o usuário clarificar antes de proceguir.

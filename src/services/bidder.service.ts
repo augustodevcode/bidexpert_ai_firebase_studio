@@ -51,10 +51,22 @@ export class BidderService {
     data: UpdateBidderProfileRequest
   ): Promise<ApiResponse<BidderProfile>> {
     try {
+      // GAP-FIX: Validação Zod no service layer conforme guia de segurança
+      const { updateBidderProfileSchema } = await import('@/lib/zod/bidder-profile.schema');
+      const validation = updateBidderProfileSchema.safeParse(data);
+
+      if (!validation.success) {
+        const errorMsg = validation.error.errors.map(e => e.message).join(', ');
+        return {
+          success: false,
+          error: `Dados inválidos: ${errorMsg}`
+        };
+      }
+
       const profile = await this.getOrCreateBidderProfile(userId);
 
       const updatedProfile = await this.bidderRepository.update(userId, {
-        ...data,
+        ...validation.data,
         updatedAt: new Date()
       });
 
