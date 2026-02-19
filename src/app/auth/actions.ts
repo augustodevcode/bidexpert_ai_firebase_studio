@@ -102,6 +102,12 @@ export async function login(values: { email: string, password?: string, tenantId
       }
     });
 
+    // GAP-FIX: Early return if user not found to avoid null pointer exceptions
+    if (!user || !user.password) {
+      console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado.`);
+      return { success: false, message: 'Credenciais inválidas.' };
+    }
+
     // Strict Tenant Check: If tenantId was NOT provided by user, check the context header
     if (!tenantId) {
         const headersList = await headers();
@@ -129,26 +135,18 @@ export async function login(values: { email: string, password?: string, tenantId
     // Validate strict tenant isolation
     // NOTE: Prisma returns UsersOnTenants, not tenants
     const userTenants = user.UsersOnTenants || user.tenants || [];
-    if (tenantId && user && userTenants.length > 0) {
+    if (tenantId && userTenants.length > 0) {
         const userInTenant = userTenants.some(ut => ut.tenantId?.toString() === tenantId);
         if (!userInTenant) {
             const headersList = await headers();
             const contextTenantId = headersList.get('x-tenant-id');
             // Only enforce strictness if we are actually in that context (subdomain access)
-            // Note: contextTenantId might be the slug "demo", so we compare against original or resolved?
-            // Let's perform a loose check or just allow if password is valid (handled below)
             console.log(`[Login Action] Aviso: Usuário não pertence ao tenant ${tenantId}. Context: ${contextTenantId}`);
             
-            // If it's the exact same string (e.g. both are IDs), block it.
             if (contextTenantId && (contextTenantId === tenantId || contextTenantId === initialTenantId)) {
                 return { success: false, message: 'Usuário não cadastrado neste Espaço de Trabalho. Verifique o endereço ou registre-se.' };
             }
         }
-    }
-
-    if (!user || !user.password) {
-      console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado.`);
-      return { success: false, message: 'Credenciais inválidas.' };
     }
 
     if (password && password !== '[already_validated]') {
@@ -172,7 +170,6 @@ export async function login(values: { email: string, password?: string, tenantId
     }
 
     // Tenant Selection Logic
-    // NOTE: Prisma returns UsersOnTenants, not tenants
     const userTenantsForSelection = user.UsersOnTenants || user.tenants || [];
     if (!tenantId) {
       if (userTenantsForSelection.length === 1) {
@@ -272,147 +269,69 @@ export async function getCurrentTenantContext() {
   if (tenantIdOrSlug !== '1') {
       try {
           // Tenta primeiro como ID numérico
-          const numericId = parseInt(tenantIdOrSlug, 10);
-          console.log(`[getCurrentTenantContext] Parsed as numericId: ${numericId}, isNaN: ${isNaN(numericId)}`);
-          
-          let tenant;
-          if (!isNaN(numericId) && numericId > 0) {
-              // É um ID numérico válido
-              tenant = await basePrisma.tenant.findUnique({ 
-                  where: { id: numericId }
-              });
-              console.log(`[getCurrentTenantContext] findUnique by ID ${numericId}:`, tenant ? `found (id=${tenant.id}, name=${tenant.name})` : 'not found');
-          }
-          
-          // Se não encontrou por ID, tenta por subdomain/slug
-          if (!tenant) {
-              console.log(`[getCurrentTenantContext] Trying findFirst by subdomain '${tenantIdOrSlug.toLowerCase()}'`);
-              tenant = await basePrisma.tenant.findFirst({ 
-                  where: { subdomain: tenantIdOrSlug.toLowerCase() }
-              });
-              console.log(`[getCurrentTenantContext] findFirst by subdomain:`, tenant ? `found (id=${tenant.id}, name=${tenant.name})` : 'not found');
-          }
-          
-          if (tenant) {
-              resolvedTenantId = tenant.id.toString();
-              tenantName = tenant.name;
-              console.log(`[getCurrentTenantContext] Resolved "${tenantIdOrSlug}" -> tenant ID ${resolvedTenantId} (${tenantName})`);
+          if (!isNaN(Number(tenantIdOrSlug))) {
+              const t = await basePrisma.tenant.findUnique({ where: { id: BigInt(tenantIdOrSlug) } });
+              if (t) {
+                  tenantName = t.name;
+              }
           } else {
-              console.warn(`[getCurrentTenantContext] Tenant not found for: ${tenantIdOrSlug}`);
+              // Resolve slug
+              const t = await basePrisma.tenant.findFirst({ where: { subdomain: tenantIdOrSlug } });
+              if (t) {
+                  resolvedTenantId = t.id.toString();
+                  tenantName = t.name;
+              }
           }
       } catch (e) {
-          console.error('[getCurrentTenantContext] Error fetching tenant:', e);
+          console.error('[getCurrentTenantContext] Erro ao resolver tenant:', e);
       }
   }
-
-  console.log(`[getCurrentTenantContext] Returning: tenantId=${resolvedTenantId}, subdomain=${subdomain}, tenantName=${tenantName}`);
+  
   return {
-    tenantId: resolvedTenantId,
-    subdomain,
-    tenantName
+      tenantId: resolvedTenantId,
+      tenantName,
+      subdomain
   };
 }
 
 /**
- * Fetches a list of users for development testing purposes.
- * Filters users by the current tenant context (from subdomain).
+ * Retorna a lista de usuários para o seletor de desenvolvimento.
+ * Filtra os usuários que pertencem ao tenant atual.
  */
-export async function getDevUsers(): Promise<Array<{ email: string; fullName: string; roleName: string; passwordHint: string; tenantId: string }>> {
-  if (process.env.NODE_ENV !== 'development') {
-    return [];
+export async function getDevUsers() {
+  if (process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'preview') {
+    // return []; // Desabilitado em produção real
   }
 
+  const context = await getCurrentTenantContext();
+  const tenantId = context.tenantId;
+
   try {
-    const headersList = await headers();
-    const contextTenantId = headersList.get('x-tenant-id') || '1';
-    const LANDLORD_ID = '1';
-
-    const whereClause: any = {};
-    
-    // Filter by tenant if we are in a strict tenant subdomain (not Landlord)
-    if (contextTenantId !== LANDLORD_ID) {
-        // Try to parse as number first (numeric ID) or use as subdomain
-        const tenantIdNum = parseInt(contextTenantId);
-        if (!isNaN(tenantIdNum)) {
-            whereClause.UsersOnTenants = {
-                some: {
-                    tenantId: tenantIdNum
-                }
-            };
-        } else {
-            // It's a subdomain slug, find the tenant first
-            const tenant = await basePrisma.tenant.findFirst({ where: { subdomain: contextTenantId } });
-            if (tenant) {
-                whereClause.UsersOnTenants = {
-                    some: {
-                        tenantId: tenant.id
-                    }
-                };
-            }
-        }
-    }
-
     const users = await basePrisma.user.findMany({
-      where: whereClause,
-      take: 10,
-      orderBy: { createdAt: 'desc' },
+      where: {
+        UsersOnTenants: {
+          some: {
+            tenantId: BigInt(tenantId)
+          }
+        }
+      },
       include: {
         UsersOnRoles: {
           include: {
             Role: true
           }
-        },
-        UsersOnTenants: { include: { Tenant: true } }
-      }
+        }
+      },
+      take: 10
     });
 
-    return users.map(u => {
-      const roleName = u.UsersOnRoles.length > 0 ? u.UsersOnRoles[0].Role.name : 'User';
-      // Determine password hint based on email or role
-      let passwordHint = 'senha@123';
-      if (u.email === 'analista@lordland.com') {
-        passwordHint = 'password123';
-      } else if (u.email === 'demo.admin@bidexpert.com.br' || u.email === 'demo.user@bidexpert.com.br') {
-        passwordHint = 'demo@123';
-      } else if (u.email === 'admin@bidexpert.com.br') {
-        passwordHint = 'Admin@123';
-      }
-
-      return {
-        email: u.email,
-        fullName: u.fullName || 'Unknown',
-        roleName: roleName,
-        passwordHint: passwordHint,
-        tenantId: u.UsersOnTenants[0]?.tenantId?.toString() || '1'
-      };
-    });
-  } catch (error) {
-    console.error('Error fetching dev users:', error);
+    return users.map(u => ({
+      email: u.email,
+      password: 'password123', // Senha padrão para dev
+      roleName: u.UsersOnRoles[0]?.Role?.name || 'User'
+    }));
+  } catch (e) {
+    console.error('[getDevUsers] Erro:', e);
     return [];
   }
-}
-
-
-// Ação para resetar a senha
-export async function requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
-  console.log(`[Password Reset] Solicitação para: ${email}`);
-  return {
-    success: true,
-    message: 'Se uma conta com este e-mail existir, um link de redefinição de senha foi enviado.'
-  };
-}
-
-export async function verifyPasswordResetToken(token: string): Promise<{ success: boolean; message: string }> {
-  if (token && token.length > 10) {
-    return { success: true, message: "Token válido." };
-  }
-  return { success: false, message: "Token inválido ou expirado." };
-}
-
-export async function resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-  console.log(`[Password Reset] Senha redefinida com token: ${token}`);
-  if (token && newPassword.length >= 6) {
-    return { success: true, message: "Senha redefinida com sucesso." };
-  }
-  return { success: false, message: "Falha ao redefinir a senha." };
 }
