@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 
+import { withSentryConfig } from "@sentry/nextjs";
+
 console.log(`[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: ${process.env.NODE_ENV}`);
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -120,5 +122,22 @@ const config = {
 // A lógica original foi alterada para sempre habilitar os checks.
 console.log(`[next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.`);
 
-export default config;
+// Wrap with Sentry configuration if DSN is provided
+const sentryConfig = process.env.NEXT_PUBLIC_SENTRY_DSN ? withSentryConfig(
+  config,
+  {
+    silent: true,
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+  },
+  {
+    widenClientFileUpload: true,
+    transpileClientSDK: true,
+    tunnelRoute: "/monitoring",
+    hideSourceMaps: true,
+    disableLogger: true,
+  }
+) : config;
+
+export default sentryConfig;
 
