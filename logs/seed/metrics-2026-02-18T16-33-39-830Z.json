@@ -1,0 +1,2 @@
+{"operation":"create-test-state","duration":5,"success":false,"details":{"error":"error: Environment variable not found: DATABASE_URL.\n  -->  schema.prisma:20\n   | \n19 |   provider = \"postgresql\"\n20 |   url      = env(\"DATABASE_URL\")\n   | \n\nValidation Error Count: 1"},"timestamp":"2026-02-18T16:33:39.898Z"}
+{"operation":"seed-test-basic-records","duration":15,"success":true,"timestamp":"2026-02-18T16:33:39.908Z"}

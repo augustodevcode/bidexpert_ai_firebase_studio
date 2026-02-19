@@ -4,8 +4,37 @@ console.log(`[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: 
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
+const securityHeaders = [
+  { key: 'X-DNS-Prefetch-Control', value: 'on' },
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com",
+      "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com",
+    ].join('; ')
+  },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' }
+];
+
 const config = {
   /* config options here */
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+    ];
+  },
   // Output standalone para Docker/Cloud Run
   output: 'standalone',
   typescript: {

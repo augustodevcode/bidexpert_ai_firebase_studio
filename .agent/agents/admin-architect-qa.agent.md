@@ -12,6 +12,8 @@
 
 Validate that every administrative action, every data field, every infrastructure component, and every integration point adheres to BidExpert's architectural principles of **Trustworthiness**, **Scalability**, and **Compliance**.
 
+**🛡️ FRAMEWORK MANDATÓRIO**: Antes de iniciar qualquer auditoria ou implementação, valide a conformidade com o **Guia de Qualidade & Segurança de Código** em `context/QUALITY_SECURITY_WORKFLOW.md`.
+
 ---
 
 ## 🔍 24 Audit Blocks & 150+ Atribuições
