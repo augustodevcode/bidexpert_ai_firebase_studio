@@ -1,0 +1,212 @@
+name: Create Issue on CI/CD Failure
+
+# Trigger when any of these workflows complete
+on:
+  workflow_run:
+    workflows: 
+      - "P0 CI Pipeline"
+      - "Deploy to Demo (Vercel)"
+      - "Deploy to HML (Vercel)"
+      - "Deploy to Production"
+      - "Seed Verification"
+    types: 
+      - completed
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  create-failure-issue:
+    name: Create Issue for Failed Workflow
+    runs-on: ubuntu-latest
+    # Only run if the workflow failed
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Get workflow run details
+        id: workflow_details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get detailed information about the failed workflow
+            const runId = context.payload.workflow_run.id;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            // Get the workflow run
+            const { data: workflowRun } = await github.rest.actions.getWorkflowRun({
+              owner,
+              repo,
+              run_id: runId,
+            });
+            
+            // Get the jobs for this run
+            const { data: jobs } = await github.rest.actions.listJobsForWorkflowRun({
+              owner,
+              repo,
+              run_id: runId,
+            });
+            
+            // Find failed jobs
+            const failedJobs = jobs.jobs.filter(job => job.conclusion === 'failure');
+            
+            return {
+              workflowName: workflowRun.name,
+              runNumber: workflowRun.run_number,
+              runId: workflowRun.id,
+              branch: workflowRun.head_branch,
+              commit: workflowRun.head_sha.substring(0, 7),
+              commitMessage: workflowRun.head_commit.message.split('\n')[0],
+              actor: workflowRun.triggering_actor.login,
+              createdAt: workflowRun.created_at,
+              htmlUrl: workflowRun.html_url,
+              failedJobs: failedJobs.map(job => ({
+                name: job.name,
+                conclusion: job.conclusion,
+                htmlUrl: job.html_url
+              }))
+            };
+
+      - name: Collect failure logs
+        id: collect_logs
+        run: |
+          # Install GitHub CLI if not available
+          which gh || (curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+            sudo apt update && sudo apt install gh -y)
+          
+          # Collect logs from the failed run (limit to 5000 chars to avoid too large issues)
+          echo "Collecting logs for run ${{ github.event.workflow_run.id }}..."
+          LOGS=$(gh run view ${{ github.event.workflow_run.id }} --log-failed 2>&1 || echo "Failed to collect logs")
+          
+          # Limit log size
+          LOGS_TRUNCATED=$(echo "$LOGS" | head -c 5000)
+          
+          # Save to file for multiline handling
+          echo "$LOGS_TRUNCATED" > /tmp/workflow_logs.txt
+          
+          # Check if logs were truncated
+          if [ ${#LOGS} -gt 5000 ]; then
+            echo "" >> /tmp/workflow_logs.txt
+            echo "... (logs truncated, see full logs at workflow URL)" >> /tmp/workflow_logs.txt
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create issue
+        id: create_issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const details = ${{ steps.workflow_details.outputs.result }};
+            
+            // Read logs from file
+            let logs = 'No logs available';
+            try {
+              logs = fs.readFileSync('/tmp/workflow_logs.txt', 'utf8');
+            } catch (error) {
+              logs = `Error reading logs: ${error.message}`;
+            }
+            
+            // Format failed jobs list
+            const failedJobsList = details.failedJobs.map(job => 
+              `- [${job.name}](${job.htmlUrl}) - ${job.conclusion}`
+            ).join('\n');
+            
+            // Create issue body
+            const issueBody = `## 🚨 CI/CD Falha Detectada Automaticamente
+
+            O workflow **${details.workflowName}** falhou e requer atenção.
+
+            ### 📊 Informações do Workflow
+
+            | Campo | Valor |
+            |-------|-------|
+            | **Workflow** | [${details.workflowName} #${details.runNumber}](${details.htmlUrl}) |
+            | **Branch** | \`${details.branch}\` |
+            | **Commit** | \`${details.commit}\` - ${details.commitMessage} |
+            | **Executado por** | @${details.actor} |
+            | **Data/Hora** | ${details.createdAt} |
+            | **Run ID** | ${details.runId} |
+
+            ### ❌ Jobs Falhados
+
+            ${failedJobsList || 'Nenhum job específico identificado'}
+
+            ### 📋 Logs da Falha
+
+            <details>
+            <summary>Clique para expandir os logs</summary>
+
+            \`\`\`
+            ${logs}
+            \`\`\`
+
+            </details>
+
+            ### 🔧 Próximas Ações
+
+            1. **Análise Automática**: O AI Agent será acionado automaticamente para investigar
+            2. **Tentativas de Correção**: Até 3 tentativas automáticas serão realizadas
+            3. **Escalação**: Se não for resolvido, será escalado para revisão humana
+
+            ### 🏷️ Labels Aplicadas
+
+            - \`ai-fix\`: Issue será processada pelo AI Agent automaticamente
+            - \`ci-cd\`: Problema relacionado a pipeline CI/CD
+            - \`priority:high\`: Alta prioridade (falha em workflow crítico)
+            - \`automated\`: Issue criada automaticamente pelo sistema
+
+            ---
+
+            *Esta issue foi criada automaticamente pelo sistema de monitoramento CI/CD.*`;
+
+            // Create the issue
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 CI/CD Failure: ${details.workflowName} - Run #${details.runNumber}`,
+              body: issueBody,
+              labels: ['ai-fix', 'ci-cd', 'priority:high', 'automated']
+            });
+            
+            console.log(`Issue created: ${issue.html_url}`);
+            return issue.number;
+
+      - name: Add initial comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ steps.create_issue.outputs.result }};
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `🤖 **AI Agent será acionado automaticamente**
+
+              O sistema de correção automática foi notificado desta falha e iniciará a análise em breve.
+              
+              Você pode acompanhar o progresso aqui nesta issue. Se a correção automática não for bem-sucedida após 3 tentativas, a issue será escalada para revisão humana.`
+            });
+
+      - name: Generate workflow summary
+        run: |
+          echo "## 🚨 CI/CD Failure Issue Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "A failure was detected in workflow **${{ github.event.workflow_run.name }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Issue Number**: #${{ steps.create_issue.outputs.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.event.workflow_run.head_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.event.workflow_run.head_sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The AI Agent will be automatically triggered to analyze and fix this issue." >> $GITHUB_STEP_SUMMARY
