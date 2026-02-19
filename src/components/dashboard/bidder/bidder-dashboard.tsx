@@ -44,63 +44,63 @@ export function BidderDashboard({ overview }: BidderDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="space-y-6">
+    <div className="wrapper-bidder-dashboard" data-ai-id="bidder-dashboard-main">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Meu Dashboard</h1>
-          <p className="text-muted-foreground">
+      <div className="wrapper-dashboard-header" data-ai-id="bidder-dashboard-header">
+        <div className="wrapper-header-title">
+          <h1 className="header-dashboard-title" data-ai-id="bidder-dashboard-title">Meu Dashboard</h1>
+          <p className="text-dashboard-subtitle" data-ai-id="bidder-dashboard-subtitle">
             Gerencie seus arremates, pagamentos e documentos
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-sm">
-            <User className="h-3 w-3 mr-1" />
+        <div className="wrapper-header-badge">
+          <Badge variant="outline" className="badge-user-role" data-ai-id="bidder-dashboard-role">
+            <User className="icon-badge-small" />
             Arrematante
           </Badge>
         </div>
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lotes Arrematados</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
+      <div className="grid-dashboard-overview" data-ai-id="bidder-dashboard-overview-grid">
+        <Card className="card-overview-item" data-ai-id="bidder-overview-won-lots">
+          <CardHeader className="header-overview-item">
+            <CardTitle className="title-overview-item">Lotes Arrematados</CardTitle>
+            <Trophy className="icon-overview-item" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{overview.wonLotsCount}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="content-overview-item">
+            <div className="text-overview-value">{overview.wonLotsCount}</div>
+            <p className="text-overview-helper">
               Total de arremates
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Investido</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+        <Card className="card-overview-item" data-ai-id="bidder-overview-total-invested">
+          <CardHeader className="header-overview-item">
+            <CardTitle className="title-overview-item">Total Investido</CardTitle>
+            <DollarSign className="icon-overview-item" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="content-overview-item">
+            <div className="text-overview-value">
               R$ {overview.totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-overview-helper">
               Valor total dos arremates
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pagamentos Pendentes</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+        <Card className="card-overview-item" data-ai-id="bidder-overview-pending-payments">
+          <CardHeader className="header-overview-item">
+            <CardTitle className="title-overview-item">Pagamentos Pendentes</CardTitle>
+            <Clock className="icon-overview-item" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{overview.pendingPayments}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="content-overview-item">
+            <div className="text-overview-value">{overview.pendingPayments}</div>
+            <p className="text-overview-helper">
               {overview.paymentSummary.nextDueDate && (
-                <span className="text-orange-600">
+                <span className="text-highlight-warning">
                   Vence em {overview.paymentSummary.nextDueDate.toLocaleDateString('pt-BR')}
                 </span>
               )}
@@ -108,14 +108,14 @@ export function BidderDashboard({ overview }: BidderDashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Notificações</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
+        <Card className="card-overview-item" data-ai-id="bidder-overview-notifications">
+          <CardHeader className="header-overview-item">
+            <CardTitle className="title-overview-item">Notificações</CardTitle>
+            <Bell className="icon-overview-item" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{overview.unreadNotifications}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="content-overview-item">
+            <div className="text-overview-value">{overview.unreadNotifications}</div>
+            <p className="text-overview-helper">
               Não lidas
             </p>
           </CardContent>
@@ -123,102 +123,102 @@ export function BidderDashboard({ overview }: BidderDashboardProps) {
       </div>
 
       {/* Habilitações e Lances Automáticos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid-dashboard-sections" data-ai-id="bidder-dashboard-detail-grid">
         {/* Habilitações em Leilões */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Gavel className="h-5 w-5 text-primary" />
+        <Card className="card-dashboard-section" data-ai-id="bidder-habilitations-card">
+          <CardHeader className="header-dashboard-section">
+            <CardTitle className="title-dashboard-section">
+              <Gavel className="icon-section-title" />
               Leilões Habilitados
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="desc-dashboard-section">
               Leilões onde você está habilitado para dar lances
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="content-dashboard-section">
             {overview.auctionHabilitations && overview.auctionHabilitations.length > 0 ? (
-              <div className="space-y-3">
+              <div className="list-dashboard-items">
                 {overview.auctionHabilitations.slice(0, 5).map((hab) => (
-                  <div key={hab.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{hab.auctionTitle}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={hab.auctionStatus === 'ABERTO' || hab.auctionStatus === 'ABERTO_PARA_LANCES' ? 'default' : 'secondary'} className="text-xs">
+                  <div key={hab.id} className="item-dashboard-row" data-ai-id={`bidder-habilitation-${hab.id}`}>
+                    <div className="wrapper-item-info">
+                      <p className="text-item-title">{hab.auctionTitle}</p>
+                      <div className="wrapper-item-badges">
+                        <Badge variant={hab.auctionStatus === 'ABERTO' || hab.auctionStatus === 'ABERTO_PARA_LANCES' ? 'default' : 'secondary'} className="badge-item-status">
                           {hab.auctionStatus === 'ABERTO_PARA_LANCES' ? 'Em andamento' : 
                            hab.auctionStatus === 'ABERTO' ? 'Aberto' :
                            hab.auctionStatus === 'EM_BREVE' ? 'Em breve' : hab.auctionStatus}
                         </Badge>
                         {hab.auctionDate && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-item-date">
                             {new Date(hab.auctionDate).toLocaleDateString('pt-BR')}
                           </span>
                         )}
                       </div>
                     </div>
                     <Link href={`/auctions/${hab.auctionPublicId || hab.auctionId}`}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <ExternalLink className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="btn-item-action" data-ai-id={`bidder-habilitation-link-${hab.id}`}>
+                        <ExternalLink className="icon-item-action" />
                       </Button>
                     </Link>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <Gavel className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">Você ainda não está habilitado em nenhum leilão</p>
-                <p className="text-xs mt-1">Explore os leilões e habilite-se para participar!</p>
+              <div className="wrapper-empty-state-dashboard" data-ai-id="bidder-habilitations-empty">
+                <Gavel className="icon-empty-state-dashboard" />
+                <p className="text-empty-state-title">Você ainda não está habilitado em nenhum leilão</p>
+                <p className="text-empty-state-desc">Explore os leilões e habilite-se para participar!</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Lances Automáticos Configurados */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Zap className="h-5 w-5 text-amber-500" />
+        <Card className="card-dashboard-section" data-ai-id="bidder-autobids-card">
+          <CardHeader className="header-dashboard-section">
+            <CardTitle className="title-dashboard-section">
+              <Zap className="icon-section-title-alt" />
               Lances Automáticos
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="desc-dashboard-section">
               Lotes com lance máximo configurado
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="content-dashboard-section">
             {overview.activeMaxBids && overview.activeMaxBids.length > 0 ? (
-              <div className="space-y-3">
+              <div className="list-dashboard-items">
                 {overview.activeMaxBids.slice(0, 5).map((mb) => (
-                  <div key={mb.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{mb.lotTitle}</p>
-                      <p className="text-xs text-muted-foreground truncate">{mb.auctionTitle}</p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                  <div key={mb.id} className="item-dashboard-row" data-ai-id={`bidder-autobid-${mb.id}`}>
+                    <div className="wrapper-item-info">
+                      <p className="text-item-title">{mb.lotTitle}</p>
+                      <p className="text-item-subtitle">{mb.auctionTitle}</p>
+                      <div className="wrapper-item-values">
+                        <span className="text-item-highlight">
                           Máx: R$ {mb.maxAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                         {mb.currentBid && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-item-secondary">
                             Atual: R$ {mb.currentBid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                         )}
-                        <Badge variant={mb.lotStatus === 'ABERTO_PARA_LANCES' ? 'default' : 'secondary'} className="text-xs">
+                        <Badge variant={mb.lotStatus === 'ABERTO_PARA_LANCES' ? 'default' : 'secondary'} className="badge-item-status">
                           {mb.lotStatus === 'ABERTO_PARA_LANCES' ? 'Ativo' : mb.lotStatus}
                         </Badge>
                       </div>
                     </div>
                     <Link href={`/auctions/${mb.auctionId}/lots/${mb.lotPublicId || mb.lotId}`}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <ExternalLink className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="btn-item-action" data-ai-id={`bidder-autobid-link-${mb.id}`}>
+                        <ExternalLink className="icon-item-action" />
                       </Button>
                     </Link>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <Zap className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">Nenhum lance automático configurado</p>
-                <p className="text-xs mt-1">Configure um lance máximo nos lotes de interesse!</p>
+              <div className="wrapper-empty-state-dashboard" data-ai-id="bidder-autobids-empty">
+                <Zap className="icon-empty-state-dashboard" />
+                <p className="text-empty-state-title">Nenhum lance automático configurado</p>
+                <p className="text-empty-state-desc">Configure um lance máximo nos lotes de interesse!</p>
               </div>
             )}
           </CardContent>
@@ -226,49 +226,53 @@ export function BidderDashboard({ overview }: BidderDashboardProps) {
       </div>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
-          <CardDescription>
+      <Card className="card-quick-actions" data-ai-id="bidder-quick-actions-card">
+        <CardHeader className="header-quick-actions">
+          <CardTitle className="title-quick-actions">Ações Rápidas</CardTitle>
+          <CardDescription className="desc-quick-actions">
             Acesso rápido às funcionalidades mais utilizadas
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <CardContent className="content-quick-actions">
+          <div className="grid-quick-actions" data-ai-id="bidder-quick-actions-grid">
             <Button
               variant="outline"
-              className="h-20 flex flex-col items-center justify-center space-y-2"
+              className="btn-quick-action"
               onClick={() => setActiveTab('won-lots')}
+              data-ai-id="btn-quick-won-lots"
             >
-              <Trophy className="h-6 w-6" />
-              <span className="text-sm">Ver Arremates</span>
+              <Trophy className="icon-quick-action" />
+              <span className="text-quick-action">Ver Arremates</span>
             </Button>
 
             <Button
               variant="outline"
-              className="h-20 flex flex-col items-center justify-center space-y-2"
+              className="btn-quick-action"
               onClick={() => setActiveTab('payments')}
+              data-ai-id="btn-quick-payments"
             >
-              <CreditCard className="h-6 w-6" />
-              <span className="text-sm">Pagamentos</span>
+              <CreditCard className="icon-quick-action" />
+              <span className="text-quick-action">Pagamentos</span>
             </Button>
 
             <Button
               variant="outline"
-              className="h-20 flex flex-col items-center justify-center space-y-2"
+              className="btn-quick-action"
               onClick={() => setActiveTab('documents')}
+              data-ai-id="btn-quick-documents"
             >
-              <FileText className="h-6 w-6" />
-              <span className="text-sm">Documentos</span>
+              <FileText className="icon-quick-action" />
+              <span className="text-quick-action">Documentos</span>
             </Button>
 
             <Button
               variant="outline"
-              className="h-20 flex flex-col items-center justify-center space-y-2"
+              className="btn-quick-action"
               onClick={() => setActiveTab('notifications')}
+              data-ai-id="btn-quick-notifications"
             >
-              <Bell className="h-6 w-6" />
-              <span className="text-sm">Notificações</span>
+              <Bell className="icon-quick-action" />
+              <span className="text-quick-action">Notificações</span>
             </Button>
           </div>
         </CardContent>
@@ -352,14 +356,14 @@ export function BidderDashboard({ overview }: BidderDashboardProps) {
       </Card>
 
       {/* Detailed Sections */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="won-lots">Arremates</TabsTrigger>
-          <TabsTrigger value="payments">Pagamentos</TabsTrigger>
-          <TabsTrigger value="documents">Documentos</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="history">Histórico</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="wrapper-dashboard-tabs" data-ai-id="bidder-dashboard-tabs">
+        <TabsList className="list-dashboard-tabs" data-ai-id="bidder-tabs-list">
+          <TabsTrigger value="overview" className="trigger-dashboard-tab" data-ai-id="tab-overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="won-lots" className="trigger-dashboard-tab" data-ai-id="tab-won-lots">Arremates</TabsTrigger>
+          <TabsTrigger value="payments" className="trigger-dashboard-tab" data-ai-id="tab-payments">Pagamentos</TabsTrigger>
+          <TabsTrigger value="documents" className="trigger-dashboard-tab" data-ai-id="tab-documents">Documentos</TabsTrigger>
+          <TabsTrigger value="notifications" className="trigger-dashboard-tab" data-ai-id="tab-notifications">Notificações</TabsTrigger>
+          <TabsTrigger value="history" className="trigger-dashboard-tab" data-ai-id="tab-history">Histórico</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">

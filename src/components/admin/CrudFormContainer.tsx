@@ -53,23 +53,17 @@ export default function CrudFormContainer({
     }
   };
 
-  const headerContent = (
-      <>
-        <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>{description}</DialogDescription>
-      </>
-  );
-
   if (effectiveMode === 'sheet') {
     return (
       <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-        <SheetContent className="sm:max-w-xl w-[90vw] overflow-y-auto p-0 flex flex-col">
-            <SheetHeader className="p-6">
-               {headerContent}
-            </SheetHeader>
-            <div className="flex-grow overflow-y-auto px-6 pb-6">
-                {children}
-            </div>
+        <SheetContent className="sm:max-w-xl w-[90vw] overflow-y-auto p-0 flex flex-col" data-ai-id="crud-form-sheet">
+          <SheetHeader className="p-6">
+            <SheetTitle data-ai-id="crud-form-sheet-title">{title}</SheetTitle>
+            <SheetDescription data-ai-id="crud-form-sheet-description">{description}</SheetDescription>
+          </SheetHeader>
+          <div className="flex-grow overflow-y-auto px-6 pb-6">
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     );
@@ -77,12 +71,13 @@ export default function CrudFormContainer({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
-         <DialogHeader>
-            {headerContent}
-         </DialogHeader>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col" data-ai-id="crud-form-dialog">
+        <DialogHeader>
+          <DialogTitle data-ai-id="crud-form-dialog-title">{title}</DialogTitle>
+          <DialogDescription data-ai-id="crud-form-dialog-description">{description}</DialogDescription>
+        </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-6 pl-2">
-            {children}
+          {children}
         </div>
       </DialogContent>
     </Dialog>

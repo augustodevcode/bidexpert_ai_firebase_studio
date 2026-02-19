@@ -352,66 +352,66 @@ export default function Header({
   return (
     <>
     <header
-      className="sticky top-0 z-header w-full backdrop-blur-2xl border-b border-border/30 bg-surface/80 shadow-glow print:hidden"
-      data-ai-id="header"
+      className="header-main-sticky"
+      data-ai-id="header-main"
       style={headerStyle}
     >
       {/* Promotion Bar */}
-      <div className="bg-gradient-radar text-primary-foreground text-xs sm:text-sm">
-        <div className="container mx-auto px-4 h-10 flex items-center justify-center sm:justify-between">
-          <p className="text-center sm:text-left">
-            <Percent className="inline h-4 w-4 mr-1.5" />
+      <div className="wrapper-promo-bar" data-ai-id="header-promo-bar">
+        <div className="container-promo-bar" data-ai-id="header-promo-container">
+          <p className="text-promo-message" data-ai-id="header-promo-text">
+            <Percent className="icon-promo-percent" />
             <strong>Leilão Especial de Veículos Clássicos!</strong> Lances a partir de R$1.000!
           </p>
-          <Button size="sm" variant="link" asChild className="text-primary-foreground hover:text-primary-foreground/80 hidden sm:inline-flex h-auto py-1 px-2">
+          <Button size="sm" variant="link" asChild className="btn-promo-action" data-ai-id="header-promo-button">
             <Link href="/search?type=lots&tab=categories&category=veiculos">Ver Agora</Link>
           </Button>
         </div>
       </div>
 
       {/* Top Bar (Informational) */}
-      <div className="bg-surface/40 backdrop-blur text-secondary-foreground text-xs border-b border-border/20">
-        <div className="container mx-auto px-4 h-10 flex items-center justify-between">
-          <div className="hidden sm:block">
-            {siteTitle ? `Bem-vindo ao ${siteTitle}! Sua plataforma de leilões online.` : <Skeleton className="h-4 w-64" />}
+      <div className="wrapper-top-bar" data-ai-id="header-top-bar">
+        <div className="container-top-bar" data-ai-id="header-top-container">
+          <div className="wrapper-welcome-msg" data-ai-id="header-welcome-message">
+            {siteTitle ? `Bem-vindo ao ${siteTitle}! Sua plataforma de leilões online.` : <Skeleton className="skeleton-welcome-msg" />}
           </div>
-          <nav className="flex items-center space-x-3 sm:space-x-4">
-            <Link href="/faq" className="hover:text-primary transition-colors flex items-center gap-1">
-              <HelpCircle className="h-3.5 w-3.5" /> Ajuda/FAQ
+          <nav className="nav-top-links" data-ai-id="header-top-nav">
+            <Link href="/faq" className="link-top-nav" data-ai-id="header-link-faq">
+              <HelpCircle className="icon-top-nav" /> Ajuda/FAQ
             </Link>
-            <Link href="/contact" className="hover:text-primary transition-colors flex items-center gap-1">
-              <Phone className="h-3.5 w-3.5" /> Contato
+            <Link href="/contact" className="link-top-nav" data-ai-id="header-link-contact">
+              <Phone className="icon-top-nav" /> Contato
             </Link>
           </nav>
         </div>
       </div>
 
       {/* Logo and Search Area */}
-      <div className="bg-surface/80 text-foreground border-b border-border/20">
-        <div className="container mx-auto px-4 flex h-20 items-center justify-between">
-          <div className="flex items-center">
-            <div className="md:hidden mr-2">
+      <div className="wrapper-logo-search-bar" data-ai-id="header-middle-bar">
+        <div className="container-logo-search" data-ai-id="header-middle-container">
+          <div className="wrapper-header-brand-mobile" data-ai-id="header-brand-section">
+            <div className="wrapper-mobile-menu-trigger" data-ai-id="header-mobile-menu">
                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-accent focus-visible:ring-accent-foreground" aria-label="Abrir Menu">
-                    <Menu className="h-6 w-6" />
+                  <Button variant="ghost" size="icon" className="btn-mobile-menu" aria-label="Abrir Menu" data-ai-id="header-menu-button">
+                    <Menu className="icon-mobile-menu" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-card text-card-foreground flex flex-col">
-                    <SheetHeader className="p-4 border-b flex-shrink-0">
-                      <SheetTitle className="flex items-center space-x-2 text-lg font-semibold">
+                <SheetContent side="left" className="sheet-mobile-menu" data-ai-id="header-mobile-sheet">
+                    <SheetHeader className="header-mobile-sheet" data-ai-id="header-mobile-sheet-header">
+                      <SheetTitle className="title-mobile-sheet" data-ai-id="header-mobile-sheet-title">
                          {siteLogoUrl ? (
-                            <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="object-contain" />
+                            <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="img-mobile-logo" />
                           ) : (
-                            <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                            <Avatar className="avatar-mobile-logo" data-ai-id="header-mobile-avatar">
                                 <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
                             </Avatar>
                           )}
-                        <span className="text-primary">{siteTitle}</span>
+                        <span className="text-mobile-brand">{siteTitle}</span>
                       </SheetTitle>
                     </SheetHeader>
-                    <ScrollArea className="flex-grow">
-                        <nav className="flex flex-col gap-1 p-4">
+                    <ScrollArea className="scroll-mobile-menu" data-ai-id="header-mobile-scroll">
+                        <nav className="nav-mobile-links" data-ai-id="header-mobile-nav">
                         {isLoading ? <p>Carregando...</p> : 
                         <MainNav
                             items={allNavItemsForMobile}
@@ -426,105 +426,107 @@ export default function Header({
                         }
                         </nav>
                     </ScrollArea>
-                    <div className="p-4 border-t flex-shrink-0">
+                    <div className="footer-mobile-sheet" data-ai-id="header-mobile-footer">
                       <UserNav />
                     </div>
                 </SheetContent>
               </Sheet>
             </div>
-            <Link href="/" className="mr-4 flex flex-col items-start sm:items-center sm:flex-row sm:space-x-3">
-              <div className="flex items-center space-x-2 sm:space-x-3">
+            <Link href="/" className="link-header-logo-main" data-ai-id="header-logo-link-main">
+              <div className="wrapper-logo-text" data-ai-id="header-logo-wrapper">
                  {siteLogoUrl ? (
-                    <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="object-contain" />
+                    <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="img-header-logo" />
                  ) : (
-                    <Coins className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
+                    <Coins className="icon-header-logo-main" />
                  )}
-                <span className="font-bold text-xl sm:text-3xl">
-                  {isLoading ? <Skeleton className="h-8 w-32" /> : siteTitle}
+                <span className="text-header-title">
+                  {isLoading ? <Skeleton className="skeleton-header-title" /> : siteTitle}
                 </span>
               </div>
               {siteTagline && (
-                <span className="text-xs sm:text-sm text-muted-foreground mt-0 sm:mt-1 hidden md:block">
-                   {isLoading ? <Skeleton className="h-4 w-48" /> : siteTagline}
+                <span className="text-header-tagline" data-ai-id="header-tagline">
+                   {isLoading ? <Skeleton className="skeleton-header-tagline" /> : siteTagline}
                 </span>
               )}
             </Link>
           </div>
 
-          <div className="hidden md:flex flex-1 justify-center items-center px-4">
-            <form onSubmit={handleSearchSubmit} className="w-full max-w-xl">
-              <div ref={searchContainerRef} className="relative flex w-full bg-background rounded-md shadow-sm border border-input">
+          <div className="wrapper-header-search-desktop" data-ai-id="header-search-section">
+            <form onSubmit={handleSearchSubmit} className="form-header-search" data-ai-id="header-search-form">
+              <div ref={searchContainerRef} className="container-header-search-input" data-ai-id="header-search-container">
                 <Select
                   value={selectedSearchCategorySlug || 'todas'}
                   onValueChange={(value) => setSelectedSearchCategorySlug(value === 'todas' ? undefined : value)}
                 >
                   <SelectTrigger
-                    className="w-[150px] h-10 text-sm text-muted-foreground border-r border-input rounded-l-md rounded-r-none focus:ring-0 focus:ring-offset-0 bg-secondary/20 truncate"
+                    className="select-header-search-category"
                     aria-label="Selecionar Categoria de Busca"
+                    data-ai-id="header-search-category-select"
                   >
                     <SelectValue placeholder="Categorias" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todas" className="text-sm">Todas</SelectItem>
+                  <SelectContent className="select-content-search">
+                    <SelectItem value="todas" className="item-search-category">Todas</SelectItem>
                     {categories.length > 0 ? (
                       categories.map(cat => (
                         <SelectItem
                           key={cat.slug}
                           value={cat.slug}
-                          className="text-sm"
+                          className="item-search-category"
                         >
                           {cat.name}
                         </SelectItem>
                       ))
                     ) : (
-                       <div className="p-2 text-xs text-muted-foreground">Carregando categorias...</div>
+                       <div className="text-search-loading">Carregando categorias...</div>
                     )}
                   </SelectContent>
                 </Select>
                 <Input
                   type="search"
                   placeholder="Buscar em todo o site..."
-                  className="h-10 pl-3 pr-10 flex-1 rounded-l-none rounded-r-md border-0 focus:ring-0 focus:ring-offset-0 text-foreground placeholder:text-muted-foreground"
+                  className="input-header-search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onFocus={() => searchTerm.length >= 3 && setIsSearchDropdownOpen(true)}
+                  data-ai-id="header-search-input"
                 />
-                <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground" aria-label="Buscar">
-                  <SearchIcon className="h-4 w-4" />
+                <Button type="submit" size="icon" className="btn-header-search-submit" aria-label="Buscar" data-ai-id="header-search-submit">
+                  <SearchIcon className="icon-search-submit" />
                 </Button>
                 {isSearchDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1.5 bg-card border border-border shadow-lg rounded-md z-50 max-h-96 overflow-y-auto">
+                  <div className="wrapper-search-dropdown" data-ai-id="header-search-dropdown">
                     {isSearchLoading && (
-                      <div className="p-4 text-center text-muted-foreground flex items-center justify-center">
-                        <Loader2 className="h-5 w-5 animate-spin mr-2" /> Buscando...
+                      <div className="wrapper-search-loading" data-ai-id="header-search-loading">
+                        <Loader2 className="icon-search-loading-spinner" /> Buscando...
                       </div>
                     )}
                     {!isSearchLoading && searchResults.length === 0 && searchTerm.length >=3 && (
-                      <div className="p-4 text-center text-muted-foreground">Nenhum lote encontrado.</div>
+                      <div className="text-search-no-results" data-ai-id="header-search-no-results">Nenhum lote encontrado.</div>
                     )}
                     {!isSearchLoading && searchResults.length > 0 && (
-                      <ul className="divide-y divide-border">
+                      <ul className="list-search-results" data-ai-id="header-search-results-list">
                         {searchResults.map(lot => (
-                          <li key={lot.id}>
+                          <li key={lot.id} className="item-search-result" data-ai-id={`header-search-result-${lot.id}`}>
                             <Link
                               href={`/auctions/${lot.auctionId}/lots/${lot.id}`}
-                              className="flex items-center p-3 hover:bg-accent transition-colors"
+                              className="link-search-result"
                               onClick={() => setIsSearchDropdownOpen(false)}
                             >
-                              <div className="relative h-12 w-16 flex-shrink-0 bg-muted rounded-sm overflow-hidden mr-3">
-                                <Image src={lot.imageUrl || "https://placehold.co/120x90.png"} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "resultado busca"} />
+                              <div className="wrapper-search-result-image" data-ai-id="header-search-result-image-wrapper">
+                                <Image src={lot.imageUrl || "https://placehold.co/120x90.png"} alt={lot.title} fill className="img-search-result" data-ai-hint={lot.dataAiHint || "resultado busca"} />
                               </div>
-                              <div className="flex-grow overflow-hidden">
-                                <p className="text-sm font-medium text-foreground truncate">{lot.title}</p>
-                                <p className="text-xs text-primary font-semibold">
+                              <div className="wrapper-search-result-info">
+                                <p className="text-search-result-title">{lot.title}</p>
+                                <p className="text-search-result-price">
                                   R$ {lot.price.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                                 </p>
                               </div>
                             </Link>
                           </li>
                         ))}
-                         <li className="p-2 border-t border-border">
-                          <Button variant="link" className="w-full text-sm text-primary" onClick={handleSearchSubmit}>
+                         <li className="item-search-view-all">
+                          <Button variant="link" className="btn-search-view-all" onClick={handleSearchSubmit} data-ai-id="header-search-view-all">
                             Ver todos os resultados para &ldquo;{searchTerm}&rdquo;
                           </Button>
                         </li>
@@ -535,14 +537,14 @@ export default function Header({
               </div>
             </form>
            </div>
-          <div className="flex items-center space-x-0.5 sm:space-x-1">
+          <div className="wrapper-header-actions" data-ai-id="header-actions-section">
 
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                        <Button asChild variant="ghost" size="icon" className="btn-header-action" data-ai-id="header-action-map">
                             <Link href="/map-search" aria-label="Busca por Mapa">
-                                <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
+                                <MapPin className="icon-header-action" />
                             </Link>
                         </Button>
                     </TooltipTrigger>
@@ -553,9 +555,9 @@ export default function Header({
              <TooltipProvider>
                  <Tooltip>
                     <TooltipTrigger asChild>
-                         <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar em todo o site" asChild>
+                         <Button variant="ghost" size="icon" className="btn-header-action-mobile" aria-label="Buscar em todo o site" asChild data-ai-id="header-action-search-mobile">
                             <Link href="/search">
-                                <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                                <SearchIcon className="icon-header-action" />
                             </Link>
                         </Button>
                     </TooltipTrigger>
@@ -568,24 +570,24 @@ export default function Header({
       </div>
 
       {/* Main Navigation Bar - Desktop */}
-      <div className="border-b bg-background text-foreground hidden md:block">
-        <div className="container mx-auto px-4 flex h-12 items-center justify-between">
+      <div className="wrapper-main-navigation" data-ai-id="header-bottom-bar">
+        <div className="container-main-navigation" data-ai-id="header-bottom-container">
             {/* Categorias Megamenu (à esquerda) */}
             {firstNavItem && firstNavItem.isMegaMenu && (
-            <NavigationMenu className="relative z-10 flex items-center justify-start">
+            <NavigationMenu className="menu-navigation-categories" data-ai-id="header-nav-categories">
                 <NavigationMenuList>
                 <NavigationMenuItem value={firstNavItem.label}>
                     <NavigationMenuTrigger
                         className={cn(
                             navigationMenuTriggerStyle(),
-                            (pathname?.startsWith('/category') || (pathname === '/search' && (currentParamsType === 'lots' || currentCategoryParam))) && 'bg-accent text-primary font-semibold',
-                            'font-semibold'
+                            (pathname?.startsWith('/category') || (pathname === '/search' && (currentParamsType === 'lots' || currentCategoryParam))) && 'trigger-nav-active',
+                            'trigger-nav-categories'
                         )}
                     >
-                    {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" /> }
+                    {firstNavItem.icon && <firstNavItem.icon className="icon-nav-categories" /> }
                     {firstNavItem.label}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent align={firstNavItem.megaMenuAlign || "start"}>
+                <NavigationMenuContent align={firstNavItem.megaMenuAlign || "start"} className="content-nav-categories" data-ai-id="header-nav-categories-content">
                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={categories} onLinkClick={onLinkClick} />}
                 </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -594,11 +596,11 @@ export default function Header({
             )}
 
             {/* Itens Centrais de Navegação */}
-            <div className="flex-grow flex justify-start pl-4">
+            <div className="wrapper-main-nav-items" data-ai-id="header-nav-items">
                 <MainNav
                     items={centralNavItems}
                     onLinkClick={onLinkClick}
-                    className="hidden md:flex"
+                    className="nav-main-desktop"
                     searchCategories={categories}
                     auctioneers={auctioneers}
                     consignorMegaMenuGroups={consignorMegaMenuGroups}

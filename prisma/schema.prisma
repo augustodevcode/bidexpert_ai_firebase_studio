@@ -1,14 +1,14 @@
 // =============================================================================
 // PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
 // =============================================================================
-// Este schema é uma cópia do schema.prisma principal, com provider alterado
+// Este schema Ã© uma cÃ³pia do schema.prisma principal, com provider alterado
 // para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
 // 
-// USO: Este schema é usado automaticamente pelo workflow de deploy para Vercel
-//      através do script prepare-vercel-demo.ps1 ou GitHub Action
+// USO: Este schema Ã© usado automaticamente pelo workflow de deploy para Vercel
+//      atravÃ©s do script prepare-vercel-demo.ps1 ou GitHub Action
 //
 // NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
-//       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
+//       sÃ£o todos compatÃ­veis entre MySQL e PostgreSQL no Prisma.
 // =============================================================================
 
 generator client {
@@ -16,7 +16,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -45,7 +45,7 @@ model Asset {
   lotInfo                    String?
   judicialProcessNumber      String?
   createdAt                  DateTime                @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt                  DateTime                @updatedAt
   tenantId                   BigInt
   plate                      String?
   make                       String?
@@ -1880,7 +1880,7 @@ model WonLot {
 }
 
 // =============================================================================
-// ENUMS - Idênticos ao schema MySQL (compatíveis entre ambos os bancos)
+// ENUMS - IdÃªnticos ao schema MySQL (compatÃ­veis entre ambos os bancos)
 // =============================================================================
 
 enum UserDocument_status {
@@ -2254,3 +2254,4 @@ model AuditConfig {
 
   @@map("audit_configs")
 }
+

@@ -394,44 +394,45 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
 
   return (
     <>
-      <Card className="flex flex-col shadow-lg rounded-lg h-full">
-        <CardHeader className="p-3 md:p-4 border-b">
-          <CardTitle className="text-lg md:text-xl font-bold flex items-center">
-            <Gavel className="h-5 w-5 mr-2 text-primary" /> Painel de Lances
+      <Card className="card-bidding-panel" data-ai-id="bidding-panel">
+        <CardHeader className="header-card-bidding-panel">
+          <CardTitle className="header-card-bidding-panel-title">
+            <Gavel className="icon-bidding-panel-header" /> Painel de Lances
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-3 md:p-4 flex-1 flex flex-col gap-3 md:gap-4 overflow-y-auto">
+        <CardContent className="content-card-bidding-panel" data-ai-id="bidding-panel-content">
           {renderBiddingInterface()}
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex justify-between items-center mb-1.5">
-              <h4 className="text-sm font-semibold text-muted-foreground flex items-center">
-                <Clock className="h-4 w-4 mr-1.5" /> Histórico Recente
+          <div className="wrapper-bid-history-summary" data-ai-id="bid-history-summary">
+            <div className="wrapper-bid-history-header">
+              <h4 className="header-bid-history-title">
+                <Clock className="icon-bid-history-title" /> Histórico Recente
               </h4>
-              <div className="flex items-center gap-1">
+              <div className="wrapper-bid-history-actions">
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-6 w-6" 
+                  className="btn-refresh-history"
                   onClick={() => fetchBidHistory()} 
                   disabled={isLoadingHistory}
                   title="Atualizar histórico"
+                  data-ai-id="bid-history-refresh-btn"
                 >
-                  <RefreshCw className={`h-3 w-3 ${isLoadingHistory ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={cn("icon-refresh-history", isLoadingHistory && "icon-spin")} />
                 </Button>
-                {bidHistory.length > 3 && (<Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setIsAllBidsModalOpen(true)}>Ver Todos</Button>)}
+                {bidHistory.length > 3 && (<Button variant="link" size="sm" className="btn-view-all-bids" onClick={() => setIsAllBidsModalOpen(true)} data-ai-id="bid-history-view-all">Ver Todos</Button>)}
               </div>
             </div>
-            <ScrollArea className="border rounded-md bg-secondary/20">
-              <div className="p-2 space-y-1.5 text-xs">
-                {isLoadingHistory ? (<div className="flex items-center justify-center p-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>)
+            <ScrollArea className="scroll-bid-history" data-ai-id="bid-history-scroll">
+              <div className="container-bid-history-items">
+                {isLoadingHistory ? (<div className="wrapper-history-loading"><Loader2 className="icon-history-loading" /></div>)
                 : bidHistory.length > 0 ? (bidHistory.slice(0, 3).map((bid, index) => (
-                    <div key={bid.id} className={`flex justify-between items-center p-1.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-800/30 font-semibold' : ''}`} data-ai-id={`bid-history-item-${index}`}>
+                    <div key={bid.id} className={cn("item-bid-history-row", index === 0 && "item-bid-history-row-active")} data-ai-id={`bid-history-item-${index}`}>
                         {/* GAP-FIX: Anonymização de lances - formato "A***1" */}
-                        <span>{anonymizeBidderName(bid.bidderDisplay)}</span>
-                        <span className="text-right font-mono">R$ {bid.amount.toLocaleString('pt-BR')} <span className="text-muted-foreground/70">({bid.timestamp ? format(new Date(bid.timestamp), 'HH:mm:ss') : ''})</span></span>
+                        <span className="text-bidder-name">{anonymizeBidderName(bid.bidderDisplay)}</span>
+                        <span className="text-bid-value">R$ {bid.amount.toLocaleString('pt-BR')} <span className="text-bid-timestamp">({bid.timestamp ? format(new Date(bid.timestamp), 'HH:mm:ss') : ''})</span></span>
                     </div>
                 )))
-                : (<p className="text-center text-muted-foreground p-2">Nenhum lance ainda.</p>)}
+                : (<p className="text-history-empty-msg">Nenhum lance ainda.</p>)}
               </div>
             </ScrollArea>
           </div>

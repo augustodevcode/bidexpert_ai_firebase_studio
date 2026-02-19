@@ -24,24 +24,24 @@ export default function PromoCard({
   bgColorClass = 'bg-secondary/30',
 }: PromoCardProps) {
   return (
-    <Link href={link} className="block h-full group" data-ai-id={`promo-card-${dataAiHint.replace(/\s/g, '-')}`}>
-      <Card className={`overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full ${bgColorClass}`}>
-        <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6 h-full">
-          <div className="flex-1 text-center md:text-left">
-            <h3 className="text-xl font-semibold text-foreground mb-1 font-headline group-hover:text-primary transition-colors">
+    <Link href={link} className="link-promo-card" data-ai-id={`promo-card-${dataAiHint.replace(/\s/g, '-')}`}>
+      <Card className={cn("card-promo", bgColorClass)}>
+        <CardContent className="content-card-promo">
+          <div className="wrapper-promo-text">
+            <h3 className="header-promo-title">
               {title}
             </h3>
-            <p className="text-sm text-muted-foreground mb-3">{description}</p>
-            <div className="text-xs text-primary font-medium flex items-center justify-center md:justify-start group-hover:underline">
-              Ver Mais <ArrowRight className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-1" />
+            <p className="text-promo-description">{description}</p>
+            <div className="wrapper-promo-action-link">
+              Ver Mais <ArrowRight className="icon-promo-arrow" />
             </div>
           </div>
-          <div className="relative w-32 h-32 md:w-36 md:h-36 flex-shrink-0">
+          <div className="wrapper-promo-image">
             <Image
               src={imageUrl}
               alt={imageAlt}
               fill
-              className="object-contain"
+              className="img-promo-graphic"
               data-ai-hint={dataAiHint}
               sizes="(max-width: 768px) 33vw, 150px"
             />

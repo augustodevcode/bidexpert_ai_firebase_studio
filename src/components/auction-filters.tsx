@@ -11,25 +11,25 @@ export default function AuctionFilters() {
   const sortOptions = ['Ending Soonest', 'Newly Listed', 'Highest Bid', 'Lowest Bid'];
 
   return (
-    <div className="mb-8 p-6 bg-secondary/50 rounded-lg shadow">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-        <div className="space-y-1">
-          <label htmlFor="search" className="text-sm font-medium text-muted-foreground">Search</label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="search" placeholder="Search by keyword..." className="pl-10" />
+    <div className="wrapper-auction-filters-legacy" data-ai-id="auction-filters-legacy">
+      <div className="grid-auction-filters-legacy" data-ai-id="auction-filters-grid">
+        <div className="wrapper-filter-field-legacy" data-ai-id="filter-search-legacy">
+          <label htmlFor="search" className="label-filter-field-legacy">Search</label>
+          <div className="wrapper-input-icon-legacy">
+            <Search className="icon-filter-field-legacy" />
+            <Input id="search" placeholder="Search by keyword..." className="input-filter-field-legacy" data-ai-id="filter-search-input-legacy" />
           </div>
         </div>
         
-        <div className="space-y-1">
-          <label htmlFor="category" className="text-sm font-medium text-muted-foreground">Category</label>
+        <div className="wrapper-filter-field-legacy" data-ai-id="filter-category-legacy">
+          <label htmlFor="category" className="label-filter-field-legacy">Category</label>
           <Select>
-            <SelectTrigger id="category">
+            <SelectTrigger id="category" className="trigger-filter-select-legacy" data-ai-id="filter-category-select-legacy">
               <SelectValue placeholder="Select Category" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="content-filter-select-legacy">
               {categories.map((category) => (
-                <SelectItem key={category} value={category.toLowerCase()}>
+                <SelectItem key={category} value={category.toLowerCase()} className="item-filter-select-legacy">
                   {category}
                 </SelectItem>
               ))}
@@ -37,15 +37,15 @@ export default function AuctionFilters() {
           </Select>
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="sort" className="text-sm font-medium text-muted-foreground">Sort By</label>
+        <div className="wrapper-filter-field-legacy" data-ai-id="filter-sort-legacy">
+          <label htmlFor="sort" className="label-filter-field-legacy">Sort By</label>
           <Select>
-            <SelectTrigger id="sort">
+            <SelectTrigger id="sort" className="trigger-filter-select-legacy" data-ai-id="filter-sort-select-legacy">
               <SelectValue placeholder="Sort Auctions" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="content-filter-select-legacy">
               {sortOptions.map((option) => (
-                <SelectItem key={option} value={option.toLowerCase().replace(' ', '-')}>
+                <SelectItem key={option} value={option.toLowerCase().replace(' ', '-')} className="item-filter-select-legacy">
                   {option}
                 </SelectItem>
               ))}
@@ -53,8 +53,8 @@ export default function AuctionFilters() {
           </Select>
         </div>
         
-        <Button className="w-full md:w-auto lg:mt-0 mt-4">
-          <Filter className="mr-2 h-4 w-4" /> Apply Filters
+        <Button className="btn-filter-apply-legacy" data-ai-id="filter-apply-button-legacy">
+          <Filter className="icon-filter-apply-legacy" /> Apply Filters
         </Button>
       </div>
     </div>

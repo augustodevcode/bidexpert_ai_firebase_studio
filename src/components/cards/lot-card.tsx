@@ -163,41 +163,41 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id={`lot-card-${lot.id}`} data-testid="lot-card" className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group relative">
-        <div className="relative">
-          <Link href={lotDetailUrl} className="block">
-            <div className="aspect-video relative bg-muted">
+      <Card data-ai-id={`lot-card-${lot.id}`} data-testid="lot-card" className="card-lot">
+        <div className="wrapper-card-media">
+          <Link href={lotDetailUrl} className="link-card-media-overlay">
+            <div className="container-card-image">
               <Image
                 src={isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay! : `https://picsum.photos/seed/${lot.id}/600/400`}
                 alt={lot.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className="img-card-lot"
                 data-ai-hint={lot.dataAiHint || 'imagem lote'}
                 data-ai-id="lot-card-main-image"
               />
             </div>
           </Link>
-          <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10" data-ai-id="lot-card-status-badges">
-            <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
+          <div className="wrapper-card-status-badges" data-ai-id="lot-card-status-badges">
+            <Badge className={cn("badge-lot-status", getLotStatusColor(lot.status))} data-ai-id="lot-card-status-badge">
               {getAuctionStatusText(lot.status)}
             </Badge>
           </div>
-          <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10" data-ai-id="lot-card-mental-triggers">
+          <div className="wrapper-card-mental-triggers" data-ai-id="lot-card-mental-triggers">
             {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
-              <Badge variant="destructive" className="text-xs animate-pulse"><Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF</Badge>
+              <Badge variant="destructive" className="badge-trigger-discount" data-ai-id="lot-card-discount-badge"><Percent className="icon-trigger" /> {discountPercentage}% OFF</Badge>
             )}
             {/* GAP 1.6: Badge Oportunidade when discount >= 40% */}
             {discountPercentage >= 40 && (
-              <Badge variant="default" className="text-xs bg-green-600 text-white border-green-700">
-                <Zap className="h-3 w-3 mr-0.5" /> Oportunidade
+              <Badge variant="default" className="badge-trigger-opportunity" data-ai-id="lot-card-opportunity-badge">
+                <Zap className="icon-trigger-small" /> Oportunidade
               </Badge>
             )}
             {mentalTriggers.map(trigger => (
-              <Badge key={trigger} variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
-                {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
-                {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
-                {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
+              <Badge key={trigger} variant="secondary" className="badge-trigger-mental" data-ai-id={`lot-card-trigger-${trigger.toLowerCase().replace(/\s+/g, '-')}`}>
+                {trigger === 'MAIS VISITADO' && <TrendingUp className="icon-trigger-small" />}
+                {trigger === 'LANCE QUENTE' && <Zap className="icon-trigger-small-red" />}
+                {trigger === 'EXCLUSIVO' && <Crown className="icon-trigger-small-purple" />}
                 {trigger}
               </Badge>
             ))}
@@ -208,64 +208,64 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             fallbackInitial={consignorInitial}
             name={sellerName}
             dataAiHint={auction?.seller?.dataAiHintLogo || 'logo comitente pequeno'}
-            anchorClassName="absolute bottom-2 left-2"
+            anchorClassName="badge-consignor-logo-overlay"
           />
-          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center items-center gap-2 pointer-events-none">
+          <div className="wrapper-card-actions-overlay" data-ai-id="lot-card-actions-overlay">
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background pointer-events-auto" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger>
+                <TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action-overlay" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"} data-ai-id="lot-card-favorite-btn"><Heart className={cn("icon-card-action", isFavorite && "icon-favorite-active")} /></Button></TooltipTrigger>
                 <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
               </Tooltip>
               <Tooltip>
-                <TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background pointer-events-auto" onClick={handlePreviewOpen} aria-label="Pré-visualizar"><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger>
+                <TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action-overlay" onClick={handlePreviewOpen} aria-label="Pré-visualizar" data-ai-id="lot-card-preview-btn"><Eye className="icon-card-action" /></Button></TooltipTrigger>
                 <TooltipContent><p>Pré-visualizar</p></TooltipContent>
               </Tooltip>
               <DropdownMenu>
-                <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background pointer-events-auto"><Share2 className="h-4 w-4 text-muted-foreground" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></Tooltip>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild><a href={getSocialLink('x', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
-                  <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
-                  <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
-                  <DropdownMenuItem asChild><a href={getSocialLink('email', lotFullUrl, lot.title)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
+                <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="btn-card-action-overlay" data-ai-id="lot-card-share-btn"><Share2 className="icon-card-action" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></Tooltip>
+                <DropdownMenuContent align="end" className="menu-share-content" data-ai-id="lot-card-share-menu">
+                  <DropdownMenuItem asChild><a href={getSocialLink('x', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="item-share-link"><X className="icon-share-platform" /> X (Twitter)</a></DropdownMenuItem>
+                  <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="item-share-link"><Facebook className="icon-share-platform" /> Facebook</a></DropdownMenuItem>
+                  <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="item-share-link"><MessageSquareText className="icon-share-platform" /> WhatsApp</a></DropdownMenuItem>
+                  <DropdownMenuItem asChild><a href={getSocialLink('email', lotFullUrl, lot.title)} className="item-share-link"><Mail className="icon-share-platform" /> Email</a></DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {hasEditPermission && <div className="pointer-events-auto"><EntityEditMenu entityType="lot" entityId={lot.id.toString()} publicId={lot.publicId} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate} /></div>}
+              {hasEditPermission && <div className="wrapper-edit-menu-overlay" data-ai-id="lot-card-edit-menu"><EntityEditMenu entityType="lot" entityId={lot.id.toString()} publicId={lot.publicId} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate} /></div>}
             </TooltipProvider>
           </div>
         </div>
-        <CardContent className="p-3 flex-grow space-y-2">
-          <Link href={lotDetailUrl}>
-            <div className="flex items-center gap-1.5 mb-0.5" data-ai-id="lot-card-auction-info">
-              <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded font-mono">
+        <CardContent className="content-card-lot" data-ai-id="lot-card-content">
+          <Link href={lotDetailUrl} className="link-card-content" data-ai-id="lot-card-link-main">
+            <div className="wrapper-card-lot-info-header" data-ai-id="lot-card-auction-info">
+              <span className="text-card-auction-id">
                 {auction?.publicId || `AUC-${lot.auctionId}`}
               </span>
             </div>
-            <h3 data-ai-id="lot-card-title" className="text-base font-bold text-zinc-900 dark:text-white hover:text-primary transition-colors leading-tight line-clamp-2">
+            <h3 data-ai-id="lot-card-title" className="header-card-lot-title">
               Lote {lotNumber}
             </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1 font-normal">
+            <p className="text-card-lot-subtitle" data-ai-id="lot-card-subtitle">
               {lot.title}
             </p>
           </Link>
 
-          <div className="flex items-center text-xs text-muted-foreground" data-ai-id="lot-card-location">
-            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-            <span className="truncate">{displayLocation}</span>
+          <div className="wrapper-card-location" data-ai-id="lot-card-location">
+            <MapPin className="icon-card-location" />
+            <span className="text-card-location">{displayLocation}</span>
           </div>
 
           {/* Property Details (Area, Status) */}
           {(lot.type === 'IMOVEL' || lot.type === 'imovel') && (
-            <div className="flex items-center gap-3 text-xs text-muted-foreground my-1">
+            <div className="wrapper-card-property-details" data-ai-id="lot-card-property-details">
               {lot.totalArea && (
-                <div className="flex items-center gap-1" title="Área Total">
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div className="item-property-detail" title="Área Total" data-ai-id="lot-card-property-area">
+                  <svg className="icon-property-detail" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 21h18M5 21V7l8-4 8 4v14M5 10a2 2 0 0 0 2-2M19 10a2 2 0 0 1-2-2" />
                   </svg>
                   <span>{Number(lot.totalArea).toLocaleString('pt-BR')}m²</span>
                 </div>
               )}
               {lot.occupancyStatus && (
-                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${lot.occupancyStatus === 'OCUPADO' ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                <div className={cn("badge-property-occupancy", lot.occupancyStatus === 'OCUPADO' ? "badge-occupancy-occupied" : "badge-occupancy-vacant")} data-ai-id="lot-card-property-occupancy">
                   {lot.occupancyStatus === 'OCUPADO' ? 'Ocupado' : 'Desocupado'}
                 </div>
               )}
@@ -274,34 +274,34 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
 
           {/* Price Display - GAP-FIX: Monospaced font + next bid calculator + ancoragem valor avaliação */}
-          <div className="flex flex-col mt-2 mb-1" data-ai-id="lot-card-price">
+          <div className="wrapper-card-price-section" data-ai-id="lot-card-price">
             {/* GAP 2.14 Ancoragem: Valor de avaliação riscado para mostrar desconto */}
             {lot.evaluationValue && discountPercentage > 0 && (
-              <p className="text-xs text-muted-foreground line-through font-mono" data-ai-id="lot-card-evaluation-value">
+              <p className="text-card-evaluation-value" data-ai-id="lot-card-evaluation-value">
                 Avaliação: R$ {Number(lot.evaluationValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             )}
-            <p className="text-xs text-muted-foreground uppercase font-semibold">
+            <p className="text-card-price-label" data-ai-id="lot-card-price-label">
               {getLotDisplayPrice(lot, auction).label}
             </p>
-            <p className="text-xl font-bold text-primary font-mono tabular-nums">
+            <p className="text-card-price-value" data-ai-id="lot-card-price-value">
               R$ {getLotDisplayPrice(lot, auction).value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             {/* GAP 2.4: Badge de dívidas conhecidas */}
             {lot.debtAmount && Number(lot.debtAmount) > 0 && (
-              <p className="text-[10px] text-destructive font-semibold mt-0.5" data-ai-id="lot-card-debt-badge">
+              <p className="text-card-debt-badge" data-ai-id="lot-card-debt-badge">
                 ⚠️ Débitos: R$ {Number(lot.debtAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             )}
             {/* GAP-FIX: Next Bid Calculator - mostra próximo lance mínimo */}
             {lot.status === 'ABERTO_PARA_LANCES' && lot.bidIncrementStep && (
-              <p className="text-[10px] text-muted-foreground font-mono mt-0.5" data-ai-id="lot-card-next-bid">
+              <p className="text-card-next-bid" data-ai-id="lot-card-next-bid">
                 Próximo lance: R$ {((getLotDisplayPrice(lot, auction).value || 0) + Number(lot.bidIncrementStep || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             )}
           </div>
 
-          <div className="mt-2 border-t pt-2" data-ai-id="lot-card-timeline">
+          <div className="wrapper-card-timeline-section" data-ai-id="lot-card-timeline">
             <BidExpertAuctionStagesTimeline
               stages={auction?.auctionStages || []}
               lot={lot}
@@ -312,31 +312,31 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           </div>
 
           {/* Footer Info */}
-          <div className="flex justify-between items-center text-xs text-muted-foreground mt-1 pt-1">
-            <div className="flex items-center gap-1" data-ai-id="lot-card-category">
-              <Tag className="h-3 w-3" />
+          <div className="wrapper-card-footer-info" data-ai-id="lot-card-footer-info">
+            <div className="item-card-footer-info" data-ai-id="lot-card-category">
+              <Tag className="icon-card-footer" />
               <span>{lot.type}</span>
             </div>
-            <div className="flex items-center gap-1" data-ai-id="lot-card-bid-count">
-              <Gavel className="h-3 w-3" />
+            <div className="item-card-footer-info" data-ai-id="lot-card-bid-count">
+              <Gavel className="icon-card-footer" />
               <span>{lot.bidsCount || 0} Lances</span>
             </div>
           </div>
 
           {/* GAP 2.1 Social Proof: Simulated viewers + GAP 2.8 Reserve Status */}
-          <div className="flex flex-wrap items-center gap-2 mt-1" data-ai-id="lot-card-social-proof">
+          <div className="wrapper-card-social-proof" data-ai-id="lot-card-social-proof">
             {(lot.views || 0) > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground" data-ai-id="lot-card-viewers">
-                <Users className="h-3 w-3" />
+              <span className="text-card-social-viewers" data-ai-id="lot-card-viewers">
+                <Users className="icon-social-small" />
                 {Math.max(1, Math.floor((lot.views || 0) / 10))} olhando agora
               </span>
             )}
             {lot.secondInitialPrice ? (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-300 text-amber-700 bg-amber-50" data-ai-id="lot-card-reserve-badge">
+              <Badge variant="outline" className="badge-lot-praça-2" data-ai-id="lot-card-reserve-badge">
                 2ª Praça
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-green-300 text-green-700 bg-green-50" data-ai-id="lot-card-no-reserve-badge">
+              <Badge variant="outline" className="badge-lot-praça-1" data-ai-id="lot-card-no-reserve-badge">
                 1ª Praça
               </Badge>
             )}
@@ -347,10 +347,10 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           )}
         </CardContent>
 
-        <CardFooter className="p-3 border-t">
-          <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+        <CardFooter className="footer-card-lot" data-ai-id="lot-card-footer">
+          <Button asChild className="btn-card-bid-action" data-ai-id="lot-card-bid-btn">
             <Link href={lotDetailUrl}>
-              <Gavel className="mr-2 h-4 w-4" /> Fazer Lance
+              <Gavel className="icon-btn-bid" /> Fazer Lance
             </Link>
           </Button>
         </CardFooter>

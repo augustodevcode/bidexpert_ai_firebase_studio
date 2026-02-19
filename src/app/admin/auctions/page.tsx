@@ -126,13 +126,13 @@ export default function AdminAuctionsPage() {
   
   if (isLoading || !platformSettings) {
     return (
-        <div className="space-y-6">
-            <Card className="shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
-                    <Skeleton className="h-10 w-36"/>
+        <div className="wrapper-admin-page-loading">
+            <Card className="card-admin-page-header-skeleton">
+                <CardHeader className="header-card-admin-skeleton">
+                    <div className="wrapper-skeleton-title"><Skeleton className="skeleton-admin-title"/><Skeleton className="skeleton-admin-desc"/></div>
+                    <Skeleton className="skeleton-admin-btn-action"/>
                 </CardHeader>
-                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+                <CardContent className="content-card-admin-skeleton"><Skeleton className="skeleton-admin-content-full" /></CardContent>
             </Card>
         </div>
     );
@@ -140,21 +140,21 @@ export default function AdminAuctionsPage() {
 
   return (
     <>
-      <div className="space-y-6" data-ai-id="admin-auctions-page-container">
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold font-headline flex items-center">
-                <Gavel className="h-6 w-6 mr-2 text-primary" />
+      <div className="container-admin-page" data-ai-id="admin-auctions-page-container">
+        <Card className="card-admin-page-header">
+          <CardHeader className="header-card-admin">
+            <div className="wrapper-admin-page-title-section">
+              <CardTitle className="header-admin-page-title">
+                <Gavel className="icon-admin-page-header" />
                 Gerenciar Leilões
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-admin-page-description">
                 Visualize, adicione e edite os leilões da plataforma.
               </CardDescription>
             </div>
-            <Button asChild>
+            <Button asChild className="btn-admin-page-primary-action" data-ai-id="admin-auctions-new-btn">
               <Link href="/admin/auctions/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Novo Leilão
+                <PlusCircle className="icon-admin-btn-start" /> Novo Leilão
               </Link>
             </Button>
           </CardHeader>

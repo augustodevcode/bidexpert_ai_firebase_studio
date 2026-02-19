@@ -24,8 +24,8 @@ export class JudicialBranchService {
     const branches = await this.repository.findAll();
     return branches.map(b => ({
       ...b,
-      districtName: b.district.name,
-      stateUf: b.district.state?.uf,
+      districtName: b.JudicialDistrict?.name || '',
+      stateUf: b.JudicialDistrict?.State?.uf || '',
     }));
   }
 
@@ -34,8 +34,8 @@ export class JudicialBranchService {
     if (!branch) return null;
     return {
       ...branch,
-      districtName: branch.district.name,
-      stateUf: branch.district.state?.uf,
+      districtName: branch.JudicialDistrict?.name || '',
+      stateUf: branch.JudicialDistrict?.State?.uf || '',
     };
   }
 

@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { PaginationState } from '@tanstack/react-table';
+import type { GridLocale } from '../SuperGrid.i18n';
 
 interface GridPaginationProps {
   pagination: PaginationState;
@@ -26,6 +27,7 @@ interface GridPaginationProps {
   pageCount: number;
   totalCount: number;
   pageSizeOptions: number[];
+  locale: GridLocale;
 }
 
 export function GridPagination({
@@ -34,6 +36,7 @@ export function GridPagination({
   pageCount,
   totalCount,
   pageSizeOptions,
+  locale,
 }: GridPaginationProps) {
   const { pageIndex, pageSize } = pagination;
   const canGoPrevious = pageIndex > 0;
@@ -50,15 +53,15 @@ export function GridPagination({
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>
           {totalCount > 0
-            ? `${startRow}-${endRow} de ${totalCount.toLocaleString('pt-BR')}`
-            : 'Nenhum registro'}
+            ? locale.pagination.rangeLabel(startRow, endRow, totalCount)
+            : locale.pagination.noRecords}
         </span>
       </div>
 
       <div className="flex items-center gap-4">
         {/* Page size selector */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Por página:</span>
+          <span className="text-sm text-muted-foreground">{locale.pagination.perPage}</span>
           <Select
             value={String(pageSize)}
             onValueChange={(val) =>
@@ -83,7 +86,7 @@ export function GridPagination({
 
         {/* Page info */}
         <span className="text-sm text-muted-foreground">
-          Página {pageCount > 0 ? pageIndex + 1 : 0} de {pageCount}
+          {locale.pagination.pageLabel(pageCount > 0 ? pageIndex + 1 : 0, pageCount)}
         </span>
 
         {/* Navigation buttons */}

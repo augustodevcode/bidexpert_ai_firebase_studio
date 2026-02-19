@@ -16,46 +16,46 @@ export default function AuctionInfoPanel({ auction }: AuctionInfoPanelProps) {
   const auctioneerInitial = auction.auctioneerName ? auction.auctioneerName.charAt(0).toUpperCase() : 'L';
   
   return (
-    <Card className="shadow-md">
-      <CardHeader className="p-3 border-b">
-        <CardTitle className="text-md font-semibold flex items-center">
-          <Info className="h-4 w-4 mr-2 text-primary" /> Informações do Leilão
+    <Card className="card-auction-info" data-ai-id="auction-info-panel">
+      <CardHeader className="header-card-auction-info" data-ai-id="auction-info-header">
+        <CardTitle className="header-card-auction-info-title">
+          <Info className="icon-auction-info-header" /> Informações do Leilão
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-3 space-y-2 text-xs">
-        <div>
-          <p className="font-medium text-muted-foreground">Leiloeiro:</p>
-          <div className="flex items-center gap-2 mt-0.5">
+      <CardContent className="content-card-auction-info" data-ai-id="auction-info-content">
+        <div className="wrapper-auctioneer-info" data-ai-id="auction-info-auctioneer">
+          <p className="text-auction-info-label">Leiloeiro:</p>
+          <div className="wrapper-auctioneer-details">
             {auction.auctioneer?.logoUrl && (
-              <Avatar className="h-7 w-7">
+              <Avatar className="avatar-auctioneer-info" data-ai-id="auction-info-auctioneer-avatar">
                 <AvatarImage src={auction.auctioneer.logoUrl} alt={auction.auctioneerName} data-ai-hint="logo leiloeiro pequeno" />
                 <AvatarFallback>{auctioneerInitial}</AvatarFallback>
               </Avatar>
             )}
-            <span className="text-foreground">{auction.auctioneerName}</span>
+            <span className="text-auction-info-value">{auction.auctioneerName}</span>
           </div>
         </div>
         {auction.seller?.name && (
-          <div>
-            <p className="font-medium text-muted-foreground">Comitente Principal:</p>
-            <p className="text-foreground">{auction.seller.name}</p>
+          <div className="wrapper-seller-info" data-ai-id="auction-info-seller">
+            <p className="text-auction-info-label">Comitente Principal:</p>
+            <p className="text-auction-info-value">{auction.seller.name}</p>
           </div>
         )}
-        <div className="pt-1 space-y-1.5">
+        <div className="wrapper-auction-info-actions" data-ai-id="auction-info-actions">
           {auction.documentsUrl && (
-            <Button variant="outline" size="sm" asChild className="w-full justify-start text-left">
+            <Button variant="outline" size="sm" asChild className="btn-auction-info-action" data-ai-id="auction-info-docs-btn">
               <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer">
-                <FileText className="h-3.5 w-3.5 mr-2" /> Ver Edital e Documentos
+                <FileText className="icon-auction-info-action" /> Ver Edital e Documentos
               </a>
             </Button>
           )}
-          <Button variant="outline" size="sm" asChild className="w-full justify-start text-left">
+          <Button variant="outline" size="sm" asChild className="btn-auction-info-action" data-ai-id="auction-info-details-btn">
             <Link href={`/auctions/${auction.publicId || auction.id}`}>
-              <ExternalLink className="h-3.5 w-3.5 mr-2" /> Detalhes Completos do Leilão
+              <ExternalLink className="icon-auction-info-action" /> Detalhes Completos do Leilão
             </Link>
           </Button>
-           <Button variant="outline" size="sm" disabled className="w-full justify-start text-left">
-            <Users className="h-3.5 w-3.5 mr-2" /> Falar com Suporte (Em breve)
+           <Button variant="outline" size="sm" disabled className="btn-auction-info-action" data-ai-id="auction-info-support-btn">
+            <Users className="icon-auction-info-action" /> Falar com Suporte (Em breve)
           </Button>
         </div>
       </CardContent>
