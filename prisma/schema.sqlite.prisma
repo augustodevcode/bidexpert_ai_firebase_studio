@@ -14,7 +14,7 @@ datasource db {
 
 // Modelos essenciais para testes
 model Tenant {
-  id        Int      @id @default(autoincrement())
+  id        BigInt   @id @default(autoincrement())
   publicId  String   @unique
   name      String
   slug      String   @unique
@@ -24,14 +24,11 @@ model Tenant {
   User              User[]
   Auction           Auction[]
   Lot               Lot[]
-  Bid               Bid[]
-  Seller            Seller[]
-  Auctioneer        Auctioneer[]
   PlatformSettings  PlatformSettings?
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
+  id            BigInt    @id @default(autoincrement())
   publicId      String    @unique
   email         String    @unique
   name          String?
@@ -40,7 +37,7 @@ model User {
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  tenantId      Int
+  tenantId      BigInt
   
   Tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   Bid           Bid[]
@@ -50,7 +47,7 @@ model User {
 }
 
 model Auction {
-  id           Int       @id @default(autoincrement())
+  id           BigInt    @id @default(autoincrement())
   publicId     String?   @unique
   slug         String?   @unique
   title        String
@@ -62,7 +59,7 @@ model Auction {
   visits       Int       @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  tenantId     Int
+  tenantId     BigInt
   
   Tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   Lot          Lot[]
@@ -72,9 +69,9 @@ model Auction {
 }
 
 model Lot {
-  id            Int       @id @default(autoincrement())
+  id            BigInt    @id @default(autoincrement())
   publicId      String?   @unique
-  auctionId     Int
+  auctionId     BigInt
   number        String?
   title         String
   description   String?
@@ -88,10 +85,10 @@ model Lot {
   imageUrl      String?
   type          String
   condition     String?
-  winnerId      Int?
+  winnerId      BigInt?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  tenantId      Int
+  tenantId      BigInt
   
   Auction       Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   Tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -104,15 +101,15 @@ model Lot {
 }
 
 model Bid {
-  id          Int       @id @default(autoincrement())
-  lotId       Int
-  auctionId   Int
-  bidderId    Int
+  id          BigInt    @id @default(autoincrement())
+  lotId       BigInt
+  auctionId   BigInt
+  bidderId    BigInt
   amount      Float
   timestamp   DateTime  @default(now())
   status      String    @default("ATIVO")
   isAutoBid   Boolean   @default(false)
-  tenantId    Int
+  tenantId    BigInt
   
   Lot         Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
   Auction     Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
@@ -126,8 +123,8 @@ model Bid {
 }
 
 model PlatformSettings {
-  id              Int       @id @default(autoincrement())
-  tenantId        Int       @unique
+  id              BigInt    @id @default(autoincrement())
+  tenantId        BigInt    @unique
   siteTitle       String?
   siteTagline     String?
   logoUrl         String?
@@ -140,7 +137,7 @@ model PlatformSettings {
 }
 
 model LotCategory {
-  id          Int       @id @default(autoincrement())
+  id          BigInt    @id @default(autoincrement())
   slug        String    @unique
   name        String    @unique
   description String?
@@ -151,7 +148,7 @@ model LotCategory {
 }
 
 model Seller {
-  id          Int       @id @default(autoincrement())
+  id          BigInt    @id @default(autoincrement())
   publicId    String    @unique
   name        String
   slug        String    @unique
@@ -162,7 +159,7 @@ model Seller {
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  tenantId    Int
+  tenantId    BigInt
   
   Tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   
@@ -170,7 +167,7 @@ model Seller {
 }
 
 model Auctioneer {
-  id                 Int       @id @default(autoincrement())
+  id                 BigInt    @id @default(autoincrement())
   publicId           String    @unique
   name               String
   slug               String    @unique
@@ -181,7 +178,7 @@ model Auctioneer {
   phone              String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
-  tenantId           Int
+  tenantId           BigInt
   
   Tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   
@@ -189,7 +186,7 @@ model Auctioneer {
 }
 
 model ContactMessage {
-  id        Int      @id @default(autoincrement())
+  id        BigInt   @id @default(autoincrement())
   name      String
   email     String
   subject   String?
@@ -199,7 +196,7 @@ model ContactMessage {
 }
 
 model PasswordResetToken {
-  id        Int      @id @default(autoincrement())
+  id        BigInt   @id @default(autoincrement())
   email     String
   token     String   @unique
   expires   DateTime
