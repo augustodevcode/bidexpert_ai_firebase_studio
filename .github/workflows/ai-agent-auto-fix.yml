@@ -1,0 +1,251 @@
+name: AI Agent Auto-Fix
+
+# Trigger when an issue is opened or labeled
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  process-ai-fix:
+    name: Process AI Fix Request
+    runs-on: ubuntu-latest
+    # Only run if the issue has the 'ai-fix' label
+    if: contains(github.event.issue.labels.*.name, 'ai-fix')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check previous attempts
+        id: check_attempts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = context.issue.number;
+            
+            // Get all comments on this issue
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+            
+            // Count comments that indicate AI Agent activation
+            const attempts = comments.filter(comment => 
+              comment.body.includes('🤖 **AI Agent ativado')
+            ).length;
+            
+            console.log(`Found ${attempts} previous attempt(s)`);
+            
+            return {
+              attempts: attempts,
+              shouldEscalate: attempts >= 3,
+              remainingAttempts: Math.max(0, 3 - attempts)
+            };
+
+      - name: Escalate if max attempts reached
+        if: fromJSON(steps.check_attempts.outputs.result).shouldEscalate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = context.issue.number;
+            const attemptInfo = ${{ steps.check_attempts.outputs.result }};
+            
+            // Remove ai-fix label
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                name: 'ai-fix'
+              });
+            } catch (error) {
+              console.log('Label ai-fix might not exist or already removed');
+            }
+            
+            // Add escalation labels
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['escalated', 'needs-human-review']
+            });
+            
+            // Add comment explaining escalation
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `## 🚨 Escalação para Revisão Humana
+
+              O AI Agent tentou corrigir este problema **3 vezes** sem sucesso. 
+              
+              ### 📊 Histórico de Tentativas
+              
+              - **Total de tentativas**: 3/3
+              - **Status**: Todas as tentativas falharam
+              - **Ação**: Escalado para time de desenvolvimento
+              
+              ### 👥 Próximos Passos
+              
+              Este caso requer atenção humana. Um desenvolvedor experiente precisa:
+              
+              1. Revisar o histórico de tentativas do AI Agent
+              2. Analisar os logs e contexto fornecidos
+              3. Identificar a causa raiz do problema
+              4. Implementar uma correção manual
+              
+              ### 🏷️ Labels Atualizadas
+              
+              - ❌ Removida: \`ai-fix\` (processamento automático encerrado)
+              - ✅ Adicionada: \`escalated\` (escalado para humanos)
+              - ✅ Adicionada: \`needs-human-review\` (requer revisão manual)
+              
+              ---
+              
+              *Um desenvolvedor será notificado automaticamente sobre esta escalação.*`
+            });
+            
+            core.setOutput('escalated', 'true');
+
+      - name: Extract issue information
+        if: fromJSON(steps.check_attempts.outputs.result).shouldEscalate == false
+        id: extract_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const attemptInfo = ${{ steps.check_attempts.outputs.result }};
+            
+            // Extract information from issue body
+            const body = issue.body || '';
+            
+            // Try to extract logs section
+            const logsMatch = body.match(/### 📋 Logs da Falha[\s\S]*?```([\s\S]*?)```/);
+            const logs = logsMatch ? logsMatch[1].trim() : 'No logs extracted';
+            
+            // Extract workflow information if available
+            const workflowMatch = body.match(/\*\*Workflow\*\* \| \[(.+?)\]/);
+            const workflow = workflowMatch ? workflowMatch[1] : 'Unknown';
+            
+            const branchMatch = body.match(/\*\*Branch\*\* \| `(.+?)`/);
+            const branch = branchMatch ? branchMatch[1] : 'unknown';
+            
+            const commitMatch = body.match(/\*\*Commit\*\* \| `(.+?)`/);
+            const commit = commitMatch ? commitMatch[1] : 'unknown';
+            
+            return {
+              title: issue.title,
+              number: issue.number,
+              url: issue.html_url,
+              logs: logs.substring(0, 1000), // Limit for comment
+              workflow: workflow,
+              branch: branch,
+              commit: commit,
+              currentAttempt: attemptInfo.attempts + 1,
+              remainingAttempts: attemptInfo.remainingAttempts - 1
+            };
+
+      - name: Activate AI Agent
+        if: fromJSON(steps.check_attempts.outputs.result).shouldEscalate == false
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const info = ${{ steps.extract_info.outputs.result }};
+            const issueNumber = context.issue.number;
+            
+            // Add in-progress label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['in-progress']
+            });
+            
+            // Create activation comment
+            const activationComment = `## 🤖 **AI Agent ativado** (Tentativa ${info.currentAttempt}/3)
+
+            O AI Agent foi acionado para analisar e corrigir este problema.
+
+            ### 📊 Status da Tentativa
+
+            - **Tentativa atual**: ${info.currentAttempt} de 3
+            - **Tentativas restantes**: ${info.remainingAttempts}
+            - **Issue**: [#${info.number}](${info.url})
+
+            ### 🔍 Informações Extraídas
+
+            - **Workflow**: ${info.workflow}
+            - **Branch**: \`${info.branch}\`
+            - **Commit**: \`${info.commit}\`
+
+            ### 📋 Logs Analisados
+
+            <details>
+            <summary>Primeiros 1000 caracteres dos logs</summary>
+
+            \`\`\`
+            ${info.logs}
+            \`\`\`
+
+            </details>
+
+            ### 🔧 Próximos Passos do AI Agent
+
+            1. ✅ Análise de logs e identificação do erro
+            2. 🔄 Busca por soluções conhecidas em documentação
+            3. 💡 Geração de correção apropriada
+            4. 🧪 Validação da correção (se possível)
+            5. 📝 Criação de Pull Request com a correção
+
+            ---
+
+            *O AI Agent pode levar alguns minutos para processar. Acompanhe o progresso aqui.*
+            
+            ${info.remainingAttempts === 0 ? '\n⚠️ **Esta é a última tentativa automática. Se falhar, será escalado para revisão humana.**' : ''}`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: activationComment
+            });
+            
+            console.log('AI Agent activation comment posted successfully');
+
+      - name: Generate workflow summary
+        if: always()
+        run: |
+          ATTEMPTS_JSON='${{ steps.check_attempts.outputs.result }}'
+          ESCALATED=$(echo "$ATTEMPTS_JSON" | jq -r '.shouldEscalate')
+          CURRENT_ATTEMPTS=$(echo "$ATTEMPTS_JSON" | jq -r '.attempts')
+          
+          echo "## 🤖 AI Agent Auto-Fix Processing" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Issue**: #${{ github.event.issue.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Title**: ${{ github.event.issue.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Attempts**: $CURRENT_ATTEMPTS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$ESCALATED" = "true" ]; then
+            echo "### ⚠️ Escalated to Human Review" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Maximum attempts (3) reached. Issue has been escalated." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Labels Updated:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Removed: \`ai-fix\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Added: \`escalated\`, \`needs-human-review\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ AI Agent Activated" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            NEXT_ATTEMPT=$((CURRENT_ATTEMPTS + 1))
+            echo "Attempt **$NEXT_ATTEMPT of 3** initiated." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Labels Added:**" >> $GITHUB_STEP_SUMMARY
+            echo "- \`in-progress\`" >> $GITHUB_STEP_SUMMARY
+          fi

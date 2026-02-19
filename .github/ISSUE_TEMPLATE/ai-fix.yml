@@ -1,0 +1,102 @@
+name: 🤖 AI Fix Request
+description: Solicitar correção automática via AI Agent
+title: "[AI-FIX] "
+labels: ["ai-fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🤖 Solicitação de Correção Automática
+        
+        Este template permite solicitar que um AI Agent investigue e corrija automaticamente problemas no projeto.
+        
+        **Como funciona:**
+        1. Você preenche este formulário com os detalhes da falha
+        2. O sistema aciona automaticamente um AI Agent
+        3. O agente analisa logs, contexto e tenta corrigir o problema
+        4. Após 3 tentativas sem sucesso, o caso é escalado para revisão humana
+
+  - type: dropdown
+    id: failure_type
+    attributes:
+      label: Tipo de Falha
+      description: Selecione o tipo de problema que você está enfrentando
+      options:
+        - Teste Falhando
+        - Erro de Build
+        - Erro de Deploy
+        - Lint/Type Check
+        - Bug em Runtime
+        - Outro
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      description: Qual a urgência desta correção?
+      options:
+        - Crítica
+        - Alta
+        - Média
+        - Baixa
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs e Mensagens de Erro
+      description: Cole aqui os logs completos do erro (quanto mais contexto, melhor)
+      placeholder: |
+        Error: Cannot find module 'xyz'
+        at require (internal/modules/cjs/loader.js:883:19)
+        ...
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto Adicional
+      description: Informações que podem ajudar na correção
+      placeholder: |
+        - Branch: main
+        - Commit: abc123
+        - Tentativas anteriores: já tentei X, Y, Z
+        - Ambiente: produção/staging/dev
+        - Última alteração que funcionou: ...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: approval
+    attributes:
+      label: Confirmação
+      description: Por favor, confirme que você está ciente do processo
+      options:
+        - label: Entendo que o AI Agent fará até 3 tentativas de correção automática
+          required: true
+        - label: Estou ciente que após 3 tentativas, o caso será escalado para revisão humana
+          required: true
+        - label: Forneci logs e contexto suficientes para análise
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ### 📋 Próximos Passos
+        
+        Após a criação desta issue:
+        
+        1. **Acionamento Automático**: O AI Agent será acionado automaticamente
+        2. **Análise**: O agente analisará logs, código e contexto
+        3. **Tentativa de Correção**: Ele tentará corrigir o problema (máximo 3 tentativas)
+        4. **Criação de PR**: Se bem-sucedido, um Pull Request será criado
+        5. **Escalação**: Se falhar 3 vezes, a issue receberá label `escalated` e `needs-human-review`
+        
+        Você pode acompanhar o progresso pelos comentários nesta issue.
