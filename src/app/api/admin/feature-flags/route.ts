@@ -3,6 +3,8 @@ import { getTenantId } from '@/lib/get-tenant-id';
 import { PlatformSettingsService } from '@/services/platform-settings.service';
 import logger from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/feature-flags
  * Retorna os feature flags do tenant
