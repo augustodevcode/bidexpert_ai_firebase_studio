@@ -77,3 +77,7 @@ security-audit-results.log
 
 # Application logs
 logs/*.log
+
+# Sentry
+.sentryclirc
+sentry.properties
