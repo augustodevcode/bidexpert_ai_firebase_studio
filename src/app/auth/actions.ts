@@ -14,70 +14,12 @@
  */
 'use server';
 
-import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createSession, getSession as getSessionFromCookie, deleteSession as deleteSessionFromCookie } from '@/server/lib/session';
-import type { UserProfileWithPermissions, Role, Tenant, UserCreationData, EditableUserProfileData } from '@/types';
-import { revalidatePath } from 'next/cache';
+import type { UserProfileWithPermissions } from '@/types';
 import bcryptjs from 'bcryptjs';
 import { prisma as basePrisma } from '@/lib/prisma';
 import { UserService } from '@/services/user.service';
-
-/**
- * Formata um objeto de usuário bruto do Prisma para o tipo `UserProfileWithPermissions`,
- * enriquecendo-o com uma lista de permissões consolidadas de seus perfis e uma
- * lista de nomes de perfis para fácil acesso.
- */
-function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
-  if (!user) return null;
-
-  // Map from Prisma relations (UsersOnRoles/UsersOnTenants) to expected format (roles/tenants)
-  const userRoles = user.UsersOnRoles || user.roles || [];
-  const userTenants = user.UsersOnTenants || user.tenants || [];
-
-  const roles: Role[] = userRoles.map((ur: any) => ({
-    ...(ur.Role || ur.role),
-    id: (ur.Role || ur.role)?.id,
-  })) || [];
-
-  const permissions = Array.from(new Set(roles.flatMap((r: any) => {
-    let perms = r.permissions;
-    if (!perms) return [];
-
-    if (typeof perms === 'string') {
-      try {
-        const parsed = JSON.parse(perms);
-        return Array.isArray(parsed) ? parsed : [parsed];
-      } catch (e) {
-        return perms.split(',').map((p: string) => p.trim()).filter(Boolean);
-      }
-    }
-
-    if (Array.isArray(perms)) {
-      return perms;
-    }
-
-    return [];
-  })));
-
-  const tenants: Tenant[] = userTenants.map((ut: any) => ({
-    ...(ut.Tenant || ut.tenant),
-    id: (ut.Tenant || ut.tenant)?.id,
-  })) || [];
-
-  return {
-    ...user,
-    id: user.id.toString(),
-    uid: user.id.toString(),
-    roles,
-    tenants,
-    roleIds: roles.map((r: any) => r.id),
-    roleNames: roles.map((r: any) => r.name),
-    permissions,
-    roleName: roles[0]?.name,
-  };
-}
-
 
 /**
  * Realiza o processo de login de um usuário.
@@ -94,11 +36,12 @@ export async function login(values: { email: string, password?: string, tenantId
 
   try {
     console.log(`[Login Action] Tentativa de login para o email: ${email}`);
+
+    // SQLite simplified query - no UsersOnRoles/UsersOnTenants
     const user = await basePrisma.user.findUnique({
       where: { email },
       include: {
-        UsersOnRoles: { include: { Role: true } },
-        UsersOnTenants: { include: { Tenant: true } }
+        Tenant: true,
       }
     });
 
@@ -107,17 +50,16 @@ export async function login(values: { email: string, password?: string, tenantId
         const headersList = await headers();
         const contextTenantId = headersList.get('x-tenant-id');
         const LANDLORD_ID = '1';
-        
+
         if (contextTenantId && contextTenantId !== LANDLORD_ID) {
             tenantId = contextTenantId;
         }
     }
-    
+
     // Resolve Tenant Slug to ID if necessary
-    // This allows "demo" to be resolved to "2" (or whatever ID)
     if (tenantId && isNaN(Number(tenantId))) {
          console.log(`[Login Action] Resolvendo tenantId slug '${tenantId}'...`);
-         const t = await basePrisma.tenant.findFirst({ where: { subdomain: tenantId } });
+         const t = await basePrisma.tenant.findFirst({ where: { slug: tenantId } });
          if (t) {
              console.log(`[Login Action] Slug '${tenantId}' resolvido para ID '${t.id}'`);
              tenantId = t.id.toString();
@@ -128,76 +70,39 @@ export async function login(values: { email: string, password?: string, tenantId
 
     // GAP-FIX: Early return if user not found to avoid null pointer exceptions later
     if (!user || !user.password) {
-      console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado.`);
+      console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado ou sem senha.`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
 
-    // Validate strict tenant isolation
-    // NOTE: Prisma returns UsersOnTenants, not tenants
-    const userTenants = user.UsersOnTenants || user.tenants || [];
-    if (tenantId && user && userTenants.length > 0) {
-        const userInTenant = userTenants.some(ut => ut.tenantId?.toString() === tenantId);
-        if (!userInTenant) {
-            const headersList = await headers();
-            const contextTenantId = headersList.get('x-tenant-id');
-            // Only enforce strictness if we are actually in that context (subdomain access)
-            // Note: contextTenantId might be the slug "demo", so we compare against original or resolved?
-            // Let's perform a loose check or just allow if password is valid (handled below)
-            console.log(`[Login Action] Aviso: Usuário não pertence ao tenant ${tenantId}. Context: ${contextTenantId}`);
-            
-            // If it's the exact same string (e.g. both are IDs), block it.
-            if (contextTenantId && (contextTenantId === tenantId || contextTenantId === initialTenantId)) {
-                return { success: false, message: 'Usuário não cadastrado neste Espaço de Trabalho. Verifique o endereço ou registre-se.' };
-            }
-        }
-    }
-
-    if (!user || !user.password) {
-      console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado.`);
-      return { success: false, message: 'Credenciais inválidas.' };
-    }
-
+    // Password validation
     if (password && password !== '[already_validated]') {
       console.log(`[Login Action] Usuário '${email}' encontrado. Verificando a senha.`);
       const isPasswordValid = await bcryptjs.compare(password, user.password);
 
       if (!isPasswordValid) {
-        // Special Debug for Admin
-        if (email === 'admin@bidexpert.ai') {
-             console.log(`[Login Action] Failed hash comparison for admin@bidexpert.ai. Provided: '${password}'. Hash: '${user.password.substring(0, 10)}...'`);
-             return { success: false, message: 'Credenciais inválidas (Debug: Senha não confere com hash).' };
-        }
         console.log(`[Login Action] Falha: Senha inválida para o usuário '${email}'.`);
         return { success: false, message: 'Credenciais inválidas.' };
       }
     }
 
-    const userProfileWithPerms = formatUserWithPermissions(user);
-    if (!userProfileWithPerms) {
-      return { success: false, message: 'Falha ao processar o perfil do usuário.' };
-    }
+    // Format user with simplified schema (role is direct field, not through relation)
+    const userProfileWithPerms: UserProfileWithPermissions = {
+      ...user,
+      id: user.id.toString(),
+      uid: user.id.toString(),
+      roles: [{ id: user.role, name: user.role, permissions: [] }],
+      tenants: user.Tenant ? [{ id: user.Tenant.id.toString(), name: user.Tenant.name, slug: user.Tenant.slug }] : [{ id: '1', name: 'BidExpert', slug: 'bidexpert' }],
+      roleIds: [user.role],
+      roleNames: [user.role],
+      permissions: user.role === 'ADMIN' ? ['manage_all', 'manage_auctions', 'manage_users', 'manage_lots'] :
+                   user.role === 'AUCTIONEER' ? ['manage_auctions', 'manage_lots'] :
+                   ['view_auctions', 'place_bids'],
+      roleName: user.role,
+    };
 
-    // Tenant Selection Logic
-    // NOTE: Prisma returns UsersOnTenants, not tenants
-    const userTenantsForSelection = user.UsersOnTenants || user.tenants || [];
+    // Set tenantId from user's tenant
     if (!tenantId) {
-      if (userTenantsForSelection.length === 1) {
-        tenantId = userTenantsForSelection[0].tenantId;
-      } else if (userTenantsForSelection.length > 1) {
-        return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
-      } else {
-        console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord ('1').`);
-        tenantId = '1';
-      }
-    }
-
-    const userBelongsToFinalTenant = userTenantsForSelection.some(t => t.tenantId?.toString() === tenantId);
-    if (!userBelongsToFinalTenant) {
-      const isAdmin = userProfileWithPerms.permissions.includes('manage_all');
-      if (tenantId !== '1' || (!isAdmin && userTenantsForSelection.length > 0)) {
-        console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'. UserTenants: ${JSON.stringify(userTenantsForSelection.map(ut => ut.tenantId?.toString()))}`);
-        return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
-      }
+      tenantId = user.tenantId?.toString() || '1';
     }
 
     await createSession(userProfileWithPerms, tenantId);
@@ -205,9 +110,10 @@ export async function login(values: { email: string, password?: string, tenantId
     console.log(`[Login Action] SUCESSO: Sessão criada para ${email} no tenant ${tenantId}. Retornando sucesso.`);
     return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
 
-  } catch (error: any) {
-    console.error(`[Login Action] ERRO FATAL: ${error.message}`, error);
-    return { success: false, message: `Ocorreu um erro interno durante o login: ${error.message}` };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Erro desconhecido';
+    console.error(`[Login Action] ERRO FATAL: ${message}`, error);
+    return { success: false, message: `Ocorreu um erro interno durante o login: ${message}` };
   }
 }
 
@@ -329,67 +235,31 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
   }
 
   try {
-    const headersList = await headers();
-    const contextTenantId = headersList.get('x-tenant-id') || '1';
-    const LANDLORD_ID = '1';
-
-    const whereClause: any = {};
-    
-    // Filter by tenant if we are in a strict tenant subdomain (not Landlord)
-    if (contextTenantId !== LANDLORD_ID) {
-        // Try to parse as number first (numeric ID) or use as subdomain
-        const tenantIdNum = parseInt(contextTenantId);
-        if (!isNaN(tenantIdNum)) {
-            whereClause.UsersOnTenants = {
-                some: {
-                    tenantId: tenantIdNum
-                }
-            };
-        } else {
-            // It's a subdomain slug, find the tenant first
-            const tenant = await basePrisma.tenant.findFirst({ where: { subdomain: contextTenantId } });
-            if (tenant) {
-                whereClause.UsersOnTenants = {
-                    some: {
-                        tenantId: tenant.id
-                    }
-                };
-            }
-        }
-    }
-
     const users = await basePrisma.user.findMany({
-      where: whereClause,
-      take: 10,
-      orderBy: { createdAt: 'desc' },
+      take: 15,
+      orderBy: { createdAt: 'asc' },
       include: {
-        UsersOnRoles: {
-          include: {
-            Role: true
-          }
-        },
-        UsersOnTenants: { include: { Tenant: true } }
+        Tenant: true,
       }
     });
 
     return users.map(u => {
-      const roleName = u.UsersOnRoles.length > 0 ? u.UsersOnRoles[0].Role.name : 'User';
-      // Determine password hint based on email or role
-      let passwordHint = 'senha@123';
-      if (u.email === 'analista@lordland.com') {
-        passwordHint = 'password123';
-      } else if (u.email === 'demo.admin@bidexpert.com.br' || u.email === 'demo.user@bidexpert.com.br') {
-        passwordHint = 'demo@123';
-      } else if (u.email === 'admin@bidexpert.com.br') {
+      // Determine password hint based on email
+      let passwordHint = 'Bot@123';
+      if (u.email === 'admin@bidexpert.com.br') {
         passwordHint = 'Admin@123';
+      } else if (u.email === 'leiloeiro@bidexpert.com.br') {
+        passwordHint = 'Leiloeiro@123';
+      } else if (u.email === 'comprador@bidexpert.com.br') {
+        passwordHint = 'Comprador@123';
       }
 
       return {
         email: u.email,
-        fullName: u.fullName || 'Unknown',
-        roleName: roleName,
+        fullName: u.name || 'Unknown',
+        roleName: u.role,
         passwordHint: passwordHint,
-        tenantId: u.UsersOnTenants[0]?.tenantId?.toString() || '1'
+        tenantId: u.tenantId?.toString() || '1'
       };
     });
   } catch (error) {

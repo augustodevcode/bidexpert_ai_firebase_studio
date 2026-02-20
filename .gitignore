@@ -81,3 +81,8 @@ logs/*.log
 # Sentry
 .sentryclirc
 sentry.properties
+
+# SQLite local database
+prisma/dev.db
+*.db
+*.db-journal
