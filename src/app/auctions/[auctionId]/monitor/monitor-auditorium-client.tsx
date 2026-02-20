@@ -8,7 +8,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { Auction, Lot, BidInfo } from '@/types';
+import type { Auction, Lot, BidInfo, LotStatus } from '@/types';
 import MonitorBidDisplay from '@/components/auction/monitor/MonitorBidDisplay';
 import MonitorVideoBox from '@/components/auction/monitor/MonitorVideoBox';
 import MonitorLotList from '@/components/auction/monitor/MonitorLotList';
@@ -263,7 +263,7 @@ export default function MonitorAuditoriumClient({
 
                         <div className="col-span-4">
                             <MonitorBidDisplay
-                                status={currentLot.status}
+                                status={currentLot.status as LotStatus}
                                 user={bidHistory[0]?.bidderDisplay || '---'}
                                 amount={currentLot.price || 0}
                                 endDate={currentLot.endDate}

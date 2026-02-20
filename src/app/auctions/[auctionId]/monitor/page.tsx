@@ -35,14 +35,14 @@ export default function AuctionMonitorPage() {
             try {
                 const [auction, lots, user] = await Promise.all([
                     getAuction(auctionId),
-                    getLots(auctionId),
+                    getLots({ auctionId }),
                     getCurrentUser()
                 ]);
 
                 if (!auction) throw new Error("Leilão não encontrado.");
                 if (lots.length === 0) throw new Error("Este leilão não possui lotes.");
 
-                const isHabilitado = user ? await checkHabilitationForAuctionAction(user.uid, auction.id) : false;
+                const isHabilitado = user ? await checkHabilitationForAuctionAction(user.id, auction.id) : false;
 
                 let currentLot = lots.find(l => l.id === targetLotId || l.publicId === targetLotId) || lots[0];
                 const upcomingLots = lots.filter(l => l.id !== currentLot.id).slice(0, 10);
