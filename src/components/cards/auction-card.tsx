@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import type { Auction } from '@/types';
 import { Heart, Share2, Eye, X, Facebook, MessageSquareText, Mail, Clock, Users, Star, ListChecks } from 'lucide-react';
 import { isPast, differenceInDays } from 'date-fns';
+import { cn } from '@/lib/utils';
 import AuctionPreviewModalV2 from '../auction-preview-modal-v2';
 import { isValidImageUrl, getAuctionStatusText, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
