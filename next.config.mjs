@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 
-import { withSentryConfig } from "@sentry/nextjs";
+// Sentry is optional — only loaded when DSN is configured
+let withSentryConfig;
+try {
+  const sentry = await import("@sentry/nextjs");
+  withSentryConfig = sentry.withSentryConfig;
+} catch {
+  withSentryConfig = null;
+}
 
 console.log(`[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: ${process.env.NODE_ENV}`);
 
@@ -37,8 +44,8 @@ const config = {
       },
     ];
   },
-  // Output standalone para Docker/Cloud Run
-  output: 'standalone',
+  // Output standalone para Docker/Cloud Run — desabilitado no Vercel
+  ...(process.env.VERCEL ? {} : { output: 'standalone' }),
   typescript: {
     // TECH DEBT: src/ai/ tem erros de tipo que precisam ser corrigidos
     // TODO: Corrigir erros em src/ai/flows/*.ts e mudar para false
@@ -122,8 +129,8 @@ const config = {
 // A lógica original foi alterada para sempre habilitar os checks.
 console.log(`[next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.`);
 
-// Wrap with Sentry configuration if DSN is provided
-const sentryConfig = process.env.NEXT_PUBLIC_SENTRY_DSN ? withSentryConfig(
+// Wrap with Sentry configuration if DSN is provided and package is available
+const sentryConfig = (process.env.NEXT_PUBLIC_SENTRY_DSN && withSentryConfig) ? withSentryConfig(
   config,
   {
     silent: true,

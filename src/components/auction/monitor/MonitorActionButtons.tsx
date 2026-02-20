@@ -1,37 +1,64 @@
 
+/**
+ * MonitorActionButtons.tsx
+ * Botões de ação do monitor: dar lance e se habilitar.
+ * Exibe estado de carregamento, habilitação e desabilitáveis conforme contexto.
+ */
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Power, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Power, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 
 interface MonitorActionButtonsProps {
     onBid: () => void;
     onHabilitate: () => void;
     isHabilitado: boolean;
     bidLabel: string;
+    disabled?: boolean;
+    isHabilitando?: boolean;
 }
 
-export default function MonitorActionButtons({ onBid, onHabilitate, isHabilitado, bidLabel }: MonitorActionButtonsProps) {
+export default function MonitorActionButtons({
+    onBid,
+    onHabilitate,
+    isHabilitado,
+    bidLabel,
+    disabled = false,
+    isHabilitando = false,
+}: MonitorActionButtonsProps) {
     return (
-        <div className="flex gap-4 h-full">
+        <div data-ai-id="monitor-action-buttons" className="flex gap-4 h-full">
             <Button
+                data-ai-id="monitor-bid-button"
                 onClick={onBid}
-                className="flex-1 bg-[#00474F] hover:bg-[#00383F] text-white flex items-center justify-center gap-3 py-8 rounded-lg shadow-lg group transition-all"
+                disabled={disabled}
+                className="flex-1 bg-[#00474F] hover:bg-[#00383F] text-white flex items-center justify-center gap-3 py-8 rounded-lg shadow-lg group transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
+                {disabled && bidLabel.includes('Enviando') && (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                )}
                 <span className="text-2xl font-black uppercase tracking-tight">{bidLabel}</span>
-                <ArrowRight className="h-8 w-8 group-hover:translate-x-1 transition-transform" />
+                {!disabled && <ArrowRight className="h-8 w-8 group-hover:translate-x-1 transition-transform" />}
             </Button>
 
             {!isHabilitado ? (
                 <Button
+                    data-ai-id="monitor-habilitate-button"
                     onClick={onHabilitate}
-                    className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white flex items-center justify-center gap-3 py-8 rounded-lg shadow-lg group transition-all"
+                    disabled={isHabilitando}
+                    className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white flex items-center justify-center gap-3 py-8 rounded-lg shadow-lg group transition-all disabled:opacity-50"
                 >
-                    <span className="text-2xl font-black uppercase tracking-tight">Habilite-se para enviar</span>
-                    <Power className="h-8 w-8 group-hover:scale-110 transition-transform text-emerald-400" />
+                    {isHabilitando
+                        ? <Loader2 className="h-8 w-8 animate-spin" />
+                        : <Power className="h-8 w-8 group-hover:scale-110 transition-transform text-emerald-400" />
+                    }
+                    <span className="text-2xl font-black uppercase tracking-tight">
+                        {isHabilitando ? 'Habilitando...' : 'Habilite-se para enviar'}
+                    </span>
                 </Button>
             ) : (
                 <Button
+                    data-ai-id="monitor-habilitado-badge"
                     disabled
                     className="flex-1 bg-emerald-100 text-emerald-800 border-2 border-emerald-200 flex items-center justify-center gap-3 py-8 rounded-lg shadow-inner cursor-default"
                 >

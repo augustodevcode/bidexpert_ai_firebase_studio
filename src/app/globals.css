@@ -1,3 +1,4 @@
+@import './semantic-classes.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
