@@ -29,7 +29,7 @@ export const config = {
      * - assets (public assets)
      * - uploads (uploaded files)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|assets|uploads).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|assets|uploads).*)',
   ],
 };
 
