@@ -125,12 +125,12 @@
   .img-history-item { @apply object-cover; }
   .text-history-item-title { @apply truncate flex-grow text-foreground/90; }
   .nav-mobile-container { @apply flex flex-col gap-1; }
-  .link-mobile-nav { @apply text-md font-medium transition-colors hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md hover:no-underline; }
+  .link-mobile-nav { @apply text-base font-medium transition-colors hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md hover:no-underline; }
   .link-mobile-active { @apply bg-accent text-primary; }
   .link-mobile-inactive { @apply text-muted-foreground hover:bg-accent/50; }
   .icon-mobile-nav { @apply h-4 w-4; }
   .wrapper-mobile-megamenu { @apply py-1; }
-  .link-mobile-megamenu-trigger { @apply text-md font-medium transition-colors hover:text-primary flex items-center justify-between gap-2 py-2.5 px-3 rounded-md hover:no-underline; }
+  .link-mobile-megamenu-trigger { @apply text-base font-medium transition-colors hover:text-primary flex items-center justify-between gap-2 py-2.5 px-3 rounded-md hover:no-underline; }
   .wrapper-mobile-megamenu-label { @apply flex items-center gap-2; }
   .icon-mobile-chevron { @apply h-4 w-4; }
   .wrapper-mobile-megamenu-content { @apply pl-6 mt-1 space-y-0.5; }
@@ -294,7 +294,7 @@
   .form-search-advanced { @apply flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl mx-auto; }
   .wrapper-search-input-with-icon { @apply relative flex-grow w-full; }
   .icon-search-input-prefix { @apply absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground; }
-  .input-search-advanced { @apply h-12 pl-12 text-md rounded-lg shadow-sm w-full; }
+  .input-search-advanced { @apply h-12 pl-12 text-base rounded-lg shadow-sm w-full; }
   .btn-search-submit-advanced { @apply h-12 w-full md:w-auto; }
   .icon-search-btn-mobile { @apply mr-2 h-4 w-4 md:hidden; }
   .wrapper-search-tabs { @apply w-full; }
@@ -312,7 +312,7 @@
   .icon-filter-reset { @apply mr-1 h-3 w-3; }
   .accordion-filters { @apply w-full; }
   .item-filter-accordion { @apply border-b; }
-  .trigger-filter-accordion { @apply text-md font-medium hover:no-underline; }
+  .trigger-filter-accordion { @apply text-base font-medium hover:no-underline; }
   .content-filter-accordion { @apply pt-1 pb-3; }
   .group-filter-radio { @apply space-y-1; }
   .group-filter-radio-scroll { @apply space-y-1 max-h-60 overflow-y-auto pr-2; }
@@ -442,7 +442,7 @@
   /* Auction Info Panel */
   .card-auction-info { @apply shadow-md bg-card text-card-foreground border; }
   .header-card-auction-info { @apply p-3 border-b; }
-  .header-card-auction-info-title { @apply text-md font-semibold flex items-center; }
+  .header-card-auction-info-title { @apply text-base font-semibold flex items-center; }
   .icon-auction-info-header { @apply h-4 w-4 mr-2 text-primary; }
   .content-card-auction-info { @apply p-3 space-y-2 text-xs; }
   .wrapper-auctioneer-info { @apply block; }
@@ -645,7 +645,7 @@
   .label-account-type-option { @apply font-normal cursor-pointer; }
   .wrapper-register-section { @apply block; }
   .separator-auth { @apply my-4; }
-  .header-register-section { @apply text-md font-semibold text-muted-foreground pt-4; }
+  .header-register-section { @apply text-base font-semibold text-muted-foreground pt-4; }
   .grid-register-fields { @apply grid grid-cols-1 sm:grid-cols-2 gap-4; }
   .wrapper-form-item-column { @apply flex flex-col; }
   .wrapper-form-item-span { @apply sm:col-span-2; }
@@ -1015,7 +1015,7 @@
   .wrapper-footer-quick-links { @apply space-y-3; }
   .wrapper-footer-legal-links { @apply space-y-3; }
   .wrapper-footer-social-links { @apply space-y-3; }
-  .header-footer-section { @apply text-md font-semibold text-foreground mb-3; }
+  .header-footer-section { @apply text-base font-semibold text-foreground mb-3; }
   .list-footer-links { @apply space-y-2; }
   .item-footer-link { @apply list-none; }
   .link-footer-item { @apply text-sm text-muted-foreground hover:text-primary transition-colors hover:no-underline; }
