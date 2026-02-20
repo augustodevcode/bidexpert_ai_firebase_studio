@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import MapSearchPageClient from './_client';
 
+export const dynamic = 'force-dynamic';
+
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
