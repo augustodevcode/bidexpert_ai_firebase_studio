@@ -13,18 +13,19 @@ async function main() {
       publicId: 'TENANT-001',
       name: 'BidExpert Demo',
       slug: 'bidexpert-demo',
+      subdomain: 'bidexpert-demo',
     },
   });
   console.log('✅ Tenant criado:', tenant.id);
 
   // Criar usuário admin
-  const passwordHash = await bcrypt.hash('admin123', 10);
+  const passwordHash = await bcrypt.hash('Admin@123', 10);
   const admin = await prisma.user.create({
     data: {
       publicId: 'USER-001',
       email: 'admin@bidexpert.com.br',
       name: 'Administrador',
-      passwordHash,
+      password: passwordHash, // Corrigido: password em vez de passwordHash
       role: 'ADMIN',
       tenantId: tenant.id,
     },
@@ -37,7 +38,7 @@ async function main() {
       publicId: 'USER-002',
       email: 'leiloeiro@bidexpert.com.br',
       name: 'Leiloeiro Teste',
-      passwordHash: await bcrypt.hash('leiloeiro123', 10),
+      password: await bcrypt.hash('Leiloeiro@123', 10),
       role: 'AUCTIONEER',
       tenantId: tenant.id,
     },
@@ -50,7 +51,7 @@ async function main() {
       publicId: 'USER-003',
       email: 'comprador@bidexpert.com.br',
       name: 'Comprador Teste',
-      passwordHash: await bcrypt.hash('comprador123', 10),
+      password: await bcrypt.hash('Comprador@123', 10),
       role: 'BIDDER',
       tenantId: tenant.id,
     },
@@ -194,9 +195,9 @@ async function main() {
 
   console.log('\n🎉 Seed concluído com sucesso!');
   console.log('\n📋 Usuários de teste:');
-  console.log('   - admin@bidexpert.com.br / admin123');
-  console.log('   - leiloeiro@bidexpert.com.br / leiloeiro123');
-  console.log('   - comprador@bidexpert.com.br / comprador123');
+  console.log('   - admin@bidexpert.com.br / Admin@123');
+  console.log('   - leiloeiro@bidexpert.com.br / Leiloeiro@123');
+  console.log('   - comprador@bidexpert.com.br / Comprador@123');
 }
 
 main()

@@ -18,9 +18,10 @@ model Tenant {
   publicId  String   @unique
   name      String
   slug      String   @unique
+  subdomain String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   User              User[]
   Auction           Auction[]
   Lot               Lot[]
@@ -35,17 +36,17 @@ model User {
   publicId      String    @unique
   email         String    @unique
   name          String?
-  passwordHash  String?
+  password      String?   // Corrigido de passwordHash para password
   role          String    @default("USER")
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   tenantId      Int
-  
+
   Tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   Bid           Bid[]
   Lot           Lot[]     @relation("LotWinner")
-  
+
   @@index([tenantId])
 }
 
