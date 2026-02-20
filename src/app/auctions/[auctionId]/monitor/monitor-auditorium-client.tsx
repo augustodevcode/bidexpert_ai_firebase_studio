@@ -1,7 +1,13 @@
 
+/**
+ * monitor-auditorium-client.tsx
+ * Componente cliente principal do Monitor de Pregão.
+ * Funcionalidades: lances em tempo real (polling 3s), navegação de lotes,
+ * auto-avanço de lote, anúncio de vencedor, status de conexão, habilitação.
+ */
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Auction, Lot, BidInfo } from '@/types';
 import MonitorBidDisplay from '@/components/auction/monitor/MonitorBidDisplay';
 import MonitorVideoBox from '@/components/auction/monitor/MonitorVideoBox';
@@ -12,9 +18,16 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
-import { LogIn } from 'lucide-react';
+import { LogIn, Wifi, WifiOff, Trophy, ChevronRight, Users } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
+import { placeBidOnLot, getBidsForLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
+import { habilitateForAuctionAction } from '@/app/admin/habilitations/actions';
+import { calculateMinimumBid } from '@/lib/ui-helpers';
 
 interface MonitorAuditoriumClientProps {
     auction: Auction;
