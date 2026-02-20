@@ -103,3 +103,20 @@ Após encerrar, novas tentativas de lance devem ser rejeitadas e auditáveis.
 3. Simular rodada de lances concorrentes.
 4. Encerrar lote e validar vencedor/valor final.
 5. Capturar evidências e consolidar relatório de execução.
+
+## 10) Matriz de rastreabilidade (Caso × Risco × Evidência)
+
+| Caso | Risco coberto | Validação principal | Evidência mínima |
+|---|---|---|---|
+| CT-01 | Falha de autenticação/admin sem sessão | Login admin com credenciais válidas | Screenshot pós-login + log de rede sem 401/500 |
+| CT-02 | Criação inconsistente de leilão/lote | Persistência e exibição no painel admin | Screenshot do cadastro salvo + ID/slug do lote |
+| CT-03 | Lote não publicado para disputa | Transição para `ABERTO_PARA_LANCES` e URL pública | Screenshot de status + URL pública acessível |
+| CT-04 | Falha de sessão concorrente dos bots | 10 sessões válidas em paralelo | Lista de bots autenticados + capturas por amostragem |
+| CT-05 | Inconsistência de lance concorrente | Maior lance prevalece sem regressão | Histórico de lances + valor final em evidência |
+| CT-06 | Ordenação incorreta no histórico | Sequência temporal/valor coerente | Screenshot histórico ordenado + horário dos eventos |
+| CT-07 | Encerramento incorreto do lote | Status final e vencedor consistente | Screenshot pós-encerramento + registro do cron/evento |
+| CT-08 | Divergência pós-arremate | Consistência de dados para admin e vencedor | Captura em dois perfis + comparação de valor/vencedor |
+| CT-09 | Lance sem autenticação aceito indevidamente | Bloqueio de ação sem sessão | Mensagem de bloqueio + ausência de registro de lance |
+| CT-10 | Regra de incremento não aplicada | Rejeição de lance inválido | Mensagem de validação + estado do lance inalterado |
+| CT-11 | Condição de corrida em lances simultâneos | Determinismo do lance vencedor/top bid | Traço temporal dos dois lances + resultado único |
+| CT-12 | Reabertura indevida após fechamento | Imutabilidade após encerramento | Tentativa rejeitada + status encerrado preservado |
