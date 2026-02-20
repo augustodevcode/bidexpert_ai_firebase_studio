@@ -72,7 +72,80 @@
 - **Próximos passos**: Implementar teste E2E com Playwright
 
 ---
-## Task ID: robot-auction-simulation - e2e-test-specialist
+## Task ID: 5 - Commit and Push Fixes
+### Agent: Main Agent
+### Task: Commitar e enviar correções para GitHub
+
+### Work Log:
+- Verificado status do git - branch fix/e2e-robot-auction-test-20260220
+- Adicionados arquivos modificados ao staging
+- Commitado com mensagem descritiva
+- Enviado para GitHub com sucesso
+
+### Stage Summary:
+- **Branch**: fix/e2e-robot-auction-test-20260220
+- **Commit**: 44416cf7
+- **Arquivos modificados**:
+  - prisma/schema.prisma
+  - scripts/seed-sqlite.ts
+  - scripts/create-bots.ts (novo)
+  - src/app/auth/actions.ts
+  - src/app/globals.css
+  - src/app/semantic-classes.css
+  - worklog.md (novo)
+
+---
+
+## RESUMO FINAL - BUGS CORRIGIDOS
+
+### Bug #1: Campo passwordHash vs password
+**Problema**: O schema Prisma SQLite usava `passwordHash` mas o código de autenticação esperava `password`.
+
+**Solução**: Renomeado o campo para `password` no schema Prisma e atualizado o seed script.
+
+### Bug #2: Relações UsersOnRoles/UsersOnTenants inexistentes
+**Problema**: O código de login usava `include: { UsersOnRoles, UsersOnTenants }` que não existem no schema SQLite simplificado.
+
+**Solução**: Reescrita a função `login()` para usar `include: { Tenant: true }` e construir o perfil do usuário com os campos diretos (`role`, `tenantId`).
+
+### Bug #3: Campo subdomain faltando
+**Problema**: API `/api/public/tenants` esperava campo `subdomain` mas schema só tinha `slug`.
+
+**Solução**: Adicionado campo `subdomain` ao modelo Tenant.
+
+### Bug #4: CSS @layer components error
+**Problema**: `@layer components` usado em semantic-classes.css sem diretiva `@tailwind components` visível.
+
+**Solução**: Removido o import do semantic-classes.css temporariamente para permitir build.
+
+---
+
+## ESTADO ATUAL DO AMBIENTE
+
+### Servidor: ✅ Rodando
+- URL: http://localhost:3000
+- Status: Compilando sem erros fatais
+
+### Banco de Dados: ✅ Configurado
+- Tipo: SQLite
+- Arquivo: prisma/dev.db
+- Usuários: 13 (1 admin + 1 leiloeiro + 1 comprador + 10 bots)
+
+### Credenciais de Teste:
+```
+Admin: admin@bidexpert.com.br / Admin@123
+Leiloeiro: leiloeiro@bidexpert.com.br / Leiloeiro@123
+Comprador: comprador@bidexpert.com.br / Comprador@123
+Bots: bot1-10@bidexpert.com.br / Bot@123
+```
+
+### Próximos Passos Pendentes:
+1. Implementar teste E2E com Playwright para simulação de leilão
+2. Criar leilão com 5 lotes via admin
+3. Simular registro e habilitação dos bots
+4. Executar simulação de lances
+5. Verificar encerramento e vencedores
+6. Documentar resultados finais
 ### Work Task
 Criar arquivo de teste E2E completo para simulação de leilão automatizado com 10 bots arrematantes competindo em um leilão completo.
 
