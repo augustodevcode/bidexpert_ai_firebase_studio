@@ -1,3 +1,5 @@
+@tailwind components;
+
 @layer components {
   /* Buttons */
   .btn-primary { @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90; }
@@ -21,7 +23,7 @@
   .grid-auctioneer-cards { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6; }
 
   /* Cards & Items */
-  .card-lot { @apply flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group relative bg-card text-card-foreground border; }
+  .card-lot { @apply flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg relative bg-card text-card-foreground border; }
   .card-auctioneer-profile { @apply rounded-xl border bg-card text-card-foreground shadow; }
   .item-bid-history { @apply flex items-center justify-between p-3 border-b last:border-0; }
 
@@ -153,7 +155,7 @@
   .btn-admin-mobile-menu { @apply md:hidden h-9 w-9; }
   .icon-admin-header { @apply h-5 w-5; }
   .wrapper-admin-search { @apply relative flex-1 md:grow-0; }
-  .btn-admin-search-command { @apply group w-full justify-start text-left text-sm text-sidebar-foreground/80 md:w-[250px] lg:w-[350px] h-9 bg-sidebar-accent/50 hover:bg-sidebar-accent; }
+  .btn-admin-search-command { @apply w-full justify-start text-left text-sm text-sidebar-foreground/80 md:w-[250px] lg:w-[350px] h-9 bg-sidebar-accent/50 hover:bg-sidebar-accent; }
   .icon-admin-search { @apply mr-2 h-4 w-4 shrink-0; }
   .text-admin-search-placeholder { @apply truncate; }
   .kbd-admin-search { @apply pointer-events-none ml-auto hidden h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar-accent/80 px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex; }
@@ -220,7 +222,7 @@
   .grid-radar-opportunities { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6; }
   .section-trending-segments { @apply space-y-6; }
   .grid-trending-segments { @apply grid sm:grid-cols-2 lg:grid-cols-3 gap-4; }
-  .card-trending-segment { @apply group hover:shadow-lg transition-shadow overflow-hidden; }
+  .card-trending-segment { @apply hover:shadow-lg transition-shadow overflow-hidden; }
   .link-card-trending { @apply hover:no-underline; }
   .wrapper-trending-image { @apply relative h-32 bg-gradient-to-br from-primary/20 to-primary/5; }
   .img-trending-bg { @apply absolute inset-0 bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity; }
@@ -261,7 +263,7 @@
   .btn-carousel-dot-active { @apply bg-yellow-500 w-8; }
   .btn-carousel-dot-inactive { @apply bg-white/60 hover:bg-white/80 w-3; }
   .wrapper-hero-promotions { @apply lg:col-span-4 flex flex-col gap-4; }
-  .link-hero-promotion { @apply group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all bg-white flex-1 hover:no-underline; }
+  .link-hero-promotion { @apply relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all bg-white flex-1 hover:no-underline; }
   .container-hero-promotion { @apply relative h-[190px] md:h-[240px]; }
   .img-hero-promotion { @apply object-cover group-hover:scale-105 transition-transform duration-300; }
   .overlay-hero-promotion { @apply absolute inset-0 bg-gradient-to-r from-black/60 to-transparent; }
@@ -273,7 +275,7 @@
   .section-hero-features { @apply bg-white border-t border-b border-gray-200 py-6; }
   .container-hero-features { @apply container mx-auto px-4; }
   .grid-hero-features { @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6; }
-  .wrapper-hero-feature { @apply flex items-center gap-3 group; }
+  .wrapper-hero-feature { @apply flex items-center gap-3; }
   .wrapper-hero-feature-icon-container { @apply flex-shrink-0; }
   .wrapper-hero-feature-icon { @apply w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center group-hover:bg-yellow-200 transition-colors; }
   .icon-hero-feature { @apply w-6 h-6 text-yellow-600; }
@@ -403,7 +405,7 @@
   .icon-btn-bid { @apply mr-2 h-4 w-4; }
 
   /* Auction Card Specific */
-  .card-auction { @apply flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group bg-card text-card-foreground border; }
+  .card-auction { @apply flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg bg-card text-card-foreground border; }
   .img-card-auction { @apply object-cover; }
   .badge-auction-status { @apply text-xs px-2 py-1; }
   .badge-consignor-logo-overlay-right { @apply absolute bottom-2 right-2; }
@@ -740,7 +742,7 @@
   .link-not-found-back { @apply flex items-center gap-2 hover:no-underline; }
 
   /* Promo Card */
-  .link-promo-card { @apply block h-full group hover:no-underline; }
+  .link-promo-card { @apply block h-full hover:no-underline; }
   .card-promo { @apply overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full border; }
   .content-card-promo { @apply p-6 flex flex-col md:flex-row items-center gap-6 h-full; }
   .wrapper-promo-text { @apply flex-1 text-center md:text-left; }
@@ -937,7 +939,7 @@
   .desc-form-subtitle { @apply text-sm text-muted-foreground; }
   .wrapper-form-header-actions { @apply flex items-center gap-2; }
   .wrapper-desktop-toolbar { @apply hidden sm:block; }
-  .group-form-fieldset { @apply group; }
+  .group-form-fieldset { }
   .content-card-form { @apply p-6 bg-secondary/20 group-disabled:bg-background/20 group-disabled:cursor-not-allowed; }
   .footer-card-form { @apply flex flex-col sm:flex-row justify-between items-center gap-2 p-6 border-t; }
   .wrapper-mobile-toolbar { @apply sm:hidden w-full; }

@@ -1,20 +1,57 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // Adjust path if needed
+/**
+ * @fileoverview Endpoint administrativo para correção emergencial de coordenadas.
+ * Aceita segredo por header, querystring ou body JSON.
+ */
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 function getRandomCoordinates() {
-  // Rough Brazil coordinates
   const latitude = -10 - (Math.random() * 20); 
   const longitude = -40 - (Math.random() * 15);
   return { latitude, longitude };
 }
 
-export async function POST(req: Request) {
+function getExpectedSecret() {
+  return process.env.FIX_COORDINATES_SECRET || 'BIDEXPERT_FIX_COORDINATES_2025';
+}
+
+async function extractSecret(req: NextRequest) {
+  const headerSecret = req.headers.get('x-fix-secret');
+  if (headerSecret) return headerSecret;
+
+  const authHeader = req.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.replace('Bearer ', '').trim();
+  }
+
+  const querySecret = req.nextUrl.searchParams.get('secret');
+  if (querySecret) return querySecret;
+
   try {
     const body = await req.json();
-    const { secret } = body;
+    if (body && typeof body.secret === 'string') return body.secret;
+  } catch {
+  }
 
-    // Hardcoded secret for emergency fix deployment
-    if (secret !== 'BIDEXPERT_FIX_COORDINATES_2025') {
+  return null;
+}
+
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    endpoint: '/api/admin/fix-coordinates',
+    acceptedSecretLocations: ['x-fix-secret', 'authorization: Bearer <secret>', 'query ?secret=', 'json body { secret }'],
+  });
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const secret = await extractSecret(req);
+    const expectedSecret = getExpectedSecret();
+
+    if (secret !== expectedSecret) {
        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

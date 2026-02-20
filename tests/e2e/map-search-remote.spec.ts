@@ -1,7 +1,13 @@
+/**
+ * @fileoverview Validação remota do mapa com auto-correção opcional de coordenadas.
+ */
 import { test, expect } from '@playwright/test';
 
-// Remote URL to test
-const REMOTE_URL = 'https://bidexpertaifirebasestudio-ol8gh5jbd-augustos-projects-d51a961f.vercel.app';
+const REMOTE_URL =
+    process.env.PLAYWRIGHT_REMOTE_URL ||
+    'https://bidexpertaifirebasestudio-git-d4a96e-augustos-projects-d51a961f.vercel.app';
+
+const FIX_SECRET = process.env.FIX_COORDINATES_SECRET || 'BIDEXPERT_FIX_COORDINATES_2025';
 
 test('remote map search verification with auto-fix', async ({ page, request }) => {
   // 1. Visit Map Search
@@ -32,8 +38,12 @@ test('remote map search verification with auto-fix', async ({ page, request }) =
   if (count === 0) {
       console.log('No markers found. Attempting to fix coordinates via API...');
       
-      const fixResponse = await request.post(`${REMOTE_URL}/api/admin/fix-coordinates`, {
-          data: { secret: 'BIDEXPERT_FIX_COORDINATES_2025' }
+            const fixResponse = await request.post(`${REMOTE_URL}/api/admin/fix-coordinates`, {
+                    headers: {
+                        'x-fix-secret': FIX_SECRET,
+                        'authorization': `Bearer ${FIX_SECRET}`,
+                    },
+                    data: { secret: FIX_SECRET }
       });
 
       if (fixResponse.ok()) {
