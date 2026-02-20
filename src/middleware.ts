@@ -12,7 +12,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/server/lib/session';
 
 // ============================================================================
 // Configuração do Matcher
@@ -206,12 +205,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(crmUrl);
   }
   
-  // Obtém a sessão do usuário (se logado)
-  const session = await getSession();
-  
-  // DEBUG: Log session state
   console.log(`[Middleware] Resolution: tenantId='${resolution.tenantId}', subdomain='${resolution.subdomain}'`);
-  console.log(`[Middleware] Session: ${session ? `tenantId='${session.tenantId}', userId='${session.userId}'` : 'null'}`);
   
   // O tenant da URL/subdomain SEMPRE tem precedência para garantir isolamento multi-tenant correto.
   // A sessão só é usada para validar se o usuário logado pertence ao tenant acessado.
