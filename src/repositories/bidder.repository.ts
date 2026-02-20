@@ -14,7 +14,7 @@ export class BidderRepository {
    * Busca perfil do bidder por userId
    */
   async findByUserId(userId: bigint) {
-    return prisma.bidder_profiles.findUnique({
+    return prisma.bidderProfile.findUnique({
       where: { userId }
     });
   }
@@ -23,14 +23,14 @@ export class BidderRepository {
    * Cria perfil do bidder
    */
   async create(data: Prisma.BidderProfileCreateInput) {
-    return prisma.bidder_profiles.create({ data });
+    return prisma.bidderProfile.create({ data });
   }
 
   /**
    * Atualiza perfil do bidder
    */
   async update(userId: bigint, data: Prisma.BidderProfileUpdateInput) {
-    return prisma.bidder_profiles.update({
+    return prisma.bidderProfile.update({
       where: { userId },
       data
     });
@@ -48,7 +48,7 @@ export class BidderRepository {
       orderBy?: Prisma.WonLotOrderByWithRelationInput;
     } = {}
   ) {
-    return prisma.won_lots.findMany({
+    return prisma.wonLot.findMany({
       where: { bidderId, ...options.where },
       orderBy: options.orderBy || { wonAt: 'desc' },
       skip: options.skip,
@@ -60,7 +60,7 @@ export class BidderRepository {
    * Conta lotes arrematados do bidder
    */
   async countWonLots(bidderId: bigint, where?: Prisma.WonLotWhereInput) {
-    return prisma.won_lots.count({
+    return prisma.wonLot.count({
       where: { bidderId, ...where }
     });
   }
@@ -69,7 +69,7 @@ export class BidderRepository {
    * Busca lote arrematado específico
    */
   async findWonLotById(id: bigint) {
-    return prisma.won_lots.findUnique({
+    return prisma.wonLot.findUnique({
       where: { id }
     });
   }
@@ -78,7 +78,7 @@ export class BidderRepository {
    * Atualiza lote arrematado
    */
   async updateWonLot(id: bigint, data: Prisma.WonLotUpdateInput) {
-    return prisma.won_lots.update({
+    return prisma.wonLot.update({
       where: { id },
       data
     });
@@ -88,14 +88,14 @@ export class BidderRepository {
    * Cria lote arrematado
    */
   async createWonLot(data: Prisma.WonLotCreateInput) {
-    return prisma.won_lots.create({ data });
+    return prisma.wonLot.create({ data });
   }
 
   /**
    * Busca métodos de pagamento do bidder
    */
   async findPaymentMethodsByBidderId(bidderId: bigint) {
-    return prisma.payment_methods.findMany({
+    return prisma.paymentMethod.findMany({
       where: { bidderId },
       orderBy: [
         { isDefault: 'desc' },
@@ -108,7 +108,7 @@ export class BidderRepository {
    * Busca método de pagamento específico
    */
   async findPaymentMethodById(id: bigint) {
-    return prisma.payment_methods.findUnique({
+    return prisma.paymentMethod.findUnique({
       where: { id }
     });
   }
@@ -117,7 +117,7 @@ export class BidderRepository {
    * Cria método de pagamento
    */
   async createPaymentMethod(bidderId: bigint, data: Prisma.PaymentMethodCreateInput) {
-    return prisma.payment_methods.create({
+    return prisma.paymentMethod.create({
       data: {
         bidderId,
         ...data
@@ -129,7 +129,7 @@ export class BidderRepository {
    * Atualiza método de pagamento
    */
   async updatePaymentMethod(id: bigint, data: Prisma.PaymentMethodUpdateInput) {
-    return prisma.payment_methods.update({
+    return prisma.paymentMethod.update({
       where: { id },
       data
     });
@@ -139,7 +139,7 @@ export class BidderRepository {
    * Remove método de pagamento
    */
   async deletePaymentMethod(id: bigint) {
-    return prisma.payment_methods.delete({
+    return prisma.paymentMethod.delete({
       where: { id }
     });
   }
@@ -156,7 +156,7 @@ export class BidderRepository {
       orderBy?: Prisma.BidderNotificationOrderByWithRelationInput;
     } = {}
   ) {
-    return prisma.bidder_notifications.findMany({
+    return prisma.bidderNotification.findMany({
       where: { bidderId, ...options.where },
       orderBy: options.orderBy || { createdAt: 'desc' },
       skip: options.skip,
@@ -168,7 +168,7 @@ export class BidderRepository {
    * Conta notificações do bidder
    */
   async countNotifications(bidderId: bigint, where?: Prisma.BidderNotificationWhereInput) {
-    return prisma.bidder_notifications.count({
+    return prisma.bidderNotification.count({
       where: { bidderId, ...where }
     });
   }
@@ -177,7 +177,7 @@ export class BidderRepository {
    * Atualiza notificações como lidas
    */
   async markNotificationsAsRead(ids: bigint[]) {
-    return prisma.bidder_notifications.updateMany({
+    return prisma.bidderNotification.updateMany({
       where: { id: { in: ids } },
       data: {
         isRead: true,
@@ -198,7 +198,7 @@ export class BidderRepository {
       orderBy?: Prisma.ParticipationHistoryOrderByWithRelationInput;
     } = {}
   ) {
-    return prisma.participation_history.findMany({
+    return prisma.participationHistory.findMany({
       where: { bidderId, ...options.where },
       orderBy: options.orderBy || { participatedAt: 'desc' },
       skip: options.skip,
@@ -210,7 +210,7 @@ export class BidderRepository {
    * Conta histórico de participações
    */
   async countParticipationHistory(bidderId: bigint, where?: Prisma.ParticipationHistoryWhereInput) {
-    return prisma.participation_history.count({
+    return prisma.participationHistory.count({
       where: { bidderId, ...where }
     });
   }
@@ -225,7 +225,7 @@ export class BidderRepository {
     orderBy?: Prisma.BidderProfileOrderByWithRelationInput;
     include?: Prisma.BidderProfileInclude;
   } = {}) {
-    return prisma.bidder_profiles.findMany({
+    return prisma.bidderProfile.findMany({
       where: options.where,
       orderBy: options.orderBy || { createdAt: 'desc' },
       skip: options.skip,
@@ -247,7 +247,7 @@ export class BidderRepository {
    * Conta total de bidders (para admin)
    */
   async countBidders(where?: Prisma.BidderProfileWhereInput) {
-    return prisma.bidder_profiles.count({
+    return prisma.bidderProfile.count({
       where
     });
   }
@@ -256,7 +256,7 @@ export class BidderRepository {
    * Busca bidder por ID (para admin)
    */
   async findBidderById(id: bigint, include?: Prisma.BidderProfileInclude) {
-    return prisma.bidder_profiles.findUnique({
+    return prisma.bidderProfile.findUnique({
       where: { id },
       include: include || {
         user: true,
@@ -279,7 +279,7 @@ export class BidderRepository {
    * Atualiza status de documentos do bidder
    */
   async updateDocumentStatus(userId: bigint, status: string) {
-    return prisma.bidder_profiles.update({
+    return prisma.bidderProfile.update({
       where: { userId },
       data: { documentStatus: status as any }
     });
@@ -289,7 +289,7 @@ export class BidderRepository {
    * Busca bidders por status de documentação
    */
   async findBiddersByDocumentStatus(status: string) {
-    return prisma.bidder_profiles.findMany({
+    return prisma.bidderProfile.findMany({
       where: { documentStatus: status as any },
       include: {
         user: true,

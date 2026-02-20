@@ -265,12 +265,12 @@ async function populateMissingData(tenantId: bigint) {
   
   if (arrematante) {
       // Garantir Perfil de Arrematante
-      let bidderProfile = await prisma.bidder_profiles.findUnique({ where: { userId: arrematante.id } });
+      let bidderProfile = await prisma.bidderProfile.findUnique({ where: { userId: arrematante.id } });
       if (!bidderProfile) {
           try {
             // Generate pseudo-valid CPF to avoid unique constraint 
             const randomCpf = `123.${Math.floor(Math.random() * 999)}.${Math.floor(Math.random() * 999)}-${Math.floor(Math.random() * 99)}`;
-            bidderProfile = await prisma.bidder_profiles.create({
+            bidderProfile = await prisma.bidderProfile.create({
                 data: {
                     userId: arrematante.id,
                     fullName: arrematante.fullName || 'Arrematante Demo',
@@ -305,9 +305,9 @@ async function populateMissingData(tenantId: bigint) {
       // 4.1 Métodos de Pagamento
       if (bidderProfile) {
         try {
-            const existingPayments = await prisma.payment_methods.count({ where: { tenantId: tenantId } });
+            const existingPayments = await prisma.paymentMethod.count({ where: { tenantId: tenantId } });
             if (existingPayments < 10) {
-                await prisma.payment_methods.create({
+                await prisma.paymentMethod.create({
                     data: {
                         bidderId: bidderProfile.id,
                         type: 'CREDIT_CARD' as PaymentMethodType,
@@ -324,9 +324,9 @@ async function populateMissingData(tenantId: bigint) {
         } catch(e) { console.log('Erro PaymentMethod:', e); }
 
         // 4.2 Notificações
-        const existingBidderNotifs = await prisma.bidder_notifications.count({ where: { bidderId: bidderProfile.id } });
+        const existingBidderNotifs = await prisma.bidderNotification.count({ where: { bidderId: bidderProfile.id } });
         if (existingBidderNotifs < 5) {
-            await prisma.bidder_notifications.create({
+            await prisma.bidderNotification.create({
                 data: {
                     bidderId: bidderProfile.id,
                     tenantId: tenantId,
@@ -419,10 +419,10 @@ async function populateMissingData(tenantId: bigint) {
   // 7. Popular Visitors e Sessões
   console.log('[POPULATE] 🌍 Criando dados de Visitantes (Analytics)...');
   try {
-      const existingVisitors = await prisma.visitors.count();
+      const existingVisitors = await prisma.visitor.count();
       if (existingVisitors < 10) {
         for (let i = 0; i < 10; i++) {
-            const visitor = await prisma.visitors.create({
+            const visitor = await prisma.visitor.create({
                 data: {
                     visitorId: uuidv4(),
                     firstIpAddress: `200.100.50.${(10 + i)}`,
@@ -434,7 +434,7 @@ async function populateMissingData(tenantId: bigint) {
                 }
             });
             
-            await prisma.visitor_sessions.create({
+            await prisma.visitorSession.create({
                 data: {
                     visitorId: visitor.id,
                     sessionId: uuidv4(),
@@ -945,7 +945,7 @@ async function addMoreAuditLogs(tenantId: bigint) {
   
   if (users.length === 0) return;
   
-  const existingCount = await prisma.audit_logs.count({ where: { tenantId } });
+  const existingCount = await prisma.auditLog.count({ where: { tenantId } });
   if (existingCount >= 10) return;
   
   const actions = [AuditAction.CREATE, AuditAction.UPDATE, AuditAction.DELETE, AuditAction.APPROVE, AuditAction.REJECT];
@@ -954,7 +954,7 @@ async function addMoreAuditLogs(tenantId: bigint) {
   for (let i = 0; i < 10; i++) {
     const user = users[i % users.length];
     
-    await prisma.audit_logs.create({
+    await prisma.auditLog.create({
       data: {
         tenantId,
         userId: user.id,
@@ -976,7 +976,7 @@ async function addMoreAuditLogs(tenantId: bigint) {
  */
 async function addMoreBidderProfiles(tenantId: bigint) {
   const users = await prisma.user.findMany({ 
-    where: { UsersOnTenants: { some: { tenantId } }, bidder_profiles: null },
+    where: { UsersOnTenants: { some: { tenantId } }, BidderProfile: null },
     take: 6 
   });
   
@@ -984,7 +984,7 @@ async function addMoreBidderProfiles(tenantId: bigint) {
   
   for (const user of users) {
     try {
-      await prisma.bidder_profiles.create({
+      await prisma.bidderProfile.create({
         data: {
           tenantId,
           userId: user.id,
@@ -1093,7 +1093,7 @@ async function seedItsmTickets(tenantId: bigint) {
     return;
   }
   
-  const existingCount = await prisma.itsm_tickets.count({ where: { tenantId } });
+  const existingCount = await prisma.iTSM_Ticket.count({ where: { tenantId } });
   if (existingCount >= 15) {
     console.log(`   Já existem ${existingCount} tickets`);
     return;
@@ -1124,7 +1124,7 @@ async function seedItsmTickets(tenantId: bigint) {
     const user = users[i % users.length];
     const assignedTo = supportUsers.length > 0 ? supportUsers[i % supportUsers.length] : null;
     
-    const ticket = await prisma.itsm_tickets.create({
+    const ticket = await prisma.iTSM_Ticket.create({
       data: {
         tenantId,
         publicId: `TKT-${Date.now()}-${i.toString().padStart(3, '0')}`,
@@ -1158,7 +1158,7 @@ async function seedItsmTickets(tenantId: bigint) {
 async function seedItsmMessages(tenantId: bigint) {
   console.log('[ITSM] 💬 Criando mensagens nos tickets...');
   
-  const tickets = await prisma.itsm_tickets.findMany({ where: { tenantId }, take: 15 });
+  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 15 });
   const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   
   if (tickets.length === 0 || users.length === 0) {
@@ -1225,7 +1225,7 @@ async function seedItsmMessages(tenantId: bigint) {
 async function seedItsmAttachments(tenantId: bigint) {
   console.log('[ITSM] 📎 Criando anexos nos tickets...');
   
-  const tickets = await prisma.itsm_tickets.findMany({ where: { tenantId }, take: 10 });
+  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 10 });
   const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   
   if (tickets.length === 0 || users.length === 0) {
@@ -1281,14 +1281,14 @@ async function seedItsmChatLogs(tenantId: bigint) {
   console.log('[ITSM] 🤖 Criando logs de chat do assistente...');
   
   const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 10 });
-  const tickets = await prisma.itsm_tickets.findMany({ where: { tenantId }, take: 5 });
+  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId }, take: 5 });
   
   if (users.length === 0) {
     console.log('   ⚠️ Sem usuários');
     return;
   }
   
-  const existingCount = await prisma.itsm_chat_logs.count({ where: { tenantId } });
+  const existingCount = await prisma.iTSM_ChatLog.count({ where: { tenantId } });
   if (existingCount >= 12) {
     console.log(`   Já existem ${existingCount} chat logs`);
     return;
@@ -1350,7 +1350,7 @@ async function seedItsmChatLogs(tenantId: bigint) {
     const user = users[i % users.length];
     const ticket = session.ticketCreated && tickets[i % tickets.length] ? tickets[i % tickets.length] : null;
     
-    await prisma.itsm_chat_logs.create({
+    await prisma.iTSM_ChatLog.create({
       data: {
         tenantId,
         userId: user.id,
@@ -1434,7 +1434,7 @@ async function seedFormSubmissions(tenantId: bigint) {
     return;
   }
   
-  const existingCount = await prisma.form_submissions.count({ where: { tenantId } });
+  const existingCount = await prisma.formSubmission.count({ where: { tenantId } });
   if (existingCount >= 15) {
     console.log(`   Já existem ${existingCount} form submissions`);
     return;
@@ -1459,7 +1459,7 @@ async function seedFormSubmissions(tenantId: bigint) {
     const tpl = formTemplates[i];
     const user = users[i % users.length];
     
-    await prisma.form_submissions.create({
+    await prisma.formSubmission.create({
       data: {
         tenantId,
         userId: user.id,
@@ -1662,13 +1662,13 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
 
   // 4. VISITOR EVENTS
   console.log('[GLOBAL-TABLES] 👁️  Populando Visitor Events...');
-  const visitors = await prisma.visitors.findMany({ take: 10 });
+  const visitors = await prisma.visitor.findMany({ take: 10 });
   const eventTypes = ['PAGE_VIEW', 'LOT_VIEW', 'AUCTION_VIEW', 'SEARCH', 'FILTER_APPLIED'];
   
   let eventCounter = 0;
   for (const visitor of visitors) {
     // Criar sessão para o visitante
-    const session = await prisma.visitor_sessions.create({
+    const session = await prisma.visitorSession.create({
       data: {
         sessionId: `session-${visitor.id}-${Date.now()}`,
         visitorId: visitor.id,
@@ -1680,7 +1680,7 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
     // Criar 5 eventos para cada visitante
     for (let i = 0; i < 5; i++) {
       eventCounter++;
-      await prisma.visitor_events.create({
+      await prisma.visitorEvent.create({
         data: {
           eventId: `event-${eventCounter}-${Date.now()}-${i}`,
           visitorId: visitor.id,
@@ -1700,8 +1700,47 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
 
   // 5. THEME SETTINGS & THEME COLORS
   console.log('[GLOBAL-TABLES] 🎨 Populando Theme Settings & Colors...');
-  const themeSettings = await prisma.themeSettings.create({
-    data: {
+  await prisma.themeSettings.upsert({
+    where: { name: `theme-${tenantId}` },
+    update: {
+      ThemeColors: {
+        upsert: {
+          update: {
+            light: {
+              primary: '#1E40AF',
+              secondary: '#7C3AED',
+              accent: '#F59E0B',
+              background: '#FFFFFF',
+              text: '#1F2937'
+            },
+            dark: {
+              primary: '#3B82F6',
+              secondary: '#A78BFA',
+              accent: '#FBBF24',
+              background: '#111827',
+              text: '#F9FAFB'
+            }
+          },
+          create: {
+            light: {
+              primary: '#1E40AF',
+              secondary: '#7C3AED',
+              accent: '#F59E0B',
+              background: '#FFFFFF',
+              text: '#1F2937'
+            },
+            dark: {
+              primary: '#3B82F6',
+              secondary: '#A78BFA',
+              accent: '#FBBF24',
+              background: '#111827',
+              text: '#F9FAFB'
+            }
+          }
+        }
+      }
+    },
+    create: {
       name: `theme-${tenantId}`,
       ThemeColors: {
         create: {
@@ -4218,13 +4257,13 @@ async function main() {
     console.log('👤 Criando dados do dashboard do arrematante...');
 
     // Perfil do Arrematante
-    let bidderProfile = await prisma.bidder_profiles.findUnique({ where: { userId: compradorUser.id } });
+    let bidderProfile = await prisma.bidderProfile.findUnique({ where: { userId: compradorUser.id } });
 
     if (!bidderProfile && compradorUser.cpf) {
-        bidderProfile = await prisma.bidder_profiles.findUnique({ where: { cpf: compradorUser.cpf } });
+        bidderProfile = await prisma.bidderProfile.findUnique({ where: { cpf: compradorUser.cpf } });
         
         if (bidderProfile) {
-             bidderProfile = await prisma.bidder_profiles.update({
+             bidderProfile = await prisma.bidderProfile.update({
                 where: { id: bidderProfile.id },
                 data: { userId: compradorUser.id }
              });
@@ -4232,7 +4271,7 @@ async function main() {
     }
 
     if (!bidderProfile) {
-         bidderProfile = await prisma.bidder_profiles.create({
+         bidderProfile = await prisma.bidderProfile.create({
             data: {
                 userId: compradorUser.id,
                 fullName: compradorUser.fullName,
@@ -4252,7 +4291,7 @@ async function main() {
     }
 
     // Métodos de Pagamento
-    await prisma.payment_methods.create({
+    await prisma.paymentMethod.create({
       data: {
         bidderId: bidderProfile.id,
         type: 'CREDIT_CARD',
@@ -4266,7 +4305,7 @@ async function main() {
     });
 
     // Histórico de Participação
-    await prisma.participation_history.create({
+    await prisma.participationHistory.create({
       data: {
         bidderId: bidderProfile.id,
         lotId: lots[0].id,
@@ -4282,7 +4321,7 @@ async function main() {
     });
 
     // Notificações do Arrematante
-    await prisma.bidder_notifications.create({
+    await prisma.bidderNotification.create({
       data: {
         bidderId: bidderProfile.id,
         type: 'AUCTION_ENDING',
@@ -4323,7 +4362,7 @@ async function main() {
     });
 
     // Criar WonLot (view do dashboard)
-    await prisma.won_lots.create({
+    await prisma.wonLot.create({
       data: {
         bidderId: bidderProfile.id,
         lotId: wonLot.id,
@@ -4356,7 +4395,7 @@ async function main() {
     // 14. CRIAR DADOS DE SUPORTE (ITSM)
     console.log('🆘 Criando dados de suporte (ITSM)...');
 
-    const ticket = await prisma.itsm_tickets.create({
+    const ticket = await prisma.iTSM_Ticket.create({
       data: {
         publicId: `ticket-${timestamp}-1`,
         userId: compradorUser.id,
@@ -4410,7 +4449,7 @@ async function main() {
     });
 
     // Audit Log
-    await prisma.audit_logs.create({
+    await prisma.auditLog.create({
       data: {
         tenantId: tenants[0].id,
         userId: compradorUser.id,
