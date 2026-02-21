@@ -65,6 +65,7 @@
         "test:e2e:admin": "playwright test tests/e2e/str-07-jornada-administrador.spec.ts --config=playwright.config.local.ts",
         "test:e2e:agente": "playwright test tests/e2e/str-08-jornada-agente.spec.ts --config=playwright.config.local.ts",
         "test:e2e:all-personas": "playwright test tests/e2e/str-*.spec.ts --config=playwright.config.local.ts",
+        "test:e2e:pregao-video": "playwright test tests/e2e/pregao-disputas-video.spec.ts --config=playwright.pregao-video.config.ts",
         "test:e2e:cloud": "cross-env PLAYWRIGHT_SKIP_WEBSERVER=1 npx playwright test --config=playwright.config.local.ts",
         "skill:tenant-isolation": "npx tsx scripts/validate-tenant-isolation.ts",
         "skill:schema-lint": "npx tsx scripts/lint-prisma-schema.ts",

@@ -1081,6 +1081,15 @@ Get-Content .next/BUILD_ID
 4. **Reportar resultado** ao usuário com evidências (logs, contagens, etc.)
 5. **NUNCA perguntar** "Quer que eu verifique?" - SEMPRE verificar
 
+# 💱 Regra Crítica: Moeda, Locale e Máscaras Monetárias
+
+**OBRIGATÓRIO:**
+1. Todo valor monetário deve ser renderizado por formatador central (`src/lib/format.ts`) com locale explícito.
+2. Nunca concatenar símbolo de moeda manualmente (`"R$ " + valor`).
+3. Antes de cálculos monetários, sempre normalizar com `toMonetaryNumber()` para evitar concatenação de string.
+4. O padrão brasileiro (`pt-BR`, `BRL`) é default, mas o sistema deve permitir exibição em `USD` e `EUR` via seletor global.
+5. Em code review, tratar valores com muitas casas residuais (ex: `...00003`) como bug de formatação/normalização.
+
 # 🚀 Regras de Deploy Vercel + PostgreSQL (OBRIGATÓRIO)
 
 > **SKILL DETALHADA:** `.github/skills/vercel-postgresql-deploy/SKILL.md`

@@ -42,6 +42,8 @@ import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import TwoColumnMegaMenu from './two-column-mega-menu';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useCurrency } from '@/contexts/currency-context';
 
 type HeaderCSSVars = CSSProperties & { '--header-height'?: string };
 
@@ -77,6 +79,7 @@ interface HeaderProps {
 export default function Header({ 
     platformSettings,
 }: HeaderProps) {
+  const { currency, setCurrency, formatCurrency } = useCurrency();
   const [isLoading, setIsLoading] = useState(true);
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]); // New state for search
@@ -104,6 +107,12 @@ export default function Header({
   const siteLogoUrl = platformSettings?.logoUrl;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+
+  const currencyOptions: Array<{ code: 'BRL' | 'USD' | 'EUR'; label: string; flag: string }> = [
+    { code: 'BRL', label: 'Real (BRL)', flag: '🇧🇷' },
+    { code: 'USD', label: 'Dólar (USD)', flag: '🇺🇸' },
+    { code: 'EUR', label: 'Euro (EUR)', flag: '🇪🇺' },
+  ];
   
   useEffect(() => {
     setIsClient(true);
@@ -519,7 +528,7 @@ export default function Header({
                               <div className="wrapper-search-result-info">
                                 <p className="text-search-result-title">{lot.title}</p>
                                 <p className="text-search-result-price">
-                                  R$ {lot.price.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                  {formatCurrency(lot.price)}
                                 </p>
                               </div>
                             </Link>
@@ -564,6 +573,33 @@ export default function Header({
                     <TooltipContent><p>Buscar em todo o site</p></TooltipContent>
                 </Tooltip>
              </TooltipProvider>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="btn-header-action"
+                  aria-label="Selecionar moeda"
+                  data-ai-id="header-currency-switch"
+                >
+                  <span aria-hidden="true">{currencyOptions.find((option) => option.code === currency)?.flag ?? '🇧🇷'}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44" data-ai-id="header-currency-menu">
+                {currencyOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.code}
+                    onClick={() => setCurrency(option.code)}
+                    className="flex items-center justify-between"
+                    data-ai-id={`header-currency-option-${option.code.toLowerCase()}`}
+                  >
+                    <span>{option.flag} {option.label}</span>
+                    <span>{currency === option.code ? '✓' : ''}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <UserNav />
           </div>
         </div>
