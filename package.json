@@ -12,7 +12,7 @@
         "build": "npx prisma generate && next build --debug",
         "build:local": "prisma generate && next build",
         "typecheck": "tsc -p tsconfig.dev.json --noEmit",
-        "typecheck:soft": "tsc -p tsconfig.dev.json --noEmit || (echo \"[typecheck:soft] Type errors detected (non-blocking). Check the full CI log for details.\" && true)",
+        "typecheck:soft": "node scripts/typecheck-soft.js",
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:run": "vitest run",
