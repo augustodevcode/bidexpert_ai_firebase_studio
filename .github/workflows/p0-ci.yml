@@ -40,7 +40,6 @@ jobs:
 
       - name: Run Typecheck (soft gate)
         run: npm run typecheck:soft
-        continue-on-error: true  # Não bloqueia por erros TS pré-existentes no codebase
         
       - name: Run Lint
         run: npm run lint
