@@ -13,7 +13,7 @@ Esta documentação descreve o funcionamento da esteira de Integração e Entreg
 - **Workflow**: `.github/workflows/p0-ci.yml`
 - **Banco**: `bidexpert_dev` (mysql.dbaas.com.br)
 - **Ações**: 
-  - Build Check & Typecheck.
+  - Build Check & Typecheck (soft gate com `npm run typecheck:soft` para não quebrar por débito técnico conhecido).
   - Testes Unitários (Vitest).
   - Testes E2E (Playwright).
 
@@ -60,6 +60,8 @@ Para o ambiente de Produção, foi configurado um "Environment" chamado **Produc
 ## Estratégia de Rollback
 - **HML**: No servidor FTP, as pastas são renomeadas com timestamp (`public_html_backup_YYYYMMDD_HHMMSS`). Para voltar, basta renomear a pasta desejada para `public_html` via FTP ou SSH.
 - **PRD**: O Firebase App Hosting permite o rollback direto pelo console do Firebase selecionando uma build anterior estável.
+
+> **Nota de prevenção:** enquanto o typecheck do pipeline roda em modo _soft_ para evitar bloqueios por débitos legados, antes de releases críticos deve-se executar manualmente `npm run typecheck` (strict) e corrigir os apontamentos.
 
 ---
 *Gerado automaticamente pelo Assistente BidExpert.*
