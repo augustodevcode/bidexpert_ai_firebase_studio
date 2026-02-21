@@ -38,6 +38,7 @@
   .container-promo-bar { @apply container mx-auto px-4 h-10 flex items-center justify-center sm:justify-between; }
   .text-promo-message { @apply text-center sm:text-left; }
   .icon-promo-percent { @apply inline h-4 w-4 mr-1.5; }
+  .text-md { @apply text-base; }
   .btn-promo-action { @apply text-primary-foreground hover:text-primary-foreground/80 hidden sm:inline-flex h-auto py-1 px-2; }
   .wrapper-top-bar { @apply bg-surface/40 backdrop-blur text-secondary-foreground text-xs border-b border-border/20; }
   .container-top-bar { @apply container mx-auto px-4 h-10 flex items-center justify-between; }
