@@ -38,7 +38,7 @@ export default function MonitorBidDisplay({ status, user, amount, endDate, bidCo
                 <p data-ai-id="monitor-current-amount" className="text-5xl md:text-6xl font-black text-[#00474F] tracking-tighter">
                     R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
-                {bidCount !== undefined && bidCount > 0 && (
+                {bidCount !== undefined && (
                     <p data-ai-id="monitor-bid-count" className="text-sm font-bold text-gray-400 uppercase tracking-widest">
                         {bidCount} lance{bidCount !== 1 ? 's' : ''}
                     </p>

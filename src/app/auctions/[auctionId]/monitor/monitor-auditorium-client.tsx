@@ -248,7 +248,7 @@ export default function MonitorAuditoriumClient({
                         <div className="col-span-3">
                             <Card className="h-full bg-white border-none shadow-sm flex items-center justify-center p-8">
                                 <Image
-                                    src="/logo-placeholder.png"
+                                    src="/logo.svg"
                                     alt="Logo do leilão"
                                     width={200}
                                     height={80}
