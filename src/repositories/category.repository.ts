@@ -6,16 +6,12 @@ import { prisma } from '@/lib/prisma';
 import type { LotCategory } from '@/types';
 import type { Prisma } from '@prisma/client';
 
-type LotCategoryWithCounts = Prisma.LotCategoryGetPayload<{
-  include: {
-    _count?: {
-      select: {
-        Lot: true;
-        Subcategory: true;
-      };
-    };
+type LotCategoryWithCounts = Prisma.LotCategory & {
+  _count?: {
+    Lot?: number;
+    Subcategory?: number;
   };
-}>;
+};
 
 function parseTenantId(tenantId: string): bigint {
   return BigInt(tenantId);
@@ -102,7 +98,7 @@ export class CategoryRepository {
   async create(data: Prisma.LotCategoryCreateInput): Promise<LotCategory> {
     try {
       const category = await prisma.lotCategory.create({ data });
-      return serializeCategory(category as LotCategoryWithCounts);
+      return serializeCategory(category);
     } catch (error) {
       console.error('[CategoryRepository.create]', error);
       throw error;
@@ -119,7 +115,7 @@ export class CategoryRepository {
         throw new Error('Categoria não encontrada para o tenant informado.');
       }
       const updated = await prisma.lotCategory.update({ where: { id: category.id }, data });
-      return serializeCategory(updated as LotCategoryWithCounts);
+      return serializeCategory(updated);
     } catch (error) {
       console.error('[CategoryRepository.update]', error);
       throw error;

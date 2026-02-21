@@ -3,13 +3,13 @@ import { prisma } from '@/lib/prisma';
 import type { CityInfo } from '@/types';
 import type { Prisma } from '@prisma/client';
 
-type CityWithState = Prisma.CityGetPayload<{
-  include?: {
-    State?: {
-      select: { uf: true };
-    };
-  };
-}>;
+type CityWithState = Prisma.City & {
+  State?: {
+    uf: string;
+  } | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
 
 function parseId(id: string): bigint {
   return BigInt(id);
@@ -25,9 +25,9 @@ function serializeCity(city: CityWithState): CityInfo {
     lotCount: city.lotCount ?? undefined,
     createdAt: city.createdAt,
     updatedAt: city.updatedAt,
-    stateUf: (city as any).State?.uf,
-    latitude: (city as any).latitude ?? null,
-    longitude: (city as any).longitude ?? null,
+    stateUf: city.State?.uf,
+    latitude: city.latitude ?? null,
+    longitude: city.longitude ?? null,
   };
 }
 
@@ -58,18 +58,23 @@ export class CityRepository {
   }
   
   async findByIbgeCode(ibgeCode: string): Promise<CityInfo | null> {
-    const city = await prisma.city.findUnique({ where: { ibgeCode } });
+    const city = await prisma.city.findUnique({
+      where: { ibgeCode },
+      include: {
+        State: { select: { uf: true } },
+      },
+    });
     return city ? serializeCity(city) : null;
   }
 
   async create(data: Prisma.CityCreateInput): Promise<CityInfo> {
     const city = await prisma.city.create({ data });
-    return serializeCity(city as CityWithState);
+    return serializeCity(city);
   }
 
   async update(id: string, data: Prisma.CityUpdateInput): Promise<CityInfo> {
     const city = await prisma.city.update({ where: { id: parseId(id) }, data });
-    return serializeCity(city as CityWithState);
+    return serializeCity(city);
   }
 
   async upsert(data: Prisma.CityCreateInput): Promise<CityInfo> {
@@ -86,7 +91,7 @@ export class CityRepository {
       },
       create: data,
     });
-    return serializeCity(city as CityWithState);
+    return serializeCity(city);
   }
 
   async delete(id: string): Promise<void> {
