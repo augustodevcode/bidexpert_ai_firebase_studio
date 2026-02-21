@@ -16,6 +16,7 @@ Esta documentação descreve o funcionamento da esteira de Integração e Entreg
   - Build Check & Typecheck.
   - Testes Unitários (Vitest).
   - Testes E2E (Playwright).
+  - **Escopo de Typecheck**: o `tsconfig.dev.json` ignora temporariamente `src/app/admin/**` (área em construção) e roda apenas o núcleo de theming/tenant. Qualquer módulo estável deve ser migrado para esse escopo e ter os tipos corrigidos antes do merge.
 
 ### 2. Homologação (HML)
 - **Workflow**: `.github/workflows/deploy-hml.yml`

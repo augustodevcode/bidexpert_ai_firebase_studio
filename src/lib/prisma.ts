@@ -82,7 +82,7 @@ function createPrismaClient(databaseUrl?: string) {
               if (duration >= threshold || !success) {
                 try {
                   // Avoid infinite loop - don't log the logging query itself
-                  if (model !== 'ITSM_QueryLog') {
+                  if ((model as string) !== 'ITSM_QueryLog') {
                     // Serialize with BigInt support
                     const queryString = JSON.stringify({
                       model,
