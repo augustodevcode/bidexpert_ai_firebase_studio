@@ -58,9 +58,16 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
     rules: [],
   });
 
-  // Edição
+  // Edição de linha (modal / inline row)
   const [editingRow, setEditingRow] = useState<TEntity | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+
+  // Edição de célula (inline cell mode)
+  const [editingCellId, setEditingCellId] = useState<{ rowId: string; columnId: string } | null>(null);
+  const [editingCellValue, setEditingCellValue] = useState<unknown>(undefined);
+
+  // Coluna com hover destacado
+  const [hoveredColumnId, setHoveredColumnId] = useState<string | null>(null);
 
   // Reset de paginação quando filtros mudam
   const handleGlobalFilterChange = (value: string) => {
@@ -72,6 +79,16 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
     setQueryBuilderState(query);
     setPagination(prev => ({ ...prev, pageIndex: 0 }));
   };
+
+  function startCellEdit(rowId: string, columnId: string, value: unknown) {
+    setEditingCellId({ rowId, columnId });
+    setEditingCellValue(value);
+  }
+
+  function cancelCellEdit() {
+    setEditingCellId(null);
+    setEditingCellValue(undefined);
+  }
 
   return {
     pagination,
@@ -98,5 +115,11 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
     setEditingRow,
     isAddingNew,
     setIsAddingNew,
+    editingCellId,
+    editingCellValue,
+    startCellEdit,
+    cancelCellEdit,
+    hoveredColumnId,
+    setHoveredColumnId,
   };
 }

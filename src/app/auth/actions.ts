@@ -263,7 +263,8 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
       take: 15,
       orderBy: { createdAt: 'asc' },
       include: {
-        Tenant: true,
+        UsersOnRoles: { include: { Role: true } },
+        UsersOnTenants: { include: { Tenant: true } },
       }
     });
 
@@ -280,10 +281,10 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
 
       return {
         email: u.email,
-        fullName: u.name || 'Unknown',
-        roleName: u.role,
+        fullName: u.fullName || 'Unknown',
+        roleName: u.UsersOnRoles?.[0]?.Role?.name ?? 'Unknown',
         passwordHint: passwordHint,
-        tenantId: u.tenantId?.toString() || '1'
+        tenantId: u.UsersOnTenants?.[0]?.tenantId?.toString() || '1'
       };
     });
   } catch (error) {

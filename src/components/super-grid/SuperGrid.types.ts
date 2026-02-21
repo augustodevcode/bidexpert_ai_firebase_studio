@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import type { ReactNode, ComponentType } from 'react';
+import type { GridLocale } from './SuperGrid.i18n';
 
 // ==========================================
 // 1. TIPOS BÁSICOS DE CAMPO
@@ -256,6 +257,23 @@ export interface SuperGridConfig<TEntity = Record<string, unknown>> {
     onRowClick?: (row: TEntity) => void;
     onSelectionChange?: (rows: TEntity[]) => void;
     onError?: (error: Error) => void;
+  };
+
+  // Internacionalização
+  locale?: GridLocale;
+
+  // Destaque visual
+  highlight?: {
+    activeRow?: boolean;
+    stripedRows?: boolean;
+    columnHover?: boolean;
+    rules?: Array<{ condition: (row: TEntity) => boolean; className: string }>;
+  };
+
+  // Congelamento de painéis
+  freezePanes?: {
+    enabled?: boolean;
+    showDividerShadow?: boolean;
   };
 }
 
