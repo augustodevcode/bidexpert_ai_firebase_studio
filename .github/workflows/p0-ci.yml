@@ -38,9 +38,13 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Run Typecheck
+      - name: Run Typecheck (soft gate for non-release branches)
+        if: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
+        run: npm run typecheck:soft
+      
+      - name: Run Typecheck (strict on release branches)
+        if: startsWith(github.ref, 'refs/heads/release/')
         run: npm run typecheck
-        continue-on-error: true  # Não bloqueia por erros TS pré-existentes no codebase
         
       - name: Run Lint
         run: npm run lint
