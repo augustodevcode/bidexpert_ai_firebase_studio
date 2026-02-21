@@ -118,10 +118,10 @@ async function resolveTenantFromRequest(
 
   // 2. Check if it's a plain Landlord domain (no subdomain)
   // Also match any *.vercel.app deployment URLs dynamically (Vercel generates unique URLs per deployment)
-  const isVercelDomain = /\.vercel\.app$/i.test(hostWithoutPort);
-  if (isVercelDomain || LANDLORD_DOMAINS.some(d => hostWithoutPort === d.toLowerCase().replace(/:\d+$/, ''))) {
+  const isVercelDomain = /\\.vercel\\.app$/i.test(hostWithoutPort);
+  if (isVercelDomain || LANDLORD_DOMAINS.some(d => hostWithoutPort === d.toLowerCase().replace(/:\\d+$/, ''))) {
     // Check for path-based routing on landlord domain: /app/[slug]
-    const pathMatch = pathname.match(/^\/app\/([a-z0-9-]+)/i);
+    const pathMatch = pathname.match(/^\\/app\\/([a-z0-9-]+)/i);
     if (pathMatch) {
       const slug = pathMatch[1].toLowerCase();
       return {
@@ -132,6 +132,16 @@ async function resolveTenantFromRequest(
       };
     }
     
+    // If it's Vercel and we have a default tenant configured, use it
+    if (isVercelDomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
+      return {
+        tenantId: process.env.NEXT_PUBLIC_DEFAULT_TENANT,
+        subdomain: process.env.NEXT_PUBLIC_DEFAULT_TENANT,
+        isCustomDomain: false,
+        isPathBased: false,
+      };
+    }
+
     return {
       tenantId: LANDLORD_ID,
       subdomain: null,

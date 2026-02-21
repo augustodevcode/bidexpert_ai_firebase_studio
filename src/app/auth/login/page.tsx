@@ -43,6 +43,7 @@ type TenantOption = {
     id: string;
     name: string;
     slug?: string | null;
+    subdomain?: string | null;
 };
 
 
@@ -71,8 +72,48 @@ function LoginPageContent() {
         },
     });
 
-    // Fetch tenant context on mount to see if we are in a specific subdomain
+    // Fast client-side tenant detection
     useEffect(() => {
+        if (availableTenants.length === 0) return;
+
+        const hostname = window.location.hostname;
+        let currentSubdomain: string | null = null;
+
+        // Extract subdomain
+        if (hostname.includes('.localhost')) {
+            currentSubdomain = hostname.split('.localhost')[0];
+        } else if (!hostname.includes('vercel.app') && hostname.split('.').length > 2) {
+            currentSubdomain = hostname.split('.')[0];
+            if (currentSubdomain === 'www') currentSubdomain = null;
+        }
+
+        // Check path-based routing (/app/[slug] or /_tenants/[slug])
+        const pathname = window.location.pathname;
+        const pathMatch = pathname.match(/^\\/(?:app|_tenants)\\/([a-z0-9-]+)/i);
+        if (pathMatch) {
+            currentSubdomain = pathMatch[1].toLowerCase();
+        }
+
+        // Fallback to CI/CD configured default tenant if no subdomain is found (e.g. on Vercel)
+        if (!currentSubdomain && hostname.includes('vercel.app') && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
+            currentSubdomain = process.env.NEXT_PUBLIC_DEFAULT_TENANT;
+        }
+
+        if (currentSubdomain) {
+            const matchedTenant = availableTenants.find(t => 
+                t.subdomain === currentSubdomain || t.slug === currentSubdomain
+            );
+            
+            if (matchedTenant) {
+                setLockedTenantId(matchedTenant.id);
+                setLockedTenantName(matchedTenant.name);
+                setSelectedTenantId(matchedTenant.id);
+                form.setValue('tenantId', matchedTenant.id);
+                return; // Found and set, no need to wait for server action
+            }
+        }
+
+        // Fallback to server action if client-side detection fails
         getCurrentTenantContext().then(context => {
             if (context.tenantId && context.tenantId !== '1') {
                 setLockedTenantId(context.tenantId);
@@ -81,7 +122,7 @@ function LoginPageContent() {
                 form.setValue('tenantId', context.tenantId);
             }
         });
-    }, [form]);
+    }, [availableTenants, form]);
 
     const fetchTenants = useCallback(async () => {
         try {

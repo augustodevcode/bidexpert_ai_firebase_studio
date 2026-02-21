@@ -57,6 +57,9 @@ ADMIN_API_KEY=chave-api-admin-para-crm-integracao
 NEXT_PUBLIC_APP_DOMAIN=bidexpert.com.br
 LANDLORD_URL=https://bidexpert.com.br
 
+# Tenant Padrão (Opcional, útil para Vercel sem subdomínio)
+NEXT_PUBLIC_DEFAULT_TENANT=demo
+
 # Opcional: Cookie Domain (para cross-subdomain)
 COOKIE_DOMAIN=.bidexpert.com.br
 
