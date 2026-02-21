@@ -327,3 +327,11 @@ Todos os agentes DEVEM seguir o **Guia de Qualidade & Segurança de Código** lo
 
 ## Conflitos de regras
  - Sempre que houver conflito de instruções, peça para o usuário clarificar antes de proceguir.
+
+## 💱 Política Global de Moeda e Máscaras (OBRIGATÓRIO)
+
+- Toda exibição monetária DEVE usar formatador central (`src/lib/format.ts`) e evitar `R$` hardcoded.
+- Toda operação matemática monetária DEVE normalizar entrada com `toMonetaryNumber()` antes de somar/subtrair/multiplicar.
+- Padrão default do produto: `pt-BR` + `BRL` com 2 casas decimais.
+- O seletor global de moeda (BRL/USD/EUR) deve ser respeitado em componentes client-side via `CurrencyProvider`/`useCurrency`.
+- Em revisões, tratar como bug crítico qualquer evidência de concatenação de string em total monetário.

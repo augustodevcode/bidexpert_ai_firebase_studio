@@ -89,3 +89,12 @@ Ao ativar qualquer agent:
 - Setup: `.agent/agents/admin-architect-qa.SETUP-GUIDE.md`
 - Usage: `.agent/agents/admin-architect-qa.USAGE.md`
 - Quick Ref: `.agent/agents/admin-architect-qa.quick-reference.md`
+
+---
+
+## 💱 Monetary Formatting Guardrail
+
+- Normalize monetary values before arithmetic using `toMonetaryNumber()`.
+- Use centralized currency formatter only; do not hardcode `R$` in dynamic totals.
+- Default locale/currency: `pt-BR` + `BRL`; support view switch to `USD` and `EUR`.
+- Any floating tail artifacts (e.g., `...00003`) are release-blocking defects.

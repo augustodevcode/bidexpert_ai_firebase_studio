@@ -4,36 +4,33 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Wallet, PiggyBank, Clock } from 'lucide-react';
 import type { UserWin } from '@/types';
+import { useCurrency } from '@/contexts/currency-context';
+import { toMonetaryNumber } from '@/lib/format';
 
 interface WinsKPIProps {
   wins: UserWin[];
 }
 
 export function WinsKPI({ wins }: WinsKPIProps) {
+  const { formatCurrency } = useCurrency();
   const totalWins = wins.length;
   
   const totalInvestment = wins.reduce((acc, win) => {
-    const commission = win.winningBidAmount * 0.05;
-    return acc + win.winningBidAmount + commission;
+    const winningBidAmount = toMonetaryNumber(win.winningBidAmount);
+    const commission = winningBidAmount * 0.05;
+    return acc + winningBidAmount + commission;
   }, 0);
 
   const pendingPayments = wins.filter(win => win.paymentStatus === 'PENDENTE').length;
 
   const potentialSavings = wins.reduce((acc, win) => {
-    const marketValue = win.lot?.evaluationValue || 0;
-    const paidValue = win.winningBidAmount;
+    const marketValue = toMonetaryNumber(win.lot?.evaluationValue || 0);
+    const paidValue = toMonetaryNumber(win.winningBidAmount);
     if (marketValue > paidValue) {
       return acc + (marketValue - paidValue);
     }
     return acc;
   }, 0);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
