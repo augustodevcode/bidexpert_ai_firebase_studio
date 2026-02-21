@@ -39,7 +39,8 @@ jobs:
         run: npx prisma generate
 
       - name: Run Typecheck
-        run: npm run typecheck || echo "Typecheck warnings (non-blocking while legacy typing is being stabilized)"
+        run: npm run typecheck
+        continue-on-error: true  # Não bloqueia por erros TS pré-existentes no codebase
         
       - name: Run Lint
         run: npm run lint

@@ -15,7 +15,7 @@
  * 5. NÃO duplicar contagem do mesmo visitante na mesma sessão para a mesma entidade
  */
 
-import { PrismaClient, VisitorEventType, Visitor, VisitorSession, VisitorEvent, EntityViewMetrics } from '@prisma/client';
+import { PrismaClient, VisitorEvent_eventType, Visitor, VisitorSession, VisitorEvent, EntityViewMetrics } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -213,7 +213,7 @@ export class VisitorTrackingService {
   async trackEvent(
     visitorInternalId: bigint,
     sessionInternalId: bigint,
-    eventType: VisitorEventType,
+    eventType: VisitorEvent_eventType,
     entityType?: string | null,
     entityId?: bigint | null,
     entityPublicId?: string | null,
@@ -379,7 +379,7 @@ export class VisitorTrackingService {
     const last7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const last30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const eventType = entityType === 'Lot' ? VisitorEventType.LOT_VIEW : VisitorEventType.AUCTION_VIEW;
+    const eventType = entityType === 'Lot' ? VisitorEvent_eventType.LOT_VIEW : VisitorEvent_eventType.AUCTION_VIEW;
 
     const [views24h, views7d, views30d] = await Promise.all([
       this.prisma.visitorEvent.count({
@@ -481,7 +481,7 @@ export class VisitorTrackingService {
    */
   async recordVisit(
     visitorCookieId: string | null,
-    eventType: VisitorEventType,
+    eventType: VisitorEvent_eventType,
     options: {
       userAgent?: string | null;
       ipAddress?: string | null;
@@ -537,14 +537,14 @@ export class VisitorTrackingService {
     const visitor = await this.prisma.visitor.findUnique({
       where: { visitorId: visitorCookieId },
       include: {
-        sessions: {
+        VisitorSession: {
           take: 10,
           orderBy: { startedAt: 'desc' }
         },
         _count: {
           select: {
-            sessions: true,
-            events: true
+            VisitorSession: true,
+            VisitorEvent: true
           }
         }
       }
@@ -584,7 +584,7 @@ export class VisitorTrackingService {
       orderBy: { timestamp: 'desc' },
       take: limit,
       include: {
-        visitor: {
+        Visitor: {
           select: {
             visitorId: true,
             country: true,
