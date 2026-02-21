@@ -4,6 +4,8 @@ name: Create Issue on CI/CD Failure
 on:
   workflow_run:
     workflows: 
+      - "CI - Pull Request Checks"
+      - "Deploy DEMO to Vercel"
       - "P0 CI Pipeline"
       - "Deploy to Demo (Vercel)"
       - "Deploy to HML (Vercel)"
