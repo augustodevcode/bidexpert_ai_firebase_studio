@@ -89,7 +89,7 @@ function LoginPageContent() {
 
         // Check path-based routing (/app/[slug] or /_tenants/[slug])
         const pathname = window.location.pathname;
-        const pathMatch = pathname.match(/^\\/(?:app|_tenants)\\/([a-z0-9-]+)/i);
+        const pathMatch = pathname.match(/^\/(?:app|_tenants)\/([a-z0-9-]+)/i);
         if (pathMatch) {
             currentSubdomain = pathMatch[1].toLowerCase();
         }
