@@ -212,7 +212,12 @@ export async function resolveTenant(
   try {
     // 1. Check if it's the landlord domain
     if (LANDLORD_DOMAINS.includes(normalizedHost) && !pathSlug) {
-      resolved = await loadTenantById(BigInt(LANDLORD_ID));
+      const isVercelDomain = /\\.vercel\\.app$/i.test(normalizedHost);
+      if (isVercelDomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
+        resolved = await loadTenantBySubdomain(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
+      } else {
+        resolved = await loadTenantById(BigInt(LANDLORD_ID));
+      }
     }
     // 2. Try custom domain
     else if (!normalizedHost.endsWith(APP_DOMAIN.replace(/:\d+$/, '')) && !pathSlug) {

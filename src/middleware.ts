@@ -132,6 +132,16 @@ async function resolveTenantFromRequest(
       };
     }
     
+    // If it's Vercel and we have a default tenant configured, use it
+    if (isVercelDomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
+      return {
+        tenantId: process.env.NEXT_PUBLIC_DEFAULT_TENANT,
+        subdomain: process.env.NEXT_PUBLIC_DEFAULT_TENANT,
+        isCustomDomain: false,
+        isPathBased: false,
+      };
+    }
+
     return {
       tenantId: LANDLORD_ID,
       subdomain: null,
