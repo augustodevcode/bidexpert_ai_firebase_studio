@@ -1,14 +1,24 @@
 // src/repositories/category.repository.ts
 import { prisma } from '@/lib/prisma';
-import type { LotCategory } from '@/types';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, LotCategory as PrismaLotCategory } from '@prisma/client';
+
+type PrismaLotCategoryWithCount = Prisma.LotCategoryGetPayload<{
+  include: {
+    _count: {
+      select: {
+        // Prisma schema defines the relation as `Lot` (capitalized).
+        Lot: true;
+      };
+    };
+  };
+}>;
 
 function parseTenantId(tenantId: string): bigint {
   return BigInt(tenantId);
 }
 
 export class CategoryRepository {
-  async findAll(tenantId: string): Promise<any[]> {
+  async findAll(tenantId: string): Promise<PrismaLotCategoryWithCount[]> {
     try {
       return await prisma.lotCategory.findMany({ 
         where: { tenantId: parseTenantId(tenantId) },
@@ -25,7 +35,7 @@ export class CategoryRepository {
     }
   }
 
-  async findById(id: bigint, tenantId: string): Promise<LotCategory | null> {
+  async findById(id: bigint, tenantId: string): Promise<PrismaLotCategory | null> {
     try {
       return await prisma.lotCategory.findFirst({ where: { id: id, tenantId: parseTenantId(tenantId) } });
     } catch (error) {
@@ -34,7 +44,7 @@ export class CategoryRepository {
     }
   }
 
-  async findBySlug(slug: string, tenantId: string): Promise<LotCategory | null> {
+  async findBySlug(slug: string, tenantId: string): Promise<PrismaLotCategory | null> {
     try {
       return await prisma.lotCategory.findFirst({ where: { slug, tenantId: parseTenantId(tenantId) } });
     } catch (error) {
@@ -43,7 +53,7 @@ export class CategoryRepository {
     }
   }
 
-  async findByName(name: string, tenantId: string): Promise<LotCategory | null> {
+  async findByName(name: string, tenantId: string): Promise<PrismaLotCategory | null> {
     try {
       return await prisma.lotCategory.findFirst({ where: { name, tenantId: parseTenantId(tenantId) } });
     } catch (error) {
@@ -52,7 +62,7 @@ export class CategoryRepository {
     }
   }
 
-  async create(data: Prisma.LotCategoryCreateInput): Promise<LotCategory> {
+  async create(data: Prisma.LotCategoryCreateInput): Promise<PrismaLotCategory> {
     try {
       return await prisma.lotCategory.create({ data });
     } catch (error) {
@@ -61,7 +71,7 @@ export class CategoryRepository {
     }
   }
 
-  async update(id: bigint, tenantId: string, data: Prisma.LotCategoryUpdateInput): Promise<LotCategory> {
+  async update(id: bigint, tenantId: string, data: Prisma.LotCategoryUpdateInput): Promise<PrismaLotCategory> {
     try {
       const category = await prisma.lotCategory.findFirst({ where: { id: id, tenantId: parseTenantId(tenantId) }, select: { id: true } });
       if (!category) {
