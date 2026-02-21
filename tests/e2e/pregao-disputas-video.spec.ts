@@ -139,8 +139,8 @@ async function setupTestData(): Promise<TestFixture> {
   const prisma = new PrismaClient();
   const runId = Date.now().toString(36);
 
-  // Descobrir tenant existente (slug "demo" ou primeiro disponível)
-  let tenant = await prisma.tenant.findFirst({ where: { slug: 'demo' } });
+  // Descobrir tenant existente (subdomain "demo" ou primeiro disponível)
+  let tenant = await prisma.tenant.findFirst({ where: { subdomain: 'demo' } });
   if (!tenant) {
     tenant = await prisma.tenant.findFirst();
   }
@@ -193,14 +193,10 @@ async function setupTestData(): Promise<TestFixture> {
     // Para o teste, inserimos bids diretamente via Prisma (sem necessidade de login dos robôs)
     const user = await prisma.user.upsert({
       where: { email },
-      update: { isActive: true },
+      update: { updatedAt: new Date() },
       create: {
-        publicId: makePublicId(`bot-${i}-${runId}`),
         email,
-        name: `Robo Arrematante ${i}`,
-        role: 'USER',
-        isActive: true,
-        tenantId: tenant.id,
+        fullName: `Robo Arrematante ${i}`,
         updatedAt: new Date(),
       },
     });

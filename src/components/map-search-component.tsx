@@ -335,6 +335,11 @@ export default function MapSearchComponent({
               key={markerKey} 
               position={[item.latitude, item.longitude]}
               icon={createCustomIcon(item)}
+              eventHandlers={{
+                mouseover: (e) => {
+                  e.target.openPopup();
+                }
+              }}
             >
               <Popup>{renderMarkerPopup(item)}</Popup>
             </Marker>
