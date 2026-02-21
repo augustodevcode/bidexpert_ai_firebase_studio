@@ -123,6 +123,8 @@ jobs:
   schema-validation:
     name: 🗃️ Schema Validation
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "mysql://dummy:dummy@localhost:3306/dummy"
     
     steps:
       - name: 📥 Checkout code
