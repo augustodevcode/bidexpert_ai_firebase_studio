@@ -69,14 +69,8 @@ export default function MapSearchSidebar({
   const activeTab = DATASET_TABS.find((tab) => tab.value === dataset);
 
   return (
-    <Card className="w-full max-w-full xl:max-w-[430px] flex flex-col bg-panel/80 border border-border/40 backdrop-blur-xl shadow-glow rounded-[1.75rem]">
-      <CardHeader className="space-y-4">
-        <div>
-          <CardTitle className="text-lg font-display tracking-tight">Explore pelo mapa</CardTitle>
-          <CardDescription className="text-muted-foreground text-sm">
-            Filtre lotes e ofertas enquanto move o mapa em tempo real.
-          </CardDescription>
-        </div>
+    <div className="w-full h-full flex flex-col bg-background">
+      <div className="p-4 space-y-4 border-b">
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/40 bg-surface/70 px-3 py-2">
           <div>
             <p className="text-[11px] uppercase tracking-[0.35em] text-muted-foreground">Tipo de Oferta</p>
@@ -148,9 +142,9 @@ export default function MapSearchSidebar({
           <span data-ai-id="map-search-count">{resultsLabel}</span>
           {activeBounds && <span className="text-[10px] uppercase tracking-widest">Área filtrada</span>}
         </div>
-      </CardHeader>
-      <ScrollArea className="flex-1 pr-2" data-ai-id="map-search-list">
-        <CardContent className="space-y-3 pb-6 pr-1">
+      </div>
+      <ScrollArea className="flex-1" data-ai-id="map-search-list">
+        <div className="p-4 space-y-3">
           {isLoading && (
             <div className="text-center py-6">
               <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
@@ -184,8 +178,8 @@ export default function MapSearchSidebar({
               </div>
             ))
           )}
-        </CardContent>
+        </div>
       </ScrollArea>
-    </Card>
+    </div>
   );
 }
