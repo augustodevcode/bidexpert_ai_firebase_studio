@@ -4,7 +4,7 @@ import type {
     User as PmUser, 
     Role as PmRole, 
     UsersOnRoles,
-    UsersOnTenants,
+    UserOnTenant,
     Tenant as PmTenant,
     Auction as PmAuction, 
     AuctionStage as PmAuctionStage,
@@ -62,7 +62,7 @@ export type Tenant = Omit<PmTenant, 'id'> & { id: string };
 export type User = Omit<PmUser, 'id'> & { 
     id: string;
     roles?: (Omit<UsersOnRoles, 'userId' | 'roleId'> & { role: Role })[];
-    tenants?: (Omit<UsersOnTenants, 'userId' | 'tenantId'> & { tenant: Tenant })[];
+    tenants?: (Omit<UserOnTenant, 'userId' | 'tenantId'> & { tenant: Tenant })[];
 };
 export type LotCategory = Omit<PmLotCategory, 'id'> & { id: string; itemCount?: number; _count?: { lots: number, subcategories: number } };
 export type Subcategory = Omit<PmSubcategory, 'id' | 'parentCategoryId'> & { id: string; parentCategoryId: string; parentCategoryName?: string; itemCount?: number };
@@ -328,7 +328,7 @@ export type AuctionParticipation = 'ONLINE' | 'PRESENCIAL' | 'HIBRIDO';
 
 export type UserProfileWithPermissions = User & {
     roles: (Omit<UsersOnRoles, 'userId' | 'roleId'> & { role: Role })[];
-    tenants: (Omit<UsersOnTenants, 'userId' | 'tenantId'> & { tenant: Tenant })[];
+    tenants: (Omit<UserOnTenant, 'userId' | 'tenantId'> & { tenant: Tenant })[];
     roleIds?: string[];
     roleNames?: string[];
     permissions: string[];

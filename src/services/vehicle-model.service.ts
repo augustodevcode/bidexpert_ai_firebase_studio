@@ -43,15 +43,15 @@ export class VehicleModelService {
       const dataToUpsert: Prisma.VehicleModelCreateInput = { 
         ...restOfData,
         slug,
-        make: { connect: { id: BigInt(makeId) } },
+        VehicleMake: { connect: { id: BigInt(makeId) } },
       };
       
       const newModel = await prisma.vehicleModel.upsert({
-        where: { makeId_name: { makeId: makeId, name: data.name } },
+        where: { makeId_name: { makeId: BigInt(makeId), name: data.name } },
         update: dataToUpsert,
         create: dataToUpsert,
       });
-      return { success: true, message: 'Modelo criado/atualizado com sucesso.', modelId: newModel.id };
+      return { success: true, message: 'Modelo criado/atualizado com sucesso.', modelId: newModel.id.toString() };
     } catch (error: any) {
       console.error("Error in VehicleModelService.create:", error);
        if (error.code === 'P2002') {
@@ -68,7 +68,7 @@ export class VehicleModelService {
         dataToUpdate.slug = slugify(data.name);
       }
       if (data.makeId) {
-        dataToUpdate.make = { connect: { id: BigInt(data.makeId) } };
+        dataToUpdate.VehicleMake = { connect: { id: BigInt(data.makeId) } };
       }
       await this.repository.update(id, dataToUpdate);
       return { success: true, message: 'Modelo atualizado com sucesso.' };

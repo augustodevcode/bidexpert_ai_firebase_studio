@@ -13,7 +13,7 @@
 
 import prisma from '@/lib/prisma';
 import { getCurrentTenant } from '@/lib/tenant';
-import type { entity_view_metrics } from '@prisma/client';
+import type { EntityViewMetrics } from '@prisma/client';
 
 export type EntityType = 'Lot' | 'Auction' | 'Asset' | 'Article';
 
@@ -44,7 +44,7 @@ export async function recordEntityView(
     const entityIdBigInt = typeof entityId === 'string' ? BigInt(entityId) : entityId;
     
     // Upsert: criar ou atualizar métricas
-    await prisma.entity_view_metrics.upsert({
+    await prisma.entityViewMetrics.upsert({
       where: {
         entityType_entityId: {
           entityType,
@@ -94,7 +94,7 @@ export async function getEntityViewMetrics(
   try {
     const entityIdBigInt = typeof entityId === 'string' ? BigInt(entityId) : entityId;
     
-    const metrics = await prisma.entity_view_metrics.findUnique({
+    const metrics = await prisma.entityViewMetrics.findUnique({
       where: {
         entityType_entityId: {
           entityType,
@@ -135,7 +135,7 @@ export async function getEntitiesViewMetrics(
       typeof id === 'string' ? BigInt(id) : id
     );
 
-    const metrics = await prisma.entity_view_metrics.findMany({
+    const metrics = await prisma.entityViewMetrics.findMany({
       where: {
         entityType,
         entityId: { in: entityIdsBigInt }
@@ -174,7 +174,7 @@ export async function recordEntityShare(
   try {
     const entityIdBigInt = typeof entityId === 'string' ? BigInt(entityId) : entityId;
     
-    await prisma.entity_view_metrics.upsert({
+    await prisma.entityViewMetrics.upsert({
       where: {
         entityType_entityId: {
           entityType,
@@ -217,7 +217,7 @@ export async function recordEntityFavorite(
   try {
     const entityIdBigInt = typeof entityId === 'string' ? BigInt(entityId) : entityId;
     
-    await prisma.entity_view_metrics.upsert({
+    await prisma.entityViewMetrics.upsert({
       where: {
         entityType_entityId: {
           entityType,
@@ -264,7 +264,7 @@ export async function getTopViewedLots(
       : period === '30d' ? 'viewsLast30d'
       : 'totalViews';
 
-    const metrics = await prisma.entity_view_metrics.findMany({
+    const metrics = await prisma.entityViewMetrics.findMany({
       where: {
         entityType: 'Lot',
         tenantId: tenant?.tenantId ? BigInt(tenant.tenantId) : undefined
