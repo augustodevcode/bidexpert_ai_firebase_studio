@@ -26,6 +26,7 @@ import LotCountdown from '../lot-countdown';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import ConsignorLogoBadge from '../consignor-logo-badge';
 import { useCurrency } from '@/contexts/currency-context';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 
 interface LotCardProps {
@@ -351,11 +352,14 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
         </CardContent>
 
         <CardFooter className="footer-card-lot" data-ai-id="lot-card-footer">
-          <Button asChild className="btn-card-bid-action" data-ai-id="lot-card-bid-btn">
-            <Link href={lotDetailUrl}>
-              <Gavel className="icon-btn-bid" /> Fazer Lance
-            </Link>
-          </Button>
+          <div className="flex w-full flex-col gap-2">
+            {auction && <GoToLiveAuctionButton auction={auction} className="w-full" dataAiId="lot-card-go-live-btn" />}
+            <Button asChild className="btn-card-bid-action" data-ai-id="lot-card-bid-btn">
+              <Link href={lotDetailUrl}>
+                <Gavel className="icon-btn-bid" /> Fazer Lance
+              </Link>
+            </Button>
+          </div>
         </CardFooter>
       </Card>
       {isPreviewModalOpen && (

@@ -36,6 +36,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 
 const SidebarFilter = dynamic(() => import('@/components/BidExpertFilter'), {
@@ -287,6 +288,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                   </div>
 
                   <div className="mt-auto pt-6 flex flex-wrap gap-2">
+                      <GoToLiveAuctionButton auction={auction} dataAiId="auction-details-go-live-btn" />
                       <Button variant="outline">
                           <Heart className="h-4 w-4 mr-2" /> Favoritar Leilão
                       </Button>

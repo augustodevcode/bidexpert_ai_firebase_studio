@@ -16,6 +16,7 @@ import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctio
 import EntityEditMenu from '../entity-edit-menu';
 import ConsignorLogoBadge from '../consignor-logo-badge';
 import { cn } from '@/lib/utils';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 interface LotListItemProps {
   lot: Lot;
@@ -195,16 +196,19 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
                   R$ {getLotDisplayPrice(lot, auction).value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
-              <Button
-                asChild
-                size="sm"
-                variant={isCompact ? 'mapGhost' : 'default'}
-                className="w-full md:w-auto mt-2 md:mt-0"
-              >
-                <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
-                  <Eye className="mr-2 h-4 w-4" /> Ver Lote
-                </Link>
-              </Button>
+              <div className="w-full md:w-auto mt-2 md:mt-0 flex flex-col gap-2">
+                {auction && <GoToLiveAuctionButton auction={auction} className="w-full" dataAiId="lot-list-go-live-btn" />}
+                <Button
+                  asChild
+                  size="sm"
+                  variant={isCompact ? 'mapGhost' : 'default'}
+                  className="w-full md:w-auto"
+                >
+                  <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
+                    <Eye className="mr-2 h-4 w-4" /> Ver Lote
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

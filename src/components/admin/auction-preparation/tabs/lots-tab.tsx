@@ -17,6 +17,7 @@ import { Search, Edit, Eye, TrendingUp, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import type { AuctionPreparationBid } from '@/types';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -193,6 +194,7 @@ export function LotsTab({ auction, bids }: LotsTabProps) {
                         )}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
+                        <GoToLiveAuctionButton auction={auction} dataAiId="admin-lots-go-live-btn" />
                         <Link href={`/admin/lots/${lot.id}`}>
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
