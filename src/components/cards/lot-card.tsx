@@ -25,6 +25,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import LotCountdown from '../lot-countdown';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import ConsignorLogoBadge from '../consignor-logo-badge';
+import { useCurrency } from '@/contexts/currency-context';
 
 
 interface LotCardProps {
@@ -44,6 +45,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
   const [lotFullUrl, setLotFullUrl] = React.useState('');
+  const { formatCurrency } = useCurrency();
 
   const hasEditPermission = hasPermission(userProfileWithPermissions, 'manage_all');
 
@@ -164,7 +166,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id={`lot-card-${lot.id}`} data-testid="lot-card" className="card-lot">
+      <Card data-ai-id={`lot-card-${lot.id}`} data-testid="lot-card" className="card-lot group">
         <div className="wrapper-card-media">
           <Link href={lotDetailUrl} className="link-card-media-overlay">
             <div className="container-card-image">
@@ -279,25 +281,25 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             {/* GAP 2.14 Ancoragem: Valor de avaliação riscado para mostrar desconto */}
             {lot.evaluationValue && discountPercentage > 0 && (
               <p className="text-card-evaluation-value" data-ai-id="lot-card-evaluation-value">
-                Avaliação: R$ {Number(lot.evaluationValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                Avaliação: {formatCurrency(Number(lot.evaluationValue), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             )}
             <p className="text-card-price-label" data-ai-id="lot-card-price-label">
               {getLotDisplayPrice(lot, auction).label}
             </p>
             <p className="text-card-price-value" data-ai-id="lot-card-price-value">
-              R$ {getLotDisplayPrice(lot, auction).value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(getLotDisplayPrice(lot, auction).value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             {/* GAP 2.4: Badge de dívidas conhecidas */}
             {lot.debtAmount && Number(lot.debtAmount) > 0 && (
               <p className="text-card-debt-badge" data-ai-id="lot-card-debt-badge">
-                ⚠️ Débitos: R$ {Number(lot.debtAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                ⚠️ Débitos: {formatCurrency(Number(lot.debtAmount), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             )}
             {/* GAP-FIX: Next Bid Calculator - mostra próximo lance mínimo */}
             {lot.status === 'ABERTO_PARA_LANCES' && lot.bidIncrementStep && (
               <p className="text-card-next-bid" data-ai-id="lot-card-next-bid">
-                Próximo lance: R$ {((getLotDisplayPrice(lot, auction).value || 0) + Number(lot.bidIncrementStep || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                Próximo lance: {formatCurrency((getLotDisplayPrice(lot, auction).value || 0) + Number(lot.bidIncrementStep || 0), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             )}
           </div>

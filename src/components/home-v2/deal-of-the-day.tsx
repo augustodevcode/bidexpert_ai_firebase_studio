@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import type { DealOfTheDay as DealOfTheDayType, SegmentType } from './types';
+import { useCurrency } from '@/contexts/currency-context';
 
 interface DealOfTheDayProps {
   deal: DealOfTheDayType | null;
@@ -44,20 +45,12 @@ function calculateTimeLeft(endDate: Date): CountdownValues {
   };
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export default function DealOfTheDay({
   deal,
   segmentId,
   title = 'Oferta Imperdível de Hoje',
 }: DealOfTheDayProps) {
+  const { formatCurrency } = useCurrency();
   const [countdown, setCountdown] = useState<CountdownValues>({
     days: 0,
     hours: 0,
