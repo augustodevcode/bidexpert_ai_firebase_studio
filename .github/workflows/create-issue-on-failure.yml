@@ -184,7 +184,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                assignees: ['copilot']
+                assignees: ['Copilot']
               });
             } catch (error) {
               console.log(`Could not assign @copilot automatically: ${error.message}`);

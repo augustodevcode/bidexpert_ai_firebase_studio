@@ -147,7 +147,7 @@ jobs:
           echo "## 🤖 AI Agent Auto-Fix Processing" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Issue**: #${{ fromJSON(steps.check_attempts.outputs.result).issueNumber }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: Skipped (missing \\`ai-fix\\` label)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Skipped (missing \`ai-fix\` label)" >> $GITHUB_STEP_SUMMARY
 
       - name: Extract issue information
         if: fromJSON(steps.check_attempts.outputs.result).shouldProcess && fromJSON(steps.check_attempts.outputs.result).shouldEscalate == false

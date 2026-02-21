@@ -35,7 +35,7 @@ export class VehicleMakeService {
         update: { ...data, slug },
         create: { ...data, slug },
       });
-      return { success: true, message: 'Marca criada/atualizada com sucesso.', makeId: newMake.id };
+      return { success: true, message: 'Marca criada/atualizada com sucesso.', makeId: newMake.id.toString() };
     } catch (error: any) {
       console.error("Error in VehicleMakeService.create:", error);
       return { success: false, message: `Falha ao criar marca: ${error.message}` };
