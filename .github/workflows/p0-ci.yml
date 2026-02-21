@@ -40,6 +40,10 @@ jobs:
 
       - name: Run Typecheck (soft gate)
         run: npm run typecheck:soft
+      
+      - name: Run Typecheck (strict on release branches)
+        if: startsWith(github.ref, 'refs/heads/release/')
+        run: npm run typecheck
         
       - name: Run Lint
         run: npm run lint
