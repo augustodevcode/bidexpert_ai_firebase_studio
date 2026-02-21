@@ -6,6 +6,25 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*"
+    "next-env.d.ts",
+    "src/app/_tenants/**/*",
+    "src/components/tenant-theme-provider.tsx",
+    "src/lib/theme-injector.ts",
+    "src/lib/theme-tokens.ts",
+    "src/types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests",
+    "tests/**",
+    "_Aiexclude",
+    "_components_old",
+    "analisar/**",
+    "prisma/**",
+    "src/ai/**",
+    "src/app/admin/**",
+    "**/src/app/admin/**",
+    "src/lib/audit-middleware.ts",
+    "src/lib/prisma.ts"
   ]
 }

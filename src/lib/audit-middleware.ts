@@ -1,7 +1,7 @@
 // src/lib/audit-middleware.ts
 // Prisma middleware for automatic audit logging
 
-import { Prisma } from '@prisma/client';
+import { Prisma, type audit_logs_action } from '@prisma/client';
 import { getAuditContext } from './audit-context';
 import { auditConfigService } from '@/services/audit-config.service';
 
@@ -115,6 +115,9 @@ async function logAuditEntry(
   const { prisma } = await import('./prisma');
   
   const action = mapPrismaActionToAuditAction(params.action);
+  if (!action) {
+    return;
+  }
   const entityId = extractEntityId(params, result);
   
   if (!entityId) {
@@ -155,15 +158,16 @@ async function logAuditEntry(
 /**
  * Map Prisma action to AuditAction enum
  */
-function mapPrismaActionToAuditAction(action: string): string {
-  const actionMap: Record<string, string> = {
+function mapPrismaActionToAuditAction(action: Prisma.PrismaAction): audit_logs_action | null {
+  const actionMap: Partial<Record<Prisma.PrismaAction, audit_logs_action>> = {
     create: 'CREATE',
     update: 'UPDATE',
     delete: 'DELETE',
     deleteMany: 'DELETE',
     updateMany: 'UPDATE',
   };
-  return actionMap[action] || 'UPDATE';
+  // Read-only operations (find*, count, aggregate, upsert) are intentionally ignored.
+  return actionMap[action] ?? null;
 }
 
 /**
