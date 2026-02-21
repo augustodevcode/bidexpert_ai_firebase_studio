@@ -37,11 +37,20 @@ export async function login(values: { email: string, password?: string, tenantId
   try {
     console.log(`[Login Action] Tentativa de login para o email: ${email}`);
 
-    // SQLite simplified query - no UsersOnRoles/UsersOnTenants
+    // MySQL query with UsersOnRoles and UsersOnTenants
     const user = await basePrisma.user.findUnique({
       where: { email },
       include: {
-        Tenant: true,
+        UsersOnTenants: {
+          include: {
+            Tenant: true
+          }
+        },
+        UsersOnRoles: {
+          include: {
+            Role: true
+          }
+        }
       }
     });
 
@@ -85,24 +94,39 @@ export async function login(values: { email: string, password?: string, tenantId
       }
     }
 
-    // Format user with simplified schema (role is direct field, not through relation)
+    // Format user with MySQL schema relations
+    const roles = user.UsersOnRoles?.map(ur => ({
+      id: ur.Role.id.toString(),
+      name: ur.Role.name,
+      permissions: []
+    })) || [];
+
+    const tenants = user.UsersOnTenants?.map(ut => ({
+      id: ut.Tenant.id.toString(),
+      name: ut.Tenant.name,
+      slug: ut.Tenant.slug
+    })) || [{ id: '1', name: 'BidExpert', slug: 'bidexpert' }];
+
+    const roleNames = roles.map(r => r.name);
+    const primaryRole = roleNames[0] || 'USER';
+
     const userProfileWithPerms: UserProfileWithPermissions = {
       ...user,
       id: user.id.toString(),
       uid: user.id.toString(),
-      roles: [{ id: user.role, name: user.role, permissions: [] }],
-      tenants: user.Tenant ? [{ id: user.Tenant.id.toString(), name: user.Tenant.name, slug: user.Tenant.slug }] : [{ id: '1', name: 'BidExpert', slug: 'bidexpert' }],
-      roleIds: [user.role],
-      roleNames: [user.role],
-      permissions: user.role === 'ADMIN' ? ['manage_all', 'manage_auctions', 'manage_users', 'manage_lots'] :
-                   user.role === 'AUCTIONEER' ? ['manage_auctions', 'manage_lots'] :
+      roles: roles,
+      tenants: tenants,
+      roleIds: roles.map(r => r.id),
+      roleNames: roleNames,
+      permissions: primaryRole === 'ADMIN' ? ['manage_all', 'manage_auctions', 'manage_users', 'manage_lots'] :
+                   primaryRole === 'AUCTIONEER' ? ['manage_auctions', 'manage_lots'] :
                    ['view_auctions', 'place_bids'],
-      roleName: user.role,
+      roleName: primaryRole,
     };
 
     // Set tenantId from user's tenant
     if (!tenantId) {
-      tenantId = user.tenantId?.toString() || '1';
+      tenantId = tenants[0]?.id || '1';
     }
 
     await createSession(userProfileWithPerms, tenantId);

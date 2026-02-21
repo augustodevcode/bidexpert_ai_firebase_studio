@@ -28,10 +28,10 @@ async function globalSetup(config: FullConfig) {
   const isDemoTenant = baseUrlObject.hostname.startsWith('demo.') || baseUrlObject.hostname.includes('demo');
   
   // SEED CREDENTIALS: 
-  // - Demo tenant (demo.localhost): admin@bidexpert.ai / senha@123
-  // - Default tenant (localhost): admin@lordland.com / password123
-  const adminEmail = process.env.ADMIN_EMAIL || (isDemoTenant ? 'admin@bidexpert.ai' : 'admin@lordland.com');
-  const adminPassword = process.env.ADMIN_PASSWORD || (isDemoTenant ? 'senha@123' : 'password123');
+  // - Demo tenant (demo.localhost): admin@bidexpert.com.br / senha@123
+  // - Default tenant (localhost): admin@bidexpert.com.br / senha@123
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@bidexpert.com.br';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'senha@123';
   const fallbackAdminPassword = process.env.ADMIN_PASSWORD_FALLBACK || adminPassword;
   const shouldAuthLawyer = process.env.PLAYWRIGHT_SKIP_LAWYER !== '1' && !isDemoTenant;
   

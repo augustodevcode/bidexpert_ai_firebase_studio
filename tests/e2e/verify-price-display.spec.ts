@@ -38,11 +38,11 @@ test.describe('Verificação de Exibição de Preços nos Cards', () => {
 
         // Ensure admin user exists with Role
         // Note: Check if user exists first to avoid duplicate connection error if creating fresh
-        const userExists = await prisma.user.findUnique({ where: { email: 'admin@lordland.com' } });
+        const userExists = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com.br' } });
         if (!userExists) {
             await prisma.user.create({
                 data: {
-                    email: 'admin@lordland.com',
+                    email: 'admin@bidexpert.com.br',
                     password: hashedPassword,
                     fullName: 'Admin Test',
                     tenants: { create: { tenantId, assignedBy: 'test' } },
@@ -132,7 +132,7 @@ test.describe('Verificação de Exibição de Preços nos Cards', () => {
     test('Deve exibir "Lance Atual" após dar um lance', async ({ page }) => {
         // Login as admin
         await page.goto('http://localhost:3000/auth/login');
-        await page.fill('input[name="email"]', 'admin@lordland.com');
+        await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
         await page.fill('input[name="password"]', 'password123');
         await page.click('button[type="submit"]');
         await page.waitForURL('http://localhost:3000/');
@@ -187,7 +187,7 @@ test.describe('Verificação de Exibição de Preços nos Cards', () => {
         // Playwright isolation means we might need login again or use storage state. 
         // For simplicity, re-login.
         await page.goto('http://localhost:3000/auth/login');
-        await page.fill('input[name="email"]', 'admin@lordland.com');
+        await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
         await page.fill('input[name="password"]', 'password123');
         await page.click('button[type="submit"]');
         await page.waitForURL('http://localhost:3000/');

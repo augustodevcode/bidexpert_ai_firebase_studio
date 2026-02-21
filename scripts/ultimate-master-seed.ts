@@ -113,14 +113,14 @@ const prisma = new PrismaClient();
 // PostgreSQL: model UserOnTenant mapeado para tabela "UsersOnTenants"
 // MySQL: model usersOnTenants para tabela "usersOnTenants"
 // Ambos acessados via prisma.userOnTenant (o Prisma usa o model name, não table name)
-const UsersOnTenantsModel = (prisma as any).userOnTenant;
-
-if (!UsersOnTenantsModel) {
+if (!prisma.usersOnTenants && !prisma.userOnTenant) {
   console.error('❌ ERRO: Model userOnTenant não encontrado!');
   console.error(`   Tipo de banco: ${DB_TYPE}`);
   console.error(`   Verifique se o Prisma Client foi gerado corretamente.`);
   process.exit(1);
 }
+
+const UsersOnTenantsModel = (prisma as any).userOnTenant || (prisma as any).usersOnTenants;
 console.log(`✅ Model de associação User-Tenant: userOnTenant\n`);
 // =============================================================================
 

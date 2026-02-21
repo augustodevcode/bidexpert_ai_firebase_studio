@@ -14,6 +14,7 @@ import { getAdminReportDataAction } from '@/app/admin/reports/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWidgetPreferences } from '@/contexts/widget-preferences-context';
 import { LineChart, PieChart, Pie, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, Cell } from 'recharts';
+import { cn } from '@/lib/utils';
 
 
 function StatCard({ title, value, icon: Icon, description, isLoading, colorClass = 'bg-primary text-primary-foreground', link }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean, colorClass?: string, link?: string }) {

@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
 import { placeBidOnLot, placeMaxBid, getActiveUserLotMaxBid, getBidsForLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import { hasPermission } from '@/lib/permissions';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LotAllBidsModal from './lot-all-bids-modal';
