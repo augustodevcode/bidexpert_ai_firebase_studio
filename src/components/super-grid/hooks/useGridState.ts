@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type {
   PaginationState,
   SortingState,
@@ -62,6 +62,23 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
   const [editingRow, setEditingRow] = useState<TEntity | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
 
+  // Destaque de coluna ao hover
+  const [hoveredColumnId, setHoveredColumnId] = useState<string | null>(null);
+
+  // Edição inline de célula (cell mode)
+  const [editingCellId, setEditingCellId] = useState<{ rowId: string; columnId: string } | null>(null);
+  const [editingCellValue, setEditingCellValue] = useState<unknown>(undefined);
+
+  const startCellEdit = useCallback((rowId: string, columnId: string, value: unknown) => {
+    setEditingCellId({ rowId, columnId });
+    setEditingCellValue(value);
+  }, []);
+
+  const cancelCellEdit = useCallback(() => {
+    setEditingCellId(null);
+    setEditingCellValue(undefined);
+  }, []);
+
   // Reset de paginação quando filtros mudam
   const handleGlobalFilterChange = (value: string) => {
     setGlobalFilter(value);
@@ -98,5 +115,11 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
     setEditingRow,
     isAddingNew,
     setIsAddingNew,
+    hoveredColumnId,
+    setHoveredColumnId,
+    editingCellId,
+    editingCellValue,
+    startCellEdit,
+    cancelCellEdit,
   };
 }
