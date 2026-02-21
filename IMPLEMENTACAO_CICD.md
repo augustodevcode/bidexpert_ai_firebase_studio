@@ -61,7 +61,7 @@ Para o ambiente de Produção, foi configurado um "Environment" chamado **Produc
 - **HML**: No servidor FTP, as pastas são renomeadas com timestamp (`public_html_backup_YYYYMMDD_HHMMSS`). Para voltar, basta renomear a pasta desejada para `public_html` via FTP ou SSH.
 - **PRD**: O Firebase App Hosting permite o rollback direto pelo console do Firebase selecionando uma build anterior estável.
 
-> **Nota de prevenção:** enquanto o typecheck do pipeline roda em modo _soft_ para evitar bloqueios por débitos legados, antes de releases críticos deve-se executar manualmente `npm run typecheck` (strict) e corrigir os apontamentos.
+> **Nota de prevenção:** enquanto o typecheck do pipeline roda em modo _soft_ para evitar bloqueios por débitos legados, em branches `release/*` ou antes de merge na `main` execute `npm run typecheck` (strict) e resolva os apontamentos obrigatoriamente.
 
 ---
 *Gerado automaticamente pelo Assistente BidExpert.*

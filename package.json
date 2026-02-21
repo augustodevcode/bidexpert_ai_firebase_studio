@@ -12,7 +12,7 @@
         "build": "npx prisma generate && next build --debug",
         "build:local": "prisma generate && next build",
         "typecheck": "tsc -p tsconfig.dev.json --noEmit",
-        "typecheck:soft": "npm run typecheck -- --pretty false || true",
+        "typecheck:soft": "npm run typecheck || true",
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:run": "vitest run",
