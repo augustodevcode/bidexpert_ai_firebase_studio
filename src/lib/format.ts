@@ -19,6 +19,37 @@ export const CURRENCY_LOCALE_MAP: Record<SupportedCurrency, string> = {
   EUR: 'de-DE',
 };
 
+let runtimeCurrencyPreference: SupportedCurrency | null = null;
+
+function parseRuntimeCurrency(value: string | null): SupportedCurrency | null {
+  if (value === 'BRL' || value === 'USD' || value === 'EUR') {
+    return value;
+  }
+  return null;
+}
+
+export function setRuntimeCurrencyPreference(currency: SupportedCurrency): void {
+  runtimeCurrencyPreference = currency;
+}
+
+export function getRuntimeCurrencyPreference(): SupportedCurrency {
+  if (runtimeCurrencyPreference) {
+    return runtimeCurrencyPreference;
+  }
+
+  if (typeof window === 'undefined') {
+    return 'BRL';
+  }
+
+  const fromStorage = parseRuntimeCurrency(window.localStorage.getItem('bidexpert:selected-currency'));
+  if (fromStorage) {
+    runtimeCurrencyPreference = fromStorage;
+    return fromStorage;
+  }
+
+  return 'BRL';
+}
+
 const CURRENCY_SANITIZER_REGEX = /[^\d,.-]/g;
 
 /**
@@ -73,7 +104,7 @@ export function formatCurrency(
   options: CurrencyFormatOptions = {}
 ): string {
   const amount = toMonetaryNumber(value);
-  const currency = options.currency ?? 'BRL';
+  const currency = options.currency ?? getRuntimeCurrencyPreference();
   const locale = options.locale ?? CURRENCY_LOCALE_MAP[currency];
 
   return new Intl.NumberFormat(locale, {

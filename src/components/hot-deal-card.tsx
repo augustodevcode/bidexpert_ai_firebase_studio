@@ -23,6 +23,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { Lot, Auction, PlatformSettings } from '@/types';
+import { useCurrency } from '@/contexts/currency-context';
 
 interface HotDealCardProps {
   lots: Lot[];
@@ -57,16 +58,6 @@ function calculateTimeLeft(endDate: Date | string | null): CountdownValues {
   };
 }
 
-function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined) return 'R$ --';
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export default function HotDealCard({
   lots,
   auctions,
@@ -75,6 +66,7 @@ export default function HotDealCard({
   autoPlay = true,
   autoPlayInterval = 8000,
 }: HotDealCardProps) {
+  const { formatCurrency } = useCurrency();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [countdown, setCountdown] = useState<CountdownValues>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -203,6 +195,8 @@ export default function HotDealCard({
                       <button
                         key={idx}
                         onClick={() => setSelectedImageIndex(idx)}
+                        aria-label={`Selecionar imagem ${idx + 1}`}
+                        title={`Selecionar imagem ${idx + 1}`}
                         className={cn(
                           "w-16 h-16 rounded-md overflow-hidden border-2 transition-all",
                           selectedImageIndex === idx

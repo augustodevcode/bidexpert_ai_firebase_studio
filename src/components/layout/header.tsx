@@ -370,7 +370,7 @@ export default function Header({
         <div className="container-promo-bar" data-ai-id="header-promo-container">
           <p className="text-promo-message" data-ai-id="header-promo-text">
             <Percent className="icon-promo-percent" />
-            <strong>Leilão Especial de Veículos Clássicos!</strong> Lances a partir de R$1.000!
+            <strong>Leilão Especial de Veículos Clássicos!</strong> Lances a partir de {formatCurrency(1000, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}!
           </p>
           <Button size="sm" variant="link" asChild className="btn-promo-action" data-ai-id="header-promo-button">
             <Link href="/search?type=lots&tab=categories&category=veiculos">Ver Agora</Link>
@@ -577,12 +577,15 @@ export default function Header({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="btn-header-action"
+                  variant="outline"
+                  size="sm"
+                  className="btn-header-action min-w-[84px] justify-between"
                   aria-label="Selecionar moeda"
                   data-ai-id="header-currency-switch"
                 >
+                  <span className="text-xs font-semibold" data-ai-id="header-currency-current">
+                    {currency}
+                  </span>
                   <span aria-hidden="true">{currencyOptions.find((option) => option.code === currency)?.flag ?? '🇧🇷'}</span>
                 </Button>
               </DropdownMenuTrigger>

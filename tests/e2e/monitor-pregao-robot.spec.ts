@@ -46,8 +46,14 @@ async function loginAndGoto(page: Page, url: string): Promise<void> {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function waitForMonitor(page: Page): Promise<void> {
-  // aguarda o container principal do monitor aparecer (não o spinner)
-  await expect(page.locator('[data-ai-id="monitor-auditorium"]')).toBeVisible({ timeout: 20_000 });
+  console.log('Current URL:', page.url());
+  try {
+    // aguarda o container principal do monitor aparecer (não o spinner)
+    await expect(page.locator('[data-ai-id="monitor-pregao-root"]')).toBeVisible({ timeout: 20_000 });
+  } catch (e) {
+    console.log('HTML:', await page.content());
+    throw e;
+  }
 }
 
 // ─── Suite principal ──────────────────────────────────────────────────────────
@@ -64,7 +70,7 @@ test.describe('🎯 Monitor de Pregão - Testes de Robô', () => {
       await waitForMonitor(page);
 
       // Verifica o container raiz
-      await expect(page.locator('[data-ai-id="monitor-auditorium"]')).toBeVisible();
+      await expect(page.locator('[data-ai-id="monitor-pregao-root"]')).toBeVisible();
 
       // Título da página deve conter o nome do leilão
       const title = await page.title();
@@ -98,7 +104,7 @@ test.describe('🎯 Monitor de Pregão - Testes de Robô', () => {
         page.locator('.monitor-video-placeholder')
       );
       // Sem assertiva de visibilidade estrita – apenas confirma existência no DOM
-      expect(await page.locator('[data-ai-id="monitor-auditorium"]').isVisible()).toBe(true);
+      expect(await page.locator('[data-ai-id="monitor-pregao-root"]').isVisible()).toBe(true);
     });
   });
 
@@ -138,7 +144,7 @@ test.describe('🎯 Monitor de Pregão - Testes de Robô', () => {
         // Após click, o URL deve atualizar com ?lotId=... ou o display deve mudar
         await page.waitForTimeout(500);
         // Confirma que ainda está no monitor (não houve erro de navegação)
-        await expect(page.locator('[data-ai-id="monitor-auditorium"]')).toBeVisible();
+        await expect(page.locator('[data-ai-id="monitor-pregao-root"]')).toBeVisible();
       } else {
         test.skip(true, 'Somente 1 lote disponível – não há navegação a testar');
       }
@@ -299,7 +305,7 @@ test.describe('🎯 Monitor de Pregão - Testes de Robô', () => {
       await waitForMonitor(page);
 
       const requiredIds = [
-        'monitor-auditorium',
+        'monitor-pregao-root',
         'monitor-header',
         'monitor-connection-status',
         'monitor-lot-list',
@@ -353,7 +359,7 @@ test.describe('🎯 Monitor de Pregão - Testes de Robô', () => {
         (await page.getByText('Entrar').count()) > 0 ||
         (await page.getByRole('link', { name: /entrar|login|sign in/i }).count()) > 0 ||
         // Caso o monitor permita acesso anônimo mas o auditório mostre login
-        (await page.locator('[data-ai-id="monitor-auditorium"]').count()) > 0;
+        (await page.locator('[data-ai-id="monitor-pregao-root"]').count()) > 0;
 
       // O sistema deve ter algum comportamento definido (não deve quebrar com 5xx)
       const title = await page.title();

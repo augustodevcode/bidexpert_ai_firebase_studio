@@ -20,6 +20,7 @@ import { formatDistanceToNow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { LotCardData, SegmentType, LotBadge } from './types';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
+import { useCurrency } from '@/contexts/currency-context';
 
 interface LotCardProps {
   lot: LotCardData;
@@ -37,16 +38,6 @@ const BADGE_VARIANTS: Record<LotBadge['type'], { variant: 'default' | 'secondary
   DESTAQUE: { variant: 'default', className: 'bg-primary' },
   URGENTE: { variant: 'destructive' },
 };
-
-function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined) return 'R$ --';
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function CountdownTimer({ endDate }: { endDate: Date }) {
   const [timeLeft, setTimeLeft] = useState<string>('');
@@ -74,6 +65,7 @@ export default function LotCard({
   variant = 'default',
   onFavoriteToggle 
 }: LotCardProps) {
+  const { formatCurrency } = useCurrency();
   const [isFavorite, setIsFavorite] = useState(false);
   const isEnded = lot.endDate ? isPast(new Date(lot.endDate)) : false;
 

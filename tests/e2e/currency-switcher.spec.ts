@@ -4,26 +4,58 @@
 
 import { expect, test } from '@playwright/test';
 
-test('deve alternar moeda no seletor global do header', async ({ page }) => {
-  await page.goto('http://demo.localhost:9005');
+async function selectCurrency(page: import('@playwright/test').Page, code: 'BRL' | 'USD' | 'EUR') {
+  await page.locator('[data-ai-id="header-currency-switch"]').click();
+  await page.locator(`[data-ai-id="header-currency-option-${code.toLowerCase()}"]`).click();
+  await expect(page.locator('[data-ai-id="header-currency-current"]')).toContainText(code);
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem('bidexpert:selected-currency')))
+    .toBe(code);
+}
+
+async function expectCurrencyVisibleOnPage(page: import('@playwright/test').Page, code: 'BRL' | 'USD' | 'EUR') {
+  const promoText = await page.locator('[data-ai-id="header-promo-text"]').innerText();
+  if (code === 'BRL') {
+    expect(promoText).toMatch(/R\$/);
+    return;
+  }
+
+  if (code === 'USD') {
+    expect(promoText).toMatch(/\$/);
+    return;
+  }
+
+  expect(promoText).toMatch(/€/);
+}
+
+test('deve alternar moeda global no header e refletir nos valores das páginas públicas', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
 
   const currencySwitch = page.locator('[data-ai-id="header-currency-switch"]');
   await expect(currencySwitch).toBeVisible();
   await expect(currencySwitch).toContainText('🇧🇷');
+  await expect(currencySwitch).toContainText('BRL');
 
-  await page.evaluate(() => window.localStorage.setItem('bidexpert:selected-currency', 'USD'));
-  await page.reload();
+  await expectCurrencyVisibleOnPage(page, 'BRL');
+
+  await selectCurrency(page, 'USD');
   await expect(currencySwitch).toContainText('🇺🇸');
+  await expectCurrencyVisibleOnPage(page, 'USD');
 
-  await expect.poll(async () => {
-    return page.evaluate(() => window.localStorage.getItem('bidexpert:selected-currency'));
-  }).toBe('USD');
+  await page.goto('/search?type=lots', { waitUntil: 'domcontentloaded' });
+  await expectCurrencyVisibleOnPage(page, 'USD');
 
-  await page.evaluate(() => window.localStorage.setItem('bidexpert:selected-currency', 'EUR'));
-  await page.reload();
+  await page.goto('/home-v2', { waitUntil: 'domcontentloaded' });
+  await expectCurrencyVisibleOnPage(page, 'USD');
+
+  await selectCurrency(page, 'EUR');
   await expect(currencySwitch).toContainText('🇪🇺');
+  await expectCurrencyVisibleOnPage(page, 'EUR');
 
-  await expect.poll(async () => {
-    return page.evaluate(() => window.localStorage.getItem('bidexpert:selected-currency'));
-  }).toBe('EUR');
+  await page.goto('/search?type=lots', { waitUntil: 'domcontentloaded' });
+  await expectCurrencyVisibleOnPage(page, 'EUR');
+
+  await selectCurrency(page, 'BRL');
+  await expect(currencySwitch).toContainText('🇧🇷');
+  await expectCurrencyVisibleOnPage(page, 'BRL');
 });
