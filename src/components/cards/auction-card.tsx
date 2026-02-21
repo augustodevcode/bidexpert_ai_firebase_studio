@@ -131,7 +131,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   return (
     <TooltipProvider>
       <>
-        <Card data-ai-id={`auction-card-${auction.id}`} data-testid="auction-card" className="card-auction">
+        <Card data-ai-id={`auction-card-${auction.id}`} data-testid="auction-card" className="card-auction group">
           <div className="wrapper-card-media">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="link-card-media-overlay">
               <div className="container-card-image">

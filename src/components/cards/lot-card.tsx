@@ -164,7 +164,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id={`lot-card-${lot.id}`} data-testid="lot-card" className="card-lot">
+      <Card data-ai-id={`lot-card-${lot.id}`} data-testid="lot-card" className="card-lot group">
         <div className="wrapper-card-media">
           <Link href={lotDetailUrl} className="link-card-media-overlay">
             <div className="container-card-image">
