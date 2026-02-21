@@ -13,9 +13,10 @@ Esta documentação descreve o funcionamento da esteira de Integração e Entreg
 - **Workflow**: `.github/workflows/p0-ci.yml`
 - **Banco**: `bidexpert_dev` (mysql.dbaas.com.br)
 - **Ações**: 
-  - Build Check & Typecheck.
+  - Build Check & Typecheck (soft gate com `npm run typecheck:soft` para não quebrar por débito técnico conhecido).
   - Testes Unitários (Vitest).
   - Testes E2E (Playwright).
+  - **Escopo de Typecheck**: o `tsconfig.dev.json` ignora temporariamente `src/app/admin/**` (área em construção) e roda apenas o núcleo de theming/tenant. Qualquer módulo estável deve ser migrado para esse escopo e ter os tipos corrigidos antes do merge.
 
 ### 2. Homologação (HML)
 - **Workflow**: `.github/workflows/deploy-hml.yml`
@@ -60,6 +61,8 @@ Para o ambiente de Produção, foi configurado um "Environment" chamado **Produc
 ## Estratégia de Rollback
 - **HML**: No servidor FTP, as pastas são renomeadas com timestamp (`public_html_backup_YYYYMMDD_HHMMSS`). Para voltar, basta renomear a pasta desejada para `public_html` via FTP ou SSH.
 - **PRD**: O Firebase App Hosting permite o rollback direto pelo console do Firebase selecionando uma build anterior estável.
+
+> **Nota de prevenção:** enquanto o typecheck do pipeline roda em modo _soft_ para evitar bloqueios por débitos legados, em branches `release/*` ou antes de merge na `main` execute `npm run typecheck` (strict) e resolva os apontamentos obrigatoriamente.
 
 ---
 *Gerado automaticamente pelo Assistente BidExpert.*

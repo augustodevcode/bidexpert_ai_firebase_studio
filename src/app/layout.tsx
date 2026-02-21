@@ -16,6 +16,7 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import SubscriptionPopup from '@/components/subscription-popup';
 import { generateThemeCssFromSettings } from '@/lib/theme-injector';
 import { Analytics } from '@vercel/analytics/next';
+import { CurrencyProvider } from '@/contexts/currency-context';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,16 +85,18 @@ export default async function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <TooltipProvider delayDuration={0}>
-            <AppContentWrapper
-              isSetupComplete={true}
-              platformSettings={platformSettings}
-            >
-              {children}
-            </AppContentWrapper>
-            {/* <SubscriptionPopup /> */}
-            <Toaster />
-          </TooltipProvider>
+          <CurrencyProvider>
+            <TooltipProvider delayDuration={0}>
+              <AppContentWrapper
+                isSetupComplete={true}
+                platformSettings={platformSettings}
+              >
+                {children}
+              </AppContentWrapper>
+              {/* <SubscriptionPopup /> */}
+              <Toaster />
+            </TooltipProvider>
+          </CurrencyProvider>
         </AuthProvider>
         <Analytics />
       </body>

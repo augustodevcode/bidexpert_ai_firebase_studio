@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview Contexto global para preferência de moeda e locale monetário.
  * Permite alternância entre BRL, USD e EUR com persistência em localStorage.
  */
@@ -71,7 +71,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 export function useCurrency(): CurrencyContextValue {
   const context = useContext(CurrencyContext);
   if (!context) {
-    throw new Error('useCurrency deve ser usado dentro de CurrencyProvider');
+    throw new Error('useCurrency must be used within a CurrencyProvider');
   }
   return context;
 }

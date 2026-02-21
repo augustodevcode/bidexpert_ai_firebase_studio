@@ -268,6 +268,7 @@ Para gerenciar a esteira de deploy BidExpert (DEV/HML/PRD):
 2. Execute `setup-github-secrets.ps1` para validar variáveis antes de deploys manuais.
 3. Não insira tokens ou senhas diretamente no chat; use o arquivo .env e leia de lá.
 4. Para criar novos workflows, siga o padrão de Environments (Homologation/Production) do GitHub Actions.
+5. Workflows que executam `prisma validate` DEVEM definir `DATABASE_URL` (dummy) para o schema alvo.
 
 # Workflow
 - Be sure to typecheck when you’re done making a series of code changes
@@ -1080,6 +1081,15 @@ Get-Content .next/BUILD_ID
 3. **Verificar status automaticamente** com comandos apropriados
 4. **Reportar resultado** ao usuário com evidências (logs, contagens, etc.)
 5. **NUNCA perguntar** "Quer que eu verifique?" - SEMPRE verificar
+
+# 💱 Regra Crítica: Moeda, Locale e Máscaras Monetárias
+
+**OBRIGATÓRIO:**
+1. Todo valor monetário deve ser renderizado por formatador central (`src/lib/format.ts`) com locale explícito.
+2. Nunca concatenar símbolo de moeda manualmente (`"R$ " + valor`).
+3. Antes de cálculos monetários, sempre normalizar com `toMonetaryNumber()` para evitar concatenação de string.
+4. O padrão brasileiro (`pt-BR`, `BRL`) é default, mas o sistema deve permitir exibição em `USD` e `EUR` via seletor global.
+5. Em code review, tratar valores com muitas casas residuais (ex: `...00003`) como bug de formatação/normalização.
 
 # 🚀 Regras de Deploy Vercel + PostgreSQL (OBRIGATÓRIO)
 

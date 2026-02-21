@@ -113,14 +113,14 @@ const prisma = new PrismaClient();
 // PostgreSQL: model UserOnTenant mapeado para tabela "UsersOnTenants"
 // MySQL: model usersOnTenants para tabela "usersOnTenants"
 // Ambos acessados via prisma.userOnTenant (o Prisma usa o model name, não table name)
-const UsersOnTenantsModel = (prisma as any).userOnTenant;
-
-if (!UsersOnTenantsModel) {
+if (!prisma.usersOnTenants && !prisma.userOnTenant) {
   console.error('❌ ERRO: Model userOnTenant não encontrado!');
   console.error(`   Tipo de banco: ${DB_TYPE}`);
   console.error(`   Verifique se o Prisma Client foi gerado corretamente.`);
   process.exit(1);
 }
+
+const UsersOnTenantsModel = (prisma as any).userOnTenant || (prisma as any).usersOnTenants;
 console.log(`✅ Model de associação User-Tenant: userOnTenant\n`);
 // =============================================================================
 
@@ -2308,6 +2308,48 @@ async function main() {
     }
 
     console.log(`✅ ${consignorDocuments.length} documentos criados para o comitente\n`);
+
+    // --- 4.2 CRIAR DOCUMENTOS DO ADMIN (FIXED ADMIN) ---
+    console.log('📄 Criando documentos do admin (Fixed Admin)...');
+    
+    const fixedAdminForDocs = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com.br' } });
+    
+    if (fixedAdminForDocs) {
+      const adminDocuments = [
+        {
+          documentTypeId: createdDocumentTypes['RG'].id,
+          fileName: 'RG_Admin.jpg',
+          fileUrl: 'https://placehold.co/600x400/png?text=RG+Frente',
+          status: 'APPROVED' as const, 
+        },
+        {
+          documentTypeId: createdDocumentTypes['CPF'].id,
+          fileName: 'CPF_Admin.jpg',
+          fileUrl: 'https://placehold.co/600x400/png?text=CPF+Admin',
+          status: 'APPROVED' as const,
+        },
+        {
+          documentTypeId: createdDocumentTypes['Comprovante de Endereço'].id,
+          fileName: 'Comprovante_Endereco_Admin.jpg',
+          fileUrl: 'https://placehold.co/600x800/png?text=Comprovante+Endereco',
+          status: 'APPROVED' as const,
+        }
+      ];
+
+      for (const doc of adminDocuments) {
+        await prisma.userDocument.upsert({
+          where: { userId_documentTypeId: { userId: fixedAdminForDocs.id, documentTypeId: doc.documentTypeId } },
+          update: {},
+          create: {
+            ...doc,
+            userId: fixedAdminForDocs.id,
+            tenantId: tenants[0].id,
+            updatedAt: new Date(),
+          },
+        });
+      }
+      console.log(`✅ ${adminDocuments.length} documentos criados para o admin\n`);
+    }
 
     // Usuário 5: Avaliador
     const avaliadorUser = await prisma.user.create({

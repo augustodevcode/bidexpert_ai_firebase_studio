@@ -125,6 +125,7 @@ Use debugging tools FIRST before examining or modifying code:
 - MONOLITHIC FILES: Create small, focused components instead of large files
 - DOING TOO MUCH AT ONCE: Make small, verifiable changes instead of large rewrites
 - ENV VARIABLES: Do not use any env variables like `VITE_*` as they are not supported
+- BIGINT IDS: Prisma models return `bigint` for IDs; never type them directly as string-based domain models. Keep repositories Prisma-typed and convert to strings at the service/controller boundary before exposing to UI to avoid TS errors.
 
 ## Response format:
 
