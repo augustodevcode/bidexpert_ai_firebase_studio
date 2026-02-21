@@ -74,8 +74,6 @@ function LoginPageContent() {
 
     // Fast client-side tenant detection
     useEffect(() => {
-        if (availableTenants.length === 0) return;
-
         const hostname = window.location.hostname;
         let currentSubdomain: string | null = null;
 
@@ -99,7 +97,7 @@ function LoginPageContent() {
             currentSubdomain = process.env.NEXT_PUBLIC_DEFAULT_TENANT;
         }
 
-        if (currentSubdomain) {
+        if (currentSubdomain && availableTenants.length > 0) {
             const matchedTenant = availableTenants.find(t => 
                 t.subdomain === currentSubdomain || t.slug === currentSubdomain
             );
