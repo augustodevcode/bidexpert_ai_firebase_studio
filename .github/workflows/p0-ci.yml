@@ -38,7 +38,7 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Run Typecheck (soft gate)
+      - name: Run Typecheck (soft gate for all branches)
         run: npm run typecheck:soft
       
       - name: Run Typecheck (strict on release branches)
