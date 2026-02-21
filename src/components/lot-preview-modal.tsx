@@ -21,6 +21,7 @@ import { Separator } from './ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/ui-helpers';
 import LotCountdown from './lot-countdown';
+import { useCurrency } from '@/contexts/currency-context';
 
 
 interface LotPreviewModalProps {
@@ -45,6 +46,7 @@ const InfoItem = ({ icon: Icon, value, label }: { icon: React.ElementType, value
 
 
 export default function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }: LotPreviewModalProps) {
+  const { formatCurrency } = useCurrency();
   if (!isOpen || !lot) return null;
   
   const gallery = useMemo(() => {
@@ -127,8 +129,8 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
             <div className="space-y-4">
                 <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Lance Atual</p>
-                    <p className="text-4xl font-bold text-primary">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    <p className="text-sm text-muted-foreground">Próximo lance mínimo: R$ {(lot.price + (lot.bidIncrementStep || 100)).toLocaleString('pt-BR')}</p>
+                  <p className="text-4xl font-bold text-primary">{formatCurrency(lot.price)}</p>
+                  <p className="text-sm text-muted-foreground">Próximo lance mínimo: {formatCurrency(lot.price + (lot.bidIncrementStep || 100))}</p>
                 </div>
 
                 <div className="p-3 border rounded-lg text-center bg-card">

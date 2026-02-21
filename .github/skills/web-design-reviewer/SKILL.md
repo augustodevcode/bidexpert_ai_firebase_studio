@@ -139,6 +139,14 @@ Detection targets:
 | Color Inconsistency | Non-unified brand colors | Medium |
 | Spacing Inconsistency | Non-uniform spacing between similar elements | Low |
 
+#### Currency & Locale Consistency
+
+| Issue | Description | Severity |
+|-------|-------------|----------|
+| Mixed Currency Masks | UI mixes `R$`, `$`, `€` without user selection | High |
+| Invalid Monetary Composition | Total/commission displayed with concatenation artifacts | High |
+| Locale Drift | Monetary separators not matching selected locale | High |
+
 ### 2.3 Viewport Testing (Responsive)
 
 Test at the following viewports:

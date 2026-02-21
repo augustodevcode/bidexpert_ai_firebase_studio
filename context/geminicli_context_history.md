@@ -85,3 +85,10 @@ docker compose -f docker-compose.dev.yml down
 - ⚠️ Sempre verificar containers antes de executar operações de banco
 - ⚠️ Usar o slug correto na URL para multi-tenancy (ex: `dev.localhost:9005`)
 - ⚠️ Não expor credenciais de produção em logs ou chat
+
+## Regra adicional: Máscaras Monetárias e Locale
+
+- Toda exibição de valor monetário deve usar utilitário central de formatação.
+- Nunca concatenar moeda manualmente em cálculos (`"R$ " + valor`).
+- Sempre normalizar entradas monetárias com função de parsing antes de calcular totais/comissões.
+- Padrão default: `pt-BR` / `BRL`; permitir troca visual para `USD` e `EUR` quando houver seletor global.

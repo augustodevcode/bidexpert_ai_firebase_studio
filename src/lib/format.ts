@@ -1,23 +1,87 @@
 // src/lib/format.ts
 /**
  * @fileoverview Funções utilitárias para formatação de valores.
- * Inclui formatação de moeda, números e datas.
+ * Inclui normalização monetária, máscara regional e utilitários de números/texto.
  */
+
+export type SupportedCurrency = 'BRL' | 'USD' | 'EUR';
+
+export interface CurrencyFormatOptions {
+  currency?: SupportedCurrency;
+  locale?: string;
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
+}
+
+export const CURRENCY_LOCALE_MAP: Record<SupportedCurrency, string> = {
+  BRL: 'pt-BR',
+  USD: 'en-US',
+  EUR: 'de-DE',
+};
+
+const CURRENCY_SANITIZER_REGEX = /[^\d,.-]/g;
+
+/**
+ * Converte qualquer valor monetário (number/string/Decimal-like) para número seguro.
+ */
+export function toMonetaryNumber(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value === 'object' && value && 'toNumber' in value && typeof (value as { toNumber?: unknown }).toNumber === 'function') {
+    const parsed = (value as { toNumber: () => number }).toNumber();
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return 0;
+
+    const sanitized = trimmed.replace(CURRENCY_SANITIZER_REGEX, '');
+    if (!sanitized) return 0;
+
+    const hasComma = sanitized.includes(',');
+    const hasDot = sanitized.includes('.');
+
+    let normalized = sanitized;
+    if (hasComma && hasDot) {
+      normalized = sanitized.lastIndexOf(',') > sanitized.lastIndexOf('.')
+        ? sanitized.replace(/\./g, '').replace(',', '.')
+        : sanitized.replace(/,/g, '');
+    } else if (hasComma) {
+      normalized = sanitized.replace(/\./g, '').replace(',', '.');
+    }
+
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 /**
  * Formata um valor numérico como moeda brasileira (BRL)
  * @param value - O valor a ser formatado
  * @returns String formatada em BRL (ex: R$ 1.234,56)
  */
-export function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined) {
-    return 'R$ 0,00';
-  }
-  
-  return new Intl.NumberFormat('pt-BR', {
+export function formatCurrency(
+  value: number | string | null | undefined,
+  options: CurrencyFormatOptions = {}
+): string {
+  const amount = toMonetaryNumber(value);
+  const currency = options.currency ?? 'BRL';
+  const locale = options.locale ?? CURRENCY_LOCALE_MAP[currency];
+
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'BRL',
-  }).format(value);
+    currency,
+    minimumFractionDigits: options.minimumFractionDigits ?? 2,
+    maximumFractionDigits: options.maximumFractionDigits ?? 2,
+  }).format(amount);
 }
 
 /**
