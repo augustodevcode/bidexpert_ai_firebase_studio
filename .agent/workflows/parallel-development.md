@@ -100,6 +100,14 @@ git push -u origin <nome-da-branch>
    - Criar Pull Request para a main
    - Fazer merge com outras PRs pendentes
 
+### Checkpoint Adicional de Qualidade Monetária (OBRIGATÓRIO)
+
+Antes do push final, validar:
+- Nenhum ponto de UI usa `R$` hardcoded para cálculo/exibição dinâmica.
+- Todos os totais/comissões usam normalização numérica prévia (`toMonetaryNumber`).
+- Formatação default BR (`pt-BR`, `BRL`) está correta e sem resíduos de ponto flutuante.
+- Seletor global de moeda (BRL/USD/EUR) altera a exibição nos componentes client-side críticos.
+
 ### Mensagem Padrão para Solicitar Autorização
 
 ```markdown

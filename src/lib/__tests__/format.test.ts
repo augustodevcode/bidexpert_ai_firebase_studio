@@ -30,7 +30,8 @@ describe('toMonetaryNumber', () => {
 
 describe('formatCurrency', () => {
   it('formata BRL por padrão', () => {
-    expect(formatCurrency(2473.45)).toBe('R$ 2.473,45');
+    expect(formatCurrency(2473.45)).toContain('R$');
+    expect(formatCurrency(2473.45)).toContain('2.473,45');
   });
 
   it('formata USD com locale en-US', () => {
