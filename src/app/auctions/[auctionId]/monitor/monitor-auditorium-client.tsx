@@ -156,7 +156,7 @@ export default function MonitorAuditoriumClient({
     const lotProgress = `${currentLotIndex + 1} / ${allLots.length}`;
 
     return (
-        <div data-ai-id="monitor-pregao-root" className="flex flex-col h-screen bg-[#F0F2F5] overflow-hidden">
+        <div data-ai-id="monitor-auditorium" className="flex flex-col h-screen bg-[#F0F2F5] overflow-hidden">
 
             {/* Banner de Vencedor */}
             {showWinnerBanner && (
@@ -316,7 +316,7 @@ export default function MonitorAuditoriumClient({
                                         </TabsTrigger>
                                     </TabsList>
 
-                                    <TabsContent value="bids" data-ai-id="monitor-bid-history-list" className="flex-1 m-0 p-0 overflow-hidden">
+                                    <TabsContent value="bids" data-ai-id="monitor-bid-history" className="flex-1 m-0 p-0 overflow-hidden">
                                         <ScrollArea className="h-full">
                                             <div className="p-4 space-y-3">
                                                 {bidHistory.length > 0 ? (
