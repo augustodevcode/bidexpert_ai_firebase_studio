@@ -36,13 +36,13 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   console.log(`[getLotPageData] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
   const [
-      platformSettings,
-      auctionFromDb,
-      lotFromDb,
-      allCategories,
-      allSellers,
-      allAuctioneers
-  ] = await Promise.all([
+      platformSettingsResult,
+      auctionResult,
+      lotResult,
+      categoriesResult,
+      sellersResult,
+      auctioneersResult
+  ] = await Promise.allSettled([
     getPlatformSettings(),
     getAuction(currentAuctionId, true), // Public call
     getLot(currentLotId, true), // Public call
@@ -50,6 +50,15 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     getSellers(true), // Public call
     getAuctioneers(true) // Public call
   ]);
+
+  const platformSettings = platformSettingsResult.status === 'fulfilled' && platformSettingsResult.value
+    ? platformSettingsResult.value
+    : ({} as PlatformSettings);
+  const auctionFromDb = auctionResult.status === 'fulfilled' ? auctionResult.value : null;
+  const lotFromDb = lotResult.status === 'fulfilled' ? lotResult.value : null;
+  const allCategories = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
+  const allSellers = sellersResult.status === 'fulfilled' ? sellersResult.value : [];
+  const allAuctioneers = auctioneersResult.status === 'fulfilled' ? auctioneersResult.value : [];
   
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
@@ -94,16 +103,18 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   // Buscar informações de contato do leilão com herança (Auction -> Auctioneer -> PlatformSettings)
   let auctionContact: AuctionContactInfo | null = null;
   try {
-    const auctionIdBigInt = typeof auctionFromDb.id === 'string' ? BigInt(auctionFromDb.id) : BigInt(auctionFromDb.id);
-    const tenantIdBigInt = typeof platformSettings.tenantId === 'string' ? BigInt(platformSettings.tenantId) : BigInt(platformSettings.tenantId);
-    auctionContact = await getAuctionContact(prisma, auctionIdBigInt, tenantIdBigInt);
+    if (/^\d+$/.test(String(auctionFromDb.id)) && /^\d+$/.test(String(platformSettings?.tenantId ?? ''))) {
+      const auctionIdBigInt = BigInt(String(auctionFromDb.id));
+      const tenantIdBigInt = BigInt(String(platformSettings.tenantId));
+      auctionContact = await getAuctionContact(prisma, auctionIdBigInt, tenantIdBigInt);
+    }
   } catch (error) {
     console.error('[getLotPageData] Erro ao buscar contatos do leilão:', error);
     // Em caso de erro, definir fallback com contatos do PlatformSettings
     auctionContact = {
-      phone: platformSettings.supportPhone || null,
-      email: platformSettings.supportEmail || null,
-      whatsapp: platformSettings.supportWhatsApp || null,
+      phone: platformSettings?.supportPhone || null,
+      email: platformSettings?.supportEmail || null,
+      whatsapp: platformSettings?.supportWhatsApp || null,
       source: 'platform',
     };
   }
