@@ -268,6 +268,7 @@ Para gerenciar a esteira de deploy BidExpert (DEV/HML/PRD):
 2. Execute `setup-github-secrets.ps1` para validar variáveis antes de deploys manuais.
 3. Não insira tokens ou senhas diretamente no chat; use o arquivo .env e leia de lá.
 4. Para criar novos workflows, siga o padrão de Environments (Homologation/Production) do GitHub Actions.
+5. Workflows que executam `prisma validate` DEVEM definir `DATABASE_URL` (dummy) para o schema alvo.
 
 # Workflow
 - Be sure to typecheck when you’re done making a series of code changes
