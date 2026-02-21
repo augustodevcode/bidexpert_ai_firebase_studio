@@ -12,6 +12,8 @@ import type { UserWin } from '@/types';
 import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions'; // Importing directly
 import { useToast } from '@/hooks/use-toast';
 import { ClientOnlyDate } from '@/components/ui/data-table-column-header';
+import { useCurrency } from '@/contexts/currency-context';
+import { toMonetaryNumber } from '@/lib/format';
 
 interface WinCardProps {
     win: UserWin;
@@ -35,12 +37,16 @@ const getPaymentStatusColor = (status: string) => {
 };
 
 const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerateTerm, viewMode }) => {
+    const { formatCurrency } = useCurrency();
+
     if (!win.lot) {
         return <Card className="p-4 text-destructive">Lote com ID {win.lotId} não encontrado.</Card>;
     }
+
+    const winningBidAmount = toMonetaryNumber(win.winningBidAmount);
     const commissionRate = 0.05;
-    const commissionValue = win.winningBidAmount * commissionRate;
-    const totalDue = win.winningBidAmount + commissionValue;
+    const commissionValue = winningBidAmount * commissionRate;
+    const totalDue = winningBidAmount + commissionValue;
 
     if (viewMode === 'list') {
         return (
@@ -75,13 +81,13 @@ const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerate
                             <div>
                                 <span className="text-muted-foreground block text-xs">Valor do Arremate</span>
                                 <span className="font-bold text-primary">
-                                    R$ {win.winningBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    {formatCurrency(winningBidAmount)}
                                 </span>
                             </div>
                             <div>
                                 <span className="text-muted-foreground block text-xs">Total Comissões</span>
                                 <span className="font-medium">
-                                    R$ {commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    {formatCurrency(commissionValue)}
                                 </span>
                             </div>
                         </div>
@@ -145,19 +151,19 @@ const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerate
                     <div className="flex justify-between items-center mb-1">
                          <span className="text-xs text-muted-foreground">Valor Lance:</span>
                          <span className="text-primary font-bold">
-                            R$ {win.winningBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                     {formatCurrency(winningBidAmount)}
                          </span>
                     </div>
                      <div className="flex justify-between items-center">
                          <span className="text-xs text-muted-foreground">Comissão (5%):</span>
                          <span className="text-xs">
-                            R$ {commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                     {formatCurrency(commissionValue)}
                          </span>
                     </div>
                     <div className="flex justify-between items-center border-t border-dashed border-muted-foreground/30 mt-1 pt-1">
                          <span className="text-xs font-medium">Total:</span>
                          <span className="text-sm font-bold">
-                            R$ {totalDue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                     {formatCurrency(totalDue)}
                          </span>
                     </div>
                 </div>

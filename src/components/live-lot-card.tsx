@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Clock, Eye, Gavel, Tag } from 'lucide-react';
 import { format, differenceInMinutes, differenceInHours, differenceInDays, isPast, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useCurrency } from '@/contexts/currency-context';
 import { useEffect, useState } from 'react';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/ui-helpers';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
@@ -77,6 +78,7 @@ function TimeRemaining({ endDate, status }: { endDate: Date | string | null; sta
 export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardProps) {
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
   const auctionStartDate = lot.auction?.auctionDate ? new Date(lot.auction.auctionDate as unknown as string) : undefined;
+  const { formatCurrency } = useCurrency();
 
   return (
     <Card data-ai-id="live-lot-card-container" className={`flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group ${isHighlighted ? 'border-2 border-primary ring-2 ring-primary/50' : ''}`}>
@@ -133,7 +135,7 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
         <div className="w-full">
           <p className="text-xs text-muted-foreground">Lance Atual / Inicial</p>
           <p className={`text-xl font-bold ${isHighlighted ? 'text-primary' : 'text-foreground'}`}>
-            R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatCurrency(lot.price)}
           </p>
         </div>
         <div className="w-full flex justify-between items-center text-xs">

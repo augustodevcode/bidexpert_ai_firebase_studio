@@ -43,6 +43,7 @@ import BidExpertAuctionStagesTimeline from './auction/BidExpertAuctionStagesTime
 import LotCountdown from './lot-countdown';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import { useCurrency } from '@/contexts/currency-context';
 
 interface LotPreviewModalV2Props {
   lot: Lot | null;
@@ -75,6 +76,7 @@ const getUrgencyBadge = (endDate: Date | null, bidsCount: number, views: number,
 
 export default function LotPreviewModalV2({ lot, auction, platformSettings, isOpen, onClose }: LotPreviewModalV2Props) {
   const { toast } = useToast();
+  const { formatCurrency } = useCurrency();
   const [isFavorite, setIsFavorite] = useState(false);
   const [lotFullUrl, setLotFullUrl] = useState('');
   
@@ -383,7 +385,7 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Lance Atual</p>
                     <p className="text-2xl md:text-4xl font-bold text-primary">
-                      R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {formatCurrency(lot.price)}
                     </p>
                   </div>
                   
@@ -395,14 +397,14 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
                       </div>
                       <Progress value={priceProgress} className="h-2" />
                       <p className="text-xs text-muted-foreground">
-                        Valor de avaliação: R$ {lot.evaluationValue.toLocaleString('pt-BR')}
+                        Valor de avaliação: {formatCurrency(lot.evaluationValue)}
                       </p>
                     </div>
                   )}
                   
                   <div className="flex items-center gap-2 text-sm">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span>Próximo lance: <strong>R$ {nextBidAmount.toLocaleString('pt-BR')}</strong></span>
+                    <span>Próximo lance: <strong>{formatCurrency(nextBidAmount)}</strong></span>
                   </div>
                 </div>
               </Card>
