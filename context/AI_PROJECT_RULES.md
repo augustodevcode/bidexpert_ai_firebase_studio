@@ -303,6 +303,8 @@ This prevents accidental loss of functionality.
 - Database adapter pattern required
 - All data access through `getDatabaseAdapter()`
 - Direct Prisma client access prohibited in app logic
+- Antes de usar novos campos em queries Prisma (ex.: `tenant.domain`), confirmar que o campo existe no schema e regenerar o client.
+- Quando houver suporte a schemas legados/parciais, adicionar fallback nas queries para evitar erros de campo desconhecido em runtime.
 
 ---
 
