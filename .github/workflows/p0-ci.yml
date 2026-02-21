@@ -104,6 +104,15 @@ jobs:
         with:
           name: build-output
           path: .next/
+        continue-on-error: true
+
+      - name: Build Application (fallback for E2E)
+        run: npm run build
+        env:
+          DATABASE_URL: mysql://root:root@localhost:3306/bidexpert_test
+          NEXTAUTH_SECRET: ci-test-secret-key-32-chars-long!
+          AUTH_SECRET: ci-test-secret-key-32-chars-long!
+          SESSION_SECRET: ci-test-secret-key-32-chars-long!
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
