@@ -19,6 +19,7 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { TenantThemeStyle, TenantHeadScripts } from '@/components/tenant-theme-provider';
+import { type ThemeTokens } from '@/lib/theme-tokens';
 
 interface TenantLayoutProps {
   children: React.ReactNode;
@@ -104,8 +105,8 @@ export default async function TenantLayout({ children, params }: TenantLayoutPro
 
   // Prepara configurações de tema
   const themeConfig = tenant.settings ? {
-    themeColorsLight: tenant.settings.themeColorsLight,
-    themeColorsDark: tenant.settings.themeColorsDark,
+    themeColorsLight: tenant.settings.themeColorsLight as ThemeTokens | null,
+    themeColorsDark: tenant.settings.themeColorsDark as ThemeTokens | null,
     primaryColorHsl: tenant.settings.primaryColorHsl,
     primaryForegroundHsl: tenant.settings.primaryForegroundHsl,
     secondaryColorHsl: tenant.settings.secondaryColorHsl,

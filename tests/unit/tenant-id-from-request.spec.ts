@@ -80,4 +80,19 @@ describe('getTenantIdFromRequest', () => {
 
     expect(tenantId).toBe('7');
   });
+
+  it('faz fallback quando o campo domain não existe no schema', async () => {
+    mocks.mockHeaders = new Headers({ 'x-tenant-id': 'demo' });
+    mocks.getSessionMock.mockResolvedValue(undefined);
+    mocks.findFirstMock
+      .mockRejectedValueOnce(new Error('Unknown argument `domain`'))
+      .mockResolvedValueOnce({ id: BigInt(9) });
+
+    const { getTenantIdFromRequest } = await import('../../src/lib/actions/auth');
+    const tenantId = await getTenantIdFromRequest();
+
+    expect(tenantId).toBe('9');
+    expect(mocks.findFirstMock).toHaveBeenCalledTimes(2);
+    expect(mocks.findFirstMock.mock.calls[1]?.[0]?.where).toEqual({ subdomain: 'demo' });
+  });
 });

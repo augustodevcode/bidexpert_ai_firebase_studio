@@ -3,9 +3,13 @@
  * @fileoverview Ações de autenticação centralizadas e seguras para uso no lado do servidor.
  * Este arquivo fornece funções para obter o contexto de autenticação e tenant
  * de uma maneira que é segura e compatível com os Server Components e Server Actions do Next.js.
+ *
+ * BDD: Manter resolução de tenant funcionando mesmo quando campos opcionais do schema não existem.
+ * TDD: Cobrir fallback de resolução de tenant ao detectar schema sem campo domain.
  */
 'use server';
 
+import { Prisma } from '@prisma/client';
 import { getSession } from '@/server/lib/session';
 import { headers } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -27,18 +31,42 @@ async function resolveTenantIdFromHeader(tenantIdFromHeader?: string | null): Pr
         return normalized;
     }
 
+    try {
+        const tenant = await prisma.tenant.findFirst({
+            where: {
+                OR: [
+                    { subdomain: normalized },
+                    { domain: normalized },
+                ],
+            },
+            select: { id: true },
+        });
+
+        if (!tenant) return null;
+        return tenant.id.toString();
+    } catch (error) {
+        if (!isDomainFieldUnsupported(error)) {
+            throw error;
+        }
+    }
+
     const tenant = await prisma.tenant.findFirst({
-        where: {
-            OR: [
-                { subdomain: normalized },
-                { domain: normalized },
-            ],
-        },
+        where: { subdomain: normalized },
         select: { id: true },
     });
 
     if (!tenant) return null;
     return tenant.id.toString();
+}
+
+function isDomainFieldUnsupported(error: unknown): boolean {
+    if (error instanceof Prisma.PrismaClientValidationError) {
+        return error.message.includes('Unknown argument `domain`');
+    }
+    if (error instanceof Error) {
+        return error.message.includes('Unknown argument `domain`');
+    }
+    return false;
 }
 
 /**
