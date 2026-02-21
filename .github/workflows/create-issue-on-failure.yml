@@ -15,7 +15,7 @@ on:
 permissions:
   contents: read
   issues: write
-  actions: read
+  actions: write
 
 jobs:
   create-failure-issue:
@@ -174,12 +174,42 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `🚨 CI/CD Failure: ${details.workflowName} - Run #${details.runNumber}`,
-              body: issueBody,
+              body: issueBody + '\n\n@copilot por favor analise e corrija esta falha.',
               labels: ['ai-fix', 'ci-cd', 'priority:high', 'automated']
             });
+
+            // Assign Copilot (best effort, should not block automation)
+            try {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: ['Copilot']
+              });
+            } catch (error) {
+              console.log(`Could not assign @copilot automatically: ${error.message}`);
+            }
             
             console.log(`Issue created: ${issue.html_url}`);
             return issue.number;
+
+      - name: Trigger AI auto-fix workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = Number(${{ steps.create_issue.outputs.result }});
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ai-agent-auto-fix.yml',
+              ref: github.context.payload.workflow_run.head_branch,
+              inputs: {
+                issue_number: String(issueNumber)
+              }
+            });
+
+            console.log(`AI auto-fix workflow dispatched for issue #${issueNumber}`);
 
       - name: Add initial comment
         uses: actions/github-script@v7
@@ -209,4 +239,4 @@ jobs:
           echo "- **Branch**: ${{ github.event.workflow_run.head_branch }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.event.workflow_run.head_sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The AI Agent will be automatically triggered to analyze and fix this issue." >> $GITHUB_STEP_SUMMARY
+          echo "The AI Agent auto-fix workflow was dispatched automatically for this issue." >> $GITHUB_STEP_SUMMARY
