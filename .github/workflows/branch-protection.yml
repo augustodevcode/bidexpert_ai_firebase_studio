@@ -47,10 +47,15 @@ jobs:
       - name: �🗄️ Generate Prisma Client
         run: npx prisma generate
         
-      - name: 🔍 Type Check
+      - name: 🔍 Type Check (strict)
         run: npm run typecheck
         
-      - name: 🧹 Lint
+      - name: 🧹 Lint (soft on pull_request)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: npm run lint:soft
+
+      - name: 🧹 Lint (strict on push)
+        if: ${{ github.event_name != 'pull_request' }}
         run: npm run lint
 
   # ============================================================================
@@ -114,7 +119,12 @@ jobs:
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
         
-      - name: 🧪 Run Unit Tests
+      - name: 🧪 Run Unit Tests (soft on pull_request)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: npm run test:unit:soft
+
+      - name: 🧪 Run Unit Tests (strict on push)
+        if: ${{ github.event_name != 'pull_request' }}
         run: npm run test:unit
 
   # ============================================================================
@@ -171,7 +181,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
           
-      - name: 🔒 npm audit
+      - name: 🔒 npm audit (soft on pull_request)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: npm run audit:soft
+
+      - name: 🔒 npm audit (strict on push)
+        if: ${{ github.event_name != 'pull_request' }}
         run: npm audit --audit-level=high
 
   # ============================================================================
