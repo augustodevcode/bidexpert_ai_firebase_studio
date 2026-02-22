@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useCurrency } from '@/contexts/currency-context';
+import CurrencyFlag from '@/components/ui/currency-flag';
 
 type HeaderCSSVars = CSSProperties & { '--header-height'?: string };
 
@@ -108,10 +109,10 @@ export default function Header({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
-  const currencyOptions: Array<{ code: 'BRL' | 'USD' | 'EUR'; label: string; flag: string }> = [
-    { code: 'BRL', label: 'Real (BRL)', flag: '🇧🇷' },
-    { code: 'USD', label: 'Dólar (USD)', flag: '🇺🇸' },
-    { code: 'EUR', label: 'Euro (EUR)', flag: '🇪🇺' },
+  const currencyOptions: Array<{ code: 'BRL' | 'USD' | 'EUR'; label: string }> = [
+    { code: 'BRL', label: 'Real (BRL)' },
+    { code: 'USD', label: 'Dólar (USD)' },
+    { code: 'EUR', label: 'Euro (EUR)' },
   ];
   
   useEffect(() => {
@@ -468,7 +469,7 @@ export default function Header({
                   onValueChange={(value) => setSelectedSearchCategorySlug(value === 'todas' ? undefined : value)}
                 >
                   <SelectTrigger
-                    className="select-header-search-category"
+                    className="select-header-search-category w-[150px] shrink-0"
                     aria-label="Selecionar Categoria de Busca"
                     data-ai-id="header-search-category-select"
                   >
@@ -579,26 +580,28 @@ export default function Header({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="btn-header-action min-w-[84px] justify-between"
+                  className="btn-header-action min-w-[84px] justify-between gap-1.5"
                   aria-label="Selecionar moeda"
                   data-ai-id="header-currency-switch"
                 >
+                  <CurrencyFlag code={currency} size={22} />
                   <span className="text-xs font-semibold" data-ai-id="header-currency-current">
                     {currency}
                   </span>
-                  <span aria-hidden="true">{currencyOptions.find((option) => option.code === currency)?.flag ?? '🇧🇷'}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44" data-ai-id="header-currency-menu">
-                {currencyOptions.map((option) => (
+              <DropdownMenuContent align="end" className="w-48" data-ai-id="header-currency-menu">
+                {currencyOptions
+                  .filter((option) => option.code !== currency)
+                  .map((option) => (
                   <DropdownMenuItem
                     key={option.code}
                     onClick={() => setCurrency(option.code)}
-                    className="flex items-center justify-between"
+                    className="flex items-center gap-2 cursor-pointer"
                     data-ai-id={`header-currency-option-${option.code.toLowerCase()}`}
                   >
-                    <span>{option.flag} {option.label}</span>
-                    <span>{currency === option.code ? '✓' : ''}</span>
+                    <CurrencyFlag code={option.code} size={22} />
+                    <span>{option.label}</span>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
