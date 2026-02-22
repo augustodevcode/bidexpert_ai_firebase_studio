@@ -1,7 +1,8 @@
 
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
-import DevInfoIndicator from '@/components/layout/dev-info-indicator'; 
+import DevInfoIndicator from '@/components/layout/dev-info-indicator';
+import AppVersionBadge from '@/components/layout/app-version-badge';
 
 export default function Footer() {
   const quickLinks = [
@@ -91,6 +92,7 @@ export default function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} BidExpert. Todos os direitos reservados.
           </p>
+          <AppVersionBadge />
           {/* O DevInfoIndicator agora é renderizado dentro de cada layout de painel */}
         </div>
       </div>

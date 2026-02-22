@@ -23,7 +23,6 @@ import {
   type MapProvider,
 } from '@/lib/map-utils';
 import BidExpertListItem from '@/components/BidExpertListItem';
-import LotCard from '@/components/cards/lot-card';
 
 // Fix for Leaflet marker icons when bundled with Next.js
 if (typeof window !== 'undefined') {
@@ -58,12 +57,57 @@ type AuctionAddressAugmented = Auction & {
 
 const isLotItem = (item: MapSearchItem): item is Lot => 'auctionId' in item;
 const isDirectSaleItem = (item: MapSearchItem): item is DirectSaleOffer => 'offerType' in item && !('auctionId' in item);
+const getMapItemKey = (item: MapSearchItem, itemType: 'lot' | 'auction' | 'direct_sale') => `${itemType}:${item.id}`;
 const getExistingCoordinates = (item: MapSearchItem): LatLngLiteral | null => {
   const candidate = item as Partial<{ latitude: number; longitude: number }>;
   if (typeof candidate.latitude === 'number' && typeof candidate.longitude === 'number') {
     return { lat: candidate.latitude, lng: candidate.longitude };
   }
   return null;
+};
+
+const buildDescriptorForItem = (item: MapSearchItem) => {
+  if (isLotItem(item)) {
+    const lot = item as LotAddressAugmented;
+    return buildLocationDescriptor({
+      latitude: null,
+      longitude: null,
+      address: lot.address ?? null,
+      city: lot.city ?? null,
+      state: lot.state ?? null,
+      zipCode: lot.zipCode ?? null,
+      country: 'Brasil',
+    });
+  }
+
+  if (isDirectSaleItem(item)) {
+    const directSale = item as DirectSaleOffer & {
+      address?: string | null;
+      city?: string | null;
+      state?: string | null;
+      zipCode?: string | null;
+    };
+    return buildLocationDescriptor({
+      latitude: null,
+      longitude: null,
+      address: directSale.address ?? null,
+      city: directSale.city ?? null,
+      state: directSale.state ?? null,
+      zipCode: directSale.zipCode ?? null,
+      country: 'Brasil',
+    });
+  }
+
+  const auction = item as AuctionAddressAugmented;
+  return buildLocationDescriptor({
+    latitude: null,
+    longitude: null,
+    address: auction.address ?? null,
+    city: auction.city ?? auction.cityName ?? null,
+    state: auction.state ?? auction.stateUf ?? null,
+    zipCode: auction.zipCode ?? null,
+    country: 'Brasil',
+  });
 };
 
 const getCategoryIcon = (category: string | undefined) => {
@@ -179,7 +223,7 @@ function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange
 
 interface MapSearchComponentProps {
   items: MapSearchItem[];
-  itemType: 'lots' | 'auctions' | 'direct_sale';
+  itemType: 'lot' | 'auction' | 'direct_sale';
   mapCenter: [number, number];
   mapZoom: number;
   onBoundsChange: (bounds: LatLngBounds) => void;
@@ -187,6 +231,7 @@ interface MapSearchComponentProps {
   fitBoundsSignal: number;
   mapSettings?: PlatformSettings['mapSettings'] | null;
   platformSettings?: PlatformSettings | null;
+  hoveredItemKey?: string | null;
 }
 
 export default function MapSearchComponent({
@@ -199,10 +244,12 @@ export default function MapSearchComponent({
   fitBoundsSignal,
   mapSettings,
   platformSettings,
+  hoveredItemKey = null,
 }: MapSearchComponentProps) {
   const [isClient, setIsClient] = useState(false);
   const [resolvedCoordinates, setResolvedCoordinates] = useState<CoordinateDictionary>({});
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const markerRefs = React.useRef<Map<string, L.Marker>>(new Map());
 
   useEffect(() => {
     setIsClient(true);
@@ -274,25 +321,43 @@ export default function MapSearchComponent({
       return <div className="text-xs text-muted-foreground">Carregando card…</div>;
     }
 
-    if (itemType === 'lots' && isLotItem(item)) {
+    if (itemType === 'lot' && isLotItem(item)) {
       return (
-        <div className="w-[300px] max-w-[360px]" data-ai-id="map-popup-lot-card">
-          <LotCard lot={item} auction={item.auction} platformSettings={platformSettings} showCountdown />
+        <div className="map-search-popup-card w-[260px] max-w-[280px]" data-ai-id="map-popup-lot">
+          <BidExpertListItem
+            item={item}
+            type="lot"
+            platformSettings={platformSettings}
+            parentAuction={item.auction}
+            density="map"
+          />
         </div>
       );
     }
 
     const popupType = itemType === 'direct_sale' ? 'direct_sale' : 'auction';
     return (
-      <div className="w-[300px] max-w-[360px]" data-ai-id={`map-popup-${popupType}`}>
+      <div className="map-search-popup-card w-[260px] max-w-[280px]" data-ai-id={`map-popup-${popupType}`}>
         <BidExpertListItem
           item={item as Lot | Auction | DirectSaleOffer}
           type={popupType}
           platformSettings={platformSettings}
+          density="map"
         />
       </div>
     );
   }, [itemType, platformSettings]);
+
+  useEffect(() => {
+    markerRefs.current.forEach((marker) => marker.closePopup());
+    if (!hoveredItemKey) {
+      return;
+    }
+    const marker = markerRefs.current.get(hoveredItemKey);
+    if (marker) {
+      marker.openPopup();
+    }
+  }, [hoveredItemKey, itemsWithCoordinates]);
 
   if (!isClient) {
     return <Skeleton className="w-full h-full rounded-lg" />;
@@ -330,13 +395,33 @@ export default function MapSearchComponent({
             return null;
           }
           const markerKey = `${item.id}-${item.latitude}-${item.longitude}`;
+          const itemKey = getMapItemKey(item, itemType);
           return (
             <Marker 
               key={markerKey} 
               position={[item.latitude, item.longitude]}
               icon={createCustomIcon(item)}
+              ref={(markerInstance) => {
+                if (markerInstance) {
+                  markerRefs.current.set(itemKey, markerInstance);
+                } else {
+                  markerRefs.current.delete(itemKey);
+                }
+              }}
+              eventHandlers={{
+                mouseover: (e) => {
+                  e.target.openPopup();
+                },
+                mouseout: (e) => {
+                  if (!hoveredItemKey || hoveredItemKey !== itemKey) {
+                    e.target.closePopup();
+                  }
+                },
+              }}
             >
-              <Popup>{renderMarkerPopup(item)}</Popup>
+              <Popup className="map-search-popup-shell" maxWidth={300} minWidth={220} autoPan={false}>
+                {renderMarkerPopup(item)}
+              </Popup>
             </Marker>
           );
         })}

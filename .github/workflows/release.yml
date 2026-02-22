@@ -1,0 +1,271 @@
+# ==============================================================================
+# GitHub Action: Semantic Release - Versionamento Automático
+# ==============================================================================
+# Trigger: Push nas branches main, demo-stable e hml
+# Responsabilidade: Analisa commits, gera versão SemVer, atualiza CHANGELOG.md,
+#   cria Git Tag e GitHub Release, injeta versão como env var para Vercel
+# ==============================================================================
+
+name: Semantic Release
+
+on:
+  push:
+    branches:
+      - main
+      - demo-stable
+      - hml
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================================================
+  # JOB 1: Quality Gate (lint + typecheck + build validation)
+  # ============================================================================
+  quality-gate:
+    name: 🔍 Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code (full history para semantic-release)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+
+      - name: 🧹 Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: 📝 Type Check
+        run: npm run typecheck
+        continue-on-error: true
+
+      - name: 🏗️ Build Validation
+        run: npm run build
+        env:
+          SESSION_SECRET: 'ci-build-secret-key-at-least-32-chars-long!'
+          NEXTAUTH_SECRET: 'ci-build-nextauth-secret-32chars!'
+
+  # ============================================================================
+  # JOB 2: Semantic Release (versão + changelog + tag + GitHub Release)
+  # ============================================================================
+  release:
+    name: 🚀 Semantic Release
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+      new_release_channel: ${{ steps.semantic.outputs.new_release_channel }}
+
+    steps:
+      - name: 📥 Checkout code (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🔖 Run Semantic Release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: 'github-actions[bot]'
+          GIT_AUTHOR_EMAIL: 'github-actions[bot]@users.noreply.github.com'
+          GIT_COMMITTER_NAME: 'github-actions[bot]'
+          GIT_COMMITTER_EMAIL: 'github-actions[bot]@users.noreply.github.com'
+        run: npx semantic-release
+
+      - name: 📊 Release Summary
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          echo "============================================"
+          echo "🎉 NOVA VERSÃO PUBLICADA!"
+          echo "============================================"
+          echo "📦 Versão: ${{ steps.semantic.outputs.new_release_version }}"
+          echo "📢 Canal: ${{ steps.semantic.outputs.new_release_channel || 'latest' }}"
+          echo "🏷️ Tag: v${{ steps.semantic.outputs.new_release_version }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "============================================"
+
+      - name: ⏭️ No Release Needed
+        if: steps.semantic.outputs.new_release_published != 'true'
+        run: |
+          echo "============================================"
+          echo "ℹ️  Nenhuma versão nova necessária."
+          echo "    Commits desde a última versão não incluem"
+          echo "    feat:, fix:, perf: ou breaking changes."
+          echo "============================================"
+
+  # ============================================================================
+  # JOB 3: Inject Version into Vercel (atualiza env var NEXT_PUBLIC_APP_VERSION)
+  # ============================================================================
+  inject-version:
+    name: 💉 Inject Version into Vercel
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🔧 Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: 💉 Set NEXT_PUBLIC_APP_VERSION on Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          BRANCH="${{ github.ref_name }}"
+          
+          echo "🔧 Injetando NEXT_PUBLIC_APP_VERSION=$VERSION para branch $BRANCH..."
+          
+          # Determinar o environment target na Vercel
+          if [ "$BRANCH" = "main" ]; then
+            TARGET="production"
+          else
+            TARGET="preview"
+          fi
+          
+          # Remover variável existente (ignora erro se não existir)
+          vercel env rm NEXT_PUBLIC_APP_VERSION "$TARGET" --yes --token="$VERCEL_TOKEN" 2>/dev/null || true
+          
+          # Adicionar nova variável
+          echo "$VERSION" | vercel env add NEXT_PUBLIC_APP_VERSION "$TARGET" --token="$VERCEL_TOKEN"
+          
+          echo "✅ NEXT_PUBLIC_APP_VERSION=$VERSION configurado para $TARGET"
+
+      - name: 🔄 Trigger Vercel Redeploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          
+          if [ "$BRANCH" = "main" ]; then
+            echo "🚀 Triggering production redeploy..."
+            vercel deploy --prod --yes --token="$VERCEL_TOKEN"
+          else
+            echo "🚀 Triggering preview redeploy for $BRANCH..."
+            vercel deploy --yes --token="$VERCEL_TOKEN"
+          fi
+
+  # ============================================================================
+  # JOB 4: Database Migration (para produção e demo)
+  # ============================================================================
+  migrate:
+    name: 🗃️ Database Migration
+    runs-on: ubuntu-latest
+    needs: release
+    if: >
+      needs.release.outputs.new_release_published == 'true' &&
+      (github.ref_name == 'main' || github.ref_name == 'demo-stable')
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+
+      - name: 🗃️ Run Prisma Migrate Deploy
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ github.ref_name == 'main' && secrets.PROD_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL_DIRECT }}
+
+      - name: ✅ Verify Migration
+        run: |
+          echo "🔍 Verificando estado do banco de dados..."
+          npx prisma migrate status
+        env:
+          DATABASE_URL: ${{ github.ref_name == 'main' && secrets.PROD_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL_DIRECT }}
+
+  # ============================================================================
+  # JOB 5: Notification
+  # ============================================================================
+  notify:
+    name: 📢 Release Notification
+    runs-on: ubuntu-latest
+    needs: [release, inject-version, migrate]
+    if: always() && needs.release.outputs.new_release_published == 'true'
+
+    steps:
+      - name: 📢 Release Report
+        run: |
+          echo "============================================"
+          echo "📋 RELEASE REPORT"
+          echo "============================================"
+          echo "📦 Versão: ${{ needs.release.outputs.new_release_version }}"
+          echo "📢 Canal: ${{ needs.release.outputs.new_release_channel || 'production' }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "🔖 Release: ${{ needs.release.result }}"
+          echo "💉 Version Inject: ${{ needs.inject-version.result || 'skipped' }}"
+          echo "🗃️ Migration: ${{ needs.migrate.result || 'skipped' }}"
+          echo "============================================"
+          
+          # Mapeamento de branch para ambiente
+          case "${{ github.ref_name }}" in
+            main)
+              echo "🌐 Ambiente: PRODUÇÃO"
+              echo "🔗 URL: https://bidexpertaifirebasestudio.vercel.app"
+              ;;
+            demo-stable)
+              echo "🌐 Ambiente: DEMONSTRAÇÃO"
+              echo "🔗 URL: https://demo-bidexpertaifirebasestudio.vercel.app"
+              ;;
+            hml)
+              echo "🌐 Ambiente: HOMOLOGAÇÃO"
+              echo "🔗 URL: https://hml-bidexpertaifirebasestudio.vercel.app"
+              ;;
+          esac

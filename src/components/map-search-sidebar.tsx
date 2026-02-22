@@ -42,6 +42,9 @@ export interface MapSearchSidebarProps {
   onForceRefresh: () => void;
   isUsingCache: boolean;
   listDensity?: 'default' | 'compact' | 'map';
+  hoveredItemKey?: string | null;
+  onItemHover?: (item: Lot | Auction | DirectSaleOffer) => void;
+  onItemHoverEnd?: () => void;
 }
 
 export default function MapSearchSidebar({
@@ -64,6 +67,9 @@ export default function MapSearchSidebar({
   onForceRefresh,
   isUsingCache,
   listDensity = 'default',
+  hoveredItemKey = null,
+  onItemHover,
+  onItemHoverEnd,
 }: MapSearchSidebarProps) {
   const showResetButton = visibleItemIds !== null;
   const activeTab = DATASET_TABS.find((tab) => tab.value === dataset);
@@ -173,7 +179,13 @@ export default function MapSearchSidebar({
           )}
           {!isLoading && !error && platformSettings && displayedItems.length > 0 && (
             displayedItems.map((item) => (
-              <div key={item.id} data-ai-id="map-search-list-item">
+              <div
+                key={item.id}
+                data-ai-id="map-search-list-item"
+                className={hoveredItemKey === `${listItemType}:${item.id}` ? 'rounded-xl ring-1 ring-primary/40' : undefined}
+                onMouseEnter={() => onItemHover?.(item)}
+                onMouseLeave={() => onItemHoverEnd?.()}
+              >
                 <BidExpertListItem
                   item={item}
                   type={listItemType}

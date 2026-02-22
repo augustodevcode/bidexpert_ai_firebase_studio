@@ -1,11 +1,27 @@
 /** @type {import('next').NextConfig} */
 
+import { readFileSync } from 'fs';
+
+// Lê versão do package.json para injetar no build
+let pkgVersion = '0.0.0-dev';
+try {
+  const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
+  pkgVersion = pkg.version || pkgVersion;
+} catch { /* ignore */ }
+
 console.log(`[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`[next.config.mjs] LOG: App Version: ${process.env.NEXT_PUBLIC_APP_VERSION || pkgVersion}`);
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const config = {
   /* config options here */
+  // Injeção de versão no build — disponível via process.env no cliente e servidor
+  env: {
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || pkgVersion,
+    NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 'local',
+    NEXT_PUBLIC_BUILD_ENV: process.env.VERCEL_ENV || process.env.NODE_ENV || 'development',
+  },
   // Output standalone para Docker/Cloud Run
   output: 'standalone',
   typescript: {

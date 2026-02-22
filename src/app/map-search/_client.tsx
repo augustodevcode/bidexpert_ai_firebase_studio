@@ -44,6 +44,10 @@ function formatSummaryLabel(count: number) {
   return `${count} ${count === 1 ? 'resultado' : 'resultados'}`;
 }
 
+function getMapSearchItemKey(item: Lot | Auction | DirectSaleOffer, listItemType: 'lot' | 'auction' | 'direct_sale') {
+  return `${listItemType}:${item.id}`;
+}
+
 function MapSearchPageContent() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
@@ -69,6 +73,7 @@ function MapSearchPageContent() {
   const [activeBounds, setActiveBounds] = useState<LatLngBounds | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(cacheSnapshot.lastUpdatedAt);
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const [hoveredItemKey, setHoveredItemKey] = useState<string | null>(null);
 
   // Advanced Filters
   const [locationFilter, setLocationFilter] = useState('');
@@ -268,6 +273,14 @@ function MapSearchPageContent() {
   const mapItemType: 'lot' | 'auction' | 'direct_sale' = searchType === 'lots' ? 'lot' : searchType === 'direct_sale' ? 'direct_sale' : 'auction';
   const listItemType: 'lot' | 'auction' | 'direct_sale' = searchType === 'lots' ? 'lot' : searchType === 'direct_sale' ? 'direct_sale' : 'auction';
 
+  const handleListItemHover = useCallback((item: Lot | Auction | DirectSaleOffer) => {
+    setHoveredItemKey(getMapSearchItemKey(item, listItemType));
+  }, [listItemType]);
+
+  const handleListItemHoverEnd = useCallback(() => {
+    setHoveredItemKey(null);
+  }, []);
+
   const datasetMeta = DATASET_METADATA[searchType];
   const lastUpdatedLabel = describeRelativeTimestamp(lastUpdatedAt);
   const mapStatus = isRefreshing ? 'Sincronizando dados em tempo real…' : lastUpdatedLabel ?? 'Aguardando sincronização';
@@ -312,7 +325,7 @@ function MapSearchPageContent() {
                   )}
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => handleModalToggle(false)} className="h-12 w-12">
+              <Button variant="ghost" size="icon" onClick={() => handleModalToggle(false)} className="h-12 w-12" data-ai-id="map-search-close-btn">
                 <X className="h-5 w-5" />
               </Button>
             </div>
@@ -405,6 +418,7 @@ function MapSearchPageContent() {
                     fitBoundsSignal={fitBoundsSignal}
                     mapSettings={platformSettings?.mapSettings ?? null}
                     platformSettings={platformSettings}
+                    hoveredItemKey={hoveredItemKey}
                   />
                 </div>
               </div>
@@ -431,6 +445,9 @@ function MapSearchPageContent() {
                   onForceRefresh={() => fetchDatasets({ silent: true })}
                   isUsingCache={Boolean(lastUpdatedAt)}
                   listDensity="map"
+                  hoveredItemKey={hoveredItemKey}
+                  onItemHover={handleListItemHover}
+                  onItemHoverEnd={handleListItemHoverEnd}
                 />
               </div>
             </div>

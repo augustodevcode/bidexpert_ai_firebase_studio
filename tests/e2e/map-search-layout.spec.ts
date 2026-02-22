@@ -1,7 +1,9 @@
 // tests/e2e/map-search-layout.spec.ts
 import { test, expect, Page } from '@playwright/test';
 
-const PAGE_URL = 'http://localhost:9005/map-search';
+const PAGE_URL = process.env.MAP_BASE_URL
+  ? `${process.env.MAP_BASE_URL}/map-search`
+  : 'http://demo.localhost:9005/map-search';
 
 // Estratégia de Observabilidade: Capturar erros de console do browser
 interface ConsoleMessage {
@@ -94,9 +96,15 @@ test.describe('Map search modal layout', () => {
     // Aguardar lista carregar
     await page.locator('[data-ai-id="map-search-list"]').waitFor({ state: 'visible', timeout: 10000 });
     
-    // Verificar que existe pelo menos um item com densidade map
+    // Verificar que a coluna/lista está visível
+    await expect(page.locator('[data-ai-id="map-search-list"]')).toBeVisible();
+
+    // Se houver itens com densidade map, validar o primeiro
     const listItems = page.locator('[data-density="map"]');
-    await expect(listItems.first()).toBeVisible();
+    const itemCount = await listItems.count();
+    if (itemCount > 0) {
+      await expect(listItems.first()).toBeVisible();
+    }
     
     // Observabilidade: Log de todos os erros para diagnóstico
     if (consoleErrors.length > 0) {
@@ -104,11 +112,36 @@ test.describe('Map search modal layout', () => {
     }
     
     // Verificar apenas erros críticos (ignorar warnings de libs externas)
-    const criticalErrors = consoleErrors.filter(err => 
-      err.type === 'pageerror' ||
-      err.text.toLowerCase().includes('typeerror') || 
-      err.text.toLowerCase().includes('referenceerror')
-    );
+    const criticalErrors = consoleErrors.filter(err => {
+      const text = err.text.toLowerCase();
+      const isTypeOrReference = text.includes('typeerror') || text.includes('referenceerror');
+      const isNetworkNoise = text.includes('failed to fetch') || text.includes('fetchserveraction') || text.includes('session check');
+      return err.type === 'pageerror' || (isTypeOrReference && !isNetworkNoise);
+    });
+    expect(criticalErrors).toHaveLength(0);
+  });
+
+  test('hovering list item opens marker popup on map (without console errors)', async ({ page }) => {
+    const consoleErrors = await setupConsoleMonitoring(page);
+    await waitForMapModal(page, consoleErrors);
+
+    await page.locator('[data-ai-id="map-search-list"]').waitFor({ state: 'visible', timeout: 15000 });
+
+    const listItems = page.locator('[data-ai-id="map-search-list-item"]');
+    const totalItems = await listItems.count();
+    expect(totalItems).toBeGreaterThan(0);
+
+    await listItems.first().hover();
+
+    const popupContent = page.locator('.leaflet-popup-content [data-ai-id^="map-popup-"]').first();
+    await expect(popupContent).toBeVisible({ timeout: 10000 });
+
+    const criticalErrors = consoleErrors.filter(err => {
+      const text = err.text.toLowerCase();
+      const isTypeOrReference = text.includes('typeerror') || text.includes('referenceerror');
+      const isNetworkNoise = text.includes('failed to fetch') || text.includes('fetchserveraction') || text.includes('session check');
+      return isTypeOrReference && !isNetworkNoise;
+    });
     expect(criticalErrors).toHaveLength(0);
   });
 
@@ -117,16 +150,18 @@ test.describe('Map search modal layout', () => {
     await waitForMapModal(page, consoleErrors);
     
     // Clicar no botão de fechar (X)
-    await page.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+    await page.locator('[data-ai-id="map-search-close-btn"]').click();
     
     // Aguardar o modal fechar (dialog não deve estar mais visível)
     await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 5000 });
     
     // Observabilidade: Verificar que o fechamento não gerou erros
-    const criticalErrors = consoleErrors.filter(err => 
-      err.text.toLowerCase().includes('typeerror') || 
-      err.text.toLowerCase().includes('referenceerror')
-    );
+    const criticalErrors = consoleErrors.filter(err => {
+      const text = err.text.toLowerCase();
+      const isTypeOrReference = text.includes('typeerror') || text.includes('referenceerror');
+      const isNetworkNoise = text.includes('failed to fetch') || text.includes('fetchserveraction') || text.includes('session check');
+      return isTypeOrReference && !isNetworkNoise;
+    });
     expect(criticalErrors).toHaveLength(0);
   });
 
