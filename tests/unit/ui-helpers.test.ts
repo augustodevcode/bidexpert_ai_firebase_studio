@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getLotDisplayPrice } from '../../src/lib/ui-helpers';
+import { getLotDisplayPrice, isAuctionInPregaoWindow } from '../../src/lib/ui-helpers';
 import { addDays, subDays } from 'date-fns';
 
 // Mock types locally to avoid complex Prisma imports in unit test if possible,
@@ -87,5 +87,62 @@ describe('getLotDisplayPrice', () => {
 
         // Assert
         expect(result).toEqual({ value: 1000, label: 'Lance Inicial' });
+    });
+});
+
+describe('isAuctionInPregaoWindow', () => {
+    it('returns true when auction is open and now is within open/end window', () => {
+        const now = new Date('2026-02-21T12:00:00Z');
+
+        const result = isAuctionInPregaoWindow(
+            {
+                status: 'ABERTO_PARA_LANCES',
+                openDate: '2026-02-21T10:00:00Z',
+                endDate: '2026-02-21T14:00:00Z',
+            },
+            now
+        );
+
+        expect(result).toBe(true);
+    });
+
+    it('returns false when auction is not ABERTO_PARA_LANCES', () => {
+        const result = isAuctionInPregaoWindow({
+            status: 'EM_BREVE',
+            openDate: '2026-02-21T10:00:00Z',
+            endDate: '2026-02-21T14:00:00Z',
+        });
+
+        expect(result).toBe(false);
+    });
+
+    it('returns false when now is before the effective opening date', () => {
+        const now = new Date('2026-02-21T08:00:00Z');
+
+        const result = isAuctionInPregaoWindow(
+            {
+                status: 'ABERTO_PARA_LANCES',
+                actualOpenDate: '2026-02-21T10:00:00Z',
+                endDate: '2026-02-21T14:00:00Z',
+            },
+            now
+        );
+
+        expect(result).toBe(false);
+    });
+
+    it('returns false when now is after end date', () => {
+        const now = new Date('2026-02-21T15:00:00Z');
+
+        const result = isAuctionInPregaoWindow(
+            {
+                status: 'ABERTO_PARA_LANCES',
+                openDate: '2026-02-21T10:00:00Z',
+                endDate: '2026-02-21T14:00:00Z',
+            },
+            now
+        );
+
+        expect(result).toBe(false);
     });
 });

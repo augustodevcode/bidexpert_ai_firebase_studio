@@ -415,3 +415,35 @@ export const getLotDisplayPrice = (lot: Lot, auction?: Auction): { value: number
     label: 'Lance Inicial'
   };
 };
+
+export interface AuctionPregaoWindowInput {
+  status?: string;
+  openDate?: Date | string | null;
+  actualOpenDate?: Date | string | null;
+  auctionDate?: Date | string | null;
+  endDate?: Date | string | null;
+}
+
+const parseOptionalDate = (date: Date | string | null | undefined): Date | null => {
+  if (!date) return null;
+  const parsed = new Date(date);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+export const isAuctionInPregaoWindow = (auction: AuctionPregaoWindowInput, referenceDate = new Date()): boolean => {
+  if (!auction || auction.status !== 'ABERTO_PARA_LANCES') {
+    return false;
+  }
+
+  const endDate = parseOptionalDate(auction.endDate);
+  if (!endDate || referenceDate > endDate) {
+    return false;
+  }
+
+  const startDate = parseOptionalDate(auction.actualOpenDate) || parseOptionalDate(auction.openDate) || parseOptionalDate(auction.auctionDate);
+  if (startDate && referenceDate < startDate) {
+    return false;
+  }
+
+  return true;
+};
