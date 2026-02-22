@@ -373,29 +373,40 @@ model Auctioneer {
 }
 
 model Bid {
-  id            BigInt     @id @default(autoincrement())
-  lotId         BigInt
-  auctionId     BigInt
-  bidderId      BigInt
-  amount        Decimal    @db.Decimal(15, 2)
-  timestamp     DateTime   @default(now())
+  id              BigInt     @id @default(autoincrement())
+  lotId           BigInt
+  auctionId       BigInt
+  bidderId        BigInt
+  amount          Decimal    @db.Decimal(15, 2)
+  timestamp       DateTime   @default(now())
   
   // Status Fields
-  status        BidStatus @default(ATIVO)
-  cancelledAt   DateTime?
-  isAutoBid     Boolean    @default(false)
+  status          BidStatus @default(ATIVO)
+  cancelledAt     DateTime?
+  isAutoBid       Boolean    @default(false)
   
-  bidderDisplay String?
-  tenantId      BigInt
-  Auction       Auction    @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  User          User       @relation(fields: [bidderId], references: [id], onDelete: Cascade)
-  Lot           Lot        @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  Tenant        Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bidderDisplay   String?
+  tenantId        BigInt
 
+  // V2 Monitor Pregão - Idempotency & Audit
+  idempotencyKey  String?    @db.VarChar(128)
+  clientTimestamp  DateTime?
+  ipAddress       String?    @db.VarChar(45)
+  userAgent       String?    @db.VarChar(512)
+  bidOrigin       BidOrigin  @default(MANUAL)
+  bidderAlias     String?    @db.VarChar(64)
+
+  Auction         Auction    @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  User            User       @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+  Lot             Lot        @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  Tenant          Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([idempotencyKey, tenantId])
   @@index([auctionId])
   @@index([bidderId])
   @@index([lotId])
   @@index([tenantId])
+  @@index([lotId, timestamp])
 }
 
 model BiddingSettings {
@@ -406,6 +417,9 @@ model BiddingSettings {
   biddingInfoCheckIntervalSeconds Int?             @default(1)
   defaultStageDurationDays        Int?             @default(7)
   defaultDaysBetweenStages        Int?             @default(1)
+  // V2 Monitor Pregão
+  proxyBiddingEnabled             Boolean          @default(true)
+  softCloseTriggerMinutes         Int              @default(3)
   PlatformSettings                PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
 }
 
@@ -707,6 +721,9 @@ model Lot {
   depositGuaranteeAmount   Decimal?             @db.Decimal(15, 2)
   depositGuaranteeInfo     String?              @db.Text
   requiresDepositGuarantee Boolean?             @default(false)
+  // V2 Monitor Pregão
+  reservePrice             Decimal?             @db.Decimal(15, 2)
+  saleMode                 LotSaleMode          @default(LEILAO)
   AssetsOnLots             AssetsOnLots[]
   Bid                      Bid[]
   Auction                  Auction              @relation(fields: [auctionId], references: [id], onDelete: Cascade)
@@ -1049,6 +1066,10 @@ model RealtimeSettings {
   lawyerSubscriptionPrice   Int?
   lawyerPerUsePrice         Int?
   lawyerRevenueSharePercent Decimal?         @db.Decimal(5, 2)
+  // V2 Monitor Pregão - Admin Toggles
+  communicationStrategy     CommunicationStrategy @default(WEBSOCKET)
+  videoStrategy             VideoStrategy         @default(DISABLED)
+  idempotencyStrategy       IdempotencyStrategy   @default(SERVER_HASH)
   PlatformSettings          PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
 }
 
@@ -1262,6 +1283,7 @@ model Tenant {
   ParticipationHistory   ParticipationHistory[]
   PaymentMethod         PaymentMethod[]
   WonLot                WonLot[]
+  BidIdempotencyLog     BidIdempotencyLog[]
 }
 
 model TenantInvoice {
@@ -2242,6 +2264,53 @@ enum Asset_occupationStatus {
   UNOCCUPIED
   UNCERTAIN
   SHARED_POSSESSION
+}
+
+// V2 Monitor Pregão - New Enums
+enum BidOrigin {
+  MANUAL
+  AUTO_BID
+  PROXY
+  API
+}
+
+enum CommunicationStrategy {
+  WEBSOCKET
+  POLLING
+}
+
+enum VideoStrategy {
+  HLS
+  WEBRTC
+  DISABLED
+}
+
+enum IdempotencyStrategy {
+  SERVER_HASH
+  CLIENT_UUID
+}
+
+enum LotSaleMode {
+  LEILAO
+  VENDA_DIRETA
+  LANCE_CONDICIONAL
+}
+
+// V2 Monitor Pregão - Idempotency Log
+model BidIdempotencyLog {
+  id              BigInt   @id @default(autoincrement())
+  idempotencyKey  String   @db.VarChar(128)
+  tenantId        BigInt
+  lotId           BigInt
+  bidderId        BigInt
+  bidId           BigInt?
+  status          String   @default("PROCESSED") @db.VarChar(20)
+  createdAt       DateTime @default(now())
+  Tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([idempotencyKey, tenantId])
+  @@index([lotId, bidderId])
+  @@index([tenantId])
 }
 
 // AUDIT & OBSERVABILITY 360

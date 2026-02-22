@@ -57,6 +57,9 @@ const BiddingSettingsSchema = z.object({
   instantBiddingEnabled: z.boolean().default(true),
   getBidInfoInstantly: z.boolean().default(true),
   biddingInfoCheckIntervalSeconds: z.coerce.number().int().min(1).max(60).default(1),
+  // V2 Monitor Pregão
+  proxyBiddingEnabled: z.boolean().default(true),
+  softCloseTriggerMinutes: z.coerce.number().int().min(1).max(30).default(3),
 });
 
 // Schema para IdMasks
@@ -132,6 +135,11 @@ const RealtimeSettingsSchema = z.object({
     lawyerSubscriptionPrice: z.coerce.number().int().min(0).optional().nullable(),
     lawyerPerUsePrice: z.coerce.number().int().min(0).optional().nullable(),
     lawyerRevenueSharePercent: z.coerce.number().min(0).max(100).optional().nullable(),
+
+    // V2 Monitor Pregão - Admin Toggles
+    communicationStrategy: z.enum(['WEBSOCKET', 'POLLING']).default('WEBSOCKET'),
+    videoStrategy: z.enum(['HLS', 'WEBRTC', 'DISABLED']).default('DISABLED'),
+    idempotencyStrategy: z.enum(['SERVER_HASH', 'CLIENT_UUID']).default('SERVER_HASH'),
 });
 
 // Schema para Marketing > Publicidade do Site
