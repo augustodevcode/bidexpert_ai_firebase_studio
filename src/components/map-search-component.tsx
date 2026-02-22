@@ -66,53 +66,6 @@ const getExistingCoordinates = (item: MapSearchItem): LatLngLiteral | null => {
   return null;
 };
 
-/**
- * Builds a location descriptor from any MapSearchItem,
- * normalising the address fields from Lot, Auction, and DirectSaleOffer shapes.
- */
-const buildDescriptorForItem = (item: MapSearchItem) => {
-  if (isLotItem(item)) {
-    const lot = item as LotAddressAugmented;
-    return buildLocationDescriptor({
-      latitude: null,
-      longitude: null,
-      address: lot.address ?? null,
-      city: lot.city ?? null,
-      state: lot.state ?? null,
-      zipCode: lot.zipCode ?? null,
-      country: 'Brasil',
-    });
-  }
-  if (isDirectSaleItem(item)) {
-    const ds = item as DirectSaleOffer & {
-      address?: string | null;
-      city?: string | null;
-      state?: string | null;
-      zipCode?: string | null;
-    };
-    return buildLocationDescriptor({
-      latitude: null,
-      longitude: null,
-      address: ds.address ?? null,
-      city: ds.city ?? null,
-      state: ds.state ?? null,
-      zipCode: ds.zipCode ?? null,
-      country: 'Brasil',
-    });
-  }
-  // Auction
-  const auction = item as AuctionAddressAugmented;
-  return buildLocationDescriptor({
-    latitude: null,
-    longitude: null,
-    address: auction.address ?? null,
-    city: auction.city ?? auction.cityName ?? null,
-    state: auction.state ?? auction.stateUf ?? null,
-    zipCode: auction.zipCode ?? null,
-    country: 'Brasil',
-  });
-};
-
 const getCategoryIcon = (category: string | undefined) => {
   const normalized = category?.toLowerCase() || '';
   if (normalized.includes('veiculo') || normalized.includes('carro') || normalized.includes('moto') || normalized.includes('caminhao')) return <Car />;
@@ -382,11 +335,6 @@ export default function MapSearchComponent({
               key={markerKey} 
               position={[item.latitude, item.longitude]}
               icon={createCustomIcon(item)}
-              eventHandlers={{
-                mouseover: (e) => {
-                  e.target.openPopup();
-                }
-              }}
             >
               <Popup>{renderMarkerPopup(item)}</Popup>
             </Marker>

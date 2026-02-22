@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Minimize2, Compass, Zap, Signal, Filter, MapPin, Tag, DollarSign, X, RefreshCcw } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Minimize2, Compass, Zap, Signal, Filter, MapPin, Tag, DollarSign, X } from 'lucide-react';
 import MapSearchSidebar from '@/components/map-search-sidebar';
 import type { Lot, Auction, PlatformSettings, DirectSaleOffer } from '@/types';
 import { getAuctions } from '@/app/admin/auctions/actions';
@@ -284,161 +285,159 @@ function MapSearchPageContent() {
     e.preventDefault();
   }, []);
 
-  if (!isModalOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[9999] bg-background flex flex-col overflow-hidden" data-ai-id="map-search-modal" role="dialog" aria-modal="true" aria-label="Mapa Inteligente BidExpert">
-      {/* Header Section */}
-      <header className="flex-none h-16 border-b bg-card flex items-center justify-between px-4 shadow-sm z-10">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold" data-ai-id="map-search-title">Mapa Inteligente BidExpert</h1>
-          <div className="hidden md:flex items-center gap-2">
-            <Badge variant="secondary" data-ai-id="map-search-dataset-label">{datasetMeta.label}</Badge>
-            <Badge variant="secondary" data-ai-id="map-search-results-count">{resultsLabel}</Badge>
-            {activeBounds && (
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20" data-ai-id="map-search-filtered-badge">
-                <Zap className="w-3 h-3 mr-1" /> Área filtrada
-              </Badge>
-            )}
-          </div>
-        </div>
-        <Button variant="ghost" size="icon" onClick={() => handleModalToggle(false)} data-ai-id="map-search-close-btn">
-          <X className="w-5 h-5" />
-        </Button>
-      </header>
+    <Dialog open={isModalOpen} onOpenChange={handleModalToggle}>
+      <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background/95 p-0 shadow-2xl">
+        <div className="flex h-full flex-col">
+          {/* Header Section */}
+          <header className="relative h-[160px] w-full overflow-hidden">
+            <Image 
+              src="/uploads/sample-images/image1.png" 
+              alt="Mapa inteligente BidExpert" 
+              fill 
+              className="object-cover" 
+              priority 
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent" />
+            <div className="relative z-10 flex h-full items-center justify-between px-8">
+              <div className="flex flex-col gap-3">
+                <h1 className="text-3xl font-bold text-foreground">Mapa Inteligente BidExpert</h1>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="border-border/40 bg-surface/80">{datasetMeta.label}</Badge>
+                  <Badge variant="outline" className="border-border/40 bg-surface/80">{resultsLabel}</Badge>
+                  {activeBounds && (
+                    <Badge variant="outline" className="border-border/40 bg-surface/80">
+                      <Zap className="mr-1 h-3.5 w-3.5" /> Área filtrada
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => handleModalToggle(false)} className="h-12 w-12">
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </header>
 
-      {/* Main Content - 3 Columns */}
-      <div className="flex-1 flex overflow-hidden" data-ai-id="map-search-content">
-        {/* Column 1: Filters (Left) */}
-        <aside className="w-80 flex-none border-r bg-card overflow-y-auto p-4 flex flex-col gap-6" data-ai-id="map-search-filters-column">
-          <div>
-            <h2 className="font-semibold mb-4 flex items-center gap-2">
-              <Filter className="w-4 h-4" /> Filtros Avançados
-            </h2>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Localização</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          {/* Filters Bar */}
+          <div className="border-t border-border/40 bg-panel/70 px-8 py-5">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Cidade ou Estado" 
+                  className="pl-9 bg-background/50 border-border/60" 
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                />
+              </div>
+              <div className="relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="pl-9 bg-background/50 border-border/60">
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as Categorias</SelectItem>
+                    <SelectItem value="veiculo">Veículos</SelectItem>
+                    <SelectItem value="imovel">Imóveis</SelectItem>
+                    <SelectItem value="equipamento">Equipamentos</SelectItem>
+                    <SelectItem value="informatica">Informática</SelectItem>
+                    <SelectItem value="judicial">Judicial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Cidade ou Estado" 
-                    className="pl-9"
-                    value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
-                    data-ai-id="map-filter-location"
+                    type="number" 
+                    placeholder="Preço mín" 
+                    className="pl-9 bg-background/50 border-border/60" 
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                  />
+                </div>
+                <div className="relative flex-1">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="number" 
+                    placeholder="Preço máx" 
+                    className="pl-9 bg-background/50 border-border/60" 
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={triggerFitBounds}
+                className="border-border/60 bg-background/50"
+              >
+                <Filter className="mr-2 h-4 w-4" /> Limpar filtros
+              </Button>
+            </div>
+          </div>
+
+          {/* Main Content - 70/30 Split */}
+          <div className="flex-1 overflow-hidden p-6">
+            <div className="grid h-full gap-6 xl:grid-cols-[7fr_3fr]">
+              {/* Map Section - 70% */}
+              <div className="relative order-2 xl:order-1 flex min-h-[560px] flex-1 rounded-[2.5rem] border border-border/40 bg-surface/60 shadow-haze">
+                <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-map-panel opacity-50" aria-hidden />
+                <div className="absolute top-5 right-5 z-10 flex flex-wrap gap-3">
+                  <Button variant="mapGhost" size="sm" onClick={triggerFitBounds} className="h-10">
+                    <Compass className="mr-2 h-4 w-4" /> Recentrar mapa
+                  </Button>
+                </div>
+                <div className="absolute bottom-5 left-6 z-10 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="border-border/40 bg-background/40">
+                    <Signal className="mr-1 h-3.5 w-3.5" /> {mapStatus}
+                  </Badge>
+                </div>
+                <div className="relative z-0 h-full w-full rounded-[2.5rem] overflow-hidden">
+                  <MapSearchComponent
+                    items={advancedFilteredItems}
+                    itemType={mapItemType}
+                    mapCenter={mapCenter}
+                    mapZoom={mapZoom}
+                    onBoundsChange={handleBoundsChange}
+                    onItemsInViewChange={handleVisibleItemsChange}
+                    fitBoundsSignal={fitBoundsSignal}
+                    mapSettings={platformSettings?.mapSettings ?? null}
+                    platformSettings={platformSettings}
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Categoria</label>
-                <div className="relative">
-                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="pl-9" data-ai-id="map-filter-category-trigger">
-                      <SelectValue placeholder="Categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as Categorias</SelectItem>
-                      <SelectItem value="veiculo">Veículos</SelectItem>
-                      <SelectItem value="imovel">Imóveis</SelectItem>
-                      <SelectItem value="equipamento">Equipamentos</SelectItem>
-                      <SelectItem value="informatica">Informática</SelectItem>
-                      <SelectItem value="judicial">Judicial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Sidebar Section - 30% */}
+              <div className="order-1 xl:order-2 h-full">
+                <MapSearchSidebar
+                  searchTerm={searchTerm}
+                  onSearchTermChange={setSearchTerm}
+                  onSubmitSearch={handleSearch}
+                  dataset={searchType}
+                  onDatasetChange={handleDatasetChange}
+                  isLoading={isLoading}
+                  error={error}
+                  platformSettings={platformSettings}
+                  displayedItems={displayedItems}
+                  resultsLabel={`${resultsLabel} · ${datasetMeta.label}`}
+                  visibleItemIds={visibleItemIds}
+                  activeBounds={activeBounds}
+                  onResetFilters={triggerFitBounds}
+                  listItemType={listItemType}
+                  lastUpdatedLabel={lastUpdatedLabel}
+                  isRefreshingDatasets={isRefreshing}
+                  onForceRefresh={() => fetchDatasets({ silent: true })}
+                  isUsingCache={Boolean(lastUpdatedAt)}
+                  listDensity="map"
+                />
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Faixa de Preço</label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                      type="number" 
-                      placeholder="Mín" 
-                      className="pl-9"
-                      value={priceMin}
-                      onChange={(e) => setPriceMin(e.target.value)}
-                      data-ai-id="map-filter-price-min"
-                    />
-                  </div>
-                  <div className="relative flex-1">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                      type="number" 
-                      placeholder="Máx" 
-                      className="pl-9"
-                      value={priceMax}
-                      onChange={(e) => setPriceMax(e.target.value)}
-                      data-ai-id="map-filter-price-max"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Button 
-                variant="outline" 
-                onClick={triggerFitBounds}
-                className="w-full mt-4"
-                data-ai-id="map-filter-clear-btn"
-              >
-                <RefreshCcw className="w-4 h-4 mr-2" /> Limpar filtros
-              </Button>
             </div>
           </div>
-        </aside>
-
-        {/* Column 2: List (Middle) */}
-        <section className="w-[450px] flex-none border-r bg-muted/10 overflow-hidden flex flex-col" data-ai-id="map-search-list-column">
-          <MapSearchSidebar
-            searchTerm={searchTerm}
-            onSearchTermChange={setSearchTerm}
-            onSubmitSearch={handleSearch}
-            dataset={searchType}
-            onDatasetChange={handleDatasetChange}
-            isLoading={isLoading}
-            error={error}
-            platformSettings={platformSettings}
-            displayedItems={displayedItems}
-            resultsLabel={`${resultsLabel} · ${datasetMeta.label}`}
-            visibleItemIds={visibleItemIds}
-            activeBounds={activeBounds}
-            onResetFilters={triggerFitBounds}
-            listItemType={listItemType}
-            lastUpdatedLabel={lastUpdatedLabel}
-            isRefreshingDatasets={isRefreshing}
-            onForceRefresh={() => fetchDatasets({ silent: true })}
-            isUsingCache={Boolean(lastUpdatedAt)}
-            listDensity="map"
-          />
-        </section>
-
-        {/* Column 3: Map (Right) */}
-        <main className="flex-1 relative" data-ai-id="map-display-column">
-          <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
-            <Button variant="secondary" size="sm" onClick={triggerFitBounds} className="shadow-md" data-ai-id="map-recenter-btn">
-              <Compass className="w-4 h-4 mr-2" /> Recentrar mapa
-            </Button>
-            <Badge variant="secondary" className="shadow-md justify-center" data-ai-id="map-status-badge">
-              <Signal className="w-3 h-3 mr-1" /> {mapStatus}
-            </Badge>
-          </div>
-          <MapSearchComponent
-            items={advancedFilteredItems}
-            itemType={mapItemType}
-            mapCenter={mapCenter}
-            mapZoom={mapZoom}
-            onBoundsChange={handleBoundsChange}
-            onItemsInViewChange={handleVisibleItemsChange}
-            fitBoundsSignal={fitBoundsSignal}
-            mapSettings={platformSettings?.mapSettings ?? null}
-            platformSettings={platformSettings}
-          />
-        </main>
-      </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

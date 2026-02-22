@@ -1,9 +1,7 @@
 // tests/e2e/map-search-layout.spec.ts
 import { test, expect, Page } from '@playwright/test';
 
-const PAGE_URL = process.env.MAP_BASE_URL
-  ? `${process.env.MAP_BASE_URL}/map-search`
-  : 'http://demo.localhost:9005/map-search';
+const PAGE_URL = 'http://localhost:9005/map-search';
 
 // Estratégia de Observabilidade: Capturar erros de console do browser
 interface ConsoleMessage {
@@ -69,18 +67,17 @@ test.describe('Map search modal layout', () => {
     expect(criticalErrors, `Encontrados ${criticalErrors.length} erros críticos no console: ${JSON.stringify(criticalErrors, null, 2)}`).toHaveLength(0);
   });
 
-  test('modal has layout with map, sidebar and filters columns (without console errors)', async ({ page }) => {
+  test('modal has 70/30 grid layout with map and sidebar (without console errors)', async ({ page }) => {
     const consoleErrors = await setupConsoleMonitoring(page);
     await waitForMapModal(page, consoleErrors);
     
-    // Verificar que o container de conteúdo existe (3 colunas: filtros, lista, mapa)
-    const contentContainer = page.locator('[data-ai-id="map-search-content"]');
-    await expect(contentContainer).toBeVisible();
+    // Verificar que o grid existe
+    const gridContainer = page.locator('.xl\\:grid-cols-\\[7fr_3fr\\]');
+    await expect(gridContainer).toBeVisible();
     
-    // Verificar que as colunas principais existem
-    await expect(page.locator('[data-ai-id="map-search-filters-column"]')).toBeVisible();
-    await expect(page.locator('[data-ai-id="map-search-list-column"]')).toBeVisible();
-    await expect(page.locator('[data-ai-id="map-display-column"]')).toBeVisible();
+    // Verificar que tem pelo menos 2 filhos (mapa e sidebar)
+    const gridChildren = gridContainer.locator('> div');
+    await expect(gridChildren).toHaveCount(2);
     
     // Observabilidade: Verificar ausência de erros críticos
     const criticalErrors = consoleErrors.filter(err => 
@@ -90,40 +87,26 @@ test.describe('Map search modal layout', () => {
     expect(criticalErrors).toHaveLength(0);
   });
 
-  test('renders list sidebar with map density items (without console errors)', async ({ page }) => {
+  test('renders list items with map density (without console errors)', async ({ page }) => {
     const consoleErrors = await setupConsoleMonitoring(page);
     await waitForMapModal(page, consoleErrors);
     
-    // Aguardar lista carregar (scroll area da sidebar)
-    await page.locator('[data-ai-id="map-search-list"]').waitFor({ state: 'visible', timeout: 15000 });
+    // Aguardar lista carregar
+    await page.locator('[data-ai-id="map-search-list"]').waitFor({ state: 'visible', timeout: 10000 });
     
-    // Aguardar que os dados carreguem ou o estado vazio apareça
-    await page.waitForTimeout(3000);
-    
-    // Verificar que a coluna de lista está visível (independente de ter itens)
-    await expect(page.locator('[data-ai-id="map-search-list-column"]')).toBeVisible();
-    
-    // Se houver itens com densidade map, verificar
+    // Verificar que existe pelo menos um item com densidade map
     const listItems = page.locator('[data-density="map"]');
-    const itemCount = await listItems.count();
-    if (itemCount > 0) {
-      await expect(listItems.first()).toBeVisible();
-      console.log(`✅ ${itemCount} item(s) com data-density=map encontrado(s)`);
-    } else {
-      // Estado vazio é aceitável se não há dados no banco de teste
-      console.log('ℹ️ Nenhum item com data-density=map - banco pode estar vazio');
-    }
+    await expect(listItems.first()).toBeVisible();
     
     // Observabilidade: Log de todos os erros para diagnóstico
     if (consoleErrors.length > 0) {
       console.log('⚠️ Erros de console detectados:', consoleErrors);
     }
     
-    // Verificar apenas erros críticos (ignorar warnings de libs externas e erros de rede/fetch)
+    // Verificar apenas erros críticos (ignorar warnings de libs externas)
     const criticalErrors = consoleErrors.filter(err => 
       err.type === 'pageerror' ||
-      // TypeErrors JS reais (não erros de rede/fetch que contêm "TypeError" no texto)
-      (err.text.toLowerCase().includes('typeerror') && !err.text.toLowerCase().includes('failed to fetch') && !err.text.toLowerCase().includes('fetchserveraction')) ||
+      err.text.toLowerCase().includes('typeerror') || 
       err.text.toLowerCase().includes('referenceerror')
     );
     expect(criticalErrors).toHaveLength(0);
@@ -133,22 +116,17 @@ test.describe('Map search modal layout', () => {
     const consoleErrors = await setupConsoleMonitoring(page);
     await waitForMapModal(page, consoleErrors);
     
-    // Clicar no botão de fechar usando data-ai-id específico
-    await page.locator('[data-ai-id="map-search-close-btn"]').click();
+    // Clicar no botão de fechar (X)
+    await page.getByRole('button').filter({ has: page.locator('svg') }).first().click();
     
     // Aguardar o modal fechar (dialog não deve estar mais visível)
-    await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 8000 });
+    await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 5000 });
     
-    // Observabilidade: Verificar que o fechamento não gerou erros críticos
-    // Excluir erros de rede/server actions esperados em dev (Failed to fetch, session check)
-    const criticalErrors = consoleErrors.filter(err => {
-      const text = err.text.toLowerCase();
-      const isTypeOrReference = text.includes('typeerror') || text.includes('referenceerror');
-      const isNetworkNoise = text.includes('failed to fetch') ||
-        text.includes('fetchserveraction') ||
-        text.includes('session check');
-      return isTypeOrReference && !isNetworkNoise;
-    });
+    // Observabilidade: Verificar que o fechamento não gerou erros
+    const criticalErrors = consoleErrors.filter(err => 
+      err.text.toLowerCase().includes('typeerror') || 
+      err.text.toLowerCase().includes('referenceerror')
+    );
     expect(criticalErrors).toHaveLength(0);
   });
 
