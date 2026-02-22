@@ -7,4 +7,6 @@
 - [ ] Se alterei consultas Prisma que alimentam a interface pública (`where`, `orderBy`, `take`), também atualizei as strings de documentação (Doc-as-Code) correspondentes no frontend no mesmo commit.
 
 ## Evidências
-- Prints, logs, links de execução ou relatório de testes.
+- [ ] Anexei prints/screenshot(s) de sucesso dos testes Playwright (obrigatório).
+- [ ] Incluí link do relatório de execução (Playwright/Vitest UI) com cenário validado.
+- PR sem evidências visuais de sucesso dos testes não deve ser aprovado nem mergeado.

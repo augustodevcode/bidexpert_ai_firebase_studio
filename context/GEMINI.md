@@ -66,6 +66,15 @@ Para diagnósticos precisos, o assistente **DEVE**:
 2. Executar esses testes sempre que houver suspeita de erro no client-side (ex: tela branca, botões que não funcionam).
 3. Cruzar os logs do console do navegador com os logs do servidor para identificar a causa raiz (ex: erro 500 no fetch -> log de erro no servidor).
 
+## 7.3 Evidência Obrigatória para Aprovação de PR (Playwright)
+
+**REGRA OBRIGATÓRIA:** Todo pedido de aprovação/merge de PR deve conter evidências visuais de sucesso dos testes:
+1. Print(s)/screenshot(s) do Playwright com execução bem-sucedida.
+2. Link do relatório de execução (Playwright ou Vitest UI com provider Playwright).
+3. Cenário validado descrito de forma objetiva.
+
+Sem evidência visual, o PR não deve ser aprovado nem mergeado.
+
 ## 8. DIRETRIZA CRÍTICA: Lazy Compilation vs Pre-Build em Next.js
 
 **REGRA OBRIGATÓRIA:** Ao executar testes E2E ou ao iniciar o servidor para ambientes de teste/produção, SEMPRE usar **pré-compilação** em vez de lazy compilation em dev mode.

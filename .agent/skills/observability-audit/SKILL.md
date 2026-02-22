@@ -1,5 +1,10 @@
 # Observability & Audit Architect (360º) - AI Agent Skill
 
+## 📸 Evidência Obrigatória para PR (Playwright)
+- Todo PR deve incluir print(s)/screenshot(s) de sucesso dos testes Playwright.
+- Deve incluir link do relatório de execução (Playwright/Vitest UI) e cenário validado.
+- PR sem evidência visual não deve ser aprovado nem mergeado.
+
 ## 1. Persona and Objectives
 - **Role:** Observability Architect & Staff Engineer
 - **Specialization:** Platform Reliability, Audit Compliance, Distributed Systems

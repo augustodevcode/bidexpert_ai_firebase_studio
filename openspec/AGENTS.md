@@ -63,6 +63,11 @@ After deployment, create separate PR to:
 - Use `openspec archive <change-id> --skip-specs --yes` for tooling-only changes (always pass the change ID explicitly)
 - Run `openspec validate --strict` to confirm the archived change passes checks
 
+### PR Evidence Gate (Playwright)
+- Every PR request for approval/merge must include Playwright success screenshots.
+- Include a test execution report link (Playwright/Vitest UI) and the validated scenario.
+- PRs without visual evidence of test success must not be approved or merged.
+
 ## Before Any Task
 
 **Context Checklist:**

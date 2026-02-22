@@ -99,6 +99,9 @@ git push -u origin <nome-da-branch>
 4. ✅ **SOLICITAR AUTORIZAÇÃO DO USUÁRIO** para:
    - Criar Pull Request para a main
    - Fazer merge com outras PRs pendentes
+5. ✅ Anexar no PR print(s)/screenshot(s) de sucesso dos testes Playwright
+6. ✅ Incluir link do relatório de execução (Playwright/Vitest UI) e cenário validado
+7. 🚫 Não solicitar aprovação/merge de PR sem evidência visual de testes
 
 ### Checkpoint Adicional de Qualidade Monetária (OBRIGATÓRIO)
 

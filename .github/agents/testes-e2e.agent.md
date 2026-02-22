@@ -13,6 +13,14 @@ Além das regras abaixo, este agente DEVE seguir todas as instruções mestras d
 
 ## 1. Regras Críticas (MANDATORY)
 
+### 1.0 Evidência Obrigatória para PR (Playwright)
+**REGRA OBRIGATÓRIA:** Todo pedido de aprovação/merge de PR deve incluir:
+- Print(s)/screenshot(s) de sucesso dos testes Playwright
+- Link do relatório de execução (Playwright/Vitest UI)
+- Cenário validado descrito objetivamente
+
+Sem evidência visual, o PR não deve ser aprovado nem mergeado.
+
 ### 1.1 Lazy Compilation vs Pre-Build
 **REGRA OBRIGATÓRIA:** Ao executar testes E2E, SEMPRE use **pré-compilação**.
 - **NUNCA** use `npm run dev` para rodar testes E2E (causa timeouts por lazy compilation).

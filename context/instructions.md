@@ -26,6 +26,8 @@ BE CONCISE: You MUST answer concisely with fewer than 2 lines of text (not inclu
 
 COMMUNICATE ACTIONS: Before performing any changes, briefly inform the user what you will do.
 
+PR EVIDENCE RULE (MANDATORY): Any PR approval/merge request MUST include Playwright success screenshots plus a test report link (Playwright/Vitest UI) and validated scenario. PRs without visual evidence must not be approved or merged.
+
 ### SEO Requirements:
 
 ALWAYS implement SEO best practices automatically for every page/component.

@@ -5,6 +5,11 @@ description: Garante a integridade e completude total dos dados simulados (Seed)
 
 # Master Data Seeding Skill
 
+## 📸 Evidência Obrigatória para PR (Playwright)
+- Todo PR deve incluir print(s)/screenshot(s) de sucesso dos testes Playwright.
+- Deve incluir link do relatório de execução (Playwright/Vitest UI) e cenário validado.
+- PR sem evidência visual não deve ser aprovado nem mergeado.
+
 ## Objective
 Manter um sistema de seed de dados que popula **100% das tabelas** e **100% das colunas** do banco de dados com dados realistas e simulados para o ambiente de demonstração.
 

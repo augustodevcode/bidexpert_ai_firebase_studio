@@ -5,6 +5,11 @@ description: Biblioteca de mídia administrativa com galeria, vínculos de entid
 
 # Media Library (Google Photos-like) ÔÇö Skill
 
+## 📸 Evidência Obrigatória para PR (Playwright)
+- Todo PR deve incluir print(s)/screenshot(s) de sucesso dos testes Playwright.
+- Deve incluir link do relatório de execução (Playwright/Vitest UI) e cenário validado.
+- PR sem evidência visual não deve ser aprovado nem mergeado.
+
 > **Scope**: Biblioteca de M├¡dia admin com galeria responsiva, entidades vinculadas, editor de imagem Canvas API, lightbox, e storage dual-adapter.
 
 ## Arquitetura

@@ -5,6 +5,11 @@ description: 'This skill enables visual inspection of websites running locally o
 
 # Web Design Reviewer
 
+## 📸 Evidência Obrigatória para PR (Playwright)
+- Todo PR deve incluir print(s)/screenshot(s) de sucesso dos testes Playwright.
+- Deve incluir link do relatório de execução (Playwright/Vitest UI) e cenário validado.
+- PR sem evidência visual não deve ser aprovado nem mergeado.
+
 This skill enables visual inspection and validation of website design quality, identifying and fixing issues at the source code level.
 
 ## Scope of Application
