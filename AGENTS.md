@@ -10,7 +10,7 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 **REGRA CRÍTICA:** Todo agente AI DEVE:
 1. Criar branch própria antes de qualquer alteração: `git checkout -b <tipo>/<descricao>-<timestamp>`
 2. Usar porta dedicada (9005, 9006, 9007...) para não conflitar com outros devs
-3. NO FINAL do chat, solicitar autorização do usuário para merge na main
+3. NO FINAL do chat, solicitar autorização do usuário para abrir PR para `demo-stable`
 
 📖 **Workflow completo:** `.agent/workflows/parallel-development.md`
 
@@ -19,11 +19,11 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 
 ## 🚀 Inicialização da Aplicação (OBRIGATÓRIO)
 
-**REGRA:** Para iniciar a aplicação BidExpert, SEMPRE utilize a task do VSCode:
-- **Task Padrão:** `BidExpert App - Porta 9005 (Full Logging)`
-- **Comando Alternativo:** `node .vscode/start-9005.js`
-- **❌ NUNCA use:** `npm run dev` diretamente (não garante logging completo)
-- **Acesso:** Após iniciar, sempre abra `http://demo.localhost:9005` no Simple Browser
+**REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre:
+- **Comando recomendado:** `node .vscode/start-9006-dev.js` (ou task equivalente de DEV)
+- **Porta:** usar a porta pretendida se livre; se ocupada, usar a próxima disponível (9006, 9007, 9008...)
+- **Banco DEV:** `bidexpert_dev` (isolado do DEMO)
+- **Acesso:** usar URL com slug do ambiente e a porta escolhida (ex.: `http://dev.localhost:9006`)
 
 ## 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -304,7 +304,7 @@ Este agente lida com:
 5. **SEMPRE** usar nomes de relação exatos do schema Prisma (case-sensitive)
 6. **NUNCA** redirecionar para subdomínios CRM em URLs `.vercel.app`
 7. **SEMPRE** adicionar `export const dynamic = 'force-dynamic'` em API routes dinâmicas
-8. Deploy **SOMENTE** via `git push origin main` — NUNCA via Vercel MCP direto
+8. Deploy via Git com PR: `git push origin <feature-branch>` → PR para `demo-stable`; promoção para `main` somente via PR aprovado (nunca push direto em `main`)
 
 ## 🛡️ Framework de Qualidade & Segurança (OBRIGATÓRIO)
 

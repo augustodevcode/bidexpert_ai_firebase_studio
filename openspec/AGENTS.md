@@ -11,6 +11,14 @@ Instructions for AI coding assistants using OpenSpec for spec-driven development
 - Write deltas: use `## ADDED|MODIFIED|REMOVED|RENAMED Requirements`; include at least one `#### Scenario:` per requirement
 - Validate: `openspec validate [change-id] --strict` and fix issues
 - Request approval: Do not start implementation until proposal is approved
+- Pre-PR gate: run `npm ci`, `npm run typecheck`, `npm run build`, and attach Playwright evidence before opening PR
+
+## PR Quality Gate (Mandatory)
+
+- Always run locally before opening PR: `npm ci`, `npm run typecheck`, `npm run build`.
+- If `package.json` changed, commit matching `package-lock.json` in the same commit.
+- Approval/merge request must include Playwright success screenshots and report link.
+- Do not open PR when any gate step fails.
 
 ## Three-Stage Workflow
 
@@ -467,4 +475,4 @@ Ao criar ou modificar specs que envolvam deploy, database, ou API routes no Verc
 6. **Middleware** deve tratar `*.vercel.app` como landlord domain e NUNCA redirecionar para subdomínios
 7. **API routes dinâmicas** DEVEM ter `export const dynamic = 'force-dynamic'`
 8. **Schemas Prisma duais**: alterar `schema.prisma` (MySQL) E `schema.postgresql.prisma` (PostgreSQL) simultaneamente
-9. **Deploy** SOMENTE via `git push origin main` — NUNCA via deploy direto
+9. **Deploy** via Git com PR: `git push origin <feature-branch>` → PR para `demo-stable`; promoção para `main` somente via PR aprovado (nunca push direto em `main`)

@@ -172,7 +172,7 @@ GITHUB_TOKEN=ghp_your_token_here
 ### 3. Deploy
 
 ```bash
-git push origin main
+git push origin feat/error-monitoring
 ```
 
 The system will activate automatically after deployment!

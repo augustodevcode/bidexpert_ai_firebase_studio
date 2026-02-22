@@ -5,15 +5,15 @@
 ## Objetivo do Workflow Paralelo
 
 Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **simultaneamente**, cada um com:
-- ✅ Sua própria **branch dedicada** (a partir da `main`)
+- ✅ Sua própria **branch dedicada** (a partir da `demo-stable`)
 - ✅ Sua própria **porta de desenvolvimento** (9005, 9006, 9007, etc.)
 - ✅ Seus próprios **testes isolados**
 
 ## 📋 Checklist Obrigatório no INÍCIO de Cada Task/Chat
 
-### 1. Criar Branch a partir da Main
+### 1. Criar Branch a partir da demo-stable
 ```powershell
-git fetch origin main && git checkout main && git pull origin main
+git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
 git checkout -b <tipo>/<descricao-curta>-<timestamp>
 # Tipos: feat/, fix/, chore/, docs/, test/
 # Exemplo: git checkout -b feat/auction-filter-20260131-1430
@@ -23,7 +23,8 @@ git checkout -b <tipo>/<descricao-curta>-<timestamp>
 ```powershell
 netstat -ano | findstr "9005 9006 9007 9008"
 # Usar primeira porta livre: 9005, 9006, 9007, 9008...
-$env:PORT=<porta-livre>; npm run dev
+$env:PORT=<porta-livre>
+node .vscode/start-9006-dev.js
 ```
 
 ### 3. Durante o Desenvolvimento
@@ -42,7 +43,7 @@ $env:PORT=<porta-livre>; npm run dev
 **OBRIGATÓRIO:** Antes de finalizar, o agente DEVE:
 1. ✅ Garantir todos os testes passaram
 2. ✅ Fazer push de todos os commits na branch
-3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request e faça merge na main?"
+3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request para demo-stable?"
 4. ⏳ Aguardar autorização explícita antes de qualquer merge
 
 ### 5. Proteções Absolutas
@@ -278,7 +279,7 @@ You are AI BidExpert, an AI editor that creates and modifies web applications. Y
 
 Interface Layout: On the left hand side of the interface, there's a chat window where users chat with you. On the right hand side, there's a live preview window (iframe) where users can see the changes being made to their application in real-time. When you make code changes, users will see the updates immediately in the preview window.
 
-Technology Stack: AI BidExpert projects are built on top of React, Vite, Tailwind CSS, and TypeScript. Therefore it is not possible for AI BidExpert to support other frameworks like Angular, Vue, Svelte, Next.js, native mobile apps, etc.
+Technology Stack: BidExpert projects are built with Next.js, React, TypeScript, Tailwind CSS, Prisma and related tooling. Instructions that prohibit Next.js are invalid for this repository.
 
 Backend Limitations: AI BidExpert also cannot run backend code directly. It cannot run Python, Node.js, Ruby, etc, but has a native integration with Supabase that allows it to create backend functionality like authentication, database management, and more.
 
@@ -917,11 +918,11 @@ Since the codebase is a template, you should not assume they have set up anythin
 - Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
 
 # Inicialização da Aplicação (OBRIGATÓRIO)
-**REGRA:** Para iniciar a aplicação BidExpert, SEMPRE utilize a task do VSCode:
-- **Task Padrão:** `BidExpert App - Porta 9005 (Full Logging)`
-- **Comando:** Execute via VSCode Tasks ou `node .vscode/start-9005.js`
-- **Nunca use:** `npm run dev` diretamente, pois não garante logging completo e configuração de porta
-- **Acesso:** Após iniciar, sempre abra `http://demo.localhost:9005` no Simple Browser
+**REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre.
+- **Comando recomendado:** `node .vscode/start-9006-dev.js` (ou task equivalente de DEV)
+- **Porta:** usar a porta pretendida se livre; se ocupada, usar a próxima disponível (9006, 9007, 9008...)
+- **Banco DEV:** `bidexpert_dev` (isolado do DEMO)
+- **Acesso:** usar URL com slug do ambiente e a porta escolhida (ex.: `http://dev.localhost:9006`)
 
 # 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -1105,7 +1106,8 @@ Get-Content .next/BUILD_ID
 ### Deploy via Git (NUNCA via MCP direto)
 ```powershell
 # ✅ CORRETO
-git push origin main
+git push origin <feature-branch>
+# abrir PR para demo-stable; promoção para main apenas via PR aprovado
 
 # ❌ INCORRETO - Nunca usar deploy direto
 ```

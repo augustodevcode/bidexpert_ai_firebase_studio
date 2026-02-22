@@ -93,10 +93,9 @@ Copy-Item -Path "prisma/schema.mysql.prisma" -Destination "prisma/schema.prisma"
 git add .
 git commit -m "feat/fix: descrição das alterações"
 
-# 3. Push para GitHub (CI/CD faz o deploy automaticamente)
-git push origin main
-# Ou para branch de feature:
+# 3. Push para branch de feature (CI/CD valida automaticamente)
 git push origin feat/minha-feature
+# Depois abrir PR para `demo-stable`; promoção para `main` somente via PR aprovado
 
 # 4. Vercel detecta o push e inicia o build automaticamente
 # Acompanhar em: https://vercel.com/augustos-projects-d51a961f/bidexpert_ai_firebase_studio

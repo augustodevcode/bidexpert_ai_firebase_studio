@@ -81,7 +81,7 @@ Or do it manually:
 ### Step 5: Deploy
 
 ```bash
-git push origin main
+git push origin feat/sentry-monitoring
 ```
 
 Sentry will automatically start monitoring your application after the next deployment!
@@ -133,7 +133,7 @@ GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx  # Create at github.com/settings/tokens
 Deploy your changes so the `/api/log-drain` endpoint is live:
 
 ```bash
-git push origin main
+git push origin feat/log-drain-monitoring
 ```
 
 Wait for deployment to complete and note your deployment URL (e.g., `https://bidexpert-xxx.vercel.app`)
