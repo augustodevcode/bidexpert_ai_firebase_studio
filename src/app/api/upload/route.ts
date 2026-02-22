@@ -1,18 +1,16 @@
 // src/app/api/upload/route.ts
 /**
  * @fileoverview Rota de API para o upload de arquivos de mídia.
- * Este endpoint lida com a recepção de arquivos via POST, realiza validações
- * de tamanho e tipo, salva os arquivos fisicamente no servidor em um diretório
- * público e cria um registro correspondente no banco de dados através do MediaService.
- * Ele é projetado para ser chamado por componentes de front-end como o `AdvancedMediaUploadPage`.
+ * Usa o StorageAdapter (LocalStorageAdapter em dev, VercelBlobAdapter em produção).
+ * Em dev: salva em public/uploads/. Em Vercel: salva no Vercel Blob com prefixo de ambiente.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { MediaService } from '@/services/media.service';
+import { getStorageAdapter } from '@/lib/storage';
 import type { MediaItem } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
+
+export const dynamic = 'force-dynamic';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -48,16 +46,10 @@ export async function POST(request: NextRequest) {
     }
     
     const mediaService = new MediaService();
+    const storage = getStorageAdapter(request.headers.get('host'));
     const uploadedItems: Partial<MediaItem>[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
     const publicUrls: string[] = [];
-
-    const relativeUploadDir = path.join('public', 'uploads', uploadPath);
-    const absoluteUploadDir = path.join(process.cwd(), relativeUploadDir);
-
-    if (!existsSync(absoluteUploadDir)) {
-        await mkdir(absoluteUploadDir, { recursive: true });
-    }
 
     for (const file of files) {
        if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -72,17 +64,20 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-        const uniqueFilename = `${uuidv4()}-${sanitizedFileName}`;
-        
-        await writeFile(path.join(absoluteUploadDir, uniqueFilename), buffer);
-        
-        const publicUrl = path.join('/uploads', uploadPath, uniqueFilename).replace(/\\/g, '/');
+        let uploadResult: { url: string; storagePath: string };
+        try {
+          uploadResult = await storage.upload(buffer, file.name, uploadPath, file.type);
+        } catch (storageErr) {
+          uploadErrors.push({ fileName: file.name, message: `Falha no storage: ${String(storageErr)}` });
+          continue;
+        }
+
+        const { url: publicUrl, storagePath: storedPath } = uploadResult;
         publicUrls.push(publicUrl);
 
         const itemData: Partial<Omit<MediaItem, 'id'>> = {
             fileName: file.name,
-            storagePath: publicUrl,
+            storagePath: storedPath,
             title: path.basename(file.name, path.extname(file.name)),
             altText: path.basename(file.name, path.extname(file.name)),
             mimeType: file.type,

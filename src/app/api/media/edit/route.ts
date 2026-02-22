@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
     const ext = file.type === 'image/png' ? '.png' : file.type === 'image/webp' ? '.webp' : '.jpg';
     const fileName = `edited-${uuidv4()}${ext}`;
 
-    // Upload to storage
-    const { url, storagePath } = await storage.upload(buffer, fileName, file.type || 'image/png', 'media');
+    // Upload to storage — ordem: (buffer, fileName, uploadPath, mimeType)
+    const { url, storagePath } = await storage.upload(buffer, fileName, 'media', file.type || 'image/png');
 
     if (mode === 'overwrite' && originalId) {
       // Overwrite: update existing MediaItem

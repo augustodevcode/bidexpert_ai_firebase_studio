@@ -61,7 +61,11 @@ export async function deleteMediaItem(id: string): Promise<{ success: boolean; m
   try {
     const item = await mediaService.getMediaItemById(id);
     if (item?.storagePath) {
-      const storage = getStorageAdapter();
+      // Server Actions não têm acesso ao request; usa headers() do Next.js
+      const { headers } = await import('next/headers');
+      const headersList = await headers();
+      const host = headersList.get('host');
+      const storage = getStorageAdapter(host);
       await storage.delete(item.storagePath);
     }
   } catch (err) {
