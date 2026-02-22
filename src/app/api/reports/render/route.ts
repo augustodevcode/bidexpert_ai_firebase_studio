@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { serializeBigInt } from '@/lib/utils';
 import Handlebars from 'handlebars';
 import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
@@ -299,22 +300,6 @@ async function fetchDataForContext(
     default:
       throw new Error(`Contexto de dados não suportado: ${context}`);
   }
-}
-
-// Helper para serializar BigInt
-function serializeBigInt(obj: any): any {
-  if (obj === null || obj === undefined) return obj;
-  if (typeof obj === 'bigint') return obj.toString();
-  if (obj instanceof Date) return obj.toISOString();
-  if (typeof obj === 'object') {
-    if (Array.isArray(obj)) {
-      return obj.map(serializeBigInt);
-    }
-    return Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [k, serializeBigInt(v)])
-    );
-  }
-  return obj;
 }
 
 // ============================================================================

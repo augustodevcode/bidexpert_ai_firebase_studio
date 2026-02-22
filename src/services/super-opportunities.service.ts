@@ -14,6 +14,7 @@
 import { prisma } from '@/lib/prisma';
 import { isPast } from 'date-fns';
 import type { Lot } from '@/types';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 interface SuperOpportunitiesOptions {
   maxDaysUntilClosing?: number;
@@ -204,5 +205,5 @@ export async function getSuperOpportunitiesLots(
     })
     .slice(0, limit);
 
-  return validatedLots as Lot[];
+  return sanitizeResponse(validatedLots) as Lot[];
 }

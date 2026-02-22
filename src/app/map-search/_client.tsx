@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Minimize2, Compass, Zap, Signal, Filter, MapPin, Tag, DollarSign, X } from 'lucide-react';
 import MapSearchSidebar from '@/components/map-search-sidebar';
 import type { Lot, Auction, PlatformSettings, DirectSaleOffer } from '@/types';
@@ -301,6 +302,9 @@ function MapSearchPageContent() {
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalToggle}>
       <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background/95 p-0 shadow-2xl">
+        <VisuallyHidden>
+          <DialogTitle>Mapa Inteligente BidExpert</DialogTitle>
+        </VisuallyHidden>
         <div className="flex h-full flex-col">
           {/* Header Section */}
           <header className="relative h-[160px] w-full overflow-hidden">
