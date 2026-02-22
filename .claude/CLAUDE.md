@@ -89,3 +89,57 @@ Ao ativar qualquer agent:
 - Setup: `.agent/agents/admin-architect-qa.SETUP-GUIDE.md`
 - Usage: `.agent/agents/admin-architect-qa.USAGE.md`
 - Quick Ref: `.agent/agents/admin-architect-qa.quick-reference.md`
+
+---
+
+## 🔖 CI/CD & Semantic Release Pipeline (OBRIGATÓRIO)
+
+O projeto BidExpert usa **Semantic Release** com **Conventional Commits**. Todo agente DEVE seguir este padrão.
+
+### Conventional Commits
+
+Todo commit DEVE seguir: `<tipo>(escopo opcional): descrição`
+
+| Tipo | Release | Tipo | Release |
+|------|---------|------|---------|
+| `feat` | minor (1.x.0) | `docs` | sem release |
+| `fix` | patch (1.0.x) | `style` | sem release |
+| `perf` | patch | `chore` | sem release |
+| `refactor` | patch | `test` | sem release |
+| `revert` | patch | `ci` | sem release |
+| `BREAKING CHANGE` | major (x.0.0) | `build` | sem release |
+
+**Enforcement:** commitlint (`.husky/commit-msg`) + typecheck (`.husky/pre-commit`)
+
+### Canais de Release
+
+| Branch | Canal | Versão Exemplo | Ambiente |
+|--------|-------|----------------|----------|
+| `main` | latest (produção) | `1.2.0` | PRD |
+| `demo-stable` | demo (prerelease) | `1.3.0-demo.1` | DEMO |
+| `hml` | alpha (prerelease) | `1.3.0-alpha.1` | HML |
+
+### Pipeline (`.github/workflows/release.yml`)
+
+```
+Push → Quality Gate → Semantic Release → Inject Version (Vercel) → Migrate DB → Notify
+```
+
+### Regras Críticas
+1. **SEMPRE** usar Conventional Commits (commitlint rejeita fora do padrão)
+2. **NUNCA** incluir `prisma db push` / `migrate deploy` no buildCommand Vercel
+3. **Deploy SOMENTE via git push** — NUNCA deploy direto via CLI
+4. **Alterar AMBOS schemas Prisma** ao modificar modelos
+5. **NUNCA** insira tokens ou senhas no chat; use `.env`
+
+### Arquivos-Chave
+- `.releaserc.json` — Configuração multi-canal do Semantic Release
+- `.github/workflows/release.yml` — Pipeline de 5 jobs
+- `commitlint.config.js` — Regras de conventional commits
+- `.husky/commit-msg` — Hook de validação de commits
+- `CHANGELOG.md` — Changelog automático
+- `src/components/layout/app-version-badge.tsx` — Badge de versão no Footer
+- `src/app/changelog/page.tsx` — Página de changelog SSR
+
+### Skill Detalhada
+- `.github/skills/semantic-release-cicd/SKILL.md`

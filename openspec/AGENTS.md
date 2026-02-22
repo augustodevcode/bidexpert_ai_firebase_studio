@@ -468,3 +468,62 @@ Ao criar ou modificar specs que envolvam deploy, database, ou API routes no Verc
 7. **API routes dinâmicas** DEVEM ter `export const dynamic = 'force-dynamic'`
 8. **Schemas Prisma duais**: alterar `schema.prisma` (MySQL) E `schema.postgresql.prisma` (PostgreSQL) simultaneamente
 9. **Deploy** SOMENTE via `git push origin main` — NUNCA via deploy direto
+
+## Semantic Release & Gestão de Produto (OBRIGATÓRIO)
+
+O projeto usa **Semantic Release** com **Conventional Commits** para versionamento automático. Ao criar proposals, tasks ou specs, SEMPRE considere:
+
+### Conventional Commits no OpenSpec
+
+Todo commit durante implementação de changes DEVE seguir:
+
+```
+<tipo>(escopo): descrição
+
+Tipos: feat | fix | perf | revert | refactor | docs | style | chore | test | ci | build
+```
+
+- `feat` → **minor** release (1.x.0)
+- `fix` / `perf` / `refactor` / `revert` → **patch** release (1.0.x)
+- `BREAKING CHANGE` no footer → **major** release (x.0.0)
+- `docs` / `style` / `chore` / `test` / `ci` → sem release
+
+### Canais de Release
+
+| Branch | Canal | Ambiente |
+|--------|-------|----------|
+| `main` | latest (produção) | PRD |
+| `demo-stable` | demo (prerelease) | DEMO |
+| `hml` | alpha (prerelease) | HML |
+
+### Fluxo: Change → Release
+
+```
+1. Criar branch a partir de demo-stable
+2. Implementar tasks do change (commits conventional)
+3. PR → demo-stable → Semantic Release gera versão demo
+4. Validar em DEMO
+5. PR → main → Semantic Release gera versão produção
+6. Arquivar change: openspec archive <change-id> --yes
+```
+
+### Pipeline (`.github/workflows/release.yml`)
+
+Ativado automaticamente em push para `main`, `demo-stable` ou `hml`:
+
+| Job | Responsabilidade |
+|-----|-----------------|
+| Quality Gate | lint + typecheck + build |
+| Semantic Release | Versão + CHANGELOG + Tag + GitHub Release |
+| Inject Version | Atualiza `NEXT_PUBLIC_APP_VERSION` no Vercel |
+| Migrate DB | `prisma migrate deploy` (main e demo-stable) |
+| Notify | Relatório final |
+
+### Tasks.md — Incluir Versão
+
+Ao criar `tasks.md` para um change, incluir como último item:
+```markdown
+- [ ] Garantir commits seguem Conventional Commits
+- [ ] Push para branch → CI Quality Gate verde
+- [ ] PR aprovado → Semantic Release gera versão automaticamente
+```

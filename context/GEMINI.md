@@ -142,12 +142,129 @@ The agent MUST detect that it is running on Windows and AVOID using Linux-specif
 - Use ES modules (import/export) syntax, not CommonJS (require)
 - Destructure imports when possible (eg. import { foo } from 'bar')
 
-# CI/CD & Deploy Automation
-Para gerenciar a esteira de deploy BidExpert (DEV/HML/PRD):
-1. Use a pasta `scripts/ci-cd` para scripts de automação.
-2. Execute `setup-github-secrets.ps1` para validar variáveis antes de deploys manuais.
-3. Não insira tokens ou senhas diretamente no chat; use o arquivo .env e leia de lá.
-4. Para criar novos workflows, siga o padrão de Environments (Homologation/Production) do GitHub Actions.
+# CI/CD & Deploy Automation — Semantic Release Pipeline
+
+> **REGRA OBRIGATÓRIA:** O projeto BidExpert usa **Semantic Release** com **Conventional Commits** para versionamento automático, changelog e deploy. Todo agente AI DEVE seguir este padrão.
+
+## Visão Geral da Esteira
+
+```
+[Commit] → [Push] → [Quality Gate] → [Semantic Release] → [Inject Version] → [Migrate DB] → [Notify]
+```
+
+### Branches e Canais de Release
+
+| Branch | Canal | Versão Exemplo | Ambiente | URL Vercel |
+|--------|-------|----------------|----------|------------|
+| `main` | latest (produção) | `1.2.0` | PRD | `bidexpertaifirebasestudio.vercel.app` |
+| `demo-stable` | demo (prerelease) | `1.3.0-demo.1` | DEMO | `demo-bidexpertaifirebasestudio.vercel.app` |
+| `hml` | alpha (prerelease) | `1.3.0-alpha.1` | HML | `hml-bidexpertaifirebasestudio.vercel.app` |
+
+### Fluxo de Branches
+
+```
+hml (homologação, alpha) → demo-stable (demonstração, demo) → main (produção, latest)
+```
+
+Feature branches são criadas a partir de `demo-stable` e mergeadas de volta via PR.
+
+## Conventional Commits (OBRIGATÓRIO)
+
+Todo commit DEVE seguir o formato:
+```
+<tipo>(escopo opcional): descrição curta
+
+corpo opcional
+
+BREAKING CHANGE: descrição (se aplicável)
+```
+
+### Tipos Permitidos e Efeito na Versão
+
+| Tipo | Descrição | Release |
+|------|-----------|---------|
+| `feat` | Nova funcionalidade | **minor** (1.x.0) |
+| `fix` | Correção de bug | **patch** (1.0.x) |
+| `perf` | Melhoria de performance | **patch** |
+| `revert` | Reversão de commit | **patch** |
+| `refactor` | Refatoração sem mudança de comportamento | **patch** |
+| `docs` | Documentação | sem release |
+| `style` | Formatação, espaçamento | sem release |
+| `chore` | Manutenção geral | sem release |
+| `test` | Testes | sem release |
+| `ci` | Mudanças em CI/CD | sem release |
+| `build` | Mudanças no build | sem release |
+| `BREAKING CHANGE` | Quebra de compatibilidade | **major** (x.0.0) |
+
+### Exemplos
+```bash
+feat(auction): add discount filter for super opportunities
+fix(login): resolve tenant resolution on localhost
+perf(search): optimize query with indexed columns
+refactor(middleware): extract tenant detection to helper
+docs(readme): update deployment instructions
+chore(deps): update prisma to 5.23
+ci(release): add migration job to pipeline
+```
+
+### Enforcement
+- **commitlint**: Rejeita commits fora do padrão automaticamente (hook `.husky/commit-msg`)
+- **pre-commit**: Roda typecheck antes de aceitar o commit (hook `.husky/pre-commit`)
+
+## Pipeline de Release (`.github/workflows/release.yml`)
+
+O workflow é ativado automaticamente via push em `main`, `demo-stable` ou `hml`:
+
+| Job | Responsabilidade |
+|-----|-----------------|
+| **Quality Gate** | lint + typecheck + build validation |
+| **Semantic Release** | Analisa commits → gera versão SemVer → atualiza CHANGELOG.md → cria Git Tag + GitHub Release |
+| **Inject Version** | Atualiza `NEXT_PUBLIC_APP_VERSION` no Vercel e faz redeploy |
+| **Migrate DB** | Roda `prisma migrate deploy` (somente main e demo-stable) |
+| **Notify** | Relatório final com versão, ambiente e URLs |
+
+## Configuração (`.releaserc.json`)
+
+- **Plugins**: commit-analyzer, release-notes-generator, changelog, git, github
+- **Canais**: `main` (latest), `demo-stable` (demo), `hml` (alpha)
+- **Notas PT-BR**: Funcionalidades, Correções, Performance, Reversões, Refatorações
+
+## Variáveis de Versão (Exibição no Footer)
+
+O `next.config.mjs` injeta estas env vars no build:
+- `NEXT_PUBLIC_APP_VERSION`: Versão semântica (ex: `1.2.0`)
+- `NEXT_PUBLIC_BUILD_ID`: Identificador único do build
+- `NEXT_PUBLIC_BUILD_ENV`: Valor de `NODE_ENV`
+
+O componente `AppVersionBadge` no Footer exibe estas informações com link para `/changelog`.
+
+## Changelog Automático
+
+- Gerado automaticamente pelo semantic-release em `CHANGELOG.md`
+- Seções em PT-BR: Funcionalidades, Correções, Performance, Reversões, Refatorações
+- Acessível via página `/changelog` (SSR)
+
+## Secrets Necessários no GitHub
+
+| Secret | Uso |
+|--------|-----|
+| `GITHUB_TOKEN` | Semantic release (tags, releases) — automático |
+| `VERCEL_TOKEN` | Deploy e injeção de versão no Vercel |
+| `VERCEL_ORG_ID` | Identificação da organização Vercel |
+| `VERCEL_PROJECT_ID` | Identificação do projeto Vercel |
+| `PROD_DATABASE_URL_DIRECT` | Migração DB produção |
+| `DEMO_DATABASE_URL_DIRECT` | Migração DB demonstração |
+
+## Regras Críticas
+
+1. **NUNCA** incluir `prisma db push`, `prisma migrate deploy` no `buildCommand` do Vercel — migrações rodam via CI/CD
+2. **SEMPRE** usar Conventional Commits — commits fora do padrão são rejeitados pelo commitlint
+3. **Deploy via Git Push** — NUNCA deploy direto via CLI Vercel em produção
+4. **Alterar AMBOS schemas Prisma** ao modificar modelos (`schema.prisma` + `schema.postgresql.prisma`)
+5. Use `scripts/ci-cd` para scripts de automação auxiliares
+6. Execute `setup-github-secrets.ps1` para validar variáveis antes de deploys manuais
+7. **NUNCA** insira tokens ou senhas no chat; use `.env` e leia de lá
+8. Para novos workflows, siga o padrão de Environments (Homologation/Production) do GitHub Actions
 
 # Workflow
 - Be sure to typecheck when you’re done making a series of code changes

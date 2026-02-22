@@ -306,5 +306,44 @@ Este agente lida com:
 7. **SEMPRE** adicionar `export const dynamic = 'force-dynamic'` em API routes dinâmicas
 8. Deploy **SOMENTE** via `git push origin main` — NUNCA via Vercel MCP direto
 
+## Semantic Release & CI/CD Pipeline
+Para tarefas relacionadas a versionamento automático, conventional commits, changelog e pipeline de release:
+`E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\skills\semantic-release-cicd\SKILL.md`
+
+Este agente lida com:
+- Versionamento automático via Semantic Release multi-canal
+- Conventional Commits (commitlint + Husky)
+- Pipeline: Quality Gate → Release → Inject Version → Migrate DB → Notify
+- Changelog automático em PT-BR
+- Exibição de versão no Footer (`AppVersionBadge`)
+
+### Canais de Release
+
+| Branch | Canal | Versão Exemplo | Ambiente |
+|--------|-------|----------------|----------|
+| `main` | latest (produção) | `1.2.0` | PRD |
+| `demo-stable` | demo (prerelease) | `1.3.0-demo.1` | DEMO |
+| `hml` | alpha (prerelease) | `1.3.0-alpha.1` | HML |
+
+### Conventional Commits (OBRIGATÓRIO)
+
+Todo commit DEVE seguir: `<tipo>(escopo): descrição`
+- `feat` → minor | `fix`/`perf`/`refactor`/`revert` → patch | `BREAKING CHANGE` → major
+- `docs`/`style`/`chore`/`test`/`ci` → sem release
+- **Enforcement**: commitlint (`.husky/commit-msg`) + typecheck (`.husky/pre-commit`)
+
+### Arquivos-Chave
+
+| Arquivo | Propósito |
+|---------|-----------|
+| `.releaserc.json` | Configuração multi-canal do Semantic Release |
+| `.github/workflows/release.yml` | Pipeline de 5 jobs (quality-gate, release, inject-version, migrate, notify) |
+| `commitlint.config.js` | Regras de conventional commits |
+| `.husky/commit-msg` | Hook de validação de commits |
+| `.husky/pre-commit` | Hook de typecheck |
+| `CHANGELOG.md` | Changelog automático |
+| `src/components/layout/app-version-badge.tsx` | Badge de versão no Footer |
+| `src/app/changelog/page.tsx` | Página de changelog SSR |
+
 ## Conflitos de regras
  - Sempre que houver conflito de instruções, peça para o usuário clarificar antes de proceguir.

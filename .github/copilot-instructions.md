@@ -262,12 +262,73 @@ The agent MUST detect that it is running on Windows and AVOID using Linux-specif
 - Use ES modules (import/export) syntax, not CommonJS (require)
 - Destructure imports when possible (eg. import { foo } from 'bar')
 
-# CI/CD & Deploy Automation
-Para gerenciar a esteira de deploy BidExpert (DEV/HML/PRD):
-1. Use a pasta `scripts/ci-cd` para scripts de automação.
-2. Execute `setup-github-secrets.ps1` para validar variáveis antes de deploys manuais.
-3. Não insira tokens ou senhas diretamente no chat; use o arquivo .env e leia de lá.
-4. Para criar novos workflows, siga o padrão de Environments (Homologation/Production) do GitHub Actions.
+# CI/CD & Deploy Automation — Semantic Release Pipeline
+
+> **REGRA OBRIGATÓRIA:** O projeto usa **Semantic Release** com **Conventional Commits**. Todo agente AI DEVE seguir este padrão.
+
+## Conventional Commits (OBRIGATÓRIO)
+
+Todo commit DEVE seguir: `<tipo>(escopo opcional): descrição`
+
+| Tipo | Release | Tipo | Release |
+|------|---------|------|---------|
+| `feat` | minor (1.x.0) | `docs` | sem release |
+| `fix` | patch (1.0.x) | `style` | sem release |
+| `perf` | patch | `chore` | sem release |
+| `refactor` | patch | `test` | sem release |
+| `revert` | patch | `ci` | sem release |
+| `BREAKING CHANGE` | major (x.0.0) | `build` | sem release |
+
+**Enforcement:** commitlint (`.husky/commit-msg`) + typecheck (`.husky/pre-commit`)
+
+## Canais de Release
+
+| Branch | Canal | Versão Exemplo | Ambiente | URL Vercel |
+|--------|-------|----------------|----------|------------|
+| `main` | latest | `1.2.0` | PRD | `bidexpertaifirebasestudio.vercel.app` |
+| `demo-stable` | demo | `1.3.0-demo.1` | DEMO | `demo-bidexpertaifirebasestudio.vercel.app` |
+| `hml` | alpha | `1.3.0-alpha.1` | HML | `hml-bidexpertaifirebasestudio.vercel.app` |
+
+## Pipeline (`.github/workflows/release.yml`)
+
+```
+Push → Quality Gate → Semantic Release → Inject Version (Vercel) → Migrate DB → Notify
+```
+
+| Job | Responsabilidade |
+|-----|-----------------|
+| Quality Gate | lint + typecheck + build validation |
+| Semantic Release | Versão + CHANGELOG + Tag + GitHub Release |
+| Inject Version | `NEXT_PUBLIC_APP_VERSION` no Vercel + redeploy |
+| Migrate DB | `prisma migrate deploy` (main e demo-stable) |
+| Notify | Relatório final |
+
+## Variáveis de Versão
+
+- `NEXT_PUBLIC_APP_VERSION`: Versão semântica
+- `NEXT_PUBLIC_BUILD_ID`: Hash do build
+- `NEXT_PUBLIC_BUILD_ENV`: Ambiente
+- Exibidas no Footer via `AppVersionBadge` → link `/changelog`
+
+## Secrets Necessários
+
+| Secret | Uso |
+|--------|-----|
+| `GITHUB_TOKEN` | Semantic release (automático) |
+| `VERCEL_TOKEN` | Deploy + inject version |
+| `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` | Identificação Vercel |
+| `PROD_DATABASE_URL_DIRECT` | Migração produção |
+| `DEMO_DATABASE_URL_DIRECT` | Migração DEMO |
+
+## Regras Críticas
+
+1. **NUNCA** incluir `prisma db push` / `migrate deploy` no buildCommand do Vercel
+2. **SEMPRE** usar Conventional Commits (commitlint rejeita fora do padrão)
+3. **Deploy SOMENTE via git push** — NUNCA deploy direto via CLI
+4. **Alterar AMBOS schemas Prisma** ao modificar modelos
+5. Use `scripts/ci-cd` para scripts de automação auxiliares
+6. **NUNCA** insira tokens ou senhas no chat; use `.env`
+7. Para novos workflows, siga o padrão de Environments do GitHub Actions
 
 # Workflow
 - Be sure to typecheck when you’re done making a series of code changes

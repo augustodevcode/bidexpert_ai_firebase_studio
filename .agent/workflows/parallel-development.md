@@ -143,3 +143,68 @@ git log --oneline --graph --all -20
 - **Nunca** fazer merge sem autorização explícita
 - **Sempre** rodar testes antes de solicitar merge
 - **Sempre** documentar alterações no commit/PR
+
+## 🔖 Semantic Release & Conventional Commits
+
+> **REGRA OBRIGATÓRIA:** Todos os commits DEVEM seguir o padrão **Conventional Commits** para que o Semantic Release funcione corretamente.
+
+### Formato do Commit
+
+```
+<tipo>(escopo opcional): descrição curta em inglês ou PT-BR
+```
+
+### Tipos e Efeito na Versão
+
+| Tipo | Efeito | Exemplo |
+|------|--------|---------|
+| `feat` | minor (1.x.0) | `feat(auction): add discount filter` |
+| `fix` | patch (1.0.x) | `fix(login): resolve tenant resolution` |
+| `perf` | patch | `perf(search): optimize indexed query` |
+| `refactor` | patch | `refactor(middleware): extract helper` |
+| `revert` | patch | `revert: undo previous change` |
+| `docs` | sem release | `docs(readme): update deploy guide` |
+| `style` | sem release | `style: fix formatting` |
+| `chore` | sem release | `chore(deps): update packages` |
+| `test` | sem release | `test(e2e): add login scenarios` |
+| `ci` | sem release | `ci(release): add migration job` |
+| `BREAKING CHANGE` | major (x.0.0) | Footer com `BREAKING CHANGE: ...` |
+
+### Enforcement Automático
+
+- **commitlint** (`.husky/commit-msg`): Rejeita commits fora do padrão
+- **pre-commit** (`.husky/pre-commit`): Roda typecheck antes de aceitar
+
+### Canais de Release por Branch
+
+| Branch | Canal | Versão Exemplo | Ambiente |
+|--------|-------|----------------|----------|
+| `main` | latest (produção) | `1.2.0` | PRD |
+| `demo-stable` | demo (prerelease) | `1.3.0-demo.1` | DEMO |
+| `hml` | alpha (prerelease) | `1.3.0-alpha.1` | HML |
+
+### Fluxo de Feature → Release
+
+```
+1. git checkout -b feat/minha-feature (a partir de demo-stable)
+2. Desenvolver + commits conventional (feat:, fix:, etc.)
+3. git push origin feat/minha-feature
+4. Criar PR → demo-stable (pipeline roda Quality Gate)
+5. Merge PR → Semantic Release gera versão demo (ex: 1.3.0-demo.1)
+6. Quando estável: PR demo-stable → main → Semantic Release gera versão produção (ex: 1.3.0)
+```
+
+### Pipeline Automático (`.github/workflows/release.yml`)
+
+Ativado em push para `main`, `demo-stable` ou `hml`:
+
+```
+Quality Gate → Semantic Release → Inject Version (Vercel) → Migrate DB → Notify
+```
+
+### Variáveis de Versão no App
+
+- `NEXT_PUBLIC_APP_VERSION`: Versão semântica
+- `NEXT_PUBLIC_BUILD_ID`: Identificador do build
+- `NEXT_PUBLIC_BUILD_ENV`: Ambiente (development/production)
+- Exibidas no Footer via `AppVersionBadge` com link para `/changelog`

@@ -272,3 +272,40 @@ npx prisma validate
 - [copilot-instructions.md](../../copilot-instructions.md) - Instruções detalhadas
 - [query-helpers.ts](../../../src/lib/prisma/query-helpers.ts) - Helpers de compatibilidade
 - [Vercel + PostgreSQL Deploy SKILL](../vercel-postgresql-deploy/SKILL.md) - Regras de deploy e compatibilidade PostgreSQL
+- [Semantic Release SKILL](../semantic-release-cicd/SKILL.md) - Pipeline de versionamento automático
+
+## Semantic Release — Mapeamento de Canais por Ambiente
+
+O projeto usa **Semantic Release** multi-canal. Cada ambiente/branch tem seu canal de release:
+
+| Ambiente | Branch | Canal Release | Versão Exemplo | Deploy Automático |
+|----------|--------|---------------|----------------|-------------------|
+| **DEV** | feature branches | Sem release | — | Local (porta 9006+) |
+| **HML** | `hml` | `alpha` (prerelease) | `1.3.0-alpha.1` | Vercel Preview |
+| **DEMO** | `demo-stable` | `demo` (prerelease) | `1.3.0-demo.1` | Vercel Preview |
+| **PRD** | `main` | `latest` (produção) | `1.3.0` | Vercel Production |
+
+### Fluxo de Promoção entre Ambientes
+
+```
+DEV (feature branch, porta 9006)
+  → PR para demo-stable → DEMO (Semantic Release: 1.3.0-demo.1)
+    → PR para main → PRD (Semantic Release: 1.3.0)
+```
+
+### Conventional Commits (OBRIGATÓRIO)
+
+Todo commit DEVE usar formato: `<tipo>(escopo): descrição`
+
+- `feat` → minor | `fix`/`perf`/`refactor` → patch | `BREAKING CHANGE` → major
+- `docs`/`style`/`chore`/`test`/`ci` → sem release
+
+### Variáveis de Versão Injetadas
+
+| Variável | Descrição | Injetada Por |
+|----------|-----------|-------------|
+| `NEXT_PUBLIC_APP_VERSION` | Versão semântica (ex: `1.2.0`) | CI/CD → Vercel env |
+| `NEXT_PUBLIC_BUILD_ID` | Hash do build | `next.config.mjs` |
+| `NEXT_PUBLIC_BUILD_ENV` | `NODE_ENV` | `next.config.mjs` |
+
+Exibidas no Footer via `AppVersionBadge` com link para `/changelog`.

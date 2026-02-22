@@ -297,3 +297,43 @@ Antes de fazer push para `main` (deploy):
 - [middleware.ts](../../../src/middleware.ts) — Middleware multi-tenant
 - [prisma.ts](../../../src/lib/prisma.ts) — Instância Prisma com ITSM logging
 - [multi-environment SKILL](../multi-environment/SKILL.md) — Isolamento de ambientes
+- [Semantic Release SKILL](../semantic-release-cicd/SKILL.md) — Pipeline de versionamento automático
+
+## Integração com Semantic Release Pipeline
+
+O deploy Vercel é integrado ao **Semantic Release** (`release.yml`). O fluxo completo é:
+
+```
+Push → Quality Gate → Semantic Release → Inject Version (Vercel) → Migrate DB → Notify
+```
+
+### Deploy Automático por Branch
+
+| Branch | Ação no Vercel | Migração DB |
+|--------|---------------|-------------|
+| `main` | Production deploy + Inject version | `prisma migrate deploy` (PROD_DATABASE_URL_DIRECT) |
+| `demo-stable` | Preview deploy + Inject version | `prisma migrate deploy` (DEMO_DATABASE_URL_DIRECT) |
+| `hml` | Preview deploy + Inject version | Sem migração automática |
+
+### Injeção de Versão
+
+O job `inject-version` do `release.yml`:
+1. Remove `NEXT_PUBLIC_APP_VERSION` existente do Vercel
+2. Define nova versão gerada pelo Semantic Release
+3. Faz redeploy automático (production ou preview conforme branch)
+
+### Secrets Necessários
+
+| Secret | Uso no Release Pipeline |
+|--------|------------------------|
+| `VERCEL_TOKEN` | Deploy + Inject version |
+| `VERCEL_ORG_ID` | Identificação da org |
+| `VERCEL_PROJECT_ID` | Identificação do projeto |
+| `PROD_DATABASE_URL_DIRECT` | Migrate produção |
+| `DEMO_DATABASE_URL_DIRECT` | Migrate DEMO |
+
+### Regra Crítica: Migrações
+
+- **NUNCA** no build command do `vercel.json`
+- **SEMPRE** via job `migrate` do `release.yml` (após Semantic Release gerar versão)
+- O job `migrate` só roda para `main` e `demo-stable`
