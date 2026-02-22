@@ -92,3 +92,9 @@ prisma/dev.db
 .tmp-*
 check-*.js
 temp_query.sql
+
+# Reconciliation daemon logs (reports/*.md are versioned)
+reports/reconciliation/*.log
+reports/reconciliation/*.pid
+reports/reconciliation/audit-stdout-*.log
+reports/reconciliation/audit-stderr-*.log

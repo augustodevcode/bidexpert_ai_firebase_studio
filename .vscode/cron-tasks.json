@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicedoc/vscode-cron-tasks/main/schema.json",
+  "tasks": [
+    {
+      "label": "Data Reconciliation Auto Audit",
+      "task": "Data Reconciliation: Audit Once",
+      "expression": "*/45 * * * *",
+      "enabled": false,
+      "description": "Executa auditoria de reconciliação DB↔UI a cada 45 minutos. Habilite manualmente quando necessário."
+    }
+  ]
+}
