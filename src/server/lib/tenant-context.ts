@@ -210,8 +210,10 @@ export async function resolveTenant(
   let resolved: ResolvedTenant | null = null;
   
   try {
+    const isVercelDomain = /\.vercel\.app$/i.test(normalizedHost);
+
     // 1. Check if it's the landlord domain
-    if (LANDLORD_DOMAINS.includes(normalizedHost) && !pathSlug) {
+    if ((LANDLORD_DOMAINS.includes(normalizedHost) || isVercelDomain) && !pathSlug) {
       resolved = await loadTenantById(BigInt(LANDLORD_ID));
     }
     // 2. Try custom domain

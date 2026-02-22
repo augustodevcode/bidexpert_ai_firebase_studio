@@ -26,10 +26,26 @@ import type { UserProfileWithPermissions, Role, Tenant } from '@/types';
 import { UserService } from '@/services/user.service';
 
 const secretKey = process.env.SESSION_SECRET;
-const encodedKey = new TextEncoder().encode(secretKey);
+let hasWarnedInvalidSessionSecret = false;
 
-if (!secretKey || secretKey.length < 32) {
-    throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
+function getEncodedKeyOrNull(): Uint8Array | null {
+    if (!secretKey || secretKey.length < 32) {
+        if (!hasWarnedInvalidSessionSecret) {
+            console.error('[Session] SESSION_SECRET inválido ou ausente. Sessões serão ignoradas até a variável ser corrigida.');
+            hasWarnedInvalidSessionSecret = true;
+        }
+        return null;
+    }
+
+    return new TextEncoder().encode(secretKey);
+}
+
+function requireEncodedKey(): Uint8Array {
+    const key = getEncodedKeyOrNull();
+    if (!key) {
+        throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
+    }
+    return key;
 }
 
 // ============================================================================
@@ -70,12 +86,17 @@ export async function encrypt(payload: any) {
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
         .setExpirationTime('7d')
-        .sign(encodedKey);
+    .sign(requireEncodedKey());
 }
 
 export async function decrypt(session: string | undefined = '') {
     if (!session) return null;
     try {
+        const encodedKey = getEncodedKeyOrNull();
+        if (!encodedKey) {
+            return null;
+        }
+
         const { payload } = await jwtVerify(session, encodedKey, {
             algorithms: ['HS256'],
         });
