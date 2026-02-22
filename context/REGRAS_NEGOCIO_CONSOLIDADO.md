@@ -2281,3 +2281,73 @@ Gerencia dados do dashboard do investidor.
 2. Popular dados de teste
 3. Executar testes E2E
 4. Deploy em staging para validação
+
+---
+
+## RN-020: Header — Barra de Busca e Seletor de Moeda
+
+> **Data:** 2025-02-21  
+> **Branch:** `fix/search-bar-currency-flags-20260221-1945`
+
+### RN-020.1: Campo de Busca Livre no Header
+
+**Regra:** O campo de texto livre de busca (`input[data-ai-id="header-search-input"]`) DEVE estar sempre visível no header em viewports desktop (≥ 768px), com largura suficiente para exibir o placeholder "Buscar em todo o site..." sem truncamento.
+
+**Requisitos Técnicos:**
+- O `<input>` DEVE ter `min-w-0` e `w-auto` para funcionar corretamente dentro do contexto `flex-1`
+- O `<SelectTrigger>` de categoria ao lado DEVE ter `w-[150px] shrink-0` como classes utilitárias diretas (não apenas via @apply em classe semântica) para evitar conflito com `tailwind-merge`
+- 🔹 **Proibido:** Permitir que o input colapse para larguras menores que 120px em desktop
+
+**Causa-Raiz Documentada:**
+- `tailwind-merge` (usado por `cn()`) NÃO consegue resolver conflitos entre classes utilitárias e classes semânticas que usam `@apply`. Exemplo: `w-[150px]` dentro de `.select-header-search-category` via `@apply` é invisível para `tailwind-merge`, que mantém `w-full` do componente base `SelectTrigger`
+- **Solução:** Sempre aplicar classes de dimensionamento críticas como utilitárias diretas no JSX, não apenas via @apply
+
+### RN-020.2: Ícone Único de Busca no Desktop
+
+**Regra:** Em viewports desktop (≥ 768px), DEVE existir apenas UM ícone de busca visível: o ícone dentro do `<Select>` ou do formulário. O botão mobile de busca (`btn-header-action-mobile`) DEVE ser oculto via `md:!hidden`.
+
+**Requisitos Técnicos:**
+- O `.btn-header-action-mobile` DEVE usar `md:!hidden` (com `!important`) para garantir ocultação, pois `.btn-base` (definido posteriormente no CSS) aplica `inline-flex` que sobrescreve `md:hidden` comum por ordem de cascata
+- 🔹 **Proibido:** Exibir dois ícones de busca simultaneamente em desktop
+
+### RN-020.3: Seletor de Moeda com Bandeiras SVG
+
+**Regra:** O seletor de moeda no header DEVE exibir bandeiras de países como componentes SVG inline (não emojis), para consistência cross-platform.
+
+**Moedas Suportadas:**
+| Código | País | Componente | `data-ai-id` |
+|--------|------|-----------|---------------|
+| BRL | Brasil | `<BrazilFlag />` | `currency-flag-brl` |
+| USD | Estados Unidos | `<USAFlag />` | `currency-flag-usd` |
+| EUR | União Europeia | `<EUFlag />` | `currency-flag-eur` |
+
+**Comportamento do Dropdown:**
+- O trigger exibe a bandeira + código da moeda selecionada
+- O dropdown lista APENAS as moedas NÃO selecionadas (ex: se BRL está selecionado, dropdown mostra apenas USD e EUR)
+- Cada item do dropdown exibe bandeira SVG + código + nome da moeda
+
+**Requisitos Técnicos:**
+- Componente: `src/components/ui/currency-flag.tsx`
+- Cada bandeira é um SVG inline com `viewBox="0 0 120 84"`, prop `size` configurável (default: 20px)
+- Todas as bandeiras DEVEM ter `aria-label` descritivo e `data-ai-id` para testabilidade
+- 🔹 **Proibido:** Usar emojis de bandeira (renderização inconsistente entre SO/browsers)
+- 🔹 **Proibido:** Usar imagens raster (PNG/JPG) para as bandeiras (aumenta bundle size)
+
+### RN-020.4: Arquivos Modificados
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/app/semantic-classes.css` | `.input-header-search`: adicionado `min-w-0 w-auto`; `.btn-header-action-mobile`: alterado `md:hidden` → `md:!hidden` |
+| `src/components/layout/header.tsx` | Import de `CurrencyFlag`; `SelectTrigger` com `w-[150px] shrink-0` direto; dropdown de moeda com filtro e SVG flags |
+| `src/components/ui/currency-flag.tsx` | **NOVO** — Componentes SVG: `BrazilFlag`, `USAFlag`, `EUFlag`, `CurrencyFlag` |
+
+### RN-020.5: Testes E2E Obrigatórios
+
+| Cenário | `data-ai-id` | Validação |
+|---------|--------------|-----------|
+| Input de busca visível no desktop | `header-search-input` | `isVisible()` + largura > 120px |
+| Ícone único de busca no desktop | `btn-header-action-mobile` | `isHidden()` em viewport ≥ 768px |
+| Bandeira SVG no trigger de moeda | `currency-flag-brl` / `currency-flag-usd` / `currency-flag-eur` | SVG renderizado com dimensões corretas |
+| Dropdown exclui moeda selecionada | `currency-selector-trigger` | Ao abrir, listar apenas moedas não selecionadas |
+
+**Arquivo de Teste:** `tests/e2e/header-search-currency.spec.ts`
