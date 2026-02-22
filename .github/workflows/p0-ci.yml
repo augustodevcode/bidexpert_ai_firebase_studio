@@ -48,11 +48,9 @@ jobs:
         
       - name: Run Lint
         run: npm run lint
-        continue-on-error: true  # Não bloqueia por enquanto
 
       - name: Dependency Security Audit
         run: npm audit --audit-level=high
-        continue-on-error: true # Notifica mas não bloqueia por enquanto em sistemas legados
 
       - name: Build Application
         run: npm run build

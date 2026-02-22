@@ -48,10 +48,10 @@ jobs:
         run: npx prisma generate
         
       - name: 🔍 Type Check
-        run: npm run typecheck || echo "Typecheck warnings (non-blocking while legacy typing is being stabilized)"
+        run: npm run typecheck
         
       - name: 🧹 Lint
-        run: npm run lint || echo "Lint warnings (non-blocking)"
+        run: npm run lint
 
   # ============================================================================
   # JOB 2: Build Test
@@ -115,7 +115,7 @@ jobs:
         run: npx prisma generate
         
       - name: 🧪 Run Unit Tests
-        run: npm run test:unit || echo "No unit tests configured"
+        run: npm run test:unit
 
   # ============================================================================
   # JOB 4: Schema Validation (MySQL + PostgreSQL)
@@ -172,7 +172,7 @@ jobs:
           cache: 'npm'
           
       - name: 🔒 npm audit
-        run: npm audit --audit-level=high || echo "Security warnings (non-blocking for now)"
+        run: npm audit --audit-level=high
 
   # ============================================================================
   # RESULTADO: Gate de Qualidade

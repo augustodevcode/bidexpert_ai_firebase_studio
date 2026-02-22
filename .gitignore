@@ -32,6 +32,7 @@ firebase-debug.log
 # local env files
 .env*.local
 .env
+.env.vercel.*
 
 # vercel
 .vercel
@@ -86,3 +87,8 @@ sentry.properties
 prisma/dev.db
 *.db
 *.db-journal
+
+# Temp debug files
+.tmp-*
+check-*.js
+temp_query.sql
