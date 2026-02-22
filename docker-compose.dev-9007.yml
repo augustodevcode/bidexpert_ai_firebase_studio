@@ -1,0 +1,11 @@
+# Docker Compose override for isolated dev testing on port 9007
+# Used when ports 9005 (demo) and 9006 (dev) are occupied by other developers/agents
+version: '3.8'
+services:
+  app-dev:
+    ports:
+      - "9007:3000"
+    environment:
+      PORT: 3000
+      TENANT_SLUG: dev
+      NODE_ENV: development
