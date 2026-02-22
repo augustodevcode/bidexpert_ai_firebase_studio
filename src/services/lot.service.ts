@@ -653,92 +653,20 @@ export class LotService {
   }
 
   async placeBid(lotIdOrPublicId: string, userId: string, amount: number, bidderDisplay?: string): Promise<{ success: boolean; message: string; currentBid?: number }> {
-    try {
-      // Resolve publicId para o ID interno se necessário
-      const internalLotId = await this.resolveLotInternalId(lotIdOrPublicId);
-      
-      const lot = await this.prisma.lot.findUnique({ where: { id: internalLotId } });
-      if (!lot) {
-        return { success: false, message: 'Lote não encontrado.' };
-      }
-
-      if (lot.status !== 'ABERTO_PARA_LANCES') {
-        return { success: false, message: 'Este lote não está mais disponível para lances.' };
-      }
-
-      // Validar valor do lance
-      // Se já houver lances, o novo lance DEVE ser maior que o valor atual (lot.price).
-      // Se NÃO houver lances (bidsCount == 0), o lot.price pode estar com Valor de Avaliação ou outro valor inicial
-      // que não necessariamente reflete o lance mínimo da praça atual (ex: 510k vs 720k).
-      // Nesse caso, confiamos na validação do frontend/regra de negócio de praça e permitimos o primeiro lance.
-      const hasBids = (lot.bidsCount ?? 0) > 0;
-
-      if (hasBids && lot.price && amount <= Number(lot.price)) {
-        return { 
-          success: false, 
-          message: `O lance deve ser maior que o valor atual de ${lot.price}.` 
-        };
-      }
-
-      const auction = await this.prisma.auction.findUnique({ where: { id: lot.auctionId } });
-      // Permite lances se o leilão está ABERTO ou ABERTO_PARA_LANCES
-      const auctionAllowsBids = auction && (auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO');
-      if (!auctionAllowsBids) {
-        return { success: false, message: 'Este leilão não está mais ativo.' };
-      }
-
-      await this.prisma.$transaction(async (tx) => {
-        const bid = await tx.bid.create({
-          data: {
-            Lot: { connect: { id: internalLotId } },
-            Auction: { connect: { id: lot.auctionId } },
-            User: { connect: { id: BigInt(userId) } },
-            amount: new Prisma.Decimal(amount),
-            bidderDisplay: bidderDisplay || null,
-            Tenant: { connect: { id: lot.tenantId } }
-          },
-          select: {
-            id: true,
-            amount: true,
-            bidderId: true,
-            bidderDisplay: true
-          }
-        });
-
-        await tx.lot.update({
-          where: { id: internalLotId },
-          data: {
-            price: new Prisma.Decimal(amount),
-            bidsCount: { increment: 1 },
-            Bid: {
-              connect: { id: bid.id }
-            },
-            User: { connect: { id: BigInt(userId) }},
-            updatedAt: new Date()
-          },
-          select: {
-            id: true,
-            price: true,
-            bidsCount: true,
-            status: true
-          }
-        });
-      });
-
-      return { 
-        success: true, 
-        message: 'Lance realizado com sucesso!',
-        currentBid: amount
-      };
-    } catch (error) {
-      console.error('Erro ao realizar lance:', error);
-      return { 
-        success: false, 
-        message: error instanceof Error 
-          ? `Erro ao realizar lance: ${error.message}` 
-          : 'Erro desconhecido ao realizar lance' 
-      };
-    }
+    // V2: Delegate to BidEngineV2 with idempotency, optimistic locking, auto-bid trigger
+    const { bidEngineV2 } = await import('@/services/bid-engine-v2.service');
+    const result = await bidEngineV2.placeBid({
+      lotId: lotIdOrPublicId,
+      userId,
+      amount,
+      bidderDisplay,
+      bidOrigin: 'MANUAL',
+    });
+    return {
+      success: result.success,
+      message: result.message,
+      currentBid: result.currentBid,
+    };
   }
 
   async createLot(data: Partial<LotFormData>, tenantId: string): Promise<{ success: boolean; message: string; lotId?: string }> {

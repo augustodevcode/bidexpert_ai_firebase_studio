@@ -8,6 +8,7 @@ import { getAuction } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getCurrentUser } from '@/app/auth/actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
 import MonitorAuditoriumClient from './monitor-auditorium-client';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,9 @@ export default function AuctionMonitorPage() {
         currentLot: Lot;
         upcomingLots: Lot[];
         isHabilitado: boolean;
+        communicationStrategy: 'WEBSOCKET' | 'POLLING';
+        proxyBiddingEnabled: boolean;
+        idempotencyStrategy: 'SERVER_HASH' | 'CLIENT_UUID';
     } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -33,13 +37,15 @@ export default function AuctionMonitorPage() {
             if (!auctionId) return;
             setLoading(true);
             try {
-                const [auction, lots, user] = await Promise.all([
+                const [auction, user, platformSettings] = await Promise.all([
                     getAuction(auctionId),
-                    getLots({ auctionId }),
-                    getCurrentUser()
+                    getCurrentUser(),
+                    getPlatformSettings(),
                 ]);
 
                 if (!auction) throw new Error("Leilão não encontrado.");
+
+                const lots = await getLots({ auctionId: String(auction.id) });
                 if (lots.length === 0) throw new Error("Este leilão não possui lotes.");
 
                 const isHabilitado = user ? await checkHabilitationForAuctionAction(user.id, auction.id) : false;
@@ -47,7 +53,19 @@ export default function AuctionMonitorPage() {
                 let currentLot = lots.find(l => l.id === targetLotId || l.publicId === targetLotId) || lots[0];
                 const upcomingLots = lots.filter(l => l.id !== currentLot.id).slice(0, 10);
 
-                setData({ auction, currentLot, upcomingLots, isHabilitado });
+                // V2: Read strategy settings from platform
+                const realtimeSettings = platformSettings?.realtimeSettings;
+                const biddingSettings = platformSettings?.biddingSettings as any;
+
+                setData({
+                    auction,
+                    currentLot,
+                    upcomingLots,
+                    isHabilitado,
+                    communicationStrategy: (realtimeSettings as any)?.communicationStrategy || 'WEBSOCKET',
+                    proxyBiddingEnabled: biddingSettings?.proxyBiddingEnabled ?? true,
+                    idempotencyStrategy: (realtimeSettings as any)?.idempotencyStrategy || 'SERVER_HASH',
+                });
             } catch (e: any) {
                 setError(e.message);
             } finally {
@@ -59,7 +77,7 @@ export default function AuctionMonitorPage() {
 
     if (loading) {
         return (
-            <div className="h-screen flex flex-col items-center justify-center bg-[#00474F] text-white">
+            <div className="h-screen flex flex-col items-center justify-center bg-primary text-primary-foreground">
                 <Loader2 className="h-12 w-12 animate-spin mb-4" />
                 <p className="text-xl font-bold">Carregando Layout de Monitor...</p>
             </div>
@@ -85,6 +103,9 @@ export default function AuctionMonitorPage() {
             initialCurrentLot={data.currentLot}
             initialUpcomingLots={data.upcomingLots}
             initialIsHabilitado={data.isHabilitado}
+            communicationStrategy={data.communicationStrategy}
+            proxyBiddingEnabled={data.proxyBiddingEnabled}
+            idempotencyStrategy={data.idempotencyStrategy}
         />
     );
 }
