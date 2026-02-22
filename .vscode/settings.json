@@ -6,6 +6,15 @@
         "args": [
           "@playwright/mcp@latest"
         ]
+      },
+      "prisma": {
+        "command": "npx",
+        "args": [
+          "prisma-mcp-server@latest"
+        ],
+        "env": {
+          "DATABASE_URL": "${env:DATABASE_URL}"
+        }
       }
     }
   },
