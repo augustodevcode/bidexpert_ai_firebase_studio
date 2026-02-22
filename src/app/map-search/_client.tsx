@@ -1,18 +1,20 @@
+/**
+ * @fileoverview Cliente da página de busca geolocalizada com layout em três colunas
+ * (filtros, lista e mapa), mantendo integração de dados e sincronização por área visível.
+ */
 'use client';
 
 import { Suspense, useState, useEffect, useMemo, useCallback, useDeferredValue, useRef, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import type { LatLngBounds } from 'leaflet';
 import Image from 'next/image';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import type { LatLngBounds } from 'leaflet';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Minimize2, Compass, Zap, Signal, Filter, MapPin, Tag, DollarSign, X } from 'lucide-react';
-import MapSearchSidebar from '@/components/map-search-sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Search, User, Heart, ChevronUp } from 'lucide-react';
 import type { Lot, Auction, PlatformSettings, DirectSaleOffer } from '@/types';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
@@ -25,23 +27,133 @@ import {
   filterByVisibleIds,
   type MapSearchDataset,
 } from '@/app/map-search/map-search-logic';
-import { describeRelativeTimestamp, persistMapCacheSnapshot, readMapCacheSnapshot } from '@/app/map-search/map-search-cache';
+import { persistMapCacheSnapshot, readMapCacheSnapshot } from '@/app/map-search/map-search-cache';
 
 const MapSearchComponent = dynamic(() => import('@/components/map-search-component'), {
   ssr: false,
-  loading: () => <Skeleton className="w-full h-full rounded-lg" />,
+  loading: () => <Skeleton className="h-full w-full" />,
 });
 
 const DEFAULT_CENTER: [number, number] = [-14.235, -51.9253];
 
-const DATASET_METADATA: Record<MapSearchDataset, { label: string; helper: string }> = {
-  lots: { label: 'Lotes em Leilão', helper: 'Todos os lotes ativos dentro do recorte atual.' },
-  direct_sale: { label: 'Venda Direta', helper: 'Ofertas com compra imediata e propostas.' },
-  tomada_de_precos: { label: 'Tomada de Preços', helper: 'Processos especiais com negociação assistida.' },
+type MapSearchItem = Lot | Auction | DirectSaleOffer;
+
+const formatCurrency = (value: number | null | undefined) => {
+  if (!value || Number.isNaN(value)) {
+    return 'R$ --';
+  }
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  }).format(value);
 };
 
-function formatSummaryLabel(count: number) {
-  return `${count} ${count === 1 ? 'resultado' : 'resultados'}`;
+const getMarketValue = (item: MapSearchItem) => {
+  const candidate = item as unknown as { marketValue?: number; evaluationValue?: number; appraisedValue?: number };
+  return Number(candidate.marketValue ?? candidate.evaluationValue ?? candidate.appraisedValue ?? 0);
+};
+
+const getCurrentValue = (item: MapSearchItem) => {
+  const candidate = item as unknown as { currentBid?: number; startingBid?: number; price?: number };
+  return Number(candidate.currentBid ?? candidate.startingBid ?? candidate.price ?? 0);
+};
+
+const getAuctioneerName = (item: MapSearchItem) => {
+  const candidate = item as unknown as {
+    auctioneerName?: string;
+    auction?: { auctioneerName?: string };
+  };
+  return candidate.auctioneerName ?? candidate.auction?.auctioneerName ?? 'Leiloeiro';
+};
+
+const getImageUrl = (item: MapSearchItem) => {
+  const candidate = item as unknown as {
+    imageUrl?: string | null;
+    image?: string | null;
+    thumbnailUrl?: string | null;
+    primaryImage?: string | null;
+    images?: string[] | null;
+  };
+
+  if (candidate.imageUrl) return candidate.imageUrl;
+  if (candidate.image) return candidate.image;
+  if (candidate.thumbnailUrl) return candidate.thumbnailUrl;
+  if (candidate.primaryImage) return candidate.primaryImage;
+  if (Array.isArray(candidate.images) && candidate.images.length > 0) return candidate.images[0];
+  return 'https://picsum.photos/seed/map-card-fallback/240/180';
+};
+
+const getStageLabel = (item: MapSearchItem) => {
+  const candidate = item as unknown as {
+    auctionStageName?: string;
+    stage?: string;
+    offerType?: string;
+  };
+  if (candidate.auctionStageName) {
+    return candidate.auctionStageName;
+  }
+  if (candidate.offerType) {
+    return 'Venda Direta';
+  }
+  return candidate.stage ?? '1º Leilão';
+};
+
+const getDiscountPercent = (item: MapSearchItem) => {
+  const market = getMarketValue(item);
+  const current = getCurrentValue(item);
+  if (market <= 0 || current <= 0 || current >= market) {
+    return 0;
+  }
+  return Math.round(((market - current) / market) * 100);
+};
+
+function ResultCard({
+  item,
+  onHover,
+  onLeave,
+}: {
+  item: MapSearchItem;
+  onHover: () => void;
+  onLeave: () => void;
+}) {
+  const market = getMarketValue(item);
+  const current = getCurrentValue(item);
+  const potential = Math.max(market - current, 0);
+  const discount = getDiscountPercent(item);
+
+  return (
+    <article
+      className="flex h-40 overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md"
+      data-ai-id="map-search-list-item"
+      data-density="map"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
+      <div className="relative h-full w-[120px] flex-shrink-0 overflow-hidden bg-muted">
+        <Image src={getImageUrl(item)} alt="Item do resultado" fill className="object-cover" unoptimized sizes="120px" />
+      </div>
+      <div className="flex flex-1 flex-col justify-between p-3">
+        <div>
+          <div className="flex items-start justify-between">
+            <span className="text-[11px] text-muted-foreground">Valor de Mercado vs Lance Atual</span>
+            <button type="button" className="text-muted-foreground transition-colors hover:text-destructive" aria-label="Favoritar">
+              <Heart className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-1 text-sm font-bold text-foreground">
+            {formatCurrency(market)} <span className="mx-1 text-[11px] font-normal text-muted-foreground">vs</span> {formatCurrency(current)}
+          </div>
+          <div className="mt-2 text-xs text-muted-foreground">Endereço</div>
+          <div className="mt-1 text-xs font-semibold text-success">Lucro Potencial {formatCurrency(potential)} ({discount}%)</div>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="rounded bg-secondary px-2 py-1 text-[11px] font-semibold text-secondary-foreground">{getStageLabel(item)}</span>
+          <button type="button" className="rounded bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground">Dar Lance</button>
+        </div>
+      </div>
+    </article>
+  );
 }
 
 function MapSearchPageContent() {
@@ -57,9 +169,8 @@ function MapSearchPageContent() {
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(cacheSnapshot.settings ?? null);
 
   const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
-  const [searchType, setSearchType] = useState<MapSearchDataset>(resolveDatasetFromParam(searchParamsHook.get('type')));
+  const [searchType] = useState<MapSearchDataset>(resolveDatasetFromParam(searchParamsHook.get('type')));
   const [isLoading, setIsLoading] = useState(!warmCacheRef.current);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER);
@@ -67,14 +178,14 @@ function MapSearchPageContent() {
   const [visibleItemIds, setVisibleItemIds] = useState<string[] | null>(null);
   const [fitBoundsSignal, setFitBoundsSignal] = useState(0);
   const [activeBounds, setActiveBounds] = useState<LatLngBounds | null>(null);
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(cacheSnapshot.lastUpdatedAt);
-  const [isModalOpen, setIsModalOpen] = useState(true);
 
-  // Advanced Filters
-  const [locationFilter, setLocationFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [priceMin, setPriceMin] = useState<string>('');
-  const [priceMax, setPriceMax] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
+
+  const [discountFilter, setDiscountFilter] = useState(20);
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
+  const [auctioneerFilter, setAuctioneerFilter] = useState('all');
 
   const boundsAnimationFrame = useRef<number | null>(null);
   const visibilityFrame = useRef<number | null>(null);
@@ -95,64 +206,57 @@ function MapSearchPageContent() {
     }
   }, []);
 
-  const fetchDatasets = useCallback(async ({ silent }: { silent?: boolean } = {}) => {
-    const runSilently = silent ?? false;
+  const fetchDatasets = useCallback(async () => {
     setError(null);
-    if (runSilently) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
+    setIsLoading(true);
 
     try {
-      // Call actions with correct signatures for public access
-      // getAuctions(isPublicCall: boolean)
-      // getLots(filter, isPublicCall: boolean)
-      // getDirectSaleOffers() - no args in definition
       const [auctionsResult, lotsResult, settingsResult, directSalesResult] = await Promise.all([
-        getAuctions(true), 
+        getAuctions(true),
         getLots(undefined, true),
         getPlatformSettings(),
         getDirectSaleOffers(),
       ]);
 
-      // Handle potential serialized responses or direct arrays
-      // Note: Actions might return arrays directly or { success, data } depending on implementation update.
-      // Based on current analysis, getAuctions returns Auction[] directly.
-      // But _client code handles { success, auctions } wrapper?
-      // Wait, _client.tsx lines 114-123 check for .success and .auctions.
-      // BUT getAuctions action returns Promise<Auction[]>.
-      // THIS IS A MAJOR BUG in _client.tsx. It expects { success: true, auctions: [...] } but gets [...].
-      
-      // I must fix _client.tsx to handle the actual return types of the actions.
-      
-      const auctions = Array.isArray(auctionsResult) ? auctionsResult : (auctionsResult as any).auctions ?? [];
-      const lots = Array.isArray(lotsResult) ? lotsResult : (lotsResult as any).lots ?? [];
-      const settings = (settingsResult as any).success ? (settingsResult as any).settings : settingsResult; 
-      const directSales = Array.isArray(directSalesResult) ? directSalesResult : (directSalesResult as any).offers ?? [];
+      const auctions = Array.isArray(auctionsResult)
+        ? auctionsResult
+        : (typeof auctionsResult === 'object' && auctionsResult !== null && 'auctions' in auctionsResult
+            ? ((auctionsResult as { auctions?: Auction[] }).auctions ?? [])
+            : []);
 
-      if (auctions) setAllAuctions(auctions);
-      if (lots) setAllLots(lots);
-      if (settings) setPlatformSettings(settings); // Settings might be object
-      if (directSales) setAllDirectSales(directSales);
+      const lots = Array.isArray(lotsResult)
+        ? lotsResult
+        : (typeof lotsResult === 'object' && lotsResult !== null && 'lots' in lotsResult
+            ? ((lotsResult as { lots?: Lot[] }).lots ?? [])
+            : []);
 
-      // Also persist to cache with correct structure
-      const now = Date.now();
-      setLastUpdatedAt(now);
+      const settings =
+        typeof settingsResult === 'object' && settingsResult !== null && 'success' in settingsResult
+          ? ((settingsResult as { success?: boolean; settings?: PlatformSettings | null }).settings ?? null)
+          : (settingsResult as PlatformSettings | null);
+
+      const directSales = Array.isArray(directSalesResult)
+        ? directSalesResult
+        : (typeof directSalesResult === 'object' && directSalesResult !== null && 'offers' in directSalesResult
+            ? ((directSalesResult as { offers?: DirectSaleOffer[] }).offers ?? [])
+            : []);
+
+      setAllAuctions(auctions);
+      setAllLots(lots);
+      setAllDirectSales(directSales);
+      setPlatformSettings(settings || null);
 
       persistMapCacheSnapshot({
-        auctions: auctions,
-        lots: lots,
-        directSales: directSales,
+        auctions,
+        lots,
+        directSales,
         settings: settings || null,
-        lastUpdatedAt: now,
       });
     } catch (err) {
       console.error('[MAP SEARCH] Error fetching datasets:', err);
       setError('Erro ao carregar dados. Por favor, tente novamente.');
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
   }, []);
 
@@ -161,22 +265,6 @@ function MapSearchPageContent() {
       fetchDatasets();
     }
   }, [fetchDatasets]);
-
-  const handleDatasetChange = useCallback((newDataset: MapSearchDataset) => {
-    setSearchType(newDataset);
-    setVisibleItemIds(null);
-    setActiveBounds(null);
-  }, []);
-
-  const triggerFitBounds = useCallback(() => {
-    setFitBoundsSignal((prev) => prev + 1);
-    setVisibleItemIds(null);
-    setActiveBounds(null);
-    setLocationFilter('');
-    setCategoryFilter('all');
-    setPriceMin('');
-    setPriceMax('');
-  }, []);
 
   const handleBoundsChange = useCallback((bounds: LatLngBounds | null) => {
     if (boundsAnimationFrame.current) {
@@ -201,12 +289,15 @@ function MapSearchPageContent() {
       const customEvent = e as CustomEvent<string[] | null>;
       handleVisibleItemsChange(customEvent.detail);
     };
+
     const handleBoundsEvent = (e: Event) => {
       const customEvent = e as CustomEvent<LatLngBounds | null>;
       handleBoundsChange(customEvent.detail);
     };
+
     window.addEventListener('bidexpert-map-bounds', handleBoundsEvent as EventListener);
     window.addEventListener('bidexpert-map-visible-ids', handleSyntheticEvent as EventListener);
+
     return () => {
       window.removeEventListener('bidexpert-map-bounds', handleBoundsEvent as EventListener);
       window.removeEventListener('bidexpert-map-visible-ids', handleSyntheticEvent as EventListener);
@@ -223,218 +314,214 @@ function MapSearchPageContent() {
 
   const searchMatchingItems = useMemo(() => filterBySearchTerm(datasetItems, deferredSearchTerm), [datasetItems, deferredSearchTerm]);
 
+  const auctioneerOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    searchMatchingItems.forEach((item) => {
+      const name = getAuctioneerName(item).trim();
+      if (name) {
+        map.set(name.toLowerCase(), name);
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
+  }, [searchMatchingItems]);
+
   const advancedFilteredItems = useMemo(() => {
     let items = searchMatchingItems;
 
-    if (locationFilter) {
-      const term = locationFilter.toLowerCase();
-      items = items.filter(item => {
-        const loc = (item as any).locationCity || (item as any).cityName || (item as any).city || '';
-        const uf = (item as any).locationState || (item as any).stateUf || (item as any).state || '';
-        return loc.toLowerCase().includes(term) || uf.toLowerCase().includes(term);
-      });
-    }
-
-    if (categoryFilter && categoryFilter !== 'all') {
-      const term = categoryFilter.toLowerCase();
-      items = items.filter(item => {
-        const cat = (item as any).category || (item as any).categoryName || '';
-        return cat.toLowerCase().includes(term);
-      });
+    if (auctioneerFilter !== 'all') {
+      items = items.filter((item) => getAuctioneerName(item).toLowerCase() === auctioneerFilter.toLowerCase());
     }
 
     if (priceMin) {
       const min = Number(priceMin);
-      items = items.filter(item => {
-        const price = Number((item as any).currentBid || (item as any).startingBid || (item as any).price || 0);
-        return price >= min;
-      });
+      items = items.filter((item) => getCurrentValue(item) >= min);
     }
 
     if (priceMax) {
       const max = Number(priceMax);
-      items = items.filter(item => {
-        const price = Number((item as any).currentBid || (item as any).startingBid || (item as any).price || 0);
-        return price <= max;
+      items = items.filter((item) => getCurrentValue(item) <= max);
+    }
+
+    if (discountFilter > 0) {
+      items = items.filter((item) => {
+        const market = getMarketValue(item);
+        if (market <= 0) {
+          return true;
+        }
+        return getDiscountPercent(item) >= discountFilter;
       });
     }
 
     return items;
-  }, [searchMatchingItems, locationFilter, categoryFilter, priceMin, priceMax]);
+  }, [searchMatchingItems, auctioneerFilter, priceMin, priceMax, discountFilter]);
 
   const displayedItems = useMemo(() => filterByVisibleIds(advancedFilteredItems, deferredVisibleIds), [advancedFilteredItems, deferredVisibleIds]);
 
-  const resultsLabel = formatSummaryLabel(displayedItems.length);
-  const mapItemType: 'lot' | 'auction' | 'direct_sale' = searchType === 'lots' ? 'lot' : searchType === 'direct_sale' ? 'direct_sale' : 'auction';
-  const listItemType: 'lot' | 'auction' | 'direct_sale' = searchType === 'lots' ? 'lot' : searchType === 'direct_sale' ? 'direct_sale' : 'auction';
+  const mapItemType: 'lots' | 'auctions' | 'direct_sale' = searchType === 'tomada_de_precos' ? 'auctions' : searchType;
 
-  const datasetMeta = DATASET_METADATA[searchType];
-  const lastUpdatedLabel = describeRelativeTimestamp(lastUpdatedAt);
-  const mapStatus = isRefreshing ? 'Sincronizando dados em tempo real…' : lastUpdatedLabel ?? 'Aguardando sincronização';
+  const resetFilters = useCallback(() => {
+    setVisibleItemIds(null);
+    setActiveBounds(null);
+    setDiscountFilter(20);
+    setPriceMin('');
+    setPriceMax('');
+    setAuctioneerFilter('all');
+    setFitBoundsSignal((prev) => prev + 1);
+  }, []);
+
+  const handleSearch = useCallback((event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+  }, []);
 
   const handleModalToggle = (nextState: boolean) => {
     setIsModalOpen(nextState);
     if (!nextState) {
       router.back();
-    } else if (typeof window !== 'undefined') {
-      setTimeout(() => window.dispatchEvent(new Event('resize')), 220);
     }
   };
 
-  const handleSearch = useCallback((e: FormEvent) => {
-    e.preventDefault();
-  }, []);
-
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalToggle}>
-      <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background/95 p-0 shadow-2xl">
-        <div className="flex h-full flex-col">
-          {/* Header Section */}
-          <header className="relative h-[160px] w-full overflow-hidden">
-            <Image 
-              src="/uploads/sample-images/image1.png" 
-              alt="Mapa inteligente BidExpert" 
-              fill 
-              className="object-cover" 
-              priority 
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent" />
-            <div className="relative z-10 flex h-full items-center justify-between px-8">
-              <div className="flex flex-col gap-3">
-                <h1 className="text-3xl font-bold text-foreground">Mapa Inteligente BidExpert</h1>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="border-border/40 bg-surface/80">{datasetMeta.label}</Badge>
-                  <Badge variant="outline" className="border-border/40 bg-surface/80">{resultsLabel}</Badge>
-                  {activeBounds && (
-                    <Badge variant="outline" className="border-border/40 bg-surface/80">
-                      <Zap className="mr-1 h-3.5 w-3.5" /> Área filtrada
-                    </Badge>
-                  )}
+      <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background p-0 shadow-none">
+        <DialogTitle className="sr-only">Busca geolocalizada de leilões</DialogTitle>
+        <DialogDescription className="sr-only">Layout com filtros, resultados e mapa interativo.</DialogDescription>
+
+        <div className="flex h-full w-full overflow-hidden bg-muted/30" data-ai-id="map-search-shell">
+          <aside className="h-full w-[280px] flex-shrink-0 overflow-y-auto border-r border-border/70 bg-card px-5 py-6" data-ai-id="map-search-filters">
+            <h1 className="text-3xl font-bold text-foreground">Filtros</h1>
+
+            <div className="mt-8 space-y-8">
+              <div>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-foreground">Filtros Avançados para Investidores</h2>
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="mt-6">
+                  <label className="block text-sm text-muted-foreground">% de Desconto sobre o Valor de Mercado</label>
+                  <div className="relative mt-5">
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={discountFilter}
+                      onChange={(e) => setDiscountFilter(Number(e.target.value))}
+                      className="map-discount-range"
+                      title="Desconto mínimo"
+                      aria-label="Desconto mínimo"
+                      data-ai-id="map-discount-range"
+                    />
+                    <div className="mt-3 flex justify-between text-xs text-muted-foreground">
+                      <span>0%</span>
+                      <span>{discountFilter}%</span>
+                      <span>50%</span>
+                      <span>100%</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => handleModalToggle(false)} className="h-12 w-12">
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-          </header>
 
-          {/* Filters Bar */}
-          <div className="border-t border-border/40 bg-panel/70 px-8 py-5">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Cidade ou Estado" 
-                  className="pl-9 bg-background/50 border-border/60" 
-                  value={locationFilter}
-                  onChange={(e) => setLocationFilter(e.target.value)}
-                />
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-foreground">Valor de Avaliação</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    placeholder="1000"
+                    className="h-10"
+                    data-ai-id="map-price-min"
+                  />
+                  <span className="text-muted-foreground">-</span>
+                  <Input
+                    type="number"
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    placeholder="3000"
+                    className="h-10"
+                    data-ai-id="map-price-max"
+                  />
+                </div>
               </div>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="pl-9 bg-background/50 border-border/60">
-                    <SelectValue placeholder="Categoria" />
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-foreground">Leiloeiro</label>
+                <Select value={auctioneerFilter} onValueChange={setAuctioneerFilter}>
+                  <SelectTrigger className="h-10" data-ai-id="map-auctioneer-select">
+                    <SelectValue placeholder="Leiloeiro" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas as Categorias</SelectItem>
-                    <SelectItem value="veiculo">Veículos</SelectItem>
-                    <SelectItem value="imovel">Imóveis</SelectItem>
-                    <SelectItem value="equipamento">Equipamentos</SelectItem>
-                    <SelectItem value="informatica">Informática</SelectItem>
-                    <SelectItem value="judicial">Judicial</SelectItem>
+                    <SelectItem value="all">Leiloeiro</SelectItem>
+                    {auctioneerOptions.map((auctioneer) => (
+                      <SelectItem key={auctioneer} value={auctioneer}>
+                        {auctioneer}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    type="number" 
-                    placeholder="Preço mín" 
-                    className="pl-9 bg-background/50 border-border/60" 
-                    value={priceMin}
-                    onChange={(e) => setPriceMin(e.target.value)}
-                  />
-                </div>
-                <div className="relative flex-1">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    type="number" 
-                    placeholder="Preço máx" 
-                    className="pl-9 bg-background/50 border-border/60" 
-                    value={priceMax}
-                    onChange={(e) => setPriceMax(e.target.value)}
-                  />
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={triggerFitBounds}
-                className="border-border/60 bg-background/50"
-              >
-                <Filter className="mr-2 h-4 w-4" /> Limpar filtros
+
+              <Button variant="outline" onClick={resetFilters} data-ai-id="map-reset-filter">
+                Limpar filtros
               </Button>
             </div>
-          </div>
+          </aside>
 
-          {/* Main Content - 70/30 Split */}
-          <div className="flex-1 overflow-hidden p-6">
-            <div className="grid h-full gap-6 xl:grid-cols-[7fr_3fr]">
-              {/* Map Section - 70% */}
-              <div className="relative order-2 xl:order-1 flex min-h-[560px] flex-1 rounded-[2.5rem] border border-border/40 bg-surface/60 shadow-haze">
-                <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-map-panel opacity-50" aria-hidden />
-                <div className="absolute top-5 right-5 z-10 flex flex-wrap gap-3">
-                  <Button variant="mapGhost" size="sm" onClick={triggerFitBounds} className="h-10">
-                    <Compass className="mr-2 h-4 w-4" /> Recentrar mapa
-                  </Button>
-                </div>
-                <div className="absolute bottom-5 left-6 z-10 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <Badge variant="outline" className="border-border/40 bg-background/40">
-                    <Signal className="mr-1 h-3.5 w-3.5" /> {mapStatus}
-                  </Badge>
-                </div>
-                <div className="relative z-0 h-full w-full rounded-[2.5rem] overflow-hidden">
-                  <MapSearchComponent
-                    items={advancedFilteredItems}
-                    itemType={mapItemType}
-                    mapCenter={mapCenter}
-                    mapZoom={mapZoom}
-                    onBoundsChange={handleBoundsChange}
-                    onItemsInViewChange={handleVisibleItemsChange}
-                    fitBoundsSignal={fitBoundsSignal}
-                    mapSettings={platformSettings?.mapSettings ?? null}
-                    platformSettings={platformSettings}
-                  />
-                </div>
-              </div>
-
-              {/* Sidebar Section - 30% */}
-              <div className="order-1 xl:order-2 h-full">
-                <MapSearchSidebar
-                  searchTerm={searchTerm}
-                  onSearchTermChange={setSearchTerm}
-                  onSubmitSearch={handleSearch}
-                  dataset={searchType}
-                  onDatasetChange={handleDatasetChange}
-                  isLoading={isLoading}
-                  error={error}
-                  platformSettings={platformSettings}
-                  displayedItems={displayedItems}
-                  resultsLabel={`${resultsLabel} · ${datasetMeta.label}`}
-                  visibleItemIds={visibleItemIds}
-                  activeBounds={activeBounds}
-                  onResetFilters={triggerFitBounds}
-                  listItemType={listItemType}
-                  lastUpdatedLabel={lastUpdatedLabel}
-                  isRefreshingDatasets={isRefreshing}
-                  onForceRefresh={() => fetchDatasets({ silent: true })}
-                  isUsingCache={Boolean(lastUpdatedAt)}
-                  listDensity="map"
+          <main className="flex h-full w-[420px] min-w-[360px] flex-col border-r border-border/70 bg-card" data-ai-id="map-search-results">
+            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/60 bg-card px-4 py-3">
+              <form className="relative flex-1" onSubmit={handleSearch} data-ai-id="map-search-form">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Pesquisar"
+                  className="h-10 pl-9"
+                  data-ai-id="map-search-input"
                 />
+              </form>
+              <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-label="Perfil">
+                <User className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="border-b border-border/60 px-4 py-2 text-xs text-muted-foreground" data-ai-id="map-search-count">
+              {displayedItems.length} {displayedItems.length === 1 ? 'resultado' : 'resultados'}
+              {activeBounds ? ' · área filtrada' : ''}
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-muted/40 p-3" data-ai-id="map-search-list">
+              {error && <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+              {isLoading && <p className="text-sm text-muted-foreground">Carregando dados do mapa…</p>}
+              {!isLoading && displayedItems.length === 0 && (
+                <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">Nenhum item nesta área. Mova o mapa ou limpe os filtros.</p>
+              )}
+              <div className="space-y-3">
+                {displayedItems.map((item) => (
+                  <ResultCard
+                    key={item.id}
+                    item={item}
+                    onHover={() => setHoveredItemId(item.id)}
+                    onLeave={() => setHoveredItemId((prev) => (prev === item.id ? null : prev))}
+                  />
+                ))}
               </div>
             </div>
-          </div>
+          </main>
+
+          <aside className="relative hidden h-full flex-1 overflow-hidden bg-background lg:block" data-ai-id="map-search-map-panel">
+            <MapSearchComponent
+              items={advancedFilteredItems}
+              itemType={mapItemType}
+              mapCenter={mapCenter}
+              mapZoom={mapZoom}
+              onBoundsChange={handleBoundsChange}
+              onItemsInViewChange={handleVisibleItemsChange}
+              fitBoundsSignal={fitBoundsSignal}
+              hoveredItemId={hoveredItemId}
+              onSearchInArea={() => setVisibleItemIds((prev) => (prev ? [...prev] : prev))}
+              mapSettings={platformSettings?.mapSettings ?? null}
+              platformSettings={platformSettings}
+            />
+          </aside>
         </div>
       </DialogContent>
     </Dialog>

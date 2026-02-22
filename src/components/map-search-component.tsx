@@ -4,7 +4,7 @@
  */
 'use client';
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L, { type LatLngBounds } from 'leaflet';
@@ -22,8 +22,6 @@ import {
   type LatLngLiteral,
   type MapProvider,
 } from '@/lib/map-utils';
-import BidExpertListItem from '@/components/BidExpertListItem';
-import LotCard from '@/components/cards/lot-card';
 
 // Fix for Leaflet marker icons when bundled with Next.js
 if (typeof window !== 'undefined') {
@@ -83,6 +81,53 @@ const formatPrice = (value: number | undefined | null) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value);
 };
 
+const formatCompactPrice = (value: number | undefined | null) => {
+  if (value === undefined || value === null || value <= 0) return 'R$ --';
+  if (value >= 1_000_000) {
+    const amount = (value / 1_000_000).toFixed(1).replace('.0', '');
+    return `R$ ${amount}M`;
+  }
+  if (value >= 1_000) {
+    const amount = Math.round(value / 1_000);
+    return `R$ ${amount}k`;
+  }
+  return formatPrice(value);
+};
+
+const getItemImage = (item: MapSearchItem) => {
+  const candidate = item as unknown as {
+    imageUrl?: string | null;
+    image?: string | null;
+    thumbnailUrl?: string | null;
+    primaryImage?: string | null;
+    images?: string[] | null;
+  };
+
+  if (candidate.imageUrl) return candidate.imageUrl;
+  if (candidate.image) return candidate.image;
+  if (candidate.thumbnailUrl) return candidate.thumbnailUrl;
+  if (candidate.primaryImage) return candidate.primaryImage;
+  if (Array.isArray(candidate.images) && candidate.images.length > 0) return candidate.images[0];
+  return 'https://picsum.photos/seed/map-search-fallback/160/120';
+};
+
+const getItemMarketValue = (item: MapSearchItem) => {
+  const candidate = item as unknown as { marketValue?: number; evaluationValue?: number; appraisedValue?: number };
+  return Number(candidate.marketValue ?? candidate.evaluationValue ?? candidate.appraisedValue ?? 0);
+};
+
+const getItemBidValue = (item: MapSearchItem) => {
+  const candidate = item as unknown as { currentBid?: number; startingBid?: number; price?: number };
+  return Number(candidate.currentBid ?? candidate.startingBid ?? candidate.price ?? 0);
+};
+
+const getItemDiscount = (item: MapSearchItem) => {
+  const market = getItemMarketValue(item);
+  const bid = getItemBidValue(item);
+  if (market <= 0 || bid <= 0 || bid >= market) return 0;
+  return Math.round(((market - bid) / market) * 100);
+};
+
 const createCustomIcon = (item: MapSearchItem) => {
   let category = '';
   let price = 0;
@@ -101,19 +146,17 @@ const createCustomIcon = (item: MapSearchItem) => {
     price = 0; 
   }
 
-  const iconHtml = renderToString(getCategoryIcon(category));
-  const priceFormatted = formatPrice(price);
+  const priceFormatted = formatCompactPrice(price);
   const showPrice = price > 0;
 
   return L.divIcon({
     className: 'custom-map-marker',
     html: `
-      <div class="marker-icon-wrapper">${iconHtml}</div>
-      ${showPrice ? `<div class="marker-price-tag">${priceFormatted}</div>` : ''}
+      <div class="map-pin-marker">${showPrice ? `<span>${priceFormatted}</span>` : `<span>${renderToString(getCategoryIcon(category))}</span>`}</div>
     `,
-    iconSize: [40, showPrice ? 60 : 40],
-    iconAnchor: [20, showPrice ? 60 : 20],
-    popupAnchor: [0, showPrice ? -60 : -20]
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -34]
   });
 };
 
@@ -185,6 +228,8 @@ interface MapSearchComponentProps {
   onBoundsChange: (bounds: LatLngBounds) => void;
   onItemsInViewChange: (ids: string[]) => void;
   fitBoundsSignal: number;
+  hoveredItemId?: string | null;
+  onSearchInArea?: () => void;
   mapSettings?: PlatformSettings['mapSettings'] | null;
   platformSettings?: PlatformSettings | null;
 }
@@ -197,12 +242,15 @@ export default function MapSearchComponent({
   onBoundsChange,
   onItemsInViewChange,
   fitBoundsSignal,
+  hoveredItemId,
+  onSearchInArea,
   mapSettings,
   platformSettings,
 }: MapSearchComponentProps) {
   const [isClient, setIsClient] = useState(false);
   const [resolvedCoordinates, setResolvedCoordinates] = useState<CoordinateDictionary>({});
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const markerRefs = useRef<Record<string, L.Marker>>({});
 
   useEffect(() => {
     setIsClient(true);
@@ -225,7 +273,7 @@ export default function MapSearchComponent({
       const updates: CoordinateDictionary = {};
 
       for (const item of itemsMissingCoords) {
-        const descriptor = buildDescriptorForItem(item);
+        const descriptor = buildLocationDescriptor(item as any);
         const coords = await geocodeLocation(descriptor);
         if (!isMounted) {
           return;
@@ -269,30 +317,45 @@ export default function MapSearchComponent({
     })
   ), [items, resolvedCoordinates]);
 
-  const renderMarkerPopup = useCallback((item: CoordinatedItem) => {
-    if (!platformSettings) {
-      return <div className="text-xs text-muted-foreground">Carregando card…</div>;
+  useEffect(() => {
+    if (!hoveredItemId) {
+      return;
     }
-
-    if (itemType === 'lots' && isLotItem(item)) {
-      return (
-        <div className="w-[300px] max-w-[360px]" data-ai-id="map-popup-lot-card">
-          <LotCard lot={item} auction={item.auction} platformSettings={platformSettings} showCountdown />
-        </div>
-      );
+    const marker = markerRefs.current[hoveredItemId];
+    if (marker) {
+      marker.openPopup();
     }
+  }, [hoveredItemId]);
 
-    const popupType = itemType === 'direct_sale' ? 'direct_sale' : 'auction';
+  const renderPopupCard = useCallback((item: CoordinatedItem) => {
+    const market = getItemMarketValue(item);
+    const bid = getItemBidValue(item);
+    const discount = getItemDiscount(item);
+
     return (
-      <div className="w-[300px] max-w-[360px]" data-ai-id={`map-popup-${popupType}`}>
-        <BidExpertListItem
-          item={item as Lot | Auction | DirectSaleOffer}
-          type={popupType}
-          platformSettings={platformSettings}
-        />
+      <div className="map-popup-card" data-ai-id="map-search-popup-card">
+        <div className="map-popup-arrow" />
+        <div className="map-popup-media">
+          <img src={getItemImage(item)} alt="Item do mapa" loading="lazy" />
+        </div>
+        <div className="map-popup-content">
+          <div className="map-popup-label">Valor de mercado vs lance atual</div>
+          <div className="map-popup-values">
+            <strong>{formatPrice(market)}</strong>
+            <span>vs</span>
+            <strong>{formatPrice(bid)}</strong>
+          </div>
+          <div className="map-popup-profit">Lucro Potencial {formatPrice(Math.max(market - bid, 0))} ({discount}%)</div>
+          <svg className="map-popup-spark" viewBox="0 0 100 20" preserveAspectRatio="none">
+            <path d="M0 15 L20 10 L40 12 L60 5 L80 8 L100 0" />
+          </svg>
+          <button type="button" className="map-popup-cta" data-ai-id="map-popup-bid-button">Dar Lance</button>
+        </div>
       </div>
     );
-  }, [itemType, platformSettings]);
+  }, []);
+
+  const renderMarkerPopup = useCallback((item: CoordinatedItem) => renderPopupCard(item), [renderPopupCard]);
 
   if (!isClient) {
     return <Skeleton className="w-full h-full rounded-lg" />;
@@ -305,12 +368,17 @@ export default function MapSearchComponent({
           {isGeocoding ? 'Geocodificando endereços…' : 'Camada padrão aplicada'}
         </div>
       )}
+      <div className="absolute left-1/2 top-4 z-[900] -translate-x-1/2">
+        <button type="button" className="map-search-area-button" onClick={onSearchInArea} data-ai-id="map-search-area-button">
+          Pesquisar nesta área
+        </button>
+      </div>
       <MapContainer
         key={`map-search-container-${mapCenter.join('-')}-${leafletProvider}`}
         center={mapCenter}
         zoom={mapZoom}
         scrollWheelZoom
-        className="w-full h-full rounded-[2.5rem] border"
+        className="w-full h-full border"
         style={{ borderColor: 'var(--map-border)' }}
       >
         {tileLayerConfig ? (
@@ -335,6 +403,13 @@ export default function MapSearchComponent({
               key={markerKey} 
               position={[item.latitude, item.longitude]}
               icon={createCustomIcon(item)}
+              ref={(instance) => {
+                if (instance) {
+                  markerRefs.current[item.id] = instance;
+                } else {
+                  delete markerRefs.current[item.id];
+                }
+              }}
             >
               <Popup>{renderMarkerPopup(item)}</Popup>
             </Marker>
