@@ -2,8 +2,10 @@
 # GitHub Action: Deploy DEMO para Vercel
 # ==============================================================================
 # Trigger: Push na branch demo-stable ou main
-# Deploy: Vercel Git Integration (automático via push ao GitHub)
+# Deploy: Vercel CLI (fallback) + Vercel Git Integration (automático)
 # Schema/Seed: Executados quando commit inclui [migrate] ou [seed]
+# Secrets necessários: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID,
+#   DEMO_DATABASE_URL, DEMO_DATABASE_URL_DIRECT, DEMO_NEXTAUTH_SECRET
 # ==============================================================================
 
 name: Deploy DEMO to Vercel
@@ -151,12 +153,58 @@ jobs:
           DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL_DIRECT }}
 
   # ============================================================================
-  # JOB 3: Status Report
+  # JOB 3: Vercel CLI Deploy Fallback
+  # Garante deploy mesmo se o Vercel Git Integration falhar/pular
+  # Requer secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+  # ============================================================================
+  deploy:
+    name: 🚀 Vercel CLI Deploy (Fallback)
+    runs-on: ubuntu-latest
+    needs: build
+    if: needs.build.result == 'success' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: 📚 Install Vercel CLI
+        run: npm install -g vercel@latest
+        
+      - name: 🔗 Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          
+      - name: 🏗️ Build with Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          
+      - name: 🚀 Deploy to Production
+        id: deploy
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "✅ Deployed to: $DEPLOY_URL"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # ============================================================================
+  # JOB 4: Status Report
   # ============================================================================
   notify:
     name: 📢 Status Report
     runs-on: ubuntu-latest
-    needs: [build, migrate]
+    needs: [build, migrate, deploy]
     if: always()
     
     steps:
@@ -167,9 +215,15 @@ jobs:
           echo "============================================"
           echo "🔨 Build: ${{ needs.build.result }}"
           echo "🗃️ Migrate/Seed: ${{ needs.migrate.result || 'skipped' }}"
+          echo "🚀 CLI Deploy: ${{ needs.deploy.result || 'skipped' }}"
           echo "============================================"
           if [ "${{ needs.build.result }}" = "success" ]; then
-            echo "✅ Build passou! Deploy automático pelo Vercel Git Integration."
+            echo "✅ Build passou!"
+            if [ "${{ needs.deploy.result }}" = "success" ]; then
+              echo "🚀 Deploy via CLI concluído com sucesso."
+            else
+              echo "⚠️  CLI Deploy skipped/failed - Vercel Git Integration should handle deploy."
+            fi
             echo "🌐 URL: ${{ secrets.DEMO_APP_URL }}"
           else
             echo "❌ Build falhou! Verifique os logs."
