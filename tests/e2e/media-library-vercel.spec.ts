@@ -7,7 +7,7 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const VERCEL_URL = 'https://bidexpertaifirebasestudio.vercel.app';
+const VERCEL_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://bidexpertaifirebasestudio.vercel.app';
 
 test.setTimeout(120_000);
 
@@ -21,6 +21,7 @@ async function loginAsAdmin(page: Page) {
     }
   });
 
+  console.log('Base URL:', VERCEL_URL);
   console.log('Navigating to login page...');
   await page.goto(VERCEL_URL + '/auth/login', { waitUntil: 'networkidle', timeout: 60000 });
   

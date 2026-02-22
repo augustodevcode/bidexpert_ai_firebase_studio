@@ -1,179 +1,190 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Run BidExpert App",
-            "type": "shell",
-            "command": "npm run dev",
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
-            },
-            "problemMatcher": [],
-            "isBackground": true,
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Run BidExpert App with Preview",
-            "type": "shell",
-            "command": "node .vscode/start-preview.js",
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
-            },
-            "problemMatcher": [],
-            "isBackground": true,
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Run BidExpert App (Port 9005)",
-            "type": "shell",
-            "command": "npm run dev:9005",
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new"
-            },
-            "problemMatcher": {
-                "pattern": {
-                    "regexp": "^(.*)$",
-                    "line": 0
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": "^.*▲.*compiling.*",
-                    "endsPattern": "^.*ready on.*9005.*"
-                }
-            },
-            "isBackground": true,
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "BidExpert App - Porta 9005 (Full Logging)",
-            "type": "shell",
-            "command": "node .vscode/start-9005.js",
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "dedicated",
-                "showReuseMessage": false,
-                "clear": false
-            },
-            "problemMatcher": [],
-            "isBackground": true,
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Run InfraControl",
-            "type": "shell",
-            "command": "npm run dev",
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
-            },
-            "problemMatcher": [],
-            "isBackground": true,
-            "options": {
-                "cwd": "${workspaceFolder:BidExpert InfraControl}"
-            }
-        },
-        {
-            "label": "Run InfraControl (Prod)",
-            "type": "shell",
-            "command": "npm run start",
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared"
-            },
-            "problemMatcher": [],
-            "isBackground": true,
-            "options": {
-                "cwd": "${workspaceFolder:BidExpert InfraControl}"
-            }
-        },
-        {
-            "label": "Data Reconciliation: Audit Once",
-            "type": "shell",
-            "command": "node scripts/reconciliation/background-audit.mjs",
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "dedicated",
-                "showReuseMessage": false
-            },
-            "problemMatcher": [],
-            "isBackground": false,
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "env": {
-                    "RECONCILIATION_BASE_URL": "http://demo.localhost:9005",
-                    "RECONCILIATION_TENANT": "demo",
-                    "RECONCILIATION_MAX_AUCTIONS": "5",
-                    "RECONCILIATION_VERBOSE": "true"
-                }
-            }
-        },
-        {
-            "label": "Data Reconciliation: Daemon (45min)",
-            "type": "shell",
-            "command": "powershell -ExecutionPolicy Bypass -File scripts/reconciliation/run-reconciliation-detached.ps1 -Mode daemon -IntervalMinutes 45 -Verbose",
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "dedicated",
-                "showReuseMessage": false
-            },
-            "problemMatcher": [],
-            "isBackground": true,
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        },
-        {
-            "label": "Data Reconciliation: Daemon DEV (9006)",
-            "type": "shell",
-            "command": "powershell -ExecutionPolicy Bypass -File scripts/reconciliation/run-reconciliation-detached.ps1 -Mode daemon -IntervalMinutes 45 -BaseUrl http://dev.localhost:9006 -TenantSlug dev -Verbose",
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "dedicated",
-                "showReuseMessage": false
-            },
-            "problemMatcher": [],
-            "isBackground": true,
-            "options": {
-                "cwd": "${workspaceFolder}"
-            }
-        }
-    ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run BidExpert App",
+			"type": "shell",
+			"command": "npm run dev",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": [],
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run BidExpert App with Preview",
+			"type": "shell",
+			"command": "node .vscode/start-preview.js",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": [],
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run BidExpert App (Port 9005)",
+			"type": "shell",
+			"command": "npm run dev:9005",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new"
+			},
+			"problemMatcher": {
+				"pattern": {
+					"regexp": "^(.*)$",
+					"line": 0
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^.*▲.*compiling.*",
+					"endsPattern": "^.*ready on.*9005.*"
+				}
+			},
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "BidExpert App - Porta 9005 (Full Logging)",
+			"type": "shell",
+			"command": "node .vscode/start-9005.js",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": false
+			},
+			"problemMatcher": [],
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run InfraControl",
+			"type": "shell",
+			"command": "npm run dev",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": [],
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder:BidExpert InfraControl}"
+			}
+		},
+		{
+			"label": "Run InfraControl (Prod)",
+			"type": "shell",
+			"command": "npm run start",
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": [],
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder:BidExpert InfraControl}"
+			}
+		},
+		{
+			"label": "Data Reconciliation: Audit Once",
+			"type": "shell",
+			"command": "node scripts/reconciliation/background-audit.mjs",
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false
+			},
+			"problemMatcher": [],
+			"isBackground": false,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": {
+					"RECONCILIATION_BASE_URL": "http://demo.localhost:9005",
+					"RECONCILIATION_TENANT": "demo",
+					"RECONCILIATION_MAX_AUCTIONS": "5",
+					"RECONCILIATION_VERBOSE": "true"
+				}
+			}
+		},
+		{
+			"label": "Data Reconciliation: Daemon (45min)",
+			"type": "shell",
+			"command": "powershell -ExecutionPolicy Bypass -File scripts/reconciliation/run-reconciliation-detached.ps1 -Mode daemon -IntervalMinutes 45 -Verbose",
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false
+			},
+			"problemMatcher": [],
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Data Reconciliation: Daemon DEV (9006)",
+			"type": "shell",
+			"command": "powershell -ExecutionPolicy Bypass -File scripts/reconciliation/run-reconciliation-detached.ps1 -Mode daemon -IntervalMinutes 45 -BaseUrl http://dev.localhost:9006 -TenantSlug dev -Verbose",
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false
+			},
+			"problemMatcher": [],
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Git Current Branch",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"rev-parse",
+				"--abbrev-ref",
+				"HEAD"
+			],
+			"isBackground": false
+		}
+	]
 }
