@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { isValidImageUrl } from '@/lib/ui-helpers';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 interface AuctionPreviewModalProps {
   auction: Auction;
@@ -132,11 +133,14 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
         
         <DialogFooter className="p-4 sm:p-6 border-t bg-background flex justify-between w-full flex-shrink-0">
             <Button variant="outline" onClick={onClose}> Fechar </Button>
+          <div className="flex items-center gap-2">
+            <GoToLiveAuctionButton auction={auction} dataAiId="auction-preview-go-live-btn" />
             <Button asChild>
-                <Link href={`/auctions/${auction.publicId || auction.id}`}>
-                    <Eye className="mr-2 h-4 w-4" /> Ver Leilão Completo
-                </Link>
+              <Link href={`/auctions/${auction.publicId || auction.id}`}>
+                <Eye className="mr-2 h-4 w-4" /> Ver Leilão Completo
+              </Link>
             </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -32,7 +32,7 @@ export default function MonitorActionButtons({
                 data-ai-id="monitor-bid-button"
                 onClick={onBid}
                 disabled={disabled}
-                className="flex-1 bg-[#00474F] hover:bg-[#00383F] text-white flex items-center justify-center gap-3 py-8 rounded-lg shadow-lg group transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-3 py-8 rounded-lg shadow-lg group transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {disabled && bidLabel.includes('Enviando') && (
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -46,7 +46,7 @@ export default function MonitorActionButtons({
                     data-ai-id="monitor-habilitate-button"
                     onClick={onHabilitate}
                     disabled={isHabilitando}
-                    className="flex-1 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white flex items-center justify-center gap-3 py-8 rounded-lg shadow-lg group transition-all disabled:opacity-50"
+                    className="flex-1 bg-secondary hover:bg-secondary/80 text-secondary-foreground flex items-center justify-center gap-3 py-8 rounded-lg shadow-lg group transition-all disabled:opacity-50"
                 >
                     {isHabilitando
                         ? <Loader2 className="h-8 w-8 animate-spin" />

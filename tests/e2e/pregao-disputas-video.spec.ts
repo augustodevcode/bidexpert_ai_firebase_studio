@@ -50,6 +50,16 @@ const ADMIN_CREDENTIALS = {
   password: 'password123',
 };
 
+const LOGIN_CANDIDATES = [
+  { email: 'admin@bidexpert.com.br', password: 'Admin@123' },
+  ADMIN_CREDENTIALS,
+  { email: 'admin@bidexpert.com.br', password: 'Test@12345' },
+  { email: 'admin@bidexpert.com.br', password: 'admin123' },
+  { email: 'admin@lordland.com.br', password: 'Admin@123' },
+  { email: 'leiloeiro@bidexpert.com.br', password: 'Leiloeiro@123' },
+  { email: 'comprador@bidexpert.com.br', password: 'Comprador@123' },
+];
+
 /** Senha padrão para todos os robôs de teste. */
 const BOT_PASSWORD = 'RoboLance@2025';
 
@@ -99,7 +109,88 @@ function makePublicId(seed: string): string {
 // ─── Login helper ────────────────────────────────────────────────────────────
 
 async function doLogin(page: Page, email: string, password: string): Promise<void> {
-  await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  let lastNavigationError: unknown = null;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+      lastNavigationError = null;
+      break;
+    } catch (error) {
+      lastNavigationError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      const isTransientConnectionError =
+        message.includes('ERR_CONNECTION_REFUSED') ||
+        message.includes('ERR_CONNECTION_RESET') ||
+        message.includes('ERR_CONNECTION_CLOSED');
+
+      if (!isTransientConnectionError || attempt === 4) {
+        throw error;
+      }
+
+      await page.waitForTimeout(1500 * attempt);
+    }
+  }
+
+  if (lastNavigationError) {
+    throw lastNavigationError;
+  }
+
+  if (!page.url().includes('/auth/login')) {
+    return;
+  }
+
+  const devAutoLoginTrigger = page.getByText('Selecione para auto-login...', { exact: false }).first();
+  if (await devAutoLoginTrigger.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    await devAutoLoginTrigger.click();
+    const preferredAutoLoginOption = page.getByRole('option', { name: new RegExp(email, 'i') }).first();
+    const firstAutoLoginOption = page.locator('[role="option"]').first();
+
+    if (await preferredAutoLoginOption.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await preferredAutoLoginOption.click();
+    } else if (await firstAutoLoginOption.isVisible({ timeout: 8_000 }).catch(() => false)) {
+      await firstAutoLoginOption.click();
+    }
+
+    await page.waitForURL((u) => !u.toString().includes('/auth/login'), { timeout: 40_000 }).catch(() => null);
+    if (!page.url().includes('/auth/login')) {
+      return;
+    }
+
+    await page.keyboard.press('Escape').catch(() => null);
+  }
+
+  await page.keyboard.press('Escape').catch(() => null);
+
+  const tenantTrigger = page.locator('[data-ai-id="auth-login-tenant-select"]').first();
+  const tenantVisible = await tenantTrigger.isVisible({ timeout: 5_000 }).catch(() => false);
+  if (tenantVisible) {
+    const tenantReady = await expect
+      .poll(async () => {
+        const isDisabled = await tenantTrigger.isDisabled().catch(() => false);
+        const triggerText = ((await tenantTrigger.textContent().catch(() => '')) || '').toLowerCase();
+        const hasValue = !/selecione|carregando/i.test(triggerText);
+
+        if (/carregando/i.test(triggerText)) return false;
+
+        if (isDisabled) {
+          return hasValue;
+        }
+
+        return true;
+      }, {
+        timeout: 60_000,
+        intervals: [500, 1000, 1500, 2000],
+      })
+      .toBeTruthy()
+      .then(() => true)
+      .catch(() => false);
+
+    if (!tenantReady) {
+      throw new Error('Tenant não ficou pronto para login (subdomínio ainda não resolvido).');
+    }
+
+    await page.waitForTimeout(300);
+  }
 
   const emailInput = page.locator(
     '[data-ai-id="auth-login-email-input"], input[type="email"], input[name="email"], input[placeholder*="email" i]'
@@ -108,27 +199,78 @@ async function doLogin(page: Page, email: string, password: string): Promise<voi
     '[data-ai-id="auth-login-password-input"], input[type="password"], input[name="password"]'
   ).first();
 
-  await emailInput.fill(email);
-  await passInput.fill(password);
+  const hasEmailInput = await emailInput.isVisible({ timeout: 2_000 }).catch(() => false);
+  const hasPasswordInput = await passInput.isVisible({ timeout: 2_000 }).catch(() => false);
 
-  await Promise.all([
-    page.waitForURL((u) => !u.toString().includes('/auth/login'), { timeout: 30_000 }).catch(() => null),
-    page.locator(
-      '[data-ai-id="auth-login-submit-button"], button[type="submit"], button:has-text("Entrar"), button:has-text("Login")'
-    ).first().click(),
-  ]);
+  if (hasEmailInput && hasPasswordInput) {
+    await emailInput.fill(email);
+    await passInput.fill(password);
+
+    await Promise.all([
+      page.waitForURL((u) => !u.toString().includes('/auth/login'), { timeout: 30_000 }).catch(() => null),
+      page.locator(
+        '[data-ai-id="auth-login-submit-button"], button[type="submit"], button:has-text("Entrar"), button:has-text("Login")'
+      ).first().click(),
+    ]);
+    return;
+  }
+
+  const submitButton = page.locator(
+    '[data-ai-id="auth-login-submit-button"], button[type="submit"], button:has-text("Entrar"), button:has-text("Login")'
+  ).first();
+
+  if (await submitButton.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await Promise.all([
+      page.waitForURL((u) => !u.toString().includes('/auth/login'), { timeout: 30_000 }).catch(() => null),
+      submitButton.click(),
+    ]);
+    return;
+  }
+
+  throw new Error('UI de login em estado não suportado (sem campos e sem botão de submit).');
+}
+
+async function loginWithFallback(page: Page): Promise<void> {
+  if (page.isClosed()) {
+    throw new Error('Página foi fechada antes do login.');
+  }
+
+  let lastErrorMessage = 'sem detalhes';
+  for (const candidate of LOGIN_CANDIDATES) {
+    await doLogin(page, candidate.email, candidate.password);
+
+    if (!page.url().includes('/auth/login')) {
+      return;
+    }
+
+    const authErrorText = await page
+      .locator('.text-auth-error, [role="alert"]')
+      .first()
+      .innerText()
+      .catch(() => 'sem mensagem de erro visível');
+
+    const tenantState = await page
+      .locator('[data-ai-id="auth-login-tenant-select"]')
+      .first()
+      .textContent()
+      .catch(() => 'tenant-select indisponível');
+
+    lastErrorMessage = `email=${candidate.email} authError="${authErrorText}" tenantState="${tenantState}"`;
+  }
+
+  throw new Error(`Nenhuma estratégia de login funcionou: ${lastErrorMessage}`);
 }
 
 // ─── Setup/Teardown de Dados via Prisma ──────────────────────────────────────
 
 interface TestFixture {
   prisma: PrismaClient;
-  tenantId: number;
-  auctionId: number;
+  tenantId: bigint;
+  auctionId: bigint;
   auctionPublicId: string;
-  lotId: number;
+  lotId: bigint;
   lotPublicId: string;
-  botUserIds: number[];
+  botUserIds: bigint[];
   botEmails: string[];
   runId: string;
 }
@@ -182,7 +324,7 @@ async function setupTestData(): Promise<TestFixture> {
   });
 
   // Criar 10 robôs
-  const botUserIds: number[] = [];
+  const botUserIds: bigint[] = [];
   const botEmails: string[] = [];
 
   for (let i = 1; i <= BOT_COUNT; i++) {
@@ -289,13 +431,25 @@ async function openAdminMonitorContext(
     viewport: { width: 1280, height: 720 },
   });
 
-  const page = await context.newPage();
-
-  // Faz login como admin
-  await doLogin(page, ADMIN_CREDENTIALS.email, ADMIN_CREDENTIALS.password);
-
-  // Navega para o monitor do pregão
+  let page = await context.newPage();
   const monitorUrl = `${BASE_URL}/auctions/${f.auctionPublicId}/monitor`;
+
+  await page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  if (!page.url().includes('/auth/login')) {
+    return { context, page };
+  }
+
+  // Faz login com fallback para novo fluxo de tenant/subdomínio
+  try {
+    await loginWithFallback(page);
+  } catch (error) {
+    if (!page.isClosed()) {
+      throw error;
+    }
+    page = await context.newPage();
+    await loginWithFallback(page);
+  }
+
   await page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 
   return { context, page };
@@ -429,7 +583,7 @@ test.describe.serial('🎬 Pregão BidExpert - Disputas em Vídeo', () => {
     expect(bids.length).toBeGreaterThan(0);
 
     // O lance mais alto deve ser o da última rodada
-    const maxAmount = Math.max(...bids.map((b) => b.amount));
+    const maxAmount = Math.max(...bids.map((b) => Number(b.amount)));
     const expectedMax = INITIAL_PRICE + BID_INCREMENT * BOT_COUNT * BID_ROUNDS;
     console.log(`📊 Lance mais alto: R$ ${maxAmount.toLocaleString('pt-BR')} (esperado: R$ ${expectedMax.toLocaleString('pt-BR')})`);
 
@@ -445,18 +599,34 @@ test.describe.serial('🎬 Pregão BidExpert - Disputas em Vídeo', () => {
   // TESTE 3: Monitor acessível após a disputa (smoke check)
   // ──────────────────────────────────────────────────────────────────────────
   test('Monitor continua acessível após a disputa', async ({ page }) => {
-    await doLogin(page, ADMIN_CREDENTIALS.email, ADMIN_CREDENTIALS.password);
-
     const monitorUrl = `${BASE_URL}/auctions/${fixture.auctionPublicId}/monitor`;
     await page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+
+    if (page.url().includes('/auth/login')) {
+      await loginWithFallback(page);
+      await page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    }
 
     // Captura estado final da página
     await captureStep(page, 'pos-disputa-monitor');
 
-    // A página deve carregar sem erro 500
-    const title = await page.title();
-    expect(title).toBeTruthy();
+    // A página deve carregar sem redirecionar para login
+    expect(page.url()).toContain(`/auctions/${fixture.auctionPublicId}/monitor`);
 
-    console.log(`\n✅ Monitor pós-disputa acessível. Título: "${title}"`);
+    await expect.poll(async () => {
+      return await page.evaluate(() => {
+        const body = document.body;
+        if (!body) return 0;
+        return body.childElementCount;
+      });
+    }, {
+      timeout: 20_000,
+      intervals: [500, 1000, 1500],
+    }).toBeGreaterThan(0);
+
+    const htmlSize = await page.content().then((html) => html.length).catch(() => 0);
+    expect(htmlSize).toBeGreaterThan(200);
+
+    console.log('\n✅ Monitor pós-disputa acessível. URL e conteúdo da página validados.');
   });
 });

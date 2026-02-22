@@ -1,0 +1,147 @@
+# ==============================================================================
+# GitHub Action: Deploy PROD para Vercel
+# ==============================================================================
+# Trigger: Push na branch main
+# Requer aprovação manual via GitHub Environment "Production"
+# Valida fluxo sequencial: HML -> DEMO -> PROD
+# ==============================================================================
+
+name: Deploy PROD to Vercel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      run_migrate:
+        description: 'Executar db push (schema sync)?'
+        required: false
+        default: false
+        type: boolean
+      run_seed:
+        description: 'Executar seed (popular dados)?'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PRISMA_SCHEMA: prisma/schema.postgresql.prisma
+
+jobs:
+  build:
+    name: 🔨 Production Build Validation
+    runs-on: ubuntu-latest
+    environment: Production
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+
+      - name: 🔐 Validate Promotion Source (DEMO ➜ PROD)
+        run: |
+          git fetch origin demo-stable
+          if ! git merge-base --is-ancestor origin/demo-stable HEAD; then
+            echo "❌ Promoção inválida: HEAD de main não contém demo-stable"
+            exit 1
+          fi
+          echo "✅ Promoção válida: demo-stable está contida em main"
+
+      - name: 🔍 Type Check
+        run: npm run typecheck
+
+      - name: 🧹 Lint
+        run: npm run lint
+
+      - name: 🏗️ Build
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+
+  migrate:
+    name: 🗃️ Database Schema Push & Seed (Optional)
+    runs-on: ubuntu-latest
+    environment: Production
+    needs: build
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[migrate]') ||
+      contains(github.event.head_commit.message, '[seed]')
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🔄 Copy PostgreSQL schema
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: 🗃️ Push Schema to Database
+        if: >
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.run_migrate == 'true') ||
+          contains(github.event.head_commit.message, '[migrate]')
+        run: npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: 🌱 Run Seed
+        if: >
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.run_seed == 'true') ||
+          contains(github.event.head_commit.message, '[seed]')
+        run: npx tsx scripts/ultimate-master-seed.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  notify:
+    name: 📢 PROD Status Report
+    runs-on: ubuntu-latest
+    environment: Production
+    needs: [build, migrate]
+    if: always()
+
+    steps:
+      - name: 📢 Status Report
+        run: |
+          echo "============================================"
+          echo "📋 DEPLOY PROD REPORT"
+          echo "============================================"
+          echo "🔨 Build: ${{ needs.build.result }}"
+          echo "🗃️ Migrate/Seed: ${{ needs.migrate.result || 'skipped' }}"
+          echo "============================================"
+          if [ "${{ needs.build.result }}" = "success" ]; then
+            echo "✅ Build passou! Deploy automático pelo Vercel Git Integration."
+          else
+            echo "❌ Build falhou! Deploy bloqueado."
+            exit 1
+          fi

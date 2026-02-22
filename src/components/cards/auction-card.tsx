@@ -18,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import EntityEditMenu from '../entity-edit-menu';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import ConsignorLogoBadge from '../consignor-logo-badge';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 
 interface AuctionCardProps {
@@ -227,9 +228,12 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                 </p>
               </div>
             )}
-            <Button asChild size="sm" className="btn-card-view-lots" data-ai-id="auction-card-view-lots-btn">
-              <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Lotes ({auction.totalLots || 0})</Link>
-            </Button>
+            <div className="flex flex-col gap-2 items-end">
+              <GoToLiveAuctionButton auction={auction} dataAiId="auction-card-go-live-btn" />
+              <Button asChild size="sm" className="btn-card-view-lots" data-ai-id="auction-card-view-lots-btn">
+                <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Lotes ({auction.totalLots || 0})</Link>
+              </Button>
+            </div>
           </CardFooter>
         </Card>
         {isPreviewModalOpen && (

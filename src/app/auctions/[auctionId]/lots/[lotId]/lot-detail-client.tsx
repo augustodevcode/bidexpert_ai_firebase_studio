@@ -74,6 +74,7 @@ import BidExpertCard from '@/components/BidExpertCard';
 import { InvestorAnalysisSection } from '@/components/lots';
 import { ptBR } from 'date-fns/locale';
 import StickyBidBar from '@/components/auction/sticky-bid-bar';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 
 const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
@@ -877,6 +878,12 @@ export default function LotDetailClientContent({
                 </Card>
               </div>
               <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 self-start hidden lg:block">
+                  <GoToLiveAuctionButton
+                    auction={auction}
+                    className="w-full"
+                    variant="default"
+                    dataAiId="lot-detail-go-live-btn"
+                  />
                   <BiddingPanel 
                     currentLot={lot} 
                     auction={auction} 

@@ -284,8 +284,10 @@ function MapSearchPageContent() {
     e.preventDefault();
   }, []);
 
+  if (!isModalOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden" data-ai-id="map-search-modal">
+    <div className="fixed inset-0 z-[9999] bg-background flex flex-col overflow-hidden" data-ai-id="map-search-modal" role="dialog" aria-modal="true" aria-label="Mapa Inteligente BidExpert">
       {/* Header Section */}
       <header className="flex-none h-16 border-b bg-card flex items-center justify-between px-4 shadow-sm z-10">
         <div className="flex items-center gap-4">
@@ -306,7 +308,7 @@ function MapSearchPageContent() {
       </header>
 
       {/* Main Content - 3 Columns */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden" data-ai-id="map-search-content">
         {/* Column 1: Filters (Left) */}
         <aside className="w-80 flex-none border-r bg-card overflow-y-auto p-4 flex flex-col gap-6" data-ai-id="map-search-filters-column">
           <div>

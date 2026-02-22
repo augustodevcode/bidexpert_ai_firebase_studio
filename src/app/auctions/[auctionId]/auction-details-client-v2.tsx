@@ -36,6 +36,7 @@ import HeroSection from './components/hero-section';
 import AuctionStatsCard from './components/auction-stats-card';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 const SidebarFilter = dynamic(() => import('@/components/BidExpertFilter'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -360,6 +361,14 @@ export default function AuctionDetailsClientV2({
                     </CardContent>
                   </Card>
                 )}
+
+                <GoToLiveAuctionButton
+                  auction={auction}
+                  className="w-full"
+                  variant="default"
+                  label="Ir para pregão online"
+                  dataAiId="auction-details-v2-go-live-btn"
+                />
               </aside>
             </div>
           </TabsContent>

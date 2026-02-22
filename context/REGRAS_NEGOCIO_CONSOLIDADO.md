@@ -104,6 +104,27 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 - **Quando** o usuário abre a página de edição
 - **Então** o mapa mostra o marcador imediatamente e aplica `flyTo` no ponto, sem depender da busca de CEP
 
+### RN-017: CTA "Ir para pregão online"
+✅ O CTA de pregão online deve apontar para `/auctions/{auctionId}/live`.
+✅ O CTA só deve aparecer quando o leilão estiver na janela ativa de pregão:
+- status `ABERTO_PARA_LANCES`;
+- data atual maior/igual à abertura efetiva (`actualOpenDate` ou `openDate` ou `auctionDate`);
+- data atual menor/igual a `endDate`.
+✅ O CTA só pode ser exibido para usuário autenticado e habilitado no leilão.
+✅ O CTA deve exibir ícone de online, tooltip explicativa e badge `Online` com animação de piscar lento.
+✅ A cobertura é obrigatória em cards/list items, detalhes e modais de leilão/lote, incluindo listagens administrativas.
+
+**Cenário BDD - Exibição do CTA dentro da janela**
+- **Dado** um usuário autenticado e habilitado
+- **E** um leilão com status `ABERTO_PARA_LANCES` dentro da janela temporal
+- **Quando** a interface renderiza card/lista/detalhe/modal de leilão/lote
+- **Então** o CTA "Ir para pregão online" é exibido
+
+**Cenário BDD - Ocultação do CTA fora das regras**
+- **Dado** um usuário não autenticado ou não habilitado, ou leilão fora da janela
+- **Quando** a interface renderiza card/lista/detalhe/modal de leilão/lote
+- **Então** o CTA "Ir para pregão online" não é exibido
+
 ### RN-005: Herança de Mídia
 ✅ Lote pode herdar galeria de `Asset` vinculado  
 ✅ Leilão pode herdar imagem de Lote vinculado  

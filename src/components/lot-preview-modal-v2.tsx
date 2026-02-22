@@ -44,6 +44,7 @@ import LotCountdown from './lot-countdown';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useCurrency } from '@/contexts/currency-context';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 interface LotPreviewModalV2Props {
   lot: Lot | null;
@@ -488,6 +489,15 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
 
               {/* CTA Principal */}
               <div className="space-y-2 md:space-y-3 sticky bottom-0 bg-background pt-3 md:pt-4 pb-2">
+                {auction && (
+                  <GoToLiveAuctionButton
+                    auction={auction}
+                    className="w-full"
+                    size="lg"
+                    label="Ir para pregão online"
+                    dataAiId="lot-preview-go-live-btn"
+                  />
+                )}
                 <Button 
                   asChild 
                   size="lg" 

@@ -18,10 +18,10 @@ interface MonitorLotListProps {
 
 export default function MonitorLotList({ lots, currentLotId, onLotSelect }: MonitorLotListProps) {
     return (
-        <div data-ai-id="monitor-lot-list" className="flex flex-col h-full bg-white shadow-sm overflow-hidden">
+        <div data-ai-id="monitor-lot-list" className="flex flex-col h-full bg-card shadow-sm overflow-hidden">
             <div className="p-4 border-b flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-800">Lista de lotes</h2>
-                <span className="text-sm font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                <h2 className="text-xl font-bold text-foreground">Lista de lotes</h2>
+                <span className="text-sm font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                     {lots.length} lotes
                 </span>
             </div>
@@ -40,10 +40,10 @@ export default function MonitorLotList({ lots, currentLotId, onLotSelect }: Moni
                                 onKeyDown={e => e.key === 'Enter' && onLotSelect?.(lot)}
                                 className={`p-4 rounded-none border-b transition-colors relative ${
                                     isCurrent
-                                        ? 'bg-[#00474F] text-white'
+                                        ? 'bg-primary text-primary-foreground'
                                         : onLotSelect
-                                            ? 'hover:bg-gray-50 text-gray-800 cursor-pointer'
-                                            : 'text-gray-800'
+                                            ? 'hover:bg-muted text-foreground cursor-pointer'
+                                            : 'text-foreground'
                                 }`}
                             >
                                 {isCurrent && (
@@ -51,7 +51,7 @@ export default function MonitorLotList({ lots, currentLotId, onLotSelect }: Moni
                                 )}
 
                                 <div className="flex flex-col gap-1 pr-8">
-                                    <p className={`text-base font-bold truncate ${isCurrent ? 'text-white' : 'text-gray-800'}`}>
+                                    <p className={`text-base font-bold truncate ${isCurrent ? 'text-primary-foreground' : 'text-foreground'}`}>
                                         {lot.title}
                                     </p>
 
@@ -60,14 +60,14 @@ export default function MonitorLotList({ lots, currentLotId, onLotSelect }: Moni
                                         <Badge
                                             className={`px-3 py-0.5 text-[10px] font-bold uppercase rounded-full border-none ring-1 ring-inset ${
                                                 isCurrent
-                                                    ? 'bg-white text-[#00474F] ring-white/20'
+                                                    ? 'bg-primary-foreground text-primary ring-primary-foreground/20'
                                                     : `${getLotStatusColor(lot.status)} ring-current/10`
                                             }`}
                                         >
                                             {getAuctionStatusText(lot.status)}
                                         </Badge>
 
-                                        <span className={`text-sm font-black ${isCurrent ? 'text-white/80' : 'text-gray-400'}`}>
+                                        <span className={`text-sm font-black ${isCurrent ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                                             #{lot.number || String(index + 1).padStart(3, '0')}
                                         </span>
                                     </div>
