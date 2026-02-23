@@ -236,8 +236,8 @@ export async function resolveTenant(
       resolved = await loadTenantBySubdomain(pathSlug);
     }
     
-    // Fallback to landlord for local development
-    if (!resolved && (normalizedHost.includes('localhost') || normalizedHost.includes('127.0.0.1'))) {
+    // Fallback to landlord for local development or Vercel if demo tenant not found
+    if (!resolved && (normalizedHost.includes('localhost') || normalizedHost.includes('127.0.0.1') || isVercelDomain)) {
       resolved = await loadTenantById(BigInt(LANDLORD_ID));
     }
     

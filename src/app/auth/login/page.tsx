@@ -92,7 +92,7 @@ function LoginPageContent() {
             currentSubdomain = pathMatch[1].toLowerCase();
         }
 
-        // Fallback to default tenant if no subdomain is found (e.g. on Vercel without subdomains)
+        // Fallback to 'demo' tenant (ID 1) if no subdomain is found (Vercel has no wildcard subdomains)
         if (!currentSubdomain && hostname.includes('vercel.app')) {
             currentSubdomain = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo';
         }

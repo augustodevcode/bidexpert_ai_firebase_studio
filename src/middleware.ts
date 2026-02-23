@@ -132,7 +132,8 @@ async function resolveTenantFromRequest(
       };
     }
     
-    // If it's Vercel, use configured default tenant or fallback to 'demo' (tenant 1)
+    // If it's Vercel, use configured default tenant or fallback to 'demo' subdomain (tenant ID 1)
+    // Vercel doesn't support wildcard subdomains, so we need an explicit fallback
     if (isVercelDomain) {
       const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo';
       return {
