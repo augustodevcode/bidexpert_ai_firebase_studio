@@ -1,14 +1,14 @@
 // =============================================================================
 // PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
 // =============================================================================
-// Este schema Ã© uma cÃ³pia do schema.prisma principal, com provider alterado
+// Este schema é uma cópia do schema.prisma principal, com provider alterado
 // para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
 // 
-// USO: Este schema Ã© usado automaticamente pelo workflow de deploy para Vercel
-//      atravÃ©s do script prepare-vercel-demo.ps1 ou GitHub Action
+// USO: Este schema é usado automaticamente pelo workflow de deploy para Vercel
+//      através do script prepare-vercel-demo.ps1 ou GitHub Action
 //
 // NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
-//       sÃ£o todos compatÃ­veis entre MySQL e PostgreSQL no Prisma.
+//       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
 // =============================================================================
 
 generator client {
@@ -16,7 +16,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -33,7 +33,6 @@ model Asset {
   evaluationValue            Decimal?                @db.Decimal(15, 2)
   imageUrl                   String?
   imageMediaId               BigInt?
-  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   galleryImageUrls           Json?
   mediaItemIds               Json?
   dataAiHint                 String?
@@ -46,7 +45,7 @@ model Asset {
   lotInfo                    String?
   judicialProcessNumber      String?
   createdAt                  DateTime                @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId                   BigInt
   plate                      String?
   make                       String?
@@ -259,7 +258,6 @@ model Auction {
   auctioneerId             BigInt?
   sellerId                 BigInt?
   imageMediaId             BigInt?
-  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   isRelisted               Boolean                @default(false)
   relistCount              Int                    @default(0)
   originalAuctionId        BigInt?                @unique
@@ -690,7 +688,6 @@ model Lot {
   discountPercentage       Int?
   additionalTriggers       Json?
   imageUrl                 String?              @db.Text
-  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   imageMediaId             BigInt?
   galleryImageUrls         Json?
   mediaItemIds             Json?
@@ -908,9 +905,6 @@ model MediaItem {
   judicialProcessId BigInt?
   linkedLotIds      Json?
   tenantId          BigInt?
-  AssetCovers       Asset[]            @relation("AssetCoverImage")
-  AuctionCovers     Auction[]          @relation("AuctionCoverImage")
-  LotCovers         Lot[]              @relation("LotCoverImage")
   AssetMedia        AssetMedia[]
   JudicialProcess   JudicialProcess?   @relation(fields: [judicialProcessId], references: [id])
   Tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1908,7 +1902,7 @@ model WonLot {
 }
 
 // =============================================================================
-// ENUMS - IdÃªnticos ao schema MySQL (compatÃ­veis entre ambos os bancos)
+// ENUMS - Idênticos ao schema MySQL (compatíveis entre ambos os bancos)
 // =============================================================================
 
 enum UserDocument_status {
@@ -2329,4 +2323,3 @@ model AuditConfig {
 
   @@map("audit_configs")
 }
-
