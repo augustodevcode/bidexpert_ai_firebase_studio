@@ -133,7 +133,7 @@ describe('AuctioneerDetailsPage', () => {
 
   it('deve renderizar BidExpertCard para visualização em grid', async () => {
     // Mock das funções de busca
-    const { getAuctioneerBySlug, getAuctionsByAuctioneerSlug, getPlatformSettings } = await import('@/app/admin/auctioneers/actions');
+    const { getAuctioneerBySlug } = await import('@/app/admin/auctioneers/actions');
     const auctionsAction = await import('@/app/admin/auctions/actions');
     const settingsAction = await import('@/app/admin/settings/actions');
 
