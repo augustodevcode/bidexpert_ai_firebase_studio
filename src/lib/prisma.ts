@@ -25,23 +25,41 @@ function isPrismaAccelerateUrl(url?: string): boolean {
 }
 
 /**
+ * Resolves the database connection string from the environment.
+ * Checks DATABASE_URL first, then falls back to Vercel Postgres variable names
+ * (POSTGRES_PRISMA_URL, POSTGRES_URL_NON_POOLING, POSTGRES_URL).
+ */
+function resolveConnectionString(override?: string): string | undefined {
+  return (
+    override ||
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.POSTGRES_URL
+  );
+}
+
+/**
  * Cria uma instância do Prisma Client com suporte a extensões e logs.
  * Automaticamente usa Prisma Accelerate quando detectado pela DATABASE_URL.
  */
 function createPrismaClient(databaseUrl?: string) {
-  const effectiveUrl = databaseUrl || process.env.DATABASE_URL;
+  // Resolve effective URL: prefer explicit arg, then DATABASE_URL, then Vercel Postgres env vars
+  const effectiveUrl = resolveConnectionString(databaseUrl);
   const useAccelerate = isPrismaAccelerateUrl(effectiveUrl);
   
   const options: any = {
     log: process.env.PRISMA_QUERY_LOG === 'true' ? ['query', 'error', 'warn'] : ['error', 'warn'],
   };
 
-  // Para Accelerate, a URL é passada automaticamente via env
-  // Para conexão direta, podemos sobrescrever
-  if (databaseUrl && !useAccelerate) {
+  // Always pass datasources.db.url explicitly so Prisma does not rely on
+  // env("DATABASE_URL") in the schema file — this handles Vercel Postgres
+  // deployments where the connection string is provided under a different
+  // variable name (POSTGRES_PRISMA_URL, POSTGRES_URL_NON_POOLING, POSTGRES_URL).
+  if (effectiveUrl && !useAccelerate) {
     options.datasources = {
       db: {
-        url: databaseUrl,
+        url: effectiveUrl,
       },
     };
   }
@@ -98,7 +116,7 @@ function createPrismaClient(databaseUrl?: string) {
                     // We also need to map the table correcty.
                     // The schema @@map("itsm_query_logs") means the table is `itsm_query_logs`.
                     
-                    const isPostgres = process.env.DATABASE_URL?.includes('postgres');
+                    const isPostgres = resolveConnectionString()?.includes('postgres') ?? false;
                     if (isPostgres) {
                       await client.$executeRaw`
                         INSERT INTO itsm_query_logs ("query", "duration", "success", "errorMessage", "timestamp")
