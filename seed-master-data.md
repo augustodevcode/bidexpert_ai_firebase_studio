@@ -1,5 +1,22 @@
 # Seed Master Data - Documentação Consolidada
 
+## Credenciais Canônicas (E2E / Testes)
+
+**FONTE:** `scripts/ultimate-master-seed.ts` → `npm run db:seed`
+
+| Perfil | Email | Senha | Notas |
+|--------|-------|-------|-------|
+| **Admin** | `admin@bidexpert.com.br` | `Admin@123` | SuperAdmin, acessa backoffice |
+| **Leiloeiro** | `carlos.silva@construtoraabc.com.br` | `Test@12345` | Auctioneer role |
+| **Comprador** | `comprador@bidexpert.com.br` | `Test@12345` | Buyer role |
+| **Advogado** | `advogado@bidexpert.com.br` | `Test@12345` | Lawyer role |
+| **Vendedor** | `vendedor@bidexpert.com.br` | `Test@12345` | Seller role |
+| **Analista** | `analista@lordland.com` | `password123` | Analyst role |
+
+> **REGRA:** A senha `senha@123` é INCORRETA e **nunca** deve ser usada em testes automatizados.
+
+> **Helper E2E:** Use `tests/e2e/helpers/auth-helper.ts` → `loginAsAdmin()`, `loginAs()`, `CREDENTIALS`
+
 ## Visão Geral
 
 Este documento consolida todas as informações de seed data encontradas no projeto BidExpert, criando um guia abrangente para geração de dados de teste em larga escala.
@@ -307,10 +324,10 @@ Para atingir os requisitos de **2000+ ativos, 1000+ lotes, 500+ leilões**:
 
 O sistema está pronto para expansão controlada dos dados de seed, mantendo consistência e integridade referencial.</content>
 <parameter name="filePath">e:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\seed-master-data.md
-## Atualiza��o (2025) - Ultimate Master Seed Reconstru�do
+## Atualiza��o (2025) - Ultimate Master Seed Reconstru�do
 
-O arquivo scripts/ultimate-master-seed.ts foi reconstru�do combinando:
-- scripts/seed-data-extended-v3.ts (L�gica Base Completa)
+O arquivo scripts/ultimate-master-seed.ts foi reconstru�do combinando:
+- scripts/seed-data-extended-v3.ts (L�gica Base Completa)
 - scripts/seed-populate-missing.ts (Dados Complementares)
 
-Ele agora restaura o banco e popula toda a massa de dados necess�ria para Demo e HML.
+Ele agora restaura o banco e popula toda a massa de dados necess�ria para Demo e HML.

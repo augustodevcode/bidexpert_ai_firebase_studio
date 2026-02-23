@@ -1,12 +1,13 @@
 
 import { test, expect, Page } from '@playwright/test';
+import { CREDENTIALS, loginAs, loginAsAdmin, type CredentialRole } from './helpers/auth-helper';
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:9005';
+const BASE_URL = process.env.BASE_URL || 'http://demo.localhost:9005';
 const TIMEOUT = 30000;
 
 const adminUser = {
-  email: 'test.leiloeiro@bidexpert.com',
-  password: 'Test@12345',
+  email: CREDENTIALS.admin.email,
+  password: CREDENTIALS.admin.password,
 };
 
 const newUser = {
@@ -18,6 +19,7 @@ const newUser = {
 };
 
 async function loginUser(page: Page, email: string, password: string) {
+  // For custom credentials (e.g., newly registered users), use direct fill
   await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'networkidle' });
   await page.fill('[data-ai-id="auth-login-email-input"]', email);
   await page.fill('[data-ai-id="auth-login-password-input"]', password);

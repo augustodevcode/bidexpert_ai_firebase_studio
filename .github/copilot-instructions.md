@@ -113,6 +113,98 @@ A estratégia de testes está documentada no `README.md` e deve ser seguida para
 
 Se não houver credenciais claras no seed, o assistente deve primeiro identificar onde elas são geradas ou persistidas antes de prosseguir com o login.
 
+## 7.2 Credenciais Canônicas (Seed Ultimate)
+
+**FONTE:** `scripts/ultimate-master-seed.ts` → `npm run db:seed`
+
+| Perfil | Email | Senha | Notas |
+|--------|-------|-------|-------|
+| **Admin** | `admin@bidexpert.com.br` | `Admin@123` | SuperAdmin, acessa backoffice |
+| **Leiloeiro** | `carlos.silva@construtoraabc.com.br` | `Test@12345` | Auctioneer role |
+| **Comprador** | `comprador@bidexpert.com.br` | `Test@12345` | Buyer role |
+| **Advogado** | `advogado@bidexpert.com.br` | `Test@12345` | Lawyer role |
+| **Vendedor** | `vendedor@bidexpert.com.br` | `Test@12345` | Seller role |
+| **Analista** | `analista@lordland.com` | `password123` | Analyst role |
+
+**REGRA:** Nunca usar senhas diferentes das listadas acima em testes automatizados. A senha `senha@123` é INCORRETA e causa falhas silenciosas.
+
+## 7.3 Resolução de Tenant e Seleção no Login (Local Dev)
+
+**Comportamento em `<slug>.localhost:<porta>`:**
+
+1. O middleware (`src/middleware.ts`) extrai o subdomínio da URL via regex `^([a-z0-9-]+)\.localhost$`.
+2. O header `x-tenant-id` é definido com o valor do subdomínio (ex: `demo`, `dev`).
+3. Na página de login, o tenant selector (`data-ai-id="auth-login-tenant-select"`) é **auto-locked** (desabilitado) quando o subdomínio é detectado.
+
+**Quando NÃO há subdomínio** (ex: `localhost:9005`):
+- O tenant selector aparece como dropdown editável.
+- O usuário/agente DEVE selecionar manualmente o tenant antes de submeter o login.
+- Sem seleção de tenant, o login falhará silenciosamente.
+
+**REGRA:** Em testes E2E, SEMPRE usar URLs com subdomínio: `http://demo.localhost:9005` (não `http://localhost:9005`).
+
+## 7.4 DevUserSelector (Modo Desenvolvimento)
+
+Em `NODE_ENV=development`, a página de login renderiza um componente `DevUserSelector` que:
+- Lista até 15 usuários do tenant atual com email e dica de senha.
+- Permite login com 1 clique (preenche email, senha e submete automaticamente).
+- NÃO aparece em produção.
+
+**Para testes:** O `DevUserSelector` pode ser usado como atalho, mas o helper centralizado `auth-helper.ts` é preferido por ser determinístico e não depender de renderização da UI.
+
+## 7.5 Seed Gate (Verificação Automática de Seed)
+
+**REGRA OBRIGATÓRIA:** Todo teste E2E DEVE verificar se o banco possui dados de seed antes de executar.
+
+**Implementação (global-setup.ts):**
+```typescript
+import { ensureSeedExecuted } from './helpers/auth-helper';
+
+async function globalSetup() {
+  await ensureSeedExecuted(BASE_URL); // Faz GET /api/health e verifica tenants
+  // ... resto do setup
+}
+```
+
+**O que o seed gate faz:**
+1. Acessa `GET <baseUrl>/api/health` (ou rota equivalente).
+2. Se o banco estiver vazio (sem tenants), executa `npm run db:seed` automaticamente.
+3. Se o seed falhar, lança erro com mensagem clara: `"Seed não executado. Rode: npm run db:seed"`.
+4. Evita falhas opacas de timeout em testes quando o banco está vazio.
+
+## 7.6 Helper Centralizado de Autenticação E2E
+
+**ARQUIVO:** `tests/e2e/helpers/auth-helper.ts`
+
+**REGRA:** TODO novo teste E2E DEVE usar o helper centralizado ao invés de implementar login inline.
+
+```typescript
+import { loginAsAdmin, loginAs, CREDENTIALS } from './helpers/auth-helper';
+
+// Login rápido como admin
+test('admin dashboard', async ({ page }) => {
+  await loginAsAdmin(page, BASE_URL);
+  // ...
+});
+
+// Login como perfil específico
+test('buyer flow', async ({ page }) => {
+  await loginAs(page, 'comprador', BASE_URL);
+  // ...
+});
+```
+
+**Exports disponíveis:**
+- `loginAs(page, role, baseUrl, options?)` — login genérico por perfil
+- `loginAsAdmin(page, baseUrl)` — shortcut admin
+- `loginAsLawyer(page, baseUrl)` — shortcut advogado
+- `loginAsBuyer(page, baseUrl)` — shortcut comprador
+- `loginAsAuctioneer(page, baseUrl)` — shortcut leiloeiro
+- `ensureSeedExecuted(baseUrl)` — seed gate
+- `selectTenant(page, tenantName)` — seleção manual de tenant
+- `CREDENTIALS` — mapa de credenciais canônicas
+- `CredentialRole` — type union dos perfis
+
 ## 8. DIRETRIZA CRÍTICA: Lazy Compilation vs Pre-Build em Next.js
 
 **REGRA OBRIGATÓRIA:** Ao executar testes E2E ou ao iniciar o servidor para ambientes de teste/produção, SEMPRE usar **pré-compilação** em vez de lazy compilation em dev mode.
@@ -1082,6 +1174,20 @@ Get-Content .next/BUILD_ID
 3. **Verificar status automaticamente** com comandos apropriados
 4. **Reportar resultado** ao usuário com evidências (logs, contagens, etc.)
 5. **NUNCA perguntar** "Quer que eu verifique?" - SEMPRE verificar
+
+# Gate Pré-PR (OBRIGATÓRIO)
+**REGRA CRÍTICA:** Antes de abrir PR, todo desenvolvedor/agente DEVE executar e registrar validações locais mínimas para evitar falhas previsíveis no CI.
+
+### Checklist Pré-PR (execução local)
+1. `npm ci` (garantir sincronia `package.json` x `package-lock.json`)
+2. `npm run typecheck`
+3. `npm run build`
+4. Executar testes necessários da entrega (unitário/e2e) + evidência Playwright
+
+### Regras de Bloqueio
+- PR sem evidência da execução do checklist acima NÃO deve ser aberto.
+- Se `package.json` foi alterado, `package-lock.json` atualizado é obrigatório no mesmo commit.
+- Não solicitar aprovação/merge sem anexar prints de sucesso Playwright + link de relatório.
 
 # 💱 Regra Crítica: Moeda, Locale e Máscaras Monetárias
 

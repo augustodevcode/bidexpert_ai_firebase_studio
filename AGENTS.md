@@ -17,6 +17,19 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 ## Regras Específicas
 - Sempre ao terminar qualquer implementação, correção ou criação de scripts, tabelas, campos, alterações, execute um teste e2e para validar o que foi feito e documente.
 
+## ✅ Gate Pré-PR (OBRIGATÓRIO)
+
+Antes de subir para PR, o desenvolvedor/agente DEVE executar localmente:
+1. `npm ci` (validar lockfile sincronizado)
+2. `npm run typecheck`
+3. `npm run build`
+4. Testes da entrega (unitário/e2e) com evidências Playwright (prints + link de relatório)
+
+Regras:
+- Se `package.json` mudar, `package-lock.json` deve ser commitado junto.
+- É proibido abrir PR sem o checklist acima concluído e documentado.
+- É proibido solicitar merge sem evidências visuais de sucesso dos testes.
+
 ## 🚀 Inicialização da Aplicação (OBRIGATÓRIO)
 
 **REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre:
@@ -101,6 +114,35 @@ Antes de iniciar qualquer task, o agente DEVE:
 2. Se ocupada → Usuário em DEMO → Usar DEV na porta 9006
 3. Criar branch a partir de `demo-stable`
 4. Testar em DEV antes de propor merge
+
+## Autenticação E2E: Helper Centralizado e Seed Gate
+
+### Helper Centralizado
+**ARQUIVO:** `tests/e2e/helpers/auth-helper.ts`
+
+Todo novo teste E2E DEVE importar o helper centralizado:
+```typescript
+import { loginAsAdmin, loginAs, CREDENTIALS, ensureSeedExecuted } from './helpers/auth-helper';
+```
+
+### Credenciais Canônicas
+| Perfil | Email | Senha |
+|--------|-------|-------|
+| Admin | `admin@bidexpert.com.br` | `Admin@123` |
+| Leiloeiro | `carlos.silva@construtoraabc.com.br` | `Test@12345` |
+| Comprador | `comprador@bidexpert.com.br` | `Test@12345` |
+| Advogado | `advogado@bidexpert.com.br` | `Test@12345` |
+| Analista | `analista@lordland.com` | `password123` |
+
+**REGRA:** senha `senha@123` é INCORRETA. Nunca usar.
+
+### Tenant Auto-Lock vs Manual
+- **Com subdomínio** (`demo.localhost:9005`): tenant selector fica bloqueado (auto-locked)
+- **Sem subdomínio** (`localhost:9005`): usuário DEVE selecionar tenant manualmente
+- **Em testes E2E:** SEMPRE usar URL com subdomínio
+
+### Seed Gate
+`global-setup.ts` chama `ensureSeedExecuted(baseUrl)` automaticamente. Se o banco estiver vazio, executa `npm run db:seed`.
 
 ## Estratégia de Observabilidade (Logs do Browser + Servidor)
 Os agentes devem sempre buscar a visão completa do problema:

@@ -4,25 +4,9 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
+import { loginAsLawyer } from './helpers/auth-helper';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:9002';
-const LAWYER_EMAIL = 'advogado@bidexpert.com.br';
-const LAWYER_PASSWORD = 'Test@12345';
-
-async function loginAsLawyer(page: Page) {
-  await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-
-  const emailInput = page.locator('[data-ai-id="auth-login-email-input"]');
-  const passwordInput = page.locator('[data-ai-id="auth-login-password-input"]');
-  const submitButton = page.locator('[data-ai-id="auth-login-submit-button"]');
-
-  await emailInput.fill(LAWYER_EMAIL);
-  await passwordInput.fill(LAWYER_PASSWORD);
-  await submitButton.click();
-
-  await page.waitForURL(/\/lawyer\/dashboard/i, { timeout: 60_000 });
-  await page.waitForLoadState('networkidle');
-}
 
 async function ensureDashboardLoaded(page: Page) {
   await expect(page.getByTestId('lawyer-dashboard-root')).toBeVisible({ timeout: 15_000 });

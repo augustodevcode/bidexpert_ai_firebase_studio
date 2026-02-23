@@ -21,6 +21,7 @@
  */
 
 import { test, expect, Page, BrowserContext } from '@playwright/test';
+import { CREDENTIALS as AUTH_CREDENTIALS, loginAsAdmin } from './helpers/auth-helper';
 
 // ─── Configuração ────────────────────────────────────────────────────────────
 
@@ -30,8 +31,8 @@ const MONITOR_URL = `${BASE_URL}/auctions/${AUCTION_ID}/monitor`;
 const LOGIN_URL   = `${BASE_URL}/auth/login`;
 
 const CREDENTIALS = {
-  email   : 'admin@bidexpert.com.br',
-  password: 'senha@123',
+  email   : AUTH_CREDENTIALS.admin.email,
+  password: AUTH_CREDENTIALS.admin.password,
 };
 
 // ─── Helper: login ────────────────────────────────────────────────────────────
