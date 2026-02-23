@@ -24,8 +24,8 @@ import { type Page, expect } from '@playwright/test';
 
 export const CREDENTIALS = {
   admin: {
-    email: 'admin@bidexpert.com.br',
-    password: 'Admin@123',
+    email: 'augustoaraujo.augusto@gmail.com',
+    password: 'M!nh@S3nha2025',
     role: 'ADMIN',
     tenant: 'demo',
   },
