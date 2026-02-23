@@ -210,11 +210,12 @@ export async function resolveTenant(
   let resolved: ResolvedTenant | null = null;
   
   try {
-    // 1. Check if it's the landlord domain
-    if (LANDLORD_DOMAINS.includes(normalizedHost) && !pathSlug) {
-      const isVercelDomain = /\\.vercel\\.app$/i.test(normalizedHost);
-      if (isVercelDomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
-        resolved = await loadTenantBySubdomain(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
+    // 1. Check if it's the landlord domain or a Vercel deployment URL
+    const isVercelDomain = /\.vercel\.app$/i.test(normalizedHost);
+    if ((LANDLORD_DOMAINS.includes(normalizedHost) || isVercelDomain) && !pathSlug) {
+      if (isVercelDomain) {
+        const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo';
+        resolved = await loadTenantBySubdomain(defaultTenant);
       } else {
         resolved = await loadTenantById(BigInt(LANDLORD_ID));
       }

@@ -132,11 +132,12 @@ async function resolveTenantFromRequest(
       };
     }
     
-    // If it's Vercel and we have a default tenant configured, use it
-    if (isVercelDomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
+    // If it's Vercel, use configured default tenant or fallback to 'demo' (tenant 1)
+    if (isVercelDomain) {
+      const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo';
       return {
-        tenantId: process.env.NEXT_PUBLIC_DEFAULT_TENANT,
-        subdomain: process.env.NEXT_PUBLIC_DEFAULT_TENANT,
+        tenantId: defaultTenant,
+        subdomain: defaultTenant,
         isCustomDomain: false,
         isPathBased: false,
       };

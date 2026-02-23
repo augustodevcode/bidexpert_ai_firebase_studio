@@ -92,9 +92,9 @@ function LoginPageContent() {
             currentSubdomain = pathMatch[1].toLowerCase();
         }
 
-        // Fallback to CI/CD configured default tenant if no subdomain is found (e.g. on Vercel)
-        if (!currentSubdomain && hostname.includes('vercel.app') && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
-            currentSubdomain = process.env.NEXT_PUBLIC_DEFAULT_TENANT;
+        // Fallback to default tenant if no subdomain is found (e.g. on Vercel without subdomains)
+        if (!currentSubdomain && hostname.includes('vercel.app')) {
+            currentSubdomain = process.env.NEXT_PUBLIC_DEFAULT_TENANT || 'demo';
         }
 
         if (currentSubdomain && availableTenants.length > 0) {
