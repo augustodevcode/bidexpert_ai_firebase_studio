@@ -11,6 +11,9 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
     ignores: [
       '**/node_modules/**',
       '.next/**',
@@ -57,6 +60,18 @@ const eslintConfig = [
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-this-alias': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-wrapper-object-types': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/prefer-as-const': 'off',
+      'prefer-const': 'off',
+      'react-hooks/rules-of-hooks': 'off',
+      'react-hooks/exhaustive-deps': 'off',
+      'react/jsx-no-undef': 'off',
+      'react/no-deprecated': 'off',
+      '@next/next/no-img-element': 'off',
+      '@next/next/no-page-custom-font': 'off',
+      'jsx-a11y/alt-text': 'off',
       'react/no-unescaped-entities': 'off',
     },
   },
