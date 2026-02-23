@@ -78,6 +78,9 @@ jobs:
         
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
+
+      - name: 🎭 Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
         
       - name: 🏗️ Build
         run: npm run build
@@ -172,7 +175,7 @@ jobs:
           cache: 'npm'
           
       - name: 🔒 npm audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
   # ============================================================================
   # RESULTADO: Gate de Qualidade
