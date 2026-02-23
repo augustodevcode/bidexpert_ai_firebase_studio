@@ -5,6 +5,12 @@
 import type { StorageAdapter, UploadResult } from './index';
 
 export class VercelBlobAdapter implements StorageAdapter {
+  private envPrefix: string;
+
+  constructor(envPrefix: string = 'dev') {
+    this.envPrefix = envPrefix;
+  }
+
   async upload(
     file: Buffer,
     fileName: string,
@@ -12,7 +18,7 @@ export class VercelBlobAdapter implements StorageAdapter {
     mimeType: string
   ): Promise<UploadResult> {
     const { put } = await import('@vercel/blob');
-    const blobPath = `media/${uploadPath}/${fileName}`;
+    const blobPath = `${this.envPrefix}/media/${uploadPath}/${fileName}`;
 
     const { url } = await put(blobPath, file, {
       access: 'public',
