@@ -158,7 +158,7 @@ export default function AuctioneerDetailsPage() {
 
 
   const sortedAuctions = useMemo(() => {
-    let auctionsToSort = [...relatedAuctions];
+    const auctionsToSort = [...relatedAuctions];
     switch (auctionSortBy) {
       case 'endDate_asc':
         auctionsToSort.sort((a, b) => new Date(a.auctionDate as string).getTime() - new Date(b.auctionDate as string).getTime());

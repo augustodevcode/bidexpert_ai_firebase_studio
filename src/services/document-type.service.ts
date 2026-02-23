@@ -17,7 +17,7 @@ export class DocumentTypeService {
     return this.repository.findByName(name);
   }
 
-  async findById(id: BigInt): Promise<DocumentType | null> {
+  async findById(id: bigint): Promise<DocumentType | null> {
     return this.repository.findById(id);
   }
 }

@@ -126,6 +126,9 @@ describe('AuctionFormV2 mapa e mídia', () => {
     onSubmit.mockClear();
   });
 
+  // Skipped: The Leaflet map test requires a real browser environment because react-leaflet's
+  // dynamic imports (via next/dynamic) cannot be properly intercepted in jsdom.
+  // This test should be run in browser mode with: npx vitest --browser
   it.skip('renderiza marcador quando coordenadas existem e aplica zoom aproximado', async () => {
     render(
       <AuctionFormV2

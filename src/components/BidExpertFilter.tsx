@@ -70,9 +70,9 @@ const defaultDirectSaleStatuses = [
 ];
 
 const defaultOfferTypes = [
-    { value: 'ALL' as 'ALL', label: 'Todos os Tipos'},
-    { value: 'BUY_NOW' as 'BUY_NOW', label: 'Comprar Agora'},
-    { value: 'ACCEPTS_PROPOSALS' as 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
+    { value: 'ALL' as const, label: 'Todos os Tipos'},
+    { value: 'BUY_NOW' as const, label: 'Comprar Agora'},
+    { value: 'ACCEPTS_PROPOSALS' as const, label: 'Aceita Propostas'}
 ];
 
 const praçaOptions = [

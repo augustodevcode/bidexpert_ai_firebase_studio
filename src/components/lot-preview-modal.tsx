@@ -75,7 +75,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
 
 
   const mentalTriggers = useMemo(() => {
-    let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
 
     if (settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) triggers.push('MAIS VISITADO');

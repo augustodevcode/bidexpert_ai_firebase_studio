@@ -9,7 +9,7 @@ export class DocumentTypeRepository {
     });
   }
 
-  async findById(id: BigInt): Promise<DocumentType | null> {
+  async findById(id: bigint): Promise<DocumentType | null> {
     return prisma.documentType.findUnique({
       where: { id },
     });

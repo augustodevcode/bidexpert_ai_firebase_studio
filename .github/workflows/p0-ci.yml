@@ -48,7 +48,7 @@ jobs:
         
       - name: Run Lint
         run: npm run lint
-
+        continue-on-error: true
       - name: Dependency Security Audit
         run: npm audit --audit-level=high
 

@@ -22,8 +22,9 @@ describe('ConsignorLogoBadge', () => {
     const img = screen.getByRole('img', { name: /comitente xpto/i });
     await userEvent.hover(img);
 
-    const texts = await screen.findAllByText(/Comitente XPTO/i);
-    expect(texts.length).toBeGreaterThan(0);
+    // Tooltip shows "Comitente: Comitente XPTO" - verify the name appears in tooltip content
+    const nameElements = await screen.findAllByText(/Comitente XPTO/i);
+    expect(nameElements.some(el => el.closest('[data-state]'))).toBe(true);
   });
 
   it('does not render when logo is missing', () => {

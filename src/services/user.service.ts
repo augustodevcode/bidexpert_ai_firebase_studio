@@ -115,7 +115,7 @@ export class UserService {
 
         const hashedPassword = await bcrypt.hash(userData.password, 10);
         
-        let finalRoleIds: string[] = providedRoleIds || [];
+        const finalRoleIds: string[] = providedRoleIds || [];
         if (finalRoleIds.length === 0) {
           const userRole = await this.roleRepository.findByNormalizedName('USER');
           if (!userRole) {

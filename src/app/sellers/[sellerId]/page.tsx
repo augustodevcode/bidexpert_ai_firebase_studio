@@ -127,7 +127,7 @@ export default function SellerDetailsPage() {
   }, [relatedAuctions]);
 
   const sortedLots = useMemo(() => {
-    let lotsToSort = [...allLotsFromSeller];
+    const lotsToSort = [...allLotsFromSeller];
     switch (lotSortBy) {
         case 'endDate_asc':
           lotsToSort.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
