@@ -93,7 +93,7 @@ $env:DATABASE_URL = "mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_de
 npx prisma migrate deploy
 
 # 2. Executar seed (se necessário)
-npx tsx scripts/seed-master-data.ts
+npx tsx scripts/ultimate-master-seed.ts
 ```
 
 ## 8. Uso pelas AIs

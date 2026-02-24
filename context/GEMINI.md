@@ -53,7 +53,7 @@ A estratégia de testes segue o **Guia de Qualidade & Segurança de Código** (`
 ## 7.1 Diretriz Crítica: Credenciais e Seleção de Tenant no Login
 
 **REGRA OBRIGATÓRIA:** Antes de executar qualquer teste automatizado (Playwright/Vitest UI) ou fluxo de login em agentes, o assistente **DEVE**:
-1. **Analisar o seed principal** (ex.: `seed-master-data.ts` e/ou `seed-master-data.md`) para obter credenciais válidas (usuário, senha e perfil).
+1. **Analisar o seed principal** (ex.: `scripts/ultimate-master-seed.ts` e/ou `seed-master-data.md`) para obter credenciais válidas (usuário, senha e perfil).
 2. **Ler a página de login** para entender o mecanismo de seleção de tenant/usuário (ex.: selector, modal, dropdown ou campo dedicado).
 3. **Evitar tentativa-e-erro**: só utilizar credenciais e seleção de tenant confirmadas no seed e/ou na UI.
 
@@ -802,7 +802,7 @@ Since the codebase is a template, you should not assume they have set up anythin
 - Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
 
 # Usuários para testes 
-- Sempre crie usuários para testes com diferentes perfis (admin, user comum, user premium, etc) conforme a necessidade do sistema que está sendo desenvolvido toda vez que ver credenciais inválidas. Documente e incremente no seed-master-data.ts sempre que criar novos usuários para testes. Documente também para que outros desenvolvedores saibam quais usuários existem para testes.
+- Sempre crie usuários para testes com diferentes perfis (admin, user comum, user premium, etc) conforme a necessidade do sistema que está sendo desenvolvido toda vez que ver credenciais inválidas. Documente e incremente no scripts/ultimate-master-seed.ts sempre que criar novos usuários para testes. Documente também para que outros desenvolvedores saibam quais usuários existem para testes.
 
 # Verificar se a aplicação já está em execução por outro desenvolvedor
 - Sempre verificar se a aplicação já está em execução por outro desenvolvedor antes de iniciar a execução da aplicação. Se sim, inicie em uma nova porta para não competir com outro desenvolvedor que está testando sua aplicação.

@@ -301,7 +301,7 @@ Para atingir os requisitos de **2000+ ativos, 1000+ lotes, 500+ leilões**:
    ```
 
 2. **Implementar Seed Master Completo**
-   - Usar `seed-master-data.ts` como base
+   - Usar `scripts/ultimate-master-seed.ts` como base
    - Implementar geração massiva de dados usando services
    - Garantir 100+ arrematantes com pagamento
 
@@ -319,7 +319,7 @@ Para atingir os requisitos de **2000+ ativos, 1000+ lotes, 500+ leilões**:
 
 ✅ **Documentação Consolidada**: Criado `seed-master-data.md` com todas as informações reunidas
 ✅ **Estado Atual Verificado**: 53 registros confirmados no banco local
-✅ **Scripts Preparados**: `seed-master-data.ts` e `verify-seed-data.ts` criados
+✅ **Scripts Preparados**: `scripts/ultimate-master-seed.ts` e `verify-seed-data.ts` criados
 ✅ **Estratégia Definida**: Uso obrigatório de services, limpeza segura, validação de dados
 
 O sistema está pronto para expansão controlada dos dados de seed, mantendo consistência e integridade referencial.</content>
