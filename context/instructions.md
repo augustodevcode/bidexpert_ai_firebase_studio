@@ -91,6 +91,13 @@ ALWAYS implement SEO best practices automatically for every page/component.
 - If `package.json` changed, include synchronized `package-lock.json` in the same commit.
 - Never request PR approval/merge without all gate evidence.
 
+## Mandatory PR Approval Alert + Playwright Evidence
+
+- If a PR has no `APPROVED` review, the workflow must keep an active reminder comment and `pending-human-approval` label.
+- Never proceed with merge/deploy promotion while approval reminder is active.
+- CI for PR must post a comment containing links to the workflow run and Playwright artifacts (`playwright-report` and `test-results`).
+- Evidence must stay discoverable from the PR timeline for audit/review.
+
 ## Efficient Tool Usage
 
 ### CARDINAL RULES:

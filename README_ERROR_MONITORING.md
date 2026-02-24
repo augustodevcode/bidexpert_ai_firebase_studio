@@ -29,6 +29,12 @@ Infrastructure-level error logging from Vercel platform.
 
 ## 🚀 Quick Start
 
+## 🔔 PR Governance (Mandatory)
+
+- Toda PR sem review `APPROVED` deve receber alerta automático com label `pending-human-approval`.
+- O merge/deploy deve permanecer bloqueado enquanto houver aprovação humana pendente.
+- O CI publica comentário automático com links do run e artifacts Playwright (`playwright-report`/`test-results`) para evidência visual.
+
 ### Choose Your Path:
 
 1. **Production Setup (Recommended)**: Use both Sentry + Log Drains → [Quick Start Guide](./docs/ERROR_MONITORING_QUICK_START.md)

@@ -2,6 +2,12 @@
 
 This guide will help you set up error monitoring for BidExpert AI using Sentry and/or Vercel Log Drains.
 
+## 🔔 PR Governance (Mandatory)
+
+- PR sem review `APPROVED` deve ser marcada com `pending-human-approval` e comentário automático de lembrete.
+- Merge/deploy permanece bloqueado enquanto houver aprovação humana pendente.
+- Cada execução de CI em PR deve comentar links do run + artifacts Playwright (`playwright-report` e `test-results`) para auditoria.
+
 ## 🎯 Choose Your Solution
 
 ### Option 1: Sentry (Recommended)

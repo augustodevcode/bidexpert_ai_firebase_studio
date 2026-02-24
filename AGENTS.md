@@ -30,6 +30,13 @@ Regras:
 - É proibido abrir PR sem o checklist acima concluído e documentado.
 - É proibido solicitar merge sem evidências visuais de sucesso dos testes.
 
+## 🔔 Alerta de Aprovação + Evidência Playwright (OBRIGATÓRIO)
+
+- Toda PR sem review `APPROVED` deve receber alerta automático com label `pending-human-approval`.
+- O agente deve considerar bloqueado o merge/deploy enquanto existir alerta de aprovação pendente.
+- Toda execução de CI em PR deve publicar comentário automático com links do run e artifact Playwright (`playwright-report`/`test-results`).
+- Evidências visuais devem ser consultáveis por link na própria PR (sem depender de arquivos locais).
+
 ## 🚀 Inicialização da Aplicação (OBRIGATÓRIO)
 
 **REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre:

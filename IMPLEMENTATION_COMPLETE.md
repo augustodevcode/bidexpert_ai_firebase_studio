@@ -4,6 +4,12 @@
 
 The complete error monitoring system has been successfully implemented for BidExpert AI.
 
+## 🔔 PR Governance (Mandatory)
+
+- PRs sem review `APPROVED` devem receber alerta automático com label `pending-human-approval`.
+- Enquanto o alerta estiver ativo, merge/deploy fica bloqueado.
+- O CI da PR deve publicar comentário com links do workflow run e artifacts Playwright (`playwright-report` e `test-results`) para evidência visual.
+
 ## 📦 What Was Delivered
 
 ### Core Implementation

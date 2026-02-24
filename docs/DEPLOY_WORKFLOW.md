@@ -42,6 +42,15 @@ Este documento descreve o fluxo correto de desenvolvimento e deploy para o BidEx
 
 ## Fluxo de Trabalho Passo a Passo
 
+## Gate de Aprovação de PR e Evidências (Obrigatório)
+
+Antes de qualquer promoção para `demo-stable`/`main`:
+
+1. A PR precisa ter review humano `APPROVED`.
+2. PR sem aprovação deve manter label `pending-human-approval` e comentário automático de lembrete.
+3. O CI deve comentar na PR os links do run e dos artifacts de evidência Playwright (`playwright-report` e `test-results`).
+4. Sem aprovação + evidência publicada na PR, o deploy deve ser considerado bloqueado.
+
 ### 1. Desenvolvimento Local (MySQL)
 
 ```powershell

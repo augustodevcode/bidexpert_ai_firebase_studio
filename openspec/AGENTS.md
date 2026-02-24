@@ -20,6 +20,13 @@ Instructions for AI coding assistants using OpenSpec for spec-driven development
 - Approval/merge request must include Playwright success screenshots and report link.
 - Do not open PR when any gate step fails.
 
+## PR Approval Reminder + Evidence (Mandatory)
+
+- Every open PR without `APPROVED` review must carry automated label `pending-human-approval` and reminder comment.
+- Promotion/merge is blocked while pending approval reminder is active.
+- CI must post automated PR comment with links to the workflow run and Playwright artifacts (`playwright-report`, `test-results`).
+- Review evidence must be accessible directly from PR comments/timeline.
+
 ## Three-Stage Workflow
 
 ### Stage 1: Creating Changes
