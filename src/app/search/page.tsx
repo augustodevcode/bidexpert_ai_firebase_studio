@@ -304,7 +304,7 @@ function SearchPageContent() {
     }
 
     // 2. Apply other filters
-    let filteredItems = searchedItems.filter(item => {
+    const filteredItems = searchedItems.filter(item => {
       if (activeFilters.category !== 'TODAS') {
         const itemCategoryName = 'type' in item && item.type ? item.type : ('category' in item ? item.category?.name : undefined);
         const category = allCategoriesForFilter.find(c => c.slug === activeFilters.category);
@@ -400,7 +400,7 @@ function SearchPageContent() {
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
     if (!platformSettings) return null;
-    let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
+    const itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
     return (
       <BidExpertCard
@@ -415,7 +415,7 @@ function SearchPageContent() {
 
   const renderListItem = (item: any, index: number): React.ReactNode => {
     if (!platformSettings) return null;
-    let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
+    const itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
     return (
       <BidExpertListItem

@@ -50,7 +50,7 @@ export default function AuctionMonitorPage() {
 
                 const isHabilitado = user ? await checkHabilitationForAuctionAction(user.id, auction.id) : false;
 
-                let currentLot = lots.find(l => l.id === targetLotId || l.publicId === targetLotId) || lots[0];
+                const currentLot = lots.find(l => l.id === targetLotId || l.publicId === targetLotId) || lots[0];
                 const upcomingLots = lots.filter(l => l.id !== currentLot.id).slice(0, 10);
 
                 // V2: Read strategy settings from platform

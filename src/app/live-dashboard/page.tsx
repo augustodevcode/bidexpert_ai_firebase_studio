@@ -24,7 +24,7 @@ async function getLiveDashboardData(): Promise<{ allOpenLots: Lot[] }> {
   const openAuctions = allAuctions.filter(a => a.status === 'ABERTO_PARA_LANCES' || a.status === 'ABERTO');
   const openAuctionIds = new Set(openAuctions.map(a => a.id));
 
-  let allOpenLots: Lot[] = [];
+  const allOpenLots: Lot[] = [];
 
   allLots.forEach(lot => {
     if (openAuctionIds.has(lot.auctionId) && lot.status === 'ABERTO_PARA_LANCES' && lot.endDate && !isPast(new Date(lot.endDate))) {

@@ -28,7 +28,7 @@ export function getFavoriteLotIdsFromStorage(): string[] {
 
 export function addFavoriteLotIdToStorage(lotId: string): void {
   if (typeof window === 'undefined' || !lotId) return;
-  let ids = getFavoriteLotIdsFromStorage();
+  const ids = getFavoriteLotIdsFromStorage();
   if (!ids.includes(lotId)) {
     ids.push(lotId);
     localStorage.setItem(FAVORITE_LOTS_KEY, JSON.stringify(ids));
