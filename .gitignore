@@ -91,6 +91,10 @@ prisma/dev.db
 # Temp debug files
 .tmp-*
 check-*.js
+temp_*.js
+test-pwd.js
+test_deploy.js
+test_fix_post*.js
 temp_query.sql
 
 # Reconciliation daemon logs (reports/*.md are versioned)
