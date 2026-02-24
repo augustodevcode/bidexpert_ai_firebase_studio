@@ -30,6 +30,7 @@ import { isValidImageUrl } from '@/lib/ui-helpers';
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
+import PublicSectionAdminTooltip from '@/components/admin/public-section-admin-tooltip';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -255,7 +256,12 @@ export default function SellerDetailsPage() {
 
           {sortedLots.length > 0 && (
             <section className="section-seller-lots" data-ai-id="seller-details-related-lots-section">
-              <h2 className="header-seller-lots-title"><TrendingUp className="icon-seller-lots-header" /> Lotes de {sellerProfile.name}</h2>
+              <PublicSectionAdminTooltip
+                sectionId="seller-details-lots"
+                description="Nesta seção exibimos todos os lotes dos leilões vinculados a este comitente. A lista permite ordenação por relevância, encerramento, preço e visualizações, com paginação baseada na configuração de itens por página."
+              >
+                <h2 className="header-seller-lots-title" data-ai-id="seller-details-lots-title"><TrendingUp className="icon-seller-lots-header" /> Lotes de {sellerProfile.name}</h2>
+              </PublicSectionAdminTooltip>
               <BidExpertSearchResultsFrame
                   items={paginatedLots}
                   totalItemsCount={sortedLots.length}
