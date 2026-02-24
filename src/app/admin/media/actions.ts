@@ -34,6 +34,13 @@ export async function getMediaItemsWithEntityLinks(): Promise<MediaItemWithLinks
   }));
 }
 
+export async function getCurrentUserId(): Promise<string | null> {
+  const { getSession } = await import('@/server/lib/session');
+  const session = await getSession();
+  console.log('[getCurrentUserId] session:', session);
+  return session?.userId || null;
+}
+
 export async function createMediaItem(
   itemData: Partial<Omit<MediaItem, 'id'>>,
   url: string,

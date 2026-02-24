@@ -12,6 +12,7 @@ import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { getStorageAdapter } from '@/lib/storage';
+import { getSession } from '@/server/lib/session';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -29,8 +30,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     const uploadPath = formData.get('path') as string || 'media';
-    const userId = formData.get('userId') as string | null;
+    let userId = formData.get('userId') as string | null;
     const judicialProcessId = formData.get('judicialProcessId') as string | null;
+
+    if (!userId) {
+      const session = await getSession();
+      userId = session?.userId || null;
+    }
 
     if (!files || files.length === 0) {
       return NextResponse.json(

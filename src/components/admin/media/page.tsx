@@ -1,4 +1,4 @@
-
+﻿
 // src/app/admin/media/page.tsx
 'use client';
 
@@ -130,3 +130,4 @@ export default function MediaLibraryPage() {
     </>
   );
 }
+
