@@ -4,7 +4,7 @@
  * gerenciar a lógica de negócio para as configurações globais da plataforma.
  */
 import { withAudit } from '@/lib/audit'; // Importa a função de auditoria
-import { Prisma, type PlatformSettings as PrismaPlatformSettings, type Tenant } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { PlatformSettings } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { defaultRadiusValue, defaultThemeTokensDark, defaultThemeTokensLight } from '@/lib/theme-tokens';
@@ -166,7 +166,7 @@ export class PlatformSettingsService {
                     data: createData,
                 });
 
-            } catch (error: any) {
+            } catch (error: unknown) {
                 if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
                     console.log(`[PlatformSettingsService] Settings for tenant ${tenantId} created concurrently. Fetching again.`);
                     settings = await findSettings();
@@ -219,9 +219,9 @@ export class PlatformSettingsService {
 
             PlatformSettingsService.settingsPromises.set(cacheKey, loadPromise);
             return loadPromise;
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(`[PlatformSettingsService] Error getting settings for tenant ${String(tenantId)}:`, error);
-            throw new Error(`Falha ao carregar configurações: ${error.message}`);
+            throw new Error(`Falha ao carregar configurações: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -281,7 +281,7 @@ export class PlatformSettingsService {
             const { 
             tenantId: _, 
             id: __, 
-            themes, 
+            themes: _themes, 
             mapSettings, 
             biddingSettings, 
             paymentGatewaySettings, 
@@ -304,10 +304,10 @@ export class PlatformSettingsService {
         
         try {
             const settings = await this.getSettings(tenantId);
-            const platformSettingsId = settings.id;
+            const _platformSettingsId = settings.id;
 
             // Prepara os dados de atualização
-            const updateData: any = {
+            const updateData: Record<string, unknown> = {
                 ...mainSettings
             };
 
@@ -501,13 +501,13 @@ export class PlatformSettingsService {
                 PlatformSettingsService.settingsCache.delete(cacheKey);
 
                 return { success: true, message: 'Configurações atualizadas com sucesso.' };
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error(`[PlatformSettingsService] Error updating settings for tenant ${String(tenantId)}:`, error);
-                return { success: false, message: `Falha ao atualizar configurações: ${error.message}` };
+                return { success: false, message: `Falha ao atualizar configurações: ${error instanceof Error ? error.message : String(error)}` };
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(`[PlatformSettingsService] Unexpected error in updateSettings for tenant ${String(tenantId)}:`, error);
-            return { success: false, message: `Erro inesperado ao atualizar configurações: ${error.message}` };
+            return { success: false, message: `Erro inesperado ao atualizar configurações: ${error instanceof Error ? error.message : String(error)}` };
         }
     }
 }

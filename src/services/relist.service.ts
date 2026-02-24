@@ -34,7 +34,7 @@ export class RelistService {
           return { success: false, message: 'Apenas lotes não vendidos ou encerrados sem venda podem ser relistados.'};
       }
       
-      const { id, publicId, status, auction, auctionId, createdAt, updatedAt, bidsCount, views, winnerId, winningBidTermUrl, originalLotId: oldOriginalId, ...restOfLotData } = originalLot;
+      const { id: _id, publicId: _publicId, status: _status, auction: _auction, auctionId: _auctionId, createdAt: _createdAt, updatedAt: _updatedAt, bidsCount: _bidsCount, views: _views, winnerId: _winnerId, winningBidTermUrl: _winningBidTermUrl, originalLotId: _oldOriginalId, ...restOfLotData } = originalLot;
 
       // Gera novo publicId usando a máscara configurada
       const newPublicId = await generatePublicId(originalLot.tenantId, 'lot');
@@ -76,9 +76,9 @@ export class RelistService {
 
       return { success: true, message: 'Lote relistado com sucesso!', newLotId: createResult.lotId };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error in RelistService.relistLot for lotId ${originalLotId}:`, error);
-      return { success: false, message: `Falha ao relistar lote: ${error.message}` };
+      return { success: false, message: `Falha ao relistar lote: ${error instanceof Error ? error.message : String(error)}` };
     }
   }
 }

@@ -8,7 +8,7 @@ export class NotificationService {
     return this.prisma.notification.create({ data });
   }
 
-  async deleteMany(args: any) {
+  async deleteMany(args: Prisma.NotificationDeleteManyArgs) {
     await this.prisma.notification.deleteMany(args);
   }
 }
