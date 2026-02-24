@@ -2,6 +2,12 @@
 
 This guide will help you set up error monitoring for BidExpert AI using Sentry and/or Vercel Log Drains.
 
+## 🔔 PR Governance (Mandatory)
+
+- PR sem review `APPROVED` deve ser marcada com `pending-human-approval` e comentário automático de lembrete.
+- Merge/deploy permanece bloqueado enquanto houver aprovação humana pendente.
+- Cada execução de CI em PR deve comentar links do run + artifacts Playwright (`playwright-report` e `test-results`) para auditoria.
+
 ## 🎯 Choose Your Solution
 
 ### Option 1: Sentry (Recommended)
@@ -81,7 +87,7 @@ Or do it manually:
 ### Step 5: Deploy
 
 ```bash
-git push origin main
+git push origin feat/sentry-monitoring
 ```
 
 Sentry will automatically start monitoring your application after the next deployment!
@@ -133,7 +139,7 @@ GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx  # Create at github.com/settings/tokens
 Deploy your changes so the `/api/log-drain` endpoint is live:
 
 ```bash
-git push origin main
+git push origin feat/log-drain-monitoring
 ```
 
 Wait for deployment to complete and note your deployment URL (e.g., `https://bidexpert-xxx.vercel.app`)

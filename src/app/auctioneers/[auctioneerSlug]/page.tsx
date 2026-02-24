@@ -37,6 +37,7 @@ import { isValidImageUrl } from '@/lib/ui-helpers';
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
+import PublicSectionAdminTooltip from '@/components/admin/public-section-admin-tooltip';
 
 // Sort options for auctions (similar to search page)
 const sortOptionsAuctions = [
@@ -280,9 +281,14 @@ export default function AuctioneerDetailsPage() {
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-2">
               <div>
-                <h2 className="text-lg font-semibold text-primary flex items-center">
-                  <Users className="h-5 w-5 mr-1.5"/> Leilões Recentes
-                </h2>
+                <PublicSectionAdminTooltip
+                  sectionId="auctioneer-recent-auctions"
+                  description="Nesta seção exibimos os 5 leilões mais recentes vinculados ao leiloeiro para navegação rápida em formato de carrossel."
+                >
+                  <h2 className="text-lg font-semibold text-primary flex items-center" data-ai-id="auctioneer-recent-auctions-title">
+                    <Users className="h-5 w-5 mr-1.5"/> Leilões Recentes
+                  </h2>
+                </PublicSectionAdminTooltip>
               </div>
               {recentAuctionsForCarousel.length > 1 && (
                 <div className="flex gap-2 print:hidden">
@@ -354,7 +360,12 @@ export default function AuctioneerDetailsPage() {
 
         {relatedAuctions.length > 0 && (
           <section className="pt-6" data-ai-id="auctioneer-all-auctions-section">
-            <h2 className="text-2xl font-bold mb-6 font-headline flex items-center"><TrendingUp className="h-6 w-6 mr-2 text-primary" /> Todos os Leilões de {auctioneerProfile.name}</h2>
+            <PublicSectionAdminTooltip
+              sectionId="auctioneer-all-auctions"
+              description="Nesta seção exibimos todos os leilões do leiloeiro com ordenação dinâmica (relevância, data de encerramento, visitas ou mais recentes) e paginação configurável."
+            >
+              <h2 className="text-2xl font-bold mb-6 font-headline flex items-center" data-ai-id="auctioneer-all-auctions-title"><TrendingUp className="h-6 w-6 mr-2 text-primary" /> Todos os Leilões de {auctioneerProfile.name}</h2>
+            </PublicSectionAdminTooltip>
             <SearchResultsFrame
                 items={paginatedAuctions}
                 totalItemsCount={relatedAuctions.length}

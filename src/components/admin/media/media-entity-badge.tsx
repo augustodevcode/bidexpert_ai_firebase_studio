@@ -91,3 +91,4 @@ export function MediaEntityBadges({ links, maxVisible = 3, compact = true }: Med
     </div>
   );
 }
+

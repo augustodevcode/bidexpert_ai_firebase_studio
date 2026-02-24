@@ -5,30 +5,40 @@ import type { Prisma } from '@prisma/client';
 
 export class MediaRepository {
   async findAll(): Promise<MediaItem[]> {
-    // @ts-ignore
-    return prisma.mediaItem.findMany({ orderBy: { uploadedAt: 'desc' } });
+    const items = await prisma.mediaItem.findMany({ orderBy: { uploadedAt: 'desc' } });
+    return items.map(this.serializeItem);
   }
 
   async findById(id: string): Promise<MediaItem | null> {
-    // @ts-ignore
-    return prisma.mediaItem.findUnique({ where: { id: id } });
+    const item = await prisma.mediaItem.findUnique({ where: { id: BigInt(id) } });
+    return item ? this.serializeItem(item) : null;
   }
 
   async create(data: Prisma.MediaItemCreateInput): Promise<MediaItem> {
-    // @ts-ignore
-    return prisma.mediaItem.create({ data });
+    const item = await prisma.mediaItem.create({ data });
+    return this.serializeItem(item);
   }
 
   async update(id: string, data: Prisma.MediaItemUpdateInput): Promise<MediaItem> {
-    // @ts-ignore
-    return prisma.mediaItem.update({ where: { id: id }, data });
+    const item = await prisma.mediaItem.update({ where: { id: BigInt(id) }, data });
+    return this.serializeItem(item);
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.mediaItem.delete({ where: { id: id } });
+    await prisma.mediaItem.delete({ where: { id: BigInt(id) } });
   }
 
   async deleteAll(): Promise<void> {
     await prisma.mediaItem.deleteMany({});
+  }
+
+  private serializeItem(item: any): MediaItem {
+    return {
+      ...item,
+      id: String(item.id),
+      uploadedByUserId: item.uploadedByUserId ? String(item.uploadedByUserId) : null,
+      judicialProcessId: item.judicialProcessId ? String(item.judicialProcessId) : null,
+      tenantId: item.tenantId ? String(item.tenantId) : null,
+    };
   }
 }

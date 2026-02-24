@@ -16,13 +16,13 @@ Permitir que múltiplos desenvolvedores (humanos ou agentes AI como Copilot GitH
 
 ## 📋 Checklist Obrigatório (Início de Cada Task)
 
-### 1. Criar Branch a partir da Main
+### 1. Criar Branch a partir da demo-stable
 
 ```powershell
-# Sincronizar com a main
-git fetch origin main
-git checkout main
-git pull origin main
+# Sincronizar com a demo-stable
+git fetch origin demo-stable
+git checkout demo-stable
+git pull origin demo-stable
 
 # Criar branch para a feature/fix
 git checkout -b <tipo>/<descricao-curta>-<timestamp>
@@ -62,7 +62,7 @@ netstat -ano | findstr "9005 9006 9007 9008 9009"
 ```powershell
 # Definir porta e iniciar
 $env:PORT=9006  # Ajustar conforme disponibilidade
-npm run dev
+node .vscode/start-9006-dev.js
 ```
 
 ### 4. Executar Desenvolvimento e Testes
@@ -97,8 +97,21 @@ git push -u origin <nome-da-branch>
 2. ✅ Documentar as alterações realizadas
 3. ✅ Fazer push de todos os commits
 4. ✅ **SOLICITAR AUTORIZAÇÃO DO USUÁRIO** para:
-   - Criar Pull Request para a main
+   - Criar Pull Request para `demo-stable`
    - Fazer merge com outras PRs pendentes
+
+### Gate Pré-PR (OBRIGATÓRIO)
+
+Antes de abrir PR, executar e registrar obrigatoriamente:
+1. `npm ci` (sincronia entre `package.json` e `package-lock.json`)
+2. `npm run typecheck`
+3. `npm run build`
+4. Testes da entrega + evidência Playwright (prints e link do relatório)
+
+Bloqueios:
+- Não abrir PR se algum item falhar.
+- Se `package.json` for alterado, `package-lock.json` atualizado no mesmo commit é obrigatório.
+- Não pedir aprovação/merge sem evidências visuais de testes passando.
 
 ### Checkpoint Adicional de Qualidade Monetária (OBRIGATÓRIO)
 
@@ -122,11 +135,11 @@ Antes do push final, validar:
 - [Lista de alterações]
 
 ### Próximos Passos (Requer Autorização):
-1. [ ] Criar Pull Request para `main`
+1. [ ] Criar Pull Request para `demo-stable`
 2. [ ] Revisar e resolver conflitos com outras PRs (se houver)
-3. [ ] Fazer merge na `main`
+3. [ ] Fazer merge em `demo-stable`
 
-**Deseja que eu prossiga com o merge na main?** (sim/não)
+**Deseja que eu prossiga com a criação do PR para demo-stable?** (sim/não)
 ---
 ```
 

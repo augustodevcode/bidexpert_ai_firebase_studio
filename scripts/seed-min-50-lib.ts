@@ -54,7 +54,7 @@ async function ensureAdminUser(tenantId: bigint) {
 }
 
 async function ensureTickets(tenantId: bigint, target: number) {
-  const existing = await prisma.itsm_tickets.count({ where: { tenantId } });
+  const existing = await prisma.iTSM_Ticket.count({ where: { tenantId } });
   if (existing >= target) return;
 
   const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
@@ -62,7 +62,7 @@ async function ensureTickets(tenantId: bigint, target: number) {
 
   for (let i = existing; i < target; i++) {
     const user = users[i % users.length];
-    await prisma.itsm_tickets.create({
+    await prisma.iTSM_Ticket.create({
       data: {
         tenantId,
         publicId: `TKT-MIN50-${Date.now()}-${i}`,
@@ -79,7 +79,7 @@ async function ensureTickets(tenantId: bigint, target: number) {
 }
 
 async function ensureBidderProfiles(tenantId: bigint, deps: SeedMin50Deps, target: number) {
-  const count = await prisma.bidder_profiles.count({ where: { tenantId } });
+  const count = await prisma.bidderProfile.count({ where: { tenantId } });
   if (count >= target) return;
 
   const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: target });
@@ -177,7 +177,7 @@ export async function seedMin50ZeroTables(
   }
 
   // form_submissions
-  if ((await prisma.form_submissions.count({ where: { tenantId } })) === 0) {
+  if ((await prisma.formSubmission.count({ where: { tenantId } })) === 0) {
     const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 10 });
     if (users.length > 0) {
       const payload = Array.from({ length: targetCount }).map((_, i) => ({
@@ -196,10 +196,10 @@ export async function seedMin50ZeroTables(
   }
 
   // ITSM (attachments, chat logs, query logs)
-  if ((await prisma.itsm_tickets.count({ where: { tenantId } })) === 0) {
+  if ((await prisma.iTSM_Ticket.count({ where: { tenantId } })) === 0) {
     await ensureTickets(tenantId, Math.max(5, targetCount / 10));
   }
-  const tickets = await prisma.itsm_tickets.findMany({ where: { tenantId } });
+  const tickets = await prisma.iTSM_Ticket.findMany({ where: { tenantId } });
   const users = await prisma.user.findMany({ where: { UsersOnTenants: { some: { tenantId } } }, take: 5 });
   const seedUser = users[0];
 
@@ -215,7 +215,7 @@ export async function seedMin50ZeroTables(
     await prisma.itsm_attachments.createMany({ data: payload });
   }
 
-  if ((await prisma.itsm_chat_logs.count({ where: { tenantId } })) === 0 && seedUser) {
+  if ((await prisma.iTSM_ChatLog.count({ where: { tenantId } })) === 0 && seedUser) {
     const payload = Array.from({ length: targetCount }).map((_, i) => ({
       tenantId,
       userId: seedUser.id,
@@ -227,7 +227,7 @@ export async function seedMin50ZeroTables(
       ticketCreated: Boolean(tickets[i % tickets.length]),
       updatedAt: new Date(),
     }));
-    await prisma.itsm_chat_logs.createMany({ data: payload });
+    await prisma.iTSM_ChatLog.createMany({ data: payload });
   }
 
   if ((await prisma.itsm_query_logs.count()) === 0 && seedUser) {
@@ -244,9 +244,9 @@ export async function seedMin50ZeroTables(
   }
 
   // PaymentMethods
-  if ((await prisma.payment_methods.count()) === 0) {
+  if ((await prisma.paymentMethod.count()) === 0) {
     await ensureBidderProfiles(tenantId, deps, Math.max(10, targetCount / 5));
-    const bidders = await prisma.bidder_profiles.findMany({ where: { tenantId } });
+    const bidders = await prisma.bidderProfile.findMany({ where: { tenantId } });
     for (let i = 0; i < targetCount; i++) {
       const bidder = bidders[i % bidders.length];
       await deps.paymentMethodService.createPaymentMethod({
@@ -261,9 +261,9 @@ export async function seedMin50ZeroTables(
   }
 
   // ParticipationHistory
-  if ((await prisma.participation_history.count({ where: { tenantId } })) === 0) {
+  if ((await prisma.participationHistory.count({ where: { tenantId } })) === 0) {
     await ensureBidderProfiles(tenantId, deps, Math.max(10, targetCount / 5));
-    const bidders = await prisma.bidder_profiles.findMany({ where: { tenantId } });
+    const bidders = await prisma.bidderProfile.findMany({ where: { tenantId } });
     const lots = await prisma.lot.findMany({ where: { tenantId }, take: 20 });
     const auctions = await prisma.auction.findMany({ where: { tenantId }, take: 10 });
 

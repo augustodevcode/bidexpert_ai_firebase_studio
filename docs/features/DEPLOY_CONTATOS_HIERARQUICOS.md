@@ -228,9 +228,9 @@ npx prisma migrate dev --name rollback_auction_contacts
 # Via Git
 git revert eab893ba  # Reverte commit específico
 
-# Ou fazer checkout da main
-git checkout main
-git pull origin main
+# Ou fazer checkout da demo-stable
+git checkout demo-stable
+git pull origin demo-stable
 ```
 
 ## 📞 Suporte

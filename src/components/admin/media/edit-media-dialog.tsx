@@ -1,4 +1,4 @@
-// src/components/admin/media/edit-media-dialog.tsx
+﻿// src/components/admin/media/edit-media-dialog.tsx
 /**
  * @fileoverview Componente de diálogo modal para editar os metadados de um item de mídia.
  * Permite que um administrador atualize o título, texto alternativo (alt text),
@@ -86,3 +86,4 @@ export default function EditMediaDialog({ isOpen, onOpenChange, mediaItem, onUpd
     </Dialog>
   );
 }
+

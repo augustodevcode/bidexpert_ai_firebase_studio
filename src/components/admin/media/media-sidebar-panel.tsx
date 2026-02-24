@@ -1,5 +1,5 @@
 ﻿/**
- * @fileoverview Painel lateral de detalhes de m├¡dia e edi├º├úo de metadados.
+ * @fileoverview Painel lateral de detalhes de Mídia e edição de metadados.
  * Exibe info do arquivo, entity links, e campos edit├íveis (altText, caption, title, description).
  * data-ai-id="media-sidebar-panel"
  */
@@ -224,7 +224,7 @@ export function MediaSidebarPanel({
                     <Link2 className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
                     <p className="text-sm text-muted-foreground">Nenhuma entidade vinculada</p>
                     <p className="text-xs text-muted-foreground/70 mt-1">
-                      Vincule esta m├¡dia a Lotes, Leil├Áes, ou outros itens
+                      Vincule esta Mídia a Lotes, Leilões, ou outros itens
                     </p>
                   </div>
                 )}
@@ -234,12 +234,12 @@ export function MediaSidebarPanel({
               <TabsContent value="edit" className="space-y-3 mt-0">
                 <div className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="media-title" className="text-xs">T├¡tulo</Label>
+                    <Label htmlFor="media-title" className="text-xs">título</Label>
                     <Input
                       id="media-title"
                       value={title}
                       onChange={(e) => { setTitle(e.target.value); setEditMode(true); }}
-                      placeholder="T├¡tulo descritivo..."
+                      placeholder="título descritivo..."
                       className="h-8 text-sm"
                     />
                   </div>
@@ -304,3 +304,4 @@ export function MediaSidebarPanel({
     </Sheet>
   );
 }
+

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Testes E2E da Biblioteca de Midia Google Photos-like (Admin).
  *
  * Valida: login admin, renderizacao da galeria Google Photos-like,
@@ -11,31 +11,12 @@
  */
 
 import { test, expect, type Page } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth-helper';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://demo.localhost:9005';
 
 // High timeout for lazy compilation
 test.setTimeout(180_000);
-
-/** Helper: Login as admin */
-async function loginAsAdmin(page: Page) {
-  page.on('console', msg => {
-    if (msg.type() === 'error') console.log('[Browser Error]: ' + msg.text());
-  });
-
-  await page.goto(BASE_URL + '/auth/login', { waitUntil: 'networkidle', timeout: 120000 });
-  await page.waitForSelector('[data-ai-id="auth-login-email-input"]', { timeout: 120000 });
-  await page.waitForTimeout(5000);
-
-  await page.locator('[data-ai-id="auth-login-email-input"]').fill('admin@bidexpert.com.br');
-  await page.locator('[data-ai-id="auth-login-password-input"]').fill('Admin@123');
-
-  await Promise.all([
-    page.waitForURL(/\/(admin|dashboard)/i, { timeout: 60000 }),
-    page.locator('[data-ai-id="auth-login-submit-button"]').click({ timeout: 60000 }),
-  ]);
-  console.log('Login OK:', page.url());
-}
 
 /** Helper: Navigate to media page */
 async function goToMediaPage(page: Page) {
@@ -48,7 +29,7 @@ async function goToMediaPage(page: Page) {
 test.describe('Biblioteca de Midia - Google Photos-like Gallery', () => {
 
   test('T01 - Deve renderizar a pagina principal com galeria', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     await expect(page.locator('[data-ai-id="admin-media-page-container"]')).toBeVisible();
@@ -69,7 +50,7 @@ test.describe('Biblioteca de Midia - Google Photos-like Gallery', () => {
   });
 
   test('T02 - Deve exibir toolbar com campo de busca e filtros', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     const toolbar = page.locator('[data-ai-id="media-toolbar"]');
@@ -83,7 +64,7 @@ test.describe('Biblioteca de Midia - Google Photos-like Gallery', () => {
   });
 
   test('T03 - Deve buscar itens via campo de pesquisa', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     const searchInput = page.locator('[data-ai-id="media-toolbar-search"]');
@@ -104,7 +85,7 @@ test.describe('Biblioteca de Midia - Google Photos-like Gallery', () => {
   });
 
   test('T04 - Deve exibir upload zone (drag-and-drop)', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     // Upload zone is hidden by default - click the upload button to open it
@@ -125,7 +106,7 @@ test.describe('Biblioteca de Midia - Google Photos-like Gallery', () => {
   });
 
   test('T05 - Deve exibir itens na galeria (grid view)', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
     await page.waitForTimeout(5000);
 
@@ -168,7 +149,7 @@ test.describe('Biblioteca de Midia - Google Photos-like Gallery', () => {
       }
     });
 
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
     await page.waitForTimeout(5000);
 
@@ -182,7 +163,7 @@ test.describe('Biblioteca de Midia - Google Photos-like Gallery', () => {
   });
 
   test('T07 - Card header deve ter titulo e descricao corretos', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     // CardTitle renders as <div> with text-2xl class
@@ -197,7 +178,7 @@ test.describe('Biblioteca de Midia - Google Photos-like Gallery', () => {
   });
 
   test('T08 - Deve ter entity badges nas imagens vinculadas', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
     await page.waitForTimeout(5000);
 

@@ -164,9 +164,14 @@ const shouldUseSeparateDemoDb =
   process.env.NODE_ENV === 'production' || 
   process.env.USE_SEPARATE_DEMO_DB === 'true';
 
+const demoDatabaseUrl =
+  process.env.PRISMA_DEMO_POSTGRES_URL ||
+  process.env.PRISMA_DEMO_PRISMA_DATABASE_URL ||
+  process.env.DATABASE_URL_DEMO;
+
 export const demoPrisma = globalForPrisma.demoPrisma ?? (
-  shouldUseSeparateDemoDb && process.env.DATABASE_URL_DEMO
-    ? createPrismaClient(process.env.DATABASE_URL_DEMO)
+  shouldUseSeparateDemoDb && demoDatabaseUrl
+    ? createPrismaClient(demoDatabaseUrl)
     : null
 );
 

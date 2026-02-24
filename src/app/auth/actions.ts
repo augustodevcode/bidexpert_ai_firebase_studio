@@ -65,15 +65,28 @@ export async function login(values: { email: string, password?: string, tenantId
         }
     }
 
-    // Resolve Tenant Slug to ID if necessary
+    // Resolve Tenant Slug/Subdomain to ID if necessary
+    // NOTA: O modelo Tenant NÃO possui campo 'slug' — apenas 'subdomain'.
+    // O middleware passa o subdomain como x-tenant-id (ex: "demo", "dev").
+    // Aqui resolvemos o slug/subdomain para o ID numérico real.
     if (tenantId && isNaN(Number(tenantId))) {
-         console.log(`[Login Action] Resolvendo tenantId slug '${tenantId}'...`);
-         const t = await basePrisma.tenant.findFirst({ where: { slug: tenantId } });
+         console.log(`[Login Action] Resolvendo tenantId slug/subdomain '${tenantId}'...`);
+         // Busca exata por subdomain
+         let t = await basePrisma.tenant.findFirst({ where: { subdomain: tenantId.toLowerCase() } });
+         
+         // Fallback: tenta match flexível (slug. prefix, slug- prefix, sufixo)
+         if (!t) {
+           const normalized = tenantId.toLowerCase().replace(/^(slug\.|slug-)/, '').replace(/(-slug|\.slug)$/, '');
+           if (normalized !== tenantId.toLowerCase()) {
+             t = await basePrisma.tenant.findFirst({ where: { subdomain: normalized } });
+           }
+         }
+         
          if (t) {
-             console.log(`[Login Action] Slug '${tenantId}' resolvido para ID '${t.id}'`);
+             console.log(`[Login Action] Subdomain '${tenantId}' resolvido para ID '${t.id}'`);
              tenantId = t.id.toString();
          } else {
-             console.log(`[Login Action] Slug '${tenantId}' não encontrado.`);
+             console.log(`[Login Action] Subdomain '${tenantId}' não encontrado no banco.`);
          }
     }
 
@@ -104,7 +117,7 @@ export async function login(values: { email: string, password?: string, tenantId
     const tenants = user.UsersOnTenants?.map(ut => ({
       id: ut.Tenant.id.toString(),
       name: ut.Tenant.name,
-      slug: ut.Tenant.slug
+      slug: ut.Tenant.subdomain
     })) || [{ id: '1', name: 'BidExpert', slug: 'bidexpert' }];
 
     const roleNames = roles.map(r => r.name);
@@ -269,14 +282,16 @@ export async function getDevUsers(): Promise<Array<{ email: string; fullName: st
     });
 
     return users.map(u => {
-      // Determine password hint based on email
-      let passwordHint = 'Bot@123';
+      // Determine password hint based on email (must match seed passwords)
+      let passwordHint = 'Test@12345'; // Default matches ultimate-master-seed.ts dynamic users
       if (u.email === 'admin@bidexpert.com.br') {
         passwordHint = 'Admin@123';
       } else if (u.email === 'leiloeiro@bidexpert.com.br') {
         passwordHint = 'Leiloeiro@123';
       } else if (u.email === 'comprador@bidexpert.com.br') {
         passwordHint = 'Comprador@123';
+      } else if (u.email === 'analista@lordland.com' || u.email === 'admin@lordland.com') {
+        passwordHint = 'password123';
       }
 
       return {

@@ -6,42 +6,16 @@
  */
 
 import { test, expect, type Page } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth-helper';
 
 const VERCEL_URL = 'https://bidexpertaifirebasestudio.vercel.app';
 
 test.setTimeout(120_000);
 
-/** Helper: Login as admin on Vercel */
-async function loginAsAdmin(page: Page) {
-  const errors: string[] = [];
-  page.on('console', msg => {
-    if (msg.type() === 'error') {
-      errors.push(msg.text());
-      console.log('[Browser Error]: ' + msg.text());
-    }
-  });
-
-  console.log('Navigating to login page...');
-  await page.goto(VERCEL_URL + '/auth/login', { waitUntil: 'networkidle', timeout: 60000 });
-  
-  await page.waitForSelector('[data-ai-id="auth-login-email-input"]', { timeout: 30000 });
-  console.log('Login form visible');
-
-  await page.locator('[data-ai-id="auth-login-email-input"]').fill('admin@bidexpert.com.br');
-  await page.locator('[data-ai-id="auth-login-password-input"]').fill('Admin@123');
-
-  await Promise.all([
-    page.waitForURL(/\/(admin|dashboard)/i, { timeout: 60000 }),
-    page.locator('[data-ai-id="auth-login-submit-button"]').click({ timeout: 30000 }),
-  ]);
-  console.log('Login OK:', page.url());
-  return errors;
-}
-
 test.describe('Media Library - Vercel Production', () => {
 
   test('V01 - Deve carregar a pagina de media no Vercel', async ({ page }) => {
-    const loginErrors = await loginAsAdmin(page);
+    const loginErrors = await loginAsAdmin(page, VERCEL_URL);
     
     console.log('Navigating to /admin/media...');
     await page.goto(VERCEL_URL + '/admin/media', { waitUntil: 'networkidle', timeout: 60000 });
@@ -57,7 +31,7 @@ test.describe('Media Library - Vercel Production', () => {
   });
 
   test('V02 - Deve exibir toolbar da galeria', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, VERCEL_URL);
     await page.goto(VERCEL_URL + '/admin/media', { waitUntil: 'networkidle', timeout: 60000 });
     
     // Check for Google Photos toolbar
@@ -72,7 +46,7 @@ test.describe('Media Library - Vercel Production', () => {
   });
 
   test('V03 - Deve exibir galeria com cards', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, VERCEL_URL);
     await page.goto(VERCEL_URL + '/admin/media', { waitUntil: 'networkidle', timeout: 60000 });
     
     // Check for gallery cards
@@ -96,7 +70,7 @@ test.describe('Media Library - Vercel Production', () => {
       }
     });
 
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, VERCEL_URL);
     await page.goto(VERCEL_URL + '/admin/media', { waitUntil: 'networkidle', timeout: 60000 });
     
     // Filter for critical errors (500s, not just "Failed to fetch" which can be transient)

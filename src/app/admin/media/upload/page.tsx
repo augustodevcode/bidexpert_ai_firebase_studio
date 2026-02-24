@@ -1,4 +1,4 @@
-// src/app/admin/media/upload/page.tsx
+﻿// src/app/admin/media/upload/page.tsx
 /**
  * @fileoverview Página para upload de múltiplos arquivos de mídia.
  * Este componente utiliza `react-dropzone` para criar uma área de arrastar e soltar
@@ -252,3 +252,4 @@ export default function AdvancedMediaUploadPage() {
     </div>
   );
 }
+

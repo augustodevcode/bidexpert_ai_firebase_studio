@@ -7,6 +7,7 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
+import { loginAsAdmin, loginAs, CREDENTIALS } from './helpers/auth-helper';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:9005';
 const TIMEOUT = 30000;
@@ -14,26 +15,6 @@ const TIMEOUT = 30000;
 // ============================================================================
 // Test Fixtures & Helpers
 // ============================================================================
-
-const testUser = {
-  email: 'test-bidder@bidexpert.com',
-  password: 'Test@12345',
-  name: 'Test Bidder'
-};
-
-const testAdmin = {
-  email: 'admin@bidexpert.com.br',
-  password: 'Admin@123',
-  name: 'Administrador'
-};
-
-async function loginUser(page: Page, email: string, password: string) {
-  await page.goto(`${BASE_URL}/auth/signin`, { waitUntil: 'networkidle' });
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(`${BASE_URL}/**`, { timeout: TIMEOUT });
-}
 
 async function waitForSocketConnection(page: Page) {
   await page.waitForFunction(() => {
@@ -66,7 +47,7 @@ test.describe('Realtime Bids with WebSocket', () => {
 
   test('Should display bid history in realtime', async ({ page }) => {
     // Login as bidder
-    await loginUser(page, testUser.email, testUser.password);
+    await loginAs(page, 'comprador', BASE_URL);
     
     // Navigate to auction lot
     await page.goto(`${BASE_URL}/auctions/1/lots/1`, { waitUntil: 'networkidle' });
@@ -134,7 +115,7 @@ test.describe('Realtime Bids with WebSocket', () => {
 test.describe('Soft Close & Auto-close Features', () => {
   
   test('Should show soft close warning before auction ends', async ({ page }) => {
-    await loginUser(page, testUser.email, testUser.password);
+    await loginAs(page, 'comprador', BASE_URL);
     
     // Navigate to auction near closing time
     await page.goto(`${BASE_URL}/auctions/1/lots/1`, { waitUntil: 'networkidle' });
@@ -149,7 +130,7 @@ test.describe('Soft Close & Auto-close Features', () => {
   });
 
   test('Should extend auction on last-second bid (soft close enabled)', async ({ page }) => {
-    await loginUser(page, testUser.email, testUser.password);
+    await loginAs(page, 'comprador', BASE_URL);
     await page.goto(`${BASE_URL}/auctions/1/lots/1`, { waitUntil: 'networkidle' });
     await waitForSocketConnection(page);
     
@@ -176,7 +157,7 @@ test.describe('Soft Close & Auto-close Features', () => {
   });
 
   test('Admin can configure soft close settings', async ({ page }) => {
-    await loginUser(page, testAdmin.email, testAdmin.password);
+    await loginAsAdmin(page, BASE_URL);
     
     // Navigate to admin settings
     await page.goto(`${BASE_URL}/admin/settings`, { waitUntil: 'networkidle' });
@@ -211,7 +192,7 @@ test.describe('Soft Close & Auto-close Features', () => {
 test.describe('Audit Logs & Versioning', () => {
   
   test('Should log all bid actions', async ({ page }) => {
-    await loginUser(page, testUser.email, testUser.password);
+    await loginAs(page, 'comprador', BASE_URL);
     await page.goto(`${BASE_URL}/auctions/1/lots/1`, { waitUntil: 'networkidle' });
     
     // Place a bid
@@ -225,7 +206,7 @@ test.describe('Audit Logs & Versioning', () => {
     await expect(page.locator('text=Bid placed successfully')).toBeVisible({ timeout: 5000 });
     
     // Check admin can see audit log
-    await loginUser(page, testAdmin.email, testAdmin.password);
+    await loginAsAdmin(page, BASE_URL);
     await page.goto(`${BASE_URL}/admin/audit-logs`, { waitUntil: 'networkidle' });
     
     // Search for bid action
@@ -239,7 +220,7 @@ test.describe('Audit Logs & Versioning', () => {
   });
 
   test('Should show entity version history', async ({ page }) => {
-    await loginUser(page, testAdmin.email, testAdmin.password);
+    await loginAsAdmin(page, BASE_URL);
     
     // Navigate to lot details
     await page.goto(`${BASE_URL}/admin/lots/1`, { waitUntil: 'networkidle' });
@@ -261,7 +242,7 @@ test.describe('Audit Logs & Versioning', () => {
   });
 
   test('Should track who made what changes', async ({ page }) => {
-    await loginUser(page, testAdmin.email, testAdmin.password);
+    await loginAsAdmin(page, BASE_URL);
     await page.goto(`${BASE_URL}/admin/audit-logs`, { waitUntil: 'networkidle' });
     
     // Filter by user
@@ -288,7 +269,7 @@ test.describe('Audit Logs & Versioning', () => {
 test.describe('Blockchain Feature Toggle', () => {
   
   test('Admin can toggle blockchain on/off', async ({ page }) => {
-    await loginUser(page, testAdmin.email, testAdmin.password);
+    await loginAsAdmin(page, BASE_URL);
     
     // Navigate to admin panel
     await page.goto(`${BASE_URL}/admin/settings`, { waitUntil: 'networkidle' });
@@ -332,7 +313,7 @@ test.describe('Blockchain Feature Toggle', () => {
 
   test('Should submit bids to blockchain when enabled', async ({ page }) => {
     // Ensure blockchain is enabled
-    await loginUser(page, testAdmin.email, testAdmin.password);
+    await loginAsAdmin(page, BASE_URL);
     await page.goto(`${BASE_URL}/admin/settings`, { waitUntil: 'networkidle' });
     const toggle = page.locator('[data-testid="toggle-blockchain"]');
     if (!(await toggle.isChecked())) {
@@ -341,7 +322,7 @@ test.describe('Blockchain Feature Toggle', () => {
     }
     
     // Now place bid
-    await loginUser(page, testUser.email, testUser.password);
+    await loginAs(page, 'comprador', BASE_URL);
     await page.goto(`${BASE_URL}/auctions/1/lots/1`, { waitUntil: 'networkidle' });
     
     const bidInput = page.locator('input[data-testid="bid-amount"]');

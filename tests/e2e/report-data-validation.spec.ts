@@ -19,6 +19,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { loginAsAdmin } from './helpers/auth-helper';
 
 // ============================================================================
 // TEST CONFIGURATION
@@ -59,19 +60,6 @@ interface ValidationResult {
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
-
-async function loginAsAdmin(page: Page): Promise<void> {
-  await page.goto(`${BASE_URL}/login`);
-  await page.waitForLoadState('networkidle');
-  
-  const isLoggedIn = await page.locator('[data-testid="user-menu"]').isVisible().catch(() => false);
-  if (isLoggedIn) return;
-
-  await page.fill('input[name="email"], input[type="email"]', 'admin@bidexpert.com');
-  await page.fill('input[name="password"], input[type="password"]', 'admin123');
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(admin|dashboard)/, { timeout: 10000 }).catch(() => {});
-}
 
 async function fetchApiData(page: Page, endpoint: string): Promise<any> {
   const response = await page.request.get(`${API_URL}${endpoint}`);
