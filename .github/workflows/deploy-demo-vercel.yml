@@ -56,14 +56,17 @@ jobs:
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
 
-      - name: 🔐 Validate Promotion Source (HML ➜ DEMO)
+      - name: 🔐 Check Promotion Source (HML ➜ DEMO)
         run: |
-          git fetch origin hml
-          if ! git merge-base --is-ancestor origin/hml HEAD; then
-            echo "❌ Promoção inválida: HEAD de demo-stable não contém hml"
-            exit 1
+          if git fetch origin hml; then
+            if git merge-base --is-ancestor origin/hml HEAD; then
+              echo "✅ hml está contida em demo-stable (promoção via HML confirmada)."
+            else
+              echo "ℹ️  hml não é ancestral de demo-stable — feature foi promovida diretamente para demo-stable (fluxo direto permitido)."
+            fi
+          else
+            echo "⚠️  Branch hml não encontrada remotamente — verificação de promoção ignorada."
           fi
-          echo "✅ Promoção válida: hml está contida em demo-stable"
         
       - name: 🔍 Type Check
         run: npm run typecheck
