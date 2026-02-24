@@ -1,5 +1,5 @@
 ﻿/**
- * @fileoverview Upload zone inline para a Biblioteca de M├¡dia.
+ * @fileoverview Upload zone inline para a Biblioteca de Mídia.
  * Drag-and-drop com react-dropzone, progress bars, auto-refresh.
  * data-ai-id="media-upload-zone"
  */
@@ -64,6 +64,18 @@ export function MediaUploadZone({ userId, onUploadComplete, isOpen, onClose }: M
     try {
       const response = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await response.json();
+
+      if (!response.ok && !data.urls?.length) {
+        setUploadingFiles((prev) =>
+          prev.map((f) => ({
+            ...f,
+            progress: 100,
+            status: 'error' as const,
+            error: data.message || 'Falha no upload',
+          }))
+        );
+        return;
+      }
 
       setUploadingFiles((prev) =>
         prev.map((f) => {
@@ -136,7 +148,7 @@ export function MediaUploadZone({ userId, onUploadComplete, isOpen, onClose }: M
               Arraste arquivos ou <span className="text-primary font-medium">clique para selecionar</span>
             </p>
             <p className="text-xs text-muted-foreground/70 mt-1">
-              JPG, PNG, WebP, GIF, PDF, SVG (m├íx. 50MB)
+              JPG, PNG, WebP, GIF, PDF, SVG (máx. 50MB)
             </p>
           </div>
         )}
@@ -168,3 +180,4 @@ export function MediaUploadZone({ userId, onUploadComplete, isOpen, onClose }: M
     </div>
   );
 }
+

@@ -8,29 +8,13 @@
  * - Filtros e busca
  */
 import { test, expect, Page } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth-helper';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
-// Credenciais do usuário Landlord (administrador da plataforma)
-const LANDLORD_EMAIL = 'admin@bidexpert.com.br';
-const LANDLORD_PASSWORD = 'admin123';
-
-/**
- * Realiza login como Landlord
- */
-async function loginAsLandlord(page: Page) {
-  await page.goto(`${BASE_URL}/login`);
-  await page.fill('input[name="email"], input[type="email"]', LANDLORD_EMAIL);
-  await page.fill('input[name="password"], input[type="password"]', LANDLORD_PASSWORD);
-  await page.click('button[type="submit"]');
-  
-  // Aguarda redirecionamento após login
-  await page.waitForURL(/\/(admin|dashboard|home)/);
-}
-
 test.describe('Platform Tenants Admin Panel', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsLandlord(page);
+    await loginAsAdmin(page, BASE_URL);
   });
 
   test('deve exibir página de gerenciamento de tenants', async ({ page }) => {
@@ -196,7 +180,7 @@ test.describe('Platform Tenants - Access Control', () => {
 
 test.describe('Platform Tenants - Visual Regression', () => {
   test('screenshot da página de tenants', async ({ page }) => {
-    await loginAsLandlord(page);
+    await loginAsAdmin(page, BASE_URL);
     await page.goto(`${BASE_URL}/admin/platform-tenants`);
     
     // Aguarda carregamento completo
@@ -211,7 +195,7 @@ test.describe('Platform Tenants - Visual Regression', () => {
   });
 
   test('screenshot do modal de detalhes', async ({ page }) => {
-    await loginAsLandlord(page);
+    await loginAsAdmin(page, BASE_URL);
     await page.goto(`${BASE_URL}/admin/platform-tenants`);
     
     // Abre modal do primeiro tenant

@@ -1,6 +1,6 @@
 ﻿// src/app/admin/media/page.tsx
 /**
- * @fileoverview Biblioteca de M├¡dia Google Photos-like.
+ * @fileoverview Biblioteca de Mídia Google Photos-like.
  * Galeria responsiva com grid/list, lightbox, editor de imagem,
  * sidebar de detalhes, badges de entidades vinculadas, upload drag-and-drop.
  * data-ai-id="admin-media-page-container"
@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  getMediaItemsWithEntityLinks, deleteMediaItem, deleteMultipleMediaItems,
+  getMediaItemsWithEntityLinks, deleteMediaItem, deleteMultipleMediaItems, getCurrentUserId
 } from './actions';
 import type { MediaItemWithLinks } from './actions';
 import { ImageIcon as LibraryIcon } from 'lucide-react';
@@ -35,6 +35,7 @@ export default function MediaLibraryPage() {
   // Data
   const [items, setItems] = useState<MediaItemWithLinks[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string>('');
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -61,11 +62,15 @@ export default function MediaLibraryPage() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await getMediaItemsWithEntityLinks();
+      const [data, currentUserId] = await Promise.all([
+        getMediaItemsWithEntityLinks(),
+        getCurrentUserId()
+      ]);
       setItems(data);
+      if (currentUserId) setUserId(currentUserId);
     } catch (e) {
       console.error('Error fetching media:', e);
-      toast({ title: 'Erro', description: 'Falha ao carregar m├¡dia.', variant: 'destructive' });
+      toast({ title: 'Erro', description: 'Falha ao carregar Mídia.', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +209,7 @@ export default function MediaLibraryPage() {
               <div>
                 <CardTitle className="text-2xl font-bold font-headline flex items-center">
                   <LibraryIcon className="h-6 w-6 mr-2 text-primary" />
-                  Biblioteca de M├¡dia
+                  Biblioteca de Mídia
                 </CardTitle>
                 <CardDescription>
                   Gerencie imagens, documentos e ativos visuais da plataforma.
@@ -234,7 +239,7 @@ export default function MediaLibraryPage() {
 
             {/* Upload zone */}
             <MediaUploadZone
-              userId=""
+              userId={userId}
               onUploadComplete={fetchData}
               isOpen={uploadOpen}
               onClose={() => setUploadOpen(false)}
@@ -319,3 +324,4 @@ export default function MediaLibraryPage() {
     </TooltipProvider>
   );
 }
+

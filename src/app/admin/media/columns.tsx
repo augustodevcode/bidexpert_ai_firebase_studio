@@ -1,4 +1,4 @@
-// src/app/admin/media/columns.tsx
+﻿// src/app/admin/media/columns.tsx
 /**
  * @fileoverview Define a estrutura das colunas para a DataTable que exibe
  * a Biblioteca de Mídia. Inclui renderização de miniaturas de imagem,
@@ -131,3 +131,4 @@ export const createColumns = ({
     },
   },
 ];
+

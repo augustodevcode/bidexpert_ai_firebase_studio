@@ -1,16 +1,15 @@
 /**
- * @fileoverview Testes E2E para validar que as páginas admin não retornam 500 errors.
- * BDD: Após fix de relações PascalCase Prisma para PostgreSQL, todas as páginas
+ * @fileoverview Testes E2E para validar que as pÃ¡ginas admin nÃ£o retornam 500 errors.
+ * BDD: ApÃ³s fix de relaÃ§Ãµes PascalCase Prisma para PostgreSQL, todas as pÃ¡ginas
  *      admin devem carregar sem erros 500.
- * TDD: Validar HTTP 200 e ausência de erros de console em cada página admin.
+ * TDD: Validar HTTP 200 e ausÃªncia de erros de console em cada pÃ¡gina admin.
  * 
  * Credenciais: admin@bidexpert.com.br / Admin@123 (conforme ultimate-master-seed.ts)
  */
 import { test, expect, Page } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth-helper';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://bidexpertaifirebasestudio.vercel.app';
-const ADMIN_EMAIL = 'admin@bidexpert.com.br';
-const ADMIN_PASSWORD = 'Admin@123';
 
 // Admin pages that were returning 500 errors
 const ADMIN_PAGES = [
@@ -44,31 +43,6 @@ const ANALYSIS_PAGES = [
 
 let consoleErrors: string[] = [];
 
-async function loginAsAdmin(page: Page) {
-  await page.goto(`${BASE_URL}/auth/login`, { 
-    waitUntil: 'domcontentloaded', 
-    timeout: 60_000 
-  });
-  
-  // Wait for login form
-  await page.waitForSelector('input[type="email"], [data-ai-id="auth-login-email-input"]', { timeout: 30_000 });
-  
-  // Fill credentials
-  const emailInput = page.locator('[data-ai-id="auth-login-email-input"]').or(page.locator('input[type="email"]')).first();
-  const passwordInput = page.locator('[data-ai-id="auth-login-password-input"]').or(page.locator('input[type="password"]')).first();
-  const submitBtn = page.locator('[data-ai-id="auth-login-submit-button"]').or(page.locator('button[type="submit"]')).first();
-  
-  await emailInput.fill(ADMIN_EMAIL);
-  await passwordInput.fill(ADMIN_PASSWORD);
-  await submitBtn.click();
-  
-  // Wait for redirect after login
-  await page.waitForURL(/\/(admin|dashboard|setup)/, { timeout: 30_000 }).catch(() => {
-    // May already be on admin page
-  });
-  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
-}
-
 test.describe('Admin Pages - No 500 Errors (Vercel PostgreSQL)', () => {
   test.beforeEach(async ({ page }) => {
     consoleErrors = [];
@@ -80,7 +54,7 @@ test.describe('Admin Pages - No 500 Errors (Vercel PostgreSQL)', () => {
   });
 
   test('login as admin succeeds', async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAsAdmin(page, BASE_URL);
     
     // Should be on admin or dashboard page
     const url = page.url();
@@ -89,7 +63,7 @@ test.describe('Admin Pages - No 500 Errors (Vercel PostgreSQL)', () => {
 
   for (const adminPage of ADMIN_PAGES) {
     test(`${adminPage.name} (${adminPage.path}) loads without 500`, async ({ page }) => {
-      await loginAsAdmin(page);
+      await loginAsAdmin(page, BASE_URL);
       
       // Navigate to admin page and capture response
       const response = await page.goto(`${BASE_URL}${adminPage.path}`, {
@@ -119,7 +93,7 @@ test.describe('Admin Pages - No 500 Errors (Vercel PostgreSQL)', () => {
 
   for (const analysisPage of ANALYSIS_PAGES) {
     test(`${analysisPage.name} (${analysisPage.path}) loads without 500`, async ({ page }) => {
-      await loginAsAdmin(page);
+      await loginAsAdmin(page, BASE_URL);
       
       const response = await page.goto(`${BASE_URL}${analysisPage.path}`, {
         waitUntil: 'domcontentloaded',

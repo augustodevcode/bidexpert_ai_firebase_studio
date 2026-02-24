@@ -98,3 +98,32 @@ Ao ativar qualquer agent:
 - Use centralized currency formatter only; do not hardcode `R$` in dynamic totals.
 - Default locale/currency: `pt-BR` + `BRL`; support view switch to `USD` and `EUR`.
 - Any floating tail artifacts (e.g., `...00003`) are release-blocking defects.
+
+---
+
+## 🔐 E2E Auth Quick Reference
+
+### Credenciais Canônicas (Seed Ultimate)
+| Perfil | Email | Senha |
+|--------|-------|-------|
+| Admin | `admin@bidexpert.com.br` | `Admin@123` |
+| Leiloeiro | `carlos.silva@construtoraabc.com.br` | `Test@12345` |
+| Comprador | `comprador@bidexpert.com.br` | `Test@12345` |
+| Advogado | `advogado@bidexpert.com.br` | `Test@12345` |
+| Vendedor | `vendedor@bidexpert.com.br` | `Test@12345` |
+| Analista | `analista@lordland.com` | `password123` |
+
+**REGRA:** `senha@123` é INCORRETA. Causa falhas silenciosas.
+
+### Helper Centralizado
+```typescript
+import { loginAsAdmin, loginAs, CREDENTIALS } from './helpers/auth-helper';
+```
+
+### Tenant Resolution
+- `demo.localhost:9005` → auto-lock tenant selector
+- `localhost:9005` (sem subdomínio) → seleção manual obrigatória
+- Em testes E2E, SEMPRE usar URL com subdomínio
+
+### Seed Gate
+`global-setup.ts` verifica automaticamente se o seed foi executado antes dos testes.

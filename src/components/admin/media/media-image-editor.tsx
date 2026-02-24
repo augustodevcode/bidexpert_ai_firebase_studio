@@ -1,5 +1,5 @@
 ﻿/**
- * @fileoverview Editor de imagens da Biblioteca de M├¡dia.
+ * @fileoverview Editor de imagens da Biblioteca de Mídia.
  * Crop (react-advanced-cropper), Rotate, Flip, Brightness/Contrast/Saturation (Canvas API),
  * Remo├º├úo de Fundo (Canvas API magic wand ÔÇö sem AGPL).
  * data-ai-id="media-image-editor"
@@ -272,7 +272,7 @@ export function MediaImageEditor({ item, open, onClose, onSave }: MediaImageEdit
     const sh = Math.floor((y2 - y1) * canvas.height);
 
     if (sw < 10 || sh < 10) {
-      toast({ title: 'Sele├º├úo muito pequena', variant: 'destructive' });
+      toast({ title: 'seleção muito pequena', variant: 'destructive' });
       return;
     }
 
@@ -622,3 +622,4 @@ export function MediaImageEditor({ item, open, onClose, onSave }: MediaImageEdit
     </Dialog>
   );
 }
+

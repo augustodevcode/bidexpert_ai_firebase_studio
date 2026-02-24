@@ -58,3 +58,4 @@ export function MediaLightbox({ items, open, index, onClose }: MediaLightboxProp
     </div>
   );
 }
+

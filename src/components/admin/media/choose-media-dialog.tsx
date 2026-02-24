@@ -1,4 +1,4 @@
-// src/components/admin/media/choose-media-dialog.tsx
+﻿// src/components/admin/media/choose-media-dialog.tsx
 /**
  * @fileoverview Componente de diálogo modal para escolher ou enviar mídia.
  * Este componente oferece uma interface unificada com abas para que o usuário
@@ -300,3 +300,4 @@ export default function ChooseMediaDialog({
     </Dialog>
   );
 }
+

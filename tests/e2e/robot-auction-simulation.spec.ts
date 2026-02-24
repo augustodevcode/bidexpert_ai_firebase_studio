@@ -6,14 +6,15 @@ import { test, expect, type Browser, type BrowserContext, type Page } from '@pla
 import { PrismaClient } from '@prisma/client';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { CREDENTIALS as AUTH_CREDENTIALS } from './helpers/auth-helper';
 
 const REMOTE_BASE_URL = 'https://bidexpertaifirebasestudio.vercel.app';
 const LOCAL_BASE_URL = process.env.ROBOT_LOCAL_BASE_URL || 'http://localhost:9005';
 const ACTIVE_BASE_URL = process.env.ROBOT_BASE_URL || process.env.PLAYWRIGHT_BASE_URL || REMOTE_BASE_URL;
 
 const ADMIN = {
-  email: 'admin@bidexpert.com.br',
-  password: 'Admin@123',
+  email: AUTH_CREDENTIALS.admin.email,
+  password: AUTH_CREDENTIALS.admin.password,
 };
 
 const BOT_PASSWORD = 'Bot@123456';

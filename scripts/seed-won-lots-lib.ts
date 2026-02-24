@@ -291,7 +291,7 @@ export async function seedWonLotsWithServices(
       } as any);
 
       await deps.bidderService.createWonLot({
-        bidder_profiles: { connect: { id: bidderProfile.id } },
+        BidderProfile: { connect: { id: bidderProfile.id } },
         lotId: BigInt(createdLot.lotId),
         auctionId: BigInt(auctionId),
         title: `Lote ${l + 1} do ${auctionName}`,

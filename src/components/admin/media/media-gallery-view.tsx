@@ -1,6 +1,6 @@
 ﻿/**
- * @fileoverview Galeria Google Photos-like para Biblioteca de M├¡dia.
- * Exibe thumbnails de m├¡dia em grid responsivo com sele├º├úo, overlays e badges de entidade.
+ * @fileoverview Galeria Google Photos-like para Biblioteca de Mídia.
+ * Exibe thumbnails de Mídia em grid responsivo com seleção, overlays e badges de entidade.
  * Modos: grid (masonry), rows (fileiras), list (tabela compacta).
  * data-ai-id="media-gallery-view"
  */
@@ -321,7 +321,7 @@ export function MediaGalleryView({
               <div key={i} className="aspect-square rounded-lg bg-muted/50" />
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Carregando m├¡dia...</p>
+          <p className="text-sm text-muted-foreground">Carregando Mídia...</p>
         </div>
       </div>
     );
@@ -333,7 +333,7 @@ export function MediaGalleryView({
         <ImageIcon className="h-16 w-16 text-muted-foreground/30 mb-4" />
         <h3 className="text-lg font-medium text-muted-foreground">Nenhum arquivo encontrado</h3>
         <p className="text-sm text-muted-foreground/70 mt-1">
-          Envie sua primeira m├¡dia ou ajuste os filtros
+          Envie sua primeira Mídia ou ajuste os filtros
         </p>
       </div>
     );
@@ -389,3 +389,4 @@ export function MediaGalleryView({
     </div>
   );
 }
+
