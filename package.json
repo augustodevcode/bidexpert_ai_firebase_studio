@@ -16,6 +16,7 @@
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:run": "vitest run",
+    "test:unit": "vitest run tests/unit --browser.enabled=false --passWithNoTests",
         "test:visual": "vitest run tests/visual/",
         "test:visual:update": "vitest --update tests/visual/",
         "start": "node .next/standalone/server.js",
