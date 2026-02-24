@@ -14,7 +14,7 @@
         "typecheck": "tsc -p tsconfig.dev.json --noEmit",
         "typecheck:soft": "node scripts/typecheck-soft.js",
         "test": "vitest",
-        "test:unit": "vitest run",
+        "test:unit": "vitest run --config vitest.unit.config.ts",
         "test:ui": "vitest --ui",
         "test:run": "vitest run",
         "test:visual": "vitest run tests/visual/",

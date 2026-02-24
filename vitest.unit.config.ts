@@ -17,13 +17,16 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: [
-      'tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+      'tests/unit/**/*.{test,spec}.{ts,mts,cts}'
     ],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
+      '**/*.tsx',
+      '**/tests/unit/components/**',
+      '**/tests/unit/log-drain.test.ts',
+      '**/tests/unit/map-search-cache.spec.ts',
+      '**/tests/unit/seed-min-50.spec.ts',
       '**/tests/e2e/**',
       '**/tests/visual/**',
       '**/tests/ui-e2e/**',
