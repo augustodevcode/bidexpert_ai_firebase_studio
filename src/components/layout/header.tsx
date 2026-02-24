@@ -590,9 +590,8 @@ export default function Header({
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48" data-ai-id="header-currency-menu">
+              <DropdownMenuContent align="end" className="w-48 z-[2000]" data-ai-id="header-currency-menu">
                 {currencyOptions
-                  .filter((option) => option.code !== currency)
                   .map((option) => (
                   <DropdownMenuItem
                     key={option.code}
