@@ -14,8 +14,11 @@
 
 import { test, expect } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
+import { CREDENTIALS, loginAs, selectTenant, type CredentialRole } from './helpers/auth-helper';
 
 const prisma = new PrismaClient();
+
+const BASE_URL = process.env.BASE_URL || 'http://demo.localhost:9005';
 
 // Configuração de tenants para teste
 const TENANT_A = {
@@ -28,10 +31,10 @@ const TENANT_B = {
   name: 'BidExpert Tenant Secundário'
 };
 
-// Usuários de teste
+// Usuários de teste — credenciais canônicas do auth-helper
 const USER_TENANT_A = {
-  email: 'admin@bidexpert.com',
-  password: 'Test@12345',
+  email: CREDENTIALS.admin.email,
+  password: CREDENTIALS.admin.password,
   tenantId: TENANT_A.id
 };
 
@@ -41,9 +44,9 @@ const USER_TENANT_B = {
   tenantId: TENANT_B.id
 };
 
-// Helper para login
+// Helper para login com seleção de tenant
 async function loginAsUser(page: any, email: string, password: string, tenantId: number) {
-  await page.goto('http://localhost:9005/auth/login');
+  await page.goto(`${BASE_URL}/auth/login`);
   await page.fill('[data-ai-id="auth-login-email-input"]', email);
   await page.fill('[data-ai-id="auth-login-password-input"]', password);
   
@@ -54,7 +57,7 @@ async function loginAsUser(page: any, email: string, password: string, tenantId:
       await dropdown.selectOption(String(tenantId));
     }
   } catch (e) {
-    // Dropdown pode não aparecer
+    // Dropdown pode não aparecer quando auto-locked via subdomínio
   }
   
   await page.click('[data-ai-id="auth-login-submit-button"]');

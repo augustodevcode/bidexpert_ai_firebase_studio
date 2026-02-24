@@ -1,0 +1,125 @@
+name: PR Approval Alert
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+  schedule:
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr-event-alert:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PR has human approval
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pending-human-approval -->';
+
+            const pr = context.payload.pull_request;
+            if (!pr || pr.draft) {
+              core.info('PR ausente ou draft; sem alerta.');
+              return;
+            }
+
+            const issue_number = pr.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const { data: reviews } = await github.rest.pulls.listReviews({ owner, repo, pull_number: issue_number, per_page: 100 });
+            const approved = reviews.some((r) => r.state === 'APPROVED');
+
+            if (approved) {
+              try {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'pending-human-approval' });
+              } catch (_) {}
+              core.info('PR já aprovada; alerta removido.');
+              return;
+            }
+
+            await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['pending-human-approval'] });
+
+            const body = [
+              marker,
+              '## ⏳ Aprovação Humana Pendente',
+              '',
+              `@${owner} esta PR precisa de aprovação humana antes de merge/deploy.`,
+              '- Regra: sem aprovação humana explícita não pode promover para demo-stable/main.',
+              `- PR: ${pr.html_url}`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number, per_page: 100 });
+            const previous = comments.find((comment) => comment.user?.type === 'Bot' && comment.body?.includes(marker));
+
+            if (previous) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: previous.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+  scheduled-scan-alert:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan open PRs without approval
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pending-human-approval -->';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const { data: pulls } = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              sort: 'updated',
+              direction: 'desc',
+              per_page: 100,
+            });
+
+            for (const pr of pulls) {
+              if (pr.draft) {
+                continue;
+              }
+
+              const issue_number = pr.number;
+              const { data: reviews } = await github.rest.pulls.listReviews({ owner, repo, pull_number: issue_number, per_page: 100 });
+              const approved = reviews.some((r) => r.state === 'APPROVED');
+
+              if (approved) {
+                try {
+                  await github.rest.issues.removeLabel({ owner, repo, issue_number, name: 'pending-human-approval' });
+                } catch (_) {}
+                continue;
+              }
+
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['pending-human-approval'] });
+
+              const body = [
+                marker,
+                '## ⏳ Aprovação Humana Pendente',
+                '',
+                `@${owner} esta PR precisa de aprovação humana antes de merge/deploy.`,
+                '- Regra: sem aprovação humana explícita não pode promover para demo-stable/main.',
+                `- PR: ${pr.html_url}`,
+              ].join('\n');
+
+              const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number, per_page: 100 });
+              const previous = comments.find((comment) => comment.user?.type === 'Bot' && comment.body?.includes(marker));
+
+              if (previous) {
+                await github.rest.issues.updateComment({ owner, repo, comment_id: previous.id, body });
+              } else {
+                await github.rest.issues.createComment({ owner, repo, issue_number, body });
+              }
+            }

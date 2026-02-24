@@ -37,6 +37,7 @@ import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
+import PublicSectionAdminTooltip from '@/components/admin/public-section-admin-tooltip';
 
 
 const SidebarFilter = dynamic(() => import('@/components/BidExpertFilter'), {
@@ -349,7 +350,12 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
 
         <Separator />
 
-        <h2 className="text-2xl font-bold font-headline">Lotes do Leilão ({auction.totalLots || auction.lots?.length || 0})</h2>
+        <PublicSectionAdminTooltip
+          sectionId="auction-details-lots"
+          description="Nesta seção exibimos os lotes do leilão filtrados por busca textual, categoria, faixa de preço, localização e status. A ordenação padrão prioriza lotes ABERTO_PARA_LANCES e depois data de encerramento mais próxima, com paginação conforme configuração da plataforma."
+        >
+          <h2 className="text-2xl font-bold font-headline" data-ai-id="auction-details-lots-section-title">Lotes do Leilão ({auction.totalLots || auction.lots?.length || 0})</h2>
+        </PublicSectionAdminTooltip>
         
         <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 items-start">
            <aside className="hidden md:block sticky top-24 h-fit">

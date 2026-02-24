@@ -22,6 +22,7 @@
 import { test, expect, type Page, type Download } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import { loginAsAdmin } from './helpers/auth-helper';
 
 // ============================================================================
 // TEST CONFIGURATION
@@ -39,50 +40,6 @@ if (!fs.existsSync(DOWNLOAD_PATH)) {
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
-
-async function loginAsAdmin(page: Page): Promise<void> {
-  await page.goto(`${BASE_URL}/auth/login`);
-  
-  // Wait for page load
-  await page.waitForLoadState('networkidle');
-  
-  // Check if already logged in (redirect to dashboard)
-  if (page.url().includes('/admin') || page.url().includes('/dashboard')) {
-    return;
-  }
-
-  // Wait for page to fully load
-  await page.waitForTimeout(3000);
-
-  // Wait for tenant selector to load
-  const tenantSelect = page.locator('[data-ai-id="auth-login-tenant-select"]');
-  await tenantSelect.waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
-  
-  // Select first tenant if available
-  if (await tenantSelect.isVisible()) {
-    await tenantSelect.click();
-    await page.waitForTimeout(1000);
-    
-    // Look for tenant option
-    const tenantOption = page.locator('[role="option"]').first();
-    if (await tenantOption.isVisible({ timeout: 5000 })) {
-      await tenantOption.click();
-      await page.waitForTimeout(500);
-    }
-  }
-
-  // Fill login form using correct selectors and credentials
-  const emailInput = page.locator('[data-ai-id="auth-login-email-input"]');
-  const passwordInput = page.locator('[data-ai-id="auth-login-password-input"]');
-  const submitButton = page.locator('[data-ai-id="auth-login-submit-button"]');
-  
-  await emailInput.fill('admin@bidexpert.com');
-  await passwordInput.fill('Test@12345');
-  await submitButton.click();
-  
-  // Wait for redirect with longer timeout
-  await page.waitForURL(/\/(admin|dashboard)/, { timeout: 60000 }).catch(() => {});
-}
 
 async function navigateToReports(page: Page): Promise<void> {
   await page.goto(REPORTS_URL);

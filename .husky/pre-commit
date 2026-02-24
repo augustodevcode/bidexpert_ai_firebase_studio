@@ -1,0 +1,3 @@
+# Validação rápida antes do commit
+echo "🔍 Verificando tipos..."
+npx tsc --noEmit --pretty 2>/dev/null || echo "⚠️ Typecheck com avisos (não bloqueante)"

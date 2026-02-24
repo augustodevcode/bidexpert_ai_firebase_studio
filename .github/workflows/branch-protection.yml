@@ -79,7 +79,7 @@ jobs:
         
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
-        
+
       - name: 🏗️ Build
         run: npm run build
         env:
@@ -115,10 +115,12 @@ jobs:
         
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
+
+      - name: 🎭 Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
         
       - name: 🧪 Run Unit Tests
-        run: npx vitest run tests/unit --browser.enabled=false --passWithNoTests
-        continue-on-error: true
+        run: xvfb-run -a npm run test:unit
 
   # ============================================================================
   # JOB 4: Schema Validation (MySQL + PostgreSQL)
@@ -178,9 +180,7 @@ jobs:
         run: npm ci
           
       - name: 🔒 npm audit
-        run: |
-          npm audit --omit=dev --audit-level=critical
-        continue-on-error: true
+        run: npm audit --audit-level=critical
 
   # ============================================================================
   # RESULTADO: Gate de Qualidade

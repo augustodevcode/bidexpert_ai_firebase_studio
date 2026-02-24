@@ -19,6 +19,7 @@ import BidExpertCard from '@/components/BidExpertCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import PublicSectionAdminTooltip from '@/components/admin/public-section-admin-tooltip';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { RadarOpportunityCard, RadarCalendar, RadarPreferencesModal } from '@/components/radar';
@@ -120,7 +121,14 @@ function HomeExperienceClassic({
 
       <section className="section-featured-lots" data-ai-id="homepage-featured-lots-section">
         <div className="wrapper-section-header" data-ai-id="homepage-featured-lots-header">
-          <h2 className="header-section-title" data-ai-id="homepage-featured-lots-title">{lotsTitle}</h2>
+          <PublicSectionAdminTooltip
+            sectionId="homepage-featured-lots"
+            description={featuredLots.length > 0
+              ? 'Nesta seção exibimos lotes com status ABERTO_PARA_LANCES que estão marcados como destaque (isFeatured=true), ordenados por visualizações em ordem decrescente e limitados aos 8 primeiros resultados.'
+              : 'Nesta seção exibimos lotes com status ABERTO_PARA_LANCES, ordenados por data de criação mais recente e limitados aos 8 primeiros resultados.'}
+          >
+            <h2 className="header-section-title" data-ai-id="homepage-featured-lots-title">{lotsTitle}</h2>
+          </PublicSectionAdminTooltip>
           <div className="wrapper-section-actions" data-ai-id="homepage-featured-lots-actions">
             <Button variant="outline" size="sm" asChild className="btn-view-all" data-ai-id="homepage-view-all-lots">
               <Link href="/search?type=lots">
@@ -166,7 +174,14 @@ function HomeExperienceClassic({
 
       <section className="section-featured-auctions" data-ai-id="homepage-featured-auctions-section">
         <div className="wrapper-section-header" data-ai-id="homepage-featured-auctions-header">
-          <h2 className="header-section-title" data-ai-id="homepage-featured-auctions-title">{auctionsTitle}</h2>
+          <PublicSectionAdminTooltip
+            sectionId="homepage-featured-auctions"
+            description={featuredAuctions.length > 0
+              ? 'Nesta seção exibimos leilões com status ABERTO_PARA_LANCES, EM_BREVE ou ABERTO que estão marcados como destaque no marketplace (isFeaturedOnMarketplace=true), ordenados pela data do leilão mais recente e limitados aos 4 primeiros.'
+              : 'Nesta seção exibimos leilões com status ABERTO_PARA_LANCES, EM_BREVE ou ABERTO, em ordem de origem da lista e limitados aos 4 primeiros resultados.'}
+          >
+            <h2 className="header-section-title" data-ai-id="homepage-featured-auctions-title">{auctionsTitle}</h2>
+          </PublicSectionAdminTooltip>
           <Button variant="outline" size="sm" asChild className="btn-view-all" data-ai-id="homepage-view-all-auctions">
             <Link href="/search?type=auctions">
               Ver Todos <ArrowRight className="icon-arrow-right" />
@@ -183,7 +198,12 @@ function HomeExperienceClassic({
       <FeaturedSellers sellers={featuredSellers} />
 
       <section className="section-browse-categories" data-ai-id="homepage-categories-section">
-        <h2 className="header-section-title-centered" data-ai-id="homepage-categories-title">Navegue por Categorias</h2>
+        <PublicSectionAdminTooltip
+          sectionId="homepage-categories"
+          description="Nesta seção exibimos categorias ordenadas por quantidade de itens (itemCount) em ordem decrescente, limitando aos 3 primeiros resultados para destacar os segmentos mais ativos."
+        >
+          <h2 className="header-section-title-centered" data-ai-id="homepage-categories-title">Navegue por Categorias</h2>
+        </PublicSectionAdminTooltip>
         <div className="grid-categories-featured" data-ai-id="homepage-categories-grid">
           {featuredCategories.map(category => {
             const assets = getCategoryAssets(category.name);
@@ -352,7 +372,12 @@ function HomeExperienceBeta({
       <section className="section-radar-opportunities" data-ai-id="homepage-beta-radar-section">
         <div className="wrapper-section-header" data-ai-id="homepage-beta-radar-header">
           <div className="wrapper-section-title">
-            <h2 className="header-section-title" data-ai-id="homepage-beta-radar-title">Radar de Oportunidades</h2>
+            <PublicSectionAdminTooltip
+              sectionId="homepage-beta-radar"
+              description="Nesta seção exibimos lotes com status ABERTO_PARA_LANCES, priorizando closingSoonLots quando disponível; caso contrário, usamos todos os lotes ativos. O resultado é limitado aos 9 primeiros para o radar operacional."
+            >
+              <h2 className="header-section-title" data-ai-id="homepage-beta-radar-title">Radar de Oportunidades</h2>
+            </PublicSectionAdminTooltip>
             <p className="desc-section-subtitle">Lotes com maior competição e tempo crítico</p>
           </div>
           <div className="wrapper-section-actions">
@@ -399,7 +424,12 @@ function HomeExperienceBeta({
       <section className="section-trending-segments" data-ai-id="homepage-beta-segments-section">
         <div className="wrapper-section-header" data-ai-id="homepage-beta-segments-header">
           <div className="wrapper-section-title">
-            <h2 className="header-section-title" data-ai-id="homepage-beta-segments-title">Segmentos em Alta</h2>
+            <PublicSectionAdminTooltip
+              sectionId="homepage-beta-segments"
+              description="Nesta seção exibimos categorias ordenadas por itemCount em ordem decrescente para destacar liquidez, limitando aos 6 primeiros segmentos."
+            >
+              <h2 className="header-section-title" data-ai-id="homepage-beta-segments-title">Segmentos em Alta</h2>
+            </PublicSectionAdminTooltip>
             <p className="desc-section-subtitle">Categorias com maior liquidez nos últimos dias</p>
           </div>
           <Button variant="outline" size="sm" asChild className="btn-view-all" data-ai-id="homepage-beta-segments-view-all">

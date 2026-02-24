@@ -11,8 +11,8 @@ import { MediaService } from '@/services/media.service';
 import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
+import { getStorageAdapter } from '@/lib/storage';
+import { getSession } from '@/server/lib/session';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -30,8 +30,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     const uploadPath = formData.get('path') as string || 'media';
-    const userId = formData.get('userId') as string | null;
+    let userId = formData.get('userId') as string | null;
     const judicialProcessId = formData.get('judicialProcessId') as string | null;
+
+    if (!userId) {
+      const session = await getSession();
+      userId = session?.userId || null;
+    }
 
     if (!files || files.length === 0) {
       return NextResponse.json(
@@ -52,12 +57,7 @@ export async function POST(request: NextRequest) {
     const uploadErrors: { fileName: string; message: string }[] = [];
     const publicUrls: string[] = [];
 
-    const relativeUploadDir = path.join('public', 'uploads', uploadPath);
-    const absoluteUploadDir = path.join(process.cwd(), relativeUploadDir);
-
-    if (!existsSync(absoluteUploadDir)) {
-        await mkdir(absoluteUploadDir, { recursive: true });
-    }
+    const storage = getStorageAdapter(request.headers.get('host'));
 
     for (const file of files) {
        if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -73,29 +73,31 @@ export async function POST(request: NextRequest) {
         const buffer = Buffer.from(bytes);
 
         const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-        const uniqueFilename = `${uuidv4()}-${sanitizedFileName}`;
         
-        await writeFile(path.join(absoluteUploadDir, uniqueFilename), buffer);
-        
-        const publicUrl = path.join('/uploads', uploadPath, uniqueFilename).replace(/\\/g, '/');
-        publicUrls.push(publicUrl);
+        try {
+          const uploadResult = await storage.upload(buffer, sanitizedFileName, uploadPath, file.type);
+          const publicUrl = uploadResult.url;
+          publicUrls.push(publicUrl);
 
-        const itemData: Partial<Omit<MediaItem, 'id'>> = {
-            fileName: file.name,
-            storagePath: publicUrl,
-            title: path.basename(file.name, path.extname(file.name)),
-            altText: path.basename(file.name, path.extname(file.name)),
-            mimeType: file.type,
-            sizeBytes: file.size,
-            dataAiHint: 'upload usuario',
-            judicialProcessId: judicialProcessId || undefined,
-        };
-        
-        const createResult = await mediaService.createMediaItem(itemData, publicUrl, userId);
-        if (createResult.success && createResult.item) {
-            uploadedItems.push(createResult.item);
-        } else {
-            uploadErrors.push({ fileName: file.name, message: createResult.message });
+          const itemData: Partial<Omit<MediaItem, 'id'>> = {
+              fileName: file.name,
+              storagePath: uploadResult.storagePath,
+              title: path.basename(file.name, path.extname(file.name)),
+              altText: path.basename(file.name, path.extname(file.name)),
+              mimeType: file.type,
+              sizeBytes: file.size,
+              dataAiHint: 'upload usuario',
+              judicialProcessId: judicialProcessId || undefined,
+          };
+          
+          const createResult = await mediaService.createMediaItem(itemData, publicUrl, userId);
+          if (createResult.success && createResult.item) {
+              uploadedItems.push(createResult.item);
+          } else {
+              uploadErrors.push({ fileName: file.name, message: createResult.message });
+          }
+        } catch (uploadError) {
+          uploadErrors.push({ fileName: file.name, message: `Erro durante upload: ${(uploadError as Error).message}` });
         }
     }
     

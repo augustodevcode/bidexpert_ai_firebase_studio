@@ -13,13 +13,17 @@ VERCEL_PROJECT_ID               # ID do projeto Vercel
 
 ### 2. Prisma Cloud Database URLs
 ```bash
-DEMO_DATABASE_URL_DIRECT        # URL direta para schema push/migrations
+PRISMA_DEMO_POSTGRES_URL        # URL direta para schema push/migrations (CANÔNICO)
 # postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require
 # Obter em: https://console.prisma.io → seu projeto → Connection URLs
 
-DEMO_DATABASE_URL_ACCELERATE    # URL Accelerate para seed (runtime queries)
-# prisma+postgres://accelerate.prisma-data.net/?api_key=[your_accelerate_api_key]
-# Obter em: https://console.prisma.io → seu projeto → Prisma Accelerate
+PRISMA_DEMO_PRISMA_DATABASE_URL # URL de runtime para Prisma (CANÔNICO)
+# postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require
+# Obter em: https://console.prisma.io → seu projeto → Prisma/Postgres
+
+# Compatibilidade (LEGADO - manter temporariamente)
+DEMO_DATABASE_URL_DIRECT
+DEMO_DATABASE_URL
 ```
 
 ### 3. Application Config
@@ -42,10 +46,14 @@ gh secret set VERCEL_ORG_ID --body "your-org-id-here"
 gh secret set VERCEL_PROJECT_ID --body "prj_your_project_id_here"
 
 # 3. Prisma Cloud - Direct URL (para schema push)
-gh secret set DEMO_DATABASE_URL_DIRECT --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
+gh secret set PRISMA_DEMO_POSTGRES_URL --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
 
-# 4. Prisma Cloud - Accelerate URL (para seed/runtime)
-gh secret set DEMO_DATABASE_URL_ACCELERATE --body "prisma+postgres://accelerate.prisma-data.net/?api_key=[your_accelerate_api_key]"
+# 4. Prisma Cloud - Runtime URL
+gh secret set PRISMA_DEMO_PRISMA_DATABASE_URL --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
+
+# 4.1 Compatibilidade legada (opcional e recomendado durante transição)
+gh secret set DEMO_DATABASE_URL_DIRECT --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
+gh secret set DEMO_DATABASE_URL --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
 
 # 5. NextAuth Secret (gerar com: openssl rand -base64 32)
 gh secret set DEMO_NEXTAUTH_SECRET --body "sua-chave-secreta-32-caracteres"
@@ -63,13 +71,13 @@ gh secret set DEMO_APP_URL --body "https://bidexpertaifirebasestudio.vercel.app"
 
 ## 📖 Diferença entre URLs Prisma Cloud
 
-### DEMO_DATABASE_URL_DIRECT
+### PRISMA_DEMO_POSTGRES_URL
 - **Uso**: Schema migrations, `prisma db push`
 - **Protocolo**: `postgres://`
 - **Endpoint**: `db.prisma.io:5432`
 - **Limitação**: Conexões diretas podem ter restrições de rede
 
-### DEMO_DATABASE_URL_ACCELERATE
+### PRISMA_DEMO_PRISMA_DATABASE_URL
 - **Uso**: Runtime queries, seeds, aplicação
 - **Protocolo**: `prisma+postgres://`
 - **Endpoint**: `accelerate.prisma-data.net`

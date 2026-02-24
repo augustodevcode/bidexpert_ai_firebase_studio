@@ -27,14 +27,27 @@ async function globalSetup(config: FullConfig) {
   const baseUrlObject = new URL(baseURL);
   const isDemoTenant = baseUrlObject.hostname.startsWith('demo.') || baseUrlObject.hostname.includes('demo');
   
-  // SEED CREDENTIALS: 
-  // - Demo tenant (demo.localhost): admin@bidexpert.com.br / senha@123
-  // - Default tenant (localhost): admin@bidexpert.com.br / senha@123
+  // SEED CREDENTIALS (canonical source: scripts/ultimate-master-seed.ts)
+  // - Demo tenant (demo.localhost): admin@bidexpert.com.br / Admin@123
+  // - Default tenant (localhost): admin@bidexpert.com.br / Admin@123
+  // IMPORTANT: If login fails, verify seed was executed: npm run db:seed
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@bidexpert.com.br';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'senha@123';
-  const fallbackAdminPassword = process.env.ADMIN_PASSWORD_FALLBACK || adminPassword;
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
+  const fallbackAdminPassword = process.env.ADMIN_PASSWORD_FALLBACK || 'Test@12345';
   const shouldAuthLawyer = process.env.PLAYWRIGHT_SKIP_LAWYER !== '1' && !isDemoTenant;
   
+  // ─── SEED GATE: Abort early if seed not executed ───
+  try {
+    const { ensureSeedExecuted } = await import('./helpers/auth-helper');
+    await ensureSeedExecuted(baseURL);
+  } catch (seedError: unknown) {
+    const errMsg = seedError instanceof Error ? seedError.message : String(seedError);
+    if (errMsg.includes('SEED') || errMsg.includes('fetch')) {
+      console.warn(`⚠️  Seed gate check falhou (servidor pode não estar pronto): ${errMsg}`);
+      console.warn('Continuando setup — o login falhará se seed realmente não existe.');
+    }
+  }
+
   console.log('🔐 Iniciando autenticação global para testes...');
   console.log('🌐 Base URL:', baseURL);
   console.log('⏳ Aguardando servidor estar disponível...');

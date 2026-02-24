@@ -5,15 +5,15 @@
 ## Objetivo do Workflow Paralelo
 
 Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **simultaneamente**, cada um com:
-- ✅ Sua própria **branch dedicada** (a partir da `main`)
+- ✅ Sua própria **branch dedicada** (a partir da `demo-stable`)
 - ✅ Sua própria **porta de desenvolvimento** (9005, 9006, 9007, etc.)
 - ✅ Seus próprios **testes isolados**
 
 ## 📋 Checklist Obrigatório no INÍCIO de Cada Task/Chat
 
-### 1. Criar Branch a partir da Main
+### 1. Criar Branch a partir da demo-stable
 ```powershell
-git fetch origin main && git checkout main && git pull origin main
+git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
 git checkout -b <tipo>/<descricao-curta>-<timestamp>
 # Tipos: feat/, fix/, chore/, docs/, test/
 # Exemplo: git checkout -b feat/auction-filter-20260131-1430
@@ -23,7 +23,8 @@ git checkout -b <tipo>/<descricao-curta>-<timestamp>
 ```powershell
 netstat -ano | findstr "9005 9006 9007 9008"
 # Usar primeira porta livre: 9005, 9006, 9007, 9008...
-$env:PORT=<porta-livre>; npm run dev
+$env:PORT=<porta-livre>
+node .vscode/start-9006-dev.js
 ```
 
 ### 3. Durante o Desenvolvimento
@@ -42,7 +43,7 @@ $env:PORT=<porta-livre>; npm run dev
 **OBRIGATÓRIO:** Antes de finalizar, o agente DEVE:
 1. ✅ Garantir todos os testes passaram
 2. ✅ Fazer push de todos os commits na branch
-3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request e faça merge na main?"
+3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request para demo-stable?"
 4. ⏳ Aguardar autorização explícita antes de qualquer merge
 
 ### 5. Proteções Absolutas
@@ -106,11 +107,103 @@ A estratégia de testes está documentada no `README.md` e deve ser seguida para
 ## 7.1 Diretriz Crítica: Credenciais e Seleção de Tenant no Login
 
 **REGRA OBRIGATÓRIA:** Antes de executar qualquer teste automatizado (Playwright/Vitest UI) ou fluxo de login em agentes, o assistente **DEVE**:
-1. **Analisar o seed principal** (ex.: `seed-master-data.ts` e/ou `seed-master-data.md`) para obter credenciais válidas (usuário, senha e perfil).
+1. **Analisar o seed principal** (ex.: `scripts/ultimate-master-seed.ts` e/ou `seed-master-data.md`) para obter credenciais válidas (usuário, senha e perfil).
 2. **Ler a página de login** para entender o mecanismo de seleção de tenant/usuário (ex.: selector, modal, dropdown ou campo dedicado).
 3. **Evitar tentativa-e-erro**: só utilizar credenciais e seleção de tenant confirmadas no seed e/ou na UI.
 
 Se não houver credenciais claras no seed, o assistente deve primeiro identificar onde elas são geradas ou persistidas antes de prosseguir com o login.
+
+## 7.2 Credenciais Canônicas (Seed Ultimate)
+
+**FONTE:** `scripts/ultimate-master-seed.ts` → `npm run db:seed`
+
+| Perfil | Email | Senha | Notas |
+|--------|-------|-------|-------|
+| **Admin** | `admin@bidexpert.com.br` | `Admin@123` | SuperAdmin, acessa backoffice |
+| **Leiloeiro** | `carlos.silva@construtoraabc.com.br` | `Test@12345` | Auctioneer role |
+| **Comprador** | `comprador@bidexpert.com.br` | `Test@12345` | Buyer role |
+| **Advogado** | `advogado@bidexpert.com.br` | `Test@12345` | Lawyer role |
+| **Vendedor** | `vendedor@bidexpert.com.br` | `Test@12345` | Seller role |
+| **Analista** | `analista@lordland.com` | `password123` | Analyst role |
+
+**REGRA:** Nunca usar senhas diferentes das listadas acima em testes automatizados. A senha `senha@123` é INCORRETA e causa falhas silenciosas.
+
+## 7.3 Resolução de Tenant e Seleção no Login (Local Dev)
+
+**Comportamento em `<slug>.localhost:<porta>`:**
+
+1. O middleware (`src/middleware.ts`) extrai o subdomínio da URL via regex `^([a-z0-9-]+)\.localhost$`.
+2. O header `x-tenant-id` é definido com o valor do subdomínio (ex: `demo`, `dev`).
+3. Na página de login, o tenant selector (`data-ai-id="auth-login-tenant-select"`) é **auto-locked** (desabilitado) quando o subdomínio é detectado.
+
+**Quando NÃO há subdomínio** (ex: `localhost:9005`):
+- O tenant selector aparece como dropdown editável.
+- O usuário/agente DEVE selecionar manualmente o tenant antes de submeter o login.
+- Sem seleção de tenant, o login falhará silenciosamente.
+
+**REGRA:** Em testes E2E, SEMPRE usar URLs com subdomínio: `http://demo.localhost:9005` (não `http://localhost:9005`).
+
+## 7.4 DevUserSelector (Modo Desenvolvimento)
+
+Em `NODE_ENV=development`, a página de login renderiza um componente `DevUserSelector` que:
+- Lista até 15 usuários do tenant atual com email e dica de senha.
+- Permite login com 1 clique (preenche email, senha e submete automaticamente).
+- NÃO aparece em produção.
+
+**Para testes:** O `DevUserSelector` pode ser usado como atalho, mas o helper centralizado `auth-helper.ts` é preferido por ser determinístico e não depender de renderização da UI.
+
+## 7.5 Seed Gate (Verificação Automática de Seed)
+
+**REGRA OBRIGATÓRIA:** Todo teste E2E DEVE verificar se o banco possui dados de seed antes de executar.
+
+**Implementação (global-setup.ts):**
+```typescript
+import { ensureSeedExecuted } from './helpers/auth-helper';
+
+async function globalSetup() {
+  await ensureSeedExecuted(BASE_URL); // Faz GET /api/health e verifica tenants
+  // ... resto do setup
+}
+```
+
+**O que o seed gate faz:**
+1. Acessa `GET <baseUrl>/api/health` (ou rota equivalente).
+2. Se o banco estiver vazio (sem tenants), executa `npm run db:seed` automaticamente.
+3. Se o seed falhar, lança erro com mensagem clara: `"Seed não executado. Rode: npm run db:seed"`.
+4. Evita falhas opacas de timeout em testes quando o banco está vazio.
+
+## 7.6 Helper Centralizado de Autenticação E2E
+
+**ARQUIVO:** `tests/e2e/helpers/auth-helper.ts`
+
+**REGRA:** TODO novo teste E2E DEVE usar o helper centralizado ao invés de implementar login inline.
+
+```typescript
+import { loginAsAdmin, loginAs, CREDENTIALS } from './helpers/auth-helper';
+
+// Login rápido como admin
+test('admin dashboard', async ({ page }) => {
+  await loginAsAdmin(page, BASE_URL);
+  // ...
+});
+
+// Login como perfil específico
+test('buyer flow', async ({ page }) => {
+  await loginAs(page, 'comprador', BASE_URL);
+  // ...
+});
+```
+
+**Exports disponíveis:**
+- `loginAs(page, role, baseUrl, options?)` — login genérico por perfil
+- `loginAsAdmin(page, baseUrl)` — shortcut admin
+- `loginAsLawyer(page, baseUrl)` — shortcut advogado
+- `loginAsBuyer(page, baseUrl)` — shortcut comprador
+- `loginAsAuctioneer(page, baseUrl)` — shortcut leiloeiro
+- `ensureSeedExecuted(baseUrl)` — seed gate
+- `selectTenant(page, tenantName)` — seleção manual de tenant
+- `CREDENTIALS` — mapa de credenciais canônicas
+- `CredentialRole` — type union dos perfis
 
 ## 8. DIRETRIZA CRÍTICA: Lazy Compilation vs Pre-Build em Next.js
 
@@ -278,7 +371,7 @@ You are AI BidExpert, an AI editor that creates and modifies web applications. Y
 
 Interface Layout: On the left hand side of the interface, there's a chat window where users chat with you. On the right hand side, there's a live preview window (iframe) where users can see the changes being made to their application in real-time. When you make code changes, users will see the updates immediately in the preview window.
 
-Technology Stack: AI BidExpert projects are built on top of React, Vite, Tailwind CSS, and TypeScript. Therefore it is not possible for AI BidExpert to support other frameworks like Angular, Vue, Svelte, Next.js, native mobile apps, etc.
+Technology Stack: BidExpert projects are built with Next.js, React, TypeScript, Tailwind CSS, Prisma and related tooling. Instructions that prohibit Next.js are invalid for this repository.
 
 Backend Limitations: AI BidExpert also cannot run backend code directly. It cannot run Python, Node.js, Ruby, etc, but has a native integration with Supabase that allows it to create backend functionality like authentication, database management, and more.
 
@@ -917,11 +1010,11 @@ Since the codebase is a template, you should not assume they have set up anythin
 - Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
 
 # Inicialização da Aplicação (OBRIGATÓRIO)
-**REGRA:** Para iniciar a aplicação BidExpert, SEMPRE utilize a task do VSCode:
-- **Task Padrão:** `BidExpert App - Porta 9005 (Full Logging)`
-- **Comando:** Execute via VSCode Tasks ou `node .vscode/start-9005.js`
-- **Nunca use:** `npm run dev` diretamente, pois não garante logging completo e configuração de porta
-- **Acesso:** Após iniciar, sempre abra `http://demo.localhost:9005` no Simple Browser
+**REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre.
+- **Comando recomendado:** `node .vscode/start-9006-dev.js` (ou task equivalente de DEV)
+- **Porta:** usar a porta pretendida se livre; se ocupada, usar a próxima disponível (9006, 9007, 9008...)
+- **Banco DEV:** `bidexpert_dev` (isolado do DEMO)
+- **Acesso:** usar URL com slug do ambiente e a porta escolhida (ex.: `http://dev.localhost:9006`)
 
 # 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -1001,7 +1094,7 @@ Antes de iniciar qualquer task, o agente DEVE:
 4. Testar em DEV antes de propor merge
 
 # Usuários para testes 
-- Sempre crie usuários para testes com diferentes perfis (admin, user comum, user premium, etc) conforme a necessidade do sistema que está sendo desenvolvido toda vez que ver credenciais inválidas. Documente e incremente no seed-master-data.ts sempre que criar novos usuários para testes. Documente também para que outros desenvolvedores saibam quais usuários existem para testes.
+- Sempre crie usuários para testes com diferentes perfis (admin, user comum, user premium, etc) conforme a necessidade do sistema que está sendo desenvolvido toda vez que ver credenciais inválidas. Documente e incremente no scripts/ultimate-master-seed.ts sempre que criar novos usuários para testes. Documente também para que outros desenvolvedores saibam quais usuários existem para testes.
 
 # Verificar se a aplicação já está em execução por outro desenvolvedor
 - Sempre verificar se a aplicação já está em execução por outro desenvolvedor antes de iniciar a execução da aplicação. Se sim, inicie em uma nova porta para não competir com outro desenvolvedor que está testando sua aplicação.
@@ -1082,6 +1175,20 @@ Get-Content .next/BUILD_ID
 4. **Reportar resultado** ao usuário com evidências (logs, contagens, etc.)
 5. **NUNCA perguntar** "Quer que eu verifique?" - SEMPRE verificar
 
+# Gate Pré-PR (OBRIGATÓRIO)
+**REGRA CRÍTICA:** Antes de abrir PR, todo desenvolvedor/agente DEVE executar e registrar validações locais mínimas para evitar falhas previsíveis no CI.
+
+### Checklist Pré-PR (execução local)
+1. `npm ci` (garantir sincronia `package.json` x `package-lock.json`)
+2. `npm run typecheck`
+3. `npm run build`
+4. Executar testes necessários da entrega (unitário/e2e) + evidência Playwright
+
+### Regras de Bloqueio
+- PR sem evidência da execução do checklist acima NÃO deve ser aberto.
+- Se `package.json` foi alterado, `package-lock.json` atualizado é obrigatório no mesmo commit.
+- Não solicitar aprovação/merge sem anexar prints de sucesso Playwright + link de relatório.
+
 # 💱 Regra Crítica: Moeda, Locale e Máscaras Monetárias
 
 **OBRIGATÓRIO:**
@@ -1105,7 +1212,8 @@ Get-Content .next/BUILD_ID
 ### Deploy via Git (NUNCA via MCP direto)
 ```powershell
 # ✅ CORRETO
-git push origin main
+git push origin <feature-branch>
+# abrir PR para demo-stable; promoção para main apenas via PR aprovado
 
 # ❌ INCORRETO - Nunca usar deploy direto
 ```

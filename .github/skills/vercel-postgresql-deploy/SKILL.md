@@ -70,7 +70,8 @@ Error: P1001 Can't reach database server at db.prisma.io:5432
 
 ```powershell
 # ✅ CORRETO - Deploy via git push
-git push origin main
+git push origin <feature-branch>
+# abrir PR para demo-stable; promoção para main apenas via PR aprovado
 
 # ❌ INCORRETO - NUNCA usar deploy direto pelo Vercel MCP
 # (exceto para executar seed via API routes)

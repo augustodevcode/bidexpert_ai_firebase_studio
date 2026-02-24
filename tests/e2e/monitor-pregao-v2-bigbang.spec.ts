@@ -31,6 +31,7 @@ import { PrismaClient } from '@prisma/client';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
+import { CREDENTIALS as AUTH_CREDENTIALS } from './helpers/auth-helper';
 
 // --- Config ---
 
@@ -38,18 +39,15 @@ const BASE_URL = process.env.PREGAO_BASE_URL || 'http://demo.localhost:9005';
 const LOGIN_URL = BASE_URL + '/auth/login';
 
 const ADMIN_CREDENTIALS = {
-  email: 'admin@lordland.com',
-  password: 'password123',
+  email: AUTH_CREDENTIALS.admin.email,
+  password: AUTH_CREDENTIALS.admin.password,
 };
 
 const LOGIN_CANDIDATES = [
-  { email: 'admin@bidexpert.com.br', password: 'Admin@123' },
+  { email: AUTH_CREDENTIALS.admin.email, password: AUTH_CREDENTIALS.admin.password },
   ADMIN_CREDENTIALS,
-  { email: 'admin@bidexpert.com.br', password: 'Test@12345' },
-  { email: 'admin@bidexpert.com.br', password: 'admin123' },
-  { email: 'admin@lordland.com.br', password: 'Admin@123' },
-  { email: 'leiloeiro@bidexpert.com.br', password: 'Leiloeiro@123' },
-  { email: 'comprador@bidexpert.com.br', password: 'Comprador@123' },
+  { email: AUTH_CREDENTIALS.leiloeiro.email, password: AUTH_CREDENTIALS.leiloeiro.password },
+  { email: AUTH_CREDENTIALS.comprador.email, password: AUTH_CREDENTIALS.comprador.password },
 ];
 
 const BOT_COUNT = 5;

@@ -4,28 +4,13 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
+import { loginAs } from '../helpers/auth-helper';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:9002';
-const ADMIN_EMAIL = 'test.leiloeiro@bidexpert.com';
-const ADMIN_PASSWORD = 'Test@12345';
-
-async function loginAsAdmin(page: Page) {
-  await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-
-  const emailInput = page.locator('[data-ai-id="auth-login-email-input"]');
-  const passwordInput = page.locator('[data-ai-id="auth-login-password-input"]');
-  const submitButton = page.locator('[data-ai-id="auth-login-submit-button"]');
-
-  await emailInput.fill(ADMIN_EMAIL);
-  await passwordInput.fill(ADMIN_PASSWORD);
-  await submitButton.click();
-
-  await page.waitForLoadState('networkidle');
-}
 
 test.describe('Admin - Impersonação de Advogado', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+    await loginAs(page, 'leiloeiro', BASE_URL);
   });
 
   test('admin pode acessar o painel do advogado', async ({ page }) => {

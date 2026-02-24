@@ -1,9 +1,22 @@
 // src/lib/audit-middleware.ts
 // Prisma middleware for automatic audit logging
+// Prisma 6.x removed Prisma.Middleware/MiddlewareParams — local types defined below.
 
 import { Prisma, type audit_logs_action } from '@prisma/client';
 import { getAuditContext } from './audit-context';
 import { auditConfigService } from '@/services/audit-config.service';
+
+/** Prisma 6.x compatible middleware param type (replaces removed Prisma.MiddlewareParams) */
+interface PrismaMiddlewareParams {
+  model?: string;
+  action: Prisma.PrismaAction;
+  args: any;
+  dataPath: string[];
+  runInTransaction: boolean;
+}
+
+type PrismaMiddlewareNext = (params: PrismaMiddlewareParams) => Promise<any>;
+type PrismaMiddleware = (params: PrismaMiddlewareParams, next: PrismaMiddlewareNext) => Promise<any>;
 
 // Models that should be audited by default
 const DEFAULT_AUDITED_MODELS = [
@@ -46,7 +59,7 @@ const IGNORED_FIELDS = new Set([
  * Audit middleware for Prisma
  * Automatically logs CREATE, UPDATE, and DELETE operations
  */
-export const auditMiddleware: Prisma.Middleware = async (params, next) => {
+export const auditMiddleware: PrismaMiddleware = async (params, next) => {
   // Execute the operation first
   const result = await next(params);
 
@@ -108,7 +121,7 @@ async function shouldAuditModel(model?: string): Promise<boolean> {
  * Create audit log entry
  */
 async function logAuditEntry(
-  params: Prisma.MiddlewareParams,
+  params: PrismaMiddlewareParams,
   result: any,
   context: AuditContext
 ): Promise<void> {
@@ -173,7 +186,7 @@ function mapPrismaActionToAuditAction(action: Prisma.PrismaAction): audit_logs_a
 /**
  * Extract entity ID from params or result
  */
-function extractEntityId(params: Prisma.MiddlewareParams, result: any): string | number | null {
+function extractEntityId(params: PrismaMiddlewareParams, result: any): string | number | null {
   // For single operations
   if (result?.id) {
     return result.id;
@@ -196,7 +209,7 @@ function extractEntityId(params: Prisma.MiddlewareParams, result: any): string |
  * Calculate changes between before and after states
  */
 async function calculateChanges(
-  params: Prisma.MiddlewareParams,
+  params: PrismaMiddlewareParams,
   result: any,
   context: AuditContext
 ): Promise<any> {

@@ -11,41 +11,19 @@
  * Pré-requisito: Dados de seed devem estar populados no banco bidexpert_demo
  */
 import { test, expect, Page } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth-helper';
 
 // Configuração do ambiente Demo
 const DEMO_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://demo.localhost:9005';
-const ADMIN_EMAIL = 'admin@bidexpert.ai';
-const ADMIN_PASSWORD = 'senha@123';
 
 // Contagens esperadas baseadas no seed
 const EXPECTED_AUCTIONS = 8;
 const EXPECTED_AUCTIONEERS = 4;
 const EXPECTED_SELLERS = 4;
 
-/**
- * Realiza login como administrador do tenant demo
- */
-async function loginAsDemoAdmin(page: Page) {
-  await page.goto(`${DEMO_BASE_URL}/auth/login`, { waitUntil: 'networkidle', timeout: 60000 });
-  
-  // Aguarda a página de login carregar
-  await page.waitForSelector('input[name="email"], input[type="email"]', { timeout: 30000 });
-  
-  // Preenche credenciais
-  await page.fill('input[name="email"], input[type="email"]', ADMIN_EMAIL);
-  await page.fill('input[name="password"], input[type="password"]', ADMIN_PASSWORD);
-  
-  // Submete o formulário
-  await page.click('button[type="submit"]');
-  
-  // Aguarda redirecionamento após login bem-sucedido
-  await page.waitForURL(/\/(admin|dashboard|overview)/, { timeout: 30000 });
-  console.log('✅ Login realizado com sucesso');
-}
-
 test.describe('Demo Tenant CRUD Pages', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsDemoAdmin(page);
+    await loginAsAdmin(page, DEMO_BASE_URL);
   });
 
   test('Página de Leilões deve exibir dados do tenant demo', async ({ page }) => {
@@ -135,7 +113,7 @@ test.describe('Demo Tenant CRUD Pages', () => {
 
 test.describe('Demo Tenant Data Isolation', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsDemoAdmin(page);
+    await loginAsAdmin(page, DEMO_BASE_URL);
   });
 
   test('Leilões devem pertencer ao tenant demo (ID 2)', async ({ page }) => {

@@ -1,5 +1,5 @@
 ﻿/**
- * @fileoverview Toolbar da Biblioteca de M├¡dia.
+ * @fileoverview Toolbar da Biblioteca de Mídia.
  * View modes (grid/list), sort, filter por tipo de entidade, search, bulk actions.
  * data-ai-id="media-toolbar"
  */
@@ -69,7 +69,7 @@ export function MediaToolbar({
         <div className={`relative flex-1 max-w-md transition-all ${isSearchFocused ? 'max-w-lg' : ''}`}>
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por t├¡tulo, nome..."
+            placeholder="Buscar por título, nome..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
@@ -237,3 +237,4 @@ export function MediaToolbar({
     </div>
   );
 }
+

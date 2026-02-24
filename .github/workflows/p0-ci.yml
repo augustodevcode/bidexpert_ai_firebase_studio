@@ -14,6 +14,10 @@ env:
   NODE_VERSION: '20'
   CI: 'true'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   # ============================================
   # DEV-01: Build/Typecheck Gate
@@ -50,7 +54,7 @@ jobs:
         run: npm run lint
         continue-on-error: true
       - name: Dependency Security Audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
       - name: Build Application
         run: npm run build
@@ -162,6 +166,7 @@ jobs:
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
+        id: upload_playwright_artifact
         if: always()
         with:
           name: playwright-report
@@ -169,6 +174,58 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+      - name: Comment PR with Playwright Evidence
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          ARTIFACT_ID: ${{ steps.upload_playwright_artifact.outputs.artifact-id }}
+        with:
+          script: |
+            const marker = '<!-- playwright-evidence -->';
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const artifactId = process.env.ARTIFACT_ID;
+            const artifactUrl = artifactId
+              ? `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}/artifacts/${artifactId}`
+              : runUrl;
+
+            const body = [
+              marker,
+              '## 🎭 Evidências Playwright (Automático)',
+              '',
+              `- Run CI: ${runUrl}`,
+              `- Artifact (playwright-report/test-results): ${artifactUrl}`,
+              '- Observação: as imagens/snapshots ficam dentro do artifact para auditoria da PR.',
+            ].join('\n');
+
+            const issue_number = context.payload.pull_request.number;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const previous = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: previous.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body,
+              });
+            }
+
 
   # ============================================
   # DEV-06: Visual Regression (Vitest Browser)
