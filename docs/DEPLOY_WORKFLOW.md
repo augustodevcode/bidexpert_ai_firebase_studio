@@ -86,7 +86,7 @@ npm run dev
 
 ```powershell
 # 1. Restaurar schema MySQL para desenvolvimento local
-Copy-Item -Path "prisma/schema.mysql.prisma" -Destination "prisma/schema.prisma" -Force
+Copy-Item -Path "prisma/schema.mysql.temp.prisma" -Destination "prisma/schema.prisma" -Force
 # (Ou simplesmente deixar o schema.prisma intacto no git - ele não deve ser commitado com alterações)
 
 # 2. Commitar alterações
@@ -150,7 +150,7 @@ npx prisma generate
 npx prisma db seed
 
 # 4. IMPORTANTE: Restaurar schema MySQL após o seed
-Copy-Item -Path "prisma/schema.mysql.prisma" -Destination "prisma/schema.prisma" -Force
+Copy-Item -Path "prisma/schema.mysql.temp.prisma" -Destination "prisma/schema.prisma" -Force
 npx prisma generate
 ```
 
