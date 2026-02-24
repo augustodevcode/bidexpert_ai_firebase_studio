@@ -253,10 +253,8 @@ export async function loginAs(
   await passwordInput.fill(cred.password);
 
   // 5. Submit + wait for redirect
-  await Promise.all([
-    page.waitForURL(waitPattern, { timeout }),
-    submitButton.click(),
-  ]);
+  await passwordInput.press('Enter');
+  await page.waitForURL(waitPattern, { timeout });
 
   console.log(`[loginAs:${role}] ✅ Login OK → ${page.url()}`);
   return consoleErrors;
