@@ -1,0 +1,76 @@
+{
+  "branches": [
+    "main",
+    {
+      "name": "demo-stable",
+      "prerelease": "demo"
+    },
+    {
+      "name": "hml",
+      "prerelease": "alpha"
+    }
+  ],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "feat", "release": "minor" },
+          { "type": "fix", "release": "patch" },
+          { "type": "perf", "release": "patch" },
+          { "type": "revert", "release": "patch" },
+          { "type": "refactor", "release": "patch" },
+          { "type": "docs", "release": false },
+          { "type": "style", "release": false },
+          { "type": "chore", "release": false },
+          { "type": "test", "release": false },
+          { "type": "ci", "release": false },
+          { "breaking": true, "release": "major" }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "Funcionalidades", "hidden": false },
+            { "type": "fix", "section": "Correções", "hidden": false },
+            { "type": "perf", "section": "Performance", "hidden": false },
+            { "type": "revert", "section": "Reversões", "hidden": false },
+            { "type": "refactor", "section": "Refatorações", "hidden": false },
+            { "type": "docs", "section": "Documentação", "hidden": true },
+            { "type": "style", "section": "Estilo", "hidden": true },
+            { "type": "chore", "section": "Manutenção", "hidden": true },
+            { "type": "test", "section": "Testes", "hidden": true },
+            { "type": "ci", "section": "CI/CD", "hidden": true }
+          ]
+        }
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md",
+        "changelogTitle": "# Changelog - BidExpert\n\nTodas as mudanças notáveis neste projeto serão documentadas neste arquivo.\n\nO formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),\ne este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).\n"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md", "package.json", "package-lock.json"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "successComment": "🎉 Esta issue foi resolvida na versão ${nextRelease.version}.\n\n📋 [Changelog completo](${releases[0].url})",
+        "failTitle": "❌ Falha no release automático",
+        "labels": ["release"]
+      }
+    ]
+  ]
+}
