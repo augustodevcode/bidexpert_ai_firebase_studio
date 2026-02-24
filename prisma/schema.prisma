@@ -1,14 +1,14 @@
 // =============================================================================
 // PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
 // =============================================================================
-// Este schema é uma cópia do schema.prisma principal, com provider alterado
+// Este schema Ã© uma cÃ³pia do schema.prisma principal, com provider alterado
 // para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
 // 
-// USO: Este schema é usado automaticamente pelo workflow de deploy para Vercel
-//      através do script prepare-vercel-demo.ps1 ou GitHub Action
+// USO: Este schema Ã© usado automaticamente pelo workflow de deploy para Vercel
+//      atravÃ©s do script prepare-vercel-demo.ps1 ou GitHub Action
 //
 // NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
-//       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
+//       sÃ£o todos compatÃ­veis entre MySQL e PostgreSQL no Prisma.
 // =============================================================================
 
 generator client {
@@ -16,7 +16,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -33,6 +33,7 @@ model Asset {
   evaluationValue            Decimal?                @db.Decimal(15, 2)
   imageUrl                   String?
   imageMediaId               BigInt?
+  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   galleryImageUrls           Json?
   mediaItemIds               Json?
   dataAiHint                 String?
@@ -253,11 +254,12 @@ model Auction {
   sellingBranch            String?
   additionalTriggers       Json?
   createdAt                DateTime               @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId                 BigInt
   auctioneerId             BigInt?
   sellerId                 BigInt?
   imageMediaId             BigInt?
+  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   isRelisted               Boolean                @default(false)
   relistCount              Int                    @default(0)
   originalAuctionId        BigInt?                @unique
@@ -361,7 +363,7 @@ model Auctioneer {
   latitude           Decimal?
   longitude          Decimal?
   createdAt          DateTime  @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId           BigInt
   userId             BigInt?   @unique
   Auction            Auction[]
@@ -456,7 +458,7 @@ model CounterState {
   entityType   String
   currentValue Int      @default(0)
   createdAt    DateTime @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, entityType])
   @@index([tenantId])
@@ -469,7 +471,7 @@ model Court {
   stateUf          String
   website          String?
   createdAt        DateTime           @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   JudicialDistrict JudicialDistrict[]
   JudicialProcess  JudicialProcess[]
   Auction          Auction[]
@@ -500,7 +502,7 @@ model DirectSaleOffer {
   mediaItemIds         Json?
   expiresAt            DateTime?
   createdAt            DateTime                  @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   categoryId           BigInt
   sellerId             BigInt
   sellerName           String?
@@ -524,7 +526,7 @@ model DocumentTemplate {
   type      DocumentTemplate_type
   content   String?               @db.Text
   createdAt DateTime              @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
 }
 
 model DocumentType {
@@ -580,7 +582,7 @@ model JudicialBranch {
   phone            String?
   email            String?
   createdAt        DateTime          @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   JudicialDistrict JudicialDistrict? @relation(fields: [districtId], references: [id])
   JudicialProcess  JudicialProcess[]
   Seller           Seller?
@@ -597,7 +599,7 @@ model JudicialDistrict {
   stateId         BigInt?
   zipCode         String?
   createdAt       DateTime          @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   JudicialBranch  JudicialBranch[]
   Court           Court?            @relation(fields: [courtId], references: [id])
   State           State?            @relation(fields: [stateId], references: [id])
@@ -688,6 +690,7 @@ model Lot {
   discountPercentage       Int?
   additionalTriggers       Json?
   imageUrl                 String?              @db.Text
+  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   imageMediaId             BigInt?
   galleryImageUrls         Json?
   mediaItemIds             Json?
@@ -702,7 +705,7 @@ model Lot {
   relistCount              Int                  @default(0)
   original_lot_id          BigInt?              @unique
   createdAt                DateTime             @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   endDate                  DateTime?
   lotSpecificAuctionDate   DateTime?
   secondAuctionDate        DateTime?
@@ -800,7 +803,7 @@ model LotDocument {
   displayOrder Int      @default(0)
   isPublic     Boolean  @default(true)
   createdAt    DateTime @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId     BigInt
   Lot          Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   Tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -845,7 +848,7 @@ model LotRisk {
   verifiedBy         BigInt?
   verifiedAt         DateTime?
   createdAt          DateTime          @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId           BigInt
   Lot                Lot               @relation(fields: [lotId], references: [id], onDelete: Cascade)
   Tenant             Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -905,6 +908,9 @@ model MediaItem {
   judicialProcessId BigInt?
   linkedLotIds      Json?
   tenantId          BigInt?
+  AssetCovers       Asset[]            @relation("AssetCoverImage")
+  AuctionCovers     Auction[]          @relation("AuctionCoverImage")
+  LotCovers         Lot[]              @relation("LotCoverImage")
   AssetMedia        AssetMedia[]
   JudicialProcess   JudicialProcess?   @relation(fields: [judicialProcessId], references: [id])
   Tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1080,7 +1086,7 @@ model Report {
   definition  Json
   tenantId    BigInt
   createdAt   DateTime @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   createdById BigInt
   User        User     @relation(fields: [createdById], references: [id])
   Tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1155,7 +1161,7 @@ model Seller {
   isJudicial       Boolean           @default(false)
   judicialBranchId BigInt?           @unique
   createdAt        DateTime          @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId         BigInt
   userId           BigInt?           @unique
   Asset            Asset[]
@@ -1210,7 +1216,7 @@ model Subscriber {
   phone       String?
   preferences Json?
   createdAt   DateTime @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId    BigInt
   Tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -1242,7 +1248,7 @@ model Tenant {
   webhookSecret           String?                   @db.VarChar(64)
   metadata                Json?
   createdAt               DateTime                  @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   Asset                   Asset[]
   AssetMedia              AssetMedia[]
   AssetsOnLots            AssetsOnLots[]
@@ -1307,7 +1313,7 @@ model TenantInvoice {
   receiptUrl       String?              @db.Text
   metadata         Json?
   createdAt        DateTime             @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   Tenant           Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([dueDate])
@@ -1373,7 +1379,7 @@ model User {
   responsibleCpf                                   String?                 @db.Text
   optInMarketing                                   Boolean?                @default(false)
   createdAt                                        DateTime                @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   Asset                                            Asset[]
   AuctionHabilitation                              AuctionHabilitation[]
   Auctioneer                                       Auctioneer?
@@ -1406,7 +1412,7 @@ model UserDocument {
   id              BigInt              @id @default(autoincrement())
   status          UserDocument_status @default(PENDING_ANALYSIS)
   createdAt       DateTime            @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   userId          BigInt
   documentTypeId  BigInt
   fileName        String?
@@ -1578,7 +1584,7 @@ model BidderProfile {
   smsNotifications      Boolean                        @default(false)
   isActive              Boolean                        @default(true)
   createdAt             DateTime                       @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId              BigInt?
   BidderNotification  BidderNotification[]
   Tenant                Tenant?                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1605,7 +1611,7 @@ model EntityViewMetrics {
   favoritesCount Int       @default(0)
   lastViewedAt   DateTime?
   createdAt      DateTime  @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
 
   @@unique([entityType, entityId])
   @@index([entityPublicId])
@@ -1660,7 +1666,7 @@ model ITSM_ChatLog {
   wasHelpful    Boolean?
   ticketCreated Boolean       @default(false)
   createdAt     DateTime      @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId      BigInt?
   Tenant        Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   ITSM_Ticket  ITSM_Ticket? @relation(fields: [ticketId], references: [id])
@@ -1721,7 +1727,7 @@ model ITSM_Ticket {
   errorLogs                                Json?
   assignedToUserId                         BigInt?
   createdAt                                DateTime              @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   resolvedAt                               DateTime?
   closedAt                                 DateTime?
   tenantId                                 BigInt?
@@ -1773,7 +1779,7 @@ model PaymentMethod {
   isActive        Boolean              @default(true)
   expiresAt       DateTime?
   createdAt       DateTime             @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId        BigInt?
   BidderProfile BidderProfile      @relation(fields: [bidderId], references: [id], onDelete: Cascade)
   Tenant          Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1793,7 +1799,7 @@ model validation_rules {
   severity     validation_rules_severity @default(ERROR)
   isActive     Boolean                   @default(true)
   createdAt    DateTime                  @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
 
   @@unique([entityType, fieldName, ruleType])
   @@index([entityType])
@@ -1865,7 +1871,7 @@ model Visitor {
   totalPageViews   Int                @default(0)
   totalEvents      Int                @default(0)
   createdAt        DateTime           @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   VisitorEvent   VisitorEvent[]
   VisitorSession VisitorSession[]
 
@@ -1892,7 +1898,7 @@ model WonLot {
   invoiceUrl      String?
   receiptUrl      String?
   createdAt       DateTime                @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId        BigInt
   BidderProfile BidderProfile         @relation(fields: [bidderId], references: [id], onDelete: Cascade)
   Tenant          Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1902,7 +1908,7 @@ model WonLot {
 }
 
 // =============================================================================
-// ENUMS - Idênticos ao schema MySQL (compatíveis entre ambos os bancos)
+// ENUMS - IdÃªnticos ao schema MySQL (compatÃ­veis entre ambos os bancos)
 // =============================================================================
 
 enum UserDocument_status {
@@ -2323,3 +2329,4 @@ model AuditConfig {
 
   @@map("audit_configs")
 }
+
