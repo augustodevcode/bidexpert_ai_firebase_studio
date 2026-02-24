@@ -58,13 +58,14 @@ jobs:
 
       - name: 🔐 Check Promotion Source (HML ➜ DEMO)
         run: |
-          git fetch origin hml 2>/dev/null || echo "⚠️  Branch hml não encontrada remotamente, pulando verificação."
-          if git rev-parse --verify origin/hml >/dev/null 2>&1; then
+          if git fetch origin hml; then
             if git merge-base --is-ancestor origin/hml HEAD; then
               echo "✅ hml está contida em demo-stable (promoção via HML confirmada)."
             else
               echo "ℹ️  hml não é ancestral de demo-stable — feature foi promovida diretamente para demo-stable (fluxo direto permitido)."
             fi
+          else
+            echo "⚠️  Branch hml não encontrada remotamente — verificação de promoção ignorada."
           fi
         
       - name: 🔍 Type Check
