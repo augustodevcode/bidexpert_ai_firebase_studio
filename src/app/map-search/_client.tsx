@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, User, Heart, ChevronUp } from 'lucide-react';
+import { Search, User, Heart, ChevronUp, X } from 'lucide-react';
 import type { Lot, Auction, PlatformSettings, DirectSaleOffer } from '@/types';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
@@ -182,7 +182,7 @@ function MapSearchPageContent() {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
 
-  const [discountFilter, setDiscountFilter] = useState(20);
+  const [discountFilter, setDiscountFilter] = useState(0);
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [auctioneerFilter, setAuctioneerFilter] = useState('all');
@@ -221,14 +221,14 @@ function MapSearchPageContent() {
       const auctions = Array.isArray(auctionsResult)
         ? auctionsResult
         : (typeof auctionsResult === 'object' && auctionsResult !== null && 'auctions' in auctionsResult
-            ? ((auctionsResult as { auctions?: Auction[] }).auctions ?? [])
-            : []);
+          ? ((auctionsResult as { auctions?: Auction[] }).auctions ?? [])
+          : []);
 
       const lots = Array.isArray(lotsResult)
         ? lotsResult
         : (typeof lotsResult === 'object' && lotsResult !== null && 'lots' in lotsResult
-            ? ((lotsResult as { lots?: Lot[] }).lots ?? [])
-            : []);
+          ? ((lotsResult as { lots?: Lot[] }).lots ?? [])
+          : []);
 
       const settings =
         typeof settingsResult === 'object' && settingsResult !== null && 'success' in settingsResult
@@ -238,8 +238,8 @@ function MapSearchPageContent() {
       const directSales = Array.isArray(directSalesResult)
         ? directSalesResult
         : (typeof directSalesResult === 'object' && directSalesResult !== null && 'offers' in directSalesResult
-            ? ((directSalesResult as { offers?: DirectSaleOffer[] }).offers ?? [])
-            : []);
+          ? ((directSalesResult as { offers?: DirectSaleOffer[] }).offers ?? [])
+          : []);
 
       setAllAuctions(auctions);
       setAllLots(lots);
@@ -362,7 +362,7 @@ function MapSearchPageContent() {
   const resetFilters = useCallback(() => {
     setVisibleItemIds(null);
     setActiveBounds(null);
-    setDiscountFilter(20);
+    setDiscountFilter(0);
     setPriceMin('');
     setPriceMax('');
     setAuctioneerFilter('all');
@@ -382,9 +382,18 @@ function MapSearchPageContent() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalToggle}>
-      <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background p-0 shadow-none">
+      <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background p-0 shadow-none [&>button.absolute]:hidden">
         <DialogTitle className="sr-only">Busca geolocalizada de leilões</DialogTitle>
         <DialogDescription className="sr-only">Layout com filtros, resultados e mapa interativo.</DialogDescription>
+
+        {/* Floating Close Button */}
+        <button
+          onClick={() => handleModalToggle(false)}
+          className="absolute right-4 top-4 z-[1000] flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-lg hover:bg-muted transition-colors border border-border/50 text-foreground"
+          aria-label="Voltar para a busca"
+        >
+          <X className="h-5 w-5" />
+        </button>
 
         <div className="flex h-full w-full overflow-hidden bg-muted/30" data-ai-id="map-search-shell">
           <aside className="h-full w-[280px] flex-shrink-0 overflow-y-auto border-r border-border/70 bg-card px-5 py-6" data-ai-id="map-search-filters">
