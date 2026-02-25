@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Filter, CalendarIcon, RefreshCw, ShoppingCart } from 'lucide-react';
+import { Filter, CalendarIcon, RefreshCw, ShoppingCart, MapPin } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,7 +20,7 @@ import BidExpertFilterSkeleton from './BidExpertFilterSkeleton';
 
 export interface ActiveFilters {
   modality: string; // For auctions
-  category: string; 
+  category: string;
   priceRange: [number, number];
   locations: string[];
   sellers: string[];
@@ -41,7 +41,7 @@ interface BidExpertFilterProps {
   models?: VehicleModel[];
   modalities?: { value: string, label: string }[];
   statuses?: { value: string, label: string }[];
-  offerTypes?: { value: DirectSaleOfferType | 'ALL', label: string}[];
+  offerTypes?: { value: DirectSaleOfferType | 'ALL', label: string }[];
   onFilterSubmit: (filters: ActiveFilters) => void;
   onFilterReset: () => void;
   initialFilters?: ActiveFilters;
@@ -63,16 +63,16 @@ const defaultAuctionStatuses = [
 ];
 
 const defaultDirectSaleStatuses = [
-    { value: 'ACTIVE', label: 'Ativa' },
-    { value: 'SOLD', label: 'Vendida' },
-    { value: 'EXPIRED', label: 'Expirada' },
-    { value: 'PENDING_APPROVAL', label: 'Pendente Aprovação'}
+  { value: 'ACTIVE', label: 'Ativa' },
+  { value: 'SOLD', label: 'Vendida' },
+  { value: 'EXPIRED', label: 'Expirada' },
+  { value: 'PENDING_APPROVAL', label: 'Pendente Aprovação' }
 ];
 
 const defaultOfferTypes = [
-    { value: 'ALL' as 'ALL', label: 'Todos os Tipos'},
-    { value: 'BUY_NOW' as 'BUY_NOW', label: 'Comprar Agora'},
-    { value: 'ACCEPTS_PROPOSALS' as 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
+  { value: 'ALL' as 'ALL', label: 'Todos os Tipos' },
+  { value: 'BUY_NOW' as 'BUY_NOW', label: 'Comprar Agora' },
+  { value: 'ACCEPTS_PROPOSALS' as 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas' }
 ];
 
 const praçaOptions = [
@@ -81,6 +81,8 @@ const praçaOptions = [
   { value: 'multiplas', label: 'Múltiplas Praças' },
 ];
 
+
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function BidExpertFilter({
   categories = [],
@@ -97,7 +99,9 @@ export default function BidExpertFilter({
   filterContext = 'auctions',
   disableCategoryFilter = false, // Default to enabled
 }: BidExpertFilterProps) {
-  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const statuses = filterContext === 'directSales' ? defaultDirectSaleStatuses : defaultAuctionStatuses;
 
   const [selectedModality, setSelectedModality] = useState<string>(initialFilters?.modality || (modalities.length > 0 ? modalities[0].value : ''));
@@ -117,7 +121,7 @@ export default function BidExpertFilter({
   useEffect(() => {
     setIsClient(true);
   }, []);
-  
+
   useEffect(() => {
     if (initialFilters) {
       setSelectedModality(initialFilters.modality);
@@ -135,7 +139,7 @@ export default function BidExpertFilter({
     }
   }, [initialFilters, filterContext]);
 
-  
+
   const handleCategoryChange = (categorySlug: string) => {
     setSelectedCategorySlug(categorySlug);
   };
@@ -145,7 +149,7 @@ export default function BidExpertFilter({
       prev.includes(location) ? prev.filter(l => l !== location) : [...prev, location]
     );
   };
-  
+
   const handleSellerChange = (seller: string) => {
     setSelectedSellers(prev =>
       prev.includes(seller) ? prev.filter(s => s !== seller) : [...prev, seller]
@@ -192,7 +196,7 @@ export default function BidExpertFilter({
   const resetInternalFilters = () => {
     setSelectedModality(modalities.length > 0 ? modalities[0].value : '');
     if (!disableCategoryFilter) {
-        setSelectedCategorySlug('TODAS');
+      setSelectedCategorySlug('TODAS');
     }
     setPriceRange([0, 500000]);
     setSelectedLocations([]);
@@ -210,7 +214,7 @@ export default function BidExpertFilter({
     resetInternalFilters();
     onFilterReset();
   };
-  
+
   if (!isClient) {
     return <BidExpertFilterSkeleton />;
   }
@@ -227,60 +231,86 @@ export default function BidExpertFilter({
         </Button>
       </div>
 
+      <div className="mb-4 mt-2 px-1" data-ai-id="bidexpert-minimap-trigger">
+        <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              const currentParams = searchParams ? searchParams.toString() : '';
+              router.push(`/map-search?${currentParams}`);
+            }
+          }}
+          onClick={() => {
+            const currentParams = searchParams ? searchParams.toString() : '';
+            router.push(`/map-search?${currentParams}`);
+          }}
+          className="group relative flex h-[100px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-muted/30 transition-all hover:border-primary/50 hover:shadow-md"
+        >
+          {/* Map pattern background */}
+          <div className="absolute inset-0 opacity-40 mix-blend-multiply dark:opacity-20 dark:mix-blend-screen" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'none\\' fill-rule=\\'evenodd\\'%3E%3Cg fill=\\'%239C92AC\\' fill-opacity=\\'0.4\\'%3E%3Cpath d=\\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}></div>
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background/80 to-transparent"></div>
+
+          <Button variant="default" className="relative z-10 gap-2 shadow-lg transition-transform group-hover:scale-105 pointer-events-none">
+            <MapPin className="h-4 w-4" /> Mostrar no mapa
+          </Button>
+        </div>
+      </div>
+
       <Accordion type="multiple" defaultValue={['categories', 'price', 'status', 'makes', 'praça']} className="accordion-filters" data-ai-id="bidexpert-filter-accordion">
-        
+
         {filterContext === 'auctions' && (
-            <AccordionItem value="modality" className="item-filter-accordion" data-ai-id="filter-modality-section">
+          <AccordionItem value="modality" className="item-filter-accordion" data-ai-id="filter-modality-section">
             <AccordionTrigger className="trigger-filter-accordion">Modalidade do Leilão</AccordionTrigger>
             <AccordionContent className="content-filter-accordion">
-                <RadioGroup value={selectedModality} onValueChange={setSelectedModality} className="group-filter-radio" data-ai-id="filter-modality-group">
+              <RadioGroup value={selectedModality} onValueChange={setSelectedModality} className="group-filter-radio" data-ai-id="filter-modality-group">
                 {modalities.map(modal => (
-                    <div key={modal.value} className="wrapper-filter-option" data-ai-id={`filter-modality-${modal.value}`}>
+                  <div key={modal.value} className="wrapper-filter-option" data-ai-id={`filter-modality-${modal.value}`}>
                     <RadioGroupItem value={modal.value} id={`mod-${modal.value}`} data-ai-id={`filter-modality-${modal.value}-radio`} />
                     <Label htmlFor={`mod-${modal.value}`} className="label-filter-option">{modal.label}</Label>
-                    </div>
+                  </div>
                 ))}
-                </RadioGroup>
+              </RadioGroup>
             </AccordionContent>
-            </AccordionItem>
+          </AccordionItem>
         )}
 
         {filterContext === 'directSales' && (
-            <AccordionItem value="offerType" className="item-filter-accordion" data-ai-id="filter-offertype-section">
+          <AccordionItem value="offerType" className="item-filter-accordion" data-ai-id="filter-offertype-section">
             <AccordionTrigger className="trigger-filter-accordion">Tipo de Oferta</AccordionTrigger>
             <AccordionContent className="content-filter-accordion">
-                <RadioGroup value={selectedOfferType} onValueChange={(value) => setSelectedOfferType(value as DirectSaleOfferType | 'ALL')} className="group-filter-radio" data-ai-id="filter-offertype-group">
+              <RadioGroup value={selectedOfferType} onValueChange={(value) => setSelectedOfferType(value as DirectSaleOfferType | 'ALL')} className="group-filter-radio" data-ai-id="filter-offertype-group">
                 {offerTypes.map(type => (
-                    <div key={type.value} className="wrapper-filter-option" data-ai-id={`filter-offertype-${type.value}`}>
+                  <div key={type.value} className="wrapper-filter-option" data-ai-id={`filter-offertype-${type.value}`}>
                     <RadioGroupItem value={type.value} id={`offerType-${type.value}`} data-ai-id={`filter-offertype-${type.value}-radio`} />
                     <Label htmlFor={`offerType-${type.value}`} className="label-filter-option">{type.label}</Label>
-                    </div>
+                  </div>
                 ))}
-                </RadioGroup>
+              </RadioGroup>
             </AccordionContent>
-            </AccordionItem>
+          </AccordionItem>
         )}
-        
+
         {categories.length > 0 && (
-            <AccordionItem value="categories" className="item-filter-accordion" disabled={disableCategoryFilter} data-ai-id="filter-category-section">
+          <AccordionItem value="categories" className="item-filter-accordion" disabled={disableCategoryFilter} data-ai-id="filter-category-section">
             <AccordionTrigger className="trigger-filter-accordion" disabled={disableCategoryFilter}>
-                Categorias {disableCategoryFilter && <span className="text-filter-current-category">(Atual)</span>}
+              Categorias {disableCategoryFilter && <span className="text-filter-current-category">(Atual)</span>}
             </AccordionTrigger>
             <AccordionContent className="content-filter-accordion">
-                <RadioGroup value={selectedCategorySlug} onValueChange={handleCategoryChange} className="group-filter-radio-scroll" data-ai-id="filter-category-group">
-                    <div key="TODAS" className="wrapper-filter-option" data-ai-id="filter-category-all">
-                        <RadioGroupItem value="TODAS" id="cat-slug-TODAS" data-ai-id="filter-category-all-radio" />
-                        <Label htmlFor="cat-slug-TODAS" className="label-filter-option">Todas as Categorias</Label>
-                    </div>
-                    {categories.map(category => (
-                        <div key={category.id} className="wrapper-filter-option" data-ai-id={`filter-category-${category.slug}`}>
-                            <RadioGroupItem value={category.slug} id={`cat-slug-${category.slug}`} data-ai-id={`filter-category-${category.slug}-radio`} />
-                            <Label htmlFor={`cat-slug-${category.slug}`} className="label-filter-option">{category.name}</Label>
-                        </div>
-                    ))}
-                </RadioGroup>
+              <RadioGroup value={selectedCategorySlug} onValueChange={handleCategoryChange} className="group-filter-radio-scroll" data-ai-id="filter-category-group">
+                <div key="TODAS" className="wrapper-filter-option" data-ai-id="filter-category-all">
+                  <RadioGroupItem value="TODAS" id="cat-slug-TODAS" data-ai-id="filter-category-all-radio" />
+                  <Label htmlFor="cat-slug-TODAS" className="label-filter-option">Todas as Categorias</Label>
+                </div>
+                {categories.map(category => (
+                  <div key={category.id} className="wrapper-filter-option" data-ai-id={`filter-category-${category.slug}`}>
+                    <RadioGroupItem value={category.slug} id={`cat-slug-${category.slug}`} data-ai-id={`filter-category-${category.slug}-radio`} />
+                    <Label htmlFor={`cat-slug-${category.slug}`} className="label-filter-option">{category.name}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </AccordionContent>
-            </AccordionItem>
+          </AccordionItem>
         )}
 
         {filterContext === 'auctions' || filterContext === 'tomada_de_precos' ? (
@@ -318,125 +348,125 @@ export default function BidExpertFilter({
         </AccordionItem>
 
         {filterContext === 'lots' && makes && makes.length > 0 && (
-            <AccordionItem value="makes" className="item-filter-accordion" data-ai-id="filter-makes-section">
+          <AccordionItem value="makes" className="item-filter-accordion" data-ai-id="filter-makes-section">
             <AccordionTrigger className="trigger-filter-accordion">Marca</AccordionTrigger>
             <AccordionContent className="content-filter-accordion-scroll">
-                {makes.map(make => (
+              {makes.map(make => (
                 <div key={make.id} className="wrapper-filter-option" data-ai-id={`filter-makes-${make.id}`}>
-                    <Checkbox id={`make-${make.id}`} checked={selectedMakes.includes(make.name)} onCheckedChange={() => handleMakeChange(make.name)} data-ai-id={`filter-makes-${make.id}-checkbox`} />
-                    <Label htmlFor={`make-${make.id}`} className="label-filter-option">{make.name}</Label>
+                  <Checkbox id={`make-${make.id}`} checked={selectedMakes.includes(make.name)} onCheckedChange={() => handleMakeChange(make.name)} data-ai-id={`filter-makes-${make.id}-checkbox`} />
+                  <Label htmlFor={`make-${make.id}`} className="label-filter-option">{make.name}</Label>
                 </div>
-                ))}
+              ))}
             </AccordionContent>
-            </AccordionItem>
+          </AccordionItem>
         )}
-        
+
         {filterContext === 'lots' && models && models.length > 0 && (
-            <AccordionItem value="models" className="item-filter-accordion" data-ai-id="filter-models-section">
+          <AccordionItem value="models" className="item-filter-accordion" data-ai-id="filter-models-section">
             <AccordionTrigger className="trigger-filter-accordion">Modelo</AccordionTrigger>
             <AccordionContent className="content-filter-accordion-scroll">
-                {models.map(model => (
+              {models.map(model => (
                 <div key={model.id} className="wrapper-filter-option" data-ai-id={`filter-models-${model.id}`}>
-                    <Checkbox id={`model-${model.id}`} checked={selectedModels.includes(model.name)} onCheckedChange={() => handleModelChange(model.name)} data-ai-id={`filter-models-${model.id}-checkbox`} />
-                    <Label htmlFor={`model-${model.id}`} className="label-filter-option">{model.name}</Label>
+                  <Checkbox id={`model-${model.id}`} checked={selectedModels.includes(model.name)} onCheckedChange={() => handleModelChange(model.name)} data-ai-id={`filter-models-${model.id}-checkbox`} />
+                  <Label htmlFor={`model-${model.id}`} className="label-filter-option">{model.name}</Label>
                 </div>
-                ))}
+              ))}
             </AccordionContent>
-            </AccordionItem>
+          </AccordionItem>
         )}
 
 
         {locations.length > 0 && (
-            <AccordionItem value="locations" className="item-filter-accordion" data-ai-id="filter-locations-section">
+          <AccordionItem value="locations" className="item-filter-accordion" data-ai-id="filter-locations-section">
             <AccordionTrigger className="trigger-filter-accordion">Localizações</AccordionTrigger>
             <AccordionContent className="content-filter-accordion-scroll">
-                {locations.map(location => (
+              {locations.map(location => (
                 <div key={location} className="wrapper-filter-option" data-ai-id={`filter-locations-${location}`}>
-                    <Checkbox 
-                        id={`loc-${location}`} 
-                        checked={selectedLocations.includes(location)}
-                        onCheckedChange={() => handleLocationChange(location)}
-                        data-ai-id={`filter-locations-${location}-checkbox`}
-                     />
-                    <Label htmlFor={`loc-${location}`} className="label-filter-option">{location}</Label>
+                  <Checkbox
+                    id={`loc-${location}`}
+                    checked={selectedLocations.includes(location)}
+                    onCheckedChange={() => handleLocationChange(location)}
+                    data-ai-id={`filter-locations-${location}-checkbox`}
+                  />
+                  <Label htmlFor={`loc-${location}`} className="label-filter-option">{location}</Label>
                 </div>
-                ))}
+              ))}
             </AccordionContent>
-            </AccordionItem>
+          </AccordionItem>
         )}
-        
+
         {sellers.length > 0 && (
-            <AccordionItem value="sellers" className="item-filter-accordion" data-ai-id="filter-sellers-section">
+          <AccordionItem value="sellers" className="item-filter-accordion" data-ai-id="filter-sellers-section">
             <AccordionTrigger className="trigger-filter-accordion">Comitentes/Vendedores</AccordionTrigger>
             <AccordionContent className="content-filter-accordion-scroll">
-                {sellers.map(seller => (
+              {sellers.map(seller => (
                 <div key={seller} className="wrapper-filter-option" data-ai-id={`filter-sellers-${seller}`}>
-                    <Checkbox 
-                        id={`sel-${seller}`} 
-                        checked={selectedSellers.includes(seller)}
-                        onCheckedChange={() => handleSellerChange(seller)}
-                        data-ai-id={`filter-sellers-${seller}-checkbox`}
-                    />
-                    <Label htmlFor={`sel-${seller}`} className="label-filter-option">{seller}</Label>
+                  <Checkbox
+                    id={`sel-${seller}`}
+                    checked={selectedSellers.includes(seller)}
+                    onCheckedChange={() => handleSellerChange(seller)}
+                    data-ai-id={`filter-sellers-${seller}-checkbox`}
+                  />
+                  <Label htmlFor={`sel-${seller}`} className="label-filter-option">{seller}</Label>
                 </div>
-                ))}
+              ))}
             </AccordionContent>
-            </AccordionItem>
+          </AccordionItem>
         )}
 
         {(filterContext === 'auctions' || filterContext === 'tomada_de_precos') && (
-            <AccordionItem value="dates" className="item-filter-accordion" data-ai-id="filter-dates-section">
+          <AccordionItem value="dates" className="item-filter-accordion" data-ai-id="filter-dates-section">
             <AccordionTrigger className="trigger-filter-accordion">Período do Leilão</AccordionTrigger>
             <AccordionContent className="content-filter-accordion-dates">
-                <div className="wrapper-filter-date-field" data-ai-id="filter-startdate-group">
+              <div className="wrapper-filter-date-field" data-ai-id="filter-startdate-group">
                 <Label htmlFor="start-date" className="label-filter-date">Data de Início</Label>
                 <Popover>
-                    <PopoverTrigger asChild>
+                  <PopoverTrigger asChild>
                     <Button variant="outline" className="btn-filter-date-picker" data-ai-id="filter-startdate-picker-trigger">
-                        <CalendarIcon className="icon-filter-date" />
-                        {startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
+                      <CalendarIcon className="icon-filter-date" />
+                      {startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
                     </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="content-filter-date-popover">
+                  </PopoverTrigger>
+                  <PopoverContent className="content-filter-date-popover">
                     <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus data-ai-id="filter-startdate-calendar" />
-                    </PopoverContent>
+                  </PopoverContent>
                 </Popover>
-                </div>
-                <div className="wrapper-filter-date-field" data-ai-id="filter-enddate-group">
+              </div>
+              <div className="wrapper-filter-date-field" data-ai-id="filter-enddate-group">
                 <Label htmlFor="end-date" className="label-filter-date">Data de Término</Label>
                 <Popover>
-                    <PopoverTrigger asChild>
+                  <PopoverTrigger asChild>
                     <Button variant="outline" className="btn-filter-date-picker" data-ai-id="filter-enddate-picker-trigger">
-                        <CalendarIcon className="icon-filter-date" />
-                        {endDate ? format(endDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
+                      <CalendarIcon className="icon-filter-date" />
+                      {endDate ? format(endDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
                     </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="content-filter-date-popover">
+                  </PopoverTrigger>
+                  <PopoverContent className="content-filter-date-popover">
                     <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus data-ai-id="filter-enddate-calendar" />
-                    </PopoverContent>
+                  </PopoverContent>
                 </Popover>
-                </div>
+              </div>
             </AccordionContent>
-            </AccordionItem>
+          </AccordionItem>
         )}
-        
+
         <AccordionItem value="status" className="item-filter-accordion" data-ai-id="filter-status-section">
-            <AccordionTrigger className="trigger-filter-accordion">Status</AccordionTrigger>
-            <AccordionContent className="content-filter-accordion-scroll">
-                 {statuses.map(statusItem => (
-                    <div key={statusItem.value} className="wrapper-filter-option" data-ai-id={`filter-status-${statusItem.value}`}>
-                        <Checkbox 
-                          id={`status-${statusItem.value}`}
-                          checked={selectedStatus.includes(statusItem.value)}
-                          onCheckedChange={() => handleStatusChange(statusItem.value)}
-                          data-ai-id={`filter-status-${statusItem.value}-checkbox`}
-                        />
-                        <Label htmlFor={`status-${statusItem.value}`} className="label-filter-option">
-                            {statusItem.label}
-                        </Label>
-                    </div>
-                 ))}
-            </AccordionContent>
+          <AccordionTrigger className="trigger-filter-accordion">Status</AccordionTrigger>
+          <AccordionContent className="content-filter-accordion-scroll">
+            {statuses.map(statusItem => (
+              <div key={statusItem.value} className="wrapper-filter-option" data-ai-id={`filter-status-${statusItem.value}`}>
+                <Checkbox
+                  id={`status-${statusItem.value}`}
+                  checked={selectedStatus.includes(statusItem.value)}
+                  onCheckedChange={() => handleStatusChange(statusItem.value)}
+                  data-ai-id={`filter-status-${statusItem.value}-checkbox`}
+                />
+                <Label htmlFor={`status-${statusItem.value}`} className="label-filter-option">
+                  {statusItem.label}
+                </Label>
+              </div>
+            ))}
+          </AccordionContent>
         </AccordionItem>
 
       </Accordion>
