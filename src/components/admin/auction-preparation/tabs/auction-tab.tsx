@@ -4,7 +4,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, AlertTriangle, Gavel, Target, Activity } from 'lucide-react';
+import { TrendingUp, AlertTriangle, Gavel, Target, Activity, Radio } from 'lucide-react';
+import GoToMonitorButton from '@/components/admin/auction-preparation/go-to-monitor-button';
 
 interface AuctionTabProps {
   auction: any;
@@ -16,8 +17,40 @@ export function AuctionTab({ auction }: AuctionTabProps) {
   const currentRevenue = 0;
   const progress = (currentRevenue / revenueTarget) * 100;
 
+  const isLive = auction?.status === 'ABERTO_PARA_LANCES' || auction?.status === 'EM_PREGAO';
+  const isPreview = auction?.status === 'EM_PREPARACAO' || auction?.status === 'EM_BREVE';
+  const isOpen = auction?.status === 'ABERTO';
+
+  const getHeroMessage = () => {
+    if (isLive) return 'O pregão está AO VIVO! Acompanhe lances em tempo real pelo Monitor.';
+    if (isOpen) return 'O leilão está aberto. Acesse o Monitor para acompanhar.';
+    if (isPreview) return 'Visualize o Monitor em modo preview antes do início do pregão.';
+    return '';
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="auction-tab-content">
+      {/* Monitor Hero Card */}
+      {(isLive || isPreview || isOpen) && (
+        <Card className={`border-2 ${isLive ? 'border-destructive bg-destructive/5' : 'border-primary/30 bg-primary/5'}`} data-ai-id="monitor-hero-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Radio className={`h-5 w-5 ${isLive ? 'text-destructive animate-pulse' : 'text-primary'}`} />
+              {isLive ? 'Pregão AO VIVO' : isOpen ? 'Leilão Aberto' : 'Preview do Monitor'}
+            </CardTitle>
+            <CardDescription>{getHeroMessage()}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GoToMonitorButton
+              auction={auction}
+              variant={isLive ? 'destructive' : 'default'}
+              size="default"
+              label={isLive ? 'Abrir Monitor AO VIVO' : 'Abrir Monitor do Pregão'}
+              dataAiId="auction-tab-monitor-btn"
+            />
+          </CardContent>
+        </Card>
+      )}
       {/* Live Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
