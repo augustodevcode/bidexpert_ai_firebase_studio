@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Wifi } from 'lucide-react';
+import { Tv, ExternalLink } from 'lucide-react';
 import type { Auction } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +32,7 @@ export default function GoToLiveAuctionButton({
   size = 'sm',
   variant = 'outline',
   requireHabilitation = true,
-  label = 'Ir para pregão online',
+  label = 'Abrir Monitor do Pregão',
   dataAiId = 'go-live-auction-btn',
 }: GoToLiveAuctionButtonProps) {
   const { userProfileWithPermissions } = useAuth();
@@ -86,15 +86,16 @@ export default function GoToLiveAuctionButton({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button asChild size={size} variant={variant} className={cn('gap-2', className)} data-ai-id={dataAiId}>
-            <Link href={`/auctions/${auction.publicId || auction.id}/live`} data-ai-id={`${dataAiId}-link`}>
-              <Wifi className="h-4 w-4" />
+            <Link href={`/auctions/${auction.publicId || auction.id}/monitor`} target="_blank" rel="noopener noreferrer" data-ai-id={`${dataAiId}-link`}>
+              <Tv className="h-4 w-4" />
               <span>{label}</span>
               <Badge className="animate-pulse [animation-duration:2.5s]">Online</Badge>
+              <ExternalLink className="h-3 w-3 opacity-60" />
             </Link>
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Entrar no pregão ao vivo deste leilão</p>
+          <p>Abrir Monitor do Pregão em nova aba</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
