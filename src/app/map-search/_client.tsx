@@ -170,6 +170,10 @@ function MapSearchPageContent() {
 
   const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
   const [searchType] = useState<MapSearchDataset>(resolveDatasetFromParam(searchParamsHook.get('type')));
+  const hasSearchContext = useMemo(
+    () => Boolean(searchParamsHook.get('term') || searchParamsHook.get('type')),
+    [searchParamsHook],
+  );
   const [isLoading, setIsLoading] = useState(!warmCacheRef.current);
   const [error, setError] = useState<string | null>(null);
 
@@ -189,8 +193,12 @@ function MapSearchPageContent() {
 
   const boundsAnimationFrame = useRef<number | null>(null);
   const visibilityFrame = useRef<number | null>(null);
+  const autoFitKeyRef = useRef<string>('');
 
   useEffect(() => {
+    if (hasSearchContext) {
+      return;
+    }
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -204,7 +212,7 @@ function MapSearchPageContent() {
         { timeout: 5000 },
       );
     }
-  }, []);
+  }, [hasSearchContext]);
 
   const fetchDatasets = useCallback(async () => {
     setError(null);
@@ -354,6 +362,21 @@ function MapSearchPageContent() {
 
     return items;
   }, [searchMatchingItems, auctioneerFilter, priceMin, priceMax, discountFilter]);
+
+  useEffect(() => {
+    if (!hasSearchContext || advancedFilteredItems.length === 0) {
+      return;
+    }
+
+    const key = `${searchType}:${searchTerm}:${advancedFilteredItems.map((item) => item.id).join(',')}`;
+    if (autoFitKeyRef.current === key) {
+      return;
+    }
+
+    autoFitKeyRef.current = key;
+    setVisibleItemIds(null);
+    setFitBoundsSignal((prev) => prev + 1);
+  }, [advancedFilteredItems, hasSearchContext, searchTerm, searchType]);
 
   const displayedItems = useMemo(() => filterByVisibleIds(advancedFilteredItems, deferredVisibleIds), [advancedFilteredItems, deferredVisibleIds]);
 

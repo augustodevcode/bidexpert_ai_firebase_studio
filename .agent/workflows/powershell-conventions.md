@@ -61,7 +61,7 @@ $env:DATABASE_URL="mysql://root:senha@localhost:3306/bidexpert_dev"
 npx prisma generate
 
 # [23/02/2026 14:30:25] Iniciar servidor
-node .vscode/start-9006-dev.js
+docker compose -f docker-compose.dev-isolated.yml up -d
 ```
 
 #### **Em Markdown (antes de cada bloco PowerShell)**
@@ -77,7 +77,7 @@ $env:PORT=9006
 **[23/02/2026 14:30:25]** Iniciar servidor de desenvolvimento:
 
 \`\`\`powershell
-node .vscode/start-9006-dev.js
+docker compose -f docker-compose.dev-isolated.yml up -d
 \`\`\`
 ```
 

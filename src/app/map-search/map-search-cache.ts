@@ -59,7 +59,15 @@ function writeCacheEnvelope<T>(key: DatasetKey, data: T) {
     data,
   };
   try {
-    storage.setItem(makeKey(key), JSON.stringify(payload));
+    storage.setItem(
+      makeKey(key),
+      JSON.stringify(payload, (_jsonKey, value) => {
+        if (typeof value === 'bigint') {
+          return Number(value);
+        }
+        return value;
+      }),
+    );
   } catch (error) {
     console.warn('[map-search-cache] Failed to persist cache', error);
   }
