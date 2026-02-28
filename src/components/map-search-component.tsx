@@ -164,20 +164,32 @@ interface MapEventsProps {
   onBoundsChange: (bounds: LatLngBounds) => void;
   items: CoordinatedItem[];
   fitBoundsSignal: number;
-  onItemsInViewChange: (ids: string[]) => void;
+  onItemsInViewChange: (ids: string[] | null) => void;
 }
 
 function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange }: MapEventsProps) {
+  const getVisibleIds = useCallback((bounds: LatLngBounds) => {
+    const hasCoordinates = items.some(
+      (item) => typeof item.latitude === 'number' && typeof item.longitude === 'number',
+    );
+
+    if (!hasCoordinates) {
+      return null;
+    }
+
+    return filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds));
+  }, [items]);
+
   const map = useMapEvents({
     moveend: () => {
       const bounds = map.getBounds();
       onBoundsChange(bounds);
-      onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
+      onItemsInViewChange(getVisibleIds(bounds));
     },
     zoomend: () => {
       const bounds = map.getBounds();
       onBoundsChange(bounds);
-      onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
+      onItemsInViewChange(getVisibleIds(bounds));
     },
   });
 
@@ -206,16 +218,16 @@ function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange
       const bounds = L.latLngBounds(points);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
       onBoundsChange(bounds);
-      onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
+      onItemsInViewChange(getVisibleIds(bounds));
     } else {
-      onItemsInViewChange([]);
+      onItemsInViewChange(null);
     }
-  }, [fitBoundsSignal, items, map, onBoundsChange, onItemsInViewChange]);
+  }, [fitBoundsSignal, items, map, onBoundsChange, onItemsInViewChange, getVisibleIds]);
 
   useEffect(() => {
     const bounds = map.getBounds();
-    onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
-  }, [items, map, onItemsInViewChange]);
+    onItemsInViewChange(getVisibleIds(bounds));
+  }, [items, map, onItemsInViewChange, getVisibleIds]);
 
   return null;
 }
@@ -226,7 +238,7 @@ interface MapSearchComponentProps {
   mapCenter: [number, number];
   mapZoom: number;
   onBoundsChange: (bounds: LatLngBounds) => void;
-  onItemsInViewChange: (ids: string[]) => void;
+  onItemsInViewChange: (ids: string[] | null) => void;
   fitBoundsSignal: number;
   hoveredItemId?: string | null;
   onSearchInArea?: () => void;

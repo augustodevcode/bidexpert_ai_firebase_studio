@@ -39,31 +39,27 @@ git checkout -b <tipo>/<descricao-curta>-<timestamp>
 - `docs/` - Documentação
 - `test/` - Testes
 
-### 2. Verificar Porta Disponível
+### 2. Iniciar Sandbox Dev em Container (OBRIGATÓRIO)
+
+**REGRA ABSOLUTA:** Nenhum agente deve modificar arquivos antes de inicializar um ambiente isolado.
 
 ```powershell
-# Verificar portas em uso
-netstat -ano | findstr "9005 9006 9007 9008 9009"
+# Parar containers anteriores
+docker compose -f docker-compose.dev-isolated.yml down
 
-# Usar a primeira porta livre (9005, 9006, 9007...)
+# Iniciar container isolado (Sandbox)
+docker compose -f docker-compose.dev-isolated.yml up -d --build
+
+# Confirmar
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
-**Portas Reservadas por Ambiente:**
+**Portas Reservadas por Ambiente (Ajustar no YML se necessário):**
 | Porta | Ambiente | Uso |
 |-------|----------|-----|
-| 9005  | DEV Principal | Desenvolvimento padrão |
-| 9006  | DEV Secundário | Agente AI #2 |
-| 9007  | DEV Terciário | Agente AI #3 |
-| 9008  | DEV Quaternário | Agente AI #4 |
-| 9009  | HML/Testes | Homologação |
-
-### 3. Iniciar Servidor na Porta Dedicada
-
-```powershell
-# Definir porta e iniciar
-$env:PORT=9006  # Ajustar conforme disponibilidade
-node .vscode/start-9006-dev.js
-```
+| 9005  | DEMO Principal | Usuário humano |
+| 9006  | DEV Secundário | Agente AI #1 Sandbox |
+| 9007  | DEV Terciário | Agente AI #2 Sandbox |
 
 ### 4. Executar Desenvolvimento e Testes
 

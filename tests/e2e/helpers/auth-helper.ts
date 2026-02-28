@@ -24,25 +24,25 @@ import { type Page, expect } from '@playwright/test';
 
 export const CREDENTIALS = {
   admin: {
-    email: 'augustoaraujo.augusto@gmail.com',
-    password: 'M!nh@S3nha2025',
+    email: 'admin@bidexpert.com.br',
+    password: 'Admin@123',
     role: 'ADMIN',
     tenant: 'demo',
   },
   leiloeiro: {
-    email: 'leiloeiro@bidexpert.com.br',
-    password: 'Leiloeiro@123',
+    email: 'test.leiloeiro.1771886928935@bidexpert.com',
+    password: 'Test@12345',
     role: 'LEILOEIRO',
     tenant: 'demo',
   },
   comprador: {
-    email: 'comprador@bidexpert.com.br',
-    password: 'Comprador@123',
+    email: 'test.comprador.1771886928935@bidexpert.com',
+    password: 'Test@12345',
     role: 'COMPRADOR',
     tenant: 'demo',
   },
   advogado: {
-    email: 'advogado@bidexpert.com',
+    email: 'advogado.1771886928935@bidexpert.com.br',
     password: 'Test@12345',
     role: 'ADVOGADO',
     tenant: 'demo',
@@ -57,7 +57,7 @@ export const CREDENTIALS = {
     email: 'analista@lordland.com',
     password: 'password123',
     role: 'AUCTION_ANALYST',
-    tenant: 'lordland',
+    tenant: 'demo',
   },
 } as const;
 

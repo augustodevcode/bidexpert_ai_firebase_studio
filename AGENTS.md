@@ -37,13 +37,17 @@ Regras:
 - Toda execução de CI em PR deve publicar comentário automático com links do run e artifact Playwright (`playwright-report`/`test-results`).
 - Evidências visuais devem ser consultáveis por link na própria PR (sem depender de arquivos locais).
 
-## 🚀 Inicialização da Aplicação (OBRIGATÓRIO)
+## 🚀 Inicialização da Aplicação em Container (OBRIGATÓRIO)
 
-**REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre:
-- **Comando recomendado:** `node .vscode/start-9006-dev.js` (ou task equivalente de DEV)
-- **Porta:** usar a porta pretendida se livre; se ocupada, usar a próxima disponível (9006, 9007, 9008...)
-- **Banco DEV:** `bidexpert_dev` (isolado do DEMO)
-- **Acesso:** usar URL com slug do ambiente e a porta escolhida (ex.: `http://dev.localhost:9006`)
+**REGRA ABSOLUTA DE SANDBOX:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos de código antes de iniciar um ambiente isolado (Sandbox de Dev) containerizado via Docker. Isso garante total isolamento em relação a outros desenvolvedores (humanos) na máquina e evita sobreposição de portas ou falhas de dados locais.
+
+- **Comando Obrigatório:** Em vez de rodar processos no Node host (como apontam scripts antigos), use SEMPRE o Docker Compose:
+```powershell
+docker compose -f docker-compose.dev-isolated.yml up -d --build
+```
+- **Porta Secundária Isola:** Utilize portas como 9006, 9007 (ajustáveis nos arquivos docker) para a aplicação dentro do Sandbox.
+- **Banco Isola:** O banco de dados MySQL para o DEV Sandbox sempre rodará isolado dentro do Docker (evitando corromper o banco DEMO do humano).
+- **Acesso:** Use `http://dev.localhost:<porta-isolada>`
 
 ## 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -84,12 +88,11 @@ main (produção - PROTEGIDO)
 
 **Quando usuário está em DEMO → Agente AI faz:**
 ```powershell
-# 1. Usar porta diferente (9006, 9007...)
-$env:PORT=9006
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
+# 1. Parar containers antigos
+docker compose -f docker-compose.dev-isolated.yml down
 
-# 2. Iniciar em ambiente DEV
-node .vscode/start-9006-dev.js
+# 2. Iniciar em ambiente DEV via Docker (Sandbox)
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 ```
 
 ### Compatibilidade MySQL ↔ PostgreSQL
@@ -157,33 +160,28 @@ Os agentes devem sempre buscar a visão completa do problema:
 2. **Logs do Servidor**: Verifique o output do `next dev` ou `start`.
 3. **Triangulação**: Um erro de "Failed to fetch" no browser geralmente tem uma stack trace correspondente no servidor. Use ambos para corrigir com precisão.
 
-## Estratégia de Inicialização Robusta (Powershell)
+## Estratégia de Inicialização Robusta (Docker Container Sandbox)
 
-**PROBLEMA:** O comando `next dev` padrão pode falhar na ligação de portas ou resolução de `localhost` em ambientes Windows/Powershell, ou ignorar variáveis de ambiente.
+**PROBLEMA:** Métodos antigos usando `next dev` na máquina host criam dependência de setup e misturam conflitos de porta entre Agente AI e Usuário trabalhando simultaneamente.
 
-**SOLUÇÃO (OBRIGATÓRIA):** Ao iniciar a aplicação para testes ou desenvolvimento, utilize SEMPRE esta sequência de comandos no PowerShell:
+**SOLUÇÃO OBRIGATÓRIA (SANDBOX CONTAINERIZADO):** A primeira ação ANTES DE MUDAR QUALQUER ARQUIVO deve ser abrir e validar a execução do projeto inteiramente via Docker. 
+
+O Agente DEVE usar este fluxo inicial no PowerShell:
 
 ```powershell
-# 1. Parar processos Node anteriores para liberar a porta (evita erro EADDRINUSE)
-Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
+# 1. Parar containers de sandbox antigos
+docker compose -f docker-compose.dev-isolated.yml down
 
-# 2. Definir variáveis de ambiente explicitamente na sessão
-$env:PORT=9005
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_demo" # Ou bidexpert_dev conforme necessidade
-$env:NODE_ENV="development"
+# 2. Iniciar novo Sandbox Isolado
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 
-# 3. Gerar cliente Prisma (garante schema sincronizado)
-npx prisma generate
-
-# 4. Iniciar servidor customizado (monitorando logs no terminal)
-# Nota: Usa ts-node com server.ts para garantir leitura correta de env e binding
-npx ts-node --project tsconfig.server.json src/server.ts
+# 3. Listar e confirmar sucesso
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
 **Monitoramento:**
-- Após iniciar, verifique se a mensagem "Ready in..." aparece.
-- Se houver erro de conexão, testar com: `Test-NetConnection -ComputerName 127.0.0.1 -Port 9005`
-- Sempre abra o **Simple Browser** (`http://demo.localhost:9005`) para validar visualmente.
+- Verifique os logs do container do app se algo falhar: `docker logs bidexpert-app-dev` (ou o nome do container iniciado no docker-compose local).
+- Sempre abra o **Simple Browser** com a URL exposta (ex: `http://dev.localhost:<porta>`) para validar visualmente o Sandbox.
 
 ## Container Tools - Ambientes Multi-Tenant
 
