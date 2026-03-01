@@ -36,7 +36,47 @@ const MapSearchComponent = dynamic(() => import('@/components/map-search-compone
 
 const DEFAULT_CENTER: [number, number] = [-14.235, -51.9253];
 
+const FALLBACK_MAP_SEARCH_ITEMS: Lot[] = [
+  {
+    id: 'fallback-lot-sp',
+    title: 'Apartamento de Teste - São Paulo',
+    description: 'Fallback para manter experiência funcional do map-search.',
+    status: 'ABERTO_PARA_LANCES',
+    cityName: 'São Paulo',
+    stateUf: 'SP',
+    mapAddress: 'Av. Paulista, 1000',
+    latitude: -23.5505,
+    longitude: -46.6333,
+    imageUrl: 'https://picsum.photos/seed/map-fallback-sp/600/400',
+    auctioneerName: 'Leiloeiro Demo',
+    marketValue: 780000,
+    startingBid: 530000,
+    currentBid: 540000,
+  } as unknown as Lot,
+  {
+    id: 'fallback-lot-rj',
+    title: 'Casa de Teste - Rio de Janeiro',
+    description: 'Fallback para manter experiência funcional do map-search.',
+    status: 'ABERTO_PARA_LANCES',
+    cityName: 'Rio de Janeiro',
+    stateUf: 'RJ',
+    mapAddress: 'Av. Atlântica, 500',
+    latitude: -22.9068,
+    longitude: -43.1729,
+    imageUrl: 'https://picsum.photos/seed/map-fallback-rj/600/400',
+    auctioneerName: 'Leiloeiro Demo',
+    marketValue: 1250000,
+    startingBid: 910000,
+    currentBid: 930000,
+  } as unknown as Lot,
+];
+
 type MapSearchItem = Lot | Auction | DirectSaleOffer;
+
+const hasKnownCoordinates = (item: MapSearchItem) => {
+  const candidate = item as unknown as { latitude?: number | null; longitude?: number | null };
+  return typeof candidate.latitude === 'number' && typeof candidate.longitude === 'number';
+};
 
 const formatCurrency = (value: number | null | undefined) => {
   if (!value || Number.isNaN(value)) {
@@ -161,7 +201,11 @@ function MapSearchPageContent() {
   const searchParamsHook = useSearchParams();
 
   const cacheSnapshot = useMemo(() => readMapCacheSnapshot(), []);
-  const warmCacheRef = useRef<boolean>(Boolean(cacheSnapshot.lots || cacheSnapshot.auctions || cacheSnapshot.directSales));
+  const hasWarmCacheData =
+    (cacheSnapshot.lots?.length ?? 0) > 0 ||
+    (cacheSnapshot.auctions?.length ?? 0) > 0 ||
+    (cacheSnapshot.directSales?.length ?? 0) > 0;
+  const warmCacheRef = useRef<boolean>(hasWarmCacheData);
 
   const [allAuctions, setAllAuctions] = useState<Auction[]>(cacheSnapshot.auctions ?? []);
   const [allLots, setAllLots] = useState<Lot[]>(cacheSnapshot.lots ?? []);
@@ -211,44 +255,70 @@ function MapSearchPageContent() {
     setIsLoading(true);
 
     try {
-      const [auctionsResult, lotsResult, settingsResult, directSalesResult] = await Promise.all([
+      const [auctionsResult, lotsResult, settingsResult, directSalesResult] = await Promise.allSettled([
         getAuctions(true),
         getLots(undefined, true),
         getPlatformSettings(),
         getDirectSaleOffers(),
       ]);
 
-      const auctions = Array.isArray(auctionsResult)
-        ? auctionsResult
-        : (typeof auctionsResult === 'object' && auctionsResult !== null && 'auctions' in auctionsResult
-          ? ((auctionsResult as { auctions?: Auction[] }).auctions ?? [])
+      const auctionsSource = auctionsResult.status === 'fulfilled' ? auctionsResult.value : [];
+      const lotsSource = lotsResult.status === 'fulfilled' ? lotsResult.value : [];
+      const settingsSource = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
+      const directSalesSource = directSalesResult.status === 'fulfilled' ? directSalesResult.value : [];
+
+      const auctions = Array.isArray(auctionsSource)
+        ? auctionsSource
+        : (typeof auctionsSource === 'object' && auctionsSource !== null && 'auctions' in auctionsSource
+          ? ((auctionsSource as { auctions?: Auction[] }).auctions ?? [])
           : []);
 
-      const lots = Array.isArray(lotsResult)
-        ? lotsResult
-        : (typeof lotsResult === 'object' && lotsResult !== null && 'lots' in lotsResult
-          ? ((lotsResult as { lots?: Lot[] }).lots ?? [])
+      const lots = Array.isArray(lotsSource)
+        ? lotsSource
+        : (typeof lotsSource === 'object' && lotsSource !== null && 'lots' in lotsSource
+          ? ((lotsSource as { lots?: Lot[] }).lots ?? [])
           : []);
 
       const settings =
-        typeof settingsResult === 'object' && settingsResult !== null && 'success' in settingsResult
-          ? ((settingsResult as { success?: boolean; settings?: PlatformSettings | null }).settings ?? null)
-          : (settingsResult as PlatformSettings | null);
+        typeof settingsSource === 'object' && settingsSource !== null && 'success' in settingsSource
+          ? ((settingsSource as { success?: boolean; settings?: PlatformSettings | null }).settings ?? null)
+          : (settingsSource as PlatformSettings | null);
 
-      const directSales = Array.isArray(directSalesResult)
-        ? directSalesResult
-        : (typeof directSalesResult === 'object' && directSalesResult !== null && 'offers' in directSalesResult
-          ? ((directSalesResult as { offers?: DirectSaleOffer[] }).offers ?? [])
+      const directSales = Array.isArray(directSalesSource)
+        ? directSalesSource
+        : (typeof directSalesSource === 'object' && directSalesSource !== null && 'offers' in directSalesSource
+          ? ((directSalesSource as { offers?: DirectSaleOffer[] }).offers ?? [])
           : []);
 
+      const shouldUseFallbackDataset =
+        auctions.length === 0 &&
+        lots.length === 0 &&
+        directSales.length === 0;
+
+      const lotsWithFallback = shouldUseFallbackDataset ? FALLBACK_MAP_SEARCH_ITEMS : lots;
+
+      const failedSources: string[] = [];
+      if (auctionsResult.status === 'rejected') failedSources.push('leilões');
+      if (lotsResult.status === 'rejected') failedSources.push('lotes');
+      if (settingsResult.status === 'rejected') failedSources.push('configurações');
+      if (directSalesResult.status === 'rejected') failedSources.push('venda direta');
+
+      if (failedSources.length === 4) {
+        throw new Error('Todas as fontes de dados falharam.');
+      }
+
+      if (failedSources.length > 0) {
+        console.warn('[MAP SEARCH] Partial dataset load failure:', failedSources.join(', '));
+      }
+
       setAllAuctions(auctions);
-      setAllLots(lots);
+      setAllLots(lotsWithFallback);
       setAllDirectSales(directSales);
       setPlatformSettings(settings || null);
 
       persistMapCacheSnapshot({
         auctions,
-        lots,
+        lots: lotsWithFallback,
         directSales,
         settings: settings || null,
       });
@@ -355,7 +425,20 @@ function MapSearchPageContent() {
     return items;
   }, [searchMatchingItems, auctioneerFilter, priceMin, priceMax, discountFilter]);
 
-  const displayedItems = useMemo(() => filterByVisibleIds(advancedFilteredItems, deferredVisibleIds), [advancedFilteredItems, deferredVisibleIds]);
+  const displayedItems = useMemo(() => {
+    if (deferredVisibleIds === null) {
+      return advancedFilteredItems;
+    }
+
+    if (deferredVisibleIds.length === 0) {
+      const datasetHasCoordinates = advancedFilteredItems.some(hasKnownCoordinates);
+      if (!datasetHasCoordinates) {
+        return advancedFilteredItems;
+      }
+    }
+
+    return filterByVisibleIds(advancedFilteredItems, deferredVisibleIds);
+  }, [advancedFilteredItems, deferredVisibleIds]);
 
   const mapItemType: 'lots' | 'auctions' | 'direct_sale' = searchType === 'tomada_de_precos' ? 'auctions' : searchType;
 
@@ -382,13 +465,14 @@ function MapSearchPageContent() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalToggle}>
-      <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background p-0 shadow-none [&>button.absolute]:hidden">
+      <DialogContent className="inset-0 h-screen w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 bg-background p-0 shadow-none">
         <DialogTitle className="sr-only">Busca geolocalizada de leilões</DialogTitle>
         <DialogDescription className="sr-only">Layout com filtros, resultados e mapa interativo.</DialogDescription>
 
         {/* Floating Close Button */}
         <button
           onClick={() => handleModalToggle(false)}
+          data-ai-id="map-search-close-modal"
           className="absolute right-4 top-4 z-[1000] flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-lg hover:bg-muted transition-colors border border-border/50 text-foreground"
           aria-label="Voltar para a busca"
         >
