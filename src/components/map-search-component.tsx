@@ -134,7 +134,7 @@ const createCustomIcon = (item: MapSearchItem) => {
 
   if (isLotItem(item)) {
     category = item.categoryName || 'Lote';
-    price = Number(item.currentBid || item.startingBid || 0);
+    price = Number(item.price || item.initialPrice || 0);
   } else if (isDirectSaleItem(item)) {
     category = item.category || 'Venda Direta';
     price = Number(item.price || 0);
@@ -165,31 +165,32 @@ interface MapEventsProps {
   items: CoordinatedItem[];
   fitBoundsSignal: number;
   onItemsInViewChange: (ids: string[] | null) => void;
+  hoveredItemId?: string | null;
 }
 
-function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange }: MapEventsProps) {
-  const getVisibleIds = useCallback((bounds: LatLngBounds) => {
-    const hasCoordinates = items.some(
-      (item) => typeof item.latitude === 'number' && typeof item.longitude === 'number',
-    );
-
-    if (!hasCoordinates) {
-      return null;
-    }
-
-    return filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds));
-  }, [items]);
+function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange, hoveredItemId }: MapEventsProps) {
+  const hasMappableItems = items.some(
+    (item) => typeof item.latitude === 'number' && typeof item.longitude === 'number',
+  );
 
   const map = useMapEvents({
     moveend: () => {
       const bounds = map.getBounds();
       onBoundsChange(bounds);
-      onItemsInViewChange(getVisibleIds(bounds));
+      if (!hasMappableItems) {
+        onItemsInViewChange(null);
+        return;
+      }
+      onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
     },
     zoomend: () => {
       const bounds = map.getBounds();
       onBoundsChange(bounds);
-      onItemsInViewChange(getVisibleIds(bounds));
+      if (!hasMappableItems) {
+        onItemsInViewChange(null);
+        return;
+      }
+      onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
     },
   });
 
@@ -218,16 +219,35 @@ function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange
       const bounds = L.latLngBounds(points);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
       onBoundsChange(bounds);
-      onItemsInViewChange(getVisibleIds(bounds));
+      onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
     } else {
       onItemsInViewChange(null);
     }
-  }, [fitBoundsSignal, items, map, onBoundsChange, onItemsInViewChange, getVisibleIds]);
+  }, [fitBoundsSignal, items, map, onBoundsChange, onItemsInViewChange]);
 
   useEffect(() => {
+    if (!hasMappableItems) {
+      onItemsInViewChange(null);
+      return;
+    }
     const bounds = map.getBounds();
-    onItemsInViewChange(getVisibleIds(bounds));
-  }, [items, map, onItemsInViewChange, getVisibleIds]);
+    onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
+  }, [hasMappableItems, items, map, onItemsInViewChange]);
+
+  useEffect(() => {
+    if (!hoveredItemId) {
+      return;
+    }
+
+    const hoveredItem = items.find((item) => item.id === hoveredItemId);
+    if (!hoveredItem || typeof hoveredItem.latitude !== 'number' || typeof hoveredItem.longitude !== 'number') {
+      return;
+    }
+
+    const currentZoom = map.getZoom();
+    const target: [number, number] = [hoveredItem.latitude, hoveredItem.longitude];
+    map.flyTo(target, currentZoom, { animate: true, duration: 0.35 });
+  }, [hoveredItemId, items, map]);
 
   return null;
 }
@@ -432,6 +452,7 @@ export default function MapSearchComponent({
           items={itemsWithCoordinates}
           fitBoundsSignal={fitBoundsSignal}
           onItemsInViewChange={onItemsInViewChange}
+          hoveredItemId={hoveredItemId}
         />
       </MapContainer>
     </div>

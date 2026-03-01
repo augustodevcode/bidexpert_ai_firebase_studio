@@ -444,6 +444,7 @@ model ContactMessage {
   id        BigInt   @id @default(autoincrement())
   name      String
   email     String
+  phone     String?  @db.VarChar(30)
   subject   String?
   message   String   @db.Text
   isRead    Boolean  @default(false)
@@ -2322,4 +2323,25 @@ model AuditConfig {
   createdAt DateTime @default(now())
 
   @@map("audit_configs")
+}
+
+// EMAIL LOG
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model EmailLog {
+  id               BigInt      @id @default(autoincrement())
+  recipient        String
+  subject          String
+  content          String      @db.Text
+  provider         String
+  status           EmailStatus @default(PENDING)
+  sentAt           DateTime?
+  errorMessage     String?     @db.Text
+  contactMessageId BigInt?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }

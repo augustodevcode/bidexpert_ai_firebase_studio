@@ -5,6 +5,18 @@ A funcionalidade de busca por mapa foi aprimorada para oferecer uma experiência
 
 ## Novas Funcionalidades
 
+### 0. Modal Fullscreen sobre o Site (estilo Booking)
+- A página `/map-search` agora funciona como modal fullscreen sobre o conteúdo principal.
+- O modal utiliza camada de overlay acima do cabeçalho fixo global:
+	- `DialogOverlay`: `z-[3000]`
+	- `DialogContent`: `z-[3001]`
+- O container do modal ocupa `inset-0`, `h-screen` e `w-screen`, sem deslocamento de centralização, garantindo cobertura total da viewport.
+
+### 0.1 Hover da Lista Centraliza no Mapa
+- Ao passar o mouse sobre um item da lista lateral, o mapa aplica `flyTo` para centralizar o item no centro da viewport.
+- O popup do marcador continua abrindo no hover para reforço visual da seleção.
+- O zoom atual é preservado para não quebrar a navegação do usuário.
+
 ### 1. Marcadores Personalizados no Mapa
 - **Ícones por Categoria:** Os marcadores agora exibem ícones específicos para cada categoria de lote ou oferta (Veículos, Imóveis, Equipamentos, etc.), facilitando a identificação visual rápida.
 - **Preço no Marcador:** O valor do lance atual ou preço de venda é exibido diretamente no marcador, permitindo que o usuário avalie oportunidades sem precisar clicar.
@@ -46,3 +58,5 @@ Recomenda-se validar:
 2. A formatação de preços nos marcadores.
 3. O funcionamento combinado dos filtros (ex: Veículos em SP até R$ 50.000).
 4. A responsividade da barra de filtros em dispositivos móveis.
+5. Ao hover em item da lista, o mapa centraliza no lote correspondente.
+6. O modal `/map-search` fica acima do cabeçalho fixo em toda a viewport.
