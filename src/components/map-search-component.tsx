@@ -165,9 +165,10 @@ interface MapEventsProps {
   items: CoordinatedItem[];
   fitBoundsSignal: number;
   onItemsInViewChange: (ids: string[]) => void;
+  hoveredItemId?: string | null;
 }
 
-function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange }: MapEventsProps) {
+function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange, hoveredItemId }: MapEventsProps) {
   const map = useMapEvents({
     moveend: () => {
       const bounds = map.getBounds();
@@ -216,6 +217,21 @@ function MapEvents({ onBoundsChange, items, fitBoundsSignal, onItemsInViewChange
     const bounds = map.getBounds();
     onItemsInViewChange(filterIdsWithinBounds(items, boundingBoxFromLatLngBounds(bounds)));
   }, [items, map, onItemsInViewChange]);
+
+  useEffect(() => {
+    if (!hoveredItemId) {
+      return;
+    }
+
+    const hoveredItem = items.find((item) => item.id === hoveredItemId);
+    if (!hoveredItem || typeof hoveredItem.latitude !== 'number' || typeof hoveredItem.longitude !== 'number') {
+      return;
+    }
+
+    const currentZoom = map.getZoom();
+    const target: [number, number] = [hoveredItem.latitude, hoveredItem.longitude];
+    map.flyTo(target, currentZoom, { animate: true, duration: 0.35 });
+  }, [hoveredItemId, items, map]);
 
   return null;
 }
@@ -420,6 +436,7 @@ export default function MapSearchComponent({
           items={itemsWithCoordinates}
           fitBoundsSignal={fitBoundsSignal}
           onItemsInViewChange={onItemsInViewChange}
+          hoveredItemId={hoveredItemId}
         />
       </MapContainer>
     </div>

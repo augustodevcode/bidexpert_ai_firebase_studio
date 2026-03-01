@@ -382,7 +382,7 @@ function MapSearchPageContent() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalToggle}>
-      <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background p-0 shadow-none [&>button.absolute]:hidden">
+      <DialogContent className="inset-0 h-screen w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 bg-background p-0 shadow-none [&>button.absolute]:hidden">
         <DialogTitle className="sr-only">Busca geolocalizada de leilões</DialogTitle>
         <DialogDescription className="sr-only">Layout com filtros, resultados e mapa interativo.</DialogDescription>
 
