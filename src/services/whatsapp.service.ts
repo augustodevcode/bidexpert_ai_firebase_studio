@@ -1,16 +1,14 @@
-import { z } from 'zod';
-
-export interface WhatsAppNotificationPayload {
-  to: string;
-  templateName: string;
-  variables: Record<string, string>;
-  language?: string;
-}
-
 /**
  * @fileoverview Serviço de notificações WhatsApp via Twilio REST API.
  * Em ambiente de desenvolvimento (sem credenciais), cai em fallback log.
  */
+export interface WhatsAppNotificationPayload {
+  /** Número de destino com ou sem prefixo whatsapp: */
+  to: string;
+  /** Corpo da mensagem de texto livre */
+  message: string;
+}
+
 export class WhatsAppService {
   private accountSid: string;
   private authToken: string;
@@ -23,20 +21,17 @@ export class WhatsAppService {
   }
 
   /**
-   * Envia uma mensagem de notificação para WhatsApp.
+   * Envia uma mensagem de texto livre para WhatsApp via Twilio.
+   * Fallback silencioso quando credenciais não estão presentes.
    */
   async sendNotification(payload: WhatsAppNotificationPayload): Promise<boolean> {
     try {
       if (!this.accountSid || !this.authToken || !this.fromNumber) {
-        console.info('[WhatsAppService] Sandbox mode / Dev mode: Credenciais do Twilio não configuradas. Mensagem WhatsApp descartada.', payload);
+        console.info('[WhatsAppService] Credenciais do Twilio ausentes — mensagem descartada (dev/sandbox).', { to: payload.to });
         return true;
       }
 
-      // Constrói a mensagem
-      let messageBody = `Nova Notificação: ${payload.templateName}\n`;
-      for (const [key, value] of Object.entries(payload.variables)) {
-        messageBody += `${key}: ${value}\n`;
-      }
+      const messageBody = payload.message;
 
       const toFormatted = payload.to.startsWith('whatsapp:') ? payload.to : `whatsapp:+55${payload.to.replace(/\D/g, '')}`;
       const fromFormatted = this.fromNumber.startsWith('whatsapp:') ? this.fromNumber : `whatsapp:${this.fromNumber}`;
