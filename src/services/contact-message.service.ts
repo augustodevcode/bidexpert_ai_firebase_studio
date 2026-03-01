@@ -10,16 +10,19 @@ import type { ContactMessage } from '@/types';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { EmailService } from './email.service';
+import { WhatsAppService } from './whatsapp.service';
 
 export class ContactMessageService {
   private repository: ContactMessageRepository;
   private prisma;
   private emailService: EmailService;
+  private whatsAppService: WhatsAppService;
 
   constructor() {
     this.repository = new ContactMessageRepository();
     this.prisma = prisma;
     this.emailService = new EmailService();
+    this.whatsAppService = new WhatsAppService();
   }
 
   async getContactMessages(): Promise<ContactMessage[]> {
@@ -43,6 +46,25 @@ export class ContactMessageService {
       if (!emailResult.success) {
         console.warn('Mensagem salva, mas falha no envio de e-mail:', emailResult.message);
         // Não falha a operação se o e-mail não for enviado, apenas loga o warning
+      }
+
+      // Enviar confirmação automática ao remetente (fire-and-forget)
+      this.emailService.sendConfirmationToSender({
+        name: data.name as string,
+        email: data.email as string,
+        subject: data.subject as string,
+        contactMessageId: savedMessage.id,
+      }).catch((err: Error) => console.warn('[ContactMessageService] Falha ao enviar confirmação ao remetente:', err.message));
+
+      // Notificação WhatsApp para o admin (fire-and-forget, se configurado)
+      const adminWhatsApp = process.env.ADMIN_WHATSAPP_NUMBER;
+      if (adminWhatsApp) {
+        this.whatsAppService.sendNotification({
+          to: adminWhatsApp.startsWith('whatsapp:') ? adminWhatsApp : `whatsapp:${adminWhatsApp}`,
+          message: `📬 Nova mensagem de contato\n*De:* ${data.name} <${data.email}>\n*Assunto:* ${data.subject}\n*Prévia:* ${String(data.message).slice(0, 100)}...`,
+        }).catch((err: Error) => console.warn('[ContactMessageService] Falha ao notificar WhatsApp:', err.message));
+      } else {
+        console.info(`[ContactMessageService] ADMIN_WHATSAPP_NUMBER não configurado — WhatsApp ignorado. Assunto: ${data.subject}`);
       }
 
       return { success: true, message: 'Mensagem salva com sucesso.' };
