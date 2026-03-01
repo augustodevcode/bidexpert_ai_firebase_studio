@@ -69,20 +69,26 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome Completo</Label>
-                    <Input id="name" name="name" placeholder="Seu nome completo" required disabled={isLoading} />
+                    <Input id="name" name="name" placeholder="Seu nome completo" required disabled={isLoading} data-ai-id="contact-input-name" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Endereço de Email</Label>
-                    <Input id="email" name="email" type="email" placeholder="seu@email.com" required disabled={isLoading} />
+                    <Input id="email" name="email" type="email" placeholder="seu@email.com" required disabled={isLoading} data-ai-id="contact-input-email" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone / WhatsApp <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+                    <Input id="phone" name="phone" type="tel" placeholder="(11) 9 9999-9999" disabled={isLoading} data-ai-id="contact-input-phone" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subject">Assunto</Label>
+                    <Input id="subject" name="subject" placeholder="Referente ao leilão..." required disabled={isLoading} data-ai-id="contact-input-subject" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="subject">Assunto</Label>
-                  <Input id="subject" name="subject" placeholder="Referente ao leilão..." required disabled={isLoading} />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="message">Mensagem</Label>
-                  <Textarea id="message" name="message" placeholder="Sua mensagem aqui..." rows={5} required disabled={isLoading} />
+                  <Textarea id="message" name="message" placeholder="Sua mensagem aqui..." rows={5} required disabled={isLoading} data-ai-id="contact-input-message" />
                 </div>
                 <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -61,7 +61,7 @@ export class ContactMessageService {
       if (adminWhatsApp) {
         this.whatsAppService.sendNotification({
           to: adminWhatsApp.startsWith('whatsapp:') ? adminWhatsApp : `whatsapp:${adminWhatsApp}`,
-          message: `📬 Nova mensagem de contato\n*De:* ${data.name} <${data.email}>\n*Assunto:* ${data.subject}\n*Prévia:* ${String(data.message).slice(0, 100)}...`,
+          message: `📬 Nova mensagem de contato\n*De:* ${data.name} <${data.email}>${data.phone ? `\n*Telefone/WhatsApp:* ${data.phone}` : ''}\n*Assunto:* ${data.subject}\n*Prévia:* ${String(data.message).slice(0, 100)}...`,
         }).catch((err: Error) => console.warn('[ContactMessageService] Falha ao notificar WhatsApp:', err.message));
       } else {
         console.info(`[ContactMessageService] ADMIN_WHATSAPP_NUMBER não configurado — WhatsApp ignorado. Assunto: ${data.subject}`);

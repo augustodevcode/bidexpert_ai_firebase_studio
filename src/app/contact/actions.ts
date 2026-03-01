@@ -20,6 +20,7 @@ const contactMessageService = new ContactMessageService();
 export async function saveContactMessage(formData: FormData): Promise<{ success: boolean; message: string }> {
   const name = formData.get('name') as string;
   const email = formData.get('email') as string;
+  const phone = (formData.get('phone') as string) || undefined;
   const subject = formData.get('subject') as string;
   const message = formData.get('message') as string;
 
@@ -27,7 +28,7 @@ export async function saveContactMessage(formData: FormData): Promise<{ success:
     return { success: false, message: 'Todos os campos são obrigatórios.' };
   }
 
-  const result = await contactMessageService.saveMessage({ name, email, subject, message });
+  const result = await contactMessageService.saveMessage({ name, email, phone, subject, message });
 
   if (result.success) {
     // Revalida o cache da página de administração de mensagens para que a nova mensagem apareça imediatamente.
