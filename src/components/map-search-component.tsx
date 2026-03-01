@@ -134,7 +134,7 @@ const createCustomIcon = (item: MapSearchItem) => {
 
   if (isLotItem(item)) {
     category = item.categoryName || 'Lote';
-    price = Number(item.currentBid || item.startingBid || 0);
+    price = Number(item.price || item.initialPrice || 0);
   } else if (isDirectSaleItem(item)) {
     category = item.category || 'Venda Direta';
     price = Number(item.price || 0);
