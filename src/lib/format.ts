@@ -11,6 +11,13 @@ export interface CurrencyFormatOptions {
   locale?: string;
   minimumFractionDigits?: number;
   maximumFractionDigits?: number;
+  convert?: boolean;
+}
+
+export interface CurrencyExchangeRates {
+  BRL: number;
+  USD: number;
+  EUR: number;
 }
 
 export const CURRENCY_LOCALE_MAP: Record<SupportedCurrency, string> = {
@@ -20,6 +27,11 @@ export const CURRENCY_LOCALE_MAP: Record<SupportedCurrency, string> = {
 };
 
 let runtimeCurrencyPreference: SupportedCurrency | null = null;
+let runtimeCurrencyExchangeRates: CurrencyExchangeRates = {
+  BRL: 1,
+  USD: 1,
+  EUR: 1,
+};
 
 function parseRuntimeCurrency(value: string | null): SupportedCurrency | null {
   if (value === 'BRL' || value === 'USD' || value === 'EUR') {
@@ -30,6 +42,18 @@ function parseRuntimeCurrency(value: string | null): SupportedCurrency | null {
 
 export function setRuntimeCurrencyPreference(currency: SupportedCurrency): void {
   runtimeCurrencyPreference = currency;
+}
+
+export function setRuntimeCurrencyExchangeRates(nextRates: Partial<CurrencyExchangeRates>): void {
+  runtimeCurrencyExchangeRates = {
+    BRL: 1,
+    USD: Number.isFinite(nextRates.USD) && (nextRates.USD as number) > 0 ? (nextRates.USD as number) : runtimeCurrencyExchangeRates.USD,
+    EUR: Number.isFinite(nextRates.EUR) && (nextRates.EUR as number) > 0 ? (nextRates.EUR as number) : runtimeCurrencyExchangeRates.EUR,
+  };
+}
+
+export function getRuntimeCurrencyExchangeRates(): CurrencyExchangeRates {
+  return { ...runtimeCurrencyExchangeRates };
 }
 
 export function getRuntimeCurrencyPreference(): SupportedCurrency {
@@ -106,13 +130,15 @@ export function formatCurrency(
   const amount = toMonetaryNumber(value);
   const currency = options.currency ?? getRuntimeCurrencyPreference();
   const locale = options.locale ?? CURRENCY_LOCALE_MAP[currency];
+  const conversionRate = currency === 'BRL' ? 1 : runtimeCurrencyExchangeRates[currency];
+  const convertedAmount = options.convert === false ? amount : amount * conversionRate;
 
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     minimumFractionDigits: options.minimumFractionDigits ?? 2,
     maximumFractionDigits: options.maximumFractionDigits ?? 2,
-  }).format(amount);
+  }).format(convertedAmount);
 }
 
 /**
