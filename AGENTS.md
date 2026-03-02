@@ -37,17 +37,43 @@ Regras:
 - Toda execução de CI em PR deve publicar comentário automático com links do run e artifact Playwright (`playwright-report`/`test-results`).
 - Evidências visuais devem ser consultáveis por link na própria PR (sem depender de arquivos locais).
 
-## 🚀 Inicialização da Aplicação em Container (OBRIGATÓRIO)
+## 🌲 Isolamento Primário: Git Worktree (OBRIGATÓRIO)
 
-**REGRA ABSOLUTA DE SANDBOX:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos de código antes de iniciar um ambiente isolado (Sandbox de Dev) containerizado via Docker. Isso garante total isolamento em relação a outros desenvolvedores (humanos) na máquina e evita sobreposição de portas ou falhas de dados locais.
+**REGRA CRÍTICA:** NENHUM modelo AI (Copilot, Gemini, etc.) deve fazer qualquer alteração em arquivos de código antes de criar um **Git Worktree dedicado** com porta própria. Este mecanismo garante isolamento de branch, contexto de build e porta de servidor — sem Docker obrigatório.
 
-- **Comando Obrigatório:** Em vez de rodar processos no Node host (como apontam scripts antigos), use SEMPRE o Docker Compose:
+> O Git Worktree é superior ao clone múltiplo e ao Docker sandbox para a maioria dos casos de desenvolvimento: setup em segundos, histórico compartilhado, sem duplicação de disco.
+
+```powershell
+# 1. Ver worktrees ativos e portas em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
+
+# 2. Criar worktree com nova branch a partir de demo-stable
+$porta = 9006   # Pegar porta livre conforme tabela
+$branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add ..idexpert-feat-minha-feature -b $branch origin/demo-stable
+
+# 3. Configurar e iniciar dentro do worktree
+Set-Location ..idexpert-feat-minha-feature
+$env:PORT = $porta ; npm install ; npm run dev
+# Acesso: http://dev.localhost:$porta
+```
+
+**Tabela de Portas por Worktree:**
+
+| Porta | Worktree | Quem |
+|-------|----------|------|
+| 9005  | Principal / DEMO | Usuário humano |
+| 9006  | DEV worktree #1 | Agente AI #1 |
+| 9007  | DEV worktree #2 | Agente AI #2 |
+| 9008  | Hotfix / PR review | Ad-hoc |
+
+> 📖 **Skill detalhada:** `.github/skills/git-worktree-isolation/SKILL.md`
+
+**Docker Sandbox** — use apenas quando precisar de banco de dados completamente isolado:
 ```powershell
 docker compose -f docker-compose.dev-isolated.yml up -d --build
 ```
-- **Porta Secundária Isola:** Utilize portas como 9006, 9007 (ajustáveis nos arquivos docker) para a aplicação dentro do Sandbox.
-- **Banco Isola:** O banco de dados MySQL para o DEV Sandbox sempre rodará isolado dentro do Docker (evitando corromper o banco DEMO do humano).
-- **Acesso:** Use `http://dev.localhost:<porta-isolada>`
 
 ## 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -86,13 +112,15 @@ main (produção - PROTEGIDO)
 - Logs mostram conexão PostgreSQL
 - Porta 9005 ocupada
 
-**Quando usuário está em DEMO → Agente AI faz:**
+**Quando usuário está em DEMO → Agente AI faz (Git Worktree):**
 ```powershell
-# 1. Parar containers antigos
-docker compose -f docker-compose.dev-isolated.yml down
-
-# 2. Iniciar em ambiente DEV via Docker (Sandbox)
-docker compose -f docker-compose.dev-isolated.yml up -d --build
+# 1. Criar worktree próprio na porta DEV (sem conflitar com DEMO do usuário)
+$porta = 9006  # ou próxima porta livre
+$branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add ..idexpert-dev -b $branch origin/demo-stable
+Set-Location ..idexpert-dev
+$env:PORT = $porta ; npm install ; npm run dev
+# Agente trabalha em http://dev.localhost:9006, sem tocar em 9005
 ```
 
 ### Compatibilidade MySQL ↔ PostgreSQL
@@ -160,28 +188,38 @@ Os agentes devem sempre buscar a visão completa do problema:
 2. **Logs do Servidor**: Verifique o output do `next dev` ou `start`.
 3. **Triangulação**: Um erro de "Failed to fetch" no browser geralmente tem uma stack trace correspondente no servidor. Use ambos para corrigir com precisão.
 
-## Estratégia de Inicialização Robusta (Docker Container Sandbox)
+## 🌲 Estratégia de Inicialização Robusta (Git Worktree + Porta Dedicada)
 
-**PROBLEMA:** Métodos antigos usando `next dev` na máquina host criam dependência de setup e misturam conflitos de porta entre Agente AI e Usuário trabalhando simultaneamente.
+**PROBLEMA:** Métodos antigos usando `next dev` na branch principal criam conflitos de porta entre Agente AI e Usuário trabalhando simultaneamente. Docker resolve o banco mas é lento para setup.
 
-**SOLUÇÃO OBRIGATÓRIA (SANDBOX CONTAINERIZADO):** A primeira ação ANTES DE MUDAR QUALQUER ARQUIVO deve ser abrir e validar a execução do projeto inteiramente via Docker. 
-
-O Agente DEVE usar este fluxo inicial no PowerShell:
+**SOLUÇÃO PRIMÁRIA (Git Worktree):** A primeira ação ANTES DE MUDAR QUALQUER ARQUIVO deve ser criar um Worktree dedicado com porta própria.
 
 ```powershell
-# 1. Parar containers de sandbox antigos
-docker compose -f docker-compose.dev-isolated.yml down
+# 1. Ver worktrees ativos e portas em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 
-# 2. Iniciar novo Sandbox Isolado
-docker compose -f docker-compose.dev-isolated.yml up -d --build
+# 2. Criar worktree com nova branch a partir de demo-stable
+$porta = 9006   # Porta livre conforme tabela
+$branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add ..\bidexpert-worktree-dev -b $branch origin/demo-stable
 
-# 3. Listar e confirmar sucesso
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+# 3. Configurar e iniciar dentro do worktree
+Set-Location ..\bidexpert-worktree-dev
+$env:PORT = $porta ; npm install ; npm run dev
+# Acesso: http://dev.localhost:$porta
 ```
 
 **Monitoramento:**
-- Verifique os logs do container do app se algo falhar: `docker logs bidexpert-app-dev` (ou o nome do container iniciado no docker-compose local).
-- Sempre abra o **Simple Browser** com a URL exposta (ex: `http://dev.localhost:<porta>`) para validar visualmente o Sandbox.
+- Sempre abra o **Simple Browser** com `http://dev.localhost:<porta>` para validar visualmente.
+- Veja logs do servidor Next.js no terminal do worktree.
+
+**Docker Sandbox** (alternativa quando banco de dados isolado é necessário):
+```powershell
+docker compose -f docker-compose.dev-isolated.yml down
+docker compose -f docker-compose.dev-isolated.yml up -d --build
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+```
 
 ## Container Tools - Ambientes Multi-Tenant
 

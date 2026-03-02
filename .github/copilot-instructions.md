@@ -1014,11 +1014,13 @@ Since the codebase is a template, you should not assume they have set up anythin
 # General IA Rules
 - Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
 
-# Inicialização da Aplicação em Container (OBRIGATÓRIO)
-**REGRA ABSOLUTA DE SANDBOX:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos de código antes de iniciar um ambiente isolado (Sandbox de Dev) containerizado.
-- **Comando recomendado:** `docker compose -f docker-compose.dev-isolated.yml up -d --build`
-- **Banco Isola:** O banco MySQL para o DEV Sandbox rola isolado dentro do Docker (bidexpert-mysql-dev).
-- **Acesso:** Use `http://dev.localhost:<porta-isolada>` (Ex: 9006 ou 9007 mapeada no yml)
+# 🌲 Isolamento Primário: Git Worktree (OBRIGATÓRIO)
+**REGRA CRÍTICA:** NENHUM modelo AI deve alterar arquivos antes de criar um Git Worktree dedicado com porta própria.
+- **Comando rápido:** `git worktree add ..idexpert-feat-X -b feat/X-timestamp origin/demo-stable`
+- **Configurar porta:** `.env.local` com `PORT=9006` (ou 9007, 9008...)
+- **Acesso:** `http://dev.localhost:<porta>`
+- **Banco Compartilhado:** O MySQL local é compartilhado (worktrees compartilham o mesmo host). Use Docker Sandbox apenas quando banco isolado é necessário.
+- **Skill completa:** `.github/skills/git-worktree-isolation/SKILL.md`
 
 # 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
