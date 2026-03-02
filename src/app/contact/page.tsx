@@ -28,24 +28,33 @@ export default function ContactPage() {
 
     const formData = new FormData(event.currentTarget);
     const formRef = event.currentTarget; // Keep a reference to the form
-    
-    const result = await saveContactMessage(formData);
-    
-    if (result.success) {
-      toast({
-        title: "Mensagem Enviada!",
-        description: result.message,
-      });
-      formRef.reset(); // Use the reference to reset
-    } else {
+
+    try {
+      const result = await saveContactMessage(formData);
+
+      if (result.success) {
+        toast({
+          title: "Mensagem Enviada!",
+          description: result.message,
+        });
+        formRef.reset();
+      } else {
+        toast({
+          title: "Erro ao Enviar",
+          description: result.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro inesperado ao enviar mensagem.';
       toast({
         title: "Erro ao Enviar",
-        description: result.message,
+        description: message,
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

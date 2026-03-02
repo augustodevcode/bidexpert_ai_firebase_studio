@@ -1,0 +1,102 @@
+{
+  "/": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 5
+  },
+  "/about": {
+    "hasCurrencySwitch": false,
+    "buttons": 8,
+    "links": 5
+  },
+  "/auction-safety-tips": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/auctioneers": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/auctions": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/auctions/live": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/auctions/lots": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/auctions/lots/v2": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/auctions/monitor": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/category": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/changelog": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/checkout": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/contact": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/direct-sales": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/faq": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/home-v2": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/imoveis": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/live-dashboard": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/lots": {
+    "hasCurrencySwitch": false,
+    "buttons": 0,
+    "links": 3
+  },
+  "/map-search": {
+    "hasCurrencySwitch": false,
+    "buttons": 8,
+    "links": 5
+  }
+}

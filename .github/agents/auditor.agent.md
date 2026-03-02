@@ -23,12 +23,17 @@ git checkout -b <tipo>/<descricao-curta>-<timestamp>
 # Exemplo: git checkout -b feat/auction-filter-20260131-1430
 ```
 
-### 2. Verificar e Usar Porta Disponível
+### 2. Iniciar Sandbox Dev em Container (OBRIGATÓRIO)
+**REGRA ABSOLUTA DE SANDBOX:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos de código antes de iniciar um ambiente isolado (Sandbox de Dev) containerizado.
 ```powershell
-netstat -ano | findstr "9005 9006 9007 9008"
-# Usar primeira porta livre: 9005, 9006, 9007, 9008...
-$env:PORT=<porta-livre>
-node .vscode/start-9006-dev.js
+# Parar containers de sandbox antigos
+docker compose -f docker-compose.dev-isolated.yml down
+
+# Iniciar novo Sandbox Isolado
+docker compose -f docker-compose.dev-isolated.yml up -d --build
+
+# Confirmar sucesso
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
 ### 3. Durante o Desenvolvimento

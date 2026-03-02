@@ -87,17 +87,53 @@ main (produção - PROTEGIDO)
    - Tipos: `feat/`, `fix/`, `chore/`, `docs/`, `test/`
    - Exemplo: `feat/auction-filter-20260131-1430`
 
+## 🌲 Isolamento Primário: Git Worktree
+
+O modelo de isolamento **preferido** no BidExpert é via **Git Worktree** — mais rápido que Docker e com isolamento de branch nativo.
+
+```powershell
+# Ver worktrees e portas já em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
+
+# Criar worktree para nova task (porta livre, ex: 9006)
+$porta = 9006
+$branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add ..idexpert-feat-minha-feature -b $branch origin/demo-stable
+
+Set-Location ..idexpert-feat-minha-feature
+# Configurar .env.local com PORT=$porta
+$env:PORT = $porta ; npm install ; npm run dev
+```
+
+> 📖 **Skill completa:** `.github/skills/git-worktree-isolation/SKILL.md`
+
+### Tabela de Portas por Worktree
+
+| Porta | Worktree | Quem |
+|-------|----------|------|
+| 9005  | Principal / DEMO | Usuário humano |
+| 9006  | DEV worktree #1 | Agente AI #1 |
+| 9007  | DEV worktree #2 | Agente AI #2 |
+| 9008  | Hotfix / PR review | Ad-hoc |
+| 9009+ | Extras | Ad-hoc |
+
 ## Checklist do Agente AI
 
 ### Ao Iniciar Qualquer Task
 
 ```powershell
-# 1. Verificar se usuário está em DEMO (porta 9005 ocupada)
-netstat -ano | findstr "9005"
+# 1. Ver worktrees ativos + portas em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 
-# 2. Se ocupada → Usar DEV na porta 9006
-$env:PORT=9006
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
+# 2. Criar worktree com nova branch (substitui git checkout -b + docker)
+$porta = 9006  # porta livre conforme tabela
+git worktree add ..idexpert-feat-$descricao -b $branch origin/demo-stable
+
+# 3. Se precisar de banco completamente isolado → Docker Sandbox (alternativa)
+# docker compose -f docker-compose.dev-isolated.yml down
+# docker compose -f docker-compose.dev-isolated.yml up -d --build
 
 # 3. Criar branch a partir de demo-stable
 git fetch origin demo-stable
@@ -105,8 +141,9 @@ git checkout demo-stable
 git pull origin demo-stable
 git checkout -b feat/minha-feature-$(Get-Date -Format "yyyyMMdd-HHmm")
 
-# 4. Iniciar ambiente DEV
-node .vscode/start-9006-dev.js
+# 4. Iniciar ambiente DEV via Container
+# O container já foi inicializado no passo 2 na porta designada (ex 9006/9007)
+docker ps
 ```
 
 ### Durante o Desenvolvimento
@@ -239,9 +276,15 @@ NODE_ENV=production
 ### Erro: "Port 9005 already in use"
 
 ```powershell
-# Usar porta alternativa
-$env:PORT=9006
-node .vscode/start-9006-dev.js
+# ✅ PREFERIDO: Criar worktree em outra porta (sem docker)
+$porta = 9006  # ou 9007, 9008...
+git worktree add ..idexpert-fix -b fix/issue-$(Get-Date -Format 'yyyyMMdd') origin/demo-stable
+Set-Location ..idexpert-fix
+$env:PORT = $porta ; npm install ; npm run dev
+
+# ALTERNATIVA: Docker Sandbox (para banco isolado)
+docker compose -f docker-compose.dev-isolated.yml down
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 ```
 
 ### Erro: "mode: insensitive not supported"

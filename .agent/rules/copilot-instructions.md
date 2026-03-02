@@ -19,12 +19,17 @@ git checkout -b <tipo>/<descricao-curta>-<timestamp>
 # Exemplo: git checkout -b feat/auction-filter-20260131-1430
 ```
 
-### 2. Verificar e Usar Porta Disponível
+### 2. Iniciar Sandbox Dev em Container (OBRIGATÓRIO)
+**REGRA ABSOLUTA DE SANDBOX:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos de código antes de iniciar um ambiente isolado (Sandbox de Dev) containerizado.
 ```powershell
-netstat -ano | findstr "9005 9006 9007 9008"
-# Usar primeira porta livre: 9005, 9006, 9007, 9008...
-$env:PORT=<porta-livre>
-node .vscode/start-9006-dev.js
+# Parar containers de sandbox antigos
+docker compose -f docker-compose.dev-isolated.yml down
+
+# Iniciar novo Sandbox Isolado
+docker compose -f docker-compose.dev-isolated.yml up -d --build
+
+# Confirmar sucesso
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
 ### 3. Durante o Desenvolvimento
@@ -915,12 +920,11 @@ Since the codebase is a template, you should not assume they have set up anythin
 # General IA Rules
 - Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
 
-# Inicialização da Aplicação (OBRIGATÓRIO)
-**REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre.
-- **Comando recomendado:** `node .vscode/start-9006-dev.js` (ou task equivalente de DEV)
-- **Porta:** usar a porta pretendida se livre; se ocupada, usar a próxima disponível (9006, 9007, 9008...)
-- **Banco DEV:** `bidexpert_dev` (isolado do DEMO)
-- **Acesso:** usar URL com slug do ambiente e a porta escolhida (ex.: `http://dev.localhost:9006`)
+# Inicialização da Aplicação em Container (OBRIGATÓRIO)
+**REGRA ABSOLUTA DE SANDBOX:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos de código antes de iniciar um ambiente isolado (Sandbox de Dev) containerizado.
+- **Comando recomendado:** `docker compose -f docker-compose.dev-isolated.yml up -d --build`
+- **Banco Isola:** O banco MySQL para o DEV Sandbox rola isolado dentro do Docker (bidexpert-mysql-dev).
+- **Acesso:** Use `http://dev.localhost:<porta-isolada>` (Ex: 9006 ou 9007 mapeada no yml)
 
 # 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -961,12 +965,9 @@ main (produção - PROTEGIDO)
 
 **Quando usuário está em DEMO → Agente AI faz:**
 ```powershell
-# 1. Usar porta diferente (9006, 9007...)
-$env:PORT=9006
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
-
-# 2. Iniciar em ambiente DEV
-node .vscode/start-9006-dev.js
+# 1. Parar containers e usar nova porta no Sandbox Isolado
+docker compose -f docker-compose.dev-isolated.yml down
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 ```
 
 ### Compatibilidade MySQL ↔ PostgreSQL

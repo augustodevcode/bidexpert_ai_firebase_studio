@@ -1,4 +1,4 @@
-# 🚀 WORKFLOW OBRIGATÓRIO: Desenvolvimento Paralelo com Branches
+# 🌲 WORKFLOW OBRIGATÓRIO: Isolamento com Git Worktree
 
 > **REGRA CRÍTICA DE MÁXIMA PRIORIDADE:** Este workflow DEVE ser seguido por TODOS os agentes AI (Copilot, GitHub Chat, etc.) ANTES de iniciar qualquer implementação, alteração ou correção no projeto.
 
@@ -6,25 +6,36 @@
 
 Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **simultaneamente**, cada um com:
 - ✅ Sua própria **branch dedicada** (a partir da `demo-stable`)
+- ✅ Sua própria **pasta de trabalho isolada** (via Git Worktree)
 - ✅ Sua própria **porta de desenvolvimento** (9005, 9006, 9007, etc.)
 - ✅ Seus próprios **testes isolados**
 
 ## 📋 Checklist Obrigatório no INÍCIO de Cada Task/Chat
 
-### 1. Criar Branch a partir da demo-stable
+### 1. Criar Worktree + Branch a partir da demo-stable
 ```powershell
 git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
-git checkout -b <tipo>/<descricao-curta>-<timestamp>
-# Tipos: feat/, fix/, chore/, docs/, test/
-# Exemplo: git checkout -b feat/auction-filter-20260131-1430
+git worktree add ..\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
+# Tipos: feat/, fix/, hotfix/, chore/, docs/, test/
+# Exemplo: git worktree add ..\bidexpert-feat-auction-filter -b feat/auction-filter-20260131-1430 origin/demo-stable
 ```
 
-### 2. Verificar e Usar Porta Disponível
+### 2. Iniciar ambiente no Worktree com porta dedicada (OBRIGATÓRIO)
+**REGRA ABSOLUTA:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos antes de criar Worktree dedicado e definir porta exclusiva.
 ```powershell
-netstat -ano | findstr "9005 9006 9007 9008"
-# Usar primeira porta livre: 9005, 9006, 9007, 9008...
-$env:PORT=<porta-livre>
-node .vscode/start-9006-dev.js
+# Entrar no worktree criado
+Set-Location ..\bidexpert-<tipo>-<descricao>
+
+# Definir porta dedicada do dev
+$env:PORT=9006
+npm install
+npm run dev
+
+# Alternativa (apenas para banco isolado): Docker Sandbox
+# docker compose -f docker-compose.dev-isolated.yml up -d --build
+
+# Acesso
+# http://dev.localhost:9006
 ```
 
 ### 3. Durante o Desenvolvimento
@@ -1009,12 +1020,13 @@ Since the codebase is a template, you should not assume they have set up anythin
 # General IA Rules
 - Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
 
-# Inicialização da Aplicação (OBRIGATÓRIO)
-**REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre.
-- **Comando recomendado:** `node .vscode/start-9006-dev.js` (ou task equivalente de DEV)
-- **Porta:** usar a porta pretendida se livre; se ocupada, usar a próxima disponível (9006, 9007, 9008...)
-- **Banco DEV:** `bidexpert_dev` (isolado do DEMO)
-- **Acesso:** usar URL com slug do ambiente e a porta escolhida (ex.: `http://dev.localhost:9006`)
+# 🌲 Isolamento Primário: Git Worktree (OBRIGATÓRIO)
+**REGRA CRÍTICA:** NENHUM modelo AI deve alterar arquivos antes de criar um Git Worktree dedicado com porta própria.
+- **Comando rápido:** `git worktree add ..idexpert-feat-X -b feat/X-timestamp origin/demo-stable`
+- **Configurar porta:** `.env.local` com `PORT=9006` (ou 9007, 9008...)
+- **Acesso:** `http://dev.localhost:<porta>`
+- **Banco Compartilhado:** O MySQL local é compartilhado (worktrees compartilham o mesmo host). Use Docker Sandbox apenas quando banco isolado é necessário.
+- **Skill completa:** `.github/skills/git-worktree-isolation/SKILL.md`
 
 # 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -1055,12 +1067,13 @@ main (produção - PROTEGIDO)
 
 **Quando usuário está em DEMO → Agente AI faz:**
 ```powershell
-# 1. Usar porta diferente (9006, 9007...)
-$env:PORT=9006
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
-
-# 2. Iniciar em ambiente DEV
-node .vscode/start-9006-dev.js
+# 1. Criar worktree próprio (sem tocar no ambiente DEMO do usuário)
+$porta = 9006
+$branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add ..\bidexpert-dev -b $branch origin/demo-stable
+Set-Location ..\bidexpert-dev
+$env:PORT = $porta ; npm install ; npm run dev
+# Agente trabalha em http://dev.localhost:9006
 ```
 
 ### Compatibilidade MySQL ↔ PostgreSQL

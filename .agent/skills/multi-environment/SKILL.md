@@ -90,9 +90,9 @@ main (produção - PROTEGIDO)
 # 1. Verificar se usuário está em DEMO (porta 9005 ocupada)
 netstat -ano | findstr "9005"
 
-# 2. Se ocupada → Usar DEV na porta 9006
-$env:PORT=9006
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
+# 2. Se ocupada → Parar DEV anterior e subir Sandbox Isolado
+docker compose -f docker-compose.dev-isolated.yml down
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 
 # 3. Criar branch a partir de demo-stable
 git fetch origin demo-stable
@@ -100,8 +100,9 @@ git checkout demo-stable
 git pull origin demo-stable
 git checkout -b feat/minha-feature-$(Get-Date -Format "yyyyMMdd-HHmm")
 
-# 4. Iniciar ambiente DEV
-node .vscode/start-9006-dev.js
+# 4. Iniciar ambiente DEV via Container
+# O container já foi inicializado no passo 2 na porta designada (ex 9006/9007)
+docker ps
 ```
 
 ### Durante o Desenvolvimento
@@ -234,9 +235,9 @@ NODE_ENV=production
 ### Erro: "Port 9005 already in use"
 
 ```powershell
-# Usar porta alternativa
-$env:PORT=9006
-node .vscode/start-9006-dev.js
+# Usar ambiente containerizado isolado na porta 9006/9007 (Sandbox)
+docker compose -f docker-compose.dev-isolated.yml down
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 ```
 
 ### Erro: "mode: insensitive not supported"

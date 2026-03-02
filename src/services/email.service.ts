@@ -57,14 +57,19 @@ export class EmailService {
       const recipient = process.env.CONTACT_EMAIL_TO || 'suporte@bidexpert.com.br';
       const provider = this.sendGridApiKey ? 'SendGrid' : 'SMTP';
 
-      // Criar log inicial
-      const emailLog = await this.emailLogService.createLog({
-        recipient,
-        subject: emailSubject,
-        content: emailBody,
-        provider,
-        contactMessageId: data.contactMessageId,
-      });
+      // Criar log inicial (falha silenciosa — não bloqueia o envio)
+      let emailLog: { id: bigint } | null = null;
+      try {
+        emailLog = await this.emailLogService.createLog({
+          recipient,
+          subject: emailSubject,
+          content: emailBody,
+          provider,
+          contactMessageId: data.contactMessageId,
+        });
+      } catch (logCreateError: unknown) {
+        console.warn('[EmailService] Falha ao criar EmailLog (continuando envio):', logCreateError);
+      }
 
       try {
         if (this.sendGridApiKey) {
@@ -92,15 +97,18 @@ export class EmailService {
         }
 
         // Atualizar log como enviado com sucesso
-        await this.emailLogService.updateLogStatus(emailLog.id, 'SENT');
+        if (emailLog) await this.emailLogService.updateLogStatus(emailLog.id, 'SENT');
         return { success: true, message: 'E-mail enviado com sucesso.' };
-      } catch (sendError: any) {
+      } catch (sendError: unknown) {
+        const errMsg = sendError instanceof Error ? sendError.message : String(sendError);
         // Atualizar log como falha
-        await this.emailLogService.updateLogStatus(
-          emailLog.id,
-          'FAILED',
-          sendError.message
-        );
+        if (emailLog) {
+          await this.emailLogService.updateLogStatus(
+            emailLog.id,
+            'FAILED',
+            errMsg
+          );
+        }
         throw sendError;
       }
     } catch (error: any) {
@@ -135,12 +143,15 @@ export class EmailService {
       const provider = this.sendGridApiKey ? 'SendGrid' : 'SMTP';
       const fromAddress = process.env.CONTACT_EMAIL_FROM || 'noreply@bidexpert.com.br';
 
-      const emailLog = await this.emailLogService.createLog({
+      const emailLog: { id: bigint } | null = await this.emailLogService.createLog({
         recipient: data.to,
         subject: emailSubject,
         content: emailBody,
         provider,
         contactMessageId: data.contactMessageId,
+      }).catch((logCreateError: unknown) => {
+        console.warn('[EmailService] Falha ao criar EmailLog para reply (continuando envio):', logCreateError);
+        return null;
       });
 
       try {
@@ -166,14 +177,17 @@ export class EmailService {
           await this.transporter.sendMail(mailOptions);
         }
 
-        await this.emailLogService.updateLogStatus(emailLog.id, 'SENT');
+        if (emailLog) await this.emailLogService.updateLogStatus(emailLog.id, 'SENT');
         return { success: true, message: 'Resposta enviada com sucesso.' };
-      } catch (sendError: any) {
-        await this.emailLogService.updateLogStatus(
-          emailLog.id,
-          'FAILED',
-          sendError.message
-        );
+      } catch (sendError: unknown) {
+        const errMsg = sendError instanceof Error ? sendError.message : String(sendError);
+        if (emailLog) {
+          await this.emailLogService.updateLogStatus(
+            emailLog.id,
+            'FAILED',
+            errMsg
+          );
+        }
         throw sendError;
       }
     } catch (error: any) {
