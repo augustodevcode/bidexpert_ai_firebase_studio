@@ -6,6 +6,8 @@
 
 import type { SegmentConfig, SegmentType } from './types';
 
+export type { SegmentType } from './types';
+
 export const SEGMENT_CONFIGS: Record<SegmentType, SegmentConfig> = {
   veiculos: {
     id: 'veiculos',
