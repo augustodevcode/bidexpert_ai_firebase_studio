@@ -12,6 +12,7 @@ import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context
 import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 import { ThemeProvider } from '@/components/theme-provider';
 import AdminQueryMonitor from '@/components/support/admin-query-monitor';
+import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
@@ -31,7 +32,7 @@ const ADMIN_ACCESS_PERMISSIONS = [
 ];
 
 export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
-  const { userProfileWithPermissions, loading } = useAuth();
+  const { userProfileWithPermissions, activeTenantId, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -67,6 +68,11 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   }
 
   const canAccessAdmin = hasAnyPermission(userProfileWithPermissions, ADMIN_ACCESS_PERMISSIONS);
+  const resolvedTenantId =
+    activeTenantId ||
+    userProfileWithPermissions.tenants?.[0]?.tenant?.id?.toString() ||
+    '1';
+  const resolvedUserEmail = userProfileWithPermissions.email || 'admin@bidexpert.ai';
 
   if (!canAccessAdmin) {
     return (
@@ -106,6 +112,11 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
                 {children}
               </div>
             </main>
+            <DevInfoIndicator
+              mode="admin-fixed"
+              tenantId={resolvedTenantId}
+              userEmail={resolvedUserEmail}
+            />
             <AdminQueryMonitor />
           </div>
         </div>
