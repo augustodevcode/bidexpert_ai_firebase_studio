@@ -148,17 +148,18 @@ npm run typecheck
 node .vscode/start-9006-dev.js
 ```
 
-### 3.2 Padrão: Criar Branch com Timestamp
+### 3.2 Padrão: Criar Worktree + Branch com Timestamp
 
 ```powershell
 # [23/02/2026 14:30:15] Fazer fetch de demo-stable
-git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
+git fetch origin demo-stable
 
-# [23/02/2026 14:30:20] Criar branch com timestamp automático
+# [23/02/2026 14:30:20] Criar worktree com branch e timestamp automático
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-git checkout -b feat/auction-filter-$timestamp
+git worktree add ..\bidexpert-feat-auction-filter -b feat/auction-filter-$timestamp origin/demo-stable
 
-# [23/02/2026 14:30:21] Verificar branch criada
+# [23/02/2026 14:30:21] Entrar no worktree e verificar
+Set-Location ..\bidexpert-feat-auction-filter
 git branch --show-current
 ```
 
@@ -246,9 +247,10 @@ Write-Host "[$(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')] === FIM: [Nome da Tarefa
 Toda tarefa de branch deve incluir:
 
 ```powershell
-# [23/02/2026 14:30:15] Criar branch feature
+# [23/02/2026 14:30:15] Criar worktree + branch feature
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-git checkout -b feat/auction-filter-$timestamp
+git worktree add ..\bidexpert-feat-auction-filter -b feat/auction-filter-$timestamp origin/demo-stable
+Set-Location ..\bidexpert-feat-auction-filter
 ```
 
 ### 5.2 Em Scripts de Inicialização

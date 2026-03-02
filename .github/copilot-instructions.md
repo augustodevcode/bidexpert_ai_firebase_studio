@@ -254,45 +254,45 @@ rodar testes com playwright acada implementação ou correção
 
 **Restrição:** O uso de URLs genéricas (ex: `localhost:3000` ou `localhost:9005`) sem o slug correto causará timeouts e falhas de login, pois os tenants não serão resolvidos corretamente. Todas as requisições de teste devem apontar para o slug específico.
 
-## 10. Container Tools - Gerenciamento de Ambientes Docker
+## 10. Isolamento Primário: Git Worktree + Container Tools (Alternativa)
 
-O Copilot tem acesso às ferramentas de container para gerenciar diferentes ambientes via Docker.
+O mecanismo **primário** de isolamento é o **Git Worktree** (sem Docker obrigatório):
 
-### Extensões Configuradas
-- **Docker Extension Pack** (`ms-azuretools.vscode-docker`)
-- **Remote Containers** (`ms-vscode-remote.remote-containers`)
-
-### Uso do container-tools_get-config
-Antes de executar qualquer comando Docker, **SEMPRE** chamar a ferramenta `container-tools_get-config` para obter a configuração correta de CLI.
-
-### Arquivos Docker Compose por Ambiente
-| Arquivo | Ambiente | Uso |
-|---------|----------|-----|
-| `docker-compose.dev.yml` | DEV | Desenvolvimento local |
-| `docker-compose.hml.yml` | HML | Homologação/Testes |
-| `docker-compose.demo.yml` | DEMO | Demonstração |
-| `docker-compose.prod.yml` | PROD | Produção |
-
-### Comandos Padrão (PowerShell)
 ```powershell
-# Iniciar ambiente dev
-docker compose -f docker-compose.dev.yml up -d
+# 1. Ver worktrees ativos e portas em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 
-# Verificar status
+# 2. Criar worktree + branch dedicada
+$porta = 9006
+$branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add ..\bidexpert-feat-minha-feature -b $branch origin/demo-stable
+
+# 3. Configurar e iniciar
+Set-Location ..\bidexpert-feat-minha-feature
+$env:PORT = $porta ; npm install ; npm run dev
+# Acesso: http://dev.localhost:$porta
+```
+
+| Porta | Worktree | Quem |
+|-------|----------|------|
+| 9005  | Principal / DEMO | Usuário humano |
+| 9006  | DEV worktree #1 | Agente AI #1 |
+| 9007  | DEV worktree #2 | Agente AI #2 |
+| 9008  | Hotfix / PR review | Ad-hoc |
+
+### Container Tools (Alternativa — banco isolado)
+Use Docker **apenas** quando precisar de banco de dados completamente isolado:
+```powershell
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-# Logs de um container
-docker logs -f <container-name>
-
-# Parar ambiente
-docker compose -f docker-compose.dev.yml down
 ```
 
 ### Regras para o Copilot
-1. **Verificar containers** antes de testes E2E
-2. **Usar ambiente correto** conforme contexto (dev/hml/demo)
+1. **Criar worktree** antes de qualquer alteração de código
+2. **Usar porta dedicada** conforme tabela acima
 3. **Não modificar produção** sem autorização explícita
-4. **Documentar alterações** em configurações de containers
+4. **Documentar alterações** em configurações de ambiente
 
 ## 11. Diretrizes de Codificação e Melhores Práticas
 

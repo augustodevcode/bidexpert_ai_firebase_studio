@@ -211,17 +211,20 @@ O `next.config.mjs` injeta automaticamente:
 
 ## 7. Fluxo Diário do Desenvolvedor
 
-```bash
-# 1. Criar branch a partir de demo-stable
-git checkout demo-stable && git pull
-git checkout -b feat/minha-feature-$(date +%Y%m%d)
+```powershell
+# 1. Criar worktree + branch a partir de demo-stable
+git fetch origin demo-stable
+$timestamp = Get-Date -Format "yyyyMMdd-HHmm"
+git worktree add ..\bidexpert-feat-minha-feature -b feat/minha-feature-$timestamp origin/demo-stable
+Set-Location ..\bidexpert-feat-minha-feature
+$env:PORT = 9006 ; npm install
 
 # 2. Desenvolver com commits conventional
 git add .
 git commit -m "feat(module): add new feature"
 
 # 3. Push para origin
-git push origin feat/minha-feature-20260201
+git push -u origin HEAD
 
 # 4. Criar PR para demo-stable
 # → CI Quality Gate roda automaticamente
@@ -229,6 +232,8 @@ git push origin feat/minha-feature-20260201
 
 # 5. Quando estável: criar PR demo-stable → main
 # → Semantic Release gera versão produção
+
+# 6. Limpeza: git worktree remove ..\bidexpert-feat-minha-feature
 ```
 
 ## 8. Regras Críticas
