@@ -91,6 +91,16 @@ main (produção - PROTEGIDO)
 
 O modelo de isolamento **preferido** no BidExpert é via **Git Worktree** — mais rápido que Docker e com isolamento de branch nativo.
 
+### Scripts Helper (RECOMENDADO)
+```powershell
+# Criar worktree (auto-detecta porta livre, npm install, configura .env.local)
+./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
+
+# Remover worktree após merge
+./scripts/remove-worktree.ps1 -Dir ..\bidexpert-feat-minha-feature -DeleteBranch
+```
+
+### Manual
 ```powershell
 # Ver worktrees e portas já em uso
 git worktree list
@@ -99,10 +109,9 @@ netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 # Criar worktree para nova task (porta livre, ex: 9006)
 $porta = 9006
 $branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..idexpert-feat-minha-feature -b $branch origin/demo-stable
+git worktree add ..idexpert-feat-minha-feature -b $branch origin/demo-stable
 
-Set-Location ..idexpert-feat-minha-feature
-# Configurar .env.local com PORT=$porta
+Set-Location ..idexpert-feat-minha-feature
 $env:PORT = $porta ; npm install ; npm run dev
 ```
 
@@ -122,6 +131,12 @@ $env:PORT = $porta ; npm install ; npm run dev
 
 ### Ao Iniciar Qualquer Task
 
+**Scripts Helper (RECOMENDADO):**
+```powershell
+./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
+```
+
+**Manual:**
 ```powershell
 # 1. Ver worktrees ativos + portas em uso
 git worktree list

@@ -150,6 +150,13 @@ node .vscode/start-9006-dev.js
 
 ### 3.2 Padrão: Criar Worktree + Branch com Timestamp
 
+**Via Script Helper (RECOMENDADO):**
+```powershell
+# [23/02/2026 14:30:15] Criar worktree com auto-detecção de porta
+./scripts/create-worktree.ps1 -Tipo feat -Descricao auction-filter -Start
+```
+
+**Manual:**
 ```powershell
 # [23/02/2026 14:30:15] Fazer fetch de demo-stable
 git fetch origin demo-stable

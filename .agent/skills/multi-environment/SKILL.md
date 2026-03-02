@@ -86,6 +86,14 @@ main (produção - PROTEGIDO)
 
 ### Ao Iniciar Qualquer Task
 
+**Scripts Helper (RECOMENDADO):**
+```powershell
+./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
+# Ao finalizar:
+./scripts/remove-worktree.ps1 -Dir ..\bidexpert-feat-minha-feature -DeleteBranch
+```
+
+**Manual:**
 ```powershell
 # 1. Verificar worktrees e portas em uso
 git worktree list

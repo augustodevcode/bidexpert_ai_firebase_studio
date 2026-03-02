@@ -13,6 +13,20 @@ Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **
 ## 📋 Checklist Obrigatório no INÍCIO de Cada Task/Chat
 
 ### 1. Criar Worktree + Branch a partir da demo-stable
+
+**Opção A — Script helper (RECOMENDADO):**
+```powershell
+# Criar worktree + branch + npm install automaticamente
+./scripts/create-worktree.ps1 -Tipo feat -Descricao auction-filter
+
+# Com auto-start do servidor
+./scripts/create-worktree.ps1 -Tipo feat -Descricao auction-filter -Start
+
+# Com porta específica
+./scripts/create-worktree.ps1 -Tipo fix -Descricao login-bug -Porta 9007
+```
+
+**Opção B — Manual:**
 ```powershell
 git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
 git worktree add ..\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
@@ -165,7 +179,16 @@ rodar testes com playwright acada implementação ou correção
 
 O mecanismo **primário** de isolamento de desenvolvimento é o **Git Worktree** — cada agente/dev cria seu próprio diretório de trabalho com porta dedicada.
 
-### Git Worktree (Preferido)
+### Scripts Helper (RECOMENDADO)
+```powershell
+# Criar worktree (auto-detecta porta livre)
+./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
+
+# Remover worktree após merge
+./scripts/remove-worktree.ps1 -Dir ..\bidexpert-feat-minha-feature -DeleteBranch
+```
+
+### Git Worktree (Manual)
 ```powershell
 # Ver worktrees e portas em uso
 git worktree list

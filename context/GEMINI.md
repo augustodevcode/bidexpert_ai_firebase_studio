@@ -93,6 +93,37 @@ rodar testes com playwright acada implementação ou correção
 - **`npm run build && npm start`**: Testes E2E, CI/CD, Pré-produção, Produção
 - **`node .vscode/run-e2e-tests.js`**: Automação de testes E2E completa
 
+## 8.1 Isolamento Primário: Git Worktree (OBRIGATÓRIO)
+
+**REGRA CRÍTICA:** NENHUM modelo AI deve alterar arquivos antes de criar um Git Worktree dedicado com porta própria.
+
+```powershell
+# Script helper (RECOMENDADO):
+.\scripts\create-worktree.ps1 -Descricao minha-feature          # auto-detecta porta
+.\scripts\create-worktree.ps1 -Tipo fix -Descricao bug -Porta 9007 -Start
+
+# Cleanup:
+.\scripts\remove-worktree.ps1                                    # interativo
+.\scripts\remove-worktree.ps1 -Dir bidexpert-feat-X -DeleteBranch
+
+# Manual (alternativa):
+git worktree add ..\bidexpert-feat-X -b feat/X-timestamp origin/demo-stable
+Set-Location ..\bidexpert-feat-X
+$env:PORT=9006 ; npm install ; npm run dev
+# → http://dev.localhost:9006
+```
+
+**Tabela de Portas:**
+
+| Porta | Uso | Quem |
+|-------|-----|------|
+| 9005  | DEMO — repositório principal | Usuário humano |
+| 9006  | DEV worktree #1 | Agente AI #1 |
+| 9007  | DEV worktree #2 | Agente AI #2 |
+| 9008  | Hotfix / PR review | Ad-hoc |
+
+**Skill completa:** `.github/skills/git-worktree-isolation/SKILL.md`
+
 ## 9. Regras de Ambiente e Multi-Tenancy (URLs e Slugs)
 
 **REGRA OBRIGATÓRIA:** Para garantir que os testes acessem o contexto de dados correto (onde usuários e tenants existem), utilize SEMPRE o padrão de URL: `<slug>.servidor:<porta>`.
