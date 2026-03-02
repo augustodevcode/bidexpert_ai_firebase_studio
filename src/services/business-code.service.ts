@@ -81,7 +81,7 @@ export class BusinessCodeService {
     const day = format(now, 'dd');
 
     // Replace dynamic parts of the mask
-    let baseCode = mask
+    const baseCode = mask
       .replace(/YYYY/g, year)
       .replace(/MM/g, month)
       .replace(/DD/g, day);
@@ -122,7 +122,7 @@ export class BusinessCodeService {
       },
     };
 
-    let orderByClause: any = { publicId: 'desc' };
+    const orderByClause: any = { publicId: 'desc' };
 
     let result: any;
     switch (entityType) {

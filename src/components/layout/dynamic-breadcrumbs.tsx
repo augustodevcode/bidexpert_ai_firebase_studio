@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 // It now uses generic labels for dynamic segments (e.g., "Leilão [ID]") instead of fetching entity titles.
 
 // Cache simples para evitar re-cálculos desnecessários em cada renderização
-let breadcrumbCache: { [path: string]: BreadcrumbItem[] } = {};
+const breadcrumbCache: { [path: string]: BreadcrumbItem[] } = {};
 
 export default function DynamicBreadcrumbs() {
   const pathname = usePathname();

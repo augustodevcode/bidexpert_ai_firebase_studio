@@ -36,6 +36,14 @@ vi.mock('@/components/consignor-logo-badge', () => ({
   default: () => <div data-testid="consignor-logo" />,
 }));
 
+vi.mock('@/contexts/auth-context', () => ({
+  useAuth: () => ({
+    userProfileWithPermissions: null,
+    session: null,
+    isLoading: false,
+  }),
+}));
+
 const baseAuction = {
   id: 'auction-001',
   publicId: 'AUC-001',

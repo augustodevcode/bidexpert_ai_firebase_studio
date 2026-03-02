@@ -133,7 +133,7 @@ function DirectSalesPageContent() {
   };
 
   const filteredAndSortedOffers = useMemo(() => {
-    let offers = allOffers.filter(offer => {
+    const offers = allOffers.filter(offer => {
       if (searchTerm) {
           const term = searchTerm.toLowerCase();
           const searchableText = `${offer.title.toLowerCase()} ${offer.description?.toLowerCase() || ''} ${offer.sellerName?.toLowerCase() || ''} ${offer.id}`;

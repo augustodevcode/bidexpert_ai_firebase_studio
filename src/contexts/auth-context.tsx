@@ -68,7 +68,7 @@ export function AuthProvider({
     async function checkSession() {
       setLoading(true);
       try {
-        let user = await getCurrentUser();
+        const user = await getCurrentUser();
 
         // **DEV-ONLY AUTO-LOGIN LOGIC REMOVED**
         // O auto-login estava forçando o usuário Admin e mascarando problemas de cookie.

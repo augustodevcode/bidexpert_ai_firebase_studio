@@ -95,7 +95,7 @@ npm run dev
 
 ```powershell
 # 1. Restaurar schema MySQL para desenvolvimento local
-Copy-Item -Path "prisma/schema.mysql.prisma" -Destination "prisma/schema.prisma" -Force
+Copy-Item -Path "prisma/schema.mysql.temp.prisma" -Destination "prisma/schema.prisma" -Force
 # (Ou simplesmente deixar o schema.prisma intacto no git - ele não deve ser commitado com alterações)
 
 # 2. Commitar alterações
@@ -112,6 +112,54 @@ git push origin feat/minha-feature
 
 ### 4. Configuração do Build no Vercel
 
+## Troca Automática de Schema MySQL → PostgreSQL (Automática)
+
+> **Resposta curta: SIM.** Tanto o Vercel quanto o GitHub Actions trocam automaticamente o schema antes do build. Você nunca precisa fazer isso manualmente para deploy.
+
+### Onde acontece a troca automática:
+
+**1. `vercel.json` — buildCommand (Vercel executa diretamente)**
+```json
+{
+  "buildCommand": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build"
+}
+```
+Este comando é executado pelo Vercel a cada deploy. O primeiro passo já é a cópia do schema PostgreSQL.
+
+**2. GitHub Actions — Workflows de Deploy**
+
+Cada workflow de deploy (HML, DEMO, PROD) tem o step `🔄 Copy PostgreSQL schema` executado ANTES de qualquer `prisma generate` ou build:
+
+```yaml
+- name: 🔄 Copy PostgreSQL schema
+  run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+
+- name: 🗄️ Generate Prisma Client
+  run: npx prisma generate
+
+- name: 🏗️ Build
+  run: npm run build
+```
+
+### Por que `prisma/schema.prisma` fica com MySQL no git?
+
+O `prisma/schema.prisma` no repositório usa `provider = "mysql"` porque:
+- Desenvolvimento local usa MySQL via Docker
+- A CI de PR (branch-protection.yml) valida o schema MySQL localmente
+- O deploy SUBSTITUI o arquivo automaticamente antes de usar
+
+```
+Git repository          GitHub Actions / Vercel Build
+─────────────           ─────────────────────────────
+schema.prisma           schema.postgresql.prisma
+(provider: mysql)  ──►  (cp) ──► schema.prisma       ──► prisma generate ──► npm build
+                                  (provider: postgresql)
+```
+
+**Regra:** nunca commitar `prisma/schema.prisma` com `provider = "postgresql"`. O CI faz essa troca em memória durante o build.
+
+---
+
 O `vercel.json` contém o build command que:
 1. Copia o schema PostgreSQL
 2. Gera o Prisma Client
@@ -120,7 +168,7 @@ O `vercel.json` contém o build command que:
 
 ```json
 {
-  "buildCommand": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npx prisma db push --skip-generate && npm run build"
+  "buildCommand": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build"
 }
 ```
 
@@ -158,7 +206,7 @@ npx prisma generate
 npx prisma db seed
 
 # 4. IMPORTANTE: Restaurar schema MySQL após o seed
-Copy-Item -Path "prisma/schema.mysql.prisma" -Destination "prisma/schema.prisma" -Force
+Copy-Item -Path "prisma/schema.mysql.temp.prisma" -Destination "prisma/schema.prisma" -Force
 npx prisma generate
 ```
 

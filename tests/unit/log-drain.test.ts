@@ -7,17 +7,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/log-drain/route';
 import { NextRequest } from 'next/server';
 
-// Mock Octokit
-vi.mock('@octokit/rest', () => ({
-  Octokit: vi.fn().mockImplementation(() => ({
-    issues: {
-      create: vi.fn().mockResolvedValue({
-        data: {
-          html_url: 'https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/123'
-        }
-      })
+// Mock Octokit using hoisted variables to avoid TDZ issues
+const { mockCreateIssue } = vi.hoisted(() => ({
+  mockCreateIssue: vi.fn().mockResolvedValue({
+    data: {
+      html_url: 'https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/123'
     }
-  }))
+  }),
+}));
+
+vi.mock('@octokit/rest', () => ({
+  Octokit: function MockOctokit() {
+    return {
+      issues: {
+        create: mockCreateIssue,
+      },
+    };
+  },
 }));
 
 describe('Log Drain API', () => {

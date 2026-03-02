@@ -226,7 +226,7 @@ export async function middleware(req: NextRequest) {
   // O tenant da URL/subdomain SEMPRE tem precedência para garantir isolamento multi-tenant correto.
   // A sessão só é usada para validar se o usuário logado pertence ao tenant acessado.
   // Se a URL resolve para um subdomain/tenant específico, esse é o tenant ativo.
-  let activeTenantId = resolution.tenantId;
+  const activeTenantId = resolution.tenantId;
   
   // Se a resolução retornou um slug (não numérico), mantém para lookup posterior
   // Se retornou LANDLORD_ID, e usuário tem sessão de outro tenant, mantém landlord

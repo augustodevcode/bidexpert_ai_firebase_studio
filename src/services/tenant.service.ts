@@ -63,7 +63,7 @@ export class TenantService {
             const roleId = adminRole.id.toString();
 
             // Check if user exists
-            let existingUser = await this.userService.findUserByEmail(adminUser.email);
+            const existingUser = await this.userService.findUserByEmail(adminUser.email);
             
             if (existingUser) {
               // Update existing user: add to tenant and add ADMIN role

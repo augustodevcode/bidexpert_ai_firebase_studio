@@ -205,7 +205,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'ai-agent-auto-fix.yml',
-              ref: github.context.payload.workflow_run.head_branch,
+              ref: context.payload.workflow_run.head_branch,
               inputs: {
                 issue_number: String(issueNumber)
               }
