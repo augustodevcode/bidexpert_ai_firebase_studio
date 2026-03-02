@@ -8,7 +8,7 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 ## 🔀 Workflow de Branches (OBRIGATÓRIO)
 
 **REGRA CRÍTICA:** Todo agente AI DEVE:
-1. Criar branch própria antes de qualquer alteração: `git checkout -b <tipo>/<descricao>-<timestamp>`
+1. Criar **Git Worktree dedicado** antes de qualquer alteração: `git worktree add ..\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao>-<timestamp> origin/demo-stable`
 2. Usar porta dedicada (9005, 9006, 9007...) para não conflitar com outros devs
 3. NO FINAL do chat, solicitar autorização do usuário para abrir PR para `demo-stable`
 

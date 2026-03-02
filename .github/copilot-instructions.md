@@ -1,4 +1,4 @@
-# 🚀 WORKFLOW OBRIGATÓRIO: Desenvolvimento Paralelo com Branches
+# 🌲 WORKFLOW OBRIGATÓRIO: Isolamento com Git Worktree
 
 > **REGRA CRÍTICA DE MÁXIMA PRIORIDADE:** Este workflow DEVE ser seguido por TODOS os agentes AI (Copilot, GitHub Chat, etc.) ANTES de iniciar qualquer implementação, alteração ou correção no projeto.
 
@@ -6,30 +6,36 @@
 
 Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **simultaneamente**, cada um com:
 - ✅ Sua própria **branch dedicada** (a partir da `demo-stable`)
+- ✅ Sua própria **pasta de trabalho isolada** (via Git Worktree)
 - ✅ Sua própria **porta de desenvolvimento** (9005, 9006, 9007, etc.)
 - ✅ Seus próprios **testes isolados**
 
 ## 📋 Checklist Obrigatório no INÍCIO de Cada Task/Chat
 
-### 1. Criar Branch a partir da demo-stable
+### 1. Criar Worktree + Branch a partir da demo-stable
 ```powershell
 git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
-git checkout -b <tipo>/<descricao-curta>-<timestamp>
-# Tipos: feat/, fix/, chore/, docs/, test/
-# Exemplo: git checkout -b feat/auction-filter-20260131-1430
+git worktree add ..\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
+# Tipos: feat/, fix/, hotfix/, chore/, docs/, test/
+# Exemplo: git worktree add ..\bidexpert-feat-auction-filter -b feat/auction-filter-20260131-1430 origin/demo-stable
 ```
 
-### 2. Iniciar Sandbox Dev em Container (OBRIGATÓRIO)
-**REGRA ABSOLUTA DE SANDBOX:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos de código antes de iniciar um ambiente isolado (Sandbox de Dev) containerizado.
+### 2. Iniciar ambiente no Worktree com porta dedicada (OBRIGATÓRIO)
+**REGRA ABSOLUTA:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos antes de criar Worktree dedicado e definir porta exclusiva.
 ```powershell
-# Parar containers de sandbox antigos
-docker compose -f docker-compose.dev-isolated.yml down
+# Entrar no worktree criado
+Set-Location ..\bidexpert-<tipo>-<descricao>
 
-# Iniciar novo Sandbox Isolado
-docker compose -f docker-compose.dev-isolated.yml up -d --build
+# Definir porta dedicada do dev
+$env:PORT=9006
+npm install
+npm run dev
 
-# Confirmar sucesso
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+# Alternativa (apenas para banco isolado): Docker Sandbox
+# docker compose -f docker-compose.dev-isolated.yml up -d --build
+
+# Acesso
+# http://dev.localhost:9006
 ```
 
 ### 3. Durante o Desenvolvimento
@@ -1061,9 +1067,13 @@ main (produção - PROTEGIDO)
 
 **Quando usuário está em DEMO → Agente AI faz:**
 ```powershell
-# 1. Parar containers e usar nova porta no Sandbox Isolado
-docker compose -f docker-compose.dev-isolated.yml down
-docker compose -f docker-compose.dev-isolated.yml up -d --build
+# 1. Criar worktree próprio (sem tocar no ambiente DEMO do usuário)
+$porta = 9006
+$branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add ..\bidexpert-dev -b $branch origin/demo-stable
+Set-Location ..\bidexpert-dev
+$env:PORT = $porta ; npm install ; npm run dev
+# Agente trabalha em http://dev.localhost:9006
 ```
 
 ### Compatibilidade MySQL ↔ PostgreSQL
