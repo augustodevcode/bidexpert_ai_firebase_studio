@@ -163,6 +163,7 @@ model Asset {
   Seller                     Seller?                 @relation(fields: [sellerId], references: [id])
   Subcategory                Subcategory?            @relation(fields: [subcategoryId], references: [id])
   Tenant                     Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   AssetMedia                 AssetMedia[]
   AssetsOnLots               AssetsOnLots[]
 
@@ -281,6 +282,7 @@ model Auction {
   Seller                   Seller?                @relation(fields: [sellerId], references: [id])
   State                    State?                 @relation(fields: [stateId], references: [id])
   Tenant                   Tenant                 @relation(fields: [tenantId], references: [id])
+  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   AuctionHabilitation      AuctionHabilitation[]
   AuctionStage             AuctionStage[]
   Bid                      Bid[]
@@ -738,6 +740,7 @@ model Lot {
   Subcategory              Subcategory?         @relation(fields: [subcategoryId], references: [id])
   Tenant                   Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   User                     User?                @relation(fields: [winnerId], references: [id])
+  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   LotDocument              LotDocument[]
   LotQuestion              LotQuestion[]
   LotRisk                  LotRisk[]
@@ -906,6 +909,9 @@ model MediaItem {
   judicialProcessId BigInt?
   linkedLotIds      Json?
   tenantId          BigInt?
+  AssetCovers       Asset[]            @relation("AssetCoverImage")
+  AuctionCovers     Auction[]          @relation("AuctionCoverImage")
+  LotCovers         Lot[]              @relation("LotCoverImage")
   AssetMedia        AssetMedia[]
   JudicialProcess   JudicialProcess?   @relation(fields: [judicialProcessId], references: [id])
   Tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
