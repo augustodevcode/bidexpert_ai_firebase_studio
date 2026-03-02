@@ -79,6 +79,9 @@ security-audit-results.log
 # Application logs
 logs/*.log
 
+# Git worktrees (diretórios criados por setup-worktree.js / worktree-setup.ps1)
+worktrees/
+
 # Sentry
 .sentryclirc
 sentry.properties
