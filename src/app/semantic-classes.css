@@ -240,6 +240,7 @@
   .header-cta-footer { @apply text-xl font-semibold mb-2; }
   .desc-cta-footer { @apply text-muted-foreground mb-4 max-w-xl mx-auto; }
   .btn-cta-footer { @apply hover:no-underline; }
+  /* Hero section uses semantic tokens for light/dark theme compatibility */
   .wrapper-hero-section { @apply w-full bg-gradient-to-b from-background via-background to-muted/30; }
   .container-hero-main { @apply container mx-auto px-4 py-6; }
   .grid-hero-main { @apply grid grid-cols-1 lg:grid-cols-12 gap-4; }
