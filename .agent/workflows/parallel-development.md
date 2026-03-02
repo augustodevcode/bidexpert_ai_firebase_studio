@@ -158,6 +158,81 @@ git branch -a | Select-String "feat/|fix/|chore/"
 git log --oneline --graph --all -20
 ```
 
+## 🌲 Git Worktrees — Desenvolvimento Paralelo em Diretórios Isolados
+
+Git worktrees permitem ter múltiplas branches abertas simultaneamente em diretórios separados, sem necessidade de `git stash` ou troca de branch.
+
+### Quando Usar Worktrees
+
+- Quando dois ou mais agentes AI precisam trabalhar em paralelo na **mesma máquina**.
+- Quando o desenvolvedor quer manter o diretório principal limpo enquanto testa outra feature.
+- Como alternativa ao `git stash` quando a troca de contexto é frequente.
+
+### Configuração Inicial
+
+O repositório inclui scripts de gerenciamento de worktrees:
+
+| Script | Plataforma | Uso |
+|--------|-----------|-----|
+| `.vscode/setup-worktree.js` | Node.js (cross-platform) | `node .vscode/setup-worktree.js <comando>` |
+| `scripts/worktree-setup.ps1` | PowerShell (Windows) | `.\scripts\worktree-setup.ps1 <comando>` |
+
+Os worktrees são criados dentro de `worktrees/` (excluído do git via `.gitignore`).
+
+### Comandos Disponíveis
+
+```powershell
+# Criar worktree para nova branch (a partir de demo-stable)
+node .vscode/setup-worktree.js add feat/minha-feature-20260302 9007
+# ou no PowerShell
+.\scripts\worktree-setup.ps1 add feat/minha-feature-20260302 9007
+
+# Listar worktrees ativos
+node .vscode/setup-worktree.js list
+
+# Remover worktree
+node .vscode/setup-worktree.js remove feat/minha-feature-20260302
+
+# Limpar referências obsoletas
+node .vscode/setup-worktree.js prune
+```
+
+### Fluxo Recomendado com Worktrees
+
+```powershell
+# 1. Criar worktree + branch na porta dedicada
+node .vscode/setup-worktree.js add feat/minha-feature-20260302 9007
+
+# 2. Entrar no diretório do worktree
+cd worktrees/feat-minha-feature-20260302
+
+# 3. Instalar dependências (se necessário)
+npm install
+
+# 4. Iniciar servidor na porta dedicada
+$env:PORT = 9007
+npm run dev
+
+# 5. Desenvolver, testar, commitar normalmente
+git add .
+git commit -m "feat: minha feature"
+git push -u origin feat/minha-feature-20260302
+
+# 6. Voltar ao diretório principal (branch original inalterada)
+cd ../..
+
+# 7. Ao finalizar, remover o worktree
+node .vscode/setup-worktree.js remove feat/minha-feature-20260302
+```
+
+### Regras de Worktrees
+
+- Cada worktree possui sua **própria branch** e **estado de trabalho independente**.
+- O `.env` e `node_modules` **não são compartilhados** entre worktrees — instale dependências em cada um separadamente.
+- **Nunca** use a mesma branch em dois worktrees ao mesmo tempo (git não permite).
+- Worktrees criados dentro de `worktrees/` são **ignorados pelo git** (`.gitignore`).
+- Ao terminar, sempre execute `remove` ou `prune` para evitar referências obsoletas.
+
 ## 🔒 Proteções
 
 - **Nunca** fazer push direto na `main`
