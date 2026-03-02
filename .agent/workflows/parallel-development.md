@@ -56,6 +56,34 @@ netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 
 ---
 
+### 🛠️ Scripts Helper Disponíveis
+
+O projeto inclui 4 scripts de automação para worktrees:
+
+| Script | Plataforma | Worktree em | Destaque |
+|--------|-----------|-------------|----------|
+| `scripts/create-worktree.ps1` | PowerShell | `../bidexpert-tipo-desc/` (fora do repo) | **RECOMENDADO** — auto-detect porta, `.env.local`, npm install, `--Start` |
+| `scripts/remove-worktree.ps1` | PowerShell | Limpeza interativa | Remove worktree + branch local/remota |
+| `.vscode/setup-worktree.js` | Node.js (cross-platform) | `worktrees/branch/` (dentro do repo) | Funciona em Linux/Mac/Windows |
+| `scripts/worktree-setup.ps1` | PowerShell | `worktrees/branch/` (dentro do repo) | Equivalente PS do setup-worktree.js |
+
+**Exemplo rápido (RECOMENDADO):**
+```powershell
+# Criar + porta auto + npm install
+.\scripts\create-worktree.ps1 -Descricao auction-filter -Start
+
+# Limpar após merge
+.\scripts\remove-worktree.ps1 -Dir ..\bidexpert-feat-auction-filter -DeleteBranch
+```
+
+**Alternativa cross-platform:**
+```bash
+node .vscode/setup-worktree.js add feat/minha-feature 9007
+node .vscode/setup-worktree.js remove feat/minha-feature
+```
+
+---
+
 ### Passo 1 — Criar Branch + Worktree (substitui `git checkout -b`)
 
 ```powershell
