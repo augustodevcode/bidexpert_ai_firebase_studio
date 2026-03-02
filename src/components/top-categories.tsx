@@ -62,14 +62,14 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
   }
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            Categorias Principais
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+            Navegue por Categorias
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Explore lotes por categoria e encontre as melhores oportunidades
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
         {/* Carousel */}
         <div className="relative">
           <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex gap-4">
+            <div className="flex gap-4 justify-center">
               {categories.map((category) => {
                 const Icon = getCategoryIcon(category.slug);
                 const imageUrl = getCategoryImage(category.slug, category.logoUrl);
@@ -88,9 +88,9 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
                     href={`/category/${category.slug}`}
                     className="group flex-[0_0_150px] sm:flex-[0_0_180px]"
                   >
-                    <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
+                    <div className="bg-card/80 border border-border/40 rounded-xl p-4 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
                       {/* Image Container */}
-                      <div className="relative aspect-square mb-3 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="relative aspect-square mb-3 rounded-lg overflow-hidden bg-muted/40">
                         <Image
                           src={imageUrl}
                           alt={category.name}
@@ -101,14 +101,14 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
                         
                         {/* Icon Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-3">
-                          <div className="bg-white/90 rounded-full p-2">
-                            <Icon className="w-5 h-5 text-blue-600" />
+                          <div className="bg-background/90 border border-border/50 rounded-full p-2">
+                            <Icon className="w-5 h-5 text-primary" />
                           </div>
                         </div>
                       </div>
 
                       {/* Category Name */}
-                      <p className="text-center text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                      <p className="text-center text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
                         {category.name}
                       </p>
                     </div>
@@ -123,7 +123,7 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
             variant="outline"
             size="icon"
             onClick={scrollPrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white hover:bg-gray-100 rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-background/90 hover:bg-background border border-border/60 rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
             aria-label="Anterior"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -132,7 +132,7 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
             variant="outline"
             size="icon"
             onClick={scrollNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-100 rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-background/90 hover:bg-background border border-border/60 rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
             aria-label="Próximo"
           >
             <ChevronRight className="w-5 h-5" />
@@ -143,7 +143,7 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
         <div className="text-center mt-8">
           <Link
             href="/search"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full transition-colors"
           >
             Ver Todas as Categorias
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
