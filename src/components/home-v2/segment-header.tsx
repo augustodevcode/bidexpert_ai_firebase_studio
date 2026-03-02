@@ -166,7 +166,7 @@ export default function SegmentHeader({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            <ThemeToggle data-ai-id="segment-header-theme-toggle-desktop" />
 
             <Button variant="ghost" size="icon" className="hidden sm:flex" asChild>
               <Link href="/favorites">
@@ -274,7 +274,7 @@ export default function SegmentHeader({
 
                     {/* Auth */}
                     <div className="pt-4 border-t">
-                      <div className="mb-3">
+                      <div className="mb-3" data-ai-id="segment-header-theme-toggle-mobile">
                         <ThemeToggle variant="full" />
                       </div>
 

@@ -62,11 +62,11 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
   }
 
   return (
-    <section className="py-16 bg-muted/30">
+    <section className="py-16 bg-muted/30" data-ai-id="top-categories-section">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+        <div className="text-center mb-10" data-ai-id="top-categories-header">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2" data-ai-id="top-categories-title">
             Navegue por Categorias
           </h2>
           <p className="text-muted-foreground">
