@@ -127,24 +127,25 @@ $env:PORT = $porta ; npm install ; npm run dev
 git worktree list
 netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 
-# 2. Criar worktree com nova branch (substitui git checkout -b + docker)
-$porta = 9006  # porta livre conforme tabela
-git worktree add ..idexpert-feat-$descricao -b $branch origin/demo-stable
-
-# 3. Se precisar de banco completamente isolado → Docker Sandbox (alternativa)
-# docker compose -f docker-compose.dev-isolated.yml down
-# docker compose -f docker-compose.dev-isolated.yml up -d --build
-
-# 3. Criar branch a partir de demo-stable
+# 2. Atualizar demo-stable
 git fetch origin demo-stable
-git checkout demo-stable
-git pull origin demo-stable
-git checkout -b feat/minha-feature-$(Get-Date -Format "yyyyMMdd-HHmm")
 
-# 4. Iniciar ambiente DEV via Container
-# O container já foi inicializado no passo 2 na porta designada (ex 9006/9007)
-docker ps
+# 3. Criar worktree com nova branch a partir de demo-stable
+$porta     = 9006  # porta livre conforme tabela
+$timestamp = Get-Date -Format "yyyyMMdd-HHmm"
+$branch    = "feat/minha-feature-$timestamp"
+$dir       = "..\bidexpert-feat-minha-feature"
+
+git worktree add $dir -b $branch origin/demo-stable
+
+# 4. Configurar e iniciar no worktree
+Set-Location $dir
+$env:PORT = $porta ; npm install ; npm run dev
+# Acesso: http://dev.localhost:$porta
 ```
+
+> **Docker Sandbox** — usar apenas se precisar de banco completamente isolado:
+> `docker compose -f docker-compose.dev-isolated.yml up -d --build`
 
 ### Durante o Desenvolvimento
 
