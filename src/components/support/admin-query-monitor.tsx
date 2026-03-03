@@ -121,7 +121,7 @@ export default function AdminQueryMonitor() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] text-slate-100 font-sans">
+    <div className="fixed bottom-[var(--dev-info-footer-height,0px)] left-0 right-0 z-50 bg-slate-900 border-t border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] text-slate-100 font-sans">
       {/* Header - Always Visible */}
       <div className="flex items-center justify-between px-4 py-2 h-12">
         <div className="flex items-center gap-6">

@@ -3,7 +3,7 @@
  */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type DevInfoIndicatorMode = 'flow' | 'admin-fixed';
 
@@ -85,6 +85,7 @@ export default function DevInfoIndicator({
   tenantId = '1',
   userEmail = 'admin@bidexpert.ai',
 }: DevInfoIndicatorProps) {
+  const footerRef = useRef<HTMLElement | null>(null);
   const [runtimeEnvironment, setRuntimeEnvironment] = useState<RuntimeEnvironmentInfo>(
     getInitialRuntimeEnvironment,
   );
@@ -122,10 +123,29 @@ export default function DevInfoIndicator({
     };
   }, []);
 
+  useEffect(() => {
+    if (mode !== 'admin-fixed') {
+      return;
+    }
+
+    const updateFooterHeight = () => {
+      const height = footerRef.current?.offsetHeight ?? 0;
+      document.documentElement.style.setProperty('--dev-info-footer-height', `${height}px`);
+    };
+
+    updateFooterHeight();
+    window.addEventListener('resize', updateFooterHeight);
+
+    return () => {
+      window.removeEventListener('resize', updateFooterHeight);
+      document.documentElement.style.setProperty('--dev-info-footer-height', '0px');
+    };
+  }, [mode]);
+
   const footerClassName = useMemo(
     () =>
       mode === 'admin-fixed'
-        ? 'fixed left-0 right-0 z-[60] px-4 sm:px-6 md:px-8 bottom-[calc(var(--admin-query-monitor-height,0px)+0.5rem)]'
+        ? 'fixed left-0 right-0 z-[45] px-4 sm:px-6 md:px-8 bottom-0'
         : 'mt-4 w-full',
     [mode],
   );
@@ -140,6 +160,7 @@ export default function DevInfoIndicator({
   return (
     <footer
       className={footerClassName}
+      ref={footerRef}
       data-ai-id="dashboard-footer"
       data-testid="dev-info-indicator"
     >
@@ -157,7 +178,7 @@ export default function DevInfoIndicator({
           className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-x-4 gap-y-2"
           data-ai-id="dev-info-grid"
         >
-          <div className="text-center sm:text-left" data-ai-id="dev-info-tenant">
+          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-tenant">
             <span className="text-xs text-muted-foreground" data-ai-id="dev-info-tenant-label">
               Tenant ID
             </span>
@@ -169,7 +190,7 @@ export default function DevInfoIndicator({
               {tenantId}
             </p>
           </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-user">
+          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-user">
             <span className="text-xs text-muted-foreground" data-ai-id="dev-info-user-label">
               User
             </span>
@@ -181,7 +202,7 @@ export default function DevInfoIndicator({
               {userEmail}
             </p>
           </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-db">
+          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-db">
             <span className="text-xs text-muted-foreground" data-ai-id="dev-info-db-label">
               DB System
             </span>
@@ -193,7 +214,7 @@ export default function DevInfoIndicator({
               {runtimeEnvironment.dbSystem}
             </p>
           </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-provider">
+          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-provider">
             <span className="text-xs text-muted-foreground" data-ai-id="dev-info-provider-label">
               Provider
             </span>
@@ -205,7 +226,7 @@ export default function DevInfoIndicator({
               {runtimeEnvironment.dbProvider}
             </p>
           </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-branch">
+          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-branch">
             <span className="text-xs text-muted-foreground" data-ai-id="dev-info-branch-label">
               Branch
             </span>
@@ -217,7 +238,7 @@ export default function DevInfoIndicator({
               {runtimeEnvironment.branch}
             </p>
           </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-server-link">
+          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-server-link">
             <span className="text-xs text-muted-foreground" data-ai-id="dev-info-server-link-label">
               Server
             </span>
@@ -232,7 +253,7 @@ export default function DevInfoIndicator({
               {remoteServerLabel}
             </a>
           </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-project">
+          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-project">
             <span className="text-xs text-muted-foreground" data-ai-id="dev-info-project-label">
               Project
             </span>

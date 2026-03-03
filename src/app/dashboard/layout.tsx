@@ -64,7 +64,7 @@ export default function DashboardLayout({
                   onSearchClick={() => setCommandPaletteOpen(true)} 
                   onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
               />
-              <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 overflow-y-auto pb-40">
+              <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 overflow-y-auto pb-[calc(var(--dev-info-footer-height,0px)+1rem)]">
                   <div className="mx-auto max-w-7xl">
                       {children}
                       <DevInfoIndicator
