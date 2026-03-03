@@ -82,7 +82,8 @@ function Get-Worktrees {
         $i++
         $label = if ($i -eq 1) { " [principal]" } else { "" }
         Write-Host "$i. $($wt['worktree'])$label" -ForegroundColor Green
-        Write-Host "   Branch : $($wt['branch'] ?? '(detached)')"
+        $branchName = if ($wt['branch']) { $wt['branch'] } else { '(detached)' }
+        Write-Host "   Branch : $branchName"
         Write-Host "   HEAD   : $($wt['HEAD'])"
         Write-Host ""
     }

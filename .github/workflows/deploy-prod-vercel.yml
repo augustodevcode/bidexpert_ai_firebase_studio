@@ -26,7 +26,7 @@ on:
         type: boolean
 
 env:
-  PRISMA_SCHEMA: prisma/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma/alternatives/schema.postgresql.prisma
 
 jobs:
   build:
@@ -48,7 +48,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -100,7 +100,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate

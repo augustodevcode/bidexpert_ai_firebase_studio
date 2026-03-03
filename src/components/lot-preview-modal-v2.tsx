@@ -346,6 +346,7 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
                         e.stopPropagation();
                         setCurrentImageIndex(index);
                       }}
+                      aria-label={`Selecionar miniatura ${index + 1}`}
                       className={`relative flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-md overflow-hidden transition-all ${
                         index === currentImageIndex 
                           ? 'ring-2 ring-primary ring-offset-2 ring-offset-black' 
