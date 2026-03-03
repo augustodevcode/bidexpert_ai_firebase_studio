@@ -225,7 +225,7 @@ export default function DevInfoIndicator({
               href={runtimeEnvironment.remoteServerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-primary truncate hover:underline"
+              className="block font-semibold text-primary truncate hover:underline"
               title={runtimeEnvironment.remoteServerUrl}
               data-ai-id="dev-info-server-link-value"
             >
