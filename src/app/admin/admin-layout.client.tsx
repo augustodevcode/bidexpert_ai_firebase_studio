@@ -102,12 +102,12 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
       <WidgetPreferencesProvider>
         <div className="flex min-h-screen bg-secondary">
           <AdminSidebar />
-          <div className="flex flex-1 flex-col" style={{ paddingBottom: 'var(--admin-query-monitor-height, 0px)' }}>
+          <div className="flex flex-1 flex-col pb-[calc(var(--admin-query-monitor-height,0px)+var(--dev-info-footer-height,0px))]">
             <AdminHeader
               onSearchClick={() => setCommandPaletteOpen(true)}
               onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
             />
-            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto pb-24">
+            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto pb-[calc(var(--admin-query-monitor-height,0px)+var(--dev-info-footer-height,0px)+1rem)]">
               <div className="w-full">
                 {children}
               </div>
