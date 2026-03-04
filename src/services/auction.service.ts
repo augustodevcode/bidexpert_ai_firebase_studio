@@ -282,7 +282,6 @@ export class AuctionService {
 
         return {
             ...rest,
-            imageUrl: rest.imageUrl || CoverImage?.urlOriginal || CoverImage?.urlThumbnail || null,
             id: a.id.toString(),
             initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
             estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
@@ -305,7 +304,9 @@ export class AuctionService {
             sellerName: sellerObj?.name,
             auctioneerName: auctioneerObj?.name,
             categoryName: categoryObj?.name,
-            imageUrl: a.imageMediaId === 'INHERIT' ? featuredLot?.imageUrl : a.imageUrl,
+            imageUrl: a.imageMediaId === 'INHERIT'
+                ? (featuredLot?.imageUrl ?? null)
+                : (a.imageUrl || CoverImage?.urlOriginal || CoverImage?.urlThumbnail || null),
             auctionStages: stagesList.map((stage: any) => ({
                 id: stage.id.toString(),
                 name: stage.name,
