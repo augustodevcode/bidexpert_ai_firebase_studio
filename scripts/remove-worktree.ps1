@@ -3,7 +3,7 @@
     Remove um Git Worktree e opcionalmente deleta a branch associada.
 
 .DESCRIPTION
-    Cleanup seguro de worktrees:
+    Cleanup seguro de worktrees (criados dentro de worktrees/ no workspace):
     1. Para processos Node rodando no diretório do worktree
     2. Remove o worktree via git worktree remove
     3. Opcionalmente deleta a branch local
@@ -63,13 +63,13 @@ if (-not $Dir) {
     $worktrees = git worktree list 2>$null
     Write-Host ($worktrees | Out-String)
 
-    $parentDir = Split-Path $PWD -Parent
-    $candidates = $worktrees | Where-Object { $_ -match [regex]::Escape($parentDir) -and $_ -notmatch [regex]::Escape($PWD) } | ForEach-Object {
+    $worktreesRoot = Join-Path $PWD "worktrees"
+    $candidates = $worktrees | Where-Object { $_ -match [regex]::Escape($worktreesRoot) } | ForEach-Object {
         ($_ -split "\s+")[0] | Split-Path -Leaf
     }
 
     if (-not $candidates -or $candidates.Count -eq 0) {
-        Write-Warn "Nenhum worktree auxiliar encontrado."
+        Write-Warn "Nenhum worktree auxiliar encontrado em worktrees/."
         exit 0
     }
 
@@ -91,11 +91,18 @@ if (-not $Dir) {
     $Dir = $candidates[$idx]
 }
 
-$dirPath = Join-Path (Split-Path $PWD -Parent) $Dir
+$dirPath = Join-Path (Join-Path $PWD "worktrees") $Dir
 
 if (-not (Test-Path $dirPath)) {
-    Write-Err "Diretório não encontrado: $dirPath"
-    exit 1
+    # Fallback: tentar diretório irmão (compatível com worktrees antigos fora do workspace)
+    $legacyPath = Join-Path (Split-Path $PWD -Parent) $Dir
+    if (Test-Path $legacyPath) {
+        Write-Warn "Worktree encontrado no local legado (fora do workspace): $legacyPath"
+        $dirPath = $legacyPath
+    } else {
+        Write-Err "Diretório não encontrado: $dirPath"
+        exit 1
+    }
 }
 
 # ── Detectar branch do worktree ──

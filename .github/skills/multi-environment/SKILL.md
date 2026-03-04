@@ -97,7 +97,7 @@ O modelo de isolamento **preferido** no BidExpert é via **Git Worktree** — ma
 ./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
 
 # Remover worktree após merge
-./scripts/remove-worktree.ps1 -Dir ..\bidexpert-feat-minha-feature -DeleteBranch
+./scripts/remove-worktree.ps1 -Dir worktrees\bidexpert-feat-minha-feature -DeleteBranch
 ```
 
 ### Manual
@@ -109,9 +109,9 @@ netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 # Criar worktree para nova task (porta livre, ex: 9006)
 $porta = 9006
 $branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..idexpert-feat-minha-feature -b $branch origin/demo-stable
+git worktree add worktrees\bidexpert-feat-minha-feature -b $branch origin/demo-stable
 
-Set-Location ..idexpert-feat-minha-feature
+Set-Location worktrees\bidexpert-feat-minha-feature
 $env:PORT = $porta ; npm install ; npm run dev
 ```
 
@@ -149,7 +149,7 @@ git fetch origin demo-stable
 $porta     = 9006  # porta livre conforme tabela
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
 $branch    = "feat/minha-feature-$timestamp"
-$dir       = "..\bidexpert-feat-minha-feature"
+$dir       = "worktrees\bidexpert-feat-minha-feature"
 
 git worktree add $dir -b $branch origin/demo-stable
 
@@ -294,8 +294,8 @@ NODE_ENV=production
 ```powershell
 # ✅ PREFERIDO: Criar worktree em outra porta (sem docker)
 $porta = 9006  # ou 9007, 9008...
-git worktree add ..idexpert-fix -b fix/issue-$(Get-Date -Format 'yyyyMMdd') origin/demo-stable
-Set-Location ..idexpert-fix
+git worktree add worktrees\bidexpert-fix -b fix/issue-$(Get-Date -Format 'yyyyMMdd') origin/demo-stable
+Set-Location worktrees\bidexpert-fix
 $env:PORT = $porta ; npm install ; npm run dev
 
 # ALTERNATIVA: Docker Sandbox (para banco isolado)

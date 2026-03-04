@@ -29,16 +29,16 @@ Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **
 **Opção B — Manual:**
 ```powershell
 git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
-git worktree add ..\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
+git worktree add worktrees\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
 # Tipos: feat/, fix/, hotfix/, chore/, docs/, test/
-# Exemplo: git worktree add ..\bidexpert-feat-auction-filter -b feat/auction-filter-20260131-1430 origin/demo-stable
+# Exemplo: git worktree add worktrees\bidexpert-feat-auction-filter -b feat/auction-filter-20260131-1430 origin/demo-stable
 ```
 
 ### 2. Iniciar ambiente no Worktree com porta dedicada (OBRIGATÓRIO)
 **REGRA ABSOLUTA:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos antes de criar Worktree dedicado e definir porta exclusiva.
 ```powershell
-# Entrar no worktree criado
-Set-Location ..\bidexpert-<tipo>-<descricao>
+# Entrar no worktree criado (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-<tipo>-<descricao>
 
 # Definir porta dedicada do dev
 $env:PORT=9006
@@ -185,7 +185,7 @@ O mecanismo **primário** de isolamento de desenvolvimento é o **Git Worktree**
 ./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
 
 # Remover worktree após merge
-./scripts/remove-worktree.ps1 -Dir ..\bidexpert-feat-minha-feature -DeleteBranch
+./scripts/remove-worktree.ps1 -Dir worktrees\bidexpert-feat-minha-feature -DeleteBranch
 ```
 
 ### Git Worktree (Manual)
@@ -197,8 +197,8 @@ netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 # Criar worktree com nova branch
 $porta = 9006
 $branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..\bidexpert-feat-task -b $branch origin/demo-stable
-Set-Location ..\bidexpert-feat-task
+git worktree add worktrees\bidexpert-feat-task -b $branch origin/demo-stable
+Set-Location worktrees\bidexpert-feat-task
 $env:PORT = $porta ; npm install ; npm run dev
 ```
 

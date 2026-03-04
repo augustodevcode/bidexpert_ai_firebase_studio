@@ -13,9 +13,11 @@
 		"files.exclude": {
 			"**/infra-dashboard": true
 		},
-        "search.exclude": {
-            "**/infra-dashboard": true
-        }
+		"search.exclude": {
+			"**/infra-dashboard": true,
+			"**/worktrees/**/node_modules": true,
+			"**/worktrees/**/.next": true
+		}
 	},
     "extensions": {
         "recommendations": [

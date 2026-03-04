@@ -16,13 +16,17 @@ O `git worktree` é o mecanismo de isolamento **primário** do BidExpert. Ele pe
 ```
 repositório (.git compartilhado)
 │
-├── /bidexpert_ai_firebase_studio   ← principal (demo-stable)       porta 9005 (humano)
-├── /bidexpert-feat-minha-feature   ← worktree agente AI #1         porta 9006
-├── /bidexpert-fix-bug-urgente      ← worktree agente AI #2         porta 9007
-└── /bidexpert-hotfix-prod          ← worktree hotfix de produção   porta 9008
+├── /bidexpert_ai_firebase_studio/          ← raiz do projeto
+│   ├── src/                                ← código principal
+│   ├── worktrees/                          ← worktrees isolados (gitignored)
+│   │   ├── bidexpert-feat-minha-feature/   ← worktree agente AI #1  porta 9006
+│   │   ├── bidexpert-fix-bug-urgente/      ← worktree agente AI #2  porta 9007
+│   │   └── bidexpert-hotfix-prod/          ← worktree hotfix        porta 9008
+│   └── ...
 ```
 
 **Vantagens sobre clones ou docker sandbox:**
+- ✅ Worktrees dentro do workspace — AI agents (Copilot) acessam tudo como projeto único
 - ✅ Troca de contexto por `cd` — sem `git stash` ou `git checkout`
 - ✅ Histórico e `git fetch` 100% compartilhados entre worktrees
 - ✅ Setup em segundos (sem docker build)
@@ -62,10 +66,10 @@ O projeto inclui 4 scripts de automação para worktrees:
 
 | Script | Plataforma | Worktree em | Destaque |
 |--------|-----------|-------------|----------|
-| `scripts/create-worktree.ps1` | PowerShell | `../bidexpert-tipo-desc/` (fora do repo) | **RECOMENDADO** — auto-detect porta, `.env.local`, npm install, `--Start` |
+| `scripts/create-worktree.ps1` | PowerShell | `worktrees/bidexpert-tipo-desc/` (dentro do workspace) | **RECOMENDADO** — auto-detect porta, `.env.local`, npm install, `--Start` |
 | `scripts/remove-worktree.ps1` | PowerShell | Limpeza interativa | Remove worktree + branch local/remota |
-| `.vscode/setup-worktree.js` | Node.js (cross-platform) | `worktrees/branch/` (dentro do repo) | Funciona em Linux/Mac/Windows |
-| `scripts/worktree-setup.ps1` | PowerShell | `worktrees/branch/` (dentro do repo) | Equivalente PS do setup-worktree.js |
+| `.vscode/setup-worktree.js` | Node.js (cross-platform) | `worktrees/branch/` (dentro do workspace) | Funciona em Linux/Mac/Windows |
+| `scripts/worktree-setup.ps1` | PowerShell | `worktrees/branch/` (dentro do workspace) | Equivalente PS do setup-worktree.js |
 
 **Exemplo rápido (RECOMENDADO):**
 ```powershell
@@ -73,7 +77,7 @@ O projeto inclui 4 scripts de automação para worktrees:
 .\scripts\create-worktree.ps1 -Descricao auction-filter -Start
 
 # Limpar após merge
-.\scripts\remove-worktree.ps1 -Dir ..\bidexpert-feat-auction-filter -DeleteBranch
+.\scripts\remove-worktree.ps1 -Dir bidexpert-feat-auction-filter -DeleteBranch
 ```
 
 **Alternativa cross-platform:**
@@ -94,14 +98,14 @@ $descricao = "minha-feature"    # ex: auction-filter, login-bug, seed-update
 $porta     = 9006               # Porta livre conforme tabela acima
 
 $branch  = "$tipo/$descricao-$timestamp"
-$dir     = "..\bidexpert-$tipo-$descricao"
+$dir     = "worktrees\bidexpert-$tipo-$descricao"
 
 # 1. Atualizar base
 git fetch origin demo-stable
 git checkout demo-stable
 git pull origin demo-stable
 
-# 2. Criar worktree com nova branch a partir de demo-stable
+# 2. Criar worktree com nova branch a partir de demo-stable (DENTRO do workspace)
 git worktree add $dir -b $branch origin/demo-stable
 
 Write-Host "✅ Worktree criado em: $dir" -ForegroundColor Green
@@ -165,30 +169,30 @@ git push -u origin HEAD
 
 ```powershell
 # Sem sair do worktree da feature (porta 9006), em outro terminal:
-git worktree add ..\bidexpert-hotfix -b hotfix/payment-20260301 origin/main
-Set-Location ..\bidexpert-hotfix
+git worktree add worktrees\bidexpert-hotfix -b hotfix/payment-20260301 origin/main
+Set-Location worktrees\bidexpert-hotfix
 $env:PORT = 9008; npm install; npm run dev
 # Corrigir, commitar, push → PR para main
-# Voltar: cd ..\bidexpert-feat-minha-feature (feature intacta, porta 9006 funcionando)
+# Voltar: cd ..\..  (feature intacta, porta 9006 funcionando)
 ```
 
 #### Cenário B — Revisão de PR de Colega
 
 ```powershell
 git fetch origin
-git worktree add ..\bidexpert-pr296 origin/fix/contact-email-log-schema
-Set-Location ..\bidexpert-pr296
+git worktree add worktrees\bidexpert-pr296 origin/fix/contact-email-log-schema
+Set-Location worktrees\bidexpert-pr296
 $env:PORT = 9009; npm install; npm run dev
 # Testar em http://dev.localhost:9009
-git worktree remove ..\bidexpert-pr296  # limpar após revisão
+git worktree remove worktrees\bidexpert-pr296  # limpar após revisão
 ```
 
 #### Cenário C — Dois Agentes AI em Paralelo
 
 ```
-Agente Copilot → worktree ../bidexpert-feat-super-opp    porta 9006
-Agente Gemini  → worktree ../bidexpert-fix-currency       porta 9007
-Ambos compartilham .git → commits de um visíveis ao outro sem conflitos
+Agente Copilot → worktree worktrees/bidexpert-feat-super-opp    porta 9006
+Agente Gemini  → worktree worktrees/bidexpert-fix-currency       porta 9007
+Ambos dentro do mesmo workspace VS Code → Copilot pode acessar ambos
 ```
 
 ---

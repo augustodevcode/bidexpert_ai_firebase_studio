@@ -66,7 +66,7 @@ netstat -ano | Select-String ":900[5-9] |:901[0-9] " | Select-Object -First 10
 
 ```powershell
 # Na raiz do repositório principal
-# Formato do diretório: ../bidexpert-<tipo>-<descricao>
+# Formato do diretório: worktrees/bidexpert-<tipo>-<descricao>
 # Formato da branch: <tipo>/<descricao>-<timestamp>
 
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
@@ -75,7 +75,7 @@ $descricao = "auction-filter"
 $porta     = 9006            # Escolher porta livre (ver tabela acima)
 
 $branch = "$tipo/$descricao-$timestamp"
-$dir    = "../bidexpert-$tipo-$descricao"
+$dir    = "worktrees/bidexpert-$tipo-$descricao"
 
 # 1. Garantir que demo-stable está atualizada
 git fetch origin demo-stable
@@ -177,13 +177,13 @@ SITUAÇÃO: Estou desenvolvendo feat/auction-filter-20260301 (porta 9006)
 
 SOLUÇÃO:
 # Sem interromper a feature, crio um segundo worktree para o hotfix
-git worktree add ../bidexpert-hotfix-prod -b hotfix/critical-payment-20260301 origin/main
-cd ../bidexpert-hotfix-prod
+git worktree add worktrees/bidexpert-hotfix-prod -b hotfix/critical-payment-20260301 origin/main
+cd worktrees/bidexpert-hotfix-prod
 $env:PORT = 9008
 npm install ; npm run dev
 
 # Corrijo o bug, faço o PR para main, depois volto para a feature
-cd ../bidexpert-feat-auction-filter
+cd worktrees/bidexpert-feat-auction-filter
 # trabalho continua normalmente na porta 9006
 ```
 
@@ -192,9 +192,9 @@ cd ../bidexpert-feat-auction-filter
 ```powershell
 # Criar worktree temporário para revisar a PR do colega
 git fetch origin
-git worktree add ../bidexpert-review-pr296 origin/fix/contact-email-log
+git worktree add worktrees/bidexpert-review-pr296 origin/fix/contact-email-log
 
-cd ../bidexpert-review-pr296
+cd worktrees/bidexpert-review-pr296
 $env:PORT = 9009
 npm install ; npm run dev
 # Testar a PR em http://dev.localhost:9009
@@ -208,11 +208,11 @@ git worktree remove bidexpert-review-pr296
 
 ```
 Agente #1 (Copilot):
-  Worktree: ../bidexpert-feat-super-opportunities (porta 9006)
+  Worktree: worktrees/bidexpert-feat-super-opportunities (porta 9006)
   Branch:   feat/super-opportunities-20260301-1000
 
 Agente #2 (Gemini):
-  Worktree: ../bidexpert-fix-currency-format (porta 9007)
+  Worktree: worktrees/bidexpert-fix-currency-format (porta 9007)
   Branch:   fix/currency-format-20260301-1100
 
 Ambos compartilham o mesmo .git — commits de um são visíveis ao outro
@@ -280,8 +280,8 @@ git worktree list --porcelain
 
 ```
 [ ] git worktree list → identificar porta livre
-[ ] git worktree add ../bidexpert-<tipo>-<desc> -b <branch> origin/demo-stable
-[ ] cd ../bidexpert-<tipo>-<desc>
+[ ] git worktree add worktrees/bidexpert-<tipo>-<desc> -b <branch> origin/demo-stable
+[ ] cd worktrees/bidexpert-<tipo>-<desc>
 [ ] .env.local → PORT=<porta-livre>
 [ ] npm install
 [ ] npm run dev  (em background ou terminal separado)

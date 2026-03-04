@@ -28,15 +28,15 @@ Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **
 **Opção B — Manual:**
 ```powershell
 git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
-git worktree add ..\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
+git worktree add worktrees\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
 # Tipos: feat/, fix/, hotfix/, chore/, docs/, test/
 ```
 
 ### 2. Iniciar ambiente no Worktree com porta dedicada (OBRIGATÓRIO)
 **REGRA ABSOLUTA:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos antes de criar Worktree dedicado e definir porta exclusiva.
 ```powershell
-# Entrar no worktree criado
-Set-Location ..\bidexpert-<tipo>-<descricao>
+# Entrar no worktree criado (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-<tipo>-<descricao>
 
 # Definir porta dedicada do dev
 $env:PORT=9006
@@ -173,7 +173,7 @@ O mecanismo **primário** de isolamento é o **Git Worktree**.
 ### Scripts Helper (RECOMENDADO)
 ```powershell
 ./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
-./scripts/remove-worktree.ps1 -Dir ..\bidexpert-feat-minha-feature -DeleteBranch
+./scripts/remove-worktree.ps1 -Dir worktrees\bidexpert-feat-minha-feature -DeleteBranch
 ```
 
 ### Manual
@@ -185,10 +185,10 @@ netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 # 2. Criar worktree + branch dedicada
 $porta = 9006
 $branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..\bidexpert-feat-minha-feature -b $branch origin/demo-stable
+git worktree add worktrees\bidexpert-feat-minha-feature -b $branch origin/demo-stable
 
 # 3. Configurar e iniciar
-Set-Location ..\bidexpert-feat-minha-feature
+Set-Location worktrees\bidexpert-feat-minha-feature
 $env:PORT = $porta ; npm install ; npm run dev
 # Acesso: http://dev.localhost:$porta
 ```

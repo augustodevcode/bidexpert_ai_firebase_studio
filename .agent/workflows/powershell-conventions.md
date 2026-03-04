@@ -163,10 +163,10 @@ git fetch origin demo-stable
 
 # [23/02/2026 14:30:20] Criar worktree com branch e timestamp automático
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-git worktree add ..\bidexpert-feat-auction-filter -b feat/auction-filter-$timestamp origin/demo-stable
+git worktree add worktrees\bidexpert-feat-auction-filter -b feat/auction-filter-$timestamp origin/demo-stable
 
 # [23/02/2026 14:30:21] Entrar no worktree e verificar
-Set-Location ..\bidexpert-feat-auction-filter
+Set-Location worktrees\bidexpert-feat-auction-filter
 git branch --show-current
 ```
 
@@ -256,8 +256,8 @@ Toda tarefa de branch deve incluir:
 ```powershell
 # [23/02/2026 14:30:15] Criar worktree + branch feature
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-git worktree add ..\bidexpert-feat-auction-filter -b feat/auction-filter-$timestamp origin/demo-stable
-Set-Location ..\bidexpert-feat-auction-filter
+git worktree add worktrees\bidexpert-feat-auction-filter -b feat/auction-filter-$timestamp origin/demo-stable
+Set-Location worktrees\bidexpert-feat-auction-filter
 ```
 
 ### 5.2 Em Scripts de Inicialização
