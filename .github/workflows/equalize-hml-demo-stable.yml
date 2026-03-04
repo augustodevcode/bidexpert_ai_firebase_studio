@@ -45,6 +45,7 @@ jobs:
     name: ✅ Validar Confirmação
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    permissions: {}
     steps:
       - name: Verificar confirmação
         run: |
@@ -138,6 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [equalize]
     if: needs.equalize.result == 'success'
+    permissions: {}
 
     steps:
       - name: ⏳ Aguardar deploy Vercel HML
@@ -154,6 +156,8 @@ jobs:
     name: 🧪 Verificar Equalização DEMO vs HML
     runs-on: ubuntu-latest
     needs: [equalize, wait-for-hml-deploy]
+    permissions:
+      contents: read
     if: >
       needs.equalize.result == 'success' &&
       (
@@ -213,6 +217,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [equalize, wait-for-hml-deploy, verify-equalization]
     if: always()
+    permissions: {}
 
     steps:
       - name: 📢 Relatório Final de Equalização
