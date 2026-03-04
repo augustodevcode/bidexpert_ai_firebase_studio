@@ -1,0 +1,235 @@
+# ==============================================================================
+# GitHub Action: Equalizar Branch HML com demo-stable
+# ==============================================================================
+# Objetivo: Sincronizar a branch hml com o estado atual de demo-stable no Vercel.
+#           Garante que o ambiente HML reflita exatamente o mesmo código do DEMO.
+#
+# Triggers:
+#   - Manual (workflow_dispatch) - principal forma de uso
+#   - Agendado (toda segunda-feira às 06:00 UTC) - manutenção automática
+#
+# O que o workflow faz:
+#   1. Reset da branch hml para o HEAD de demo-stable
+#   2. Force-push hml (sincronização completa)
+#   3. Smoke tests no Vercel HML para confirmar equalizacão
+# ==============================================================================
+
+name: Equalizar HML com demo-stable
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_e2e:
+        description: 'Executar testes E2E de verificação após equalizar?'
+        required: false
+        default: true
+        type: boolean
+      confirm:
+        description: 'CONFIRMO que desejo sobrescrever hml com demo-stable'
+        required: true
+        type: boolean
+  schedule:
+    # Toda segunda-feira às 06:00 UTC
+    - cron: '0 6 * * 1'
+
+env:
+  PRISMA_SCHEMA: prisma/schema.postgresql.prisma
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ============================================================================
+  # JOB 1: Validação de confirmação (manual apenas)
+  # ============================================================================
+  validate-input:
+    name: ✅ Validar Confirmação
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Verificar confirmação
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "true" ]; then
+            echo "❌ Execução cancelada: confirmação não fornecida."
+            exit 1
+          fi
+          echo "✅ Confirmação recebida. Prosseguindo com equalização."
+
+  # ============================================================================
+  # JOB 2: Equalizar hml com demo-stable (reset + force-push)
+  # ============================================================================
+  equalize:
+    name: 🔄 Equalizar hml ← demo-stable
+    runs-on: ubuntu-latest
+    needs: [validate-input]
+    if: always() && (needs.validate-input.result == 'success' || github.event_name == 'schedule')
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout demo-stable
+        uses: actions/checkout@v4
+        with:
+          ref: demo-stable
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Verificar divergência antes da equalização
+        run: |
+          git fetch origin hml || echo "⚠️  Branch hml não encontrada remotamente"
+          
+          DEMO_SHA=$(git rev-parse HEAD)
+          HML_SHA=$(git rev-parse origin/hml 2>/dev/null || echo "N/A")
+          
+          echo "============================================"
+          echo "📊 STATUS DE DIVERGÊNCIA:"
+          echo "============================================"
+          echo "🟢 demo-stable HEAD: $DEMO_SHA"
+          echo "🔵 hml HEAD:         $HML_SHA"
+          echo "============================================"
+          
+          if [ "$DEMO_SHA" = "$HML_SHA" ]; then
+            echo "✅ Branches já estão equalizadas! Nenhuma ação necessária."
+            echo "ALREADY_EQUAL=true" >> $GITHUB_ENV
+          else
+            COMMITS_BEHIND=$(git rev-list --count origin/hml..HEAD 2>/dev/null || echo "N/A")
+            echo "📉 hml está $COMMITS_BEHIND commits atrás de demo-stable"
+            echo "ALREADY_EQUAL=false" >> $GITHUB_ENV
+          fi
+
+      - name: 🔄 Reset hml para demo-stable (force-push)
+        if: env.ALREADY_EQUAL != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          echo "🚀 Iniciando equalização: hml ← demo-stable"
+          
+          # Force-push demo-stable HEAD para hml
+          git push origin HEAD:hml --force
+          
+          echo "✅ Branch hml equalizada com demo-stable com sucesso!"
+          echo "============================================"
+          echo "📋 RESUMO:"
+          echo "  • Branch hml foi atualizada para: $(git rev-parse HEAD)"
+          echo "  • Vercel HML irá fazer deploy automaticamente"
+          echo "============================================"
+
+      - name: ✅ Confirmar equalização
+        run: |
+          git fetch origin hml
+          DEMO_SHA=$(git rev-parse HEAD)
+          HML_SHA=$(git rev-parse origin/hml)
+          
+          if [ "$DEMO_SHA" = "$HML_SHA" ]; then
+            echo "✅ EQUALIZAÇÃO CONFIRMADA!"
+            echo "   demo-stable = hml = $DEMO_SHA"
+          else
+            echo "❌ FALHA NA EQUALIZAÇÃO!"
+            echo "   demo-stable: $DEMO_SHA"
+            echo "   hml: $HML_SHA"
+            exit 1
+          fi
+
+  # ============================================================================
+  # JOB 3: Aguardar deploy Vercel HML (após push)
+  # ============================================================================
+  wait-for-hml-deploy:
+    name: ⏳ Aguardar Deploy Vercel HML
+    runs-on: ubuntu-latest
+    needs: [equalize]
+    if: needs.equalize.result == 'success'
+
+    steps:
+      - name: ⏳ Aguardar deploy Vercel HML
+        run: |
+          echo "⏳ Aguardando Vercel HML processar o novo deploy..."
+          echo "   (Vercel detecta o push em hml e inicia deploy automaticamente)"
+          sleep 120
+          echo "✅ Aguardo concluído. Prosseguindo com verificação."
+
+  # ============================================================================
+  # JOB 4: Testes E2E de verificação (smoke + comparação DEMO vs HML)
+  # ============================================================================
+  verify-equalization:
+    name: 🧪 Verificar Equalização DEMO vs HML
+    runs-on: ubuntu-latest
+    needs: [equalize, wait-for-hml-deploy]
+    if: >
+      needs.equalize.result == 'success' &&
+      (
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.run_e2e == 'true')
+      )
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: demo-stable
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: 🧪 Executar testes de verificação HML vs DEMO
+        run: |
+          npx playwright test tests/e2e/hml-equalization-vercel.spec.ts \
+            --config=playwright.vercel.config.ts \
+            --reporter=list,html
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.HML_APP_URL || 'https://bidexpert-hml.vercel.app' }}
+          DEMO_URL: ${{ secrets.DEMO_APP_URL || 'https://bidexpert-demo.vercel.app' }}
+          HML_URL: ${{ secrets.HML_APP_URL || 'https://bidexpert-hml.vercel.app' }}
+
+      - name: 📊 Upload relatório de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hml-equalization-playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: 📊 Upload resultados de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hml-equalization-test-results
+          path: test-results/
+          retention-days: 14
+
+  # ============================================================================
+  # JOB 5: Relatório Final
+  # ============================================================================
+  report:
+    name: 📢 Relatório Final
+    runs-on: ubuntu-latest
+    needs: [equalize, wait-for-hml-deploy, verify-equalization]
+    if: always()
+
+    steps:
+      - name: 📢 Relatório Final de Equalização
+        run: |
+          echo "============================================"
+          echo "📋 RELATÓRIO DE EQUALIZAÇÃO HML ← demo-stable"
+          echo "============================================"
+          echo "🔄 Equalização:      ${{ needs.equalize.result }}"
+          echo "⏳ Aguardo Deploy:   ${{ needs.wait-for-hml-deploy.result || 'skipped' }}"
+          echo "🧪 Verificação E2E:  ${{ needs.verify-equalization.result || 'skipped' }}"
+          echo "============================================"
+          
+          if [ "${{ needs.equalize.result }}" = "success" ]; then
+            echo "✅ Branch hml equalizada com demo-stable com sucesso!"
+            echo "🌐 DEMO URL: ${{ secrets.DEMO_APP_URL }}"
+            echo "🌐 HML URL:  ${{ secrets.HML_APP_URL }}"
+          else
+            echo "❌ Falha na equalização. Verifique os logs acima."
+            exit 1
+          fi
