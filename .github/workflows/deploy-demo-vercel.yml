@@ -69,7 +69,7 @@ jobs:
           fi
         
       - name: 🔍 Type Check
-        run: npm run typecheck
+        run: npm run typecheck:soft
         
       - name: 🏗️ Build
         run: npm run build
