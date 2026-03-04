@@ -226,21 +226,87 @@ export class PlatformSettingsService {
     }
 
     static async getFeatureFlags(tenantId: string | bigint | number): Promise<FeatureFlags> {
-        const { cacheKey } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
+        const { cacheKey, tenantIdBigInt } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
         const cached = PlatformSettingsService.featureFlagsCache.get(cacheKey);
         if (cached) {
             return PlatformSettingsService.cloneFeatureFlags(cached);
         }
 
-        const defaults = PlatformSettingsService.cloneFeatureFlags(defaultFeatureFlags);
-        PlatformSettingsService.featureFlagsCache.set(cacheKey, defaults);
-        return PlatformSettingsService.cloneFeatureFlags(defaults);
+        // Load from database via RealtimeSettings (persisted feature flags)
+        const ps = await prisma.platformSettings.findUnique({
+            where: { tenantId: tenantIdBigInt },
+            select: { id: true, RealtimeSettings: true },
+        });
+        const rt = ps?.RealtimeSettings;
+
+        const flags: FeatureFlags = {
+            ...defaultFeatureFlags,
+            ...(rt ? {
+                blockchainEnabled: rt.blockchainEnabled,
+                blockchainNetwork: rt.blockchainNetwork as FeatureFlags['blockchainNetwork'],
+                softCloseEnabled: rt.softCloseEnabled,
+                softCloseMinutes: rt.softCloseMinutes,
+                lawyerPortalEnabled: rt.lawyerPortalEnabled,
+                lawyerMonetizationModel: rt.lawyerMonetizationModel as FeatureFlags['lawyerMonetizationModel'],
+                lawyerSubscriptionPrice: rt.lawyerSubscriptionPrice ?? undefined,
+                lawyerPerUsePrice: rt.lawyerPerUsePrice ?? undefined,
+                lawyerRevenueSharePercent: rt.lawyerRevenueSharePercent !== null
+                    ? Number(rt.lawyerRevenueSharePercent) : undefined,
+                fipeIntegrationEnabled: (rt as any).fipeIntegrationEnabled ?? false,
+                cartorioIntegrationEnabled: (rt as any).cartorioIntegrationEnabled ?? false,
+                tribunalIntegrationEnabled: (rt as any).tribunalIntegrationEnabled ?? false,
+                pwaEnabled: (rt as any).pwaEnabled ?? true,
+                offlineFirstEnabled: (rt as any).offlineFirstEnabled ?? false,
+                maintenanceMode: (rt as any).maintenanceMode ?? false,
+                debugLogsEnabled: (rt as any).debugLogsEnabled ?? false,
+            } : {}),
+        };
+
+        PlatformSettingsService.featureFlagsCache.set(cacheKey, flags);
+        return PlatformSettingsService.cloneFeatureFlags(flags);
     }
 
     static async updateFeatureFlags(tenantId: string | bigint | number, flags: Partial<FeatureFlags>): Promise<FeatureFlags> {
-        const { cacheKey } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
-        const current = PlatformSettingsService.featureFlagsCache.get(cacheKey) ?? PlatformSettingsService.cloneFeatureFlags(defaultFeatureFlags);
+        const { cacheKey, tenantIdBigInt } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
+        // Use cached flags or defaults — avoids a redundant DB query since ensureSettingsPrepared
+        // already loaded settings. A subsequent getFeatureFlags call will re-populate from DB if needed.
+        const current = PlatformSettingsService.featureFlagsCache.get(cacheKey)
+            ?? PlatformSettingsService.cloneFeatureFlags(defaultFeatureFlags);
         const merged = validateFeatureFlags({ ...current, ...flags });
+
+        // Persist to database via RealtimeSettings
+        const ps = await prisma.platformSettings.findUnique({
+            where: { tenantId: tenantIdBigInt },
+            select: { id: true },
+        });
+        if (ps) {
+            const realtimeData = {
+                blockchainEnabled: merged.blockchainEnabled,
+                blockchainNetwork: merged.blockchainNetwork,
+                softCloseEnabled: merged.softCloseEnabled,
+                softCloseMinutes: merged.softCloseMinutes,
+                lawyerPortalEnabled: merged.lawyerPortalEnabled,
+                lawyerMonetizationModel: merged.lawyerMonetizationModel,
+                lawyerSubscriptionPrice: merged.lawyerSubscriptionPrice ?? null,
+                lawyerPerUsePrice: merged.lawyerPerUsePrice ?? null,
+                lawyerRevenueSharePercent: merged.lawyerRevenueSharePercent ?? null,
+                fipeIntegrationEnabled: merged.fipeIntegrationEnabled,
+                cartorioIntegrationEnabled: merged.cartorioIntegrationEnabled,
+                tribunalIntegrationEnabled: merged.tribunalIntegrationEnabled,
+                pwaEnabled: merged.pwaEnabled,
+                offlineFirstEnabled: merged.offlineFirstEnabled,
+                maintenanceMode: merged.maintenanceMode,
+                debugLogsEnabled: merged.debugLogsEnabled,
+            };
+            await (prisma.realtimeSettings as any).upsert({
+                where: { platformSettingsId: ps.id },
+                create: { platformSettingsId: ps.id, ...realtimeData },
+                update: realtimeData,
+            });
+            // Invalidate settings cache so next read gets fresh data
+            PlatformSettingsService.settingsCache.delete(cacheKey);
+        }
+
         PlatformSettingsService.featureFlagsCache.set(cacheKey, merged);
         return PlatformSettingsService.cloneFeatureFlags(merged);
     }

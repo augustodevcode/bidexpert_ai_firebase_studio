@@ -1078,7 +1078,15 @@ model RealtimeSettings {
   // V2 Monitor Pregão - Admin Toggles
   communicationStrategy     CommunicationStrategy @default(WEBSOCKET)
   videoStrategy             VideoStrategy         @default(DISABLED)
-  idempotencyStrategy       IdempotencyStrategy   @default(SERVER_HASH)
+  idempotencyStrategy        IdempotencyStrategy   @default(SERVER_HASH)
+  // Extended feature flags persisted to DB
+  fipeIntegrationEnabled     Boolean               @default(false)
+  cartorioIntegrationEnabled Boolean               @default(false)
+  tribunalIntegrationEnabled Boolean               @default(false)
+  pwaEnabled                 Boolean               @default(true)
+  offlineFirstEnabled        Boolean               @default(false)
+  maintenanceMode            Boolean               @default(false)
+  debugLogsEnabled           Boolean               @default(false)
   PlatformSettings          PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
 }
 
