@@ -157,8 +157,8 @@ jobs:
             ### 🔧 Próximas Ações
 
             1. **Análise Automática**: O AI Agent será acionado automaticamente para investigar
-            2. **Tentativas de Correção**: Até 3 tentativas automáticas serão realizadas
-            3. **Escalação**: Se não for resolvido, será escalado para revisão humana
+            2. **Auto-fix Real**: O pipeline tentará correção GitOps e/ou acionamento do Copilot para criar PR
+            3. **Modo Contínuo (Build)**: Issues automáticas de build ficam em processamento sem escalonamento humano automático
 
             ### 🏷️ Labels Aplicadas
 
@@ -169,7 +169,9 @@ jobs:
 
             ---
 
-            *Esta issue foi criada automaticamente pelo sistema de monitoramento CI/CD.*`;
+            *Esta issue foi criada automaticamente pelo sistema de monitoramento CI/CD.*
+
+            <!-- ci-auto-fix-source:build-workflow -->`;
 
             // Create the issue
             const { data: issue } = await github.rest.issues.create({
@@ -180,16 +182,38 @@ jobs:
               labels: ['ai-fix', 'ci-cd', 'priority:high', 'automated']
             });
 
-            // Assign Copilot (best effort, should not block automation)
-            try {
-              await github.rest.issues.addAssignees({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                assignees: ['Copilot']
-              });
-            } catch (error) {
-              console.log(`Could not assign @copilot automatically: ${error.message}`);
+            // Assign Copilot with retries (best effort, should not block automation)
+            let copilotAssigned = false;
+            let lastError = '';
+
+            for (let attempt = 1; attempt <= 5; attempt++) {
+              try {
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  assignees: ['Copilot']
+                });
+
+                const { data: refreshedIssue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                });
+
+                copilotAssigned = (refreshedIssue.assignees || []).some(a => a.login?.toLowerCase() === 'copilot');
+                if (copilotAssigned) {
+                  break;
+                }
+              } catch (error) {
+                lastError = error?.message || String(error);
+              }
+
+              await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+            }
+
+            if (!copilotAssigned) {
+              console.log(`Could not assign @copilot automatically: ${lastError || 'unknown error'}`);
             }
             
             console.log(`Issue created: ${issue.html_url}`);
@@ -227,7 +251,7 @@ jobs:
 
               O sistema de correção automática foi notificado desta falha e iniciará a análise em breve.
               
-              Você pode acompanhar o progresso aqui nesta issue. Se a correção automática não for bem-sucedida após 3 tentativas, a issue será escalada para revisão humana.`
+              Você pode acompanhar o progresso aqui nesta issue. Para falhas geradas pelo próprio build, o modo de correção é contínuo e sem escalonamento humano automático.`
             });
 
       - name: Generate workflow summary
