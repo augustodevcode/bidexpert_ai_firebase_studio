@@ -1045,6 +1045,7 @@ model PlatformSettings {
   logoMediaId                BigInt?
   themeColorsDark            Json?
   themeColorsLight           Json?
+  featureFlags               Json?
   BiddingSettings            BiddingSettings?
   IdMasks                    IdMasks?
   MapSettings                MapSettings?
