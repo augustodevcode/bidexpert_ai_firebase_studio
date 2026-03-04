@@ -6,9 +6,10 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ListChecks, Gavel, TrendingUp, Clock, Heart, Share2 } from 'lucide-react';
+import { ListChecks, Gavel, TrendingUp, Clock, Heart, Share2, Pencil } from 'lucide-react';
 import type { Auction } from '@/types';
 import { getAuctionStatusText, getAuctionStatusColor } from '@/lib/ui-helpers';
 import { useAuctionCountdown } from '../hooks/use-auction-countdown';
@@ -18,13 +19,15 @@ interface HeroSectionProps {
   onFavorite?: () => void;
   onShare?: () => void;
   isFavorited?: boolean;
+  editHref?: string;
 }
 
 export default function HeroSection({ 
   auction, 
   onFavorite, 
   onShare,
-  isFavorited = false 
+  isFavorited = false,
+  editHref,
 }: HeroSectionProps) {
   const { timeRemaining, isExpiringSoon, stage } = useAuctionCountdown(auction);
 
@@ -87,6 +90,21 @@ export default function HeroSection({
 
       {/* Top Right: Actions */}
       <div className="absolute top-4 right-4 flex gap-2 z-10">
+        {editHref && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="bg-background/70 hover:bg-background/90 text-foreground gap-1.5"
+            asChild
+            aria-label="Editar leilão"
+            data-ai-id="hero-edit-auction-btn"
+          >
+            <Link href={editHref}>
+              <Pencil className="h-4 w-4" />
+              <span className="hidden sm:inline">Editar</span>
+            </Link>
+          </Button>
+        )}
         <Button
           size="icon"
           variant="ghost"
