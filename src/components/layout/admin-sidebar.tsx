@@ -16,6 +16,7 @@ import {
     Boxes, Rocket, FileUp, BarChart3, BookOpen, UserCheck, MessageSquare, Files,
     ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash, Palette, Wrench, Zap, ArrowUpDown, Database, Eye
 } from 'lucide-react';
+import EnvInfoButton from '@/components/layout/env-info-button';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -226,6 +227,10 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                     </Accordion>
                 </nav>
             </ScrollArea>
+            {/* Dev Console button at the bottom of sidebar */}
+            <div className="p-2 border-t border-sidebar-border" data-ai-id="sidebar-dev-console-section">
+                <EnvInfoButton onLinkClick={onLinkClick} />
+            </div>
         </>
     );
 }
