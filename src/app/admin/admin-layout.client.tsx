@@ -19,6 +19,8 @@ const AdminQueryMonitor = dynamic(() => import('@/components/support/admin-query
 const QUERY_MONITOR_LS_KEY = 'admin_query_monitor_enabled';
 // Can be force-enabled via env var, otherwise reads from localStorage toggle in General Settings
 const ENV_QUERY_MONITOR = process.env.NEXT_PUBLIC_QUERY_MONITOR_ENABLED === 'true';
+import AdminQueryMonitor from '@/components/support/admin-query-monitor';
+import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
@@ -38,7 +40,7 @@ const ADMIN_ACCESS_PERMISSIONS = [
 ];
 
 export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
-  const { userProfileWithPermissions, loading } = useAuth();
+  const { userProfileWithPermissions, activeTenantId, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -92,6 +94,11 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   }
 
   const canAccessAdmin = hasAnyPermission(userProfileWithPermissions, ADMIN_ACCESS_PERMISSIONS);
+  const resolvedTenantId =
+    activeTenantId ||
+    userProfileWithPermissions.tenants?.[0]?.tenant?.id?.toString() ||
+    '1';
+  const resolvedUserEmail = userProfileWithPermissions.email || 'admin@bidexpert.ai';
 
   if (!canAccessAdmin) {
     return (
@@ -121,17 +128,23 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
       <WidgetPreferencesProvider>
         <div className="flex min-h-screen bg-secondary">
           <AdminSidebar />
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col pb-[calc(var(--admin-query-monitor-height,0px)+var(--dev-info-footer-height,0px))]">
             <AdminHeader
               onSearchClick={() => setCommandPaletteOpen(true)}
               onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
             />
-            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto pb-[calc(var(--admin-query-monitor-height,0px)+var(--dev-info-footer-height,0px)+1rem)]">
               <div className="w-full">
                 {children}
               </div>
             </main>
             {queryMonitorEnabled && <AdminQueryMonitor />}
+            <DevInfoIndicator
+              mode="admin-fixed"
+              tenantId={resolvedTenantId}
+              userEmail={resolvedUserEmail}
+            />
+            <AdminQueryMonitor />
           </div>
         </div>
         <WidgetConfigurationModal

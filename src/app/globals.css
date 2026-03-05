@@ -656,6 +656,12 @@
   overflow: visible;
 }
 
+/* Constrain Leaflet z-index within its container to prevent tiles from floating over the form */
+.leaflet-container {
+  z-index: 0 !important;
+  isolation: isolate;
+}
+
 .leaflet-popup-content {
   margin: 0;
   width: 340px !important;

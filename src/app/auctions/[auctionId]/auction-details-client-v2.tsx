@@ -265,6 +265,7 @@ export default function AuctionDetailsClientV2({
           isFavorited={isFavorited}
           onFavorite={() => setIsFavorited(!isFavorited)}
           onShare={() => {/* TODO: Implement share logic */}}
+          editHref={hasEditPermissions ? `/admin/auctions/${auction.id}/edit` : undefined}
         />
 
         {/* Stats Card */}

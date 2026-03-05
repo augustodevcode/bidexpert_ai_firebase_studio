@@ -430,7 +430,7 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, imageUrl: _imageUrl, ...restOfData } = data;
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, imageUrl: _imageUrl, imageMediaId, ...restOfData } = data;
       
       // Gera o publicId FORA da transação para evitar timeout por nested transactions
       const publicId = await generatePublicId(tenantId, 'auction');
@@ -450,6 +450,7 @@ export class AuctionService {
             City: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
             State: stateId ? { connect: { id: BigInt(stateId) } } : undefined,
             JudicialProcess: judicialProcessId ? { connect: { id: BigInt(judicialProcessId) } } : undefined,
+            CoverImage: imageMediaId ? { connect: { id: BigInt(imageMediaId as unknown as string) } } : undefined,
             updatedAt: new Date(),
           }
         });
@@ -496,7 +497,7 @@ export class AuctionService {
       }
       const internalId = BigInt(auctionToUpdate.id);
 
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, cityId, stateId, tenantId: _tenantId, imageUrl: _imageUrl, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, cityId, stateId, tenantId: _tenantId, imageUrl: _imageUrl, imageMediaId, ...restOfData } = data;
 
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
@@ -505,15 +506,24 @@ export class AuctionService {
         
         if (data.title) dataToUpdate.slug = slugify(data.title);
         
-        if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: BigInt(auctioneerId) } };
-        if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } }; // Corrected relation name
-        if (categoryId) dataToUpdate.category = { connect: { id: BigInt(categoryId) } };
-        if (cityId) dataToUpdate.cityRef = { connect: {id: BigInt(cityId) }};
-        if (stateId) dataToUpdate.stateRef = { connect: {id: BigInt(stateId) }};
+        if (auctioneerId) dataToUpdate.Auctioneer = { connect: { id: BigInt(auctioneerId) } };
+        if (sellerId) dataToUpdate.Seller = { connect: { id: BigInt(sellerId) } };
+        if (categoryId) dataToUpdate.LotCategory = { connect: { id: BigInt(categoryId) } };
+        if (cityId) dataToUpdate.City = { connect: { id: BigInt(cityId) } };
+        if (stateId) dataToUpdate.State = { connect: { id: BigInt(stateId) } };
         if (judicialProcessId) {
-          dataToUpdate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
+          dataToUpdate.JudicialProcess = { connect: { id: BigInt(judicialProcessId) } };
         } else if (data.hasOwnProperty('judicialProcessId')) {
-          dataToUpdate.judicialProcess = { disconnect: true };
+          dataToUpdate.JudicialProcess = { disconnect: true };
+        }
+        
+        // Handle CoverImage relation via imageMediaId
+        if (imageMediaId !== undefined) {
+          if (imageMediaId) {
+            dataToUpdate.CoverImage = { connect: { id: BigInt(imageMediaId as unknown as string) } };
+          } else {
+            dataToUpdate.CoverImage = { disconnect: true };
+          }
         }
         
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);

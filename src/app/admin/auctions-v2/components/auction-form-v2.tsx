@@ -965,13 +965,15 @@ export default function AuctionFormV2({
               </div>
 
               {/* Right Column - Map Preview */}
-              <div className="space-y-4">
+              <div className="space-y-4 relative isolate" data-ai-id="auction-map-column">
                 <FormLabel>Mapa de Localização</FormLabel>
-                <LocationMapPreview
-                  latitude={watchedLatitude}
-                  longitude={watchedLongitude}
-                  setValue={form.setValue}
-                />
+                <div className="relative z-0 overflow-hidden rounded-md" data-ai-id="auction-map-wrapper">
+                  <LocationMapPreview
+                    latitude={watchedLatitude}
+                    longitude={watchedLongitude}
+                    setValue={form.setValue}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Clique no mapa para definir a localização exata do leilão. 
                   O mapa será atualizado automaticamente após a busca do CEP.

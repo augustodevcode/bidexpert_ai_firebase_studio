@@ -4097,6 +4097,22 @@ async function main() {
         searchItemsPerPage: 12,
         showCountdownOnCards: true,
         showCountdownOnLotDetail: true,
+        featureFlags: {
+          blockchainEnabled: false,
+          blockchainNetwork: 'NONE',
+          softCloseEnabled: true,
+          softCloseMinutes: 5,
+          lawyerPortalEnabled: true,
+          lawyerMonetizationModel: 'SUBSCRIPTION',
+          lawyerSubscriptionPrice: 29900,
+          fipeIntegrationEnabled: false,
+          cartorioIntegrationEnabled: false,
+          tribunalIntegrationEnabled: false,
+          pwaEnabled: true,
+          offlineFirstEnabled: false,
+          maintenanceMode: false,
+          debugLogsEnabled: false,
+        },
         IdMasks: {
           create: {
             auctionCodeMask: 'AUC-{YYYY}-{####}',

@@ -45,6 +45,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useCurrency } from '@/contexts/currency-context';
 import CurrencyFlag from '@/components/ui/currency-flag';
+import { ThemeToggle } from './theme-toggle';
 
 type HeaderCSSVars = CSSProperties & { '--header-height'?: string };
 
@@ -437,6 +438,9 @@ export default function Header({
                         </nav>
                     </ScrollArea>
                     <div className="footer-mobile-sheet" data-ai-id="header-mobile-footer">
+                      <div className="mb-3" data-ai-id="header-mobile-theme-toggle">
+                        <ThemeToggle variant="full" />
+                      </div>
                       <UserNav />
                     </div>
                 </SheetContent>
@@ -605,6 +609,10 @@ export default function Header({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <div data-ai-id="header-theme-toggle">
+              <ThemeToggle />
+            </div>
             <UserNav />
           </div>
         </div>

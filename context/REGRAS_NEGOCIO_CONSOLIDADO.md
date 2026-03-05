@@ -104,6 +104,25 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 - **Quando** o usuário abre a página de edição
 - **Então** o mapa mostra o marcador imediatamente e aplica `flyTo` no ponto, sem depender da busca de CEP
 
+### RN-MAP-001: Modal da Busca por Mapa sobreposto ao site
+✅ A rota `/map-search` DEVE abrir em modo modal fullscreen sobre o site (estilo Booking), sem deslocamento por `translate` central.
+✅ O overlay do modal DEVE usar z-index acima do cabeçalho fixo global (baseline `z-[3000]` para overlay e `z-[3001]` para conteúdo).
+✅ O fechamento do modal DEVE retornar ao fluxo anterior via `router.back()`.
+
+**Cenário BDD - Sobreposição correta**
+- **Dado** que o usuário está em uma página com cabeçalho fixo
+- **Quando** acessa `/map-search`
+- **Então** o modal cobre toda a viewport e fica acima do cabeçalho, sem sobreposição visual indevida.
+
+### RN-MAP-002: Hover da lista deve centralizar lote no mapa
+✅ Ao passar o mouse em um item da lista de resultados do map-search, o mapa DEVE centralizar o respectivo lote no centro da viewport (`flyTo`/`setView`) mantendo o zoom atual.
+✅ O popup do marcador correspondente DEVE abrir no hover para reforçar contexto visual.
+
+**Cenário BDD - Hover com recentralização**
+- **Dado** uma lista de lotes com coordenadas válidas no map-search
+- **Quando** o usuário passa o mouse em um item da lista
+- **Então** o mapa recentraliza no lote destacado e exibe o popup do marcador correspondente.
+
 ### RN-017: CTA "Ir para pregão online"
 ✅ O CTA de pregão online deve apontar para `/auctions/{auctionId}/live`.
 ✅ O CTA só deve aparecer quando o leilão estiver na janela ativa de pregão:
