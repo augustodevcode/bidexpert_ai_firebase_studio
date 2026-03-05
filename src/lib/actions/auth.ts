@@ -13,6 +13,7 @@ import { Prisma } from '@prisma/client';
 import { getSession } from '@/server/lib/session';
 import { headers } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { shouldAllowDbFallback, getEnvironmentLabel } from '@/lib/db-resilience';
 
 let cachedDefaultTenantId: string | null = null;
 let ensureDefaultTenantPromise: Promise<string> | null = null;
@@ -117,13 +118,17 @@ async function ensureDefaultTenant(): Promise<string> {
             return tenant.id.toString();
         })()
         .catch((error) => {
-            // Se falhar devido a problemas de BD (ex.: credenciais, conta bloqueada),
-            // em ambiente de desenvolvimento não queremos travar todo o servidor.
+            // Se falhar devido a problemas de BD (ex.: credenciais, conta bloqueada,
+            // Prisma Data Proxy inacessível no Vercel Preview), não queremos travar o servidor.
             ensureDefaultTenantPromise = null;
 
             console.error('Erro durante ensureDefaultTenant:', error);
-            if (process.env.NODE_ENV !== 'production') {
-                console.warn('Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.');
+            if (shouldAllowDbFallback(error)) {
+                console.warn(
+                    `[ensureDefaultTenant] ${getEnvironmentLabel()}: DB indisponível. ` +
+                    'Usando fallback tenantId=1. Verifique DATABASE_URL e a integração ' +
+                    'Prisma/Neon/Supabase no painel da Vercel.'
+                );
                 return '1';
             }
 
@@ -154,8 +159,12 @@ export async function getTenantIdFromRequest(isPublicCall = false): Promise<stri
             return await ensureDefaultTenant();
         } catch (error) {
             console.error("Falha crítica ao garantir a existência do tenant padrão em chamada pública:", error);
-            if (process.env.NODE_ENV !== 'production') {
-                console.warn('Ambiente de desenvolvimento: fallback tenantId=1 será usado para chamadas públicas.');
+            if (shouldAllowDbFallback(error)) {
+                console.warn(
+                    `[getTenantIdFromRequest] ${getEnvironmentLabel()}: DB indisponível. ` +
+                    'Usando fallback tenantId=1 para chamada pública. Verifique DATABASE_URL ' +
+                    'e a integração Prisma/Neon/Supabase no painel da Vercel.'
+                );
                 return '1';
             }
             throw new Error("Falha ao inicializar o tenant principal do sistema.");
