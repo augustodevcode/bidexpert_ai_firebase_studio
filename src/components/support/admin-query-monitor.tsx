@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 interface QueryLog {
   id: string;
@@ -122,7 +121,7 @@ export default function AdminQueryMonitor() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] text-slate-100 font-sans">
+    <div className="fixed bottom-[var(--dev-info-footer-height,0px)] left-0 right-0 z-50 bg-slate-900 border-t border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] text-slate-100 font-sans">
       {/* Header - Always Visible */}
       <div className="flex items-center justify-between px-4 py-2 h-12">
         <div className="flex items-center gap-6">
@@ -210,9 +209,6 @@ export default function AdminQueryMonitor() {
       >
         <div className="h-full overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <div className="space-y-4" data-ai-id="query-monitor-content">
-            <div data-ai-id="query-monitor-dev-info">
-              <DevInfoIndicator />
-            </div>
             {queries.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-500 py-12">
                 <Database className="h-12 w-12 mb-3 opacity-20" />

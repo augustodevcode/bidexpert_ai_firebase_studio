@@ -12,14 +12,16 @@ import type { LatLngBounds } from 'leaflet';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, User, Heart, ChevronUp } from 'lucide-react';
-import type { Lot, Auction, PlatformSettings, DirectSaleOffer } from '@/types';
+import { Search, User, Heart, X } from 'lucide-react';
+import type { Lot, Auction, PlatformSettings, DirectSaleOffer, LotCategory } from '@/types';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import BidExpertFilter, { type ActiveFilters } from '@/components/BidExpertFilter';
 import {
   resolveDatasetFromParam,
   selectDatasetItems,
@@ -36,7 +38,47 @@ const MapSearchComponent = dynamic(() => import('@/components/map-search-compone
 
 const DEFAULT_CENTER: [number, number] = [-14.235, -51.9253];
 
+const FALLBACK_MAP_SEARCH_ITEMS: Lot[] = [
+  {
+    id: 'fallback-lot-sp',
+    title: 'Apartamento de Teste - São Paulo',
+    description: 'Fallback para manter experiência funcional do map-search.',
+    status: 'ABERTO_PARA_LANCES',
+    cityName: 'São Paulo',
+    stateUf: 'SP',
+    mapAddress: 'Av. Paulista, 1000',
+    latitude: -23.5505,
+    longitude: -46.6333,
+    imageUrl: 'https://picsum.photos/seed/map-fallback-sp/600/400',
+    auctioneerName: 'Leiloeiro Demo',
+    marketValue: 780000,
+    startingBid: 530000,
+    currentBid: 540000,
+  } as unknown as Lot,
+  {
+    id: 'fallback-lot-rj',
+    title: 'Casa de Teste - Rio de Janeiro',
+    description: 'Fallback para manter experiência funcional do map-search.',
+    status: 'ABERTO_PARA_LANCES',
+    cityName: 'Rio de Janeiro',
+    stateUf: 'RJ',
+    mapAddress: 'Av. Atlântica, 500',
+    latitude: -22.9068,
+    longitude: -43.1729,
+    imageUrl: 'https://picsum.photos/seed/map-fallback-rj/600/400',
+    auctioneerName: 'Leiloeiro Demo',
+    marketValue: 1250000,
+    startingBid: 910000,
+    currentBid: 930000,
+  } as unknown as Lot,
+];
+
 type MapSearchItem = Lot | Auction | DirectSaleOffer;
+
+const hasKnownCoordinates = (item: MapSearchItem) => {
+  const candidate = item as unknown as { latitude?: number | null; longitude?: number | null };
+  return typeof candidate.latitude === 'number' && typeof candidate.longitude === 'number';
+};
 
 const formatCurrency = (value: number | null | undefined) => {
   if (!value || Number.isNaN(value)) {
@@ -161,7 +203,11 @@ function MapSearchPageContent() {
   const searchParamsHook = useSearchParams();
 
   const cacheSnapshot = useMemo(() => readMapCacheSnapshot(), []);
-  const warmCacheRef = useRef<boolean>(Boolean(cacheSnapshot.lots || cacheSnapshot.auctions || cacheSnapshot.directSales));
+  const hasWarmCacheData =
+    (cacheSnapshot.lots?.length ?? 0) > 0 ||
+    (cacheSnapshot.auctions?.length ?? 0) > 0 ||
+    (cacheSnapshot.directSales?.length ?? 0) > 0;
+  const warmCacheRef = useRef<boolean>(hasWarmCacheData);
 
   const [allAuctions, setAllAuctions] = useState<Auction[]>(cacheSnapshot.auctions ?? []);
   const [allLots, setAllLots] = useState<Lot[]>(cacheSnapshot.lots ?? []);
@@ -182,10 +228,21 @@ function MapSearchPageContent() {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
 
-  const [discountFilter, setDiscountFilter] = useState(20);
-  const [priceMin, setPriceMin] = useState('');
-  const [priceMax, setPriceMax] = useState('');
-  const [auctioneerFilter, setAuctioneerFilter] = useState('all');
+  /* ── Full filter state (parity with BidExpertFilter) ── */
+  const [allCategories, setAllCategories] = useState<LotCategory[]>([]);
+  const [uniqueLocations, setUniqueLocations] = useState<string[]>([]);
+  const [uniqueSellers, setUniqueSellers] = useState<string[]>([]);
+  const defaultActiveFilters: ActiveFilters = {
+    modality: 'TODAS',
+    category: 'TODAS',
+    priceRange: [0, 1000000],
+    locations: [],
+    sellers: [],
+    makes: [],
+    models: [],
+    status: [],
+  };
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(defaultActiveFilters);
 
   const boundsAnimationFrame = useRef<number | null>(null);
   const visibilityFrame = useRef<number | null>(null);
@@ -211,44 +268,95 @@ function MapSearchPageContent() {
     setIsLoading(true);
 
     try {
-      const [auctionsResult, lotsResult, settingsResult, directSalesResult] = await Promise.all([
+      const [auctionsResult, lotsResult, settingsResult, directSalesResult, categoriesResult, sellersResult] = await Promise.allSettled([
         getAuctions(true),
         getLots(undefined, true),
         getPlatformSettings(),
         getDirectSaleOffers(),
+        getLotCategories(),
+        getSellers(true),
       ]);
 
-      const auctions = Array.isArray(auctionsResult)
-        ? auctionsResult
-        : (typeof auctionsResult === 'object' && auctionsResult !== null && 'auctions' in auctionsResult
-            ? ((auctionsResult as { auctions?: Auction[] }).auctions ?? [])
-            : []);
+      const auctionsSource = auctionsResult.status === 'fulfilled' ? auctionsResult.value : [];
+      const lotsSource = lotsResult.status === 'fulfilled' ? lotsResult.value : [];
+      const settingsSource = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
+      const directSalesSource = directSalesResult.status === 'fulfilled' ? directSalesResult.value : [];
+      const categoriesSource = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
+      const sellersSource = sellersResult.status === 'fulfilled' ? sellersResult.value : [];
 
-      const lots = Array.isArray(lotsResult)
-        ? lotsResult
-        : (typeof lotsResult === 'object' && lotsResult !== null && 'lots' in lotsResult
-            ? ((lotsResult as { lots?: Lot[] }).lots ?? [])
-            : []);
+      const auctions = Array.isArray(auctionsSource)
+        ? auctionsSource
+        : (typeof auctionsSource === 'object' && auctionsSource !== null && 'auctions' in auctionsSource
+          ? ((auctionsSource as { auctions?: Auction[] }).auctions ?? [])
+          : []);
+
+      const lots = Array.isArray(lotsSource)
+        ? lotsSource
+        : (typeof lotsSource === 'object' && lotsSource !== null && 'lots' in lotsSource
+          ? ((lotsSource as { lots?: Lot[] }).lots ?? [])
+          : []);
 
       const settings =
-        typeof settingsResult === 'object' && settingsResult !== null && 'success' in settingsResult
-          ? ((settingsResult as { success?: boolean; settings?: PlatformSettings | null }).settings ?? null)
-          : (settingsResult as PlatformSettings | null);
+        typeof settingsSource === 'object' && settingsSource !== null && 'success' in settingsSource
+          ? ((settingsSource as { success?: boolean; settings?: PlatformSettings | null }).settings ?? null)
+          : (settingsSource as PlatformSettings | null);
 
-      const directSales = Array.isArray(directSalesResult)
-        ? directSalesResult
-        : (typeof directSalesResult === 'object' && directSalesResult !== null && 'offers' in directSalesResult
-            ? ((directSalesResult as { offers?: DirectSaleOffer[] }).offers ?? [])
-            : []);
+      const directSales = Array.isArray(directSalesSource)
+        ? directSalesSource
+        : (typeof directSalesSource === 'object' && directSalesSource !== null && 'offers' in directSalesSource
+          ? ((directSalesSource as { offers?: DirectSaleOffer[] }).offers ?? [])
+          : []);
+
+      const categories = Array.isArray(categoriesSource) ? categoriesSource : [];
+      const sellers = Array.isArray(sellersSource) ? sellersSource : [];
+
+      const shouldUseFallbackDataset =
+        auctions.length === 0 &&
+        lots.length === 0 &&
+        directSales.length === 0;
+
+      const lotsWithFallback = shouldUseFallbackDataset ? FALLBACK_MAP_SEARCH_ITEMS : lots;
+
+      const failedSources: string[] = [];
+      if (auctionsResult.status === 'rejected') failedSources.push('leilões');
+      if (lotsResult.status === 'rejected') failedSources.push('lotes');
+      if (settingsResult.status === 'rejected') failedSources.push('configurações');
+      if (directSalesResult.status === 'rejected') failedSources.push('venda direta');
+
+      if (failedSources.length === 4) {
+        throw new Error('Todas as fontes de dados falharam.');
+      }
+
+      if (failedSources.length > 0) {
+        console.warn('[MAP SEARCH] Partial dataset load failure:', failedSources.join(', '));
+      }
 
       setAllAuctions(auctions);
-      setAllLots(lots);
+      setAllLots(lotsWithFallback);
       setAllDirectSales(directSales);
       setPlatformSettings(settings || null);
 
+      /* ── Build filter data: categories, locations, sellers ── */
+      setAllCategories(categories as LotCategory[]);
+
+      const locationSet = new Set<string>();
+      const allItems = [...auctions, ...lotsWithFallback, ...directSales] as any[];
+      allItems.forEach((item) => {
+        const city = item.locationCity || item.cityName || item.city;
+        const state = item.locationState || item.stateUf || item.state;
+        if (city && state) locationSet.add(`${city} - ${state}`);
+      });
+      setUniqueLocations(Array.from(locationSet).sort());
+
+      const sellerNames = sellers.map((s: any) => s.name || s.companyName || '').filter(Boolean);
+      setUniqueSellers(Array.from(new Set(sellerNames)).sort() as string[]);
+
+      /* ── Trigger fitBounds after data loads so map zooms to items ── */
+      setTimeout(() => setFitBoundsSignal((prev) => prev + 1), 300);
+
       persistMapCacheSnapshot({
         auctions,
-        lots,
+        lots: lotsWithFallback,
         directSales,
         settings: settings || null,
       });
@@ -314,60 +422,129 @@ function MapSearchPageContent() {
 
   const searchMatchingItems = useMemo(() => filterBySearchTerm(datasetItems, deferredSearchTerm), [datasetItems, deferredSearchTerm]);
 
-  const auctioneerOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    searchMatchingItems.forEach((item) => {
-      const name = getAuctioneerName(item).trim();
-      if (name) {
-        map.set(name.toLowerCase(), name);
-      }
-    });
-    return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
-  }, [searchMatchingItems]);
-
   const advancedFilteredItems = useMemo(() => {
     let items = searchMatchingItems;
 
-    if (auctioneerFilter !== 'all') {
-      items = items.filter((item) => getAuctioneerName(item).toLowerCase() === auctioneerFilter.toLowerCase());
-    }
-
-    if (priceMin) {
-      const min = Number(priceMin);
-      items = items.filter((item) => getCurrentValue(item) >= min);
-    }
-
-    if (priceMax) {
-      const max = Number(priceMax);
-      items = items.filter((item) => getCurrentValue(item) <= max);
-    }
-
-    if (discountFilter > 0) {
+    /* Category filter */
+    if (activeFilters.category !== 'TODAS') {
+      const cat = allCategories.find((c) => c.slug === activeFilters.category);
       items = items.filter((item) => {
-        const market = getMarketValue(item);
-        if (market <= 0) {
-          return true;
-        }
-        return getDiscountPercent(item) >= discountFilter;
+        const anyItem = item as any;
+        if (cat && anyItem.categoryId === cat.id) return true;
+        const itemCatName = anyItem.type || anyItem.category?.name || '';
+        return itemCatName && cat && itemCatName.toLowerCase().includes(cat.name.toLowerCase());
+      });
+    }
+
+    /* Price range filter */
+    if (activeFilters.priceRange[0] > 0 || activeFilters.priceRange[1] < 1000000) {
+      items = items.filter((item) => {
+        const val = getCurrentValue(item);
+        return val >= activeFilters.priceRange[0] && val <= activeFilters.priceRange[1];
+      });
+    }
+
+    /* Locations filter */
+    if (activeFilters.locations.length > 0) {
+      items = items.filter((item) => {
+        const anyItem = item as any;
+        const city = anyItem.locationCity || anyItem.cityName || anyItem.city || '';
+        const state = anyItem.locationState || anyItem.stateUf || anyItem.state || '';
+        const loc = city && state ? `${city} - ${state}` : '';
+        return loc && activeFilters.locations.includes(loc);
+      });
+    }
+
+    /* Sellers filter */
+    if (activeFilters.sellers.length > 0) {
+      items = items.filter((item) => {
+        const anyItem = item as any;
+        const seller = anyItem.sellerName || anyItem.seller?.name || '';
+        return seller && activeFilters.sellers.includes(seller);
+      });
+    }
+
+    /* Status filter */
+    if (activeFilters.status.length > 0) {
+      items = items.filter((item) => item.status && activeFilters.status.includes(item.status as string));
+    }
+
+    /* Modality filter (auctions) */
+    if (activeFilters.modality !== 'TODAS') {
+      items = items.filter((item) => {
+        const anyItem = item as any;
+        return anyItem.auctionType?.toUpperCase() === activeFilters.modality;
+      });
+    }
+
+    /* Offer type filter (direct sales) */
+    if (activeFilters.offerType && activeFilters.offerType !== 'ALL') {
+      items = items.filter((item) => {
+        const anyItem = item as any;
+        return anyItem.offerType === activeFilters.offerType;
+      });
+    }
+
+    /* Praça filter */
+    if (activeFilters.praça && activeFilters.praça !== 'todas') {
+      items = items.filter((item) => {
+        const stages = (item as any).auctionStages?.length || 0;
+        if (activeFilters.praça === 'unica') return stages === 1;
+        if (activeFilters.praça === 'multiplas') return stages > 1;
+        return true;
+      });
+    }
+
+    /* Date range filter */
+    if (activeFilters.startDate) {
+      items = items.filter((item) => {
+        const d = (item as any).startDate || (item as any).createdAt;
+        return d && new Date(d) >= activeFilters.startDate!;
+      });
+    }
+    if (activeFilters.endDate) {
+      items = items.filter((item) => {
+        const d = (item as any).endDate || (item as any).updatedAt;
+        return d && new Date(d) <= activeFilters.endDate!;
       });
     }
 
     return items;
-  }, [searchMatchingItems, auctioneerFilter, priceMin, priceMax, discountFilter]);
+  }, [searchMatchingItems, activeFilters, allCategories]);
 
-  const displayedItems = useMemo(() => filterByVisibleIds(advancedFilteredItems, deferredVisibleIds), [advancedFilteredItems, deferredVisibleIds]);
+  const displayedItems = useMemo(() => {
+    if (deferredVisibleIds === null) {
+      return advancedFilteredItems;
+    }
+
+    if (deferredVisibleIds.length === 0) {
+      const datasetHasCoordinates = advancedFilteredItems.some(hasKnownCoordinates);
+      if (!datasetHasCoordinates) {
+        return advancedFilteredItems;
+      }
+    }
+
+    return filterByVisibleIds(advancedFilteredItems, deferredVisibleIds);
+  }, [advancedFilteredItems, deferredVisibleIds]);
 
   const mapItemType: 'lots' | 'auctions' | 'direct_sale' = searchType === 'tomada_de_precos' ? 'auctions' : searchType;
 
   const resetFilters = useCallback(() => {
     setVisibleItemIds(null);
     setActiveBounds(null);
-    setDiscountFilter(20);
-    setPriceMin('');
-    setPriceMax('');
-    setAuctioneerFilter('all');
+    setActiveFilters(defaultActiveFilters);
     setFitBoundsSignal((prev) => prev + 1);
+  }, [defaultActiveFilters]);
+
+  const handleFilterSubmit = useCallback((filters: ActiveFilters) => {
+    setActiveFilters(filters);
+    /* After applying filters, re-fit map bounds to show filtered items */
+    setTimeout(() => setFitBoundsSignal((prev) => prev + 1), 100);
   }, []);
+
+  const handleFilterReset = useCallback(() => {
+    resetFilters();
+  }, [resetFilters]);
 
   const handleSearch = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -382,88 +559,31 @@ function MapSearchPageContent() {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalToggle}>
-      <DialogContent className="h-[100vh] w-[100vw] max-w-none border-0 bg-background p-0 shadow-none">
+      <DialogContent className="inset-0 h-screen w-screen max-w-none translate-x-0 translate-y-0 rounded-none border-0 bg-background p-0 shadow-none">
         <DialogTitle className="sr-only">Busca geolocalizada de leilões</DialogTitle>
         <DialogDescription className="sr-only">Layout com filtros, resultados e mapa interativo.</DialogDescription>
 
+        {/* Floating Close Button */}
+        <button
+          onClick={() => handleModalToggle(false)}
+          data-ai-id="map-search-close-modal"
+          className="absolute right-4 top-4 z-[1000] flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-lg hover:bg-muted transition-colors border border-border/50 text-foreground"
+          aria-label="Voltar para a busca"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
         <div className="flex h-full w-full overflow-hidden bg-muted/30" data-ai-id="map-search-shell">
-          <aside className="h-full w-[280px] flex-shrink-0 overflow-y-auto border-r border-border/70 bg-card px-5 py-6" data-ai-id="map-search-filters">
-            <h1 className="text-3xl font-bold text-foreground">Filtros</h1>
-
-            <div className="mt-8 space-y-8">
-              <div>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-foreground">Filtros Avançados para Investidores</h2>
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="mt-6">
-                  <label className="block text-sm text-muted-foreground">% de Desconto sobre o Valor de Mercado</label>
-                  <div className="relative mt-5">
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={discountFilter}
-                      onChange={(e) => setDiscountFilter(Number(e.target.value))}
-                      className="map-discount-range"
-                      title="Desconto mínimo"
-                      aria-label="Desconto mínimo"
-                      data-ai-id="map-discount-range"
-                    />
-                    <div className="mt-3 flex justify-between text-xs text-muted-foreground">
-                      <span>0%</span>
-                      <span>{discountFilter}%</span>
-                      <span>50%</span>
-                      <span>100%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-foreground">Valor de Avaliação</label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={priceMin}
-                    onChange={(e) => setPriceMin(e.target.value)}
-                    placeholder="1000"
-                    className="h-10"
-                    data-ai-id="map-price-min"
-                  />
-                  <span className="text-muted-foreground">-</span>
-                  <Input
-                    type="number"
-                    value={priceMax}
-                    onChange={(e) => setPriceMax(e.target.value)}
-                    placeholder="3000"
-                    className="h-10"
-                    data-ai-id="map-price-max"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-foreground">Leiloeiro</label>
-                <Select value={auctioneerFilter} onValueChange={setAuctioneerFilter}>
-                  <SelectTrigger className="h-10" data-ai-id="map-auctioneer-select">
-                    <SelectValue placeholder="Leiloeiro" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Leiloeiro</SelectItem>
-                    {auctioneerOptions.map((auctioneer) => (
-                      <SelectItem key={auctioneer} value={auctioneer}>
-                        {auctioneer}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button variant="outline" onClick={resetFilters} data-ai-id="map-reset-filter">
-                Limpar filtros
-              </Button>
-            </div>
+          <aside className="h-full w-[300px] flex-shrink-0 overflow-y-auto border-r border-border/70 bg-card" data-ai-id="map-search-filters">
+            <BidExpertFilter
+              categories={allCategories}
+              locations={uniqueLocations}
+              sellers={uniqueSellers}
+              onFilterSubmit={handleFilterSubmit}
+              onFilterReset={handleFilterReset}
+              initialFilters={activeFilters}
+              filterContext={searchType === 'tomada_de_precos' ? 'tomada_de_precos' : searchType === 'direct_sale' ? 'directSales' : 'lots'}
+            />
           </aside>
 
           <main className="flex h-full w-[420px] min-w-[360px] flex-col border-r border-border/70 bg-card" data-ai-id="map-search-results">
@@ -517,7 +637,24 @@ function MapSearchPageContent() {
               onItemsInViewChange={handleVisibleItemsChange}
               fitBoundsSignal={fitBoundsSignal}
               hoveredItemId={hoveredItemId}
-              onSearchInArea={() => setVisibleItemIds((prev) => (prev ? [...prev] : prev))}
+              onSearchInArea={() => {
+                /* Force the list to re-sync with the current map viewport */
+                if (activeBounds) {
+                  const idsInBounds: string[] = [];
+                  advancedFilteredItems.forEach((item) => {
+                    const anyItem = item as any;
+                    const lat = typeof anyItem.latitude === 'number' ? anyItem.latitude : null;
+                    const lng = typeof anyItem.longitude === 'number' ? anyItem.longitude : null;
+                    if (lat !== null && lng !== null && activeBounds.contains([lat, lng])) {
+                      idsInBounds.push(String(item.id));
+                    }
+                  });
+                  setVisibleItemIds(idsInBounds);
+                } else {
+                  /* No bounds tracked yet — fit to all items */
+                  setFitBoundsSignal((prev) => prev + 1);
+                }
+              }}
               mapSettings={platformSettings?.mapSettings ?? null}
               platformSettings={platformSettings}
             />

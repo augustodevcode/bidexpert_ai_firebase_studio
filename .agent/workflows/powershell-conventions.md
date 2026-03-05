@@ -61,7 +61,7 @@ $env:DATABASE_URL="mysql://root:senha@localhost:3306/bidexpert_dev"
 npx prisma generate
 
 # [23/02/2026 14:30:25] Iniciar servidor
-node .vscode/start-9006-dev.js
+docker compose -f docker-compose.dev-isolated.yml up -d
 ```
 
 #### **Em Markdown (antes de cada bloco PowerShell)**
@@ -77,7 +77,7 @@ $env:PORT=9006
 **[23/02/2026 14:30:25]** Iniciar servidor de desenvolvimento:
 
 \`\`\`powershell
-node .vscode/start-9006-dev.js
+docker compose -f docker-compose.dev-isolated.yml up -d
 \`\`\`
 ```
 
@@ -148,17 +148,25 @@ npm run typecheck
 node .vscode/start-9006-dev.js
 ```
 
-### 3.2 Padrão: Criar Branch com Timestamp
+### 3.2 Padrão: Criar Worktree + Branch com Timestamp
 
+**Via Script Helper (RECOMENDADO):**
+```powershell
+# [23/02/2026 14:30:15] Criar worktree com auto-detecção de porta
+./scripts/create-worktree.ps1 -Tipo feat -Descricao auction-filter -Start
+```
+
+**Manual:**
 ```powershell
 # [23/02/2026 14:30:15] Fazer fetch de demo-stable
-git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
+git fetch origin demo-stable
 
-# [23/02/2026 14:30:20] Criar branch com timestamp automático
+# [23/02/2026 14:30:20] Criar worktree com branch e timestamp automático
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-git checkout -b feat/auction-filter-$timestamp
+git worktree add worktrees\bidexpert-feat-auction-filter -b feat/auction-filter-$timestamp origin/demo-stable
 
-# [23/02/2026 14:30:21] Verificar branch criada
+# [23/02/2026 14:30:21] Entrar no worktree e verificar
+Set-Location worktrees\bidexpert-feat-auction-filter
 git branch --show-current
 ```
 
@@ -246,9 +254,10 @@ Write-Host "[$(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')] === FIM: [Nome da Tarefa
 Toda tarefa de branch deve incluir:
 
 ```powershell
-# [23/02/2026 14:30:15] Criar branch feature
+# [23/02/2026 14:30:15] Criar worktree + branch feature
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-git checkout -b feat/auction-filter-$timestamp
+git worktree add worktrees\bidexpert-feat-auction-filter -b feat/auction-filter-$timestamp origin/demo-stable
+Set-Location worktrees\bidexpert-feat-auction-filter
 ```
 
 ### 5.2 Em Scripts de Inicialização

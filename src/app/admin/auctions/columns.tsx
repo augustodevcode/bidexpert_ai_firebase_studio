@@ -9,7 +9,8 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { Eye, Pencil, Trash2, LayoutDashboard } from 'lucide-react';
+import { Eye, Pencil, Trash2, LayoutDashboard, Tv } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -90,25 +91,44 @@ export const createColumns = ({ handleDelete, onOpenDashboard }: { handleDelete:
     cell: ({ row }) => {
       const auction = row.original;
       const canDelete = auction.status === 'RASCUNHO' || auction.status === 'CANCELADO';
+      const canMonitor = ['EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'EM_PREGAO'].includes(auction.status);
+      const isLive = auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'EM_PREGAO';
       return (
-        <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+        <div className="flex items-center justify-end gap-1" data-ai-id="auction-row-actions">
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild data-ai-id="auction-view-btn">
             <Link href={`/auctions/${auction.publicId || auction.id}`} target="_blank">
               <Eye className="h-4 w-4" />
               <span className="sr-only">Visualizar Leilão</span>
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenDashboard(auction)}>
+          {canMonitor && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className={`h-8 w-8 ${isLive ? 'text-destructive' : ''}`} asChild data-ai-id="auction-monitor-btn">
+                    <Link href={`/auctions/${auction.publicId || auction.id}/monitor`} target="_blank" rel="noopener noreferrer">
+                      <Tv className={`h-4 w-4 ${isLive ? 'animate-pulse' : ''}`} />
+                      <span className="sr-only">Monitor do Pregão</span>
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isLive ? 'Pregão AO VIVO — Abrir Monitor' : 'Abrir Monitor do Pregão'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenDashboard(auction)} data-ai-id="auction-dashboard-btn">
             <LayoutDashboard className="h-4 w-4" />
             <span className="sr-only">Preparar Leilão</span>
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild data-ai-id="auction-edit-btn">
             <Link href={`/admin/auctions-v2/${auction.publicId || auction.id}`}>
               <Pencil className="h-4 w-4" />
               <span className="sr-only">Editar</span>
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(auction.id)} disabled={!canDelete} title={!canDelete ? "Apenas leilões em Rascunho ou Cancelado podem ser excluídos" : "Excluir Leilão"}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(auction.id)} disabled={!canDelete} title={!canDelete ? "Apenas leilões em Rascunho ou Cancelado podem ser excluídos" : "Excluir Leilão"} data-ai-id="auction-delete-btn">
             <Trash2 className="h-4 w-4 text-destructive" />
             <span className="sr-only">Excluir</span>
           </Button>

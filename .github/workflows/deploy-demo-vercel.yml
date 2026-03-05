@@ -82,6 +82,8 @@ jobs:
           POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
           POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
           DATABASE_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
+          PRISMA_DEMO_POSTGRES_URL: ${{ secrets.PRISMA_DEMO_POSTGRES_URL || secrets.PRISMA_DEMO_PRISMA_DATABASE_URL || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.DEMO_NEXTAUTH_SECRET }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-demo-secret-key-at-least-32-chars-long!' }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.DEMO_APP_URL }}
@@ -123,6 +125,8 @@ jobs:
           DATABASE_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
           POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
           POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
+          PRISMA_DEMO_POSTGRES_URL: ${{ secrets.PRISMA_DEMO_POSTGRES_URL || secrets.PRISMA_DEMO_PRISMA_DATABASE_URL || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
         
       - name: 🗃️ Push Schema to Database
         if: >
@@ -180,6 +184,8 @@ jobs:
           DATABASE_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
           POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
           POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
+          PRISMA_DEMO_POSTGRES_URL: ${{ secrets.PRISMA_DEMO_POSTGRES_URL || secrets.PRISMA_DEMO_PRISMA_DATABASE_URL || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
 
   # ============================================================================
   # JOB 3: Status Report

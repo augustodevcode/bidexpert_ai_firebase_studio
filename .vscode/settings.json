@@ -51,6 +51,7 @@
   },
   "chat.mcp.gallery.enabled": true,
   "chat.tips.enabled": true,
+  "chat.tools.autoApprove": true,
   "chat.tools.terminal.autoReplyToPrompts": true,
   "chat.tools.terminal.blockDetectedFileWrites": "never",
   "chat.tools.terminal.ignoreDefaultAutoApproveRules": true,

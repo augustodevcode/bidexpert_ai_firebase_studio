@@ -87,27 +87,80 @@ main (produção - PROTEGIDO)
    - Tipos: `feat/`, `fix/`, `chore/`, `docs/`, `test/`
    - Exemplo: `feat/auction-filter-20260131-1430`
 
+## 🌲 Isolamento Primário: Git Worktree
+
+O modelo de isolamento **preferido** no BidExpert é via **Git Worktree** — mais rápido que Docker e com isolamento de branch nativo.
+
+### Scripts Helper (RECOMENDADO)
+```powershell
+# Criar worktree (auto-detecta porta livre, npm install, configura .env.local)
+./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
+
+# Remover worktree após merge
+./scripts/remove-worktree.ps1 -Dir worktrees\bidexpert-feat-minha-feature -DeleteBranch
+```
+
+### Manual
+```powershell
+# Ver worktrees e portas já em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
+
+# Criar worktree para nova task (porta livre, ex: 9006)
+$porta = 9006
+$branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add worktrees\bidexpert-feat-minha-feature -b $branch origin/demo-stable
+
+Set-Location worktrees\bidexpert-feat-minha-feature
+$env:PORT = $porta ; npm install ; npm run dev
+```
+
+> 📖 **Skill completa:** `.github/skills/git-worktree-isolation/SKILL.md`
+
+### Tabela de Portas por Worktree
+
+| Porta | Worktree | Quem |
+|-------|----------|------|
+| 9005  | Principal / DEMO | Usuário humano |
+| 9006  | DEV worktree #1 | Agente AI #1 |
+| 9007  | DEV worktree #2 | Agente AI #2 |
+| 9008  | Hotfix / PR review | Ad-hoc |
+| 9009+ | Extras | Ad-hoc |
+
 ## Checklist do Agente AI
 
 ### Ao Iniciar Qualquer Task
 
+**Scripts Helper (RECOMENDADO):**
 ```powershell
-# 1. Verificar se usuário está em DEMO (porta 9005 ocupada)
-netstat -ano | findstr "9005"
-
-# 2. Se ocupada → Usar DEV na porta 9006
-$env:PORT=9006
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
-
-# 3. Criar branch a partir de demo-stable
-git fetch origin demo-stable
-git checkout demo-stable
-git pull origin demo-stable
-git checkout -b feat/minha-feature-$(Get-Date -Format "yyyyMMdd-HHmm")
-
-# 4. Iniciar ambiente DEV
-node .vscode/start-9006-dev.js
+./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
 ```
+
+**Manual:**
+```powershell
+# 1. Ver worktrees ativos + portas em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
+
+# 2. Atualizar demo-stable
+git fetch origin demo-stable
+
+# 3. Criar worktree com nova branch a partir de demo-stable
+$porta     = 9006  # porta livre conforme tabela
+$timestamp = Get-Date -Format "yyyyMMdd-HHmm"
+$branch    = "feat/minha-feature-$timestamp"
+$dir       = "worktrees\bidexpert-feat-minha-feature"
+
+git worktree add $dir -b $branch origin/demo-stable
+
+# 4. Configurar e iniciar no worktree
+Set-Location $dir
+$env:PORT = $porta ; npm install ; npm run dev
+# Acesso: http://dev.localhost:$porta
+```
+
+> **Docker Sandbox** — usar apenas se precisar de banco completamente isolado:
+> `docker compose -f docker-compose.dev-isolated.yml up -d --build`
 
 ### Durante o Desenvolvimento
 
@@ -239,9 +292,15 @@ NODE_ENV=production
 ### Erro: "Port 9005 already in use"
 
 ```powershell
-# Usar porta alternativa
-$env:PORT=9006
-node .vscode/start-9006-dev.js
+# ✅ PREFERIDO: Criar worktree em outra porta (sem docker)
+$porta = 9006  # ou 9007, 9008...
+git worktree add worktrees\bidexpert-fix -b fix/issue-$(Get-Date -Format 'yyyyMMdd') origin/demo-stable
+Set-Location worktrees\bidexpert-fix
+$env:PORT = $porta ; npm install ; npm run dev
+
+# ALTERNATIVA: Docker Sandbox (para banco isolado)
+docker compose -f docker-compose.dev-isolated.yml down
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 ```
 
 ### Erro: "mode: insensitive not supported"

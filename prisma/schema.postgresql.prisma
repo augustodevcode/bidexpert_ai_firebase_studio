@@ -168,6 +168,7 @@ model Asset {
   Seller                     Seller?                 @relation(fields: [sellerId], references: [id])
   Subcategory                Subcategory?            @relation(fields: [subcategoryId], references: [id])
   Tenant                     Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   AssetMedia                 AssetMedia[]
   AssetsOnLots               AssetsOnLots[]
 
@@ -286,6 +287,7 @@ model Auction {
   Seller                   Seller?                @relation(fields: [sellerId], references: [id])
   State                    State?                 @relation(fields: [stateId], references: [id])
   Tenant                   Tenant                 @relation(fields: [tenantId], references: [id])
+  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   AuctionHabilitation      AuctionHabilitation[]
   AuctionStage             AuctionStage[]
   Bid                      Bid[]
@@ -449,6 +451,7 @@ model ContactMessage {
   id        BigInt   @id @default(autoincrement())
   name      String
   email     String
+  phone     String?  @db.VarChar(30)
   subject   String?
   message   String   @db.Text
   isRead    Boolean  @default(false)
@@ -742,6 +745,7 @@ model Lot {
   Subcategory              Subcategory?         @relation(fields: [subcategoryId], references: [id])
   Tenant                   Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   User                     User?                @relation(fields: [winnerId], references: [id])
+  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   LotDocument              LotDocument[]
   LotQuestion              LotQuestion[]
   LotRisk                  LotRisk[]
@@ -910,6 +914,9 @@ model MediaItem {
   judicialProcessId BigInt?
   linkedLotIds      Json?
   tenantId          BigInt?
+  AssetCovers       Asset[]            @relation("AssetCoverImage")
+  AuctionCovers     Auction[]          @relation("AuctionCoverImage")
+  LotCovers         Lot[]              @relation("LotCoverImage")
   AssetMedia        AssetMedia[]
   JudicialProcess   JudicialProcess?   @relation(fields: [judicialProcessId], references: [id])
   Tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1043,6 +1050,7 @@ model PlatformSettings {
   logoMediaId                BigInt?
   themeColorsDark            Json?
   themeColorsLight           Json?
+  featureFlags               Json?
   BiddingSettings            BiddingSettings?
   IdMasks                    IdMasks?
   MapSettings                MapSettings?
@@ -2335,4 +2343,25 @@ model AuditConfig {
   createdAt DateTime @default(now())
 
   @@map("audit_configs")
+}
+
+// EMAIL LOG
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model EmailLog {
+  id               BigInt      @id @default(autoincrement())
+  recipient        String
+  subject          String
+  content          String      @db.Text
+  provider         String
+  status           EmailStatus @default(PENDING)
+  sentAt           DateTime?
+  errorMessage     String?     @db.Text
+  contactMessageId BigInt?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
