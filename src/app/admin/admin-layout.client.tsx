@@ -19,7 +19,6 @@ const AdminQueryMonitor = dynamic(() => import('@/components/support/admin-query
 const QUERY_MONITOR_LS_KEY = 'admin_query_monitor_enabled';
 // Can be force-enabled via env var, otherwise reads from localStorage toggle in General Settings
 const ENV_QUERY_MONITOR = process.env.NEXT_PUBLIC_QUERY_MONITOR_ENABLED === 'true';
-import AdminQueryMonitor from '@/components/support/admin-query-monitor';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 interface AdminLayoutClientProps {
