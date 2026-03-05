@@ -128,7 +128,7 @@ export default function HeroSection({
       </div>
 
       {/* Bottom: Content */}
-      <div className="absolute inset-0 flex flex-col justify-end p-6 z-10">
+      <div className="absolute inset-0 flex flex-col justify-end p-6 z-10 pointer-events-none">
         <div className="space-y-4">
           {/* Title */}
           <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">

@@ -227,7 +227,8 @@ export async function loginAs(
   const waitPattern = options.waitPattern ?? /\/(admin|dashboard|lawyer|home)/i;
   const consoleErrors: string[] = [];
 
-  // Capture console errors
+  // Browser console telemetry routed to Node.js stdout
+  page.on('console', msg => console.log(`${msg.type()}: ${msg.text()}`));
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(msg.text());
   });
