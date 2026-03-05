@@ -1,6 +1,6 @@
 // src/app/auctions/[auctionId]/auction-details-client-v2.tsx
 /**
- * @fileoverview Página de detalhes de leilão V2 com abas, hero aprimorado e stats.
+ * @fileoverview Página de detalhes de leilão V2 com abas e hero aprimorado.
  * Mantém funcionalidades V1 mas com layout e UX melhorado.
  */
 'use client';
@@ -33,7 +33,6 @@ import BidExpertListItem from '@/components/BidExpertListItem';
 import type { ActiveFilters } from '@/components/BidExpertFilter';
 import SidebarFiltersSkeleton from '@/components/BidExpertFilterSkeleton';
 import HeroSection from './components/hero-section';
-import AuctionStatsCard from './components/auction-stats-card';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
@@ -267,9 +266,6 @@ export default function AuctionDetailsClientV2({
           onShare={() => {/* TODO: Implement share logic */}}
           editHref={hasEditPermissions ? `/admin/auctions/${auction.id}/edit` : undefined}
         />
-
-        {/* Stats Card */}
-        <AuctionStatsCard auction={auction} />
 
         {/* Tabs Container */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
