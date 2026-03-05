@@ -164,10 +164,12 @@ const shouldUseSeparateDemoDb =
   process.env.NODE_ENV === 'production' || 
   process.env.USE_SEPARATE_DEMO_DB === 'true';
 
+// Use Neon variables only — PRISMA_DEMO_* were injected by the suspended
+// Prisma Postgres integration (demo-bidexpert-prisma-cloud) and must not be used.
 const demoDatabaseUrl =
-  process.env.PRISMA_DEMO_POSTGRES_URL ||
-  process.env.PRISMA_DEMO_PRISMA_DATABASE_URL ||
-  process.env.DATABASE_URL_DEMO;
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.DATABASE_URL;
 
 export const demoPrisma = globalForPrisma.demoPrisma ?? (
   shouldUseSeparateDemoDb && demoDatabaseUrl
