@@ -8,7 +8,7 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 ## 🔀 Workflow de Branches (OBRIGATÓRIO)
 
 **REGRA CRÍTICA:** Todo agente AI DEVE:
-1. Criar **Git Worktree dedicado** antes de qualquer alteração: `git worktree add ..\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao>-<timestamp> origin/demo-stable`
+1. Criar **Git Worktree dedicado** antes de qualquer alteração: `git worktree add worktrees\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao>-<timestamp> origin/demo-stable`
 2. Usar porta dedicada (9005, 9006, 9007...) para não conflitar com outros devs
 3. NO FINAL do chat, solicitar autorização do usuário para abrir PR para `demo-stable`
 
@@ -51,10 +51,10 @@ netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 # 2. Criar worktree com nova branch a partir de demo-stable
 $porta = 9006   # Pegar porta livre conforme tabela
 $branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..idexpert-feat-minha-feature -b $branch origin/demo-stable
+git worktree add worktrees\bidexpert-feat-minha-feature -b $branch origin/demo-stable
 
-# 3. Configurar e iniciar dentro do worktree
-Set-Location ..idexpert-feat-minha-feature
+# 3. Configurar e iniciar dentro do worktree (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-feat-minha-feature
 $env:PORT = $porta ; npm install ; npm run dev
 # Acesso: http://dev.localhost:$porta
 ```
@@ -117,8 +117,8 @@ main (produção - PROTEGIDO)
 # 1. Criar worktree próprio na porta DEV (sem conflitar com DEMO do usuário)
 $porta = 9006  # ou próxima porta livre
 $branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..idexpert-dev -b $branch origin/demo-stable
-Set-Location ..idexpert-dev
+git worktree add worktrees\bidexpert-dev -b $branch origin/demo-stable
+Set-Location worktrees\bidexpert-dev
 $env:PORT = $porta ; npm install ; npm run dev
 # Agente trabalha em http://dev.localhost:9006, sem tocar em 9005
 ```
@@ -202,10 +202,10 @@ netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 # 2. Criar worktree com nova branch a partir de demo-stable
 $porta = 9006   # Porta livre conforme tabela
 $branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..\bidexpert-worktree-dev -b $branch origin/demo-stable
+git worktree add worktrees\bidexpert-worktree-dev -b $branch origin/demo-stable
 
-# 3. Configurar e iniciar dentro do worktree
-Set-Location ..\bidexpert-worktree-dev
+# 3. Configurar e iniciar dentro do worktree (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-worktree-dev
 $env:PORT = $porta ; npm install ; npm run dev
 # Acesso: http://dev.localhost:$porta
 ```

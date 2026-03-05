@@ -5,13 +5,16 @@
 .DESCRIPTION
     Automatiza o workflow de isolamento de desenvolvimento via Git Worktree:
     1. Atualiza a base demo-stable
-    2. Cria branch + worktree em diretório irmão
+    2. Cria branch + worktree DENTRO do workspace (worktrees/<nome>/)
     3. Configura porta no .env.local
     4. Executa npm install
     5. Opcionalmente inicia o servidor dev
 
-    Cada worktree é criado como diretório irmão do repositório principal:
-      ../bidexpert-<tipo>-<descricao>/
+    Cada worktree é criado dentro do diretório do projeto:
+      worktrees/bidexpert-<tipo>-<descricao>/
+
+    Isso garante que o VS Code trate o worktree como parte do workspace,
+    permitindo que AI agents (Copilot, etc.) acessem seus arquivos.
 
     Portas reservadas:
       9005 = Humano/DEMO (principal)
@@ -115,13 +118,20 @@ if ($portInUse) {
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
 $branch    = "$Tipo/$Descricao-$timestamp"
 $dirName   = "bidexpert-$Tipo-$Descricao"
-$dirPath   = Join-Path (Split-Path $PWD -Parent) $dirName
+$worktreesRoot = Join-Path $PWD "worktrees"
+$dirPath   = Join-Path $worktreesRoot $dirName
 
 # ── Verificar se worktree/dir já existe ──
 if (Test-Path $dirPath) {
     Write-Err "Diretório já existe: $dirPath"
     Write-Host "  Use outro nome ou remova com: git worktree remove $dirPath" -ForegroundColor DarkGray
     exit 1
+}
+
+# ── Criar diretório worktrees/ se não existir ──
+if (-not (Test-Path $worktreesRoot)) {
+    New-Item -ItemType Directory -Path $worktreesRoot -Force | Out-Null
+    Write-Ok "Diretório worktrees/ criado"
 }
 
 $existingWorktrees = git worktree list --porcelain 2>$null | Select-String "worktree $([regex]::Escape($dirPath))"
@@ -202,12 +212,13 @@ Write-Host "  🌲 Worktree pronto para uso!" -ForegroundColor Green
 Write-Host "═══════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Diretório:  $dirPath" -ForegroundColor White
+Write-Host "  Relativo:   worktrees\$dirName" -ForegroundColor White
 Write-Host "  Branch:     $branch" -ForegroundColor White
 Write-Host "  Porta:      $Porta" -ForegroundColor White
 Write-Host "  URL Local:  http://dev.localhost:$Porta" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Próximos passos:" -ForegroundColor Yellow
-Write-Host "    cd $dirPath" -ForegroundColor DarkGray
+Write-Host "    cd worktrees\$dirName" -ForegroundColor DarkGray
 Write-Host "    `$env:PORT=$Porta ; npm run dev" -ForegroundColor DarkGray
 Write-Host ""
 

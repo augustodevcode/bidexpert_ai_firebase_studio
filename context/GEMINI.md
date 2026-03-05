@@ -107,8 +107,8 @@ rodar testes com playwright acada implementação ou correção
 .\scripts\remove-worktree.ps1 -Dir bidexpert-feat-X -DeleteBranch
 
 # Manual (alternativa):
-git worktree add ..\bidexpert-feat-X -b feat/X-timestamp origin/demo-stable
-Set-Location ..\bidexpert-feat-X
+git worktree add worktrees\bidexpert-feat-X -b feat/X-timestamp origin/demo-stable
+Set-Location worktrees\bidexpert-feat-X
 $env:PORT=9006 ; npm install ; npm run dev
 # → http://dev.localhost:9006
 ```

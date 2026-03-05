@@ -90,7 +90,7 @@ main (produção - PROTEGIDO)
 ```powershell
 ./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
 # Ao finalizar:
-./scripts/remove-worktree.ps1 -Dir ..\bidexpert-feat-minha-feature -DeleteBranch
+./scripts/remove-worktree.ps1 -Dir worktrees\bidexpert-feat-minha-feature -DeleteBranch
 ```
 
 **Manual:**
@@ -106,7 +106,7 @@ git fetch origin demo-stable
 $porta     = 9006  # porta livre conforme tabela
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
 $branch    = "feat/minha-feature-$timestamp"
-$dir       = "..\bidexpert-feat-minha-feature"
+$dir       = "worktrees\bidexpert-feat-minha-feature"
 
 git worktree add $dir -b $branch origin/demo-stable
 

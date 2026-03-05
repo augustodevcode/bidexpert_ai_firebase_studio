@@ -1,7 +1,7 @@
 // src/app/admin/admin-layout.client.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
@@ -11,6 +11,14 @@ import AdminSidebar from '@/components/layout/admin-sidebar';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
 import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 import { ThemeProvider } from '@/components/theme-provider';
+import dynamic from 'next/dynamic';
+
+// Lazy-load query monitor so it doesn't affect the bundle when disabled
+const AdminQueryMonitor = dynamic(() => import('@/components/support/admin-query-monitor'), { ssr: false });
+
+const QUERY_MONITOR_LS_KEY = 'admin_query_monitor_enabled';
+// Can be force-enabled via env var, otherwise reads from localStorage toggle in General Settings
+const ENV_QUERY_MONITOR = process.env.NEXT_PUBLIC_QUERY_MONITOR_ENABLED === 'true';
 import AdminQueryMonitor from '@/components/support/admin-query-monitor';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
@@ -37,7 +45,25 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   const pathname = usePathname();
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isWidgetConfigModalOpen, setIsWidgetConfigModalOpen] = useState(false);
+  const [queryMonitorEnabled, setQueryMonitorEnabled] = useState(ENV_QUERY_MONITOR);
   
+  // Read localStorage toggle for query monitor (client-side only)
+  useEffect(() => {
+    if (!ENV_QUERY_MONITOR) {
+      const stored = localStorage.getItem(QUERY_MONITOR_LS_KEY);
+      setQueryMonitorEnabled(stored === 'true');
+
+      // Listen for changes from the settings page without a full reload
+      const handleStorage = (e: StorageEvent) => {
+        if (e.key === QUERY_MONITOR_LS_KEY) {
+          setQueryMonitorEnabled(e.newValue === 'true');
+        }
+      };
+      window.addEventListener('storage', handleStorage);
+      return () => window.removeEventListener('storage', handleStorage);
+    }
+  }, []);
+
   // Check if current page should be full-width
   const isFullWidth = pathname?.includes('/auction-control-center');
 
@@ -112,6 +138,7 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
                 {children}
               </div>
             </main>
+            {queryMonitorEnabled && <AdminQueryMonitor />}
             <DevInfoIndicator
               mode="admin-fixed"
               tenantId={resolvedTenantId}

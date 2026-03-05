@@ -225,23 +225,64 @@ export class PlatformSettingsService {
         }
     }
 
+    /**
+     * Obtém feature flags do tenant, lendo do banco de dados (coluna JSON em PlatformSettings).
+     * Usa cache em memória para evitar leituras repetidas durante o mesmo ciclo de vida do servidor.
+     */
     static async getFeatureFlags(tenantId: string | bigint | number): Promise<FeatureFlags> {
-        const { cacheKey } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
+        const { cacheKey, tenantIdBigInt } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
         const cached = PlatformSettingsService.featureFlagsCache.get(cacheKey);
         if (cached) {
             return PlatformSettingsService.cloneFeatureFlags(cached);
         }
 
-        const defaults = PlatformSettingsService.cloneFeatureFlags(defaultFeatureFlags);
-        PlatformSettingsService.featureFlagsCache.set(cacheKey, defaults);
-        return PlatformSettingsService.cloneFeatureFlags(defaults);
+        try {
+            const settings = await prisma.platformSettings.findUnique({
+                where: { tenantId: tenantIdBigInt },
+                select: { featureFlags: true },
+            });
+
+            const storedFlags = settings?.featureFlags as Partial<FeatureFlags> | null;
+            const merged = validateFeatureFlags({ ...defaultFeatureFlags, ...(storedFlags ?? {}) });
+            PlatformSettingsService.featureFlagsCache.set(cacheKey, merged);
+            return PlatformSettingsService.cloneFeatureFlags(merged);
+        } catch (error) {
+            console.error(`[PlatformSettingsService] Error reading feature flags for tenant ${String(tenantId)}:`, error);
+            const defaults = PlatformSettingsService.cloneFeatureFlags(defaultFeatureFlags);
+            PlatformSettingsService.featureFlagsCache.set(cacheKey, defaults);
+            return PlatformSettingsService.cloneFeatureFlags(defaults);
+        }
     }
 
+    /**
+     * Atualiza feature flags do tenant, persistindo no banco de dados (coluna JSON em PlatformSettings).
+     * Invalida o cache em memória após a gravação.
+     */
     static async updateFeatureFlags(tenantId: string | bigint | number, flags: Partial<FeatureFlags>): Promise<FeatureFlags> {
-        const { cacheKey } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
+        const { cacheKey, tenantIdBigInt } = await PlatformSettingsService.ensureSettingsPrepared(tenantId);
         const current = PlatformSettingsService.featureFlagsCache.get(cacheKey) ?? PlatformSettingsService.cloneFeatureFlags(defaultFeatureFlags);
         const merged = validateFeatureFlags({ ...current, ...flags });
-        PlatformSettingsService.featureFlagsCache.set(cacheKey, merged);
+
+        try {
+            await withAudit({
+                model: 'PlatformSettings',
+                action: 'update',
+                prismaAction: prisma.platformSettings.update({
+                    where: { tenantId: tenantIdBigInt },
+                    data: { featureFlags: merged as any },
+                }),
+                where: { tenantId: tenantIdBigInt },
+                data: { featureFlags: merged },
+            });
+
+            PlatformSettingsService.featureFlagsCache.set(cacheKey, merged);
+            console.log(`[PlatformSettingsService] Feature flags persisted to DB for tenant ${String(tenantId)}`);
+        } catch (error) {
+            console.error(`[PlatformSettingsService] Error persisting feature flags for tenant ${String(tenantId)}:`, error);
+            // Atualiza cache mesmo em caso de falha de escrita para manter consistência em memória
+            PlatformSettingsService.featureFlagsCache.set(cacheKey, merged);
+        }
+
         return PlatformSettingsService.cloneFeatureFlags(merged);
     }
 

@@ -15,16 +15,16 @@ Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **
 ### 1. Criar Worktree + Branch a partir da demo-stable
 ```powershell
 git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
-git worktree add ..\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
+git worktree add worktrees\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
 # Tipos: feat/, fix/, hotfix/, chore/, docs/, test/
-# Exemplo: git worktree add ..\bidexpert-feat-auction-filter -b feat/auction-filter-20260131-1430 origin/demo-stable
+# Exemplo: git worktree add worktrees\bidexpert-feat-auction-filter -b feat/auction-filter-20260131-1430 origin/demo-stable
 ```
 
 ### 2. Iniciar ambiente no Worktree com porta dedicada (OBRIGATÓRIO)
 **REGRA ABSOLUTA:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos antes de criar Worktree dedicado e definir porta exclusiva.
 ```powershell
-# Entrar no worktree criado
-Set-Location ..\bidexpert-<tipo>-<descricao>
+# Entrar no worktree criado (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-<tipo>-<descricao>
 
 # Definir porta dedicada do dev
 $env:PORT=9006
@@ -266,10 +266,10 @@ netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 # 2. Criar worktree + branch dedicada
 $porta = 9006
 $branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..\bidexpert-feat-minha-feature -b $branch origin/demo-stable
+git worktree add worktrees\bidexpert-feat-minha-feature -b $branch origin/demo-stable
 
-# 3. Configurar e iniciar
-Set-Location ..\bidexpert-feat-minha-feature
+# 3. Configurar e iniciar (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-feat-minha-feature
 $env:PORT = $porta ; npm install ; npm run dev
 # Acesso: http://dev.localhost:$porta
 ```
@@ -1022,7 +1022,7 @@ Since the codebase is a template, you should not assume they have set up anythin
 
 # 🌲 Isolamento Primário: Git Worktree (OBRIGATÓRIO)
 **REGRA CRÍTICA:** NENHUM modelo AI deve alterar arquivos antes de criar um Git Worktree dedicado com porta própria.
-- **Comando rápido:** `git worktree add ..idexpert-feat-X -b feat/X-timestamp origin/demo-stable`
+- **Comando rápido:** `git worktree add worktrees/bidexpert-feat-X -b feat/X-timestamp origin/demo-stable`
 - **Configurar porta:** `.env.local` com `PORT=9006` (ou 9007, 9008...)
 - **Acesso:** `http://dev.localhost:<porta>`
 - **Banco Compartilhado:** O MySQL local é compartilhado (worktrees compartilham o mesmo host). Use Docker Sandbox apenas quando banco isolado é necessário.
@@ -1067,11 +1067,11 @@ main (produção - PROTEGIDO)
 
 **Quando usuário está em DEMO → Agente AI faz:**
 ```powershell
-# 1. Criar worktree próprio (sem tocar no ambiente DEMO do usuário)
+# 1. Criar worktree próprio DENTRO do workspace (sem tocar no ambiente DEMO do usuário)
 $porta = 9006
 $branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
-git worktree add ..\bidexpert-dev -b $branch origin/demo-stable
-Set-Location ..\bidexpert-dev
+git worktree add worktrees\bidexpert-dev -b $branch origin/demo-stable
+Set-Location worktrees\bidexpert-dev
 $env:PORT = $porta ; npm install ; npm run dev
 # Agente trabalha em http://dev.localhost:9006
 ```

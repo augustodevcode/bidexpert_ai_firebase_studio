@@ -215,8 +215,8 @@ O `next.config.mjs` injeta automaticamente:
 # 1. Criar worktree + branch a partir de demo-stable
 git fetch origin demo-stable
 $timestamp = Get-Date -Format "yyyyMMdd-HHmm"
-git worktree add ..\bidexpert-feat-minha-feature -b feat/minha-feature-$timestamp origin/demo-stable
-Set-Location ..\bidexpert-feat-minha-feature
+git worktree add worktrees\bidexpert-feat-minha-feature -b feat/minha-feature-$timestamp origin/demo-stable
+Set-Location worktrees\bidexpert-feat-minha-feature
 $env:PORT = 9006 ; npm install
 
 # 2. Desenvolver com commits conventional
@@ -233,7 +233,7 @@ git push -u origin HEAD
 # 5. Quando estável: criar PR demo-stable → main
 # → Semantic Release gera versão produção
 
-# 6. Limpeza: git worktree remove ..\bidexpert-feat-minha-feature
+# 6. Limpeza: git worktree remove worktrees\bidexpert-feat-minha-feature
 ```
 
 ## 8. Regras Críticas

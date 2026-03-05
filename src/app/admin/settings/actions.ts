@@ -6,6 +6,7 @@ import type { PlatformSettings } from '@/types';
 import { PlatformSettingsService } from '@/services/platform-settings.service';
 import { runFullSeedAction as seedAction } from './actions-old'; 
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { shouldAllowDbFallback, getEnvironmentLabel } from '@/lib/db-resilience';
 
 import { sanitizeResponse } from '@/lib/serialization-helper';
 
@@ -19,6 +20,19 @@ export async function getPlatformSettings(): Promise<PlatformSettings | null> {
     return sanitizeResponse(settings) as PlatformSettings;
   } catch (error: any) {
     console.error("[getPlatformSettings Action] Error fetching or creating settings:", error);
+
+    // Em ambientes de preview/desenvolvimento, retornar null quando o DB está
+    // indisponível para evitar HTTP 500 em páginas públicas (Home, Layout).
+    // Em VERCEL_ENV=production, o erro é relançado para não mascarar falhas reais.
+    if (shouldAllowDbFallback(error)) {
+      console.warn(
+        `[getPlatformSettings Action] ${getEnvironmentLabel()}: DB indisponível. ` +
+        'Retornando null. Verifique DATABASE_URL e a integração Prisma/Neon/Supabase ' +
+        'no painel da Vercel (Settings > Integrations).'
+      );
+      return null;
+    }
+
     const errorMessage = error.name + ': ' + error.message;
     throw new Error(`[getPlatformSettings Action] Error: ${errorMessage}`);
   }
