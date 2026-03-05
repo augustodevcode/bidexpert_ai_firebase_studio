@@ -1,46 +1,21 @@
 /**
- * @fileoverview Indicador de informações de ambiente para uso nos painéis internos.
- * Mostra tenant, usuário, banco de dados e projeto atual.
- * Usado pelo componente EnvInfoButton (modal no sidebar) e pelo AdminQueryMonitor.
+ * @fileoverview Rodape inline (nao-sticky) do dashboard com informacoes de ambiente para debug.
+ * Cada secao exibe um icone (favicon) ao lado do label para facilitar identificacao visual.
  */
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === 'undefined') return undefined;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift();
-}
-
-export default function DevInfoIndicator() {
-  const { userProfileWithPermissions, activeTenantId } = useAuth();
-  const [dbSystem, setDbSystem] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-    const dbFromCookie = getCookie('dev-config-db');
-    const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'MYSQL';
-    setDbSystem((dbFromCookie || dbFromEnv).toUpperCase());
-    setProjectId(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_PROJECT_ID || 'bidexpert');
-  }, []);
-
-  if (!isClient) return null;
-
-  const displayTenantId = activeTenantId || process.env.DEFAULT_TENANT_ID || 'N/A';
-
-  return (
-    <footer className="mt-4 w-full" data-ai-id="dashboard-footer" data-testid="dev-info-indicator">
-import { useEffect, useMemo, useRef, useState } from 'react';
-
-type DevInfoIndicatorMode = 'flow' | 'admin-fixed';
+import {
+  Building2,
+  User,
+  Database,
+  Server,
+  GitBranch,
+  Globe,
+  FolderKanban,
+} from 'lucide-react';
 
 interface DevInfoIndicatorProps {
-  mode?: DevInfoIndicatorMode;
   tenantId?: string;
   userEmail?: string;
 }
@@ -62,28 +37,15 @@ const DEFAULT_RUNTIME_ENVIRONMENT: RuntimeEnvironmentInfo = {
 };
 
 function normalizeUrl(url: string): string {
-  if (!url) {
-    return url;
-  }
-
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
   return `https://${url}`;
 }
 
 function inferBranchByHost(): string {
-  if (typeof window === 'undefined') {
-    return DEFAULT_RUNTIME_ENVIRONMENT.branch;
-  }
-
+  if (typeof window === 'undefined') return DEFAULT_RUNTIME_ENVIRONMENT.branch;
   const host = window.location.hostname.toLowerCase();
-  if (host.includes('demo')) {
-    return 'demo-stable';
-  }
-
-  return 'main';
+  return host.includes('demo') ? 'demo-stable' : 'main';
 }
 
 function getInitialRuntimeEnvironment(): RuntimeEnvironmentInfo {
@@ -112,15 +74,57 @@ function getInitialRuntimeEnvironment(): RuntimeEnvironmentInfo {
   };
 }
 
+/** Celula individual do grid com icone + label + valor. */
+function InfoCell({
+  icon: Icon,
+  label,
+  value,
+  href,
+  aiId,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  href?: string;
+  aiId: string;
+}) {
+  return (
+    <div className="min-w-0 flex items-start gap-1.5" data-ai-id={aiId}>
+      <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
+      <div className="min-w-0">
+        <span className="text-[10px] leading-tight text-muted-foreground block" data-ai-id={`${aiId}-label`}>
+          {label}
+        </span>
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-semibold text-primary truncate block hover:underline"
+            title={value}
+            data-ai-id={`${aiId}-value`}
+          >
+            {value}
+          </a>
+        ) : (
+          <p
+            className="text-xs font-semibold text-primary truncate"
+            title={value}
+            data-ai-id={`${aiId}-value`}
+          >
+            {value}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DevInfoIndicator({
-  mode = 'flow',
   tenantId = '1',
   userEmail = 'admin@bidexpert.ai',
 }: DevInfoIndicatorProps) {
-  const footerRef = useRef<HTMLElement | null>(null);
-  const [runtimeEnvironment, setRuntimeEnvironment] = useState<RuntimeEnvironmentInfo>(
-    getInitialRuntimeEnvironment,
-  );
+  const [env, setEnv] = useState<RuntimeEnvironmentInfo>(getInitialRuntimeEnvironment);
 
   useEffect(() => {
     let isMounted = true;
@@ -128,80 +132,33 @@ export default function DevInfoIndicator({
     const fetchRuntimeEnvironment = async () => {
       try {
         const response = await fetch('/api/admin/dev-info', { cache: 'no-store' });
-
-        if (!response.ok) {
-          return;
-        }
-
+        if (!response.ok) return;
         const payload = (await response.json()) as Partial<RuntimeEnvironmentInfo>;
-
-        if (!isMounted) {
-          return;
-        }
-
-        setRuntimeEnvironment((previous) => ({
-          ...previous,
-          ...payload,
-        }));
+        if (!isMounted) return;
+        setEnv((prev) => ({ ...prev, ...payload }));
       } catch {
-        // noop: keep current fallback environment info
+        // noop
       }
     };
 
     void fetchRuntimeEnvironment();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
-  useEffect(() => {
-    if (mode !== 'admin-fixed') {
-      return;
-    }
-
-    const updateFooterHeight = () => {
-      const height = footerRef.current?.offsetHeight ?? 0;
-      document.documentElement.style.setProperty('--dev-info-footer-height', `${height}px`);
-    };
-
-    updateFooterHeight();
-    window.addEventListener('resize', updateFooterHeight);
-
-    return () => {
-      window.removeEventListener('resize', updateFooterHeight);
-      document.documentElement.style.setProperty('--dev-info-footer-height', '0px');
-    };
-  }, [mode]);
-
-  const footerClassName = useMemo(
-    () =>
-      mode === 'admin-fixed'
-        ? 'fixed left-0 right-0 z-[45] px-4 sm:px-6 md:px-8 bottom-0'
-        : 'mt-4 w-full',
-    [mode],
-  );
-
-  const indicatorPanelClassName =
-    mode === 'admin-fixed'
-      ? 'p-3 bg-muted/90 rounded-lg border w-full max-w-7xl mx-auto backdrop-blur supports-[backdrop-filter]:bg-muted/75'
-      : 'mt-4 p-4 bg-muted/50 rounded-lg border w-full max-w-4xl mx-auto';
-
-  const remoteServerLabel = runtimeEnvironment.remoteServerUrl.replace(/^https?:\/\//, '');
+  const serverLabel = env.remoteServerUrl.replace(/^https?:\/\//, '');
 
   return (
     <footer
-      className={footerClassName}
-      ref={footerRef}
+      className="mt-6 w-full"
       data-ai-id="dashboard-footer"
       data-testid="dev-info-indicator"
     >
       <div
-        className={indicatorPanelClassName}
+        className="p-3 bg-muted/60 rounded-lg border w-full"
         data-ai-id="dev-info-indicator-inner"
       >
         <p
-          className="font-semibold text-center text-foreground mb-3 text-sm"
+          className="font-semibold text-center text-foreground mb-2 text-xs tracking-wide uppercase"
           data-ai-id="dev-info-title"
         >
           Dev Info
@@ -210,93 +167,13 @@ export default function DevInfoIndicator({
           className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-x-4 gap-y-2"
           data-ai-id="dev-info-grid"
         >
-          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-tenant">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-tenant-label">
-              Tenant ID
-            </span>
-            <p
-              className="font-semibold text-primary truncate"
-              title={tenantId}
-              data-ai-id="dev-info-tenant-value"
-            >
-              {tenantId}
-            </p>
-          </div>
-          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-user">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-user-label">
-              User
-            </span>
-            <p
-              className="font-semibold text-primary truncate"
-              title={userEmail}
-              data-ai-id="dev-info-user-value"
-            >
-              {userEmail}
-            </p>
-          </div>
-          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-db">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-db-label">
-              DB System
-            </span>
-            <p
-              className="font-semibold text-primary truncate"
-              title={runtimeEnvironment.dbSystem}
-              data-ai-id="dev-info-db-value"
-            >
-              {runtimeEnvironment.dbSystem}
-            </p>
-          </div>
-          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-provider">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-provider-label">
-              Provider
-            </span>
-            <p
-              className="font-semibold text-primary truncate"
-              title={runtimeEnvironment.dbProvider}
-              data-ai-id="dev-info-provider-value"
-            >
-              {runtimeEnvironment.dbProvider}
-            </p>
-          </div>
-          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-branch">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-branch-label">
-              Branch
-            </span>
-            <p
-              className="font-semibold text-primary truncate"
-              title={runtimeEnvironment.branch}
-              data-ai-id="dev-info-branch-value"
-            >
-              {runtimeEnvironment.branch}
-            </p>
-          </div>
-          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-server-link">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-server-link-label">
-              Server
-            </span>
-            <a
-              href={runtimeEnvironment.remoteServerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block font-semibold text-primary truncate hover:underline"
-              title={runtimeEnvironment.remoteServerUrl}
-              data-ai-id="dev-info-server-link-value"
-            >
-              {remoteServerLabel}
-            </a>
-          </div>
-          <div className="min-w-0 text-center sm:text-left" data-ai-id="dev-info-project">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-project-label">
-              Project
-            </span>
-            <p
-              className="font-semibold text-primary truncate"
-              title={runtimeEnvironment.project}
-              data-ai-id="dev-info-project-value"
-            >
-              {runtimeEnvironment.project}
-            </p>
-          </div>
+          <InfoCell icon={Building2} label="Tenant ID" value={tenantId} aiId="dev-info-tenant" />
+          <InfoCell icon={User} label="User" value={userEmail} aiId="dev-info-user" />
+          <InfoCell icon={Database} label="DB System" value={env.dbSystem} aiId="dev-info-db" />
+          <InfoCell icon={Server} label="Provider" value={env.dbProvider} aiId="dev-info-provider" />
+          <InfoCell icon={GitBranch} label="Branch" value={env.branch} aiId="dev-info-branch" />
+          <InfoCell icon={Globe} label="Server" value={serverLabel} href={env.remoteServerUrl} aiId="dev-info-server-link" />
+          <InfoCell icon={FolderKanban} label="Project" value={env.project} aiId="dev-info-project" />
         </div>
       </div>
     </footer>

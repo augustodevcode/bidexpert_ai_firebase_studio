@@ -84,11 +84,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 ))}
                 </nav>
             </ScrollArea>
-            <div className="p-4 border-t">
-                <Button variant="outline" className="w-full" asChild>
-                    <Link href="/">Voltar ao Site</Link>
-                </Button>
-            </div>
+
         </>
     );
 }
