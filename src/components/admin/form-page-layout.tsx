@@ -172,34 +172,36 @@ export default function FormPageLayout({
             </div>
         </div>
       </CardHeader>
+      {/* Mobile toolbar is outside the fieldset so it is never disabled by it,
+          ensuring "Entrar em Modo de Edição" is always clickable on small screens. */}
+      <div className="wrapper-mobile-toolbar border-b px-6 py-3" data-ai-id="form-page-mobile-toolbar">
+          <FormToolbar
+              isViewMode={isViewMode}
+              isSubmitting={isSubmitting}
+              isValid={isValid}
+              onSave={onSave}
+              onSaveAndNew={onSaveAndNew}
+              onDelete={onDelete}
+              onEnterEditMode={onEnterEditMode}
+              onNavigateNext={onNavigateNext}
+              onNavigatePrev={onNavigatePrev}
+              hasNext={hasNext}
+              hasPrev={hasPrev}
+          />
+      </div>
       <fieldset disabled={isViewMode || isSubmitting} className="group-form-fieldset" data-ai-id="form-page-fieldset">
         <CardContent className="content-card-form" data-ai-id="form-page-content">
             {children}
         </CardContent>
-        <CardFooter className="footer-card-form" data-ai-id="form-page-footer">
-             <div className="wrapper-mobile-toolbar">
-                 <FormToolbar 
-                    isViewMode={isViewMode} 
-                    isSubmitting={isSubmitting}
-                    isValid={isValid}
-                    onSave={onSave}
-                    onSaveAndNew={onSaveAndNew}
-                    onDelete={onDelete}
-                    onEnterEditMode={onEnterEditMode}
-                    onNavigateNext={onNavigateNext}
-                    onNavigatePrev={onNavigatePrev}
-                    hasNext={hasNext}
-                    hasPrev={hasPrev}
-                 />
-            </div>
-            {!isViewMode && (
-                <div className="wrapper-cancel-action">
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting} data-ai-id="form-page-btn-cancel" className="btn-form-cancel">
-                        <XCircle className="icon-btn-start"/> Cancelar
-                    </Button>
-                </div>
-            )}
-        </CardFooter>
+        {!isViewMode && (
+          <CardFooter className="footer-card-form" data-ai-id="form-page-footer">
+              <div className="wrapper-cancel-action">
+                  <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting} data-ai-id="form-page-btn-cancel" className="btn-form-cancel">
+                      <XCircle className="icon-btn-start"/> Cancelar
+                  </Button>
+              </div>
+          </CardFooter>
+        )}
       </fieldset>
     </Card>
   );
