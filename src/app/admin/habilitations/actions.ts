@@ -9,6 +9,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 import type { UserProfileData, UserDocument, UserHabilitationStatus, Role } from '@/types';
 import { RoleRepository } from '@/repositories/role.repository';
 import { UserService } from '@/services/user.service';
@@ -132,27 +133,26 @@ export async function checkHabilitationForAuctionAction(userId: string, auctionI
  */
 export async function getUserDocumentsForReview(userId: string): Promise<UserDocument[]> {
   const documents = await prisma.userDocument.findMany({
-    where: { userId },
+    where: { userId: BigInt(userId) },
     include: { documentType: true }
   });
-  // @ts-ignore
-  return documents;
+  return sanitizeResponse(documents) as UserDocument[];
 }
 
 export async function approveDocument(documentId: string, analystId: string): Promise<{ success: boolean; message: string }> {
   try {
-    const docToUpdate = await prisma.userDocument.findUnique({ where: {id: documentId}});
+    const docToUpdate = await prisma.userDocument.findUnique({ where: {id: BigInt(documentId)}});
     if (!docToUpdate) {
       throw new Error("Documento não encontrado.");
     }
 
     await prisma.userDocument.update({
-      where: { id: documentId },
+      where: { id: BigInt(documentId) },
       data: { status: 'APPROVED', rejectionReason: null }
     });
     
     // After approval, check if the user is now fully habilitated
-    await userService.checkAndHabilitateUser(docToUpdate.userId);
+    await userService.checkAndHabilitateUser(docToUpdate.userId.toString());
 
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');
@@ -170,13 +170,13 @@ export async function rejectDocument(documentId: string, reason: string): Promis
     return { success: false, message: 'O motivo da rejeição é obrigatório.' };
   }
    try {
-    const docToUpdate = await prisma.userDocument.findUnique({ where: {id: documentId}});
+    const docToUpdate = await prisma.userDocument.findUnique({ where: {id: BigInt(documentId)}});
     if (!docToUpdate) {
       throw new Error("Documento não encontrado.");
     }
 
     await prisma.userDocument.update({
-      where: { id: documentId },
+      where: { id: BigInt(documentId) },
       data: { status: 'REJECTED', rejectionReason: reason }
     });
 
