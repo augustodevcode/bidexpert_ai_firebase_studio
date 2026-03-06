@@ -16,7 +16,7 @@ export class DocumentRepository {
 
   async findUserDocumentsByUserId(userId: string): Promise<any[]> {
     return this.prisma.userDocument.findMany({
-      where: { userId },
+      where: { userId: BigInt(userId) },
       include: { DocumentType: true },
     });
   }
@@ -42,21 +42,20 @@ export class DocumentRepository {
   async updateUserDocumentStatus(
     userId: string,
     documentTypeId: string,
-    status: Prisma.UserDocumentStatus,
+    status: 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS' | 'SUBMITTED' | 'NOT_SENT',
     rejectionReason: string | null = null
   ): Promise<UserDocument | null> {
     try {
       return await this.prisma.userDocument.update({
         where: {
           userId_documentTypeId: {
-            userId,
-            documentTypeId,
+            userId: BigInt(userId),
+            documentTypeId: BigInt(documentTypeId),
           },
         },
         data: {
           status,
           rejectionReason,
-          verifiedAt: status === 'APPROVED' ? new Date() : null,
         },
       });
     } catch (error) {
