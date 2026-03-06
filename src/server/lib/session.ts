@@ -25,11 +25,22 @@ import { cookies } from 'next/headers';
 import type { UserProfileWithPermissions, Role, Tenant } from '@/types';
 import { UserService } from '@/services/user.service';
 
-const secretKey = process.env.SESSION_SECRET;
-const encodedKey = new TextEncoder().encode(secretKey);
+let _encodedKey: Uint8Array | undefined;
 
-if (!secretKey || secretKey.length < 32) {
-    throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
+/**
+ * Retorna a chave codificada para assinar JWTs.
+ * A validação é feita de forma lazy para não bloquear o build do Next.js
+ * quando SESSION_SECRET está ausente no ambiente de build.
+ * O resultado é memoizado para evitar re-codificações desnecessárias.
+ */
+function getEncodedKey(): Uint8Array {
+    if (_encodedKey) return _encodedKey;
+    const key = process.env.SESSION_SECRET;
+    if (!key || key.length < 32) {
+        throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
+    }
+    _encodedKey = new TextEncoder().encode(key);
+    return _encodedKey;
 }
 
 // ============================================================================
@@ -70,13 +81,13 @@ export async function encrypt(payload: any) {
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
         .setExpirationTime('7d')
-        .sign(encodedKey);
+        .sign(getEncodedKey());
 }
 
 export async function decrypt(session: string | undefined = '') {
     if (!session) return null;
     try {
-        const { payload } = await jwtVerify(session, encodedKey, {
+        const { payload } = await jwtVerify(session, getEncodedKey(), {
             algorithms: ['HS256'],
         });
         return payload;
