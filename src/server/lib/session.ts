@@ -25,11 +25,20 @@ import { cookies } from 'next/headers';
 import type { UserProfileWithPermissions, Role, Tenant } from '@/types';
 import { UserService } from '@/services/user.service';
 
-const secretKey = process.env.SESSION_SECRET;
-const encodedKey = new TextEncoder().encode(secretKey);
-
-if (!secretKey || secretKey.length < 32) {
-    throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
+/**
+ * Retorna a chave de sessão codificada, lançando erro caso SESSION_SECRET não esteja definida.
+ * Verificação lazy com memoização para evitar falha no carregamento do módulo durante o build
+ * e evitar re-codificação a cada chamada.
+ */
+let _encodedKey: Uint8Array | undefined;
+function getEncodedKey(): Uint8Array {
+    if (_encodedKey) return _encodedKey;
+    const secretKey = process.env.SESSION_SECRET;
+    if (!secretKey || secretKey.length < 32) {
+        throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
+    }
+    _encodedKey = new TextEncoder().encode(secretKey);
+    return _encodedKey;
 }
 
 // ============================================================================
@@ -70,13 +79,13 @@ export async function encrypt(payload: any) {
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
         .setExpirationTime('7d')
-        .sign(encodedKey);
+        .sign(getEncodedKey());
 }
 
 export async function decrypt(session: string | undefined = '') {
     if (!session) return null;
     try {
-        const { payload } = await jwtVerify(session, encodedKey, {
+        const { payload } = await jwtVerify(session, getEncodedKey(), {
             algorithms: ['HS256'],
         });
         return payload;
