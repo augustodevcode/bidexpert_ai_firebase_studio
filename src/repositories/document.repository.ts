@@ -17,7 +17,7 @@ export class DocumentRepository {
   async findUserDocumentsByUserId(userId: string): Promise<any[]> {
     return this.prisma.userDocument.findMany({
       where: { userId },
-      include: { documentType: true },
+      include: { DocumentType: true },
     });
   }
 
