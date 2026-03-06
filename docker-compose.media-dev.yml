@@ -1,0 +1,42 @@
+version: '3.8'
+
+# ============================================================
+# Docker Compose: Media Library DEV — Porta 9007
+# ============================================================
+# Isola o banco de dados para desenvolvimento da biblioteca de mídia
+# sem interferir nos ambientes demo (9005) ou dev padrão (9006).
+#
+# Uso:
+#   docker compose -f docker-compose.media-dev.yml up -d
+#   node .vscode/start-9007-dev.js
+#   npx playwright test --config=playwright.media-local.config.ts
+# ============================================================
+
+services:
+  mysql-media-dev:
+    image: mysql:8.0
+    container_name: bidexpert-mysql-dev-iso
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: bidexpert_dev
+      MYSQL_USER: bidexpert
+      MYSQL_PASSWORD: bidexpert_dev_pwd
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_media_dev_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mysql_media_dev_data:
+    driver: local
