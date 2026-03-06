@@ -38,27 +38,53 @@ type HomeSearchParams = {
 };
 
 export default async function HomePage({ searchParams }: { searchParams?: HomeSearchParams }) {
-  // Otimização: Buscar apenas um subconjunto de dados para a página inicial
-  const [
-      settings,
-      auctionsData,
-      lotsData,
-      categoriesData,
-      sellersData,
-  ] = await Promise.all([
-      getPlatformSettings(),
-      getAuctions(true, 10), // Limitar para 10 leilões
-    getLots(undefined, true, 12), // Public call
+    // Mantém a home pública disponível mesmo se um loader específico falhar em preview.
+    const [
+            settingsResult,
+            auctionsResult,
+            lotsResult,
+            categoriesResult,
+            sellersResult,
+    ] = await Promise.allSettled([
+            getPlatformSettings(),
+            getAuctions(true, 10),
+            getLots(undefined, true, 12),
             getLotCategories(true),
-      getSellers(true),
-  ]);
+            getSellers(true),
+    ]);
 
-  // Buscar lotes para Super Oportunidades com validação completa de integridade referencial
-  const maxDaysUntilClosing = settings?.marketingSiteAdsSuperOpportunitiesDaysBeforeClosing ?? 7;
-  const closingSoonLots = await getSuperOpportunitiesLots({
-    maxDaysUntilClosing,
-    limit: 8,
-  });
+    const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
+    const auctionsData = auctionsResult.status === 'fulfilled' ? auctionsResult.value : [];
+    const lotsData = lotsResult.status === 'fulfilled' ? lotsResult.value : [];
+    const categoriesData = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
+    const sellersData = sellersResult.status === 'fulfilled' ? sellersResult.value : [];
+
+    if (settingsResult.status === 'rejected') {
+        console.error('[HomePage] getPlatformSettings failed', settingsResult.reason);
+    }
+    if (auctionsResult.status === 'rejected') {
+        console.error('[HomePage] getAuctions failed', auctionsResult.reason);
+    }
+    if (lotsResult.status === 'rejected') {
+        console.error('[HomePage] getLots failed', lotsResult.reason);
+    }
+    if (categoriesResult.status === 'rejected') {
+        console.error('[HomePage] getLotCategories failed', categoriesResult.reason);
+    }
+    if (sellersResult.status === 'rejected') {
+        console.error('[HomePage] getSellers failed', sellersResult.reason);
+    }
+
+    const maxDaysUntilClosing = settings?.marketingSiteAdsSuperOpportunitiesDaysBeforeClosing ?? 7;
+    let closingSoonLots: Lot[] = [];
+    try {
+        closingSoonLots = await getSuperOpportunitiesLots({
+            maxDaysUntilClosing,
+            limit: 8,
+        });
+    } catch (error) {
+        console.error('[HomePage] getSuperOpportunitiesLots failed', error);
+    }
     
 
     const variantParam = (searchParams?.homeVariant || '').toLowerCase();
