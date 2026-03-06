@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Use a specific LTS version
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Linting
+        run: npm run lint
+
+      - name: Run Type Checking
+        run: npm run typecheck
+
+      # Note: Unit test dependencies (Jest) failed to install in the interactive env.
+      # This step assumes they can be installed successfully in the GitHub Actions runner.
+      # If not, this step might need to be commented out until the dependency issue is resolved.
+      - name: Run Unit Tests
+        run: npm run test:unit
+
+      # This command implicitly builds and starts the server via Playwright's webServer config
+      # Make sure the webServer block in playwright.config.ts is UNCOMMENTED for CI runs.
+      # For now, I will add a step to uncomment it.
+      - name: Enable webServer in Playwright config for CI
+        run: sed -i 's/# webServer:/webServer:/g; s/#   command:/  command:/g; s/#   url:/  url:/g; s/#   reuseExistingServer:/  reuseExistingServer:/g; s/#   timeout:/  timeout:/g; s/"]},/"]},/g' playwright.config.ts
+
+      - name: Run E2E Tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always() # Upload report even if tests fail
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Build Project
+        # This step is somewhat redundant if E2E tests passed (as they require a build)
+        # but it's a good final check.
+        run: npm run build
