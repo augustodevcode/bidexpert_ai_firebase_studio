@@ -122,6 +122,18 @@ Consulte `.windsurf/rules/README.md` para:
 - Melhores práticas para criação de regras
 - Troubleshooting e solução de problemas
 
+## 🌐 Ambientes de Deploy (Links para Teste)
+
+| Ambiente | URL | Banco | Branch | Uso |
+|----------|-----|-------|--------|-----|
+| **DEMO / Produção** | [bidexpertaifirebasestudio.vercel.app](https://bidexpertaifirebasestudio.vercel.app/) | PostgreSQL (Vercel) | `main` | Demonstração e testes públicos |
+| **DEV (local)** | `http://dev.localhost:9006` | MySQL `bidexpert_dev` | feature branch | Desenvolvimento e agentes AI |
+
+> **Credenciais de teste no DEMO:**
+> - Admin: `admin@bidexpert.com.br` / `Admin@123`
+> - Comprador: `comprador@bidexpert.com.br` / `Test@12345`
+> - Leiloeiro: `carlos.silva@construtoraabc.com.br` / `Test@12345`
+
 ## Funcionalidades da Plataforma
 
 Para um entendimento detalhado de todas as funcionalidades, regras de negócio e o progresso atual do projeto, é essencial ler os arquivos de documentação na pasta `/home/user/studio/context`. Eles servem como a fonte da verdade para o que a plataforma faz e como ela deve se comportar.
