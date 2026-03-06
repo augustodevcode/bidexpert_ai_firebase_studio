@@ -67,6 +67,11 @@ npm run dev
 - 🚫 **NUNCA** fazer merge sem autorização explícita do usuário
 - 🚫 **NUNCA** resolver conflitos automaticamente sem revisão
 
+### 6. Evidência Obrigatória para Aprovação de PR (Playwright)
+- ✅ Exigir print(s)/screenshot(s) de sucesso dos testes Playwright em todo PR.
+- ✅ Exigir link do relatório (Playwright/Vitest UI) com cenário validado.
+- 🚫 Não aprovar nem mergear PR sem evidência visual.
+
 ---
 
 **Arquivo de Workflow Detalhado:** `.agent/workflows/parallel-development.md`

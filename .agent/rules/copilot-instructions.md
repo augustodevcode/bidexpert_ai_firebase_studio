@@ -71,6 +71,13 @@ npm run dev
 3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request para demo-stable?"
 4. ⏳ Aguardar autorização explícita antes de qualquer merge
 
+### 6. Evidência Obrigatória para Aprovação de PR (Playwright)
+**OBRIGATÓRIO:** Todo pedido de aprovação/merge de PR DEVE incluir:
+1. ✅ Print(s)/screenshot(s) mostrando sucesso dos testes Playwright
+2. ✅ Link do relatório de execução (Playwright ou Vitest UI com provider Playwright)
+3. ✅ Referência objetiva do cenário validado
+4. 🚫 PR sem evidência visual não deve ser aprovado nem mergeado
+
 ### 5. Proteções Absolutas
 - 🚫 **NUNCA** fazer push direto na `main`
 - 🚫 **NUNCA** fazer merge sem autorização explícita do usuário

@@ -1,5 +1,10 @@
 # 🔀 Skill: Multi-Environment Workflow (DEV ↔ DEMO ↔ PROD)
 
+## 📸 Evidência Obrigatória para PR (Playwright)
+- Todo PR deve incluir print(s)/screenshot(s) de sucesso dos testes Playwright.
+- Deve incluir link do relatório de execução (Playwright/Vitest UI) e cenário validado.
+- PR sem evidência visual não deve ser aprovado nem mergeado.
+
 ## Descrição
 
 Esta skill define o workflow de desenvolvimento com isolamento de ambientes para o projeto BidExpert, garantindo que:

@@ -74,6 +74,12 @@ Ao ativar qualquer agent:
 - ✓ Validate against 115+ (Auction) or 150+ (Admin) checkpoints
 - ✓ Provide code diff + tests if fixing
 
+### PR Visual Evidence Gate (Playwright)
+
+- Every PR approval/merge request must include Playwright success screenshots.
+- Include report link (Playwright/Vitest UI) and validated scenario.
+- Without visual evidence, PR must not be approved or merged.
+
 ---
 
 ## Documentation:
