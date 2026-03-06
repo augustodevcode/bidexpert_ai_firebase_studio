@@ -16,6 +16,7 @@ export default defineConfig({
 	reporter: [ 
 		['list'], 
 		['./playwright-custom-reporter.js', { outputFile: 'test-results/plaintext-report.txt' }], 
+		['./tests/e2e/reporters/ai-friendly-reporter.ts', { outputFile: 'test-output.log', verbose: false }],
 		['html', { open: 'never' }],
 		['json', { outputFile: 'test-results/results.json' }]
 	],
