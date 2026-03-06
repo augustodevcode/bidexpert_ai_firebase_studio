@@ -8,8 +8,7 @@
 import { ReportService } from '@/services/report.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { revalidatePath } from 'next/cache';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getSession } from '@/server/lib/session';
 import type { ReportType, ReportDefinition } from '@/types/report-builder.types';
 import type { Report } from '@prisma/client';
 
@@ -64,8 +63,8 @@ export async function createReportAction(data: {
   definition: ReportDefinition;
 }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const session = await getSession();
+    if (!session?.userId) {
       return { success: false, message: 'Usuário não autenticado.' };
     }
 
@@ -76,7 +75,7 @@ export async function createReportAction(data: {
         name: data.name,
         description: data.description || null,
         definition: data.definition as unknown,
-        createdById: session.user.id,
+        createdById: session.userId,
       },
       tenantId
     );
@@ -371,8 +370,8 @@ const PREDEFINED_REPORTS_DATA: Record<string, {
  */
 export async function copyPredefinedReportAction(reportCode: string, newName: string) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const session = await getSession();
+    if (!session?.userId) {
       return { success: false, message: 'Usuário não autenticado.' };
     }
 
@@ -388,7 +387,7 @@ export async function copyPredefinedReportAction(reportCode: string, newName: st
         name: newName,
         description: `Cópia de "${predefinedReport.name}". ${predefinedReport.description}`,
         definition: predefinedReport.definition as any,
-        createdById: session.user.id,
+        createdById: session.userId,
       },
       tenantId
     );
