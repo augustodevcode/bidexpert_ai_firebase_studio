@@ -720,6 +720,14 @@ Since the codebase is a template, you should not assume they have set up anythin
 **Testes**:
 - Sempre implementar testes unitários e2e para qualquer código alterado ou implementado.
 - Sempre implementar testes visuais com print da tela do browser e navegação com mouse conforme o Visual Regression Testing: https://vitest.dev/guide/browser/visual-regression-testing.html. Não é pra usar playwright diretamente (somente se o usuário pedir), mas sim o provider do Vitest para Playwright conforme documentado em https://vitest.dev/guide/browser/visual-regression-testing.html#using-playwright-provider para qualquer código alterado ou implementado usando Vitest UI e Playwright conforme a estratégia de testes documentada nos arquivos .md de testes visuais ou a partir da implementação recém feita. Quando houver problemas, busque soluções em https://stackoverflow.com/questions ou no próprio site da vitest ou na sua comunidade. você tem todal acesso a essa máquina para corrigir qualquer coisa ou implementar mecanismos para que isso funcione.
+- REGRA DE BLOQUEIO (SEMPRE): nenhuma task pode ser concluída ou virar PR sem testes cobrindo a mudança com **Vitest + Playwright + BDD**.
+- Para qualquer alteração em funções, Server Actions, services ou regras de negócio: criar/atualizar testes com Vitest (unitário/integrado) em `tests/unit/**`.
+- Para qualquer alteração de tela, fluxo, UX ou componente renderizado: criar/atualizar teste de UI/E2E com Playwright (preferencialmente via provider Playwright do Vitest UI; quando necessário, `tests/e2e/**` com Playwright).
+- Toda entrega deve incluir cenário BDD escrito (Gherkin) e rastreável ao teste automatizado (`Given/When/Then`), preferindo `tests/itsm/features/*.feature` (ou diretório de features equivalente do contexto alterado).
+- Execução mínima obrigatória antes de encerrar:
+  1. `npm run test:unit` (ou suíte Vitest alvo equivalente da alteração)
+  2. `node scripts/autofix/run-tests.mjs <arquivo.spec.ts>` ou `npx playwright test <arquivo.spec.ts> --config=playwright.config.local.ts`
+  3. Evidência de execução (print + relatório Playwright/Vitest UI) anexada ao status da task/PR.
 
 **Preview**:
 - Sempre abra o projeto no preview Simple Browser do Vscode e monitore o logs do console para garantir que não há erros de build ou runtime.

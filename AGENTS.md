@@ -16,6 +16,10 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 
 ## Regras Específicas
 - Sempre ao terminar qualquer implementação, correção ou criação de scripts, tabelas, campos, alterações, execute um teste e2e para validar o que foi feito e documente.
+- REGRA DE BLOQUEIO (SEMPRE): nenhum agente pode encerrar task ou abrir PR sem cobertura de testes em **Vitest + Playwright + BDD** para o que foi alterado.
+- Alterou functions/actions/services/regras de negócio: criar ou atualizar testes Vitest (unit/integration).
+- Alterou telas/fluxos renderizados: criar ou atualizar testes Playwright (E2E/visual, preferindo provider Playwright do Vitest UI).
+- Registrar cenários BDD (Given/When/Then) em arquivo `.feature` e manter rastreabilidade com os testes automatizados da entrega.
 
 ## ✅ Gate Pré-PR (OBRIGATÓRIO)
 
