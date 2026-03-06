@@ -443,6 +443,7 @@ export class AuctionService {
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
+            addressLink,
             Auctioneer: { connect: { id: BigInt(auctioneerId) } },
             Seller: { connect: { id: BigInt(sellerId) } },
             LotCategory: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
@@ -503,6 +504,11 @@ export class AuctionService {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
             ...(restOfData as any),
         };
+
+        // Gerar addressLink automaticamente
+        if (restOfData.latitude && restOfData.longitude) {
+          dataToUpdate.addressLink = `https://www.google.com/maps?q=${restOfData.latitude},${restOfData.longitude}`;
+        }
         
         if (data.title) dataToUpdate.slug = slugify(data.title);
         
