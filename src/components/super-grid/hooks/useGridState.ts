@@ -66,6 +66,9 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
   const [editingCellId, setEditingCellId] = useState<{ rowId: string; columnId: string } | null>(null);
   const [editingCellValue, setEditingCellValue] = useState<unknown>(undefined);
 
+  // Linha ativa (para highlight ao clicar)
+  const [activeRowId, setActiveRowId] = useState<string | null>(null);
+
   // Coluna com hover destacado
   const [hoveredColumnId, setHoveredColumnId] = useState<string | null>(null);
 
@@ -121,5 +124,7 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
     cancelCellEdit,
     hoveredColumnId,
     setHoveredColumnId,
+    activeRowId,
+    setActiveRowId,
   };
 }
