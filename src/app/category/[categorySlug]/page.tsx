@@ -10,7 +10,7 @@ export default function CategoryPage({ params }: { params: { categorySlug: strin
 
 export async function generateStaticParams() {
   try {
-    const categories = await getLotCategories();
+    const categories = await getLotCategories(true);
     return categories.map(category => ({
       categorySlug: category.slug,
     }));

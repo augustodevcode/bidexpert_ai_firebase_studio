@@ -273,7 +273,7 @@ function MapSearchPageContent() {
         getLots(undefined, true),
         getPlatformSettings(),
         getDirectSaleOffers(),
-        getLotCategories(),
+        getLotCategories(true),
         getSellers(true),
       ]);
 

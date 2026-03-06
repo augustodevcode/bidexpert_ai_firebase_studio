@@ -46,7 +46,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     getPlatformSettings(),
     getAuction(currentAuctionId, true), // Public call
     getLot(currentLotId, true), // Public call
-    getLotCategories(),
+    getLotCategories(true),
     getSellers(true), // Public call
     getAuctioneers(true) // Public call
   ]);

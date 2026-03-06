@@ -49,7 +49,7 @@ export default async function HomePage({ searchParams }: { searchParams?: HomeSe
       getPlatformSettings(),
       getAuctions(true, 10), // Limitar para 10 leilões
     getLots(undefined, true, 12), // Public call
-      getLotCategories(),
+            getLotCategories(true),
       getSellers(true),
   ]);
 
