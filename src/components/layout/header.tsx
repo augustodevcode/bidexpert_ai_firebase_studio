@@ -18,10 +18,7 @@ import Image from 'next/image';
 import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo, Auction } from '@/types';
 import { getLotsByIds, getLots } from '@/app/admin/lots/actions';
-import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getSellers } from '@/app/admin/sellers/actions';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -85,7 +82,6 @@ export default function Header({
   const [isLoading, setIsLoading] = useState(true);
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]); // New state for search
-  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [categories, setCategories] = useState<LotCategory[]>([]);
   const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
@@ -127,39 +123,21 @@ export default function Header({
       try {
         const [
             fetchedLots,
-            fetchedAuctions,
-            fetchedCategories,
-            fetchedSellers,
-            fetchedAuctioneers
+            fetchedCategories
         ] = await Promise.allSettled([
           getLots(undefined, true), 
-          getAuctions(true, 20),
-          getLotCategories(true),
-          getSellers(true, 20),
-          getAuctioneers(true, 20)
+          getLotCategories(true)
         ]);
 
         if (fetchedLots.status === 'rejected') {
           console.warn('Header failed to load public lots:', fetchedLots.reason);
         }
-        if (fetchedAuctions.status === 'rejected') {
-          console.warn('Header failed to load public auctions:', fetchedAuctions.reason);
-        }
         if (fetchedCategories.status === 'rejected') {
           console.warn('Header failed to load public categories:', fetchedCategories.reason);
         }
-        if (fetchedSellers.status === 'rejected') {
-          console.warn('Header failed to load public sellers:', fetchedSellers.reason);
-        }
-        if (fetchedAuctioneers.status === 'rejected') {
-          console.warn('Header failed to load public auctioneers:', fetchedAuctioneers.reason);
-        }
 
         setAllLots(fetchedLots.status === 'fulfilled' ? fetchedLots.value : []);
-        setAllAuctions(fetchedAuctions.status === 'fulfilled' ? fetchedAuctions.value : []);
         setCategories(fetchedCategories.status === 'fulfilled' ? fetchedCategories.value : []);
-        setSellers(fetchedSellers.status === 'fulfilled' ? fetchedSellers.value : []);
-        setAuctioneers(fetchedAuctioneers.status === 'fulfilled' ? fetchedAuctioneers.value : []);
 
         const viewedIds = getRecentlyViewedIds();
         if (viewedIds.length > 0) {
