@@ -11,17 +11,10 @@ import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { convertQueryBuilderToPrisma } from '@/components/super-grid/utils/prismaQueryBuilder';
 import { FetchParamsSchema } from '@/components/super-grid/SuperGrid.types';
 import type { GridFetchParams, GridFetchResult } from '@/components/super-grid/SuperGrid.types';
-
-// Serializer de BigInt para JSON
-function bigIntReplacer(_key: string, value: unknown): unknown {
-  if (typeof value === 'bigint') {
-    return value.toString();
-  }
-  return value;
-}
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 function serializeData<T>(data: T): T {
-  return JSON.parse(JSON.stringify(data, bigIntReplacer));
+  return sanitizeResponse(data);
 }
 
 /** Resolve o modelo Prisma dinamicamente a partir do nome da entidade */
@@ -116,25 +109,34 @@ export async function fetchGridData(
   const include = validated.includes || {};
 
   // 7. Executar queries em paralelo
-  const [data, totalCount] = await Promise.all([
-    model.findMany({
-      where,
-      orderBy,
-      skip: validated.pagination.pageIndex * validated.pagination.pageSize,
-      take: validated.pagination.pageSize,
-      include: Object.keys(include).length > 0 ? include : undefined,
-    }),
-    model.count({ where }),
-  ]);
+  try {
+    const [data, totalCount] = await Promise.all([
+      model.findMany({
+        where,
+        orderBy,
+        skip: validated.pagination.pageIndex * validated.pagination.pageSize,
+        take: validated.pagination.pageSize,
+        include: Object.keys(include).length > 0 ? include : undefined,
+      }),
+      model.count({ where }),
+    ]);
 
-  const elapsed = Date.now() - startTime;
-  console.log(`[SuperGrid] ${validated.entity}: ${totalCount} registros, página ${validated.pagination.pageIndex}, ${elapsed}ms`);
+    const elapsed = Date.now() - startTime;
+    console.log(`[SuperGrid] ${validated.entity}: ${totalCount} registros, página ${validated.pagination.pageIndex}, ${elapsed}ms`);
 
-  return serializeData({
-    data: data as Record<string, unknown>[],
-    totalCount,
-    pageCount: Math.ceil(totalCount / validated.pagination.pageSize),
-  });
+    return serializeData({
+      data: data as Record<string, unknown>[],
+      totalCount,
+      pageCount: Math.ceil(totalCount / validated.pagination.pageSize),
+    });
+  } catch (error) {
+    console.error(`[SuperGrid] Error fetching ${validated.entity}:`, error);
+    return serializeData({
+      data: [] as Record<string, unknown>[],
+      totalCount: 0,
+      pageCount: 0,
+    });
+  }
 }
 
 /** Salva (create ou update) um registro genérico */

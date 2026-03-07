@@ -13,18 +13,22 @@ import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
 import { AssetService } from '@/services/asset.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const lotService = new LotService();
 const assetService = new AssetService();
 
 
 export async function getLots(filter?: { auctionId?: string; judicialProcessId?: string }, isPublicCall: boolean = false, limit?: number): Promise<Lot[]> {
-  const tenantId = await getTenantIdFromRequest(isPublicCall);
-  console.log(`[Action getLots] Tenant: ${tenantId}, Filter:`, filter);
-  const lots = await lotService.getLots(filter, tenantId, limit, isPublicCall);
-  return JSON.parse(JSON.stringify(lots, (key, value) => 
-    typeof value === 'bigint' ? value.toString() : value
-  ));
+  try {
+    const tenantId = await getTenantIdFromRequest(isPublicCall);
+    console.log(`[Action getLots] Tenant: ${tenantId}, Filter:`, filter);
+    const lots = await lotService.getLots(filter, tenantId, limit, isPublicCall);
+    return sanitizeResponse(lots);
+  } catch (error) {
+    console.error('[getLots] Error:', error);
+    return [];
+  }
 }
 
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {
