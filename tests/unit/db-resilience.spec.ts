@@ -161,8 +161,7 @@ describe('shouldAllowDbFallback', () => {
   });
 
   it('retorna true para erro de DB em NODE_ENV=test (desenvolvimento)', () => {
-    // NODE_ENV já é 'test' no ambiente de testes
-    expect(process.env.NODE_ENV).toBe('test');
+    process.env.NODE_ENV = 'test';
     expect(shouldAllowDbFallback(dbError)).toBe(true);
   });
 
@@ -280,9 +279,9 @@ describe('getPlatformSettings em VERCEL_ENV=preview com DB indisponível', () =>
 
     const mockGetSettings = vi.fn().mockRejectedValue(prismaInitError);
     vi.doMock('../../src/services/platform-settings.service', () => ({
-      PlatformSettingsService: vi.fn().mockImplementation(() => ({
-        getSettings: mockGetSettings,
-      })),
+      PlatformSettingsService: class PlatformSettingsService {
+        getSettings = mockGetSettings;
+      },
     }));
 
     // getTenantIdFromRequest também usará o fallback pois prisma está indisponível
@@ -308,10 +307,11 @@ describe('getPlatformSettings em VERCEL_ENV=preview com DB indisponível', () =>
       { name: 'Error' }
     );
 
+    const mockGetSettings = vi.fn().mockRejectedValue(logicError);
     vi.doMock('../../src/services/platform-settings.service', () => ({
-      PlatformSettingsService: vi.fn().mockImplementation(() => ({
-        getSettings: vi.fn().mockRejectedValue(logicError),
-      })),
+      PlatformSettingsService: class PlatformSettingsService {
+        getSettings = mockGetSettings;
+      },
     }));
 
     vi.doMock('../../src/lib/actions/auth', () => ({
@@ -324,5 +324,6 @@ describe('getPlatformSettings em VERCEL_ENV=preview com DB indisponível', () =>
 
     const { getPlatformSettings } = await import('../../src/app/admin/settings/actions');
     await expect(getPlatformSettings()).rejects.toThrow('[getPlatformSettings Action] Error:');
+    expect(mockGetSettings).toHaveBeenCalledWith('1');
   });
 });

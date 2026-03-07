@@ -21,7 +21,7 @@ permissions:
   pull-requests: write
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
 
 jobs:
   # ============================================================================
@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📚 Install dependencies
         run: npm ci
@@ -64,8 +64,11 @@ jobs:
       - name: 🏗️ Build Validation
         run: npm run build
         env:
-          SESSION_SECRET: 'ci-build-secret-key-at-least-32-chars-long!'
-          NEXTAUTH_SECRET: 'ci-build-nextauth-secret-32chars!'
+          POSTGRES_PRISMA_URL: ${{ github.ref_name == 'main' && (secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL || secrets.HML_DATABASE_URL_DIRECT) || (secrets.DEMO_DATABASE_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL) }}
+          POSTGRES_URL_NON_POOLING: ${{ github.ref_name == 'main' && (secrets.PROD_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL) || (secrets.DEMO_DATABASE_URL_DIRECT || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL) }}
+          DATABASE_URL: ${{ github.ref_name == 'main' && (secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL || secrets.HML_DATABASE_URL_DIRECT) || (secrets.DEMO_DATABASE_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL) }}
+          SESSION_SECRET: "ci-build-secret-key-at-least-32-chars-long!"
+          NEXTAUTH_SECRET: "ci-build-nextauth-secret-32chars!"
 
   # ============================================================================
   # JOB 2: Semantic Release (versão + changelog + tag + GitHub Release)
@@ -90,7 +93,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📚 Install dependencies
         run: npm ci
@@ -99,10 +102,10 @@ jobs:
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: 'github-actions[bot]'
-          GIT_AUTHOR_EMAIL: 'github-actions[bot]@users.noreply.github.com'
-          GIT_COMMITTER_NAME: 'github-actions[bot]'
-          GIT_COMMITTER_EMAIL: 'github-actions[bot]@users.noreply.github.com'
+          GIT_AUTHOR_NAME: "github-actions[bot]"
+          GIT_AUTHOR_EMAIL: "github-actions[bot]@users.noreply.github.com"
+          GIT_COMMITTER_NAME: "github-actions[bot]"
+          GIT_COMMITTER_EMAIL: "github-actions[bot]@users.noreply.github.com"
         run: npx semantic-release
 
       - name: 📊 Release Summary
@@ -155,23 +158,33 @@ jobs:
         run: |
           VERSION="${{ needs.release.outputs.new_release_version }}"
           BRANCH="${{ github.ref_name }}"
-          
+
           echo "🔧 Injetando NEXT_PUBLIC_APP_VERSION=$VERSION para branch $BRANCH..."
-          
+
           # Determinar o environment target na Vercel
           if [ "$BRANCH" = "main" ]; then
             TARGET="production"
+            BRANCH_ARG=""
           else
             TARGET="preview"
+            BRANCH_ARG="$BRANCH"
           fi
-          
+
           # Remover variável existente (ignora erro se não existir)
-          vercel env rm NEXT_PUBLIC_APP_VERSION "$TARGET" --yes --token="$VERCEL_TOKEN" 2>/dev/null || true
-          
+          if [ -n "$BRANCH_ARG" ]; then
+            vercel env rm NEXT_PUBLIC_APP_VERSION "$TARGET" "$BRANCH_ARG" --yes --token="$VERCEL_TOKEN" 2>/dev/null || true
+          else
+            vercel env rm NEXT_PUBLIC_APP_VERSION "$TARGET" --yes --token="$VERCEL_TOKEN" 2>/dev/null || true
+          fi
+
           # Adicionar nova variável
-          echo "$VERSION" | vercel env add NEXT_PUBLIC_APP_VERSION "$TARGET" --token="$VERCEL_TOKEN"
-          
-          echo "✅ NEXT_PUBLIC_APP_VERSION=$VERSION configurado para $TARGET"
+          if [ -n "$BRANCH_ARG" ]; then
+            echo "$VERSION" | vercel env add NEXT_PUBLIC_APP_VERSION "$TARGET" "$BRANCH_ARG" --token="$VERCEL_TOKEN"
+          else
+            echo "$VERSION" | vercel env add NEXT_PUBLIC_APP_VERSION "$TARGET" --token="$VERCEL_TOKEN"
+          fi
+
+          echo "✅ NEXT_PUBLIC_APP_VERSION=$VERSION configurado para $TARGET ${BRANCH_ARG:+(branch $BRANCH_ARG)}"
 
       - name: 🔄 Trigger Vercel Redeploy
         env:
@@ -180,7 +193,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           BRANCH="${{ github.ref_name }}"
-          
+
           if [ "$BRANCH" = "main" ]; then
             echo "🚀 Triggering production redeploy..."
             vercel deploy --prod --yes --token="$VERCEL_TOKEN"
@@ -190,7 +203,7 @@ jobs:
           fi
 
   # ============================================================================
-  # JOB 4: Database Migration (para produção e demo)
+  # JOB 4: Database Migration (produção, demo e hml)
   # ============================================================================
   migrate:
     name: 🗃️ Database Migration
@@ -198,7 +211,7 @@ jobs:
     needs: release
     if: >
       needs.release.outputs.new_release_published == 'true' &&
-      (github.ref_name == 'main' || github.ref_name == 'demo-stable')
+      (github.ref_name == 'main' || github.ref_name == 'demo-stable' || github.ref_name == 'hml')
 
     steps:
       - name: 📥 Checkout code
@@ -208,7 +221,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: 📚 Install dependencies
         run: npm ci
@@ -222,14 +235,18 @@ jobs:
       - name: 🗃️ Run Prisma Migrate Deploy
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ github.ref_name == 'main' && secrets.PROD_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL_DIRECT }}
+          POSTGRES_PRISMA_URL: ${{ github.ref_name == 'main' && (secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL || secrets.HML_DATABASE_URL_DIRECT) || (secrets.DEMO_DATABASE_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL) }}
+          POSTGRES_URL_NON_POOLING: ${{ github.ref_name == 'main' && (secrets.PROD_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL) || (secrets.DEMO_DATABASE_URL_DIRECT || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL) }}
+          DATABASE_URL: ${{ github.ref_name == 'main' && (secrets.PROD_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL) || (secrets.DEMO_DATABASE_URL_DIRECT || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL) }}
 
       - name: ✅ Verify Migration
         run: |
           echo "🔍 Verificando estado do banco de dados..."
           npx prisma migrate status
         env:
-          DATABASE_URL: ${{ github.ref_name == 'main' && secrets.PROD_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL_DIRECT }}
+          POSTGRES_PRISMA_URL: ${{ github.ref_name == 'main' && (secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL || secrets.HML_DATABASE_URL_DIRECT) || (secrets.DEMO_DATABASE_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL) }}
+          POSTGRES_URL_NON_POOLING: ${{ github.ref_name == 'main' && (secrets.PROD_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL) || (secrets.DEMO_DATABASE_URL_DIRECT || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL) }}
+          DATABASE_URL: ${{ github.ref_name == 'main' && (secrets.PROD_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL) || (secrets.DEMO_DATABASE_URL_DIRECT || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL) }}
 
   # ============================================================================
   # JOB 5: Notification
@@ -253,19 +270,22 @@ jobs:
           echo "💉 Version Inject: ${{ needs.inject-version.result || 'skipped' }}"
           echo "🗃️ Migration: ${{ needs.migrate.result || 'skipped' }}"
           echo "============================================"
-          
+
           # Mapeamento de branch para ambiente
           case "${{ github.ref_name }}" in
             main)
               echo "🌐 Ambiente: PRODUÇÃO"
-              echo "🔗 URL: https://bidexpertaifirebasestudio.vercel.app"
+              echo "🗄️ Provider: Supabase PostgreSQL"
+              echo "🔗 URL: https://bidexpert.com.br"
               ;;
             demo-stable)
               echo "🌐 Ambiente: DEMONSTRAÇÃO"
-              echo "🔗 URL: https://demo-bidexpertaifirebasestudio.vercel.app"
+              echo "🗄️ Provider: Neon PostgreSQL"
+              echo "🔗 URL: https://demo.bidexpert.com.br"
               ;;
             hml)
               echo "🌐 Ambiente: HOMOLOGAÇÃO"
-              echo "🔗 URL: https://hml-bidexpertaifirebasestudio.vercel.app"
+              echo "🗄️ Provider: Prisma Postgres"
+              echo "🔗 URL: https://hml.bidexpert.com.br"
               ;;
           esac
