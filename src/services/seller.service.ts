@@ -137,6 +137,9 @@ export class SellerService {
         } = data;
   
         const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
+        const addressLink = (latitude && longitude)
+          ? `https://www.google.com/maps?q=${latitude},${longitude}`
+          : null;
   
         // Gera o publicId usando a máscara configurada
         const publicId = await generatePublicId(tenantId, 'seller');
@@ -144,8 +147,19 @@ export class SellerService {
         const dataToCreate: Prisma.SellerCreateInput = {
           ...(sellerData as any),
           address: fullAddress,
+          addressLink,
+          street: street ?? null,
+          number: number ?? null,
+          complement: complement ?? null,
+          neighborhood: neighborhood ?? null,
+          latitude: latitude ? new Prisma.Decimal(String(latitude)) : null,
+          longitude: longitude ? new Prisma.Decimal(String(longitude)) : null,
+          cityId: cityId ? BigInt(cityId) : null,
+          stateId: stateId ? BigInt(stateId) : null,
+          zipCode: (sellerData as any).zipCode ?? null,
           slug: slugify(data.name),
           publicId,
+          updatedAt: new Date(),
           Tenant: { connect: { id: BigInt(tenantId) } },
         };
   
@@ -213,6 +227,23 @@ export class SellerService {
           complement ?? currentAddressParts[2] ?? '',
           neighborhood ?? currentAddressParts[3] ?? ''
         ].filter(Boolean).join(', ');
+      }
+
+      // Persistir campos individuais de endereço (corrige bug de campos silenciados)
+      if (street !== undefined) (dataToUpdate as any).street = street;
+      if (number !== undefined) (dataToUpdate as any).number = number;
+      if (complement !== undefined) (dataToUpdate as any).complement = complement;
+      if (neighborhood !== undefined) (dataToUpdate as any).neighborhood = neighborhood;
+      if (latitude !== undefined) (dataToUpdate as any).latitude = latitude ? new Prisma.Decimal(String(latitude)) : null;
+      if (longitude !== undefined) (dataToUpdate as any).longitude = longitude ? new Prisma.Decimal(String(longitude)) : null;
+      if (cityId !== undefined) (dataToUpdate as any).cityId = cityId ? BigInt(cityId) : null;
+      if (stateId !== undefined) (dataToUpdate as any).stateId = stateId ? BigInt(stateId) : null;
+
+      // Gerar addressLink automaticamente
+      const effectiveLat = latitude ?? (await this.sellerRepository.findById(tenantId, id))?.latitude;
+      const effectiveLng = longitude ?? (await this.sellerRepository.findById(tenantId, id))?.longitude;
+      if (effectiveLat && effectiveLng) {
+        (dataToUpdate as any).addressLink = `https://www.google.com/maps?q=${effectiveLat},${effectiveLng}`;
       }
       
       if (cityId) {

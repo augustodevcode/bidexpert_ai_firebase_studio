@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 interface QueryLog {
   id: string;
@@ -210,9 +209,6 @@ export default function AdminQueryMonitor() {
       >
         <div className="h-full overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <div className="space-y-4" data-ai-id="query-monitor-content">
-            <div data-ai-id="query-monitor-dev-info">
-              <DevInfoIndicator />
-            </div>
             {queries.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-500 py-12">
                 <Database className="h-12 w-12 mb-3 opacity-20" />

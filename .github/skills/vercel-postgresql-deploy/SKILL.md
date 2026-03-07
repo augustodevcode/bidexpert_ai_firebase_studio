@@ -5,6 +5,11 @@ description: Regras críticas de deploy Vercel com PostgreSQL e Prisma para evit
 
 # 🚀 Skill: Vercel + PostgreSQL Deploy & Compatibility
 
+## 📸 Evidência Obrigatória para PR (Playwright)
+- Todo PR deve incluir print(s)/screenshot(s) de sucesso dos testes Playwright.
+- Deve incluir link do relatório de execução (Playwright/Vitest UI) e cenário validado.
+- PR sem evidência visual não deve ser aprovado nem mergeado.
+
 ## Descrição
 
 Esta skill documenta todas as regras, armadilhas e soluções aprendidas ao fazer deploy do BidExpert no Vercel com PostgreSQL (Prisma Postgres). Seguir estas regras evita os erros recorrentes que bloqueiam o site em produção.

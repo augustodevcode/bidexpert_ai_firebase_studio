@@ -50,7 +50,12 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/release/')
         run: npm run typecheck
         
-      - name: Run Lint
+      - name: Run Lint (soft gate for non-release branches)
+        if: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
+        run: npm run lint:soft
+
+      - name: Run Lint (strict on release branches)
+        if: startsWith(github.ref, 'refs/heads/release/')
         run: npm run lint
         continue-on-error: true
       - name: Dependency Security Audit

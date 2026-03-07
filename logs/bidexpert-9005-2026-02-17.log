@@ -1,0 +1,1670 @@
+
+================================================================================
+[2026-02-17T23:57:48.908Z] BidExpert iniciado na porta 9005
+================================================================================
+
+[STDOUT] 
+> bid-expert@0.1.0 dev:9005
+> next dev --port 9005 --hostname 0.0.0.0
+
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT] [next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: development
+[STDOUT] [next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.
+[STDOUT]   ▲ Next.js 14.2.3
+[STDOUT]   - Local:        http://localhost:9005
+  - Network:      http://0.0.0.0:9005
+  - Environments: .env.local, .env
+
+[STDOUT]  ✓ Starting...
+[STDOUT]  ✓ Ready in 12.3s
+[STDOUT]  ○ Compiling /src/middleware ...
+[STDOUT]  ✓ Compiled /src/middleware in 840ms (212 modules)
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  ○ Compiling /faq ...
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[STDOUT] [Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  ✓ Compiled /faq in 46.7s (5324 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR] Erro durante ensureDefaultTenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findUnique()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:86:32) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[PlatformSettingsService] Erro ao verificar/criar tenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findUnique()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:86:32) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[PlatformSettingsService] Error getting settings for tenant 1: Error: Falha ao verificar/criar tenant
+    at eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:107:23)
+[STDERR] [PlatformSettingsService] Error getting settings for tenant 1: Error: Falha ao verificar/criar tenant
+    at eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:107:23)
+[PlatformSettingsService] Error getting settings for tenant 1: Error: Falha ao verificar/criar tenant
+    at eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:107:23)
+[getPlatformSettings Action] Error fetching or creating settings: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:224:19)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[getPlatformSettings Action] Error fetching or creating settings: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:224:19)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[getPlatformSettings Action] Error fetching or creating settings: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:224:19)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[Layout Data Fetch] Could not fetch platform settings (this is expected on first run): Error: [getPlatformSettings Action] Error: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:35:15)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[Layout Data Fetch] Could not fetch platform settings (this is expected on first run): Error: [getPlatformSettings Action] Error: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:35:15)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[Layout Data Fetch] Could not fetch platform settings (this is expected on first run): Error: [getPlatformSettings Action] Error: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:35:15)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[STDOUT]  GET /faq?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372703895 200 in 41793ms
+[STDOUT]  ✓ Compiled in 4.3s (2005 modules)
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  POST /faq?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372703895 200 in 387ms
+[STDERR]  ⨯ Error: aborted
+    at abortIncoming (node:_http_server:845:17)
+    at socketOnClose (node:_http_server:839:3)
+    at Socket.emit (node:events:520:35)
+    at TCP.<anonymous> (node:net:346:12)
+[STDERR] digest: "884124770"
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT]  ○ Compiling / ...
+[STDOUT]  ✓ Compiled / in 24.6s (7252 modules)
+[STDOUT] [layout.tsx] LOG: RootLayout component is rendering/executing.
+[STDOUT] [getPlatformSettings Action] Fetching settings via service...
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[getPlatformSettings Action] Fetching settings via service...
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async resolveTenantIdFromHeader (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:34:20)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:135:36)
+    at async getLotCategories (webpack-internal:///(rsc)/./src/app/admin/categories/actions.ts:33:22)
+    at async Promise.all (index 3)
+    at async HomePage (webpack-internal:///(rsc)/./src/app/page.tsx:115:77) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR] Erro durante ensureDefaultTenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDERR]  ⨯ PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:74:38)
+    at async resolveTenantIdFromHeader (./src/lib/actions/auth.ts:34:20)
+    at async getTenantIdFromRequest (./src/lib/actions/auth.ts:135:36)
+    at async getLotCategories (./src/app/admin/categories/actions.ts:33:22)
+    at async Promise.all (index 3)
+    at async HomePage (./src/app/page.tsx:115:77)
+[STDERR] digest: "422711166"
+[STDOUT] prisma:error 
+Invalid `prisma.auction.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.lot.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.seller.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findUnique()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async AuctionService.getAuctions (webpack-internal:///(rsc)/./src/services/auction.service.ts:382:26)
+    at async getAuctions (webpack-internal:///(rsc)/./src/app/admin/auctions/actions.ts:51:22)
+    at async Promise.all (index 1) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async LotService.getLots (webpack-internal:///(rsc)/./src/services/lot.service.ts:527:26)
+    at async getLots (webpack-internal:///(rsc)/./src/app/admin/lots/actions.ts:45:18)
+    at async Promise.all (index 2) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async SellerService.getSellers (webpack-internal:///(rsc)/./src/services/seller.service.ts:48:25)
+    at async getSellers (webpack-internal:///(rsc)/./src/app/admin/sellers/actions.ts:36:20)
+    at async Promise.all (index 4) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:86:32) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Error in getLots: PrismaClientInitializationError: 
+Invalid `prisma.lot.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async LotService.getLots (webpack-internal:///(rsc)/./src/services/lot.service.ts:527:26)
+    at async getLots (webpack-internal:///(rsc)/./src/app/admin/lots/actions.ts:45:18)
+    at async Promise.all (index 2) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[PlatformSettingsService] Erro ao verificar/criar tenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findUnique()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:86:32) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[PlatformSettingsService] Error getting settings for tenant 1: Error: Falha ao verificar/criar tenant
+    at eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:107:23)
+[PlatformSettingsService] Error getting settings for tenant 1: Error: Falha ao verificar/criar tenant
+    at eval (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:107:23)
+[getPlatformSettings Action] Error fetching or creating settings: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:224:19)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async Promise.all (index 0)
+[getPlatformSettings Action] Error fetching or creating settings: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at PlatformSettingsService.getSettings (webpack-internal:///(rsc)/./src/services/platform-settings.service.ts:224:19)
+    at async getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:30:26)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[Layout Data Fetch] Could not fetch platform settings (this is expected on first run): Error: [getPlatformSettings Action] Error: Error: Falha ao carregar configurações: Falha ao verificar/criar tenant
+    at getPlatformSettings (webpack-internal:///(rsc)/./src/app/admin/settings/actions.ts:35:15)
+    at async getLayoutData (webpack-internal:///(rsc)/./src/app/layout.tsx:49:26)
+    at async RootLayout (webpack-internal:///(rsc)/./src/app/layout.tsx:63:51)
+[STDERR]  ⨯ PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:74:38)
+    at async resolveTenantIdFromHeader (./src/lib/actions/auth.ts:34:20)
+    at async getTenantIdFromRequest (./src/lib/actions/auth.ts:135:36)
+    at async getLotCategories (./src/app/admin/categories/actions.ts:33:22)
+    at async Promise.all (index 3)
+    at async HomePage (./src/app/page.tsx:115:77)
+digest: "422711166"
+[STDOUT]  GET /?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372750092 500 in 26291ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372750092 200 in 179ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT]  POST /?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372750092 200 in 143ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:122:20)
+    at async getLots (webpack-internal:///(rsc)/./src/app/admin/lots/actions.ts:43:22)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDOUT] [Action getLots] Tenant: 1, Filter: undefined
+[STDERR] Erro durante ensureDefaultTenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:122:20)
+    at async getLots (webpack-internal:///(rsc)/./src/app/admin/lots/actions.ts:43:22)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.
+[STDOUT] prisma:error 
+Invalid `prisma.lot.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async LotService.getLots (webpack-internal:///(rsc)/./src/services/lot.service.ts:527:26)
+    at async getLots (webpack-internal:///(rsc)/./src/app/admin/lots/actions.ts:45:18)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR] Error in getLots: PrismaClientInitializationError: 
+Invalid `prisma.lot.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async LotService.getLots (webpack-internal:///(rsc)/./src/services/lot.service.ts:527:26)
+    at async getLots (webpack-internal:///(rsc)/./src/app/admin/lots/actions.ts:45:18)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDOUT]  POST /?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372750092 200 in 201ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:122:20)
+    at async getAuctions (webpack-internal:///(rsc)/./src/app/admin/auctions/actions.ts:50:27)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Erro durante ensureDefaultTenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:122:20)
+    at async getAuctions (webpack-internal:///(rsc)/./src/app/admin/auctions/actions.ts:50:27)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.
+[STDOUT] prisma:error 
+Invalid `prisma.auction.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async AuctionService.getAuctions (webpack-internal:///(rsc)/./src/services/auction.service.ts:382:26)
+    at async getAuctions (webpack-internal:///(rsc)/./src/app/admin/auctions/actions.ts:51:22)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR]  ⨯ PrismaClientInitializationError: 
+Invalid `prisma.auction.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:74:38)
+    at async AuctionService.getAuctions (./src/services/auction.service.ts:382:26)
+    at async getAuctions (./src/app/admin/auctions/actions.ts:51:22)
+digest: "297172316"
+[STDOUT]  POST /?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372750092 500 in 208ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] [Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[STDOUT] [Get Session] Cookies disponiveis: (nenhum)
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async resolveTenantIdFromHeader (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:34:20)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:135:36)
+    at async getLotCategories (webpack-internal:///(rsc)/./src/app/admin/categories/actions.ts:33:22)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR]  ⨯ PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:74:38)
+    at async resolveTenantIdFromHeader (./src/lib/actions/auth.ts:34:20)
+    at async getTenantIdFromRequest (./src/lib/actions/auth.ts:135:36)
+    at async getLotCategories (./src/app/admin/categories/actions.ts:33:22)
+[STDERR] digest: "1342676097"
+[STDOUT]  POST /?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372750092 500 in 132ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:122:20)
+    at async getSellers (webpack-internal:///(rsc)/./src/app/admin/sellers/actions.ts:35:27)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Erro durante ensureDefaultTenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(rsc)/./src/lib/actions/auth.ts:122:20)
+    at async getSellers (webpack-internal:///(rsc)/./src/app/admin/sellers/actions.ts:35:27)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR] Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.
+[STDOUT] prisma:error 
+Invalid `prisma.seller.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async SellerService.getSellers (webpack-internal:///(rsc)/./src/services/seller.service.ts:48:25)
+    at async getSellers (webpack-internal:///(rsc)/./src/app/admin/sellers/actions.ts:36:20)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR]  ⨯ PrismaClientInitializationError: 
+Invalid `prisma.seller.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:74:38)
+    at async SellerService.getSellers (./src/services/seller.service.ts:48:25)
+    at async getSellers (./src/app/admin/sellers/actions.ts:36:20)
+digest: "3593919395"
+[STDOUT]  POST /?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372750092 500 in 121ms
+[STDOUT] [resolveTenantFromRequest] hostname='demo.localhost:9005', forwardedHost='demo.localhost:9005', effectiveHost='demo.localhost:9005', hostWithoutPort='demo.localhost'
+[STDOUT] [resolveTenantFromRequest] localhostSubdomainMatch: [
+  'demo.localhost',
+  'demo',
+  index: 0,
+  input: 'demo.localhost',
+  groups: undefined
+]
+[Get Session] Cookie "session" NAO encontrado nos headers da requisicao.
+[Get Session] Cookies disponiveis: (nenhum)
+[Middleware] Resolution: tenantId='demo', subdomain='demo'
+[Middleware] Session: null
+[Middleware] Active Tenant ID set to: 'demo'
+[STDOUT] prisma:error 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(action-browser)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(action-browser)/./src/lib/actions/auth.ts:122:20)
+    at async getAuctioneers (webpack-internal:///(action-browser)/./src/app/admin/auctioneers/actions.ts:31:27)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR] Erro durante ensureDefaultTenant: PrismaClientInitializationError: 
+Invalid `prisma.tenant.findFirst()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async auditMiddleware (webpack-internal:///(rsc)/./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:74:38)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async eval (webpack-internal:///(action-browser)/./src/lib/actions/auth.ts:64:26)
+    at async getTenantIdFromRequest (webpack-internal:///(action-browser)/./src/lib/actions/auth.ts:122:20)
+    at async getAuctioneers (webpack-internal:///(action-browser)/./src/app/admin/auctioneers/actions.ts:31:27)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Ambiente de desenvolvimento: retornando fallback tenantId=1 para continuar.
+[STDOUT] prisma:error 
+Invalid `prisma.auctioneer.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDOUT] prisma:error 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[STDERR] Failed to log query: PrismaClientInitializationError: 
+Invalid `prisma.$executeRaw()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:7615)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async Array.$allOperations (webpack-internal:///(rsc)/./src/lib/prisma.ts:107:45)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async AuctioneerRepository.findAll (webpack-internal:///(action-browser)/./src/repositories/auctioneer.repository.ts:13:29)
+    at async AuctioneerService.getAuctioneers (webpack-internal:///(action-browser)/./src/services/auctioneer.service.ts:35:29)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:418
+    at async rS (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:38:7978)
+    at async r2 (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:41:1251)
+    at async doRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1438:30)
+    at async cacheEntry.responseCache.get.routeKind (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\base-server.js:816:17)
+    at async E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+[STDERR]  ⨯ PrismaClientInitializationError: 
+Invalid `prisma.auctioneer.findMany()` invocation:
+
+
+error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
+  -->  schema.prisma:20
+   | 
+19 |   provider = "postgresql"
+20 |   url      = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+    at async auditMiddleware (./src/lib/audit-middleware.ts:50:20)
+    at async Array.$allOperations (./src/lib/prisma.ts:74:38)
+    at async AuctioneerRepository.findAll (./src/repositories/auctioneer.repository.ts:13:29)
+    at async AuctioneerService.getAuctioneers (./src/services/auctioneer.service.ts:35:29)
+[STDERR] digest: "878138950"
+[STDOUT]  POST /?id=4e158958-5af2-4de8-a6a2-7503d8e0c633&vscodeBrowserReqId=1771372750092 500 in 410ms

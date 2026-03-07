@@ -1,4 +1,4 @@
-# 🚀 WORKFLOW OBRIGATÓRIO: Desenvolvimento Paralelo com Branches
+# 🌲 WORKFLOW OBRIGATÓRIO: Isolamento com Git Worktree
 
 > **REGRA CRÍTICA DE MÁXIMA PRIORIDADE:** Este workflow DEVE ser seguido por TODOS os agentes AI (Copilot, GitHub Chat, etc.) ANTES de iniciar qualquer implementação, alteração ou correção no projeto.
 
@@ -6,25 +6,50 @@
 
 Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **simultaneamente**, cada um com:
 - ✅ Sua própria **branch dedicada** (a partir da `demo-stable`)
+- ✅ Sua própria **pasta de trabalho isolada** (via Git Worktree)
 - ✅ Sua própria **porta de desenvolvimento** (9005, 9006, 9007, etc.)
 - ✅ Seus próprios **testes isolados**
 
 ## 📋 Checklist Obrigatório no INÍCIO de Cada Task/Chat
 
-### 1. Criar Branch a partir da demo-stable
+### 1. Criar Worktree + Branch a partir da demo-stable
+
+**Opção A — Script helper (RECOMENDADO):**
 ```powershell
-git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
-git checkout -b <tipo>/<descricao-curta>-<timestamp>
-# Tipos: feat/, fix/, chore/, docs/, test/
-# Exemplo: git checkout -b feat/auction-filter-20260131-1430
+# Criar worktree + branch + npm install automaticamente
+./scripts/create-worktree.ps1 -Tipo feat -Descricao auction-filter
+
+# Com auto-start do servidor
+./scripts/create-worktree.ps1 -Tipo feat -Descricao auction-filter -Start
+
+# Com porta específica
+./scripts/create-worktree.ps1 -Tipo fix -Descricao login-bug -Porta 9007
 ```
 
-### 2. Verificar e Usar Porta Disponível
+**Opção B — Manual:**
 ```powershell
-netstat -ano | findstr "9005 9006 9007 9008"
-# Usar primeira porta livre: 9005, 9006, 9007, 9008...
-$env:PORT=<porta-livre>
-node .vscode/start-9006-dev.js
+git fetch origin demo-stable && git checkout demo-stable && git pull origin demo-stable
+git worktree add worktrees\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao-curta>-<timestamp> origin/demo-stable
+# Tipos: feat/, fix/, hotfix/, chore/, docs/, test/
+# Exemplo: git worktree add worktrees\bidexpert-feat-auction-filter -b feat/auction-filter-20260131-1430 origin/demo-stable
+```
+
+### 2. Iniciar ambiente no Worktree com porta dedicada (OBRIGATÓRIO)
+**REGRA ABSOLUTA:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos antes de criar Worktree dedicado e definir porta exclusiva.
+```powershell
+# Entrar no worktree criado (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-<tipo>-<descricao>
+
+# Definir porta dedicada do dev
+$env:PORT=9006
+npm install
+npm run dev
+
+# Alternativa (apenas para banco isolado): Docker Sandbox
+# docker compose -f docker-compose.dev-isolated.yml up -d --build
+
+# Acesso
+# http://dev.localhost:9006
 ```
 
 ### 3. Durante o Desenvolvimento
@@ -45,6 +70,13 @@ node .vscode/start-9006-dev.js
 2. ✅ Fazer push de todos os commits na branch
 3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request para demo-stable?"
 4. ⏳ Aguardar autorização explícita antes de qualquer merge
+
+### 6. Evidência Obrigatória para Aprovação de PR (Playwright)
+**OBRIGATÓRIO:** Todo pedido de aprovação/merge de PR DEVE incluir:
+1. ✅ Print(s)/screenshot(s) mostrando sucesso dos testes Playwright
+2. ✅ Link do relatório de execução (Playwright ou Vitest UI com provider Playwright)
+3. ✅ Referência objetiva do cenário validado
+4. 🚫 PR sem evidência visual não deve ser aprovado nem mergeado
 
 ### 5. Proteções Absolutas
 - 🚫 **NUNCA** fazer push direto na `main`
@@ -150,45 +182,57 @@ rodar testes com playwright acada implementação ou correção
 
 **Restrição:** O uso de URLs genéricas (ex: `localhost:3000` ou `localhost:9005`) sem o slug correto causará timeouts e falhas de login, pois os tenants não serão resolvidos corretamente. Todas as requisições de teste devem apontar para o slug específico.
 
-## 10. Container Tools - Gerenciamento de Ambientes Docker
+## 10. Isolamento Primário: Git Worktree + Container Tools (Alternativa)
 
-O Copilot tem acesso às ferramentas de container para gerenciar diferentes ambientes via Docker.
+O mecanismo **primário** de isolamento de desenvolvimento é o **Git Worktree** — cada agente/dev cria seu próprio diretório de trabalho com porta dedicada.
 
-### Extensões Configuradas
-- **Docker Extension Pack** (`ms-azuretools.vscode-docker`)
-- **Remote Containers** (`ms-vscode-remote.remote-containers`)
+### Scripts Helper (RECOMENDADO)
+```powershell
+# Criar worktree (auto-detecta porta livre)
+./scripts/create-worktree.ps1 -Tipo feat -Descricao minha-feature -Start
 
-### Uso do container-tools_get-config
-Antes de executar qualquer comando Docker, **SEMPRE** chamar a ferramenta `container-tools_get-config` para obter a configuração correta de CLI.
+# Remover worktree após merge
+./scripts/remove-worktree.ps1 -Dir worktrees\bidexpert-feat-minha-feature -DeleteBranch
+```
 
-### Arquivos Docker Compose por Ambiente
+### Git Worktree (Manual)
+```powershell
+# Ver worktrees e portas em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
+
+# Criar worktree com nova branch
+$porta = 9006
+$branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add worktrees\bidexpert-feat-task -b $branch origin/demo-stable
+Set-Location worktrees\bidexpert-feat-task
+$env:PORT = $porta ; npm install ; npm run dev
+```
+
+> **Skill completa:** `.github/skills/git-worktree-isolation/SKILL.md`
+
+### Docker Compose (Alternativa — apenas para banco isolado)
+
 | Arquivo | Ambiente | Uso |
 |---------|----------|-----|
 | `docker-compose.dev.yml` | DEV | Desenvolvimento local |
+| `docker-compose.dev-isolated.yml` | DEV | Banco completamente isolado |
 | `docker-compose.hml.yml` | HML | Homologação/Testes |
 | `docker-compose.demo.yml` | DEMO | Demonstração |
 | `docker-compose.prod.yml` | PROD | Produção |
 
-### Comandos Padrão (PowerShell)
 ```powershell
-# Iniciar ambiente dev
-docker compose -f docker-compose.dev.yml up -d
-
-# Verificar status
+# Usar APENAS quando precisar de banco isolado
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-# Logs de um container
-docker logs -f <container-name>
-
-# Parar ambiente
-docker compose -f docker-compose.dev.yml down
 ```
 
 ### Regras para o Copilot
-1. **Verificar containers** antes de testes E2E
-2. **Usar ambiente correto** conforme contexto (dev/hml/demo)
-3. **Não modificar produção** sem autorização explícita
-4. **Documentar alterações** em configurações de containers
+1. **Criar worktree** antes de qualquer alteração de código
+2. **Usar porta dedicada** (9006, 9007, etc.) por worktree
+3. **Usar ambiente correto** conforme contexto (dev/hml/demo)
+4. **Não modificar produção** sem autorização explícita
+5. **Documentar alterações** em configurações de containers
 
 ## 11. Diretrizes de Codificação e Melhores Práticas
 
@@ -915,12 +959,11 @@ Since the codebase is a template, you should not assume they have set up anythin
 # General IA Rules
 - Sempre crie um todo informando todas as tarefas que você irá realizar que estão descritas aqui nesse copilot-instructions.md antes de começar a implementar qualquer coisa.
 
-# Inicialização da Aplicação (OBRIGATÓRIO)
-**REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre.
-- **Comando recomendado:** `node .vscode/start-9006-dev.js` (ou task equivalente de DEV)
-- **Porta:** usar a porta pretendida se livre; se ocupada, usar a próxima disponível (9006, 9007, 9008...)
-- **Banco DEV:** `bidexpert_dev` (isolado do DEMO)
-- **Acesso:** usar URL com slug do ambiente e a porta escolhida (ex.: `http://dev.localhost:9006`)
+# Inicialização da Aplicação em Container (OBRIGATÓRIO)
+**REGRA ABSOLUTA DE SANDBOX:** NENHUM modelo AI (Copilot, AntiGravity, etc.) deve fazer qualquer alteração em arquivos de código antes de iniciar um ambiente isolado (Sandbox de Dev) containerizado.
+- **Comando recomendado:** `docker compose -f docker-compose.dev-isolated.yml up -d --build`
+- **Banco Isola:** O banco MySQL para o DEV Sandbox rola isolado dentro do Docker (bidexpert-mysql-dev).
+- **Acesso:** Use `http://dev.localhost:<porta-isolada>` (Ex: 9006 ou 9007 mapeada no yml)
 
 # 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -961,12 +1004,9 @@ main (produção - PROTEGIDO)
 
 **Quando usuário está em DEMO → Agente AI faz:**
 ```powershell
-# 1. Usar porta diferente (9006, 9007...)
-$env:PORT=9006
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
-
-# 2. Iniciar em ambiente DEV
-node .vscode/start-9006-dev.js
+# 1. Parar containers e usar nova porta no Sandbox Isolado
+docker compose -f docker-compose.dev-isolated.yml down
+docker compose -f docker-compose.dev-isolated.yml up -d --build
 ```
 
 ### Compatibilidade MySQL ↔ PostgreSQL

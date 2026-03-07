@@ -519,7 +519,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       participation: initialData?.participation ?? '',
       status: initialData?.status ?? '',
       softCloseEnabled: initialData?.softCloseEnabled ?? false,
-      softCloseMinutes: initialData?.softCloseMinutes ?? 0,
+      softCloseMinutes: initialData?.softCloseMinutes ?? 2,
       auctionStages: initialData?.auctionStages?.length
         ? initialData.auctionStages.map((s) => ({ ...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate) }))
         : [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],

@@ -1,10 +1,16 @@
 <#
 .SYNOPSIS
     Gerenciador de Git Worktrees para BidExpert (PowerShell).
+    Cria worktrees dentro de `worktrees/` (gitignored).
 
 .DESCRIPTION
     Permite que múltiplos desenvolvedores/agentes AI trabalhem em paralelo
     com branches e portas de desenvolvimento isoladas, usando git worktrees.
+
+    Veja também:
+    - scripts/create-worktree.ps1 — Alternativa RECOMENDADA com auto-detect porta, .env.local e npm install
+    - scripts/remove-worktree.ps1 — Limpeza interativa de worktrees fora do repo
+    - .vscode/setup-worktree.js  — Versão Node.js cross-platform deste script
 
 .PARAMETER Command
     Ação a executar: add | list | remove | prune
@@ -76,7 +82,8 @@ function Get-Worktrees {
         $i++
         $label = if ($i -eq 1) { " [principal]" } else { "" }
         Write-Host "$i. $($wt['worktree'])$label" -ForegroundColor Green
-        Write-Host "   Branch : $($wt['branch'] ?? '(detached)')"
+        $branchName = if ($wt['branch']) { $wt['branch'] } else { '(detached)' }
+        Write-Host "   Branch : $branchName"
         Write-Host "   HEAD   : $($wt['HEAD'])"
         Write-Host ""
     }

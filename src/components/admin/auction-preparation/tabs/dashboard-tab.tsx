@@ -21,7 +21,7 @@ import type {
   AuctionPreparationHabilitation,
   AuctionPreparationWin,
 } from '@/types';
-import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
+import GoToMonitorButton from '@/components/admin/auction-preparation/go-to-monitor-button';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -172,8 +172,8 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
           <CardDescription>Acesso rápido às principais funcionalidades</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-3">
-            <GoToLiveAuctionButton auction={auction} variant="default" className="w-full md:w-auto" dataAiId="admin-dashboard-go-live-btn" />
+          <div className="mb-3" data-ai-id="dashboard-monitor-btn-container">
+            <GoToMonitorButton auction={auction} variant="default" className="w-full md:w-auto" dataAiId="admin-dashboard-go-monitor-btn" />
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {quickActions.map((action) => (

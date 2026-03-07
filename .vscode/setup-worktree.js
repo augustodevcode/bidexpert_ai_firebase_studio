@@ -1,9 +1,14 @@
 /**
  * @file setup-worktree.js
- * @description Script para gerenciar git worktrees no BidExpert.
+ * @description Script cross-platform (Node.js) para gerenciar git worktrees no BidExpert.
  *
  * Permite que múltiplos agentes AI ou desenvolvedores trabalhem em paralelo,
  * cada um com seu próprio diretório de trabalho e porta de desenvolvimento.
+ * Worktrees são criados dentro de `worktrees/` (gitignored).
+ *
+ * @see scripts/create-worktree.ps1 — Alternativa PowerShell (RECOMENDADA) com auto-detect porta + .env.local
+ * @see scripts/remove-worktree.ps1 — Limpeza interativa de worktrees
+ * @see scripts/worktree-setup.ps1 — Equivalente PowerShell deste script
  *
  * Uso:
  *   node .vscode/setup-worktree.js add <branch> <porta>

@@ -1,5 +1,10 @@
 # Skill: Quality & Security Guard (Shift Left)
 
+## 📸 Evidência Obrigatória para PR (Playwright)
+- Todo PR deve incluir print(s)/screenshot(s) de sucesso dos testes Playwright.
+- Deve incluir link do relatório de execução (Playwright/Vitest UI) e cenário validado.
+- PR sem evidência visual não deve ser aprovado nem mergeado.
+
 Esta skill define as capacidades de análise de qualidade e segurança do agente.
 
 ## Capacidades

@@ -202,8 +202,14 @@ export default function JudicialProcessForm({
     return sellersForSelect.filter(s => s.isJudicial);
   }, [sellersForSelect]);
   
-  const filteredDistricts = React.useMemo(() => allDistricts.filter(d => d.courtId === selectedCourtId), [selectedCourtId, allDistricts]);
-  const filteredBranches = React.useMemo(() => allBranches.filter(b => b.districtId === selectedDistrictId), [selectedDistrictId, allBranches]);
+  const filteredDistricts = React.useMemo(
+    () => allDistricts.filter(d => String(d.courtId ?? '') === String(selectedCourtId ?? '')),
+    [selectedCourtId, allDistricts],
+  );
+  const filteredBranches = React.useMemo(
+    () => allBranches.filter(b => String(b.districtId ?? '') === String(selectedDistrictId ?? '')),
+    [selectedDistrictId, allBranches],
+  );
 
   React.useEffect(() => {
     console.log('[ProcessForm Debug]', {
@@ -222,14 +228,20 @@ export default function JudicialProcessForm({
   }, []);
 
   React.useEffect(() => {
-    if (selectedCourtId && !filteredDistricts.find(d => d.id === form.getValues('districtId'))) {
+    if (
+      selectedCourtId
+      && !filteredDistricts.find(d => String(d.id) === String(form.getValues('districtId') ?? ''))
+    ) {
         form.setValue('districtId', '');
         form.setValue('branchId', '');
     }
   }, [selectedCourtId, filteredDistricts, form]);
 
   React.useEffect(() => {
-    if (selectedDistrictId && !filteredBranches.find(b => b.id === form.getValues('branchId'))) {
+    if (
+      selectedDistrictId
+      && !filteredBranches.find(b => String(b.id) === String(form.getValues('branchId') ?? ''))
+    ) {
         form.setValue('branchId', '');
     }
   }, [selectedDistrictId, filteredBranches, form]);

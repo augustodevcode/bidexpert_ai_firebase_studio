@@ -15,6 +15,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  actions: write
 
 jobs:
   process-ai-fix:
@@ -25,6 +26,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Check previous attempts
         id: check_attempts
@@ -50,6 +53,10 @@ jobs:
               typeof label === 'string' ? label : label.name
             );
             const hasAiFixLabel = issueLabels.includes('ai-fix');
+            const isBuildGenerated =
+              issue.user?.login === 'github-actions[bot]' &&
+              issueLabels.includes('automated') &&
+              issueLabels.includes('ci-cd');
             
             // Get all comments on this issue
             const { data: comments } = await github.rest.issues.listComments({
@@ -70,8 +77,9 @@ jobs:
               issueTitle: issue.title,
               issueUrl: issue.html_url,
               shouldProcess: hasAiFixLabel,
+              isBuildGenerated,
               attempts: attempts,
-              shouldEscalate: attempts >= 3,
+              shouldEscalate: attempts >= 3 && !isBuildGenerated,
               remainingAttempts: Math.max(0, 3 - attempts)
             };
 
@@ -179,6 +187,9 @@ jobs:
             
             const commitMatch = body.match(/\*\*Commit\*\* \| `(.+?)`/);
             const commit = commitMatch ? commitMatch[1] : 'unknown';
+
+            const runIdMatch = body.match(/\*\*Run ID\*\* \| (\d+)/);
+            const runId = runIdMatch ? runIdMatch[1] : '';
             
             return {
               title: issue.title,
@@ -188,8 +199,33 @@ jobs:
               workflow: workflow,
               branch: branch,
               commit: commit,
+              runId,
               currentAttempt: attemptInfo.attempts + 1,
               remainingAttempts: attemptInfo.remainingAttempts - 1
+            };
+
+      - name: Analyze failure pattern
+        if: fromJSON(steps.check_attempts.outputs.result).shouldProcess && fromJSON(steps.check_attempts.outputs.result).shouldEscalate == false
+        id: analyze_failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const info = ${{ steps.extract_info.outputs.result }};
+            const logText = (info.logs || '').toLowerCase();
+            const workflowName = (info.workflow || '').toLowerCase();
+            const branch = (info.branch || '').toLowerCase();
+
+            const isPromotionGateFailure =
+              branch === 'demo-stable' &&
+              (logText.includes('promoção inválida: head de demo-stable não contém hml') ||
+               logText.includes('validate promotion source') ||
+               workflowName.includes('deploy demo to vercel'));
+
+            return {
+              isPromotionGateFailure,
+              branch,
+              workflowName,
+              issueNumber: info.number
             };
 
       - name: Activate AI Agent
@@ -198,7 +234,14 @@ jobs:
         with:
           script: |
             const info = ${{ steps.extract_info.outputs.result }};
+            const attemptInfo = ${{ steps.check_attempts.outputs.result }};
             const issueNumber = info.number;
+            const buildModeMessage = attemptInfo.isBuildGenerated
+              ? '\n🔁 **Modo contínuo ativo:** Issue automática de build sem escalonamento humano.'
+              : '';
+            const escalationWarning = (!attemptInfo.isBuildGenerated && info.remainingAttempts === 0)
+              ? '\n⚠️ **Esta é a última tentativa automática. Se falhar, será escalado para revisão humana.**'
+              : '';
             
             // Add in-progress label
             await github.rest.issues.addLabels({
@@ -246,9 +289,7 @@ jobs:
 
             ---
 
-            *O AI Agent pode levar alguns minutos para processar. Acompanhe o progresso aqui.*
-            
-            ${info.remainingAttempts === 0 ? '\n⚠️ **Esta é a última tentativa automática. Se falhar, será escalado para revisão humana.**' : ''}`;
+            *O AI Agent pode levar alguns minutos para processar. Acompanhe o progresso aqui.*${buildModeMessage}${escalationWarning}`;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -259,6 +300,186 @@ jobs:
             
             console.log('AI Agent activation comment posted successfully');
 
+      - name: Auto-fix GitOps (sync hml -> demo-stable)
+        if: fromJSON(steps.check_attempts.outputs.result).shouldProcess && fromJSON(steps.check_attempts.outputs.result).shouldEscalate == false && fromJSON(steps.analyze_failure.outputs.result).isPromotionGateFailure
+        id: gitops_autofix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin demo-stable hml
+
+          AUTOFIX_BRANCH="autofix/sync-hml-demo-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "autofix_branch=$AUTOFIX_BRANCH" >> "$GITHUB_OUTPUT"
+
+          git checkout -B "$AUTOFIX_BRANCH" origin/demo-stable
+
+          set +e
+          git merge --no-ff origin/hml -m "chore(autofix): sync hml into demo-stable to satisfy promotion gate"
+          MERGE_EXIT=$?
+          set -e
+
+          if [ "$MERGE_EXIT" -ne 0 ]; then
+            git merge --abort || true
+            echo "merge_conflict=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git diff --quiet origin/demo-stable..HEAD; then
+            echo "no_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git push origin "$AUTOFIX_BRANCH"
+
+      - name: Open GitOps auto-fix PR
+        if: fromJSON(steps.check_attempts.outputs.result).shouldProcess && fromJSON(steps.check_attempts.outputs.result).shouldEscalate == false && fromJSON(steps.analyze_failure.outputs.result).isPromotionGateFailure
+        id: open_gitops_pr
+        uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ fromJSON(steps.check_attempts.outputs.result).issueNumber }}
+          AUTOFIX_BRANCH: ${{ steps.gitops_autofix.outputs.autofix_branch }}
+          MERGE_CONFLICT: ${{ steps.gitops_autofix.outputs.merge_conflict }}
+          NO_CHANGES: ${{ steps.gitops_autofix.outputs.no_changes }}
+        with:
+          script: |
+            const issueNumber = Number(process.env.ISSUE_NUMBER);
+            const branch = process.env.AUTOFIX_BRANCH;
+            const mergeConflict = process.env.MERGE_CONFLICT === 'true';
+            const noChanges = process.env.NO_CHANGES === 'true';
+
+            core.setOutput('pr_created', 'false');
+
+            if (mergeConflict) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `⚠️ **Auto-fix GitOps detectou conflito de merge entre \`hml\` e \`demo-stable\`.**\n\nO fallback com Copilot será executado automaticamente nesta mesma issue.`
+              });
+              return;
+            }
+
+            if (noChanges || !branch) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `ℹ️ **Auto-fix GitOps não encontrou mudanças para sincronizar \`hml\` -> \`demo-stable\`.**\n\nO fallback com Copilot será executado automaticamente nesta mesma issue.`
+              });
+              return;
+            }
+
+            const existing = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${branch}`,
+              base: 'demo-stable'
+            });
+
+            let pr = existing.data[0];
+
+            if (!pr) {
+              const created = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head: branch,
+                base: 'demo-stable',
+                title: `chore(autofix): sync hml into demo-stable for CI gate (#${issueNumber})`,
+                body: [
+                  '## 🤖 Auto-fix GitOps (build-generated issue)',
+                  '',
+                  `Closes #${issueNumber}`,
+                  '',
+                  '- Root cause: gate `Validate Promotion Source (HML ➜ DEMO)`',
+                  '- Action: merge automatizado de `hml` em `demo-stable`',
+                  '- Trigger: issue automática de falha de build'
+                ].join('\n')
+              });
+              pr = created.data;
+            }
+
+            core.setOutput('pr_created', 'true');
+            core.setOutput('pr_url', pr.html_url);
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `✅ **Auto-fix GitOps criou PR automaticamente:** ${pr.html_url}`
+            });
+
+      - name: Activate Copilot auto-fix fallback
+        if: fromJSON(steps.check_attempts.outputs.result).shouldProcess && fromJSON(steps.check_attempts.outputs.result).shouldEscalate == false && steps.open_gitops_pr.outputs.pr_created != 'true'
+        id: assign_copilot
+        uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ fromJSON(steps.check_attempts.outputs.result).issueNumber }}
+          IS_BUILD_GENERATED: ${{ fromJSON(steps.check_attempts.outputs.result).isBuildGenerated }}
+        with:
+          script: |
+            const issueNumber = Number(process.env.ISSUE_NUMBER);
+            const isBuildGenerated = process.env.IS_BUILD_GENERATED === 'true';
+
+            let assigned = false;
+            let lastError = '';
+
+            for (let attempt = 1; attempt <= 5; attempt++) {
+              try {
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  assignees: ['Copilot']
+                });
+
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                });
+
+                assigned = (issue.assignees || []).some(a => a.login?.toLowerCase() === 'copilot');
+                if (assigned) {
+                  break;
+                }
+              } catch (error) {
+                lastError = error?.message || String(error);
+              }
+
+              await new Promise(resolve => setTimeout(resolve, attempt * 2000));
+            }
+
+            if (!assigned) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: [
+                  '⚠️ **Não foi possível atribuir automaticamente ao Copilot após 5 tentativas.**',
+                  '',
+                  'Fallback automático aplicado: menção direta para acionamento do agente.',
+                  '',
+                  '@copilot por favor analise e corrija esta falha com PR automático.'
+                ].join('\n')
+              });
+              core.setOutput('assigned', 'false');
+              core.setOutput('error', lastError || 'unknown');
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: isBuildGenerated
+                ? '✅ **Copilot acionado com sucesso em modo auto-fix contínuo (sem escalonamento humano).**'
+                : '✅ **Copilot acionado com sucesso para auto-fix da issue.**'
+            });
+
+            core.setOutput('assigned', 'true');
+
       - name: Generate workflow summary
         if: always()
         run: |
@@ -266,8 +487,11 @@ jobs:
           ISSUE_NUMBER=$(echo "$ATTEMPTS_JSON" | jq -r '.issueNumber')
           ISSUE_TITLE=$(echo "$ATTEMPTS_JSON" | jq -r '.issueTitle')
           SHOULD_PROCESS=$(echo "$ATTEMPTS_JSON" | jq -r '.shouldProcess')
+          IS_BUILD_GENERATED=$(echo "$ATTEMPTS_JSON" | jq -r '.isBuildGenerated')
           ESCALATED=$(echo "$ATTEMPTS_JSON" | jq -r '.shouldEscalate')
           CURRENT_ATTEMPTS=$(echo "$ATTEMPTS_JSON" | jq -r '.attempts')
+          PR_CREATED="${{ steps.open_gitops_pr.outputs.pr_created }}"
+          COPILOT_ASSIGNED="${{ steps.assign_copilot.outputs.assigned }}"
           
           echo "## 🤖 AI Agent Auto-Fix Processing" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -281,6 +505,10 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Issue does not have label \`ai-fix\`." >> $GITHUB_STEP_SUMMARY
             exit 0
+          fi
+
+          if [ "$IS_BUILD_GENERATED" = "true" ]; then
+            echo "- **Mode**: Build-generated auto-fix (no human escalation)" >> $GITHUB_STEP_SUMMARY
           fi
           
           if [ "$ESCALATED" = "true" ]; then
@@ -299,4 +527,17 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Labels Added:**" >> $GITHUB_STEP_SUMMARY
             echo "- \`in-progress\`" >> $GITHUB_STEP_SUMMARY
+
+            if [ "$PR_CREATED" = "true" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ✅ GitOps auto-fix PR created" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            if [ "$COPILOT_ASSIGNED" = "true" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ✅ Copilot auto-fix activated" >> $GITHUB_STEP_SUMMARY
+            elif [ "$COPILOT_ASSIGNED" = "false" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ⚠️ Copilot assignment fallback used" >> $GITHUB_STEP_SUMMARY
+            fi
           fi

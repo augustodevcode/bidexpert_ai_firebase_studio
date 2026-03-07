@@ -23,6 +23,11 @@ const getSellerInitial = (name: string) => {
 };
 
 export default function SellerCard({ seller, onUpdate }: SellerCardProps) {
+  if (!seller || !seller.id) {
+    console.warn('SellerCard recebeu dados inválidos:', seller);
+    return null;
+  }
+
   const validLogoUrl = isValidImageUrl(seller.logoUrl) ? seller.logoUrl! : `https://placehold.co/100x100.png?text=${getSellerInitial(seller.name)}`;
   const formattedDate = seller.createdAt ? format(new Date(seller.createdAt as string), 'MM/yyyy', { locale: ptBR }) : null;
   const SellerIcon = seller.isJudicial ? Scale : Building;

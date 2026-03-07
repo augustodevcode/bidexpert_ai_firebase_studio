@@ -8,7 +8,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth-helper';
 
-const VERCEL_URL = 'https://bidexpertaifirebasestudio.vercel.app';
+const VERCEL_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://bidexpertaifirebasestudio.vercel.app';
 
 test.setTimeout(120_000);
 

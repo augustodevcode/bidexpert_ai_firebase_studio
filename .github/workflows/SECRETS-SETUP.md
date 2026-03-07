@@ -1,5 +1,9 @@
 # ============================================================================
-# GitHub Secrets - DEMO Environment (Vercel + Prisma Cloud)
+# GitHub Secrets - DEMO Environment (Vercel + Neon PostgreSQL)
+# ============================================================================
+# ⚠️  IMPORTANTE: A integração Prisma Postgres (demo-bidexpert-prisma-cloud)
+# foi REMOVIDA porque estava SUSPENSA, causando "Provisioning integrations failed"
+# em todos os deploys. Use APENAS variáveis Neon listadas abaixo.
 # ============================================================================
 
 ## 📋 Checklist de Secrets Necessários
@@ -11,19 +15,23 @@ VERCEL_ORG_ID                   # ID da organização Vercel
 VERCEL_PROJECT_ID               # ID do projeto Vercel
 ```
 
-### 2. Prisma Cloud Database URLs
+### 2. Neon PostgreSQL Database URLs (OBRIGATÓRIO)
 ```bash
-PRISMA_DEMO_POSTGRES_URL        # URL direta para schema push/migrations (CANÔNICO)
-# postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require
-# Obter em: https://console.prisma.io → seu projeto → Connection URLs
+# Obtidas em: Vercel Dashboard → Project → Settings → Environment Variables
+# (injetadas automaticamente pela integração Neon)
 
-PRISMA_DEMO_PRISMA_DATABASE_URL # URL de runtime para Prisma (CANÔNICO)
-# postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require
-# Obter em: https://console.prisma.io → seu projeto → Prisma/Postgres
+POSTGRES_PRISMA_URL             # pgbouncer URL para runtime Prisma (OBRIGATÓRIO — schema url)
+# postgresql://[user]:[pass]@[host]/[db]?sslmode=require&pgbouncer=true
 
-# Compatibilidade (LEGADO - manter temporariamente)
-DEMO_DATABASE_URL_DIRECT
-DEMO_DATABASE_URL
+POSTGRES_URL_NON_POOLING        # URL direta para schema push/migrations (OBRIGATÓRIO — schema directUrl)
+# postgresql://[user]:[pass]@[host]/[db]?sslmode=require
+
+DATABASE_URL                    # URL de conexão base (fallback)
+# postgresql://[user]:[pass]@[host]/[db]?sslmode=require
+
+# Opcional (fallback adicional)
+POSTGRES_URL                    # pgbouncer URL genérica
+DEMO_DATABASE_URL               # Legacy fallback — manter durante transição
 ```
 
 ### 3. Application Config
@@ -45,15 +53,14 @@ gh secret set VERCEL_TOKEN --body "vck_YOUR_VERCEL_TOKEN_HERE"
 gh secret set VERCEL_ORG_ID --body "your-org-id-here"
 gh secret set VERCEL_PROJECT_ID --body "prj_your_project_id_here"
 
-# 3. Prisma Cloud - Direct URL (para schema push)
-gh secret set PRISMA_DEMO_POSTGRES_URL --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
+# 3. Neon URLs (obter em Vercel Dashboard → Project → Settings → Environment Variables)
+gh secret set POSTGRES_PRISMA_URL --body "postgresql://user:pass@host/db?sslmode=require&pgbouncer=true"
+gh secret set POSTGRES_URL_NON_POOLING --body "postgresql://user:pass@host/db?sslmode=require"
+gh secret set DATABASE_URL --body "postgresql://user:pass@host/db?sslmode=require"
+gh secret set POSTGRES_URL --body "postgresql://user:pass@host/db?sslmode=require&pgbouncer=true"
 
-# 4. Prisma Cloud - Runtime URL
-gh secret set PRISMA_DEMO_PRISMA_DATABASE_URL --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
-
-# 4.1 Compatibilidade legada (opcional e recomendado durante transição)
-gh secret set DEMO_DATABASE_URL_DIRECT --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
-gh secret set DEMO_DATABASE_URL --body "postgres://[tenant_id]:[api_key]@db.prisma.io:5432/postgres?sslmode=require"
+# 4. Legacy fallback (manter durante transição)
+gh secret set DEMO_DATABASE_URL --body "postgresql://user:pass@host/db?sslmode=require"
 
 # 5. NextAuth Secret (gerar com: openssl rand -base64 32)
 gh secret set DEMO_NEXTAUTH_SECRET --body "sua-chave-secreta-32-caracteres"
@@ -69,19 +76,23 @@ gh secret set DEMO_APP_URL --body "https://bidexpertaifirebasestudio.vercel.app"
 
 ---
 
-## 📖 Diferença entre URLs Prisma Cloud
+## 📖 Variáveis Neon: Para que serve cada URL
 
-### PRISMA_DEMO_POSTGRES_URL
-- **Uso**: Schema migrations, `prisma db push`
-- **Protocolo**: `postgres://`
-- **Endpoint**: `db.prisma.io:5432`
-- **Limitação**: Conexões diretas podem ter restrições de rede
+### POSTGRES_PRISMA_URL (OBRIGATÓRIO)
+- **Uso**: Runtime da aplicação — Prisma Client em produção
+- **Protocolo**: `postgresql://` + `?pgbouncer=true`
+- **Referência no schema**: `url = env("POSTGRES_PRISMA_URL")`
+- **Por que pgbouncer**: Evita esgotamento de conexões em serverless
 
-### PRISMA_DEMO_PRISMA_DATABASE_URL
-- **Uso**: Runtime queries, seeds, aplicação
-- **Protocolo**: `prisma+postgres://`
-- **Endpoint**: `accelerate.prisma-data.net`
-- **Vantagem**: Pooling, cache, melhor performance
+### POSTGRES_URL_NON_POOLING (OBRIGATÓRIO)
+- **Uso**: Prisma CLI — `prisma db push`, `prisma migrate`, seeds
+- **Protocolo**: `postgresql://` (sem pgbouncer)
+- **Referência no schema**: `directUrl = env("POSTGRES_URL_NON_POOLING")`
+- **Por que direto**: pgbouncer não suporta algumas operações DDL
+
+### DATABASE_URL
+- **Uso**: Fallback geral e código legado
+- **Valor**: mesma URL direta ou pooled dependendo da configuração Neon
 
 ---
 
@@ -92,7 +103,7 @@ gh secret set DEMO_APP_URL --body "https://bidexpertaifirebasestudio.vercel.app"
 gh secret list
 
 # Verificar se secret específico existe
-gh secret list | Select-String "DEMO_DATABASE"
+gh secret list | Select-String "POSTGRES"
 ```
 
 ---
@@ -135,13 +146,7 @@ gh run view --log
 # ✅ Users: 35+ | Tenants: 1+ | Auctions: 10+
 ```
 
-### 2. Verificar no Console Prisma
-- Acesse: https://console.prisma.io/.../studio
-- Tabela `User`: Deve ter 35+ registros
-- Tabela `UserDocument`: Deve ter documentos associados
-- Filtre por `habilitationStatus` para ver diferentes grupos
-
-### 3. Verificar na Aplicação DEMO
+### 2. Verificar na Aplicação DEMO
 - Acesse: https://bidexpertaifirebasestudio.vercel.app/admin/habilitacoes
 - Grid deve estar populado com usuários em diferentes colunas:
   - PENDING_DOCUMENTS: 9 usuários
@@ -154,18 +159,27 @@ gh run view --log
 
 ## 🐛 Troubleshooting
 
-### Erro: "Can't reach database server"
-**Causa**: Usando URL_DIRECT em step de seed  
-**Solução**: Seed deve usar URL_ACCELERATE
+### Erro: "Provisioning integrations failed" no Vercel
+**Causa**: Integração Prisma Postgres suspensa ainda vinculada ao projeto Vercel.
+**Solução**: Acesse Vercel Dashboard → Project → Integrations → Remova a integração `demo-bidexpert-prisma-cloud`. O deploy passará a usar apenas as variáveis Neon.
+
+### Erro: "environment variable not found: POSTGRES_PRISMA_URL"
+**Causa**: Secret não configurado no GitHub Actions ou integração Neon não vinculada no Vercel.
+**Solução**: Configure os secrets conforme a seção "Como Configurar Secrets" acima.
+
+### Erro: "Can't reach database server" em db push
+**Causa**: Usando URL pooled (pgbouncer) para operação de schema
+**Solução**: Confirmar que `POSTGRES_URL_NON_POOLING` está configurado como secret
 
 ### Erro: "the URL must start with the protocol `mysql://`"
-**Causa**: Prisma Client foi gerado para MySQL, não PostgreSQL  
+**Causa**: Prisma Client foi gerado para MySQL, não PostgreSQL
 **Solução**: Verificar step `Copy PostgreSQL schema` roda antes de `Generate Prisma Client`
 
 ### Erro: "Model userOnTenant not found"
-**Causa**: Schema não tem `@@map("UsersOnTenants")`  
+**Causa**: Schema não tem `@@map("UsersOnTenants")`
 **Solução**: Verificar se commit mais recente do schema.postgresql.prisma foi aplicado
 
 ### Workflow não dispara automaticamente
-**Causa**: Commit sem `[seed]` na mensagem  
+**Causa**: Commit sem `[seed]` na mensagem
 **Solução**: Adicionar `[seed]` ao commit message ou disparar manualmente
+

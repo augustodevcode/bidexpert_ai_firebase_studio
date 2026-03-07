@@ -18,7 +18,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userProfileWithPermissions, loading } = useAuth();
+  const { userProfileWithPermissions, activeTenantId, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -43,6 +43,12 @@ export default function DashboardLayout({
     return null; // Don't render anything while redirecting
   }
 
+  const resolvedTenantId =
+    activeTenantId ||
+    userProfileWithPermissions.tenants?.[0]?.tenant?.id?.toString() ||
+    '1';
+  const resolvedUserEmail = userProfileWithPermissions.email || 'admin@bidexpert.ai';
+
   return (
     <ThemeProvider
       attribute="class"
@@ -61,7 +67,10 @@ export default function DashboardLayout({
               <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 overflow-y-auto">
                   <div className="mx-auto max-w-7xl">
                       {children}
-                      <DevInfoIndicator />
+                      <DevInfoIndicator
+                        tenantId={resolvedTenantId}
+                        userEmail={resolvedUserEmail}
+                      />
                   </div>
               </main>
             </div>

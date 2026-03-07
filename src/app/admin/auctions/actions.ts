@@ -76,9 +76,9 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
         }
     }
 
-    assetWhere.lots = {
+    assetWhere.AssetsOnLots = {
         none: {
-            lot: {
+            Lot: {
                 auctionId: numericAuctionId,
             },
         },

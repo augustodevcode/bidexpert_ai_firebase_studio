@@ -24,12 +24,60 @@ function isPrismaAccelerateUrl(url?: string): boolean {
   return url?.startsWith('prisma+postgres://') || url?.startsWith('prisma://') || false;
 }
 
+function isPostgresLikeUrl(url?: string): boolean {
+  if (!url) return false;
+  return (
+    url.startsWith('postgresql://') ||
+    url.startsWith('postgres://') ||
+    url.startsWith('prisma+postgres://') ||
+    url.startsWith('prisma://')
+  );
+}
+
+function isMySqlLikeUrl(url?: string): boolean {
+  if (!url) return false;
+  return url.startsWith('mysql://');
+}
+
+function validateDatabaseUrlProtocol(url?: string) {
+  if (!url) {
+    throw new Error('[Prisma] DATABASE_URL não definida. Defina uma URL válida antes de iniciar a aplicação.');
+  }
+
+  const hasValidProtocol = isPostgresLikeUrl(url) || isMySqlLikeUrl(url);
+  if (!hasValidProtocol) {
+    throw new Error(
+      `[Prisma] DATABASE_URL com protocolo inválido: ${url.split('://')[0] || 'desconhecido'}. ` +
+      'Use mysql://, postgresql://, postgres://, prisma:// ou prisma+postgres://.'
+    );
+  }
+
+  const prismaSchema = process.env.PRISMA_SCHEMA?.toLowerCase() || '';
+  const expectsPostgres = prismaSchema.includes('postgresql') || process.env.EXPECT_POSTGRESQL === 'true';
+  const expectsMySql = prismaSchema.includes('mysql');
+
+  if (expectsPostgres && !isPostgresLikeUrl(url)) {
+    throw new Error(
+      '[Prisma] Configuração inconsistente: ambiente/schema espera PostgreSQL, ' +
+      `mas DATABASE_URL está com protocolo não-PostgreSQL (${url.split('://')[0]}://).`
+    );
+  }
+
+  if (expectsMySql && !isMySqlLikeUrl(url)) {
+    throw new Error(
+      '[Prisma] Configuração inconsistente: PRISMA_SCHEMA aponta para MySQL, ' +
+      `mas DATABASE_URL está com protocolo não-MySQL (${url.split('://')[0]}://).`
+    );
+  }
+}
+
 /**
  * Cria uma instância do Prisma Client com suporte a extensões e logs.
  * Automaticamente usa Prisma Accelerate quando detectado pela DATABASE_URL.
  */
 function createPrismaClient(databaseUrl?: string) {
   const effectiveUrl = databaseUrl || process.env.DATABASE_URL;
+  validateDatabaseUrlProtocol(effectiveUrl);
   const useAccelerate = isPrismaAccelerateUrl(effectiveUrl);
   
   const options: any = {
@@ -98,7 +146,7 @@ function createPrismaClient(databaseUrl?: string) {
                     // We also need to map the table correcty.
                     // The schema @@map("itsm_query_logs") means the table is `itsm_query_logs`.
                     
-                    const isPostgres = process.env.DATABASE_URL?.includes('postgres');
+                    const isPostgres = isPostgresLikeUrl(effectiveUrl);
                     if (isPostgres) {
                       await client.$executeRaw`
                         INSERT INTO itsm_query_logs ("query", "duration", "success", "errorMessage", "timestamp")
@@ -164,10 +212,12 @@ const shouldUseSeparateDemoDb =
   process.env.NODE_ENV === 'production' || 
   process.env.USE_SEPARATE_DEMO_DB === 'true';
 
+// Use Neon variables only — PRISMA_DEMO_* were injected by the suspended
+// Prisma Postgres integration (demo-bidexpert-prisma-cloud) and must not be used.
 const demoDatabaseUrl =
-  process.env.PRISMA_DEMO_POSTGRES_URL ||
-  process.env.PRISMA_DEMO_PRISMA_DATABASE_URL ||
-  process.env.DATABASE_URL_DEMO;
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.DATABASE_URL;
 
 export const demoPrisma = globalForPrisma.demoPrisma ?? (
   shouldUseSeparateDemoDb && demoDatabaseUrl

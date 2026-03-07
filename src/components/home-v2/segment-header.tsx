@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import { SEGMENT_CONFIGS, SEGMENT_ORDER, type SegmentType } from './segment-config';
 import type { SegmentConfig } from './types';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
 
 const SEGMENT_ICONS: Record<SegmentType, React.ElementType> = {
   veiculos: Car,
@@ -165,6 +166,8 @@ export default function SegmentHeader({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            <ThemeToggle data-ai-id="segment-header-theme-toggle-desktop" />
+
             <Button variant="ghost" size="icon" className="hidden sm:flex" asChild>
               <Link href="/favorites">
                 <Heart className="h-5 w-5" />
@@ -271,6 +274,10 @@ export default function SegmentHeader({
 
                     {/* Auth */}
                     <div className="pt-4 border-t">
+                      <div className="mb-3" data-ai-id="segment-header-theme-toggle-mobile">
+                        <ThemeToggle variant="full" />
+                      </div>
+
                       {userProfileWithPermissions ? (
                         <Button variant="outline" className="w-full" asChild>
                           <Link href="/profile">
