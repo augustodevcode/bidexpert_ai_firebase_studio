@@ -8,7 +8,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { isDbUnavailableError, isVercelPreviewOrDevelopment, shouldAllowDbFallback, getEnvironmentLabel } from '../../src/lib/db-resilience';
+import {
+  getEnvironmentLabel,
+  isDbUnavailableError,
+  isMissingColumnError,
+  isVercelPreviewOrDevelopment,
+  shouldAllowDbFallback,
+  shouldAllowSchemaFallback,
+} from '../../src/lib/db-resilience';
 
 // ---------------------------------------------------------------------------
 // isDbUnavailableError
@@ -127,9 +134,9 @@ describe('getEnvironmentLabel', () => {
     expect(getEnvironmentLabel()).toBe('desenvolvimento local');
   });
 
-  it('retorna "desenvolvimento local" quando VERCEL_ENV=production', () => {
+  it('retorna "Vercel production" quando VERCEL_ENV=production', () => {
     process.env.VERCEL_ENV = 'production';
-    expect(getEnvironmentLabel()).toBe('desenvolvimento local');
+    expect(getEnvironmentLabel()).toBe('Vercel production');
   });
 });
 
@@ -188,6 +195,69 @@ describe('shouldAllowDbFallback', () => {
     process.env.NODE_ENV = 'production';
     delete process.env.VERCEL_ENV;
     expect(shouldAllowDbFallback(dbError)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isMissingColumnError / shouldAllowSchemaFallback
+// ---------------------------------------------------------------------------
+
+describe('schema drift fallback', () => {
+  const originalNodeEnv = process.env.NODE_ENV;
+  const originalVercelEnv = process.env.VERCEL_ENV;
+  const originalVercel = process.env.VERCEL;
+
+  afterEach(() => {
+    process.env.NODE_ENV = originalNodeEnv;
+    if (originalVercelEnv === undefined) {
+      delete process.env.VERCEL_ENV;
+    } else {
+      process.env.VERCEL_ENV = originalVercelEnv;
+    }
+
+    if (originalVercel === undefined) {
+      delete process.env.VERCEL;
+    } else {
+      process.env.VERCEL = originalVercel;
+    }
+  });
+
+  it('detecta erro P2022 de coluna ausente', () => {
+    const error = new Error('P2022: The column `PlatformSettings.featureFlags` does not exist in the current database');
+    expect(isMissingColumnError(error)).toBe(true);
+    expect(isMissingColumnError(error, 'PlatformSettings.featureFlags')).toBe(true);
+  });
+
+  it('retorna false quando a coluna não corresponde', () => {
+    const error = new Error('P2022: The column `PlatformSettings.otherField` does not exist in the current database');
+    expect(isMissingColumnError(error, 'PlatformSettings.featureFlags')).toBe(false);
+  });
+
+  it('permite fallback de schema em preview', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.VERCEL_ENV = 'preview';
+    delete process.env.VERCEL;
+
+    const error = new Error('P2022: The column `PlatformSettings.featureFlags` does not exist in the current database');
+    expect(shouldAllowSchemaFallback(error)).toBe(true);
+  });
+
+  it('permite fallback de schema em produção Vercel', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.VERCEL_ENV = 'production';
+    process.env.VERCEL = '1';
+
+    const error = new Error('P2022: The column `PlatformSettings.featureFlags` does not exist in the current database');
+    expect(shouldAllowSchemaFallback(error)).toBe(true);
+  });
+
+  it('nega fallback de schema fora da Vercel em produção', () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.VERCEL_ENV;
+    delete process.env.VERCEL;
+
+    const error = new Error('P2022: The column `PlatformSettings.featureFlags` does not exist in the current database');
+    expect(shouldAllowSchemaFallback(error)).toBe(false);
   });
 });
 
@@ -280,9 +350,9 @@ describe('getPlatformSettings em VERCEL_ENV=preview com DB indisponível', () =>
 
     const mockGetSettings = vi.fn().mockRejectedValue(prismaInitError);
     vi.doMock('../../src/services/platform-settings.service', () => ({
-      PlatformSettingsService: vi.fn().mockImplementation(() => ({
-        getSettings: mockGetSettings,
-      })),
+      PlatformSettingsService: class {
+        getSettings = mockGetSettings;
+      },
     }));
 
     // getTenantIdFromRequest também usará o fallback pois prisma está indisponível
@@ -308,10 +378,11 @@ describe('getPlatformSettings em VERCEL_ENV=preview com DB indisponível', () =>
       { name: 'Error' }
     );
 
+    const mockGetSettings = vi.fn().mockRejectedValue(logicError);
     vi.doMock('../../src/services/platform-settings.service', () => ({
-      PlatformSettingsService: vi.fn().mockImplementation(() => ({
-        getSettings: vi.fn().mockRejectedValue(logicError),
-      })),
+      PlatformSettingsService: class {
+        getSettings = mockGetSettings;
+      },
     }));
 
     vi.doMock('../../src/lib/actions/auth', () => ({

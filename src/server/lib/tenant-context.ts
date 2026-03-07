@@ -12,6 +12,7 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import prisma from '@/lib/prisma';
 import type { Tenant, PlatformSettings, ResolutionStrategy, TenantStatus } from '@prisma/client';
+import { normalizeTenantToken } from '@/lib/tenant-token';
 
 // ============================================================================
 // Tipos e Interfaces
@@ -194,7 +195,7 @@ export async function resolveTenant(
   forwardedHost?: string | null
 ): Promise<ResolvedTenant | null> {
   // Usa X-Forwarded-Host se disponível (SSL termination no proxy)
-  const effectiveHost = forwardedHost || hostname;
+  const effectiveHost = normalizeTenantToken(forwardedHost || hostname) || '';
   const normalizedHost = effectiveHost.toLowerCase().replace(/:\d+$/, ''); // Remove porta
   
   // Cache key inclui hostname e path para suportar path-based routing
@@ -213,8 +214,9 @@ export async function resolveTenant(
     // 1. Check if it's the landlord domain
     if (LANDLORD_DOMAINS.includes(normalizedHost) && !pathSlug) {
       const isVercelDomain = /\\.vercel\\.app$/i.test(normalizedHost);
-      if (isVercelDomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
-        resolved = await loadTenantBySubdomain(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
+      const defaultTenant = normalizeTenantToken(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
+      if (isVercelDomain && defaultTenant) {
+        resolved = await loadTenantBySubdomain(defaultTenant);
       } else {
         resolved = await loadTenantById(BigInt(LANDLORD_ID));
       }

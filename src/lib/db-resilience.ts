@@ -16,6 +16,12 @@ interface ErrorLike {
   message?: string;
 }
 
+function getErrorMessage(error: unknown): string {
+  if (!error) return '';
+  const err = error as ErrorLike;
+  return err.message ?? '';
+}
+
 /**
  * Detecta erros que indicam indisponibilidade do banco de dados ou do proxy Prisma.
  * Inclui erros de inicialização do cliente, falhas de conexão e erros de
@@ -26,7 +32,7 @@ export function isDbUnavailableError(error: unknown): boolean {
 
   const err = error as ErrorLike;
   const name: string = err.name ?? '';
-  const msg: string = err.message ?? '';
+  const msg = getErrorMessage(error);
 
   // PrismaClientInitializationError sempre indica falha ao conectar
   if (name === 'PrismaClientInitializationError') return true;
@@ -49,6 +55,19 @@ export function isDbUnavailableError(error: unknown): boolean {
   return unavailablePatterns.some((pattern) => msg.includes(pattern));
 }
 
+export function isMissingColumnError(error: unknown, columnName?: string): boolean {
+  const msg = getErrorMessage(error);
+  if (!msg.includes('P2022') && !msg.includes('does not exist in the current database')) {
+    return false;
+  }
+
+  if (!columnName) {
+    return true;
+  }
+
+  return msg.toLowerCase().includes(columnName.toLowerCase());
+}
+
 /**
  * Retorna `true` quando o ambiente atual é um Preview ou Development da Vercel.
  *
@@ -67,7 +86,7 @@ export function isVercelPreviewOrDevelopment(): boolean {
  * Exemplos: "Vercel preview", "Vercel development", "desenvolvimento local".
  */
 export function getEnvironmentLabel(): string {
-  if (isVercelPreviewOrDevelopment()) {
+  if (process.env.VERCEL_ENV) {
     return `Vercel ${process.env.VERCEL_ENV}`;
   }
   return 'desenvolvimento local';
@@ -86,4 +105,13 @@ export function getEnvironmentLabel(): string {
 export function shouldAllowDbFallback(error: unknown): boolean {
   if (!isDbUnavailableError(error)) return false;
   return process.env.NODE_ENV !== 'production' || isVercelPreviewOrDevelopment();
+}
+
+export function shouldAllowSchemaFallback(error: unknown): boolean {
+  if (!isMissingColumnError(error)) return false;
+  return (
+    process.env.NODE_ENV !== 'production' ||
+    isVercelPreviewOrDevelopment() ||
+    process.env.VERCEL === '1'
+  );
 }
