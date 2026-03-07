@@ -10,6 +10,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { DocumentService } from '@/services/document.service';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 import type { DocumentType, UserDocument } from '@/types';
 
 const documentService = new DocumentService();
@@ -20,7 +21,8 @@ const documentService = new DocumentService();
  * @returns {Promise<DocumentType[]>} A promise that resolves to an array of DocumentType objects.
  */
 export async function getDocumentTypes(): Promise<DocumentType[]> {
-  return documentService.getDocumentTypes();
+  const result = await documentService.getDocumentTypes();
+  return sanitizeResponse(result) as DocumentType[];
 }
 
 /**
@@ -33,7 +35,8 @@ export async function getUserDocuments(userId: string): Promise<UserDocument[]> 
     console.warn("[Action - getUserDocuments] No userId provided.");
     return [];
   }
-  return documentService.getUserDocuments(userId);
+  const result = await documentService.getUserDocuments(userId);
+  return sanitizeResponse(result) as UserDocument[];
 }
 
 /**
