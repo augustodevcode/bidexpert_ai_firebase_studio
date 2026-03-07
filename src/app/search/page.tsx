@@ -161,10 +161,14 @@ function SearchPageContent() {
         setIsFilterDataLoading(false);
 
         // Phase 2: Fetch actual data with limits to prevent timeout
+        const shouldLoadAuctions = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos';
+        const shouldLoadLots = currentSearchType === 'lots';
+        const shouldLoadDirectSales = currentSearchType === 'direct_sale';
+
         const [offers, auctions, lots] = await Promise.all([
-          getDirectSaleOffers().catch(() => []),
-          getAuctions(true, 200).catch(() => []),
-          getLots(undefined, true, 200).catch(() => []),
+          shouldLoadDirectSales ? getDirectSaleOffers().catch(() => []) : Promise.resolve([]),
+          shouldLoadAuctions ? getAuctions(true, 200).catch(() => []) : Promise.resolve([]),
+          shouldLoadLots ? getLots(undefined, true, 200).catch(() => []) : Promise.resolve([]),
         ]);
 
         // Set data states
@@ -194,7 +198,7 @@ function SearchPageContent() {
       }
     }
     fetchAllData();
-  }, []);
+  }, [currentSearchType]);
 
 
   useEffect(() => {
