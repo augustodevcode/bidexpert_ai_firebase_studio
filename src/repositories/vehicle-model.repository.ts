@@ -7,7 +7,7 @@ export class VehicleModelRepository {
   async findAll(): Promise<any[]> {
     return prisma.vehicleModel.findMany({
       include: {
-        make: { select: { name: true } },
+        VehicleMake: { select: { name: true } },
       },
       orderBy: { name: 'asc' },
     });
@@ -17,7 +17,7 @@ export class VehicleModelRepository {
     return prisma.vehicleModel.findUnique({
       where: { id },
       include: {
-        make: { select: { name: true } },
+        VehicleMake: { select: { name: true } },
       },
     });
   }

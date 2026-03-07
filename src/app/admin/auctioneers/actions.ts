@@ -11,23 +11,27 @@ import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { AuctioneerService } from '@/services/auctioneer.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const auctioneerService = new AuctioneerService();
 
 
 export async function getAuctioneers(isPublicCall: boolean = false, limit?: number): Promise<AuctioneerProfileInfo[]> {
   const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-  return auctioneerService.getAuctioneers(tenantIdToUse, limit);
+  const result = await auctioneerService.getAuctioneers(tenantIdToUse, limit);
+  return sanitizeResponse(result);
 }
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
   const tenantId = await getTenantIdFromRequest();
-  return auctioneerService.getAuctioneerById(tenantId, id);
+  const result = await auctioneerService.getAuctioneerById(tenantId, id);
+  return sanitizeResponse(result);
 }
 
 export async function getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
-    const tenantId = await getTenantIdFromRequest(true); // Public data is always from landlord
-    return auctioneerService.getAuctioneerBySlug(tenantId, slugOrId);
+    const tenantId = await getTenantIdFromRequest(true);
+    const result = await auctioneerService.getAuctioneerBySlug(tenantId, slugOrId);
+    return sanitizeResponse(result);
 }
 
 export async function createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean, message: string, auctioneerId?: string }> {

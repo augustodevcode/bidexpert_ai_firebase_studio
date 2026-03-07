@@ -21,7 +21,7 @@ export class VehicleModelService {
   private mapModelsWithDetails(models: any[]): VehicleModel[] {
     return models.map(model => ({
       ...model,
-      makeName: model.make?.name,
+      makeName: model.VehicleMake?.name,
     }));
   }
 
