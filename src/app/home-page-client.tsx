@@ -39,15 +39,9 @@ interface HomePageClientProps {
 }
 
 export default function HomePageClient(props: HomePageClientProps) {
-  const { platformSettings } = props;
-
-  if (!platformSettings) {
-    return (
-      <div className="wrapper-error-msg" data-ai-id="homepage-error-boundary">
-        <p className="text-error-msg" data-ai-id="homepage-error-text">Erro ao carregar as configurações da plataforma.</p>
-      </div>
-    );
-  }
+  const platformSettings = props.platformSettings ?? ({
+    marketingSiteAdsSuperOpportunitiesEnabled: true,
+  } as PlatformSettings);
 
   if (props.variant === 'beta') {
     return <HomeExperienceBeta {...props} platformSettings={platformSettings} />;
