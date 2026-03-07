@@ -19,7 +19,6 @@ import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getSellers } from '@/app/admin/sellers/actions';
 import BidExpertFilter, { type ActiveFilters } from '@/components/BidExpertFilter';
 import {
   resolveDatasetFromParam,
@@ -271,19 +270,17 @@ function MapSearchPageContent() {
       const shouldLoadLots = searchType === 'lots';
       const shouldLoadDirectSales = searchType === 'direct_sale';
 
-      const [auctionsResult, lotsResult, directSalesResult, categoriesResult, sellersResult] = await Promise.allSettled([
+      const [auctionsResult, lotsResult, directSalesResult, categoriesResult] = await Promise.allSettled([
         shouldLoadAuctions ? getAuctions(true) : Promise.resolve([]),
         shouldLoadLots ? getLots(undefined, true) : Promise.resolve([]),
         shouldLoadDirectSales ? getDirectSaleOffers() : Promise.resolve([]),
         getLotCategories(true),
-        getSellers(true),
       ]);
 
       const auctionsSource = auctionsResult.status === 'fulfilled' ? auctionsResult.value : [];
       const lotsSource = lotsResult.status === 'fulfilled' ? lotsResult.value : [];
       const directSalesSource = directSalesResult.status === 'fulfilled' ? directSalesResult.value : [];
       const categoriesSource = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
-      const sellersSource = sellersResult.status === 'fulfilled' ? sellersResult.value : [];
 
       const auctions = Array.isArray(auctionsSource)
         ? auctionsSource
@@ -304,7 +301,6 @@ function MapSearchPageContent() {
           : []);
 
       const categories = Array.isArray(categoriesSource) ? categoriesSource : [];
-      const sellers = Array.isArray(sellersSource) ? sellersSource : [];
 
       const shouldUseFallbackDataset =
         auctions.length === 0 &&
@@ -343,8 +339,7 @@ function MapSearchPageContent() {
       });
       setUniqueLocations(Array.from(locationSet).sort());
 
-      const sellerNames = sellers.map((s: any) => s.name || s.companyName || '').filter(Boolean);
-      setUniqueSellers(Array.from(new Set(sellerNames)).sort() as string[]);
+      setUniqueSellers([]);
 
       /* ── Trigger fitBounds after data loads so map zooms to items ── */
       setTimeout(() => setFitBoundsSignal((prev) => prev + 1), 300);
