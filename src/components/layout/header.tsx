@@ -131,23 +131,42 @@ export default function Header({
             fetchedCategories,
             fetchedSellers,
             fetchedAuctioneers
-        ] = await Promise.all([
+        ] = await Promise.allSettled([
           getLots(undefined, true), 
           getAuctions(true, 20),
-          getLotCategories(),
+          getLotCategories(true),
           getSellers(true, 20),
           getAuctioneers(true, 20)
         ]);
 
-        setAllLots(fetchedLots);
-        setAllAuctions(fetchedAuctions);
-        setCategories(fetchedCategories);
-        setSellers(fetchedSellers);
-        setAuctioneers(fetchedAuctioneers);
+        if (fetchedLots.status === 'rejected') {
+          console.warn('Header failed to load public lots:', fetchedLots.reason);
+        }
+        if (fetchedAuctions.status === 'rejected') {
+          console.warn('Header failed to load public auctions:', fetchedAuctions.reason);
+        }
+        if (fetchedCategories.status === 'rejected') {
+          console.warn('Header failed to load public categories:', fetchedCategories.reason);
+        }
+        if (fetchedSellers.status === 'rejected') {
+          console.warn('Header failed to load public sellers:', fetchedSellers.reason);
+        }
+        if (fetchedAuctioneers.status === 'rejected') {
+          console.warn('Header failed to load public auctioneers:', fetchedAuctioneers.reason);
+        }
+
+        setAllLots(fetchedLots.status === 'fulfilled' ? fetchedLots.value : []);
+        setAllAuctions(fetchedAuctions.status === 'fulfilled' ? fetchedAuctions.value : []);
+        setCategories(fetchedCategories.status === 'fulfilled' ? fetchedCategories.value : []);
+        setSellers(fetchedSellers.status === 'fulfilled' ? fetchedSellers.value : []);
+        setAuctioneers(fetchedAuctioneers.status === 'fulfilled' ? fetchedAuctioneers.value : []);
 
         const viewedIds = getRecentlyViewedIds();
         if (viewedIds.length > 0) {
-          const itemsData = await getLotsByIds(viewedIds);
+          const itemsData = await getLotsByIds(viewedIds).catch((error) => {
+            console.warn('Header failed to load recently viewed lots:', error);
+            return [];
+          });
           const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
               const lot = itemsData.find(l => l.id === id);
               return lot ? {
