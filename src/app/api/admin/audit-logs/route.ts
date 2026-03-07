@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTenantId } from '@/lib/get-tenant-id';
 import { AuditService } from '@/services/audit.service';
 import logger from '@/lib/logger';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 /**
  * GET /api/admin/audit-logs
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
     const stats = await AuditService.getStats(tenantId, 7);
 
     return NextResponse.json(
-      {
+      sanitizeResponse({
         success: true,
         data: {
           logs,
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
           pagination: { limit, offset },
           testId: 'admin-audit-logs-container',
         },
-      },
+      }),
       { status: 200 }
     );
   } catch (error) {

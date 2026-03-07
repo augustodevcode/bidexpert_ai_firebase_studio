@@ -22,6 +22,7 @@ import { AuctionService } from '@/services/auction.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 // Tipo para Lot com includes do Prisma
 type PrismaLotWithIncludes = Prisma.LotGetPayload<{
@@ -69,9 +70,14 @@ export async function getAuctionsV2(
         searchTerm?: string;
     }
 ): Promise<{ auctions: Auction[]; total: number }> {
-    const tenantId = await getTenantIdFromRequest(options?.isPublicCall ?? false);
-    const auctions = await auctionService.getAuctions(tenantId, options?.limit, options?.isPublicCall ?? false);
-    return { auctions, total: auctions.length };
+    try {
+        const tenantId = await getTenantIdFromRequest(options?.isPublicCall ?? false);
+        const auctions = await auctionService.getAuctions(tenantId, options?.limit, options?.isPublicCall ?? false);
+        return sanitizeResponse({ auctions, total: auctions.length });
+    } catch (error) {
+        console.error('[getAuctionsV2] Error:', error);
+        return { auctions: [], total: 0 };
+    }
 }
 
 /**
@@ -156,6 +162,7 @@ export async function getAuctionAnalyticsV2(auctionId: string): Promise<{
     lotsByStatus: { status: string; count: number }[];
     bidsByDay: { date: string; count: number }[];
 }> {
+  try {
     const tenantId = await getTenantIdFromRequest(false);
     const numericAuctionId = BigInt(auctionId);
     const numericTenantId = BigInt(tenantId);
@@ -229,6 +236,14 @@ export async function getAuctionAnalyticsV2(auctionId: string): Promise<{
             count,
         })),
     };
+  } catch (error) {
+    console.error('[getAuctionAnalyticsV2] Error:', error);
+    return {
+        totalLots: 0, totalBids: 0, totalHabilitatedUsers: 0,
+        totalRevenue: 0, averageBidValue: 0, conversionRate: 0,
+        lotsByStatus: [], bidsByDay: [],
+    };
+  }
 }
 
 // Type for audit changes
@@ -245,6 +260,7 @@ export async function getAuctionAuditHistoryV2(auctionId: string): Promise<{
     changedAt: Date;
     changes: AuditChanges;
 }[]> {
+  try {
     const tenantId = await getTenantIdFromRequest(false);
     
     // Converte o auctionId para BigInt para a consulta de entityId
@@ -272,6 +288,10 @@ export async function getAuctionAuditHistoryV2(auctionId: string): Promise<{
         changedAt: log.timestamp,
         changes: log.changes as AuditChanges,
     }));
+  } catch (error) {
+    console.error('[getAuctionAuditHistoryV2] Error:', error);
+    return [];
+  }
 }
 
 /**

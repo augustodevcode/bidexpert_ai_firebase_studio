@@ -18,9 +18,14 @@ const judicialProcessService = new JudicialProcessService();
 
 
 export async function getJudicialProcesses(tenantId?: string): Promise<JudicialProcess[]> {
-    const id = tenantId || await getTenantIdFromRequest();
-    const result = await judicialProcessService.getJudicialProcesses(id);
-    return sanitizeResponse(result);
+    try {
+        const id = tenantId || await getTenantIdFromRequest();
+        const result = await judicialProcessService.getJudicialProcesses(id);
+        return sanitizeResponse(result);
+    } catch (error) {
+        console.error('[getJudicialProcesses] Error:', error);
+        return [];
+    }
 }
 
 export async function getJudicialProcess(id: string): Promise<JudicialProcess | null> {

@@ -145,41 +145,46 @@ export async function saveGridRow(
   data: Record<string, unknown>,
   id?: string
 ): Promise<Record<string, unknown>> {
-  const tenantId = await getTenantIdFromRequest();
-  const model = getPrismaModel(entity);
+  try {
+    const tenantId = await getTenantIdFromRequest();
+    const model = getPrismaModel(entity);
 
-  // Remover campos que não devem ser enviados ao Prisma
-  const cleanData = { ...data };
-  delete cleanData.id;
-  delete cleanData.createdAt;
-  delete cleanData.updatedAt;
+    // Remover campos que não devem ser enviados ao Prisma
+    const cleanData = { ...data };
+    delete cleanData.id;
+    delete cleanData.createdAt;
+    delete cleanData.updatedAt;
 
-  if (id) {
-    // Update
-    const existing = await model.findUnique({
-      where: { id: BigInt(id) },
-    });
-    if (!existing) {
-      throw new Error('Registro não encontrado');
+    if (id) {
+      // Update
+      const existing = await model.findUnique({
+        where: { id: BigInt(id) },
+      });
+      if (!existing) {
+        throw new Error('Registro não encontrado');
+      }
+      const result = await model.update({
+        where: { id: BigInt(id) },
+        data: {
+          ...cleanData,
+          updatedAt: new Date(),
+        },
+      });
+      return serializeData(result as Record<string, unknown>);
+    } else {
+      // Create
+      const result = await model.create({
+        data: {
+          ...cleanData,
+          tenantId: BigInt(tenantId),
+          updatedAt: new Date(),
+        },
+      });
+      return serializeData(result as Record<string, unknown>);
     }
-    const result = await model.update({
-      where: { id: BigInt(id) },
-      data: {
-        ...cleanData,
-        updatedAt: new Date(),
-      },
-    });
-    return serializeData(result as Record<string, unknown>);
-  } else {
-    // Create
-    const result = await model.create({
-      data: {
-        ...cleanData,
-        tenantId: BigInt(tenantId),
-        updatedAt: new Date(),
-      },
-    });
-    return serializeData(result as Record<string, unknown>);
+  } catch (error) {
+    console.error(`[SuperGrid] Error saving ${entity}:`, error);
+    throw error;
   }
 }
 
@@ -188,17 +193,22 @@ export async function deleteGridRows(
   entity: string,
   ids: string[]
 ): Promise<{ deleted: number }> {
-  const tenantId = await getTenantIdFromRequest();
-  const model = getPrismaModel(entity);
+  try {
+    const tenantId = await getTenantIdFromRequest();
+    const model = getPrismaModel(entity);
 
-  const bigIntIds = ids.map(id => BigInt(id));
+    const bigIntIds = ids.map(id => BigInt(id));
 
-  const result = await model.deleteMany({
-    where: {
-      id: { in: bigIntIds },
-      tenantId: BigInt(tenantId),
-    },
-  });
+    const result = await model.deleteMany({
+      where: {
+        id: { in: bigIntIds },
+        tenantId: BigInt(tenantId),
+      },
+    });
 
-  return { deleted: result.count };
+    return { deleted: result.count };
+  } catch (error) {
+    console.error(`[SuperGrid] Error deleting ${entity}:`, error);
+    throw error;
+  }
 }

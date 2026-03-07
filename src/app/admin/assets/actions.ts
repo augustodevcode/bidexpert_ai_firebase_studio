@@ -22,10 +22,14 @@ const assetService = new AssetService();
  * @returns {Promise<Asset[]>} Uma lista de ativos.
  */
 export async function getAssets(filter?: { judicialProcessId?: string, sellerId?: string, status?: string }): Promise<Asset[]> {
-    console.log('getAssets called');
-    const tenantId = await getTenantIdFromRequest();
-    const result = await assetService.getAssets({ ...filter, tenantId });
-    return sanitizeResponse(result);
+    try {
+        const tenantId = await getTenantIdFromRequest();
+        const result = await assetService.getAssets({ ...filter, tenantId });
+        return sanitizeResponse(result);
+    } catch (error) {
+        console.error('[getAssets] Error:', error);
+        return [];
+    }
 }
 
 /**
