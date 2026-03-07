@@ -135,11 +135,17 @@ function SearchPageContent() {
       setIsLoading(true);
       try {
         // Phase 1: Fetch critical UI data first (filters + settings)
-        const [categories, sellers, settings] = await Promise.all([
+        const phase1 = await Promise.allSettled([
           getCategories(),
           getSellers(true),
           getPlatformSettings(),
         ]);
+        const categories = phase1[0].status === 'fulfilled' ? phase1[0].value : [];
+        const sellers = phase1[1].status === 'fulfilled' ? phase1[1].value : [];
+        const settings = phase1[2].status === 'fulfilled' ? phase1[2].value : null;
+        phase1.forEach((r, i) => {
+          if (r.status === 'rejected') console.warn(`[Search] phase1 promise[${i}] rejected:`, r.reason);
+        });
         setAllCategoriesForFilter(categories);
         setPlatformSettings(settings as PlatformSettings);
         setUniqueSellersForFilter(sellers.map(s => s.name).sort());

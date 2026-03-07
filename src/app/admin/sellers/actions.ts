@@ -19,9 +19,14 @@ const sellerService = new SellerService();
 
 
 export async function getSellers(isPublicCall: boolean = false, limit?: number): Promise<SellerProfileInfo[]> {
-    const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-    const result = await sellerService.getSellers(tenantIdToUse, limit);
-    return sanitizeResponse(result);
+    try {
+        const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
+        const result = await sellerService.getSellers(tenantIdToUse, limit);
+        return sanitizeResponse(result);
+    } catch (error) {
+        console.error('[getSellers] Error:', error);
+        return [];
+    }
 }
 
 export async function getSeller(id: string): Promise<SellerProfileInfo | null> {

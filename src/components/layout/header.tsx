@@ -125,19 +125,25 @@ export default function Header({
     async function fetchClientSideData() {
       setIsLoading(true);
       try {
-        const [
-            fetchedLots,
-            fetchedAuctions,
-            fetchedCategories,
-            fetchedSellers,
-            fetchedAuctioneers
-        ] = await Promise.all([
+        const results = await Promise.allSettled([
           getLots(undefined, true), 
           getAuctions(true, 20),
           getLotCategories(),
           getSellers(true, 20),
           getAuctioneers(true, 20)
         ]);
+
+        const fetchedLots = results[0].status === 'fulfilled' ? results[0].value : [];
+        const fetchedAuctions = results[1].status === 'fulfilled' ? results[1].value : [];
+        const fetchedCategories = results[2].status === 'fulfilled' ? results[2].value : [];
+        const fetchedSellers = results[3].status === 'fulfilled' ? results[3].value : [];
+        const fetchedAuctioneers = results[4].status === 'fulfilled' ? results[4].value : [];
+
+        results.forEach((r, i) => {
+          if (r.status === 'rejected') {
+            console.warn(`[Header] fetchClientSideData promise[${i}] rejected:`, r.reason);
+          }
+        });
 
         setAllLots(fetchedLots);
         setAllAuctions(fetchedAuctions);

@@ -17,9 +17,14 @@ const auctioneerService = new AuctioneerService();
 
 
 export async function getAuctioneers(isPublicCall: boolean = false, limit?: number): Promise<AuctioneerProfileInfo[]> {
-  const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-  const result = await auctioneerService.getAuctioneers(tenantIdToUse, limit);
-  return sanitizeResponse(result);
+  try {
+    const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
+    const result = await auctioneerService.getAuctioneers(tenantIdToUse, limit);
+    return sanitizeResponse(result);
+  } catch (error) {
+    console.error('[getAuctioneers] Error:', error);
+    return [];
+  }
 }
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {

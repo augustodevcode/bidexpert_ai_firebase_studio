@@ -17,9 +17,14 @@ import { getTenantIdFromRequest } from '@/lib/actions/auth';
 const categoryService = new CategoryService();
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  const tenantId = await getTenantIdFromRequest(true);
-  const result = await categoryService.getCategories(tenantId);
-  return sanitizeResponse(result);
+  try {
+    const tenantId = await getTenantIdFromRequest(true);
+    const result = await categoryService.getCategories(tenantId);
+    return sanitizeResponse(result);
+  } catch (error) {
+    console.error('[getLotCategories] Error:', error);
+    return [];
+  }
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
