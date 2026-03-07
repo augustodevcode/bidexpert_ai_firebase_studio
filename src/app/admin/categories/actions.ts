@@ -17,7 +17,7 @@ import { getTenantIdFromRequest } from '@/lib/actions/auth';
 const categoryService = new CategoryService();
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  const tenantId = await getTenantIdFromRequest();
+  const tenantId = await getTenantIdFromRequest(true);
   const result = await categoryService.getCategories(tenantId);
   return sanitizeResponse(result);
 }

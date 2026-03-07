@@ -61,11 +61,15 @@ async function resolveTenantIdFromHeader(tenantIdFromHeader?: string | null): Pr
 }
 
 function isDomainFieldUnsupported(error: unknown): boolean {
-    if (error instanceof Prisma.PrismaClientValidationError) {
-        return error.message.includes('Unknown argument `domain`');
+    if (error instanceof Prisma.PrismaClientValidationError ||
+        error instanceof Prisma.PrismaClientKnownRequestError) {
+        return error.message.includes('Unknown argument `domain`') ||
+               error.message.includes('column "domain" does not exist') ||
+               error.message.includes('Invalid `prisma');
     }
     if (error instanceof Error) {
-        return error.message.includes('Unknown argument `domain`');
+        return error.message.includes('Unknown argument `domain`') ||
+               error.message.includes('column "domain" does not exist');
     }
     return false;
 }
