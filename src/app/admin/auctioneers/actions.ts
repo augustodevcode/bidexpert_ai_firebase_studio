@@ -11,13 +11,22 @@ import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { AuctioneerService } from '@/services/auctioneer.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { shouldAllowDbFallback, getEnvironmentLabel } from '@/lib/db-resilience';
 
 const auctioneerService = new AuctioneerService();
 
 
 export async function getAuctioneers(isPublicCall: boolean = false, limit?: number): Promise<AuctioneerProfileInfo[]> {
-  const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-  return auctioneerService.getAuctioneers(tenantIdToUse, limit);
+  try {
+    const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
+    return auctioneerService.getAuctioneers(tenantIdToUse, limit);
+  } catch (error) {
+    if (isPublicCall && shouldAllowDbFallback(error)) {
+      console.warn(`[getAuctioneers] ${getEnvironmentLabel()}: falha ao carregar leiloeiros públicos. Retornando lista vazia.`, error);
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
