@@ -19,8 +19,6 @@ import dynamic from 'next/dynamic';
 import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
-import { getSellers } from '@/app/admin/sellers/actions';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { getAuctions } from '@/app/admin/auctions/actions';
@@ -152,29 +150,14 @@ function SearchPageContent() {
       setIsLoading(true);
       try {
         // Phase 1: Fetch critical UI data first (filters + settings)
-        const [categoriesResult, sellersResult, settingsResult] = await Promise.allSettled([
-          getCategories(true),
-          getSellers(true),
-          getPlatformSettings(),
-        ]);
-
-        if (categoriesResult.status === 'rejected') {
-          console.warn('Search page failed to load public categories:', categoriesResult.reason);
-        }
-        if (sellersResult.status === 'rejected') {
-          console.warn('Search page failed to load public sellers:', sellersResult.reason);
-        }
-        if (settingsResult.status === 'rejected') {
-          console.warn('Search page failed to load platform settings:', settingsResult.reason);
-        }
-
-        const categories = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
-        const sellers = sellersResult.status === 'fulfilled' ? sellersResult.value : [];
-        const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
+        const categories = await getCategories(true).catch((error) => {
+          console.warn('Search page failed to load public categories:', error);
+          return [];
+        });
 
         setAllCategoriesForFilter(categories);
-        setPlatformSettings((settings as PlatformSettings | null) ?? fallbackPlatformSettings);
-        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
+        setPlatformSettings(fallbackPlatformSettings);
+        setUniqueSellersForFilter([]);
         setIsFilterDataLoading(false);
 
         // Phase 2: Fetch actual data with limits to prevent timeout
