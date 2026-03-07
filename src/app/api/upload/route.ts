@@ -9,7 +9,6 @@ import { MediaService } from '@/services/media.service';
 import { getStorageAdapter } from '@/lib/storage';
 import type { MediaItem } from '@/types';
 import path from 'path';
-import { getStorageAdapter } from '@/lib/storage';
 import { getSession } from '@/server/lib/session';
 
 const MAX_FILE_SIZE_MB = 10;
@@ -55,8 +54,6 @@ export async function POST(request: NextRequest) {
     const uploadedItems: Partial<MediaItem>[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
     const publicUrls: string[] = [];
-
-    const storage = getStorageAdapter(request.headers.get('host'));
 
     for (const file of files) {
        if (file.size > MAX_FILE_SIZE_BYTES) {

@@ -16,8 +16,8 @@ import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const categoryService = new CategoryService();
 
-export async function getLotCategories(): Promise<LotCategory[]> {
-  const tenantId = await getTenantIdFromRequest();
+export async function getLotCategories(isPublicCall: boolean = false): Promise<LotCategory[]> {
+  const tenantId = await getTenantIdFromRequest(isPublicCall);
   const result = await categoryService.getCategories(tenantId);
   return sanitizeResponse(result);
 }

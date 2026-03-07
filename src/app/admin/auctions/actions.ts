@@ -22,6 +22,7 @@ import { AuctionService } from '@/services/auction.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { shouldAllowDbFallback, getEnvironmentLabel } from '@/lib/db-resilience';
 
 const auctionService = new AuctionService();
 
@@ -36,11 +37,19 @@ const decimalToNumber = (value?: Prisma.Decimal | number | bigint | null): numbe
 };
 
 export async function getAuctions(isPublicCall: boolean = false, limit?: number): Promise<Auction[]> {
-    const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-    const auctions = await auctionService.getAuctions(tenantIdToUse, limit, isPublicCall);
-    return JSON.parse(JSON.stringify(auctions, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value
-    ));
+    try {
+        const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
+        const auctions = await auctionService.getAuctions(tenantIdToUse, limit, isPublicCall);
+        return JSON.parse(JSON.stringify(auctions, (key, value) => 
+            typeof value === 'bigint' ? value.toString() : value
+        ));
+    } catch (error) {
+        if (isPublicCall && shouldAllowDbFallback(error)) {
+            console.warn(`[getAuctions] ${getEnvironmentLabel()}: falha ao carregar dados públicos. Retornando lista vazia.`, error);
+            return [];
+        }
+        throw error;
+    }
 }
 
 export async function getAuction(id: string, isPublicCall: boolean = false): Promise<Auction | null> {

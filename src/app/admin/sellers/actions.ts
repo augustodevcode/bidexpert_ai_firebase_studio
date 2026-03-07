@@ -14,14 +14,23 @@ import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { SellerService } from '@/services/seller.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { sanitizeResponse } from '@/lib/serialization-helper';
+import { shouldAllowDbFallback, getEnvironmentLabel } from '@/lib/db-resilience';
 
 const sellerService = new SellerService();
 
 
 export async function getSellers(isPublicCall: boolean = false, limit?: number): Promise<SellerProfileInfo[]> {
-    const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-    const result = await sellerService.getSellers(tenantIdToUse, limit);
-    return sanitizeResponse(result);
+    try {
+        const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
+        const result = await sellerService.getSellers(tenantIdToUse, limit);
+        return sanitizeResponse(result);
+    } catch (error) {
+        if (isPublicCall && shouldAllowDbFallback(error)) {
+            console.warn(`[getSellers] ${getEnvironmentLabel()}: falha ao carregar vendedores públicos. Retornando lista vazia.`, error);
+            return [];
+        }
+        throw error;
+    }
 }
 
 export async function getSeller(id: string): Promise<SellerProfileInfo | null> {

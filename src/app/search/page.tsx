@@ -19,8 +19,6 @@ import dynamic from 'next/dynamic';
 import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
-import { getSellers } from '@/app/admin/sellers/actions';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { getAuctions } from '@/app/admin/auctions/actions';
@@ -79,6 +77,22 @@ const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | '
   praça: 'todas',
 };
 
+const fallbackPlatformSettings = {
+  siteTitle: 'BidExpert',
+  siteTagline: 'Sua plataforma de leilões online.',
+  showCountdownOnCards: true,
+  sectionBadgeVisibility: {
+    searchGrid: {
+      showStatusBadge: true,
+      showDiscountBadge: true,
+      showUrgencyTimer: true,
+      showPopularityBadge: true,
+      showHotBidBadge: true,
+      showExclusiveBadge: true,
+    },
+  },
+} as PlatformSettings;
+
 
 function SearchPageContent() {
   const router = useRouter();
@@ -127,6 +141,7 @@ function SearchPageContent() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
+  const effectivePlatformSettings = platformSettings ?? fallbackPlatformSettings;
 
   // Fetch data on mount with limits to avoid infinite loading (FIX 5.29 CRÍTICO)
   useEffect(() => {
@@ -135,21 +150,25 @@ function SearchPageContent() {
       setIsLoading(true);
       try {
         // Phase 1: Fetch critical UI data first (filters + settings)
-        const [categories, sellers, settings] = await Promise.all([
-          getCategories(),
-          getSellers(true),
-          getPlatformSettings(),
-        ]);
+        const categories = await getCategories(true).catch((error) => {
+          console.warn('Search page failed to load public categories:', error);
+          return [];
+        });
+
         setAllCategoriesForFilter(categories);
-        setPlatformSettings(settings as PlatformSettings);
-        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
+        setPlatformSettings(fallbackPlatformSettings);
+        setUniqueSellersForFilter([]);
         setIsFilterDataLoading(false);
 
         // Phase 2: Fetch actual data with limits to prevent timeout
+        const shouldLoadAuctions = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos';
+        const shouldLoadLots = currentSearchType === 'lots';
+        const shouldLoadDirectSales = currentSearchType === 'direct_sale';
+
         const [offers, auctions, lots] = await Promise.all([
-          getDirectSaleOffers().catch(() => []),
-          getAuctions(true, 200).catch(() => []),
-          getLots(undefined, true, 200).catch(() => []),
+          shouldLoadDirectSales ? getDirectSaleOffers().catch(() => []) : Promise.resolve([]),
+          shouldLoadAuctions ? getAuctions(true, 200).catch(() => []) : Promise.resolve([]),
+          shouldLoadLots ? getLots(undefined, true, 200).catch(() => []) : Promise.resolve([]),
         ]);
 
         // Set data states
@@ -179,7 +198,7 @@ function SearchPageContent() {
       }
     }
     fetchAllData();
-  }, []);
+  }, [currentSearchType]);
 
 
   useEffect(() => {
@@ -399,7 +418,6 @@ function SearchPageContent() {
   };
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
-    if (!platformSettings) return null;
     const itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
     return (
@@ -407,14 +425,13 @@ function SearchPageContent() {
         key={`${itemType}-${item.id}-${index}`}
         item={item}
         type={itemType}
-        platformSettings={platformSettings}
+        platformSettings={effectivePlatformSettings}
         parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
       />
     );
   };
 
   const renderListItem = (item: any, index: number): React.ReactNode => {
-    if (!platformSettings) return null;
     const itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
     return (
@@ -422,7 +439,7 @@ function SearchPageContent() {
         key={`${itemType}-list-${item.id}-${index}`}
         item={item}
         type={itemType as 'auction' | 'lot' | 'direct_sale'}
-        platformSettings={platformSettings}
+        platformSettings={effectivePlatformSettings}
         parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
       />
     );
@@ -444,7 +461,7 @@ function SearchPageContent() {
         sortOptionsDirectSales;
 
 
-  if (isFilterDataLoading || !platformSettings) {
+  if (isFilterDataLoading) {
     return (
       <div className="wrapper-search-loading-full" data-ai-id="search-page-loading">
         <Loader2 className="icon-search-loading-spinner-large" />
@@ -510,7 +527,7 @@ function SearchPageContent() {
             sortOptions={currentSortOptions}
             initialSortBy={sortBy}
             onSortChange={setSortByState}
-            platformSettings={platformSettings}
+            platformSettings={effectivePlatformSettings}
             isLoading={isLoading}
             searchTypeLabel={getSearchTypeLabel()}
             emptyStateMessage="Nenhum item encontrado com os filtros aplicados."

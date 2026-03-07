@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/server/lib/session';
+import { normalizeTenantToken } from '@/lib/tenant-token';
 
 // ============================================================================
 // Configuração do Matcher
@@ -87,7 +88,7 @@ async function resolveTenantFromRequest(
   forwardedHost: string | null
 ): Promise<TenantResolution> {
   // Usa X-Forwarded-Host se disponível (SSL termination no proxy)
-  const effectiveHost = forwardedHost || hostname;
+  const effectiveHost = normalizeTenantToken(forwardedHost || hostname) || '';
   const normalizedHost = effectiveHost.toLowerCase();
   const hostWithoutPort = normalizedHost.replace(/:\d+$/, ''); // Remove porta
 
@@ -98,7 +99,15 @@ async function resolveTenantFromRequest(
   const localhostSubdomainMatch = hostWithoutPort.match(/^([a-z0-9-]+)\.localhost$/i);
   console.log(`[resolveTenantFromRequest] localhostSubdomainMatch:`, localhostSubdomainMatch);
   if (localhostSubdomainMatch) {
-    const subdomain = localhostSubdomainMatch[1].toLowerCase();
+    const subdomain = normalizeTenantToken(localhostSubdomainMatch[1]);
+    if (!subdomain) {
+      return {
+        tenantId: LANDLORD_ID,
+        subdomain: null,
+        isCustomDomain: false,
+        isPathBased: false,
+      };
+    }
     // www is treated as landlord
     if (subdomain === 'www') {
       return {
@@ -123,7 +132,15 @@ async function resolveTenantFromRequest(
     // Check for path-based routing on landlord domain: /app/[slug]
     const pathMatch = pathname.match(/^\/app\/([a-z0-9-]+)/i);
     if (pathMatch) {
-      const slug = pathMatch[1].toLowerCase();
+      const slug = normalizeTenantToken(pathMatch[1]);
+      if (!slug) {
+        return {
+          tenantId: LANDLORD_ID,
+          subdomain: null,
+          isCustomDomain: false,
+          isPathBased: false,
+        };
+      }
       return {
         tenantId: slug, // Será validado na rota/layout
         subdomain: slug,
@@ -133,10 +150,11 @@ async function resolveTenantFromRequest(
     }
     
     // If it's Vercel and we have a default tenant configured, use it
-    if (isVercelDomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
+    const defaultTenant = normalizeTenantToken(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
+    if (isVercelDomain && defaultTenant) {
       return {
-        tenantId: process.env.NEXT_PUBLIC_DEFAULT_TENANT,
-        subdomain: process.env.NEXT_PUBLIC_DEFAULT_TENANT,
+        tenantId: defaultTenant,
+        subdomain: defaultTenant,
         isCustomDomain: false,
         isPathBased: false,
       };
@@ -159,7 +177,15 @@ async function resolveTenantFromRequest(
   const subdomainMatch = hostWithoutPort.match(subdomainPattern);
   
   if (subdomainMatch) {
-    const subdomain = subdomainMatch[1].toLowerCase();
+    const subdomain = normalizeTenantToken(subdomainMatch[1]);
+    if (!subdomain) {
+      return {
+        tenantId: LANDLORD_ID,
+        subdomain: null,
+        isCustomDomain: false,
+        isPathBased: false,
+      };
+    }
     return {
       tenantId: subdomain, // Será resolvido para ID na rota
       subdomain,
@@ -182,11 +208,11 @@ async function resolveTenantFromRequest(
 // ============================================================================
 
 export async function middleware(req: NextRequest) {
-  const hostname = req.headers.get('host') || '';
+  const hostname = normalizeTenantToken(req.headers.get('host')) || '';
   const pathname = req.nextUrl.pathname;
   
   // Headers de proxy reverso para SSL termination
-  const forwardedHost = req.headers.get('x-forwarded-host');
+  const forwardedHost = normalizeTenantToken(req.headers.get('x-forwarded-host'));
   const forwardedProto = req.headers.get('x-forwarded-proto');
   
   // Resolve o tenant
@@ -226,7 +252,8 @@ export async function middleware(req: NextRequest) {
   // O tenant da URL/subdomain SEMPRE tem precedência para garantir isolamento multi-tenant correto.
   // A sessão só é usada para validar se o usuário logado pertence ao tenant acessado.
   // Se a URL resolve para um subdomain/tenant específico, esse é o tenant ativo.
-  const activeTenantId = resolution.tenantId;
+  const activeTenantId = normalizeTenantToken(resolution.tenantId) || LANDLORD_ID;
+  const activeSubdomain = normalizeTenantToken(resolution.subdomain);
   
   // Se a resolução retornou um slug (não numérico), mantém para lookup posterior
   // Se retornou LANDLORD_ID, e usuário tem sessão de outro tenant, mantém landlord
@@ -237,7 +264,7 @@ export async function middleware(req: NextRequest) {
   // Prepara headers para a requisição
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-tenant-id', activeTenantId);
-  requestHeaders.set('x-tenant-subdomain', resolution.subdomain || '');
+  requestHeaders.set('x-tenant-subdomain', activeSubdomain || '');
   requestHeaders.set('x-tenant-is-custom-domain', resolution.isCustomDomain.toString());
   requestHeaders.set('x-tenant-is-path-based', resolution.isPathBased.toString());
   requestHeaders.set('x-original-host', hostname);
