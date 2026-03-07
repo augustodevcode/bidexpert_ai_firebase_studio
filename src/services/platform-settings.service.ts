@@ -8,6 +8,7 @@ import { Prisma, type PlatformSettings as PrismaPlatformSettings, type Tenant } 
 import type { PlatformSettings } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { defaultRadiusValue, defaultThemeTokensDark, defaultThemeTokensLight } from '@/lib/theme-tokens';
+import { getEnvironmentLabel, isMissingColumnError, shouldAllowSchemaFallback } from '@/lib/db-resilience';
 import {
     defaultFeatureFlags,
     defaultBlockchainConfig,
@@ -54,6 +55,38 @@ export class PlatformSettingsService {
 
     private static cloneFeatureFlags(flags: FeatureFlags): FeatureFlags {
         return { ...flags };
+    }
+
+    private buildFallbackSettings(tenantId: bigint): PlatformSettings {
+        const now = new Date();
+
+        return {
+            id: `fallback-${tenantId.toString()}`,
+            tenantId: tenantId.toString(),
+            siteTitle: 'BidExpert',
+            siteTagline: 'Sua plataforma de leilões online.',
+            isSetupComplete: false,
+            crudFormMode: 'modal',
+            radiusValue: defaultRadiusValue,
+            themeColorsLight: defaultThemeTokensLight,
+            themeColorsDark: defaultThemeTokensDark,
+            marketingSiteAdsSuperOpportunitiesEnabled: true,
+            marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds: 6,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            featureFlags: defaultFeatureFlags as any,
+            ThemeSettings: null,
+            IdMasks: null,
+            MapSettings: null,
+            BiddingSettings: null,
+            PaymentGatewaySettings: null,
+            NotificationSettings: null,
+            MentalTriggerSettings: null,
+            SectionBadgeVisibility: null,
+            VariableIncrementRule: [],
+            RealtimeSettings: null,
+        } as unknown as PlatformSettings;
     }
 
     /**
@@ -126,7 +159,21 @@ export class PlatformSettingsService {
             });
         };
 
-        let settings = await findSettings();
+        let settings;
+
+        try {
+            settings = await findSettings();
+        } catch (error) {
+            if (isMissingColumnError(error, 'PlatformSettings.featureFlags') && shouldAllowSchemaFallback(error)) {
+                console.warn(
+                    `[PlatformSettingsService] ${getEnvironmentLabel()}: coluna PlatformSettings.featureFlags ausente. ` +
+                    'Usando fallback temporario ate a migration remota ser aplicada.'
+                );
+                return this.buildFallbackSettings(tenantId);
+            }
+
+            throw error;
+        }
 
         if (!settings) {
             try {
@@ -145,26 +192,38 @@ export class PlatformSettingsService {
                     marketingSiteAdsSuperOpportunitiesScrollIntervalSeconds: 6,
                 };
 
-                settings = await withAudit({
-                    model: 'PlatformSettings',
-                    action: 'create',
-                    prismaAction: prisma.platformSettings.create({
+                try {
+                    settings = await withAudit({
+                        model: 'PlatformSettings',
+                        action: 'create',
+                        prismaAction: prisma.platformSettings.create({
+                            data: createData,
+                            include: {
+                                ThemeSettings: { include: { ThemeColors: true } },
+                                IdMasks: true,
+                                MapSettings: true,
+                                BiddingSettings: true,
+                                PaymentGatewaySettings: true,
+                                NotificationSettings: true,
+                                MentalTriggerSettings: true,
+                                SectionBadgeVisibility: true,
+                                VariableIncrementRule: true,
+                                RealtimeSettings: true,
+                            },
+                        }),
                         data: createData,
-                        include: {
-                            ThemeSettings: { include: { ThemeColors: true } },
-                            IdMasks: true,
-                            MapSettings: true,
-                            BiddingSettings: true,
-                            PaymentGatewaySettings: true,
-                            NotificationSettings: true,
-                            MentalTriggerSettings: true,
-                            SectionBadgeVisibility: true,
-                            VariableIncrementRule: true,
-                            RealtimeSettings: true,
-                        },
-                    }),
-                    data: createData,
-                });
+                    });
+                } catch (error) {
+                    if (isMissingColumnError(error, 'PlatformSettings.featureFlags') && shouldAllowSchemaFallback(error)) {
+                        console.warn(
+                            `[PlatformSettingsService] ${getEnvironmentLabel()}: create PlatformSettings falhou por schema drift em featureFlags. ` +
+                            'Retornando fallback temporario.'
+                        );
+                        return this.buildFallbackSettings(tenantId);
+                    }
+
+                    throw error;
+                }
 
             } catch (error: any) {
                 if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

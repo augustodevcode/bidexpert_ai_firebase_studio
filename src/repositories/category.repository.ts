@@ -41,10 +41,6 @@ function serializeCategory(category: LotCategoryWithCounts): LotCategory {
   };
 }
 
-function parseTenantId(tenantId: string): bigint {
-  return BigInt(tenantId);
-}
-
 export class CategoryRepository {
   async findAll(tenantId: string): Promise<LotCategory[]> {
     try {
