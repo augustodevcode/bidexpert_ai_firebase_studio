@@ -8,7 +8,7 @@ Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriame
 ## 🔀 Workflow de Branches (OBRIGATÓRIO)
 
 **REGRA CRÍTICA:** Todo agente AI DEVE:
-1. Criar branch própria antes de qualquer alteração: `git checkout -b <tipo>/<descricao>-<timestamp>`
+1. Criar **Git Worktree dedicado** antes de qualquer alteração: `git worktree add worktrees\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao>-<timestamp> origin/demo-stable`
 2. Usar porta dedicada (9005, 9006, 9007...) para não conflitar com outros devs
 3. NO FINAL do chat, solicitar autorização do usuário para abrir PR para `demo-stable`
 
@@ -37,13 +37,43 @@ Regras:
 - Toda execução de CI em PR deve publicar comentário automático com links do run e artifact Playwright (`playwright-report`/`test-results`).
 - Evidências visuais devem ser consultáveis por link na própria PR (sem depender de arquivos locais).
 
-## 🚀 Inicialização da Aplicação (OBRIGATÓRIO)
+## 🌲 Isolamento Primário: Git Worktree (OBRIGATÓRIO)
 
-**REGRA:** Para iniciar a aplicação BidExpert, use ambiente isolado (Docker) e porta livre:
-- **Comando recomendado:** `node .vscode/start-9006-dev.js` (ou task equivalente de DEV)
-- **Porta:** usar a porta pretendida se livre; se ocupada, usar a próxima disponível (9006, 9007, 9008...)
-- **Banco DEV:** `bidexpert_dev` (isolado do DEMO)
-- **Acesso:** usar URL com slug do ambiente e a porta escolhida (ex.: `http://dev.localhost:9006`)
+**REGRA CRÍTICA:** NENHUM modelo AI (Copilot, Gemini, etc.) deve fazer qualquer alteração em arquivos de código antes de criar um **Git Worktree dedicado** com porta própria. Este mecanismo garante isolamento de branch, contexto de build e porta de servidor — sem Docker obrigatório.
+
+> O Git Worktree é superior ao clone múltiplo e ao Docker sandbox para a maioria dos casos de desenvolvimento: setup em segundos, histórico compartilhado, sem duplicação de disco.
+
+```powershell
+# 1. Ver worktrees ativos e portas em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
+
+# 2. Criar worktree com nova branch a partir de demo-stable
+$porta = 9006   # Pegar porta livre conforme tabela
+$branch = "feat/minha-feature-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add worktrees\bidexpert-feat-minha-feature -b $branch origin/demo-stable
+
+# 3. Configurar e iniciar dentro do worktree (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-feat-minha-feature
+$env:PORT = $porta ; npm install ; npm run dev
+# Acesso: http://dev.localhost:$porta
+```
+
+**Tabela de Portas por Worktree:**
+
+| Porta | Worktree | Quem |
+|-------|----------|------|
+| 9005  | Principal / DEMO | Usuário humano |
+| 9006  | DEV worktree #1 | Agente AI #1 |
+| 9007  | DEV worktree #2 | Agente AI #2 |
+| 9008  | Hotfix / PR review | Ad-hoc |
+
+> 📖 **Skill detalhada:** `.github/skills/git-worktree-isolation/SKILL.md`
+
+**Docker Sandbox** — use apenas quando precisar de banco de dados completamente isolado:
+```powershell
+docker compose -f docker-compose.dev-isolated.yml up -d --build
+```
 
 ## 🔒 Isolamento de Ambientes DEV ↔ DEMO (OBRIGATÓRIO)
 
@@ -82,14 +112,15 @@ main (produção - PROTEGIDO)
 - Logs mostram conexão PostgreSQL
 - Porta 9005 ocupada
 
-**Quando usuário está em DEMO → Agente AI faz:**
+**Quando usuário está em DEMO → Agente AI faz (Git Worktree):**
 ```powershell
-# 1. Usar porta diferente (9006, 9007...)
-$env:PORT=9006
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
-
-# 2. Iniciar em ambiente DEV
-node .vscode/start-9006-dev.js
+# 1. Criar worktree próprio na porta DEV (sem conflitar com DEMO do usuário)
+$porta = 9006  # ou próxima porta livre
+$branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add worktrees\bidexpert-dev -b $branch origin/demo-stable
+Set-Location worktrees\bidexpert-dev
+$env:PORT = $porta ; npm install ; npm run dev
+# Agente trabalha em http://dev.localhost:9006, sem tocar em 9005
 ```
 
 ### Compatibilidade MySQL ↔ PostgreSQL
@@ -157,33 +188,38 @@ Os agentes devem sempre buscar a visão completa do problema:
 2. **Logs do Servidor**: Verifique o output do `next dev` ou `start`.
 3. **Triangulação**: Um erro de "Failed to fetch" no browser geralmente tem uma stack trace correspondente no servidor. Use ambos para corrigir com precisão.
 
-## Estratégia de Inicialização Robusta (Powershell)
+## 🌲 Estratégia de Inicialização Robusta (Git Worktree + Porta Dedicada)
 
-**PROBLEMA:** O comando `next dev` padrão pode falhar na ligação de portas ou resolução de `localhost` em ambientes Windows/Powershell, ou ignorar variáveis de ambiente.
+**PROBLEMA:** Métodos antigos usando `next dev` na branch principal criam conflitos de porta entre Agente AI e Usuário trabalhando simultaneamente. Docker resolve o banco mas é lento para setup.
 
-**SOLUÇÃO (OBRIGATÓRIA):** Ao iniciar a aplicação para testes ou desenvolvimento, utilize SEMPRE esta sequência de comandos no PowerShell:
+**SOLUÇÃO PRIMÁRIA (Git Worktree):** A primeira ação ANTES DE MUDAR QUALQUER ARQUIVO deve ser criar um Worktree dedicado com porta própria.
 
 ```powershell
-# 1. Parar processos Node anteriores para liberar a porta (evita erro EADDRINUSE)
-Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
+# 1. Ver worktrees ativos e portas em uso
+git worktree list
+netstat -ano | Select-String ":900[5-9]|:901" | Select-Object -First 10
 
-# 2. Definir variáveis de ambiente explicitamente na sessão
-$env:PORT=9005
-$env:DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_demo" # Ou bidexpert_dev conforme necessidade
-$env:NODE_ENV="development"
+# 2. Criar worktree com nova branch a partir de demo-stable
+$porta = 9006   # Porta livre conforme tabela
+$branch = "feat/task-$(Get-Date -Format 'yyyyMMdd-HHmm')"
+git worktree add worktrees\bidexpert-worktree-dev -b $branch origin/demo-stable
 
-# 3. Gerar cliente Prisma (garante schema sincronizado)
-npx prisma generate
-
-# 4. Iniciar servidor customizado (monitorando logs no terminal)
-# Nota: Usa ts-node com server.ts para garantir leitura correta de env e binding
-npx ts-node --project tsconfig.server.json src/server.ts
+# 3. Configurar e iniciar dentro do worktree (dentro do workspace VS Code)
+Set-Location worktrees\bidexpert-worktree-dev
+$env:PORT = $porta ; npm install ; npm run dev
+# Acesso: http://dev.localhost:$porta
 ```
 
 **Monitoramento:**
-- Após iniciar, verifique se a mensagem "Ready in..." aparece.
-- Se houver erro de conexão, testar com: `Test-NetConnection -ComputerName 127.0.0.1 -Port 9005`
-- Sempre abra o **Simple Browser** (`http://demo.localhost:9005`) para validar visualmente.
+- Sempre abra o **Simple Browser** com `http://dev.localhost:<porta>` para validar visualmente.
+- Veja logs do servidor Next.js no terminal do worktree.
+
+**Docker Sandbox** (alternativa quando banco de dados isolado é necessário):
+```powershell
+docker compose -f docker-compose.dev-isolated.yml down
+docker compose -f docker-compose.dev-isolated.yml up -d --build
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+```
 
 ## Container Tools - Ambientes Multi-Tenant
 

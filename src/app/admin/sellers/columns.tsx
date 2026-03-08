@@ -80,19 +80,39 @@ export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: str
     id: "actions",
     cell: ({ row }) => {
       const seller = row.original;
+      if (!seller || !seller.id) return null;
+      
       return (
-        <div className="flex items-center justify-end gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+        <div className="flex items-center justify-end gap-1" data-ai-id="seller-row-actions">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8" 
+              asChild
+              data-ai-id="seller-view-public-profile-btn"
+            >
                 <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`} target="_blank">
                     <Eye className="h-4 w-4" />
                     <span className="sr-only">Ver Perfil Público</span>
                 </Link>
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(seller)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8" 
+              onClick={() => onEdit(seller)}
+              data-ai-id="seller-edit-btn"
+            >
                 <Pencil className="h-4 w-4" />
                 <span className="sr-only">Editar</span>
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(seller.id)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8" 
+              onClick={() => handleDelete(seller.id)}
+              data-ai-id="seller-delete-btn"
+            >
                 <Trash2 className="h-4 w-4 text-destructive" />
                 <span className="sr-only">Excluir</span>
             </Button>

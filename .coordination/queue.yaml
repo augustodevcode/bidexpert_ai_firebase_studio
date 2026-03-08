@@ -1,0 +1,45 @@
+# ============================================================
+# Sistema de Coordenação de Squads - BidExpert
+# ============================================================
+# Este arquivo é a fila central de implementações em andamento.
+# Cada dev DEVE registrar sua feature aqui ANTES de começar.
+# O Agent Master usa este arquivo para detectar sobreposições.
+# ============================================================
+
+# Formato de cada entrada:
+# - id: identificador único (timestamp-based)
+#   dev_id: nome do dev
+#   branch: nome da branch
+#   status: planned | in-progress | testing | ready-for-hml | hml-validated | merged | blocked
+#   title: descrição curta da feature
+#   areas_impacted: lista de áreas do código afetadas
+#   files_touched: lista de arquivos principais alterados
+#   risk_level: low | medium | high | critical
+#   playwright_evidence: caminho para relatório ou "pending"
+#   started_at: timestamp ISO
+#   updated_at: timestamp ISO
+#   pr_number: número do PR (quando criado)
+#   notes: observações livres
+
+queue: []
+
+# Exemplo de entrada preenchida:
+# queue:
+#   - id: "20260216-1430-augusto"
+#     dev_id: augusto
+#     branch: feat/auction-filter-20260216-1430
+#     status: in-progress
+#     title: "Filtro avançado de leilões por categoria"
+#     areas_impacted:
+#       - src/components/search
+#       - src/services/auction.service.ts
+#       - tests/e2e/search*.spec.ts
+#     files_touched:
+#       - src/components/search/FilterPanel.tsx
+#       - src/services/auction.service.ts
+#     risk_level: medium
+#     playwright_evidence: pending
+#     started_at: "2026-02-16T14:30:00Z"
+#     updated_at: "2026-02-16T14:30:00Z"
+#     pr_number: null
+#     notes: ""

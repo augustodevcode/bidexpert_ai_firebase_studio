@@ -27,6 +27,8 @@ jobs:
   typecheck:
     name: 🔍 Type Check & Lint
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
     
     steps:
       - name: 📥 Checkout code
@@ -47,10 +49,15 @@ jobs:
       - name: �🗄️ Generate Prisma Client
         run: npx prisma generate
         
-      - name: 🔍 Type Check
+      - name: 🔍 Type Check (strict)
         run: npm run typecheck
         
-      - name: 🧹 Lint
+      - name: 🧹 Lint (soft on pull_request)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: npm run lint:soft
+
+      - name: 🧹 Lint (strict on push)
+        if: ${{ github.event_name != 'pull_request' }}
         run: npm run lint
         continue-on-error: true
 
@@ -60,6 +67,8 @@ jobs:
   build:
     name: 🏗️ Build Test
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
     
     steps:
       - name: 📥 Checkout code
@@ -96,6 +105,8 @@ jobs:
     name: 🧪 Unit Tests
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
 
     steps:
       - name: 📥 Checkout code

@@ -8,7 +8,7 @@
 import { ReportService } from '@/services/report.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { revalidatePath } from 'next/cache';
-import { getSession } from '@/server/lib/session';
+import { auth } from '@/lib/auth';
 import type { ReportType, ReportDefinition } from '@/types/report-builder.types';
 import type { Report } from '@prisma/client';
 
@@ -63,8 +63,8 @@ export async function createReportAction(data: {
   definition: ReportDefinition;
 }) {
   try {
-    const session = await getSession();
-    if (!session?.userId) {
+    const session = await auth();
+    if (!session?.user?.id) {
       return { success: false, message: 'Usuário não autenticado.' };
     }
 
@@ -370,8 +370,8 @@ const PREDEFINED_REPORTS_DATA: Record<string, {
  */
 export async function copyPredefinedReportAction(reportCode: string, newName: string) {
   try {
-    const session = await getSession();
-    if (!session?.userId) {
+    const session = await auth();
+    if (!session?.user?.id) {
       return { success: false, message: 'Usuário não autenticado.' };
     }
 

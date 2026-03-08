@@ -10,7 +10,12 @@ const BASE_URL = process.env.MAP_BASE_URL || 'http://demo.localhost:9005';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: ['**/map-search-layout.spec.ts', '**/map-search-dataset.spec.ts', '**/map-views.spec.ts'],
+  testMatch: [
+    '**/map-search-layout.spec.ts',
+    '**/map-search-dataset.spec.ts',
+    '**/map-search-modal-regression.spec.ts',
+    '**/map-views.spec.ts',
+  ],
 
   timeout: 60_000,
   expect: { timeout: 15_000 },

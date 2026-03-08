@@ -74,6 +74,12 @@ Ao ativar qualquer agent:
 - ✓ Validate against 115+ (Auction) or 150+ (Admin) checkpoints
 - ✓ Provide code diff + tests if fixing
 
+### PR Visual Evidence Gate (Playwright)
+
+- Every PR approval/merge request must include Playwright success screenshots.
+- Include report link (Playwright/Vitest UI) and validated scenario.
+- Without visual evidence, PR must not be approved or merged.
+
 ---
 
 ## Documentation:
@@ -89,6 +95,30 @@ Ao ativar qualquer agent:
 - Setup: `.agent/agents/admin-architect-qa.SETUP-GUIDE.md`
 - Usage: `.agent/agents/admin-architect-qa.USAGE.md`
 - Quick Ref: `.agent/agents/admin-architect-qa.quick-reference.md`
+
+---
+
+## 🌲 Git Worktree — Isolamento Primário de Desenvolvimento
+
+**REGRA ANTES DE QUALQUER CÓDIGO:** Criar um Git Worktree dedicado com porta própria — sem clonar, sem docker obrigatório, sem `git stash`.
+
+```bash
+# 1. Ver o que está em execução
+git worktree list
+# Portas: 9005=humano | 9006=AI#1 | 9007=AI#2 | 9008=hotfix
+
+# 2. Criar worktree + nova branch a partir de demo-stable
+git worktree add worktrees/bidexpert-feat-X -b feat/X-$(date +%Y%m%d-%H%M) origin/demo-stable
+cd worktrees/bidexpert-feat-X
+PORT=9006 npm install && npm run dev
+# → http://dev.localhost:9006
+
+# 3. Limpeza após merge
+git worktree remove worktrees/bidexpert-feat-X
+git branch -d feat/X-...
+```
+
+**Skill completa:** `.github/skills/git-worktree-isolation/SKILL.md`
 
 ---
 

@@ -1,4 +1,7 @@
-// src/repositories/media.repository.ts
+/**
+ * @fileoverview Repository de acesso ao banco para MediaItem.
+ * Usa BigInt para ids conforme definido no schema Prisma.
+ */
 import { prisma } from '@/lib/prisma';
 import type { MediaItem } from '@/types';
 import type { Prisma } from '@prisma/client';

@@ -1,14 +1,14 @@
 // =============================================================================
 // PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
 // =============================================================================
-// Este schema é uma cópia do schema.prisma principal, com provider alterado
+// Este schema ├® uma c├│pia do schema.prisma principal, com provider alterado
 // para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
 // 
-// USO: Este schema é usado automaticamente pelo workflow de deploy para Vercel
-//      através do script prepare-vercel-demo.ps1 ou GitHub Action
+// USO: Este schema ├® usado automaticamente pelo workflow de deploy para Vercel
+//      atrav├®s do script prepare-vercel-demo.ps1 ou GitHub Action
 //
 // NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
-//       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
+//       s├úo todos compat├¡veis entre MySQL e PostgreSQL no Prisma.
 // =============================================================================
 
 generator client {
@@ -388,7 +388,7 @@ model Bid {
   bidderDisplay   String?
   tenantId        BigInt
 
-  // V2 Monitor Pregão - Idempotency & Audit
+  // V2 Monitor Preg├úo - Idempotency & Audit
   idempotencyKey  String?    @db.VarChar(128)
   clientTimestamp  DateTime?
   ipAddress       String?    @db.VarChar(45)
@@ -417,7 +417,7 @@ model BiddingSettings {
   biddingInfoCheckIntervalSeconds Int?             @default(1)
   defaultStageDurationDays        Int?             @default(7)
   defaultDaysBetweenStages        Int?             @default(1)
-  // V2 Monitor Pregão
+  // V2 Monitor Preg├úo
   proxyBiddingEnabled             Boolean          @default(true)
   softCloseTriggerMinutes         Int              @default(3)
   PlatformSettings                PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
@@ -721,7 +721,7 @@ model Lot {
   depositGuaranteeAmount   Decimal?             @db.Decimal(15, 2)
   depositGuaranteeInfo     String?              @db.Text
   requiresDepositGuarantee Boolean?             @default(false)
-  // V2 Monitor Pregão
+  // V2 Monitor Preg├úo
   reservePrice             Decimal?             @db.Decimal(15, 2)
   saleMode                 LotSaleMode          @default(LEILAO)
   AssetsOnLots             AssetsOnLots[]
@@ -1066,7 +1066,7 @@ model RealtimeSettings {
   lawyerSubscriptionPrice   Int?
   lawyerPerUsePrice         Int?
   lawyerRevenueSharePercent Decimal?         @db.Decimal(5, 2)
-  // V2 Monitor Pregão - Admin Toggles
+  // V2 Monitor Preg├úo - Admin Toggles
   communicationStrategy     CommunicationStrategy @default(WEBSOCKET)
   videoStrategy             VideoStrategy         @default(DISABLED)
   idempotencyStrategy        IdempotencyStrategy   @default(SERVER_HASH)
@@ -1910,7 +1910,7 @@ model WonLot {
 }
 
 // =============================================================================
-// ENUMS - Idênticos ao schema MySQL (compatíveis entre ambos os bancos)
+// ENUMS - Id├¬nticos ao schema MySQL (compat├¡veis entre ambos os bancos)
 // =============================================================================
 
 enum UserDocument_status {
@@ -2274,7 +2274,7 @@ enum Asset_occupationStatus {
   SHARED_POSSESSION
 }
 
-// V2 Monitor Pregão - New Enums
+// V2 Monitor Preg├úo - New Enums
 enum BidOrigin {
   MANUAL
   AUTO_BID
@@ -2304,7 +2304,7 @@ enum LotSaleMode {
   LANCE_CONDICIONAL
 }
 
-// V2 Monitor Pregão - Idempotency Log
+// V2 Monitor Preg├úo - Idempotency Log
 model BidIdempotencyLog {
   id              BigInt   @id @default(autoincrement())
   idempotencyKey  String   @db.VarChar(128)

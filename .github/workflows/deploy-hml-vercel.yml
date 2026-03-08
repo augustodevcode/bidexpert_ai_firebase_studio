@@ -35,7 +35,7 @@ on:
         type: boolean
 
 env:
-  PRISMA_SCHEMA: prisma/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma/alternatives/schema.postgresql.prisma
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
@@ -61,7 +61,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -122,7 +122,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -214,7 +214,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate

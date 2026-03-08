@@ -1,70 +1,179 @@
 /**
- * @fileoverview Indicador de informações de ambiente para uso nos painéis internos.
- * Mostra tenant, usuário, banco de dados e projeto atual.
- * Usado pelo componente EnvInfoButton (modal no sidebar) e pelo AdminQueryMonitor.
+ * @fileoverview Rodape inline (nao-sticky) do dashboard com informacoes de ambiente para debug.
+ * Cada secao exibe um icone (favicon) ao lado do label para facilitar identificacao visual.
  */
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import {
+  Building2,
+  User,
+  Database,
+  Server,
+  GitBranch,
+  Globe,
+  FolderKanban,
+} from 'lucide-react';
 
-function getCookie(name: string): string | undefined {
-  if (typeof document === 'undefined') return undefined;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift();
+interface DevInfoIndicatorProps {
+  tenantId?: string;
+  userEmail?: string;
 }
 
-export default function DevInfoIndicator() {
-  const { userProfileWithPermissions, activeTenantId } = useAuth();
-  const [dbSystem, setDbSystem] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [isClient, setIsClient] = useState(false);
+interface RuntimeEnvironmentInfo {
+  dbSystem: string;
+  dbProvider: string;
+  project: string;
+  remoteServerUrl: string;
+  branch: string;
+}
+
+const DEFAULT_RUNTIME_ENVIRONMENT: RuntimeEnvironmentInfo = {
+  dbSystem: 'MYSQL',
+  dbProvider: 'Prisma',
+  project: 'bidexpert',
+  remoteServerUrl: 'https://bidexpert-demo.vercel.app',
+  branch: 'demo-stable',
+};
+
+function normalizeUrl(url: string): string {
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `https://${url}`;
+}
+
+function inferBranchByHost(): string {
+  if (typeof window === 'undefined') return DEFAULT_RUNTIME_ENVIRONMENT.branch;
+  const host = window.location.hostname.toLowerCase();
+  return host.includes('demo') ? 'demo-stable' : 'main';
+}
+
+function getInitialRuntimeEnvironment(): RuntimeEnvironmentInfo {
+  const branchFromEnv =
+    process.env.NEXT_PUBLIC_SYSTEM_BRANCH ||
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF ||
+    process.env.NEXT_PUBLIC_GIT_BRANCH ||
+    '';
+
+  const branch = branchFromEnv || inferBranchByHost();
+  const remoteServerUrlFromEnv =
+    process.env.NEXT_PUBLIC_REMOTE_SERVER_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    '';
+  const remoteServerUrl = remoteServerUrlFromEnv
+    ? normalizeUrl(remoteServerUrlFromEnv)
+    : branch === 'main'
+      ? 'https://bidexpert.vercel.app'
+      : 'https://bidexpert-demo.vercel.app';
+
+  return {
+    ...DEFAULT_RUNTIME_ENVIRONMENT,
+    project: process.env.NEXT_PUBLIC_PROJECT_NAME || DEFAULT_RUNTIME_ENVIRONMENT.project,
+    branch,
+    remoteServerUrl,
+  };
+}
+
+/** Celula individual do grid com icone + label + valor. */
+function InfoCell({
+  icon: Icon,
+  label,
+  value,
+  href,
+  aiId,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  href?: string;
+  aiId: string;
+}) {
+  return (
+    <div className="min-w-0 flex items-start gap-1.5" data-ai-id={aiId}>
+      <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
+      <div className="min-w-0">
+        <span className="text-[10px] leading-tight text-muted-foreground block" data-ai-id={`${aiId}-label`}>
+          {label}
+        </span>
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-semibold text-primary truncate block hover:underline"
+            title={value}
+            data-ai-id={`${aiId}-value`}
+          >
+            {value}
+          </a>
+        ) : (
+          <p
+            className="text-xs font-semibold text-primary truncate"
+            title={value}
+            data-ai-id={`${aiId}-value`}
+          >
+            {value}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function DevInfoIndicator({
+  tenantId = '1',
+  userEmail = 'admin@bidexpert.ai',
+}: DevInfoIndicatorProps) {
+  const [env, setEnv] = useState<RuntimeEnvironmentInfo>(getInitialRuntimeEnvironment);
 
   useEffect(() => {
-    setIsClient(true);
-    const dbFromCookie = getCookie('dev-config-db');
-    const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'MYSQL';
-    setDbSystem((dbFromCookie || dbFromEnv).toUpperCase());
-    setProjectId(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_PROJECT_ID || 'bidexpert');
+    let isMounted = true;
+
+    const fetchRuntimeEnvironment = async () => {
+      try {
+        const response = await fetch('/api/admin/dev-info', { cache: 'no-store' });
+        if (!response.ok) return;
+        const payload = (await response.json()) as Partial<RuntimeEnvironmentInfo>;
+        if (!isMounted) return;
+        setEnv((prev) => ({ ...prev, ...payload }));
+      } catch {
+        // noop
+      }
+    };
+
+    void fetchRuntimeEnvironment();
+    return () => { isMounted = false; };
   }, []);
 
-  if (!isClient) return null;
-
-  const displayTenantId = activeTenantId || process.env.DEFAULT_TENANT_ID || 'N/A';
+  const serverLabel = env.remoteServerUrl.replace(/^https?:\/\//, '');
 
   return (
-    <footer className="mt-4 w-full" data-ai-id="dashboard-footer" data-testid="dev-info-indicator">
+    <footer
+      className="mt-6 w-full"
+      data-ai-id="dashboard-footer"
+      data-testid="dev-info-indicator"
+    >
       <div
-        className="mt-4 p-4 bg-muted/50 rounded-lg border w-full max-w-4xl mx-auto"
+        className="p-3 bg-muted/60 rounded-lg border w-full"
         data-ai-id="dev-info-indicator-inner"
       >
         <p
-          className="font-semibold text-center text-foreground mb-3 text-sm"
+          className="font-semibold text-center text-foreground mb-2 text-xs tracking-wide uppercase"
           data-ai-id="dev-info-title"
         >
           Dev Info
         </p>
         <div
-          className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2"
+          className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-x-4 gap-y-2"
           data-ai-id="dev-info-grid"
         >
-          <div className="text-center sm:text-left" data-ai-id="dev-info-tenant">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-tenant-label">Tenant ID</span>
-            <p className="font-semibold text-primary truncate" title={displayTenantId} data-ai-id="dev-info-tenant-value">{displayTenantId}</p>
-          </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-user">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-user-label">User</span>
-            <p className="font-semibold text-primary truncate" title={userProfileWithPermissions?.email || 'N/A'} data-ai-id="dev-info-user-value">{userProfileWithPermissions?.email || 'N/A'}</p>
-          </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-db">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-db-label">DB System</span>
-            <p className="font-semibold text-primary truncate" title={dbSystem} data-ai-id="dev-info-db-value">{dbSystem}</p>
-          </div>
-          <div className="text-center sm:text-left" data-ai-id="dev-info-project">
-            <span className="text-xs text-muted-foreground" data-ai-id="dev-info-project-label">Project</span>
-            <p className="font-semibold text-primary truncate" title={projectId} data-ai-id="dev-info-project-value">{projectId}</p>
-          </div>
+          <InfoCell icon={Building2} label="Tenant ID" value={tenantId} aiId="dev-info-tenant" />
+          <InfoCell icon={User} label="User" value={userEmail} aiId="dev-info-user" />
+          <InfoCell icon={Database} label="DB System" value={env.dbSystem} aiId="dev-info-db" />
+          <InfoCell icon={Server} label="Provider" value={env.dbProvider} aiId="dev-info-provider" />
+          <InfoCell icon={GitBranch} label="Branch" value={env.branch} aiId="dev-info-branch" />
+          <InfoCell icon={Globe} label="Server" value={serverLabel} href={env.remoteServerUrl} aiId="dev-info-server-link" />
+          <InfoCell icon={FolderKanban} label="Project" value={env.project} aiId="dev-info-project" />
         </div>
       </div>
     </footer>

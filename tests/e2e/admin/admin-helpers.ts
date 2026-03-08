@@ -10,6 +10,11 @@ export function randomImageUrl(seed?: string, w = 1200, h = 800) {
 
 export async function ensureAdminSession(_page: Page) {
   // Session is already loaded from storageState in playwright.config
+  const page = _page as Page & { __aiConsoleTelemetryAttached?: boolean };
+  if (!page.__aiConsoleTelemetryAttached) {
+    page.on('console', msg => console.log(`${msg.type()}: ${msg.text()}`));
+    page.__aiConsoleTelemetryAttached = true;
+  }
   return;
 }
 

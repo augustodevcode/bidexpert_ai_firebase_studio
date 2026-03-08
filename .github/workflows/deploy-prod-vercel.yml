@@ -26,7 +26,7 @@ on:
         type: boolean
 
 env:
-  PRISMA_SCHEMA: prisma/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma/alternatives/schema.postgresql.prisma
 
 jobs:
   build:
@@ -48,7 +48,20 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
+
+      - name: 🔐 Validate DATABASE_URL Protocol (PostgreSQL)
+        run: |
+          DB_URL="${{ secrets.DATABASE_URL }}"
+          if [ -z "$DB_URL" ]; then
+            echo "❌ DATABASE_URL não configurada para produção"
+            exit 1
+          fi
+          if [[ "$DB_URL" != postgresql://* && "$DB_URL" != postgres://* && "$DB_URL" != prisma://* && "$DB_URL" != prisma+postgres://* ]]; then
+            echo "❌ DATABASE_URL inválida para schema PostgreSQL. Prefixos aceitos: postgresql://, postgres://, prisma://, prisma+postgres://"
+            exit 1
+          fi
+          echo "✅ DATABASE_URL válida para PostgreSQL"
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -100,7 +113,20 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
+
+      - name: 🔐 Validate DATABASE_URL Protocol (PostgreSQL)
+        run: |
+          DB_URL="${{ secrets.DATABASE_URL }}"
+          if [ -z "$DB_URL" ]; then
+            echo "❌ DATABASE_URL não configurada para produção"
+            exit 1
+          fi
+          if [[ "$DB_URL" != postgresql://* && "$DB_URL" != postgres://* && "$DB_URL" != prisma://* && "$DB_URL" != prisma+postgres://* ]]; then
+            echo "❌ DATABASE_URL inválida para schema PostgreSQL. Prefixos aceitos: postgresql://, postgres://, prisma://, prisma+postgres://"
+            exit 1
+          fi
+          echo "✅ DATABASE_URL válida para PostgreSQL"
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate

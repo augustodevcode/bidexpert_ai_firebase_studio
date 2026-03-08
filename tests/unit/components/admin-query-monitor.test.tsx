@@ -39,8 +39,10 @@ describe('AdminQueryMonitor', () => {
     expect(document.documentElement.style.getPropertyValue('--admin-query-monitor-height')).toBe('48px');
   });
 
-  it('renders Dev Info inside the monitor', async () => {
+  it('does not render Dev Info inside the monitor by default', async () => {
     render(<AdminQueryMonitor />);
-    expect(await screen.findByText('Dev Info')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Dev Info')).not.toBeInTheDocument();
+    });
   });
 });

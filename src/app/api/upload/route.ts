@@ -1,17 +1,14 @@
 // src/app/api/upload/route.ts
 /**
  * @fileoverview Rota de API para o upload de arquivos de mídia.
- * Este endpoint lida com a recepção de arquivos via POST, realiza validações
- * de tamanho e tipo, salva os arquivos fisicamente no servidor em um diretório
- * público e cria um registro correspondente no banco de dados através do MediaService.
- * Ele é projetado para ser chamado por componentes de front-end como o `AdvancedMediaUploadPage`.
+ * Usa o StorageAdapter (LocalStorageAdapter em dev, VercelBlobAdapter em produção).
+ * Em dev: salva em public/uploads/. Em Vercel: salva no Vercel Blob com prefixo de ambiente.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { MediaService } from '@/services/media.service';
-import type { MediaItem } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
 import { getStorageAdapter } from '@/lib/storage';
+import type { MediaItem } from '@/types';
+import path from 'path';
 import { getSession } from '@/server/lib/session';
 
 const MAX_FILE_SIZE_MB = 10;
@@ -53,11 +50,10 @@ export async function POST(request: NextRequest) {
     }
     
     const mediaService = new MediaService();
+    const storage = getStorageAdapter(request.headers.get('host'));
     const uploadedItems: Partial<MediaItem>[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
     const publicUrls: string[] = [];
-
-    const storage = getStorageAdapter(request.headers.get('host'));
 
     for (const file of files) {
        if (file.size > MAX_FILE_SIZE_BYTES) {

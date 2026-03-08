@@ -110,15 +110,15 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
                     <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint="imagem principal lote" priority />
                     {gallery.length > 1 && (
                         <>
-                            <Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md"><ChevronLeft className="h-5 w-5" /></Button>
-                            <Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md"><ChevronRight className="h-5 w-5" /></Button>
+                            <Button variant="outline" size="icon" onClick={prevImage} aria-label="Imagem anterior" className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md"><ChevronLeft className="h-5 w-5" /></Button>
+                            <Button variant="outline" size="icon" onClick={nextImage} aria-label="Próxima imagem" className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md"><ChevronRight className="h-5 w-5" /></Button>
                         </>
                     )}
                 </div>
                  {gallery.length > 1 && (
                     <div className="grid grid-cols-5 gap-1.5">
                         {gallery.slice(0, 5).map((imgUrl, index) => (
-                            <button key={index} onClick={() => setCurrentImageIndex(index)} className={`relative aspect-square bg-muted rounded-sm overflow-hidden border-2 flex-shrink-0 ${ index === currentImageIndex ? 'border-primary' : 'border-transparent' }`} >
+                            <button key={index} onClick={() => setCurrentImageIndex(index)} aria-label={`Selecionar miniatura ${index + 1}`} className={`relative aspect-square bg-muted rounded-sm overflow-hidden border-2 flex-shrink-0 ${ index === currentImageIndex ? 'border-primary' : 'border-transparent' }`} >
                                 <Image src={imgUrl} alt={`Thumbnail ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'miniatura galeria'}/>
                             </button>
                         ))}

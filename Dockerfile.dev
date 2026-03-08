@@ -1,0 +1,47 @@
+# ============================================================
+# Dockerfile.dev - Ambiente de Desenvolvimento com Playwright
+# ============================================================
+# Usado para containers isolados por dev com suporte a testes E2E.
+# Base: Node 20 com Chromium para Playwright headless/headed.
+# ============================================================
+
+FROM node:20-bookworm AS dev
+
+# Instalar dependências do sistema para Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+    libcups2 libdrm2 libxkbcommon0 libxcomposite1 \
+    libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 \
+    libcairo2 libasound2 libxshmfence1 libgtk-3-0 \
+    libx11-xcb1 fonts-liberation xvfb xauth \
+    git curl wget procps openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copiar package files e instalar deps
+COPY package.json package-lock.json* ./
+RUN npm install --legacy-peer-deps --ignore-scripts
+
+# Instalar Playwright browsers
+RUN npx playwright install chromium --with-deps
+
+# Copiar Prisma schema e gerar cliente
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Copiar código fonte
+COPY . .
+
+# Garantir permissão de execução nos scripts
+RUN chmod +x scripts/docker-entrypoint-dev.sh scripts/run-tests-in-container.sh 2>/dev/null || true
+
+# Expor porta da app
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+# Entrypoint garante deps (xauth) e gera Prisma
+ENTRYPOINT ["bash", "/app/scripts/docker-entrypoint-dev.sh"]

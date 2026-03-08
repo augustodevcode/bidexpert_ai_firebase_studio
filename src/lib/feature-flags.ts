@@ -119,17 +119,11 @@ export function validateFeatureFlags(flags: Partial<FeatureFlags>): FeatureFlags
 
 // Context para feature flags (usado em Server Components)
 export async function getFeatureFlags(tenantId: string): Promise<FeatureFlags> {
-  // TODO: Carregar do banco de dados (PlatformSettings)
-  // Por enquanto, retorna defaults
-  return defaultFeatureFlags;
+  const { PlatformSettingsService } = await import('@/services/platform-settings.service');
+  return PlatformSettingsService.getFeatureFlags(tenantId);
 }
 
 export async function updateFeatureFlags(tenantId: string, flags: Partial<FeatureFlags>): Promise<FeatureFlags> {
-  // Validar antes de salvar
-  const validated = validateFeatureFlags(flags);
-
-  // TODO: Salvar em PlatformSettings via Prisma
-  // Implementar aqui quando Prisma estiver funcional
-
-  return validated;
+  const { PlatformSettingsService } = await import('@/services/platform-settings.service');
+  return PlatformSettingsService.updateFeatureFlags(tenantId, flags);
 }
