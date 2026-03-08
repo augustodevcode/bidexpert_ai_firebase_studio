@@ -61,7 +61,7 @@ export const CREDENTIALS = {
     email: 'analista@lordland.com',
     password: 'password123',
     role: 'AUCTION_ANALYST',
-    tenant: 'demo',
+    tenant: 'lordland',
   },
 } as const;
 
