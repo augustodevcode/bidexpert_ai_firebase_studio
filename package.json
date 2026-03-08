@@ -27,6 +27,7 @@
         "prebuild:e2e": "npm run build && npm run start:9002",
         "postinstall": "npx prisma generate",
         "lint": "eslint src --max-warnings=0",
+        "lint:soft": "eslint src || true",
         "db:init": "npx tsx --env-file=.env scripts/init-db.ts",
         "db:seed": "npx tsx --env-file=.env scripts/ultimate-master-seed.ts",
         "db:seed:ultimate": "npx tsx --env-file=.env scripts/ultimate-master-seed.ts",
