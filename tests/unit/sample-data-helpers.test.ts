@@ -1,4 +1,4 @@
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import type { AuctionStatus, LotStatus, PaymentStatus } from '@/types';
 
 describe('getAuctionStatusText', () => {
