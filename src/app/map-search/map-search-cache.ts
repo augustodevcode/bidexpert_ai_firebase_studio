@@ -63,7 +63,8 @@ function writeCacheEnvelope<T>(key: DatasetKey, data: T) {
       makeKey(key),
       JSON.stringify(payload, (_jsonKey, value) => {
         if (typeof value === 'bigint') {
-          return Number(value);
+          // Serialize BigInt as string to preserve full precision (IDs > 2^53-1)
+          return value.toString();
         }
         return value;
       }),

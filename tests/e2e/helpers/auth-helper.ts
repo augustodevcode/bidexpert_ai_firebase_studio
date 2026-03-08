@@ -18,6 +18,10 @@
  */
 import { type Page, expect } from '@playwright/test';
 
+// WeakMap to track which Page instances already have console telemetry attached.
+// Using WeakMap avoids mutating the Page object and keeps type safety intact.
+const consoleTelemetryAttached = new WeakMap<Page, true>();
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Canonical Credentials (source: scripts/ultimate-master-seed.ts)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,19 +34,19 @@ export const CREDENTIALS = {
     tenant: 'demo',
   },
   leiloeiro: {
-    email: 'test.leiloeiro.1771886928935@bidexpert.com',
+    email: 'carlos.silva@construtoraabc.com.br',
     password: 'Test@12345',
     role: 'LEILOEIRO',
     tenant: 'demo',
   },
   comprador: {
-    email: 'test.comprador.1771886928935@bidexpert.com',
+    email: 'comprador@bidexpert.com.br',
     password: 'Test@12345',
     role: 'COMPRADOR',
     tenant: 'demo',
   },
   advogado: {
-    email: 'advogado.1771886928935@bidexpert.com.br',
+    email: 'advogado@bidexpert.com.br',
     password: 'Test@12345',
     role: 'ADVOGADO',
     tenant: 'demo',
@@ -227,11 +231,15 @@ export async function loginAs(
   const waitPattern = options.waitPattern ?? /\/(admin|dashboard|lawyer|home)/i;
   const consoleErrors: string[] = [];
 
-  // Browser console telemetry routed to Node.js stdout
-  page.on('console', msg => console.log(`${msg.type()}: ${msg.text()}`));
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') consoleErrors.push(msg.text());
-  });
+  // Attach console telemetry once per page context to avoid handler accumulation.
+  // WeakMap key lookup avoids mutating the Page object or using unsafe `as any`.
+  if (!consoleTelemetryAttached.has(page)) {
+    consoleTelemetryAttached.set(page, true);
+    page.on('console', (msg) => {
+      console.log(`${msg.type()}: ${msg.text()}`);
+      if (msg.type() === 'error') consoleErrors.push(msg.text());
+    });
+  }
 
   // 1. Navigate to login
   await page.goto(`${baseUrl}/auth/login`, { waitUntil: 'networkidle', timeout: 120_000 });

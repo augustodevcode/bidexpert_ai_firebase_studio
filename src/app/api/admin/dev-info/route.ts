@@ -1,8 +1,10 @@
 /**
  * @fileoverview Endpoint de diagnostico para exibir ambiente no rodape fixo do dashboard admin.
+ * Requer sessão autenticada — expõe detalhes operacionais sensíveis (DB, branch, URL).
  */
 
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,6 +99,11 @@ function detectRemoteServerUrl(branch: string): string {
 }
 
 export async function GET() {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const databaseUrl = process.env.DATABASE_URL || '';
   const directUrl = process.env.DIRECT_URL || '';
   const postgresUrl = process.env.POSTGRES_URL || '';

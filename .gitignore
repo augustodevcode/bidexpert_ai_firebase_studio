@@ -93,6 +93,7 @@ prisma/dev.db
 
 # Temp debug files
 .tmp-*
+/tmp/
 check-*.js
 temp_query.sql
 

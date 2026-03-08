@@ -11,16 +11,9 @@
  * Toast de sucesso: "Mensagem Enviada!"
  */
 import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth-helper';
 
 const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://demo.localhost:9005';
-
-async function loginFast(page: any, email: string, pass: string) {
-  await page.goto(BASE_URL + '/auth/login', { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', pass);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/\/admin|\/dashboard/, { timeout: 30_000 }).catch(() => {});
-}
 
 test.describe('ATOR 1 — Visitante/Comprador no Formulário de Contato', () => {
 
@@ -66,7 +59,7 @@ test.describe('ATOR 2 — Admin visualiza mensagens de contato', () => {
 
   test('2.1 Admin visualiza mensagem no painel /admin/contact-messages', async ({ page }) => {
     test.setTimeout(120_000);
-    await loginFast(page, 'admin@bidexpert.com.br', 'Admin@123');
+    await loginAsAdmin(page, BASE_URL);
     await page.goto(BASE_URL + '/admin/contact-messages', { waitUntil: 'domcontentloaded', timeout: 60_000 });
     // A mensagem enviada no teste 1.3 deve aparecer na listagem
     await expect(page.getByText(/João Teste E2E/i).first()).toBeVisible({ timeout: 20_000 });

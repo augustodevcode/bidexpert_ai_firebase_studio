@@ -279,8 +279,9 @@ export class PlatformSettingsService {
             console.log(`[PlatformSettingsService] Feature flags persisted to DB for tenant ${String(tenantId)}`);
         } catch (error) {
             console.error(`[PlatformSettingsService] Error persisting feature flags for tenant ${String(tenantId)}:`, error);
-            // Atualiza cache mesmo em caso de falha de escrita para manter consistência em memória
-            PlatformSettingsService.featureFlagsCache.set(cacheKey, merged);
+            // Do NOT update cache on DB write failure — caller receives the error
+            // and the in-memory state stays consistent with what was last persisted.
+            throw error;
         }
 
         return PlatformSettingsService.cloneFeatureFlags(merged);
