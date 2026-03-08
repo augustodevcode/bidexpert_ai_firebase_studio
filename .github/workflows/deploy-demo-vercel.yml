@@ -188,13 +188,73 @@ jobs:
           POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
 
   # ============================================================================
-  # JOB 3: Status Report
+  # JOB 3: Playwright Smoke Tests (post-deploy)
+  # ============================================================================
+  smoke:
+    name: 🎭 Playwright Smoke Tests
+    runs-on: ubuntu-latest
+    environment: Demo
+    needs: [build]
+    if: needs.build.result == 'success'
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: ⏳ Wait for Vercel deploy to be live
+        run: |
+          URL="${{ secrets.DEMO_APP_URL || 'https://bidexpertaifirebasestudio.vercel.app' }}"
+          echo "Aguardando deploy em $URL..."
+          READY=false
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+            echo "Tentativa $i: HTTP $STATUS"
+            if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 500 ]; then
+              echo "✅ Aplicação respondendo!"
+              READY=true
+              break
+            fi
+            sleep 10
+          done
+          if [ "$READY" = "false" ]; then
+            echo "❌ Aplicação não respondeu após 12 tentativas. Abortando smoke tests."
+            exit 1
+          fi
+
+      - name: 🧪 Run Playwright Smoke Tests
+        run: npx playwright test --config=playwright.vercel.config.ts
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.DEMO_APP_URL || 'https://bidexpertaifirebasestudio.vercel.app' }}
+
+      - name: 📊 Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-vercel
+          path: playwright-report-vercel/
+          retention-days: 7
+
+  # ============================================================================
+  # JOB 4: Status Report
   # ============================================================================
   notify:
     name: 📢 Status Report
     runs-on: ubuntu-latest
     environment: Demo
-    needs: [build, migrate]
+    needs: [build, migrate, smoke]
     if: always()
     
     steps:
@@ -205,6 +265,7 @@ jobs:
           echo "============================================"
           echo "🔨 Build: ${{ needs.build.result }}"
           echo "🗃️ Migrate/Seed: ${{ needs.migrate.result || 'skipped' }}"
+          echo "🎭 Smoke Tests: ${{ needs.smoke.result || 'skipped' }}"
           echo "============================================"
           if [ "${{ needs.build.result }}" = "success" ]; then
             echo "✅ Build passou! Deploy automático pelo Vercel Git Integration."

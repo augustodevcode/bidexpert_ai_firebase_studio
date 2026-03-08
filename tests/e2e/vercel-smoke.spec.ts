@@ -12,7 +12,7 @@
 import { test, expect } from '@playwright/test';
 
 // URL base - usar variável de ambiente ou fallback
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://bidexpert-demo.vercel.app';
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://bidexpertaifirebasestudio.vercel.app';
 
 test.describe('Vercel DEMO Smoke Tests', () => {
   
