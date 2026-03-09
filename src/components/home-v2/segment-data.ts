@@ -5,6 +5,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { insensitiveContains } from '@/lib/prisma/query-helpers';
 import type {
   FeaturedEvent,
   LotCardData,
@@ -14,12 +15,12 @@ import type {
   SegmentType
 } from './types';
 
-// Map segment to database category patterns
+// Map segment to database category patterns (must include both singular and plural/exact forms)
 const SEGMENT_CATEGORY_PATTERNS: Record<SegmentType, string[]> = {
-  veiculos: ['veículo', 'veiculo', 'carro', 'moto', 'caminhão', 'caminhao', 'ônibus', 'onibus', 'automóvel', 'automovel'],
-  imoveis: ['imóvel', 'imovel', 'casa', 'apartamento', 'terreno', 'sala', 'galpão', 'galpao', 'loja'],
-  maquinas: ['máquina', 'maquina', 'equipamento', 'trator', 'escavadeira', 'empilhadeira', 'industrial'],
-  tecnologia: ['eletrônico', 'eletronico', 'informática', 'informatica', 'computador', 'notebook', 'celular', 'servidor'],
+  veiculos: ['veículo', 'veiculo', 'veículos', 'veiculos', 'carro', 'moto', 'caminhão', 'caminhao', 'ônibus', 'onibus', 'automóvel', 'automovel'],
+  imoveis: ['imóvel', 'imovel', 'imóveis', 'imoveis', 'casa', 'apartamento', 'terreno', 'sala', 'galpão', 'galpao', 'loja'],
+  maquinas: ['máquina', 'maquina', 'máquinas', 'maquinas', 'maquinário', 'maquinario', 'equipamento', 'trator', 'escavadeira', 'empilhadeira', 'industrial', 'mobiliário', 'mobiliario'],
+  tecnologia: ['eletrônico', 'eletronico', 'eletrônicos', 'eletronicos', 'informática', 'informatica', 'computador', 'notebook', 'celular', 'servidor'],
 };
 
 function getLotBadges(lot: {
@@ -66,26 +67,19 @@ export async function getSegmentEvents(
   try {
     const patterns = SEGMENT_CATEGORY_PATTERNS[segment];
 
-    const auctions = await prisma.auction.findMany({
-      where: {
-        status: {
-          in: ['ABERTO_PARA_LANCES', 'EM_BREVE'],
-        },
-        OR: [
-          {
-            LotCategory: {
-              name: {
-                contains: patterns[0],
-              },
-            },
-          },
-          {
-            title: {
-              contains: patterns[0],
-            },
-          },
-        ],
+    const whereClause = {
+      status: {
+        in: ['ABERTO_PARA_LANCES', 'EM_BREVE', 'ABERTO'],
       },
+      OR: patterns.flatMap(pattern => [
+        { title: insensitiveContains(pattern) },
+        { LotCategory: { name: insensitiveContains(pattern) } },
+        { Lot: { some: { LotCategory: { name: insensitiveContains(pattern) } } } },
+      ]),
+    };
+
+    const auctions = await prisma.auction.findMany({
+      where: whereClause,
       include: {
         Seller: true,
         Auctioneer: true,
@@ -128,13 +122,11 @@ export async function getSegmentLots(
         status: {
           in: ['ABERTO_PARA_LANCES', 'EM_BREVE'],
         },
-        OR: patterns.map(pattern => ({
-          OR: [
-            { title: { contains: pattern } },
-            { LotCategory: { name: { contains: pattern } } },
-            { type: { contains: pattern } },
-          ],
-        })),
+        OR: patterns.flatMap(pattern => [
+          { title: insensitiveContains(pattern) },
+          { LotCategory: { name: insensitiveContains(pattern) } },
+          { type: insensitiveContains(pattern) },
+        ]),
       },
       include: {
         LotCategory: true,
@@ -154,7 +146,42 @@ export async function getSegmentLots(
       take: limit,
     });
 
-    return lots;
+    // Transform raw Prisma data to Lot type expected by BidExpertCard
+    return lots.map(lot => ({
+      ...lot,
+      id: lot.id.toString(),
+      auctionId: lot.auctionId.toString(),
+      categoryId: lot.categoryId?.toString() || null,
+      subcategoryId: (lot as any).subcategoryId?.toString() || null,
+      sellerId: lot.sellerId?.toString() || null,
+      auctioneerId: lot.auctioneerId?.toString() || null,
+      cityId: lot.cityId?.toString() || null,
+      stateId: lot.stateId?.toString() || null,
+      winnerId: lot.winnerId?.toString() || null,
+      originalLotId: (lot as any).originalLotId?.toString() || null,
+      inheritedMediaFromAssetId: (lot as any).inheritedMediaFromAssetId?.toString() || null,
+      tenantId: lot.tenantId.toString(),
+      price: Number(lot.price),
+      initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+      secondInitialPrice: (lot as any).secondInitialPrice ? Number((lot as any).secondInitialPrice) : null,
+      bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
+      evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
+      categoryName: lot.LotCategory?.name || undefined,
+      sellerName: lot.Auction?.Seller?.name || lot.Auction?.Auctioneer?.name || undefined,
+      auctionName: lot.Auction?.title || undefined,
+      auction: lot.Auction ? {
+        ...lot.Auction,
+        id: lot.Auction.id.toString(),
+        tenantId: lot.Auction.tenantId.toString(),
+      } : undefined,
+      lotPrices: lot.LotStagePrice?.map((lsp: any) => ({
+        ...lsp,
+        id: lsp.id.toString(),
+        lotId: lsp.lotId.toString(),
+        price: Number(lsp.price),
+      })) || [],
+      badges: getLotBadges(lot),
+    }));
   } catch (error) {
     console.error('Error fetching segment lots:', error);
     return [];
@@ -199,12 +226,10 @@ export async function getSegmentDealOfTheDay(
         isFeatured: true,
         discountPercentage: { gt: 0 },
         endDate: { gt: new Date() },
-        OR: patterns.map(pattern => ({
-          OR: [
-            { title: { contains: pattern } },
-            { LotCategory: { name: { contains: pattern } } },
-          ],
-        })),
+        OR: patterns.flatMap(pattern => [
+          { title: insensitiveContains(pattern) },
+          { LotCategory: { name: insensitiveContains(pattern) } },
+        ]),
       },
       orderBy: [
         { discountPercentage: 'desc' },
@@ -252,24 +277,21 @@ export async function getSegmentStats(segment: SegmentType): Promise<{
     const [eventsCount, lotsCount] = await Promise.all([
       prisma.auction.count({
         where: {
-          status: { in: ['ABERTO_PARA_LANCES', 'EM_BREVE'] },
-          OR: patterns.map(pattern => ({
-            OR: [
-              { title: { contains: pattern } },
-              { LotCategory: { name: { contains: pattern } } },
-            ],
-          })),
+          status: { in: ['ABERTO_PARA_LANCES', 'EM_BREVE', 'ABERTO'] },
+          OR: patterns.flatMap(pattern => [
+            { title: insensitiveContains(pattern) },
+            { LotCategory: { name: insensitiveContains(pattern) } },
+            { Lot: { some: { LotCategory: { name: insensitiveContains(pattern) } } } },
+          ]),
         },
       }),
       prisma.lot.count({
         where: {
           status: { in: ['ABERTO_PARA_LANCES', 'EM_BREVE'] },
-          OR: patterns.map(pattern => ({
-            OR: [
-              { title: { contains: pattern } },
-              { LotCategory: { name: { contains: pattern } } },
-            ],
-          })),
+          OR: patterns.flatMap(pattern => [
+            { title: insensitiveContains(pattern) },
+            { LotCategory: { name: insensitiveContains(pattern) } },
+          ]),
         },
       }),
     ]);
@@ -300,6 +322,8 @@ function mapAuctionTypeToEventType(type: string | null): FeaturedEvent['eventTyp
 function mapAuctionStatusToEventStatus(status: string): FeaturedEvent['status'] {
   switch (status) {
     case 'ABERTO_PARA_LANCES':
+      return 'ABERTO_PARA_LANCES';
+    case 'ABERTO':
       return 'ABERTO_PARA_LANCES';
     case 'ENCERRADO':
       return 'ENCERRADO';
