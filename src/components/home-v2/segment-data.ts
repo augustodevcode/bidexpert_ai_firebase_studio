@@ -146,42 +146,105 @@ export async function getSegmentLots(
       take: limit,
     });
 
-    // Transform raw Prisma data to Lot type expected by BidExpertCard
-    return lots.map(lot => ({
-      ...lot,
-      id: lot.id.toString(),
-      auctionId: lot.auctionId.toString(),
-      categoryId: lot.categoryId?.toString() || null,
-      subcategoryId: (lot as any).subcategoryId?.toString() || null,
-      sellerId: lot.sellerId?.toString() || null,
-      auctioneerId: lot.auctioneerId?.toString() || null,
-      cityId: lot.cityId?.toString() || null,
-      stateId: lot.stateId?.toString() || null,
-      winnerId: lot.winnerId?.toString() || null,
-      originalLotId: (lot as any).originalLotId?.toString() || null,
-      inheritedMediaFromAssetId: (lot as any).inheritedMediaFromAssetId?.toString() || null,
-      tenantId: lot.tenantId.toString(),
-      price: Number(lot.price),
-      initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
-      secondInitialPrice: (lot as any).secondInitialPrice ? Number((lot as any).secondInitialPrice) : null,
-      bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
-      evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
-      categoryName: lot.LotCategory?.name || undefined,
-      sellerName: lot.Auction?.Seller?.name || lot.Auction?.Auctioneer?.name || undefined,
-      auctionName: lot.Auction?.title || undefined,
-      auction: lot.Auction ? {
-        ...lot.Auction,
+    // Explicitly pick fields to avoid BigInt/Decimal serialization issues in RSC
+    return lots.map(lot => {
+      const auction = lot.Auction ? {
         id: lot.Auction.id.toString(),
+        publicId: (lot.Auction as any).publicId || null,
+        title: lot.Auction.title,
+        auctionType: (lot.Auction as any).auctionType || null,
+        auctionDate: lot.Auction.auctionDate,
+        endDate: (lot.Auction as any).endDate || null,
+        status: lot.Auction.status,
         tenantId: lot.Auction.tenantId.toString(),
-      } : undefined,
-      lotPrices: lot.LotStagePrice?.map((lsp: any) => ({
-        ...lsp,
+        seller: lot.Auction.Seller ? {
+          id: lot.Auction.Seller.id.toString(),
+          name: lot.Auction.Seller.name,
+          slug: (lot.Auction.Seller as any).slug || null,
+          publicId: (lot.Auction.Seller as any).publicId || null,
+          logoUrl: lot.Auction.Seller.logoUrl || null,
+          dataAiHintLogo: (lot.Auction.Seller as any).dataAiHintLogo || null,
+        } : null,
+        auctioneer: lot.Auction.Auctioneer ? {
+          id: lot.Auction.Auctioneer.id.toString(),
+          name: lot.Auction.Auctioneer.name,
+        } : null,
+        auctionStages: (lot.Auction.AuctionStage || []).map((stage: any) => ({
+          id: stage.id.toString(),
+          name: stage.name,
+          startDate: stage.startDate,
+          endDate: stage.endDate,
+          auctionId: stage.auctionId.toString(),
+          status: stage.status,
+          discountPercent: stage.discountPercent ? Number(stage.discountPercent) : 100,
+          tenantId: stage.tenantId.toString(),
+        })),
+      } : null;
+
+      const lotPrices = (lot.LotStagePrice || []).map((lsp: any) => ({
         id: lsp.id.toString(),
         lotId: lsp.lotId.toString(),
-        price: Number(lsp.price),
-      })) || [],
-      badges: getLotBadges(lot),
-    }));
+        auctionId: lsp.auctionId.toString(),
+        auctionStageId: lsp.auctionStageId.toString(),
+        initialBid: lsp.initialBid ? Number(lsp.initialBid) : null,
+        bidIncrement: lsp.bidIncrement ? Number(lsp.bidIncrement) : null,
+        tenantId: lsp.tenantId.toString(),
+      }));
+
+      return {
+        id: lot.id.toString(),
+        publicId: (lot as any).publicId || null,
+        auctionId: lot.auctionId.toString(),
+        number: lot.number || null,
+        title: lot.title,
+        description: lot.description || null,
+        slug: (lot as any).slug || null,
+        status: lot.status,
+        type: lot.type,
+        condition: lot.condition || null,
+        imageUrl: lot.imageUrl || null,
+        galleryImageUrls: (lot as any).galleryImageUrls || null,
+        dataAiHint: lot.dataAiHint || null,
+        endDate: lot.endDate || null,
+        lotSpecificAuctionDate: (lot as any).lotSpecificAuctionDate || null,
+        secondAuctionDate: (lot as any).secondAuctionDate || null,
+        cityName: lot.cityName || null,
+        stateUf: lot.stateUf || null,
+        mapAddress: (lot as any).mapAddress || null,
+        bidsCount: lot.bidsCount || 0,
+        views: lot.views || 0,
+        isFeatured: lot.isFeatured || false,
+        isExclusive: lot.isExclusive || false,
+        discountPercentage: lot.discountPercentage || null,
+        additionalTriggers: (lot as any).additionalTriggers || null,
+        allowInstallmentBids: lot.allowInstallmentBids || false,
+        // Decimal → number
+        price: Number(lot.price),
+        initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+        secondInitialPrice: (lot as any).secondInitialPrice ? Number((lot as any).secondInitialPrice) : null,
+        bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
+        evaluationValue: (lot as any).evaluationValue ? Number((lot as any).evaluationValue) : null,
+        soldPrice: (lot as any).soldPrice ? Number((lot as any).soldPrice) : null,
+        depositGuaranteeAmount: (lot as any).depositGuaranteeAmount ? Number((lot as any).depositGuaranteeAmount) : null,
+        // BigInt FK → string
+        categoryId: lot.categoryId?.toString() || null,
+        subcategoryId: (lot as any).subcategoryId?.toString() || null,
+        sellerId: lot.sellerId?.toString() || null,
+        auctioneerId: lot.auctioneerId?.toString() || null,
+        cityId: lot.cityId?.toString() || null,
+        stateId: lot.stateId?.toString() || null,
+        winnerId: lot.winnerId?.toString() || null,
+        tenantId: lot.tenantId.toString(),
+        // Derived
+        categoryName: lot.LotCategory?.name || undefined,
+        sellerName: lot.Auction?.Seller?.name || lot.Auction?.Auctioneer?.name || undefined,
+        auctionName: lot.Auction?.title || undefined,
+        // Nested (safely serialized)
+        auction,
+        lotPrices,
+        badges: getLotBadges(lot),
+      };
+    });
   } catch (error) {
     console.error('Error fetching segment lots:', error);
     return [];
@@ -194,9 +257,6 @@ export async function getSegmentPartners(
 ): Promise<PartnerData[]> {
   try {
     const sellers = await prisma.seller.findMany({
-      where: {
-        isActive: true,
-      },
       orderBy: { name: 'asc' },
       take: limit,
     });
@@ -205,8 +265,8 @@ export async function getSegmentPartners(
       id: seller.id.toString(),
       name: seller.name,
       logoUrl: seller.logoUrl || '',
-      type: mapSellerTypeToPartnerType(seller.sellerType),
-      href: `/sellers/${seller.slug || seller.publicId || seller.id}`,
+      type: mapSellerTypeToPartnerType((seller as any).sellerType || ((seller as any).isJudicial ? 'GOVERNO' : null)),
+      href: `/sellers/${(seller as any).slug || (seller as any).publicId || seller.id}`,
     }));
   } catch (error) {
     console.error('Error fetching segment partners:', error);
