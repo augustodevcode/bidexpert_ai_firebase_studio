@@ -1,6 +1,6 @@
 /**
  * @file Temporary diagnostic endpoint for lots query debugging
- * @description Tests the same queries used by Home V2 segment-data.ts
+ * @description Tests the EXACT same queries used by Home V2 segment-data.ts
  * TODO: Remove after debugging is complete
  */
 
@@ -10,50 +10,25 @@ import { insensitiveContains, getDatabaseType } from '@/lib/prisma/query-helpers
 
 export const dynamic = 'force-dynamic';
 
+function safeSerialize(obj: unknown): unknown {
+  return JSON.parse(JSON.stringify(obj, (_, v) =>
+    typeof v === 'bigint' ? v.toString() :
+    v instanceof Date ? v.toISOString() :
+    typeof v === 'object' && v !== null && v.constructor?.name === 'Decimal' ? Number(v) :
+    v
+  ));
+}
+
 export async function GET() {
   const results: Record<string, unknown> = {
     databaseType: getDatabaseType(),
-    databaseUrl: (process.env.DATABASE_URL || '').substring(0, 30) + '...',
     timestamp: new Date().toISOString(),
   };
 
-  // 1. Count lots by status
-  try {
-    const statusCounts = await prisma.$queryRawUnsafe<Array<{ status: string; count: bigint }>>(
-      'SELECT status, COUNT(*) as count FROM "Lot" GROUP BY status ORDER BY count DESC'
-    );
-    results.lotStatusCounts = statusCounts.map(r => ({
-      status: r.status,
-      count: Number(r.count),
-    }));
-  } catch (e: any) {
-    results.lotStatusCountsError = e.message;
-  }
+  const patterns = ['veículo', 'veiculo', 'veículos', 'veiculos', 'carro', 'moto', 'caminhão', 'caminhao', 'ônibus', 'onibus', 'automóvel', 'automovel'];
 
-  // 2. Count total lots
+  // Step 1: Test the EXACT Prisma query from getSegmentLots (with include)
   try {
-    const totalLots = await prisma.lot.count();
-    results.totalLots = totalLots;
-  } catch (e: any) {
-    results.totalLotsError = e.message;
-  }
-
-  // 3. Count lots with target statuses
-  try {
-    const targetLots = await prisma.lot.count({
-      where: {
-        status: { in: ['ABERTO_PARA_LANCES', 'EM_BREVE'] },
-      },
-    });
-    results.lotsWithTargetStatus = targetLots;
-  } catch (e: any) {
-    results.lotsWithTargetStatusError = e.message;
-  }
-
-  // 4. Try the full lots query (veiculos patterns)
-  try {
-    const patterns = ['veículo', 'veiculo', 'veículos', 'veiculos', 'carro', 'moto', 'caminhão', 'caminhao', 'ônibus', 'onibus', 'automóvel', 'automovel'];
-    
     const lots = await prisma.lot.findMany({
       where: {
         status: { in: ['ABERTO_PARA_LANCES', 'EM_BREVE'] },
@@ -63,78 +38,120 @@ export async function GET() {
           { type: insensitiveContains(pattern) },
         ]),
       },
-      select: { id: true, title: true, status: true, type: true, categoryId: true },
-      take: 5,
-    });
-    results.veiculosLotsFound = lots.length;
-    results.veiculosLotsSample = lots.map(l => ({
-      id: Number(l.id),
-      title: l.title,
-      status: l.status,
-      type: l.type,
-      categoryId: l.categoryId ? Number(l.categoryId) : null,
-    }));
-  } catch (e: any) {
-    results.veiculosQueryError = e.message;
-    results.veiculosQueryStack = e.stack?.substring(0, 500);
-  }
-
-  // 5. Try simpler query (no OR patterns)
-  try {
-    const simpleLots = await prisma.lot.findMany({
-      where: {
-        status: { in: ['ABERTO_PARA_LANCES', 'EM_BREVE'] },
+      include: {
+        LotCategory: true,
+        Auction: {
+          include: {
+            Seller: true,
+            Auctioneer: true,
+            AuctionStage: true,
+          }
+        },
+        LotStagePrice: true,
       },
-      select: { id: true, title: true, status: true, type: true },
-      take: 5,
+      orderBy: [
+        { isFeatured: 'desc' },
+        { endDate: 'asc' },
+      ],
+      take: 4,
     });
-    results.simpleLotsFound = simpleLots.length;
-    results.simpleLotsSample = simpleLots.map(l => ({
-      id: Number(l.id),
-      title: l.title,
-      status: l.status,
-      type: l.type,
-    }));
-  } catch (e: any) {
-    results.simpleQueryError = e.message;
+    results.step1_querySuccess = true;
+    results.step1_lotsCount = lots.length;
+    results.step1_lotIds = lots.map(l => Number(l.id));
+    results.step1_lotTitles = lots.map(l => l.title);
+    results.step1_hasAuction = lots.map(l => !!l.Auction);
+    results.step1_hasCategory = lots.map(l => !!l.LotCategory);
+    results.step1_hasPrices = lots.map(l => (l.LotStagePrice || []).length);
+    results.step1_hasAuctionSeller = lots.map(l => !!l.Auction?.Seller);
+    results.step1_hasAuctionStage = lots.map(l => (l.Auction?.AuctionStage || []).length);
+
+    // Step 2: Test the transform (same as getSegmentLots)
+    try {
+      const transformed = lots.map(lot => ({
+        ...lot,
+        id: lot.id.toString(),
+        auctionId: lot.auctionId.toString(),
+        categoryId: lot.categoryId?.toString() || null,
+        subcategoryId: (lot as any).subcategoryId?.toString() || null,
+        sellerId: lot.sellerId?.toString() || null,
+        auctioneerId: lot.auctioneerId?.toString() || null,
+        cityId: lot.cityId?.toString() || null,
+        stateId: lot.stateId?.toString() || null,
+        winnerId: lot.winnerId?.toString() || null,
+        originalLotId: (lot as any).originalLotId?.toString() || null,
+        inheritedMediaFromAssetId: (lot as any).inheritedMediaFromAssetId?.toString() || null,
+        tenantId: lot.tenantId.toString(),
+        price: Number(lot.price),
+        initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+        secondInitialPrice: (lot as any).secondInitialPrice ? Number((lot as any).secondInitialPrice) : null,
+        bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
+        evaluationValue: (lot as any).evaluationValue ? Number((lot as any).evaluationValue) : null,
+        categoryName: lot.LotCategory?.name || undefined,
+        sellerName: lot.Auction?.Seller?.name || lot.Auction?.Auctioneer?.name || undefined,
+        auctionName: lot.Auction?.title || undefined,
+        auction: lot.Auction ? {
+          ...lot.Auction,
+          id: lot.Auction.id.toString(),
+          tenantId: lot.Auction.tenantId.toString(),
+        } : undefined,
+        lotPrices: lot.LotStagePrice?.map((lsp: any) => ({
+          ...lsp,
+          id: lsp.id.toString(),
+          lotId: lsp.lotId.toString(),
+          price: Number(lsp.price),
+        })) || [],
+      }));
+      results.step2_transformSuccess = true;
+      results.step2_count = transformed.length;
+
+      // Step 3: Test JSON serialization (what RSC would do)
+      try {
+        const serialized = JSON.stringify(transformed, (_, v) =>
+          typeof v === 'bigint' ? v.toString() :
+          typeof v === 'object' && v !== null && v.constructor?.name === 'Decimal' ? Number(v) :
+          v
+        );
+        results.step3_serializeSuccess = true;
+        results.step3_serializedSize = serialized.length;
+      } catch (serErr: any) {
+        results.step3_serializeError = serErr.message;
+        results.step3_serializeStack = serErr.stack?.substring(0, 500);
+      }
+
+      // Step 4: Test native JSON.stringify (what RSC ACTUALLY uses - no BigInt handler)
+      try {
+        JSON.stringify(transformed);
+        results.step4_nativeSerializeSuccess = true;
+      } catch (natErr: any) {
+        results.step4_nativeSerializeError = natErr.message;
+        // Find which fields still have BigInt
+        const bigIntFields: string[] = [];
+        if (transformed.length > 0) {
+          const first = transformed[0];
+          for (const [key, val] of Object.entries(first)) {
+            if (typeof val === 'bigint') bigIntFields.push(`lot.${key}`);
+            if (typeof val === 'object' && val !== null) {
+              for (const [k2, v2] of Object.entries(val)) {
+                if (typeof v2 === 'bigint') bigIntFields.push(`lot.${key}.${k2}`);
+                if (typeof v2 === 'object' && v2 !== null) {
+                  for (const [k3, v3] of Object.entries(v2)) {
+                    if (typeof v3 === 'bigint') bigIntFields.push(`lot.${key}.${k2}.${k3}`);
+                  }
+                }
+              }
+            }
+          }
+        }
+        results.step4_bigIntFields = bigIntFields;
+      }
+    } catch (transformErr: any) {
+      results.step2_transformError = transformErr.message;
+      results.step2_transformStack = transformErr.stack?.substring(0, 500);
+    }
+  } catch (queryErr: any) {
+    results.step1_queryError = queryErr.message;
+    results.step1_queryStack = queryErr.stack?.substring(0, 500);
   }
 
-  // 6. Check lot categories
-  try {
-    const categories = await prisma.lotCategory.findMany({
-      select: { id: true, name: true, slug: true },
-    });
-    results.categories = categories.map(c => ({
-      id: Number(c.id),
-      name: c.name,
-      slug: c.slug,
-    }));
-  } catch (e: any) {
-    results.categoriesError = e.message;
-  }
-
-  // 7. Check lot types
-  try {
-    const types = await prisma.$queryRawUnsafe<Array<{ type: string; count: bigint }>>(
-      'SELECT type, COUNT(*) as count FROM "Lot" GROUP BY type ORDER BY count DESC LIMIT 10'
-    );
-    results.lotTypes = types.map(r => ({
-      type: r.type,
-      count: Number(r.count),
-    }));
-  } catch (e: any) {
-    results.lotTypesError = e.message;
-  }
-
-  // 8. Check Seller model fields
-  try {
-    const sellerColumns = await prisma.$queryRawUnsafe<Array<{ column_name: string }>>(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = 'Seller' ORDER BY ordinal_position`
-    );
-    results.sellerColumns = sellerColumns.map(c => c.column_name);
-  } catch (e: any) {
-    results.sellerColumnsError = e.message;
-  }
-
-  return NextResponse.json(results, { status: 200 });
+  return NextResponse.json(safeSerialize(results), { status: 200 });
 }
