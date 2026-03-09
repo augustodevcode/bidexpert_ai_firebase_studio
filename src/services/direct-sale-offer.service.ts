@@ -7,6 +7,12 @@ import { slugify } from '@/lib/ui-helpers';
 import { v4 as uuidv4 } from 'uuid';
 
 const mapOffer = (offer: any): DirectSaleOffer => {
+    let gallery: string[] = [];
+    if (offer.galleryImageUrls) {
+        gallery = typeof offer.galleryImageUrls === 'string'
+            ? JSON.parse(offer.galleryImageUrls)
+            : Array.isArray(offer.galleryImageUrls) ? offer.galleryImageUrls : [];
+    }
     return {
         ...offer,
         id: offer.id.toString(),
@@ -15,7 +21,7 @@ const mapOffer = (offer: any): DirectSaleOffer => {
         categoryId: offer.categoryId.toString(),
         price: offer.price ? Number(offer.price) : null,
         minimumOfferPrice: offer.minimumOfferPrice ? Number(offer.minimumOfferPrice) : null,
-        galleryImageUrls: offer.galleryImageUrls ? JSON.parse(offer.galleryImageUrls as string) : [],
+        galleryImageUrls: gallery,
         category: offer.category?.name,
     }
 }
@@ -41,28 +47,42 @@ export class DirectSaleOfferService {
   
   async createDirectSaleOffer(tenantId: string, data: DirectSaleOfferFormData): Promise<{ success: boolean, message: string, offerId?: string }> {
       try {
-        const { categoryId, sellerId, ...rest } = data;
+        const { categoryId, sellerId, imageMediaId, id: _id, ...rest } = data as any;
+        // Strip phantom relation fields that might leak from form data
+        delete rest.Seller; delete rest.LotCategory; delete rest.Tenant;
+        delete rest.seller; delete rest.category; delete rest.tenant;
+        delete rest._count;
         const publicId = `DSO-${uuidv4()}`;
-        const dataToCreate: Omit<Prisma.DirectSaleOfferCreateInput, 'publicId'> = {
+        const dataToCreate: Prisma.DirectSaleOfferCreateInput = {
             ...rest,
+            publicId,
+            imageMediaId: imageMediaId ? BigInt(imageMediaId) : null,
             LotCategory: { connect: { id: BigInt(categoryId) } },
             Seller: { connect: { id: BigInt(sellerId) } },
             Tenant: { connect: { id: BigInt(tenantId) } },
         };
-        const newOffer = await this.repository.create(dataToCreate, publicId);
+        const newOffer = await this.repository.create(dataToCreate);
         return { success: true, message: 'Oferta criada com sucesso.', offerId: newOffer.id.toString() };
       } catch (error: any) {
+          console.error('[direct-sale-service] Create failed:', error);
           return { success: false, message: `Falha ao criar oferta: ${error.message}` };
       }
   }
 
   async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> {
       try {
-          const { categoryId, sellerId, ...rest } = data;
+          const { categoryId, sellerId, imageMediaId, id: _id, ...rest } = data as any;
+          // Strip phantom relation fields
+          delete rest.Seller; delete rest.LotCategory; delete rest.Tenant;
+          delete rest.seller; delete rest.category; delete rest.tenant;
+          delete rest._count; delete rest.publicId; delete rest.tenantId;
           const dataToUpdate: Partial<Prisma.DirectSaleOfferUpdateInput> = {...rest};
-          if (categoryId) dataToUpdate.category = { connect: { id: BigInt(categoryId) } };
-          if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } };
-          await this.repository.update(BigInt(id), dataToUpdate);
+          if (imageMediaId !== undefined) {
+              dataToUpdate.imageMediaId = imageMediaId ? BigInt(imageMediaId) : null;
+          }
+          if (categoryId) dataToUpdate.LotCategory = { connect: { id: BigInt(categoryId) } };
+          if (sellerId) dataToUpdate.Seller = { connect: { id: BigInt(sellerId) } };
+          await this.repository.update(id, dataToUpdate);
           return { success: true, message: 'Oferta atualizada com sucesso.' };
       } catch(error: any) {
            return { success: false, message: `Falha ao atualizar oferta: ${error.message}` };

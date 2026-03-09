@@ -13,21 +13,21 @@ export class DirectSaleOfferRepository {
   async findById(id: string): Promise<DirectSaleOffer | null> {
     return prisma.directSaleOffer.findFirst({
       where: {
-        OR: [{ id }, { publicId: id }]
+        OR: [{ id: BigInt(id) }, { publicId: id }]
       }
     });
   }
   
-  async create(data: Prisma.DirectSaleOfferCreateInput, publicId: string): Promise<DirectSaleOffer> {
-    return prisma.directSaleOffer.create({ data: { ...data, publicId } });
+  async create(data: Prisma.DirectSaleOfferCreateInput): Promise<DirectSaleOffer> {
+    return prisma.directSaleOffer.create({ data });
   }
 
   async update(id: string, data: Prisma.DirectSaleOfferUpdateInput): Promise<DirectSaleOffer> {
-    return prisma.directSaleOffer.update({ where: { id }, data });
+    return prisma.directSaleOffer.update({ where: { id: BigInt(id) }, data });
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.directSaleOffer.delete({ where: { id } });
+    await prisma.directSaleOffer.delete({ where: { id: BigInt(id) } });
   }
 
   async deleteMany(args: Prisma.DirectSaleOfferDeleteManyArgs): Promise<Prisma.BatchPayload> {

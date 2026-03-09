@@ -188,7 +188,7 @@ export class LottingService {
       });
     }
 
-    if (processDetails && processDetails.lots.length === 0 && assets.length > 0) {
+    if (processDetails && (processDetails.Lot?.length ?? 0) === 0 && assets.length > 0) {
       alerts.push({
         id: 'process-without-lots',
         title: 'Processo sem lote vinculado',

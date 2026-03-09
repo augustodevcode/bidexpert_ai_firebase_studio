@@ -691,29 +691,38 @@ export class LotService {
           updatedAt: new Date(),
       };
 
+      // Strip phantom fields that don't exist on the Prisma Lot model
+      const phantomLotFields = [
+        'id', 'auctionName', 'properties', 'inheritedMediaFromAssetId',
+        'originalLotId', 'Auction', 'Auctioneer', 'LotCategory', 'City',
+        'State', 'Seller', 'Subcategory', 'Tenant', 'CoverImage', 'User',
+        'AssetsOnLots', 'Bid', 'LotDocument', 'LotQuestion', 'LotRisk',
+        'LotStagePrice', 'Notification', 'Review', 'UserLotMaxBid',
+        'UserWin', 'InstallmentPayment', 'JudicialProcess',
+        'auction', 'seller', 'auctioneer', 'category', 'subcategory',
+        'city', 'state', 'tenant', '_count', 'Lot', 'other_Lot',
+      ];
+      for (const key of phantomLotFields) {
+        delete createData[key];
+      }
+
       if (cleanData.categoryId) {
         createData.categoryId = BigInt(cleanData.categoryId);
-        delete createData.category;
       }
       if (cleanData.subcategoryId) {
         createData.subcategoryId = BigInt(cleanData.subcategoryId);
-        delete createData.subcategory;
       }
       if (cleanData.sellerId) {
         createData.sellerId = BigInt(cleanData.sellerId);
-        delete createData.seller;
       }
       if (cleanData.auctioneerId) {
         createData.auctioneerId = BigInt(cleanData.auctioneerId);
-        delete createData.auctioneer;
       }
       if (cleanData.cityId) {
         createData.cityId = BigInt(cleanData.cityId);
-        delete createData.city;
       }
       if (cleanData.stateId) {
         createData.stateId = BigInt(cleanData.stateId);
-        delete createData.state;
       }
 
 
@@ -801,23 +810,57 @@ export class LotService {
         lotRisks,
         ...cleanData 
       } = data as any;
+
+      // Strip phantom fields that don't exist on the Prisma Lot model
+      const phantomLotFields = [
+        'id', 'auctionName', 'properties', 'inheritedMediaFromAssetId',
+        'originalLotId', 'Auction', 'Auctioneer', 'LotCategory', 'City',
+        'State', 'Seller', 'Subcategory', 'Tenant', 'CoverImage', 'User',
+        'AssetsOnLots', 'Bid', 'LotDocument', 'LotQuestion', 'LotRisk',
+        'LotStagePrice', 'Notification', 'Review', 'UserLotMaxBid',
+        'UserWin', 'InstallmentPayment', 'JudicialProcess',
+        'auction', 'seller', 'auctioneer', 'category', 'subcategory',
+        'city', 'state', 'tenant', '_count', 'Lot', 'other_Lot',
+        'tenantId',
+      ];
+      for (const key of phantomLotFields) {
+        delete cleanData[key];
+      }
       
       const updateRelations: Record<string, any> = {};
       
       if (auctionId) {
-        updateRelations.auction = { connect: { id: BigInt(auctionId) } };
+        updateRelations.Auction = { connect: { id: BigInt(auctionId) } };
       }
       
       if (cleanData.categoryId) {
-        updateRelations.category = { connect: { id: BigInt(cleanData.categoryId) } };
+        updateRelations.LotCategory = { connect: { id: BigInt(cleanData.categoryId) } };
+        delete cleanData.categoryId;
       }
       
       if (cleanData.subcategoryId) {
-        updateRelations.subcategory = { connect: { id: BigInt(cleanData.subcategoryId) } };
+        updateRelations.Subcategory = { connect: { id: BigInt(cleanData.subcategoryId) } };
+        delete cleanData.subcategoryId;
       }
       
       if (cleanData.sellerId) {
-        updateRelations.seller = { connect: { id: BigInt(cleanData.sellerId) } };
+        updateRelations.Seller = { connect: { id: BigInt(cleanData.sellerId) } };
+        delete cleanData.sellerId;
+      }
+
+      if (cleanData.auctioneerId) {
+        updateRelations.Auctioneer = { connect: { id: BigInt(cleanData.auctioneerId) } };
+        delete cleanData.auctioneerId;
+      }
+
+      if (cleanData.cityId) {
+        updateRelations.City = { connect: { id: BigInt(cleanData.cityId) } };
+        delete cleanData.cityId;
+      }
+
+      if (cleanData.stateId) {
+        updateRelations.State = { connect: { id: BigInt(cleanData.stateId) } };
+        delete cleanData.stateId;
       }
       
       await this.prisma.$transaction(async (tx) => {
