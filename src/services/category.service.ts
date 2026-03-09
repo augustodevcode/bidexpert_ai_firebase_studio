@@ -12,6 +12,48 @@ import { slugify } from '@/lib/ui-helpers';
 import prisma from '@/lib/prisma'; // Import prisma directly
 import type { Prisma } from '@prisma/client';
 
+type CategoryMutationInput = {
+  name: string;
+  description?: string | null;
+  logoUrl?: string | null;
+  logoMediaId?: string | bigint | null;
+  dataAiHintLogo?: string | null;
+  coverImageUrl?: string | null;
+  coverImageMediaId?: string | bigint | null;
+  dataAiHintCover?: string | null;
+  megaMenuImageUrl?: string | null;
+  megaMenuImageMediaId?: string | bigint | null;
+  dataAiHintMegaMenu?: string | null;
+};
+
+function toOptionalString(value: string | null | undefined): string | null | undefined {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function toOptionalBigInt(value: string | bigint | null | undefined): bigint | null | undefined {
+  if (value == null || value === '') return null;
+  if (typeof value === 'bigint') return value;
+  return BigInt(value);
+}
+
+function normalizeCategoryMutationInput(data: CategoryMutationInput) {
+  return {
+    name: data.name.trim(),
+    description: toOptionalString(data.description),
+    logoUrl: toOptionalString(data.logoUrl),
+    logoMediaId: toOptionalBigInt(data.logoMediaId),
+    dataAiHintLogo: toOptionalString(data.dataAiHintLogo),
+    coverImageUrl: toOptionalString(data.coverImageUrl),
+    coverImageMediaId: toOptionalBigInt(data.coverImageMediaId),
+    dataAiHintCover: toOptionalString(data.dataAiHintCover),
+    megaMenuImageUrl: toOptionalString(data.megaMenuImageUrl),
+    megaMenuImageMediaId: toOptionalBigInt(data.megaMenuImageMediaId),
+    dataAiHintMegaMenu: toOptionalString(data.dataAiHintMegaMenu),
+  };
+}
+
 export class CategoryService {
   private categoryRepository: CategoryRepository;
 
@@ -19,42 +61,16 @@ export class CategoryService {
     this.categoryRepository = new CategoryRepository();
   }
 
-  private static cachedCategories = new Map<string, LotCategory[]>();
-  private static categoriesPromise = new Map<string, Promise<LotCategory[]>>();
-
   async getCategories(tenantId: string): Promise<LotCategory[]> {
-    const cached = CategoryService.cachedCategories.get(tenantId);
-    if (cached) {
-      return cached;
-    }
-
-    if (!CategoryService.categoriesPromise.has(tenantId)) {
-      CategoryService.categoriesPromise.set(
-        tenantId,
-        this.categoryRepository.findAll(tenantId)
-        .then(categories => categories.map(c => ({
-          ...c,
-          id: c.id.toString(),
-          logoMediaId: c.logoMediaId?.toString(),
-          coverImageMediaId: c.coverImageMediaId?.toString(),
-          megaMenuImageMediaId: c.megaMenuImageMediaId?.toString(),
-          _count: { lots: c._count.lots }
-        })))
-        .then(mapped => {
-          CategoryService.cachedCategories.set(tenantId, mapped);
-          return mapped;
-        })
-        .catch(error => {
-          CategoryService.categoriesPromise.delete(tenantId);
-          throw error;
-        })
-        .finally(() => {
-          CategoryService.categoriesPromise.delete(tenantId);
-        })
-      );
-    }
-
-    return CategoryService.categoriesPromise.get(tenantId)!;
+    const categories = await this.categoryRepository.findAll(tenantId);
+    return categories.map(c => ({
+      ...c,
+      id: c.id.toString(),
+      logoMediaId: c.logoMediaId?.toString(),
+      coverImageMediaId: c.coverImageMediaId?.toString(),
+      megaMenuImageMediaId: c.megaMenuImageMediaId?.toString(),
+      _count: { lots: c._count.lots }
+    }));
   }
 
   async getCategoryById(id: bigint, tenantId: string): Promise<LotCategory | null> {
@@ -69,20 +85,19 @@ export class CategoryService {
     return {...category, id: category.id.toString()};
   }
 
-  async createCategory(data: Pick<LotCategory, 'name' | 'description'>, tenantId: string): Promise<{ success: boolean; message: string; category?: LotCategory; }> {
+  async createCategory(data: CategoryMutationInput, tenantId: string): Promise<{ success: boolean; message: string; category?: LotCategory; }> {
     try {
-      const slug = slugify(data.name);
+      const normalizedData = normalizeCategoryMutationInput(data);
+      const slug = slugify(normalizedData.name);
 
-      const existingCategory = await this.categoryRepository.findByName(data.name, tenantId);
+      const existingCategory = await this.categoryRepository.findByName(normalizedData.name, tenantId);
       if (existingCategory) {
         return { success: false, message: 'Já existe uma categoria com este nome no tenant atual.' };
       }
       
       const newCategory = await prisma.lotCategory.create({
-        data: { ...data, slug, hasSubcategories: false, tenantId: BigInt(tenantId) },
+        data: { ...normalizedData, slug, hasSubcategories: false, tenantId: BigInt(tenantId) },
       });
-
-      CategoryService.cachedCategories.delete(tenantId);
 
       return { success: true, message: 'Categoria criada com sucesso.', category: { ...newCategory, id: newCategory.id.toString() } };
     } catch (error: any) {
@@ -90,15 +105,29 @@ export class CategoryService {
     }
   }
 
-  async updateCategory(id: bigint, data: Partial<Pick<LotCategory, 'name' | 'description'>>, tenantId: string): Promise<{ success: boolean; message: string }> {
+  async updateCategory(id: bigint, data: Partial<CategoryMutationInput>, tenantId: string): Promise<{ success: boolean; message: string }> {
     try {
-      const dataToUpdate: Partial<Prisma.LotCategoryUpdateInput> = { ...data };
-      if (data.name) {
+      const dataToUpdate: Partial<Prisma.LotCategoryUpdateInput> = normalizeCategoryMutationInput({
+        name: data.name ?? '',
+        description: data.description,
+        logoUrl: data.logoUrl,
+        logoMediaId: data.logoMediaId,
+        dataAiHintLogo: data.dataAiHintLogo,
+        coverImageUrl: data.coverImageUrl,
+        coverImageMediaId: data.coverImageMediaId,
+        dataAiHintCover: data.dataAiHintCover,
+        megaMenuImageUrl: data.megaMenuImageUrl,
+        megaMenuImageMediaId: data.megaMenuImageMediaId,
+        dataAiHintMegaMenu: data.dataAiHintMegaMenu,
+      });
+      if (data.name?.trim()) {
+        dataToUpdate.name = data.name.trim();
         dataToUpdate.slug = slugify(data.name);
+      } else {
+        delete dataToUpdate.name;
       }
 
       await this.categoryRepository.update(id, tenantId, dataToUpdate);
-      CategoryService.cachedCategories.delete(tenantId);
       return { success: true, message: 'Categoria atualizada com sucesso.' };
     } catch (error: any) {
       return { success: false, message: `Falha ao atualizar categoria: ${error.message}` };
@@ -108,7 +137,6 @@ export class CategoryService {
   async deleteCategory(id: bigint, tenantId: string): Promise<{ success: boolean; message: string; }> {
     try {
       await this.categoryRepository.delete(id, tenantId);
-      CategoryService.cachedCategories.delete(tenantId);
       return { success: true, message: 'Categoria excluída com sucesso.' };
     } catch (error: any) {
       return { success: false, message: 'Falha ao excluir categoria. Verifique se ela não está em uso.' };
@@ -118,7 +146,6 @@ export class CategoryService {
   async deleteAllCategories(tenantId: string): Promise<{ success: boolean; message: string; }> {
     try {
       await this.categoryRepository.deleteAll(tenantId);
-      CategoryService.cachedCategories.delete(tenantId);
       return { success: true, message: 'Todas as categorias foram excluídas.' };
     } catch (error: any) {
       return { success: false, message: 'Falha ao excluir todas as categorias.' };

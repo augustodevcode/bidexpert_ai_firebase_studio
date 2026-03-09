@@ -4,6 +4,8 @@
 import { chromium, FullConfig, Page } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
+import { attachBrowserConsoleTelemetry } from './helpers/browser-console-telemetry';
+import { ensureSeedExecuted } from './helpers/auth-helper';
 
 const DEBUG_DIR = path.resolve(process.cwd(), 'tests/e2e/.debug');
 
@@ -26,6 +28,7 @@ async function globalSetup(config: FullConfig) {
   const baseURL = process.env.BASE_URL || config.projects[0].use.baseURL || 'http://localhost:9005';
   const baseUrlObject = new URL(baseURL);
   const isDemoTenant = baseUrlObject.hostname.startsWith('demo.') || baseUrlObject.hostname.includes('demo');
+  const isLocalhostFamily = /(^|\.)localhost$/i.test(baseUrlObject.hostname) || baseUrlObject.hostname === '127.0.0.1';
   
   // SEED CREDENTIALS (canonical source: scripts/ultimate-master-seed.ts)
   // - Demo tenant (demo.localhost): admin@bidexpert.com.br / Admin@123
@@ -38,7 +41,6 @@ async function globalSetup(config: FullConfig) {
   
   // ─── SEED GATE: Abort early if seed not executed ───
   try {
-    const { ensureSeedExecuted } = await import('./helpers/auth-helper');
     await ensureSeedExecuted(baseURL);
   } catch (seedError: unknown) {
     const errMsg = seedError instanceof Error ? seedError.message : String(seedError);
@@ -54,7 +56,9 @@ async function globalSetup(config: FullConfig) {
 
   // Extract port and protocol to check connectivity on localhost/IP directly
   // This bypasses issues where Node cannot resolve *.localhost
-  const checkUrl = `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`;
+  const checkUrl = isLocalhostFamily && baseUrlObject.port
+    ? `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`
+    : `${baseUrlObject.origin}/auth/login`;
 
   console.log(`🔍 Checking connectivity at ${checkUrl} (bypassing DNS for check)...`);
   
@@ -94,6 +98,7 @@ async function globalSetup(config: FullConfig) {
   try {
     // 1. Autenticar como ADMIN
     adminPage = await browser.newPage();
+    attachBrowserConsoleTelemetry(adminPage);
     await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await adminPage.waitForTimeout(5000);
 
@@ -162,6 +167,7 @@ async function globalSetup(config: FullConfig) {
     if (shouldAuthLawyer) {
       // 2. Autenticar como ADVOGADO
       const lawyerPage = await browser.newPage();
+      attachBrowserConsoleTelemetry(lawyerPage);
       await lawyerPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
       await lawyerPage.waitForTimeout(5000);
 

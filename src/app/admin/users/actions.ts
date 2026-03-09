@@ -40,8 +40,8 @@ export async function getAdminUserForDev(): Promise<UserProfileWithPermissions |
 
 
 export async function createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
-  // Pass tenantId as null, the service will handle the default
-  const result = await userService.createUser({ ...data, tenantId: data.tenantId || null });
+  const tenantId = data.tenantId || await getTenantIdFromRequest();
+  const result = await userService.createUser({ ...data, tenantId });
   if (result.success) {
     if (process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/users');

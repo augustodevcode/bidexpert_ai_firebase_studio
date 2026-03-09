@@ -17,6 +17,12 @@
  *   com password hints, mas este helper preenche os campos diretamente.
  */
 import { type Page, expect } from '@playwright/test';
+import { attachBrowserConsoleTelemetry } from './browser-console-telemetry';
+
+function resolvePublicCheckUrl(baseUrl: string, pathName: string): string {
+  const urlObj = new URL(baseUrl);
+  return `${urlObj.origin}${pathName}`;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Canonical Credentials (source: scripts/ultimate-master-seed.ts)
@@ -89,9 +95,8 @@ const SEL = {
  * @throws Error se nenhum tenant for encontrado (seed não executado)
  */
 export async function ensureSeedExecuted(baseUrl: string): Promise<void> {
-  // Bypass DNS issues: resolve via localhost IP directly
   const urlObj = new URL(baseUrl);
-  const checkUrl = `${urlObj.protocol}//localhost:${urlObj.port}/api/public/tenants`;
+  const checkUrl = resolvePublicCheckUrl(baseUrl, '/api/public/tenants');
 
   try {
     const response = await fetch(checkUrl, { signal: AbortSignal.timeout(30_000) });
@@ -124,7 +129,7 @@ export async function ensureSeedExecuted(baseUrl: string): Promise<void> {
         `Verifique:\n` +
         `  1. O servidor está rodando? (node .vscode/start-9005.js)\n` +
         `  2. O seed foi executado? (npm run db:seed)\n` +
-        `  3. A porta está correta? (${urlObj.port})`
+        `  3. A URL base está correta? (${baseUrl})`
       );
     }
     throw error;
@@ -228,7 +233,7 @@ export async function loginAs(
   const consoleErrors: string[] = [];
 
   // Browser console telemetry routed to Node.js stdout
-  page.on('console', msg => console.log(`${msg.type()}: ${msg.text()}`));
+  attachBrowserConsoleTelemetry(page);
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(msg.text());
   });

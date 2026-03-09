@@ -110,6 +110,8 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
     console.log('[Create Session] NODE_ENV:', process.env.NODE_ENV);
 
     const isProduction = process.env.NODE_ENV === 'production';
+    // When AUTH_TRUST_HOST is set (e.g. local production testing over HTTP), don't force Secure cookies
+    const forceInsecure = process.env.AUTH_TRUST_HOST === 'true';
     const cookieDomain = getCookieDomain();
     
     console.log('[Create Session] Cookie domain:', cookieDomain || 'undefined (localhost)');
@@ -117,7 +119,7 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
     // Configuração do cookie com suporte multi-tenant
     const cookieOptions: any = {
         httpOnly: true,
-        secure: isProduction,
+        secure: isProduction && !forceInsecure,
         expires: expiresAt,
         maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
         path: '/',
