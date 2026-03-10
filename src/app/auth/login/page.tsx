@@ -30,7 +30,6 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { normalizeTenantToken } from '@/lib/tenant-token';
 
 
 const loginFormSchema = z.object({
@@ -90,12 +89,14 @@ function LoginPageContent() {
         const pathname = window.location.pathname;
         const pathMatch = pathname.match(/^\/(?:app|_tenants)\/([a-z0-9-]+)/i);
         if (pathMatch) {
-            currentSubdomain = normalizeTenantToken(pathMatch[1]);
+            currentSubdomain = pathMatch[1].toLowerCase();
         }
 
-        // Fallback to CI/CD configured default tenant if no subdomain is found (e.g. on Vercel)
-        if (!currentSubdomain && hostname.includes('vercel.app') && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
-            currentSubdomain = normalizeTenantToken(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
+        // Fallback: use NEXT_PUBLIC_DEFAULT_TENANT when no subdomain is detected.
+        // This env var is set per-environment in Vercel (hml, demo, production) and
+        // in CI/CD workflows so the correct workspace is auto-locked on each deployment.
+        if (!currentSubdomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
+            currentSubdomain = process.env.NEXT_PUBLIC_DEFAULT_TENANT;
         }
 
         if (currentSubdomain && availableTenants.length > 0) {

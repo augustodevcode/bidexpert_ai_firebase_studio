@@ -5,11 +5,12 @@ import { Decimal } from '@prisma/client/runtime/library';
  * to ensure the object is serializable for Client Components.
  */
 export function sanitizeResponse<T>(data: T): T {
+  // console.error('sanitizeResponse called'); // Debug
   if (data === null || data === undefined) {
     return data;
   }
 
-  // BigInt check MUST come before the object check
+  // BigInt primitives have typeof 'bigint' (not 'object'), so check before the object block
   if (typeof data === 'bigint') {
     return data.toString() as unknown as T;
   }
@@ -33,6 +34,7 @@ export function sanitizeResponse<T>(data: T): T {
     }
 
     const newData: any = {};
+    // console.log('Sanitizing object keys:', Object.keys(data)); // Debug
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
         newData[key] = sanitizeResponse((data as any)[key]);

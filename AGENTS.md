@@ -3,7 +3,7 @@
 > **🚀 PRIORIDADE MÁXIMA:** Antes de qualquer implementação, siga o **Workflow de Desenvolvimento Paralelo** em `.agent/workflows/parallel-development.md`
 
 Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriamente as instruções contidas no arquivo mestre:
-`E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\copilot-instructions.md`
+`.github/copilot-instructions.md`
 
 ## 🔀 Workflow de Branches (OBRIGATÓRIO)
 
@@ -348,7 +348,7 @@ runSubagent {
 
 ## Report Builder Architect (GrapesJS + Puppeteer + Handlebars)
 Para tarefas relacionadas a criação de templates de relatórios, editais, laudos e cartas de arrematação, siga as diretrizes em:
-`E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\skills\report-builder\SKILL.md`
+`.github/skills/report-builder/SKILL.md`
 
 Este agente lida com:
 - Implementação de designer visual drag-and-drop com GrapesJS
@@ -367,7 +367,7 @@ Este agente lida com:
 
 ## Observability & Audit Architect (360º) - New Skill
 For tasks related to Logs, Traces, Metrics, and Business Audit Compliance, follow the guidelines in:
-`E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\skills\observability-audit\SKILL.md`
+`.github/skills/observability-audit/SKILL.md`
 
 This agent handles:
 - Implementation of OpenTelemetry.
@@ -376,7 +376,7 @@ This agent handles:
 
 ## Vercel + PostgreSQL Deploy Skill
 Para tarefas relacionadas a deploy no Vercel, configuração de build, compatibilidade PostgreSQL, e middleware multi-tenant:
-`E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\skills\vercel-postgresql-deploy\SKILL.md`
+`.github/skills/vercel-postgresql-deploy/SKILL.md`
 
 Este agente lida com:
 - Configuração do `vercel.json` (build command, regions, headers)

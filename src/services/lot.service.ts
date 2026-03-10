@@ -527,9 +527,17 @@ export class LotService {
                 LotStagePrice: true,
                 AssetsOnLots: {
                     include: {
-                        Asset: true
+                        Asset: {
+                            include: {
+                                AssetMedia: {
+                                    include: { MediaItem: true },
+                                    orderBy: { displayOrder: 'asc' }
+                                }
+                            }
+                        }
                     }
                 },
+                CoverImage: true,
                 LotRisk: true,
                 LotDocument: {
                     orderBy: { displayOrder: 'asc' }
@@ -782,9 +790,17 @@ export class LotService {
                 LotStagePrice: true,
                 AssetsOnLots: {
                     include: {
-                        Asset: true
+                        Asset: {
+                            include: {
+                                AssetMedia: {
+                                    include: { MediaItem: true },
+                                    orderBy: { displayOrder: 'asc' }
+                                }
+                            }
+                        }
                     }
                 },
+                CoverImage: true,
                 _count: {
                     select: { Bid: true }
                 }
@@ -826,22 +842,38 @@ export class LotService {
         delete cleanData[key];
       }
       
+      // Strip phantom fields that don't exist on the Prisma Lot model
+      const phantomLotFields = [
+        'id', 'auctionName', 'properties', 'inheritedMediaFromAssetId',
+        'originalLotId', 'Auction', 'Auctioneer', 'LotCategory', 'City',
+        'State', 'Seller', 'Subcategory', 'Tenant', 'CoverImage', 'User',
+        'AssetsOnLots', 'Bid', 'LotDocument', 'LotQuestion', 'LotRisk',
+        'LotStagePrice', 'Notification', 'Review', 'UserLotMaxBid',
+        'UserWin', 'InstallmentPayment', 'JudicialProcess',
+        'auction', 'seller', 'auctioneer', 'category', 'subcategory',
+        'city', 'state', 'tenant', '_count', 'Lot', 'other_Lot',
+        'tenantId',
+      ];
+      for (const key of phantomLotFields) {
+        delete cleanData[key];
+      }
+
       const updateRelations: Record<string, any> = {};
-      
+
       if (auctionId) {
         updateRelations.Auction = { connect: { id: BigInt(auctionId) } };
       }
-      
+
       if (cleanData.categoryId) {
         updateRelations.LotCategory = { connect: { id: BigInt(cleanData.categoryId) } };
         delete cleanData.categoryId;
       }
-      
+
       if (cleanData.subcategoryId) {
         updateRelations.Subcategory = { connect: { id: BigInt(cleanData.subcategoryId) } };
         delete cleanData.subcategoryId;
       }
-      
+
       if (cleanData.sellerId) {
         updateRelations.Seller = { connect: { id: BigInt(cleanData.sellerId) } };
         delete cleanData.sellerId;

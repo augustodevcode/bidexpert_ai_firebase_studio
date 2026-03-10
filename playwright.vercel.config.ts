@@ -8,7 +8,7 @@ const VERCEL_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://bidexpertaifireba
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: '**/*-vercel.spec.ts',
+  testMatch: ['**/*-vercel.spec.ts', '**/vercel-smoke.spec.ts'],
   timeout: 120_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
@@ -25,7 +25,7 @@ export default defineConfig({
     video: 'retain-on-failure',
     actionTimeout: 15000,
     navigationTimeout: 60000,
-    headless: false,
+    headless: true,
   },
   projects: [
     {

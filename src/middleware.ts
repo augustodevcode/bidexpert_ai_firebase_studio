@@ -146,9 +146,11 @@ async function resolveTenantFromRequest(
       };
     }
     
-    // If it's Vercel and we have a default tenant configured, use it
+    // If NEXT_PUBLIC_DEFAULT_TENANT is configured, use it as the tenant for this landlord/Vercel domain.
+    // This env var is set per Vercel environment (hml, demo, production) to auto-lock the workspace
+    // without requiring subdomain routing. It is NOT set in local development.
     const defaultTenant = normalizeTenantToken(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
-    if (isVercelDomain && defaultTenant) {
+    if (defaultTenant) {
       return {
         tenantId: defaultTenant,
         subdomain: defaultTenant,
