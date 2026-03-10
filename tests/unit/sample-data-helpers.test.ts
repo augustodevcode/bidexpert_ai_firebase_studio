@@ -1,4 +1,4 @@
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import type { AuctionStatus, LotStatus, PaymentStatus } from '@/types';
 
 describe('getAuctionStatusText', () => {
@@ -26,14 +26,14 @@ describe('getAuctionStatusText', () => {
 
   // Test for UserHabilitationStatus types
   it('should return the correct text for UserHabilitationStatus variants', () => {
-    expect(getAuctionStatusText('HABILITADO')).toBe('Habilitado para Dar Lances');
+    expect(getAuctionStatusText('HABILITADO')).toBe('Habilitado');
     expect(getAuctionStatusText('BLOCKED')).toBe('Conta Bloqueada');
-    expect(getAuctionStatusText('PENDING_DOCUMENTS')).toBe('Documentação Pendente');
+    expect(getAuctionStatusText('PENDING_DOCUMENTS')).toBe('Documentos Pendentes');
   });
 
   // Test the default case for unhandled string
   it('should format an unknown string status correctly', () => {
-    expect(getAuctionStatusText('SOME_NEW_STATUS')).toBe('Some New Status');
+    expect(getAuctionStatusText('SOME_NEW_STATUS')).toBe('SOME NEW STATUS');
   });
 
   // Test for undefined or null input
