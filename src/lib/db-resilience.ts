@@ -86,7 +86,7 @@ export function isVercelPreviewOrDevelopment(): boolean {
  * Exemplos: "Vercel preview", "Vercel development", "desenvolvimento local".
  */
 export function getEnvironmentLabel(): string {
-  if (process.env.VERCEL_ENV) {
+  if (isVercelPreviewOrDevelopment()) {
     return `Vercel ${process.env.VERCEL_ENV}`;
   }
   return 'desenvolvimento local';
@@ -109,9 +109,5 @@ export function shouldAllowDbFallback(error: unknown): boolean {
 
 export function shouldAllowSchemaFallback(error: unknown): boolean {
   if (!isMissingColumnError(error)) return false;
-  return (
-    process.env.NODE_ENV !== 'production' ||
-    isVercelPreviewOrDevelopment() ||
-    process.env.VERCEL === '1'
-  );
+  return process.env.NODE_ENV !== 'production' || isVercelPreviewOrDevelopment();
 }

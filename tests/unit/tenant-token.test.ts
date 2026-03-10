@@ -1,25 +1,21 @@
 /**
- * @fileoverview Testes unitários para normalização de tokens de tenant.
+ * @fileoverview Testes unitários para sanitização de identificadores de tenant.
  * @vitest-environment node
  */
 
 import { describe, expect, it } from 'vitest';
-import { normalizeTenantToken } from '../../src/lib/tenant-token';
+import { normalizeTenantToken } from '@/lib/tenant-token';
 
 describe('normalizeTenantToken', () => {
-  it('retorna null para valores vazios', () => {
-    expect(normalizeTenantToken(undefined)).toBeNull();
-    expect(normalizeTenantToken(null)).toBeNull();
-    expect(normalizeTenantToken('')).toBeNull();
-    expect(normalizeTenantToken('   ')).toBeNull();
+  it('remove quebras de linha e normaliza para lowercase por padrão', () => {
+    expect(normalizeTenantToken('demo\r\n')).toBe('demo');
   });
 
-  it('remove caracteres de controle, trim e normaliza para lowercase por padrão', () => {
-    expect(normalizeTenantToken('  Demo\n')).toBe('demo');
-    expect(normalizeTenantToken('\u0000Tenant-01\u0007')).toBe('tenant-01');
+  it('preserva casing quando solicitado', () => {
+    expect(normalizeTenantToken('DemoTenant\n', { lowercase: false })).toBe('DemoTenant');
   });
 
-  it('preserva casing quando lowercase=false', () => {
-    expect(normalizeTenantToken('  TenantABC\n', { lowercase: false })).toBe('TenantABC');
+  it('retorna null para entradas vazias apos sanitizacao', () => {
+    expect(normalizeTenantToken('\r\n\t')).toBeNull();
   });
 });

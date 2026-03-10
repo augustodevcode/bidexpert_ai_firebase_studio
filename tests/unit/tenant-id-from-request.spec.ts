@@ -50,6 +50,29 @@ describe('getTenantIdFromRequest', () => {
     expect(mocks.findFirstMock).toHaveBeenCalledOnce();
   });
 
+  it('em chamada pública, prioriza o tenant do header antes do fallback landlord', async () => {
+    mocks.mockHeaders = new Headers({ 'x-tenant-id': 'prod' });
+    mocks.getSessionMock.mockResolvedValue(null);
+    mocks.findFirstMock.mockResolvedValue({ id: BigInt(12) });
+
+    const { getTenantIdFromRequest } = await import('../../src/lib/actions/auth');
+    const tenantId = await getTenantIdFromRequest(true);
+
+    expect(tenantId).toBe('12');
+    expect(mocks.findFirstMock).toHaveBeenCalledOnce();
+  });
+
+  it('em chamada pública, usa o tenant numérico do header sem consultar fallback', async () => {
+    mocks.mockHeaders = new Headers({ 'x-tenant-id': '3' });
+    mocks.getSessionMock.mockResolvedValue(null);
+
+    const { getTenantIdFromRequest } = await import('../../src/lib/actions/auth');
+    const tenantId = await getTenantIdFromRequest(true);
+
+    expect(tenantId).toBe('3');
+    expect(mocks.findFirstMock).not.toHaveBeenCalled();
+  });
+
   it('prioriza o tenant da sessão quando não é landlord', async () => {
     mocks.mockHeaders = new Headers({ 'x-tenant-id': 'demo' });
     mocks.getSessionMock.mockResolvedValue({ tenantId: '5' });

@@ -1,8 +1,8 @@
 /**
- * @fileoverview Normalização centralizada de identificadores de tenant e subdomínio.
+ * @fileoverview Normalização centralizada de identificadores de tenant/subdomínio.
  *
- * Remove caracteres de controle e espaços acidentais vindos de headers ou
- * variáveis de ambiente para evitar falhas de resolução multi-tenant.
+ * Remove caracteres de controle comuns em variáveis de ambiente e headers e
+ * normaliza o casing quando necessário para evitar erros de roteamento.
  */
 
 export function normalizeTenantToken(
