@@ -62,6 +62,7 @@ export default async function RootLayout({
 
   const { platformSettings, isSetupComplete } = await getLayoutData();
   const platformThemeCss = generateThemeCssFromSettings(platformSettings);
+  const shouldExposeManifest = process.env.VERCEL_ENV !== 'preview';
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
@@ -72,7 +73,7 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
           rel="stylesheet"
         />
-        <link rel="manifest" href="/manifest.json" />
+        {shouldExposeManifest ? <link rel="manifest" href="/manifest.json" /> : null}
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

@@ -13,7 +13,6 @@ import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
 import { AssetService } from '@/services/asset.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
-import { getSession } from '@/server/lib/session';
 import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const lotService = new LotService();
@@ -35,19 +34,7 @@ export async function getLots(filter?: { auctionId?: string; judicialProcessId?:
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {
   const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : await getTenantIdFromRequest(false);
   console.log(`[Action getLot] ID: ${id}, Public: ${isPublicCall}, Tenant: ${tenantId}`);
-  const lot = await lotService.getLotById(id, tenantId, isPublicCall);
-
-  // Landlord admin fallback: if lot not found due to tenant mismatch,
-  // retry without tenant filter (landlord admins can manage all tenants)
-  if (!lot && !isPublicCall) {
-    const session = await getSession();
-    if (session?.tenantId === '1') {
-      console.log(`[Action getLot] Landlord fallback for ID: ${id}`);
-      return lotService.getLotById(id, undefined, false);
-    }
-  }
-
-  return lot;
+  return lotService.getLotById(id, tenantId, isPublicCall);
 }
 
 export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string }> {

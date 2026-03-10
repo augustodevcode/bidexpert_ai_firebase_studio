@@ -11,6 +11,7 @@ import { PrismaClient } from '@prisma/client';
 import { withAccelerate } from '@prisma/extension-accelerate';
 import { headers } from 'next/headers';
 import { auditMiddleware } from './audit-middleware';
+import { normalizeTenantToken } from './tenant-token';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof createPrismaClient> | undefined;
@@ -239,7 +240,7 @@ export const mainPrisma = basePrisma;
  * Use este helper explicitamente quando precisar do cliente demo.
  */
 export function getPrismaClientBySubdomain(subdomain?: string | null) {
-  if (subdomain?.toLowerCase() === 'demo' && demoPrisma) {
+  if (normalizeTenantToken(subdomain) === 'demo' && demoPrisma) {
     return demoPrisma;
   }
   return mainPrisma;
@@ -248,8 +249,7 @@ export function getPrismaClientBySubdomain(subdomain?: string | null) {
 function resolveSubdomainFromHeaders(): string | null {
   try {
     const headersList = headers();
-    const subdomain = headersList.get('x-tenant-subdomain');
-    return subdomain ? subdomain.toLowerCase() : null;
+    return normalizeTenantToken(headersList.get('x-tenant-subdomain'));
   } catch {
     return null;
   }

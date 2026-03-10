@@ -18,10 +18,7 @@ import Image from 'next/image';
 import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo, Auction } from '@/types';
 import { getLotsByIds, getLots } from '@/app/admin/lots/actions';
-import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getSellers } from '@/app/admin/sellers/actions';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -85,7 +82,6 @@ export default function Header({
   const [isLoading, setIsLoading] = useState(true);
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]); // New state for search
-  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [categories, setCategories] = useState<LotCategory[]>([]);
   const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
@@ -125,35 +121,30 @@ export default function Header({
     async function fetchClientSideData() {
       setIsLoading(true);
       try {
-        const results = await Promise.allSettled([
+        const [
+            fetchedLots,
+            fetchedCategories
+        ] = await Promise.allSettled([
           getLots(undefined, true), 
-          getAuctions(true, 20),
-          getLotCategories(),
-          getSellers(true, 20),
-          getAuctioneers(true, 20)
+          getLotCategories(true)
         ]);
 
-        const fetchedLots = results[0].status === 'fulfilled' ? results[0].value : [];
-        const fetchedAuctions = results[1].status === 'fulfilled' ? results[1].value : [];
-        const fetchedCategories = results[2].status === 'fulfilled' ? results[2].value : [];
-        const fetchedSellers = results[3].status === 'fulfilled' ? results[3].value : [];
-        const fetchedAuctioneers = results[4].status === 'fulfilled' ? results[4].value : [];
+        if (fetchedLots.status === 'rejected') {
+          console.warn('Header failed to load public lots:', fetchedLots.reason);
+        }
+        if (fetchedCategories.status === 'rejected') {
+          console.warn('Header failed to load public categories:', fetchedCategories.reason);
+        }
 
-        results.forEach((r, i) => {
-          if (r.status === 'rejected') {
-            console.warn(`[Header] fetchClientSideData promise[${i}] rejected:`, r.reason);
-          }
-        });
-
-        setAllLots(fetchedLots);
-        setAllAuctions(fetchedAuctions);
-        setCategories(fetchedCategories);
-        setSellers(fetchedSellers);
-        setAuctioneers(fetchedAuctioneers);
+        setAllLots(fetchedLots.status === 'fulfilled' ? fetchedLots.value : []);
+        setCategories(fetchedCategories.status === 'fulfilled' ? fetchedCategories.value : []);
 
         const viewedIds = getRecentlyViewedIds();
         if (viewedIds.length > 0) {
-          const itemsData = await getLotsByIds(viewedIds);
+          const itemsData = await getLotsByIds(viewedIds).catch((error) => {
+            console.warn('Header failed to load recently viewed lots:', error);
+            return [];
+          });
           const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
               const lot = itemsData.find(l => l.id === id);
               return lot ? {

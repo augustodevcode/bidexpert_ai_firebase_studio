@@ -1,6 +1,5 @@
 // Configuração global para testes
 import { expect, afterEach, vi } from 'vitest';
-import '@testing-library/jest-dom';
 
 // Polyfills for jsdom
 if (typeof ResizeObserver === 'undefined') {

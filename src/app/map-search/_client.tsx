@@ -17,10 +17,8 @@ import { Search, User, Heart, X } from 'lucide-react';
 import type { Lot, Auction, PlatformSettings, DirectSaleOffer, LotCategory } from '@/types';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getSellers } from '@/app/admin/sellers/actions';
 import BidExpertFilter, { type ActiveFilters } from '@/components/BidExpertFilter';
 import {
   resolveDatasetFromParam,
@@ -268,21 +266,21 @@ function MapSearchPageContent() {
     setIsLoading(true);
 
     try {
-      const [auctionsResult, lotsResult, settingsResult, directSalesResult, categoriesResult, sellersResult] = await Promise.allSettled([
-        getAuctions(true),
-        getLots(undefined, true),
-        getPlatformSettings(),
-        getDirectSaleOffers(),
-        getLotCategories(),
-        getSellers(true),
+      const shouldLoadAuctions = searchType === 'auctions';
+      const shouldLoadLots = searchType === 'lots';
+      const shouldLoadDirectSales = searchType === 'direct_sale';
+
+      const [auctionsResult, lotsResult, directSalesResult, categoriesResult] = await Promise.allSettled([
+        shouldLoadAuctions ? getAuctions(true) : Promise.resolve([]),
+        shouldLoadLots ? getLots(undefined, true) : Promise.resolve([]),
+        shouldLoadDirectSales ? getDirectSaleOffers() : Promise.resolve([]),
+        getLotCategories(true),
       ]);
 
       const auctionsSource = auctionsResult.status === 'fulfilled' ? auctionsResult.value : [];
       const lotsSource = lotsResult.status === 'fulfilled' ? lotsResult.value : [];
-      const settingsSource = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
       const directSalesSource = directSalesResult.status === 'fulfilled' ? directSalesResult.value : [];
       const categoriesSource = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
-      const sellersSource = sellersResult.status === 'fulfilled' ? sellersResult.value : [];
 
       const auctions = Array.isArray(auctionsSource)
         ? auctionsSource
@@ -296,11 +294,6 @@ function MapSearchPageContent() {
           ? ((lotsSource as { lots?: Lot[] }).lots ?? [])
           : []);
 
-      const settings =
-        typeof settingsSource === 'object' && settingsSource !== null && 'success' in settingsSource
-          ? ((settingsSource as { success?: boolean; settings?: PlatformSettings | null }).settings ?? null)
-          : (settingsSource as PlatformSettings | null);
-
       const directSales = Array.isArray(directSalesSource)
         ? directSalesSource
         : (typeof directSalesSource === 'object' && directSalesSource !== null && 'offers' in directSalesSource
@@ -308,7 +301,6 @@ function MapSearchPageContent() {
           : []);
 
       const categories = Array.isArray(categoriesSource) ? categoriesSource : [];
-      const sellers = Array.isArray(sellersSource) ? sellersSource : [];
 
       const shouldUseFallbackDataset =
         auctions.length === 0 &&
@@ -320,10 +312,9 @@ function MapSearchPageContent() {
       const failedSources: string[] = [];
       if (auctionsResult.status === 'rejected') failedSources.push('leilões');
       if (lotsResult.status === 'rejected') failedSources.push('lotes');
-      if (settingsResult.status === 'rejected') failedSources.push('configurações');
       if (directSalesResult.status === 'rejected') failedSources.push('venda direta');
 
-      if (failedSources.length === 4) {
+      if (failedSources.length === 3) {
         throw new Error('Todas as fontes de dados falharam.');
       }
 
@@ -334,7 +325,7 @@ function MapSearchPageContent() {
       setAllAuctions(auctions);
       setAllLots(lotsWithFallback);
       setAllDirectSales(directSales);
-      setPlatformSettings(settings || null);
+      setPlatformSettings(platformSettings || null);
 
       /* ── Build filter data: categories, locations, sellers ── */
       setAllCategories(categories as LotCategory[]);
@@ -348,8 +339,7 @@ function MapSearchPageContent() {
       });
       setUniqueLocations(Array.from(locationSet).sort());
 
-      const sellerNames = sellers.map((s: any) => s.name || s.companyName || '').filter(Boolean);
-      setUniqueSellers(Array.from(new Set(sellerNames)).sort() as string[]);
+      setUniqueSellers([]);
 
       /* ── Trigger fitBounds after data loads so map zooms to items ── */
       setTimeout(() => setFitBoundsSignal((prev) => prev + 1), 300);
@@ -358,7 +348,7 @@ function MapSearchPageContent() {
         auctions,
         lots: lotsWithFallback,
         directSales,
-        settings: settings || null,
+        settings: platformSettings || null,
       });
     } catch (err) {
       console.error('[MAP SEARCH] Error fetching datasets:', err);
@@ -366,7 +356,7 @@ function MapSearchPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [platformSettings, searchType]);
 
   useEffect(() => {
     if (!warmCacheRef.current) {

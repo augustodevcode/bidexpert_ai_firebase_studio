@@ -408,7 +408,7 @@ export default function LotDetailClientContent({
       {
         id: 'edit-lot',
         label: 'Editar Lote',
-        href: `/admin/lots/${lot.publicId || lot.id}/edit`,
+        href: `/admin/lots/${lot.id}/edit`,
         icon: Pencil,
         dataAiId: 'floating-action-edit-lot',
       },
