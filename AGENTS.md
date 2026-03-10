@@ -1,5 +1,27 @@
 # Diretrizes Globais para Agentes
 
+# 🚫 CAUSAS-RAIZ CRÍTICAS (ANTI-REINCIDÊNCIA)
+## 1. Serialização BigInt/Decimal em Next.js
+Nunca passe objetos Prisma diretamente para componentes client-side. Sempre converta BigInt para string e Decimal para Number antes de renderizar.
+
+## 2. Compatibilidade Prisma MySQL ↔ PostgreSQL
+Valide queries Prisma em ambos schemas. Nunca use filtros/campos não presentes no Postgres. Relações são PascalCase e case-sensitive.
+
+## 3. Isolamento de Ambientes e Branches
+Sempre use Git Worktree com porta dedicada e branch isolada. Nunca testar ou alterar diretamente em main/demo-stable sem PR aprovado.
+
+## 4. Proteção de Deploy e PR
+Todo PR deve incluir prints Playwright, link de relatório, e cenário validado. Nunca mergear sem aprovação explícita.
+
+## 5. Seed de Dados e Testes Automatizados
+Sempre usar credenciais canônicas do seed, verificar seed antes de testes, garantir cobertura total de tabelas e colunas.
+
+## 6. Diagnóstico Avançado e Observabilidade
+Sempre monitorar logs do browser e servidor, usar tags de telemetria Playwright, nunca corrigir testes sem analisar causa-raiz.
+
+## 7. Regras de Negócio Consolidadas
+Sempre consultar REGRAS_NEGOCIO_CONSOLIDADO.md antes de alterar lógica de negócio. Regras do arquivo têm precedência.
+
 > **🚀 PRIORIDADE MÁXIMA:** Antes de qualquer implementação, siga o **Workflow de Desenvolvimento Paralelo** em `.agent/workflows/parallel-development.md`
 
 Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriamente as instruções contidas no arquivo mestre:

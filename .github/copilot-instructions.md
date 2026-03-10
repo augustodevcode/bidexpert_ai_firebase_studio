@@ -1,5 +1,28 @@
 # 🌲 WORKFLOW OBRIGATÓRIO: Isolamento com Git Worktree
 
+# 🚫 CAUSAS-RAIZ CRÍTICAS (ANTI-REINCIDÊNCIA)
+## 1. Serialização BigInt/Decimal em Next.js
+Nunca passe objetos Prisma diretamente para componentes client-side. Sempre converta BigInt para string e Decimal para Number antes de renderizar.
+
+## 2. Compatibilidade Prisma MySQL ↔ PostgreSQL
+Valide queries Prisma em ambos schemas. Nunca use filtros/campos não presentes no Postgres. Relações são PascalCase e case-sensitive.
+
+## 3. Isolamento de Ambientes e Branches
+Sempre use Git Worktree com porta dedicada e branch isolada. Nunca testar ou alterar diretamente em main/demo-stable sem PR aprovado.
+
+## 4. Proteção de Deploy e PR
+Todo PR deve incluir prints Playwright, link de relatório, e cenário validado. Nunca mergear sem aprovação explícita.
+
+## 5. Seed de Dados e Testes Automatizados
+Sempre usar credenciais canônicas do seed, verificar seed antes de testes, garantir cobertura total de tabelas e colunas.
+
+## 6. Diagnóstico Avançado e Observabilidade
+Sempre monitorar logs do browser e servidor, usar tags de telemetria Playwright, nunca corrigir testes sem analisar causa-raiz.
+
+## 7. Regras de Negócio Consolidadas
+Sempre consultar REGRAS_NEGOCIO_CONSOLIDADO.md antes de alterar lógica de negócio. Regras do arquivo têm precedência.
+
+
 > **REGRA CRÍTICA DE MÁXIMA PRIORIDADE:** Este workflow DEVE ser seguido por TODOS os agentes AI (Copilot, GitHub Chat, etc.) ANTES de iniciar qualquer implementação, alteração ou correção no projeto.
 
 ## Objetivo do Workflow Paralelo
