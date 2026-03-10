@@ -527,9 +527,17 @@ export class LotService {
                 LotStagePrice: true,
                 AssetsOnLots: {
                     include: {
-                        Asset: true
+                        Asset: {
+                            include: {
+                                AssetMedia: {
+                                    include: { MediaItem: true },
+                                    orderBy: { displayOrder: 'asc' }
+                                }
+                            }
+                        }
                     }
                 },
+                CoverImage: true,
                 LotRisk: true,
                 LotDocument: {
                     orderBy: { displayOrder: 'asc' }
@@ -783,9 +791,17 @@ export class LotService {
                 LotStagePrice: true,
                 AssetsOnLots: {
                     include: {
-                        Asset: true
+                        Asset: {
+                            include: {
+                                AssetMedia: {
+                                    include: { MediaItem: true },
+                                    orderBy: { displayOrder: 'asc' }
+                                }
+                            }
+                        }
                     }
                 },
+                CoverImage: true,
                 _count: {
                     select: { Bid: true }
                 }

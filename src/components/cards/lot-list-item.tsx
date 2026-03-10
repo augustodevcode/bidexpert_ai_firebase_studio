@@ -58,7 +58,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
     return Array.from(new Set(triggers));
   }, [lot.endDate, lot.bidsCount, lot.isFeatured]);
 
-  const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : `https://picsum.photos/seed/${lot.id}/600/400`;
+  const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : `https://placehold.co/600x400.png?text=${encodeURIComponent(lot.title || 'Lote')}`;
 
   const IconComponent = auctionTypeDisplay?.icon;
   const isCompact = density === 'compact';
