@@ -1,0 +1,154 @@
+# ==============================================================================
+# GitHub Action: Criar PR demo-stable → main
+# ==============================================================================
+# Objetivo: Criar (ou atualizar) automaticamente um Pull Request promovendo
+#           todos os commits de demo-stable para main.
+#
+# Trigger: Manual (workflow_dispatch) — execute via Actions → Run workflow
+# ==============================================================================
+
+name: Criar PR demo-stable → main
+
+on:
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: 'Criar como rascunho (Draft PR)?'
+        required: false
+        default: 'false'
+        type: string
+
+jobs:
+  create-pr:
+    name: 🔀 Criar PR demo-stable → main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: 📥 Checkout com histórico completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📡 Buscar branches remotas
+        run: |
+          git fetch origin main:refs/remotes/origin/main
+          git fetch origin demo-stable:refs/remotes/origin/demo-stable
+
+      - name: 🔍 Verificar divergência
+        id: divergence
+        run: |
+          AHEAD=$(git rev-list --count origin/main..origin/demo-stable)
+          DEMO_SHA=$(git rev-parse origin/demo-stable)
+          MAIN_SHA=$(git rev-parse origin/main)
+
+          echo "ahead=${AHEAD}"         >> $GITHUB_OUTPUT
+          echo "demo_sha=${DEMO_SHA}"   >> $GITHUB_OUTPUT
+          echo "main_sha=${MAIN_SHA}"   >> $GITHUB_OUTPUT
+
+          echo "============================================"
+          echo "📊 demo-stable vs main"
+          echo "  main HEAD:        ${MAIN_SHA:0:8}"
+          echo "  demo-stable HEAD: ${DEMO_SHA:0:8}"
+          echo "  Commits pendentes: ${AHEAD}"
+          echo "============================================"
+
+          if [ "${AHEAD}" -eq 0 ]; then
+            echo "✅ demo-stable já está sincronizado com main. Nenhum PR necessário."
+          fi
+
+      - name: 🔀 Criar ou atualizar PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ahead   = ${{ steps.divergence.outputs.ahead }};
+            const demoSha = '${{ steps.divergence.outputs.demo_sha }}'.substring(0, 8);
+            const mainSha = '${{ steps.divergence.outputs.main_sha }}'.substring(0, 8);
+            const isDraft = '${{ github.event.inputs.draft }}' === 'true';
+
+            if (ahead === 0) {
+              core.notice('demo-stable já está sincronizado com main. Nenhum PR necessário.');
+              return;
+            }
+
+            const prTitle = `🔀 Sync: demo-stable → main (${ahead} commit(s))`;
+
+            // Primeiros 30 commits para o corpo do PR
+            const { execSync } = require('child_process');
+            const recentCommits = execSync(
+              'git log --oneline origin/main..origin/demo-stable | head -30',
+              { encoding: 'utf8' }
+            ).trim();
+
+            const moreCommits = ahead > 30
+              ? `\n\n> ⚠️ Exibindo apenas os 30 commits mais recentes de ${ahead} total.`
+              : '';
+
+            const prBody = [
+              `## 🔀 Sincronização \`demo-stable\` → \`main\``,
+              ``,
+              `Este PR foi criado automaticamente pelo workflow **Criar PR demo-stable → main**.`,
+              ``,
+              `### 📊 Resumo`,
+              ``,
+              `| | SHA |`,
+              `|---|---|`,
+              `| \`main\` HEAD | \`${mainSha}\` |`,
+              `| \`demo-stable\` HEAD | \`${demoSha}\` |`,
+              `| Commits pendentes | **${ahead}** |`,
+              ``,
+              `### 📤 Commits recentes em \`demo-stable\` (fora do \`main\`)`,
+              ``,
+              `\`\`\``,
+              recentCommits,
+              `\`\`\`${moreCommits}`,
+              ``,
+              `### ✅ Ação Requerida`,
+              ``,
+              `Revise os commits listados acima e aprove o merge para promover as mudanças`,
+              `de \`demo-stable\` para \`main\` (produção).`,
+              ``,
+              `> Gerado automaticamente em: ${new Date().toISOString()}`,
+            ].join('\n');
+
+            // Verificar se já existe PR aberto de demo-stable → main
+            const { data: existingPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:demo-stable`,
+              base: 'main',
+            });
+
+            if (existingPRs.length > 0) {
+              const pr = existingPRs[0];
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                title: prTitle,
+                body: prBody,
+              });
+              const msg = `PR #${pr.number} atualizado: ${pr.html_url}`;
+              console.log(msg);
+              core.notice(msg);
+              core.summary.addRaw(`## 🔀 PR Atualizado\n\n[#${pr.number} — ${prTitle}](${pr.html_url})\n`);
+              await core.summary.write();
+            } else {
+              const { data: newPR } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: prTitle,
+                body: prBody,
+                head: 'demo-stable',
+                base: 'main',
+                draft: isDraft,
+              });
+              const msg = `PR #${newPR.number} criado: ${newPR.html_url}`;
+              console.log(msg);
+              core.notice(msg);
+              core.summary.addRaw(`## 🔀 PR Criado\n\n[#${newPR.number} — ${prTitle}](${newPR.html_url})\n`);
+              await core.summary.write();
+            }
