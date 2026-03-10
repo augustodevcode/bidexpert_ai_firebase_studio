@@ -85,9 +85,13 @@ jobs:
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          NEXT_PUBLIC_DEFAULT_TENANT: prod
+          NEXT_PUBLIC_ENVIRONMENT: production
 
   migrate:
     name: 🗃️ Database Schema Push & Seed (Optional)
