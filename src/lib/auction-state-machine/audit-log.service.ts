@@ -32,7 +32,7 @@ export async function createStateAuditLog(
     // Mapear action string para audit_logs_action enum
     const actionEnum = mapActionToEnum(entry.action);
 
-    await (tx as PrismaClient).audit_logs.create({
+    await (tx as unknown as Record<string, any>).auditLog.create({
       data: {
         entityType: entry.entityType,
         entityId: entry.entityId,

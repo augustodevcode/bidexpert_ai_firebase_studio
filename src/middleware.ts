@@ -92,12 +92,9 @@ async function resolveTenantFromRequest(
   const normalizedHost = effectiveHost.toLowerCase();
   const hostWithoutPort = normalizedHost.replace(/:\d+$/, ''); // Remove porta
 
-  console.log(`[resolveTenantFromRequest] hostname='${hostname}', forwardedHost='${forwardedHost}', effectiveHost='${effectiveHost}', hostWithoutPort='${hostWithoutPort}'`);
-
   // 1. Check for localhost subdomain pattern: [subdomain].localhost or [subdomain].localhost:port
   // This supports demo.localhost:3000, crm.localhost:9002, etc.
   const localhostSubdomainMatch = hostWithoutPort.match(/^([a-z0-9-]+)\.localhost$/i);
-  console.log(`[resolveTenantFromRequest] localhostSubdomainMatch:`, localhostSubdomainMatch);
   if (localhostSubdomainMatch) {
     const subdomain = normalizeTenantToken(localhostSubdomainMatch[1]);
     if (!subdomain) {
@@ -245,10 +242,6 @@ export async function middleware(req: NextRequest) {
   // Obtém a sessão do usuário (se logado)
   const session = await getSession();
   
-  // DEBUG: Log session state
-  console.log(`[Middleware] Resolution: tenantId='${resolution.tenantId}', subdomain='${resolution.subdomain}'`);
-  console.log(`[Middleware] Session: ${session ? `tenantId='${session.tenantId}', userId='${session.userId}'` : 'null'}`);
-  
   // O tenant da URL/subdomain SEMPRE tem precedência para garantir isolamento multi-tenant correto.
   // A sessão só é usada para validar se o usuário logado pertence ao tenant acessado.
   // Se a URL resolve para um subdomain/tenant específico, esse é o tenant ativo.
@@ -258,8 +251,6 @@ export async function middleware(req: NextRequest) {
   // Se a resolução retornou um slug (não numérico), mantém para lookup posterior
   // Se retornou LANDLORD_ID, e usuário tem sessão de outro tenant, mantém landlord
   // Isso garante que demo.localhost sempre use tenant "demo" (depois resolvido para ID 3)
-  
-  console.log(`[Middleware] Active Tenant ID set to: '${activeTenantId}'`);
   
   // Prepara headers para a requisição
   const requestHeaders = new Headers(req.headers);
