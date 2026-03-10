@@ -91,10 +91,14 @@ jobs:
       - name: 🏗️ Build
         run: npm run build
         env:
-          DATABASE_URL: ${{ secrets.HML_DATABASE_URL }}
+          POSTGRES_PRISMA_URL: ${{ secrets.HML_POSTGRES_PRISMA_URL || secrets.HML_DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.HML_POSTGRES_URL_NON_POOLING || secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.HML_POSTGRES_PRISMA_URL || secrets.HML_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-hml-secret-key-at-least-32-chars-long!' }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.HML_APP_URL }}
+          NEXT_PUBLIC_DEFAULT_TENANT: hml
+          NEXT_PUBLIC_ENVIRONMENT: hml
 
   # ============================================================================
   # JOB 2: Database Schema Push & Seed (condicional)
