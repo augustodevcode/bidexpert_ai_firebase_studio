@@ -1,5 +1,15 @@
 // Configuração global para testes
 import { expect, afterEach, vi } from 'vitest';
+
+// Set required environment variables before any module imports
+// These are dummy values used ONLY for unit testing — they do not connect to a real DB.
+// They exist solely to prevent Prisma from throwing during module initialization.
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'mysql://vitest-placeholder:placeholder@localhost:3306/test_db_no_connection';
+}
+if (!process.env.SESSION_SECRET) {
+  process.env.SESSION_SECRET = 'vitest-session-secret-placeholder-at-least-32-chars!!';
+}
 import '@testing-library/jest-dom';
 
 // Polyfills for jsdom
