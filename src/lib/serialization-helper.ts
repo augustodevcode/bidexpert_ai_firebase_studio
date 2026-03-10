@@ -10,6 +10,11 @@ export function sanitizeResponse<T>(data: T): T {
     return data;
   }
 
+  // BigInt primitives have typeof 'bigint' (not 'object'), so check before the object block
+  if (typeof data === 'bigint') {
+    return data.toString() as unknown as T;
+  }
+
   if (typeof data === 'object') {
     if (Array.isArray(data)) {
       return data.map(item => sanitizeResponse(item)) as unknown as T;
@@ -20,13 +25,7 @@ export function sanitizeResponse<T>(data: T): T {
       (data as any) instanceof Decimal || 
       (typeof (data as any).toNumber === 'function' && typeof (data as any).toFixed === 'function')
     ) {
-      console.error('Sanitizing Decimal (value):', (data as any).toString()); // Debug
       return (data as any).toNumber() as unknown as T;
-    }
-
-    // Check if it's a BigInt
-    if (typeof data === 'bigint') {
-      return data.toString() as unknown as T;
     }
 
     // Check if it's a Date

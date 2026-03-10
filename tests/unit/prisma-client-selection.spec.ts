@@ -11,7 +11,9 @@ import { describe, expect, it, vi } from 'vitest';
 describe('Prisma client selection', () => {
   it('seleciona demoPrisma quando subdomínio é demo', async () => {
     vi.resetModules();
-    process.env.DATABASE_URL_DEMO = 'mysql://user:pass@localhost:3306/bidexpert_demo';
+    // Set DATABASE_URL required for Prisma client initialization
+    process.env.DATABASE_URL = 'mysql://user:pass@localhost:3306/bidexpert_dev';
+    process.env.POSTGRES_PRISMA_URL = 'postgresql://user:pass@localhost:5432/bidexpert_demo';
 
     const { getPrismaClientBySubdomain, demoPrisma, mainPrisma } = await import('../../src/lib/prisma');
     const client = getPrismaClientBySubdomain('demo');
@@ -21,7 +23,7 @@ describe('Prisma client selection', () => {
 
   it('retorna mainPrisma para subdomínios não demo', async () => {
     vi.resetModules();
-    process.env.DATABASE_URL_DEMO = 'mysql://user:pass@localhost:3306/bidexpert_demo';
+    process.env.DATABASE_URL = 'mysql://user:pass@localhost:3306/bidexpert_dev';
 
     const { getPrismaClientBySubdomain, mainPrisma } = await import('../../src/lib/prisma');
     const client = getPrismaClientBySubdomain('bidexpert');
@@ -31,7 +33,8 @@ describe('Prisma client selection', () => {
 
   it('permite seleção explícita via getPrismaInstance', async () => {
     vi.resetModules();
-    process.env.DATABASE_URL_DEMO = 'mysql://user:pass@localhost:3306/bidexpert_demo';
+    process.env.DATABASE_URL = 'mysql://user:pass@localhost:3306/bidexpert_dev';
+    process.env.POSTGRES_PRISMA_URL = 'postgresql://user:pass@localhost:5432/bidexpert_demo';
 
     const { getPrismaInstance, demoPrisma, mainPrisma } = await import('../../src/lib/prisma');
     const client = getPrismaInstance('demo');
