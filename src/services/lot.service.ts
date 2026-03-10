@@ -745,9 +745,7 @@ export class LotService {
       }
 
         if (Array.isArray(lotRisks) && lotRisks.length > 0) {
-          const prismaAny = this.prisma as unknown as Record<string, any>;
-          const lotRiskModel = prismaAny['lotRisk'] ?? prismaAny['lotRisks'];
-          await lotRiskModel.createMany({
+          await (this.prisma as any).lotRisk.createMany({
           data: lotRisks.map((risk: any) => ({
             lotId,
             tenantId: BigInt(tenantId),
@@ -757,6 +755,7 @@ export class LotService {
             mitigationStrategy: risk.mitigationStrategy || null,
             verified: Boolean(risk.verified),
             verifiedAt: risk.verified ? new Date() : null,
+            updatedAt: new Date(),
           })),
         });
       }

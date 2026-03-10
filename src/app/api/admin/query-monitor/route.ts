@@ -19,8 +19,7 @@ export async function GET(req: NextRequest) {
     // Get recent query logs (last 100 queries)
     let queryLogs: any[] = [];
     try {
-      // @ts-ignore - Handle prisma model name mismatch between databases
-      const model = prisma.itsm_query_logs ?? prisma.iTSM_QueryLog;
+      const model = (prisma as any).itsm_query_logs;
       if (model) {
         queryLogs = await model.findMany({
           take: 100,
@@ -80,8 +79,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { query, duration, success, errorMessage, userId, endpoint, method, ipAddress } = body;
 
-    // @ts-ignore
-    await (prisma.itsm_query_logs || prisma.iTSM_QueryLog).create({
+    await (prisma as any).itsm_query_logs.create({
       data: {
         query,
         duration,
