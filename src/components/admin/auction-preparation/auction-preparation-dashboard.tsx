@@ -14,6 +14,7 @@ import {
   Wallet,
   Megaphone,
   BarChart3,
+  GitBranch,
 } from 'lucide-react';
 import { DashboardTab } from './tabs/dashboard-tab';
 import { LottingTab } from './tabs/lotting-tab';
@@ -24,6 +25,7 @@ import { ClosingTab } from './tabs/closing-tab';
 import { FinancialTab } from './tabs/financial-tab';
 import { MarketingTab } from './tabs/marketing-tab';
 import { AnalyticsTab } from './tabs/analytics-tab';
+import { LineageTab } from './tabs/lineage-tab';
 import type { AuctionPreparationData } from '@/types';
 
 interface AuctionPreparationDashboardProps {
@@ -44,6 +46,7 @@ export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboar
     { value: 'closing', label: 'Arremates', icon: HandCoins },
     { value: 'financial', label: 'Financeiro', icon: Wallet },
     { value: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { value: 'lineage', label: 'Linhagem', icon: GitBranch },
   ];
 
   return (
@@ -58,7 +61,7 @@ export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboar
 
       {/* Navigation Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 mb-6">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 xl:grid-cols-10 mb-6">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -115,6 +118,9 @@ export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboar
             habilitations={habilitations}
             userWins={userWins}
           />
+        </TabsContent>
+        <TabsContent value="lineage" className="space-y-4">
+          <LineageTab auctionId={Number(auction.id)} />
         </TabsContent>
       </Tabs>
     </div>
