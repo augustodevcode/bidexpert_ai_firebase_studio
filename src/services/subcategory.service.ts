@@ -31,7 +31,7 @@ export class SubcategoryService {
       ...s,
       id: s.id.toString(),
       parentCategoryId: s.parentCategoryId.toString(),
-      parentCategoryName: s.parentCategory?.name,
+      parentCategoryName: s.LotCategory?.name,
     }));
   }
 

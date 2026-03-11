@@ -13,13 +13,35 @@ import type { LotCategory } from '@/types';
 import { CategoryService } from '@/services/category.service';
 import { sanitizeResponse } from '@/lib/serialization-helper';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import type { CategoryFormValues } from './category-form-schema';
 
 const categoryService = new CategoryService();
 
+function normalizeCategoryFormData(data: CategoryFormValues) {
+  return {
+    name: data.name,
+    description: data.description,
+    logoUrl: data.logoUrl,
+    logoMediaId: data.logoMediaId,
+    dataAiHintLogo: data.dataAiHintLogo,
+    coverImageUrl: data.coverImageUrl,
+    coverImageMediaId: data.coverImageMediaId,
+    dataAiHintCover: data.dataAiHintCover,
+    megaMenuImageUrl: data.megaMenuImageUrl,
+    megaMenuImageMediaId: data.megaMenuImageMediaId,
+    dataAiHintMegaMenu: data.dataAiHintMegaMenu,
+  };
+}
+
 export async function getLotCategories(): Promise<LotCategory[]> {
-  const tenantId = await getTenantIdFromRequest();
-  const result = await categoryService.getCategories(tenantId);
-  return sanitizeResponse(result);
+  try {
+    const tenantId = await getTenantIdFromRequest();
+    const result = await categoryService.getCategories(tenantId);
+    return sanitizeResponse(result);
+  } catch (error) {
+    console.error('[getLotCategories] Error:', error);
+    return [];
+  }
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
@@ -27,9 +49,9 @@ export async function getLotCategory(id: string): Promise<LotCategory | null> {
     return categoryService.getCategoryById(BigInt(id), tenantId);
 }
 
-export async function updateLotCategory(id: string, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean, message: string }> {
+export async function updateLotCategory(id: string, data: CategoryFormValues): Promise<{ success: boolean, message: string }> {
     const tenantId = await getTenantIdFromRequest();
-    const result = await categoryService.updateCategory(BigInt(id), data, tenantId);
+  const result = await categoryService.updateCategory(BigInt(id), normalizeCategoryFormData(data), tenantId);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/categories');
         revalidatePath(`/admin/categories/${id}/edit`);
@@ -37,9 +59,9 @@ export async function updateLotCategory(id: string, data: Partial<Pick<LotCatego
     return result;
 }
 
-export async function createLotCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean, message: string }> {
+export async function createLotCategory(data: CategoryFormValues): Promise<{ success: boolean, message: string }> {
     const tenantId = await getTenantIdFromRequest();
-    const result = await categoryService.createCategory(data, tenantId);
+    const result = await categoryService.createCategory(normalizeCategoryFormData(data), tenantId);
     if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/categories');
     }

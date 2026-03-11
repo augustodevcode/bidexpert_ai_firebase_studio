@@ -11,7 +11,11 @@ import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
-const baseURL = process.env.BASE_URL || 'http://demo.localhost:9015';
+process.env.DATABASE_URL ??= 'mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_demo';
+process.env.ACTIVE_DATABASE_SYSTEM ??= 'MYSQL';
+process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM ??= 'MYSQL';
+
+const baseURL = process.env.BASE_URL || 'http://demo.localhost:9007';
 
 // GlobalSetup é condicional: só roda se o arquivo de auth não existir e SKIP_GLOBAL_SETUP não estiver definido
 const authFile = path.join(__dirname, 'tests/e2e/.auth/admin.json');
@@ -27,6 +31,7 @@ export default defineConfig({
   retries: 0, // Loop externo gerencia retries com correção entre eles
   workers: 1,
   globalSetup,
+  globalTeardown: './tests/e2e/hooks/browser-telemetry-global.ts',
   reporter: [
     ['list'],
     ['./tests/e2e/reporters/ai-friendly-reporter.ts', {

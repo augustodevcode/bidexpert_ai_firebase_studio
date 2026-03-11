@@ -12,6 +12,7 @@ import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';
 import type { DirectSaleOffer, DirectSaleOfferFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { tenantContext } from '@/lib/tenant-context';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const offerService = new DirectSaleOfferService();
 
@@ -24,15 +25,20 @@ export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | 
 }
 
 export async function createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean, message: string, offerId?: string }> {
-  const tenantId = tenantContext.getStore();
-  if (!tenantId) {
-      return { success: false, message: "Tenant ID não encontrado." };
+  try {
+    const tenantId = tenantContext.getStore() || await getTenantIdFromRequest();
+    if (!tenantId) {
+        return { success: false, message: "Tenant ID não encontrado." };
+    }
+    const result = await offerService.createDirectSaleOffer(tenantId, data);
+    if (result.success && process.env.NODE_ENV !== 'test') {
+      revalidatePath('/admin/direct-sales');
+    }
+    return result;
+  } catch (error: any) {
+    console.error('[direct-sales-action] createDirectSaleOffer error:', error);
+    return { success: false, message: `Erro inesperado: ${error.message}` };
   }
-  const result = await offerService.createDirectSaleOffer(tenantId, data);
-  if (result.success && process.env.NODE_ENV !== 'test') {
-    revalidatePath('/admin/direct-sales');
-  }
-  return result;
 }
 
 export async function updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean, message: string }> {

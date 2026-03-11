@@ -47,17 +47,6 @@ export class EmailLogRepository {
 
   async findAll(limit?: number, offset?: number): Promise<EmailLog[]> {
     return await prisma.emailLog.findMany({
-      include: {
-        contactMessage: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            subject: true,
-            createdAt: true,
-          },
-        },
-      },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,

@@ -132,7 +132,7 @@ export async function applyShadowBan(
     });
 
     // Log de auditoria (usando UPDATE pois shadow ban é uma alteração de estado)
-    await prisma.audit_logs.create({
+    await (prisma as any).auditLog.create({
       data: {
         action: 'UPDATE',
         entityType: 'User',
@@ -205,7 +205,7 @@ export async function removeShadowBan(
     });
 
     // Log de auditoria (usando UPDATE pois shadow ban é uma alteração de estado)
-    await prisma.audit_logs.create({
+    await (prisma as any).auditLog.create({
       data: {
         action: 'UPDATE',
         entityType: 'User',

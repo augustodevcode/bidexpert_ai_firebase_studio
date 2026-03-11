@@ -95,7 +95,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
       setIsLoading(true);
       try {
         const [categories, platform, lots, sellers, auctions] = await Promise.all([
-          getLotCategories(),
+          getLotCategories(true),
           getPlatformSettings(),
           getLots(undefined, true), // Public Call
           getSellers(true), // Public Call

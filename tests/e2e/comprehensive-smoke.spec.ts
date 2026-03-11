@@ -1,11 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/browser-telemetry.fixture';
+import { loginAsAdmin } from './helpers/auth-helper';
 
-const ADMIN_EMAIL = process.env.SMOKE_TEST_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.SMOKE_TEST_ADMIN_PASSWORD;
-
-if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  throw new Error('SMOKE_TEST_ADMIN_EMAIL and SMOKE_TEST_ADMIN_PASSWORD must be set');
-}
+const NAVIGATION_TIMEOUT_MS = 15000;
 
 const ADMIN_ROUTES = [
   '/admin/dashboard',
@@ -57,45 +53,37 @@ const PUBLIC_ROUTES = [
   '/search',
 ];
 
+function toScreenshotName(route: string, prefix = ''): string {
+  const baseName = route.replace(/\//g, '-').replace(/^-+/, '') || 'home';
+  return `${prefix}${baseName}`;
+}
+
+async function waitForPageReady(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
+  await expect(page.locator('body')).toBeVisible({ timeout: NAVIGATION_TIMEOUT_MS });
+  await page.waitForLoadState('load', { timeout: NAVIGATION_TIMEOUT_MS }).catch(() => {});
+}
+
 test.describe('Comprehensive Smoke Test - Admin Navigation', () => {
   test('should navigate through all specified screens', async ({ page }) => {
+    test.setTimeout(8 * 60 * 1000);
+    const failedRoutes: Array<{ route: string; reason: string }> = [];
+
     // 1. Visit Public Home
     console.log('Visiting Home Page...');
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
+    await waitForPageReady(page);
     await page.screenshot({ path: 'smoke-screenshots/public-home.png', fullPage: true });
 
     // 2. Visit Login Page
     console.log('Visiting Login Page...');
-    await page.goto('/auth/login');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/auth/login', { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
+    await waitForPageReady(page);
     await page.screenshot({ path: 'smoke-screenshots/login-page.png' });
 
     // 3. Perform Login
     console.log('Performing Login...');
-
-    // Select Tenant if available
-    const tenantSelect = page.locator('[data-ai-id="auth-login-tenant-select"]');
-    if (await tenantSelect.isVisible({ timeout: 10000 })) {
-      await tenantSelect.click();
-      await page.waitForTimeout(1000);
-      // Select the first option or a specific one if known.
-      // Based on previous logs, "Tenant Principal" or just the first option.
-      const firstOption = page.locator('[role="option"]').first();
-      if (await firstOption.isVisible()) {
-        await firstOption.click();
-      }
-    }
-
-    await page.locator('[data-ai-id="auth-login-email-input"]').fill(ADMIN_EMAIL);
-    await page.locator('[data-ai-id="auth-login-password-input"]').fill(ADMIN_PASSWORD);
-    await page.screenshot({ path: 'smoke-screenshots/login-filled.png' });
-
-    await page.locator('[data-ai-id="auth-login-submit-button"]').click();
-
-    // Wait for navigation to dashboard
-    await page.waitForURL(/\/admin|\/dashboard/);
-    await page.waitForLoadState('networkidle');
+    await loginAsAdmin(page, test.info().project.use.baseURL ?? 'http://demo.localhost:9006');
+    await waitForPageReady(page);
     console.log('Login successful, on dashboard.');
     await page.screenshot({ path: 'smoke-screenshots/admin-dashboard.png', fullPage: true });
 
@@ -103,21 +91,23 @@ test.describe('Comprehensive Smoke Test - Admin Navigation', () => {
     for (const route of ADMIN_ROUTES) {
       console.log(`Navigating to ${route}...`);
       try {
-        await page.goto(route, { timeout: 30000 });
-        await page.waitForLoadState('networkidle');
-        // Wait a bit for any dynamic content/grids
-        await page.waitForTimeout(2000);
+        await page.goto(route, { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
+        await waitForPageReady(page);
 
-        const screenshotName = route.replace(/\//g, '-').substring(1);
+        const screenshotName = toScreenshotName(route);
         await page.screenshot({ path: `smoke-screenshots/${screenshotName}.png`, fullPage: true });
 
         // Basic assertion to ensure page loaded
         const bodyText = await page.innerText('body');
         if (bodyText.includes('404') || bodyText.includes('Error')) {
+          const reason = 'body returned 404/Error markers';
+          failedRoutes.push({ route, reason });
           console.warn(`Warning: Route ${route} might have returned an error page.`);
         }
-      } catch (error) {
-        console.error(`Failed to navigate to ${route}:`, error.message);
+      } catch (error: unknown) {
+        const reason = error instanceof Error ? error.message : String(error);
+        failedRoutes.push({ route, reason });
+        console.error(`Failed to navigate to ${route}:`, reason);
       }
     }
 
@@ -125,27 +115,49 @@ test.describe('Comprehensive Smoke Test - Admin Navigation', () => {
     for (const route of PUBLIC_ROUTES) {
         if (route === '/') continue; // Already visited
         console.log(`Navigating to public route ${route}...`);
-        await page.goto(route);
-        await page.waitForLoadState('networkidle');
-        const screenshotName = `public-${route.replace(/\//g, '-').substring(1) || 'home'}`;
-        await page.screenshot({ path: `smoke-screenshots/${screenshotName}.png`, fullPage: true });
+        try {
+          await page.goto(route, { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
+          await waitForPageReady(page);
+          const screenshotName = toScreenshotName(route, 'public-');
+          await page.screenshot({ path: `smoke-screenshots/${screenshotName}.png`, fullPage: true });
+        } catch (error: unknown) {
+          const reason = error instanceof Error ? error.message : String(error);
+          failedRoutes.push({ route, reason });
+          console.error(`Failed to navigate to public route ${route}:`, reason);
+        }
     }
 
     // 6. Test Search Interaction
     console.log('Testing search interaction in /admin/users...');
-    await page.goto('/admin/users');
-    await page.waitForLoadState('networkidle');
+    try {
+      await page.goto('/admin/users', { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
+      await waitForPageReady(page);
 
-    const searchInput = page.locator('input[placeholder*="Buscar"], input[placeholder*="Search"], [data-ai-id*="search-input"]').first();
-    if (await searchInput.isVisible()) {
-        await searchInput.fill('admin');
-        await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
-        await page.screenshot({ path: 'smoke-screenshots/admin-users-search.png', fullPage: true });
-    } else {
-        console.log('Search input not found on /admin/users');
+      const searchInput = page.locator('input[placeholder*="Buscar"], input[placeholder*="Search"], [data-ai-id*="search-input"]').first();
+      if (await searchInput.count()) {
+          await searchInput.fill('admin');
+          await searchInput.press('Enter');
+          await waitForPageReady(page);
+          await page.screenshot({ path: 'smoke-screenshots/admin-users-search.png', fullPage: true });
+      } else {
+          const reason = 'search input not found on /admin/users';
+          failedRoutes.push({ route: '/admin/users#search', reason });
+          console.log('Search input not found on /admin/users');
+      }
+    } catch (error: unknown) {
+      const reason = error instanceof Error ? error.message : String(error);
+      failedRoutes.push({ route: '/admin/users#search', reason });
+      console.error('Failed to exercise search on /admin/users:', reason);
+    }
+
+    if (failedRoutes.length > 0) {
+      console.table(failedRoutes);
     }
 
     console.log('Comprehensive Smoke Test Completed.');
+    expect(
+      failedRoutes,
+      `Routes with failures: ${failedRoutes.map(({ route, reason }) => `${route} => ${reason}`).join(' | ')}`
+    ).toEqual([]);
   });
 });

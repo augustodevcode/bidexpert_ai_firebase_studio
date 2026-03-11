@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { faker as fakerPtBr } from '@faker-js/faker/locale/pt_BR';
+import { attachBrowserConsoleTelemetry } from '../helpers/browser-console-telemetry';
 
 export const BASE_URL = process.env.BASE_URL || 'http://localhost:9002';
 
@@ -10,11 +11,7 @@ export function randomImageUrl(seed?: string, w = 1200, h = 800) {
 
 export async function ensureAdminSession(_page: Page) {
   // Session is already loaded from storageState in playwright.config
-  const page = _page as Page & { __aiConsoleTelemetryAttached?: boolean };
-  if (!page.__aiConsoleTelemetryAttached) {
-    page.on('console', msg => console.log(`${msg.type()}: ${msg.text()}`));
-    page.__aiConsoleTelemetryAttached = true;
-  }
+  attachBrowserConsoleTelemetry(_page);
   return;
 }
 
@@ -124,7 +121,15 @@ export async function selectShadcnByLabel(page: Page, labelText: string | RegExp
   
   // Fallback
   const item = page.locator('div[role="option"], div[role="menuitem"]', { hasText: optionText as any }).first();
-  await item.click({ timeout: 10000 });
+  if (await item.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await item.click({ timeout: 10000 });
+    return;
+  }
+
+  // Close the dropdown before throwing to avoid stale open state
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  throw new Error(`Option matching ${String(optionText)} not found for label ${String(labelText)}`);
 }
 
 /**

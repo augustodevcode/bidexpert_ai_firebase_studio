@@ -32,6 +32,7 @@ model Asset {
   sellerId                   BigInt?
   evaluationValue            Decimal?                @db.Decimal(15, 2)
   imageUrl                   String?
+  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   imageMediaId               BigInt?
   galleryImageUrls           Json?
   mediaItemIds               Json?
@@ -272,6 +273,7 @@ model Auction {
   supportPhone             String?                @db.VarChar(50)
   supportEmail             String?                @db.VarChar(255)
   supportWhatsApp          String?                @db.VarChar(50)
+  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   Auctioneer               Auctioneer?            @relation(fields: [auctioneerId], references: [id])
   LotCategory              LotCategory?           @relation(fields: [categoryId], references: [id])
   City                     City?                  @relation(fields: [cityId], references: [id])
@@ -688,6 +690,7 @@ model Lot {
   discountPercentage       Int?
   additionalTriggers       Json?
   imageUrl                 String?              @db.Text
+  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   imageMediaId             BigInt?
   galleryImageUrls         Json?
   mediaItemIds             Json?
@@ -905,6 +908,9 @@ model MediaItem {
   judicialProcessId BigInt?
   linkedLotIds      Json?
   tenantId          BigInt?
+  AssetCovers       Asset[]            @relation("AssetCoverImage")
+  AuctionCovers     Auction[]          @relation("AuctionCoverImage")
+  LotCovers         Lot[]              @relation("LotCoverImage")
   AssetMedia        AssetMedia[]
   JudicialProcess   JudicialProcess?   @relation(fields: [judicialProcessId], references: [id])
   Tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)

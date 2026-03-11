@@ -38,18 +38,19 @@ type HomeSearchParams = {
 };
 
 export default async function HomePage({ searchParams }: { searchParams?: HomeSearchParams }) {
+    // Mantém a home pública disponível mesmo se um loader específico falhar em preview.
     const [
-        settingsResult,
-        auctionsResult,
-        lotsResult,
-        categoriesResult,
-        sellersResult,
+            settingsResult,
+            auctionsResult,
+            lotsResult,
+            categoriesResult,
+            sellersResult,
     ] = await Promise.allSettled([
-        getPlatformSettings(),
-        getAuctions(true, 10),
-        getLots(undefined, true, 12),
-        getLotCategories(true),
-        getSellers(true),
+            getPlatformSettings(),
+            getAuctions(true, 10),
+            getLots(undefined, true, 12),
+            getLotCategories(true),
+            getSellers(true),
     ]);
 
     const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : null;

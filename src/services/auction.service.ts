@@ -51,6 +51,27 @@ export class AuctionService {
   }
 
   /**
+   * Remove campos fantasma (não-Prisma) de dados de leilão antes de persistir.
+   */
+  private stripPhantomFields(data: Record<string, any>): Record<string, any> {
+    const phantom = [
+      'id', 'auctionStages', 'imageUrl', 'auctionName', 'sellerName',
+      'auctioneerName', 'categoryName', 'Seller', 'Auctioneer', 'LotCategory',
+      'City', 'State', 'Tenant', 'CoverImage', 'JudicialProcess', 'Lot',
+      'lots', 'Bid', 'AuctionStage', 'AuctionHabilitation', 'Review',
+      'Notification', 'LotQuestion', 'LotStagePrice', 'Court',
+      'JudicialBranch', 'JudicialDistrict', 'Auction', 'other_Auction',
+      'seller', 'auctioneer', 'category', 'city', 'state', 'tenant',
+      'coverImage', 'judicialProcess', 'originalAuction', '_count',
+    ];
+    const cleaned = { ...data };
+    for (const key of phantom) {
+      delete cleaned[key];
+    }
+    return cleaned;
+  }
+
+  /**
    * Valida a integridade de um Leilão para verificar se pode ser aberto.
    * Regras verificadas:
    * 1. Possui pelo menos 1 Lote
@@ -430,7 +451,24 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, imageUrl: _imageUrl, imageMediaId, ...restOfData } = data;
+      const {
+        auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId,
+        auctionStages, imageUrl: _imageUrl, imageMediaId,
+        // Strip form-only fields that don't exist in the Prisma Auction model
+        estimatedRevenue: _estimatedRevenue,
+        marketplaceAnnouncementTitle: _marketplaceAnnouncementTitle,
+        automaticBiddingEnabled: _automaticBiddingEnabled,
+        allowInstallmentBids: _allowInstallmentBids,
+        silentBiddingEnabled: _silentBiddingEnabled,
+        allowMultipleBidsPerUser: _allowMultipleBidsPerUser,
+        autoRelistSettings: _autoRelistSettings,
+        ...restOfData
+      } = data;
+      const derivedAddressLink = restOfData.addressLink ?? (
+        restOfData.latitude != null && restOfData.longitude != null
+          ? `https://www.google.com/maps?q=${restOfData.latitude},${restOfData.longitude}`
+          : undefined
+      );
       
       // Gera o publicId FORA da transação para evitar timeout por nested transactions
       const publicId = await generatePublicId(tenantId, 'auction');
@@ -438,12 +476,12 @@ export class AuctionService {
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
         const createdAuction = await tx.auction.create({
           data: {
-            ...(restOfData as any),
+            ...(this.stripPhantomFields(restOfData) as any),
             publicId,
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
-            addressLink,
+            addressLink: derivedAddressLink,
             Auctioneer: { connect: { id: BigInt(auctioneerId) } },
             Seller: { connect: { id: BigInt(sellerId) } },
             LotCategory: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
@@ -498,11 +536,23 @@ export class AuctionService {
       }
       const internalId = BigInt(auctionToUpdate.id);
 
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, cityId, stateId, tenantId: _tenantId, imageUrl: _imageUrl, imageMediaId, ...restOfData } = data;
+      const {
+        categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId,
+        cityId, stateId, tenantId: _tenantId, imageUrl: _imageUrl, imageMediaId,
+        // Strip form-only fields that don't exist in the Prisma Auction model
+        estimatedRevenue: _estimatedRevenue,
+        marketplaceAnnouncementTitle: _marketplaceAnnouncementTitle,
+        automaticBiddingEnabled: _automaticBiddingEnabled,
+        allowInstallmentBids: _allowInstallmentBids,
+        silentBiddingEnabled: _silentBiddingEnabled,
+        allowMultipleBidsPerUser: _allowMultipleBidsPerUser,
+        autoRelistSettings: _autoRelistSettings,
+        ...restOfData
+      } = data;
 
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
-            ...(restOfData as any),
+            ...(this.stripPhantomFields(restOfData) as any),
         };
 
         // Gerar addressLink automaticamente

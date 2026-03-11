@@ -1,9 +1,15 @@
-// src/app/api/[[...slug]]/route.ts
+/**
+ * @fileoverview Catch-all legado para rotas de API ainda não mapeadas.
+ * Mantém respostas de fallback e endpoints de diagnóstico sem inicializar Prisma
+ * no escopo do módulo, o que quebrava o build remoto da Vercel.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { tenantContext } from '@/lib/tenant-context';
 import { getSession } from '@/server/lib/session';
-import { prisma } from '@/lib/prisma';
 import { PrismaClient } from '@prisma/client';
+
+export const dynamic = 'force-dynamic';
 
 async function handler(req: NextRequest) {
   const pathname = req.nextUrl.pathname.replace(/^\/api\//, '').replace(/\/$/, '');
@@ -66,6 +72,7 @@ async function handler(req: NextRequest) {
 
   if (segments[0] === 'system' && segments[1] === 'db' && segments[2] === 'metrics') {
     try {
+      const { prisma } = await import('@/lib/prisma');
       const [tenants, users, auctions, lots, bids] = await Promise.all([
         prisma.tenant.count(),
         prisma.user.count(),

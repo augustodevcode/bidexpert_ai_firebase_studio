@@ -14,6 +14,7 @@ import { getSession } from '@/server/lib/session';
 import { headers } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { shouldAllowDbFallback, getEnvironmentLabel } from '@/lib/db-resilience';
+import { normalizeTenantToken } from '@/lib/tenant-token';
 
 let cachedDefaultTenantId: string | null = null;
 let ensureDefaultTenantPromise: Promise<string> | null = null;
@@ -23,9 +24,7 @@ let ensureDefaultTenantPromise: Promise<string> | null = null;
  * Retorna null quando não for possível resolver.
  */
 async function resolveTenantIdFromHeader(tenantIdFromHeader?: string | null): Promise<string | null> {
-    if (!tenantIdFromHeader) return null;
-
-    const normalized = tenantIdFromHeader.trim().toLowerCase();
+    const normalized = normalizeTenantToken(tenantIdFromHeader);
     if (!normalized) return null;
 
     if (/^\d+$/.test(normalized)) {
@@ -61,11 +60,15 @@ async function resolveTenantIdFromHeader(tenantIdFromHeader?: string | null): Pr
 }
 
 function isDomainFieldUnsupported(error: unknown): boolean {
-    if (error instanceof Prisma.PrismaClientValidationError) {
-        return error.message.includes('Unknown argument `domain`');
+    if (error instanceof Prisma.PrismaClientValidationError ||
+        error instanceof Prisma.PrismaClientKnownRequestError) {
+        return error.message.includes('Unknown argument `domain`') ||
+               error.message.includes('column "domain" does not exist') ||
+               error.message.includes('Invalid `prisma');
     }
     if (error instanceof Error) {
-        return error.message.includes('Unknown argument `domain`');
+        return error.message.includes('Unknown argument `domain`') ||
+               error.message.includes('column "domain" does not exist');
     }
     return false;
 }
@@ -155,6 +158,14 @@ async function ensureDefaultTenant(): Promise<string> {
  */
 export async function getTenantIdFromRequest(isPublicCall = false): Promise<string> {
     if (isPublicCall) {
+        const headersList = headers();
+        const publicTenantIdFromHeader = normalizeTenantToken(headersList.get('x-tenant-id'), { lowercase: false });
+        const resolvedPublicTenantId = await resolveTenantIdFromHeader(publicTenantIdFromHeader);
+
+        if (resolvedPublicTenantId) {
+            return resolvedPublicTenantId;
+        }
+
         try {
             return await ensureDefaultTenant();
         } catch (error) {
@@ -173,7 +184,7 @@ export async function getTenantIdFromRequest(isPublicCall = false): Promise<stri
 
     const session = await getSession();
     const headersList = headers();
-    const tenantIdFromHeader = headersList.get('x-tenant-id');
+    const tenantIdFromHeader = normalizeTenantToken(headersList.get('x-tenant-id'), { lowercase: false });
 
     const resolvedHeaderTenantId = await resolveTenantIdFromHeader(tenantIdFromHeader);
 

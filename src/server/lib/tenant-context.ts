@@ -335,28 +335,38 @@ async function loadTenantBySubdomain(subdomain: string): Promise<ResolvedTenant 
  * Carrega tenant por domínio customizado
  */
 async function loadTenantByDomain(domain: string): Promise<ResolvedTenant | null> {
-  const tenant = await prisma.tenant.findFirst({
-    where: { 
-      domain: domain.toLowerCase(),
-      customDomainVerified: true, // Só resolve se domínio verificado
-    },
-    include: { settings: true },
-  });
-  
-  if (!tenant) return null;
-  
-  return {
-    tenant: {
-      tenantId: tenant.id.toString(),
-      subdomain: tenant.subdomain,
-      domain: tenant.domain,
-      resolutionStrategy: tenant.resolutionStrategy,
-      status: tenant.status,
-      name: tenant.name,
-      isLandlord: tenant.id === BigInt(LANDLORD_ID),
-    },
-    settings: tenant.settings,
-  };
+  try {
+    const tenant = await prisma.tenant.findFirst({
+      where: { 
+        domain: domain.toLowerCase(),
+        customDomainVerified: true,
+      },
+      include: { settings: true },
+    });
+    
+    if (!tenant) return null;
+    
+    return {
+      tenant: {
+        tenantId: tenant.id.toString(),
+        subdomain: tenant.subdomain,
+        domain: tenant.domain,
+        resolutionStrategy: tenant.resolutionStrategy,
+        status: tenant.status,
+        name: tenant.name,
+        isLandlord: tenant.id === BigInt(LANDLORD_ID),
+      },
+      settings: tenant.settings,
+    };
+  } catch (error: unknown) {
+    // Defensive: domain field may not exist in some Prisma client versions
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('Unknown argument `domain`') || msg.includes('column "domain"') || msg.includes('Invalid `prisma')) {
+      console.warn('[loadTenantByDomain] domain field unsupported, skipping custom domain resolution');
+      return null;
+    }
+    throw error;
+  }
 }
 
 // ============================================================================

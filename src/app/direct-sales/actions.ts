@@ -9,14 +9,18 @@
 
 import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';
 import type { DirectSaleOffer } from '@/types';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 const offerService = new DirectSaleOfferService();
 
 export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
-    const offers = await offerService.getDirectSaleOffers();
-    return JSON.parse(JSON.stringify(offers, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value
-    ));
+    try {
+        const offers = await offerService.getDirectSaleOffers();
+        return sanitizeResponse(offers);
+    } catch (error) {
+        console.error('[getDirectSaleOffers] Error:', error);
+        return [];
+    }
 }
 
 export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
