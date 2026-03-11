@@ -249,17 +249,100 @@ export async function loginAs(
   await emailInput.waitFor({ state: 'visible', timeout: 60_000 });
   await page.waitForTimeout(2_000); // Debounce for tenant list to load
 
-  // 3. Select tenant if needed (URL without subdomain)
-  if (!hasSubdomain(baseUrl)) {
+  // 3. Resolve tenant: auto-lock via subdomain OR manual selection
+  if (hasSubdomain(baseUrl)) {
+    // Wait for the subdomain-based tenant auto-lock (React state must be populated
+    // before form submission, otherwise handleLogin rejects with "Selecione um espaço")
+    try {
+      await page.locator('.text-auth-locked-info').waitFor({ state: 'visible', timeout: 15_000 });
+      console.log('[loginAs] Tenant auto-locked via subdomain');
+    } catch {
+      // Fallback: if locked-info text never appears, try setting tenantId manually
+      console.warn('[loginAs] Tenant lock indicator not found — setting tenantId via evaluate');
+      await page.evaluate(() => {
+        const select = document.querySelector<HTMLSelectElement>('[data-ai-id="auth-login-tenant-select"] + select, select[name="tenantId"], select');
+        if (select?.value) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')?.set;
+          nativeInputValueSetter?.call(select, select.value);
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+      await page.waitForTimeout(500);
+    }
+  } else {
     await selectTenant(page, options.customTenant ?? /BidExpert Demo|BidExpert/i);
   }
 
   // 4. Fill credentials
   await emailInput.fill(cred.email);
   await passwordInput.fill(cred.password);
+  await page.waitForTimeout(500); // Let form state settle after fill
 
-  // 5. Submit + wait for redirect
-  await passwordInput.press('Enter');
+  // Debug: log form state before submit
+  const formState = await page.evaluate(() => {
+    const email = (document.querySelector('[data-ai-id="auth-login-email-input"]') as HTMLInputElement)?.value;
+    const pwd = (document.querySelector('[data-ai-id="auth-login-password-input"]') as HTMLInputElement)?.value;
+    const submitBtn = document.querySelector('[data-ai-id="auth-login-submit-button"]') as HTMLButtonElement;
+    const isDisabled = submitBtn?.disabled;
+    const lockedText = document.querySelector('.text-auth-locked-info')?.textContent;
+    const errorText = document.querySelector('.text-auth-error-center')?.textContent;
+    return { email, pwdLen: pwd?.length, isDisabled, lockedText, errorText };
+  });
+  console.log('[loginAs] AUTH-HELPER-V3 Pre-submit state:', JSON.stringify(formState));
+
+  // Capture browser console for errors during submit
+  const browserErrors: string[] = [];
+  page.on('console', msg => {
+    if (msg.type() === 'error') browserErrors.push(msg.text());
+  });
+  page.on('pageerror', err => {
+    browserErrors.push(`PAGE_ERROR: ${err.message}`);
+  });
+
+  // 5. Submit via form.requestSubmit() — more reliable than button click for React forms
+  const responsePromise = page.waitForResponse(
+    resp => resp.url().includes('/auth') && resp.request().method() === 'POST',
+    { timeout: 30_000 }
+  ).catch(() => null);
+
+  // Try requestSubmit first, fallback to button click
+  const submitted = await page.evaluate(() => {
+    const form = document.querySelector('[data-ai-id="auth-login-form"]') as HTMLFormElement;
+    if (form) {
+      form.requestSubmit();
+      return 'requestSubmit';
+    }
+    const btn = document.querySelector('[data-ai-id="auth-login-submit-button"]') as HTMLButtonElement;
+    if (btn) {
+      btn.click();
+      return 'buttonClick';
+    }
+    return 'none';
+  });
+  console.log(`[loginAs] Submit method: ${submitted}`);
+
+  const response = await responsePromise;
+  if (response) {
+    console.log(`[loginAs] Server action response: ${response.status()} ${response.url()}`);
+    try {
+      const body = await response.text();
+      console.log(`[loginAs] Response body (first 500): ${body.substring(0, 500)}`);
+    } catch { /* ignore */ }
+  } else {
+    console.log('[loginAs] No POST response captured after 30s');
+    if (browserErrors.length > 0) {
+      console.log('[loginAs] Browser errors during submit:', browserErrors.join(' | '));
+    }
+    // Check if any error appeared on the page
+    const pageError = await page.evaluate(() => {
+      const err = document.querySelector('.text-auth-error-center');
+      const formErrors = document.querySelectorAll('[role="alert"]');
+      const alerts = Array.from(formErrors).map(el => el.textContent).filter(Boolean);
+      return { pageError: err?.textContent, formAlerts: alerts };
+    });
+    console.log('[loginAs] Page state after submit:', JSON.stringify(pageError));
+  }
+
   await page.waitForURL(waitPattern, { timeout });
 
   console.log(`[loginAs:${role}] ✅ Login OK → ${page.url()}`);

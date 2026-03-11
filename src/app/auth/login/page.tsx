@@ -115,7 +115,7 @@ function LoginPageContent() {
 
         // Fallback to server action if client-side detection fails
         getCurrentTenantContext().then(context => {
-            if (context.tenantId && context.tenantId !== '1') {
+            if (context.tenantId) {
                 setLockedTenantId(context.tenantId);
                 setLockedTenantName(context.tenantName);
                 setSelectedTenantId(context.tenantId);
