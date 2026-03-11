@@ -841,22 +841,6 @@ export class LotService {
       for (const key of phantomLotFields) {
         delete cleanData[key];
       }
-      
-      // Strip phantom fields that don't exist on the Prisma Lot model
-      const phantomLotFields = [
-        'id', 'auctionName', 'properties', 'inheritedMediaFromAssetId',
-        'originalLotId', 'Auction', 'Auctioneer', 'LotCategory', 'City',
-        'State', 'Seller', 'Subcategory', 'Tenant', 'CoverImage', 'User',
-        'AssetsOnLots', 'Bid', 'LotDocument', 'LotQuestion', 'LotRisk',
-        'LotStagePrice', 'Notification', 'Review', 'UserLotMaxBid',
-        'UserWin', 'InstallmentPayment', 'JudicialProcess',
-        'auction', 'seller', 'auctioneer', 'category', 'subcategory',
-        'city', 'state', 'tenant', '_count', 'Lot', 'other_Lot',
-        'tenantId',
-      ];
-      for (const key of phantomLotFields) {
-        delete cleanData[key];
-      }
 
       const updateRelations: Record<string, any> = {};
 
