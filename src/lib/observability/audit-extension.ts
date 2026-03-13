@@ -70,9 +70,8 @@ export const auditExtension = Prisma.defineExtension((client) => {
                 // We use 'prisma.audit_logs.create' but we are inside extension of client.
                 // context.prisma.audit_logs.create ...
                 
-                // This requires a separate non-extended client avoid recursion loop if we audit the audit_logs table!
-                // So we should check if model === 'audit_logs'.
-                if (model === 'audit_logs' || model === 'AuditConfig') return;
+                // This requires a separate non-extended client to avoid recursion loop if we audit the AuditLog table!
+                if (model === 'AuditLog' || model === 'AuditConfig') return;
 
                  // Using a raw query or a separate client reference would be safer to avoid infinite loops
                  // But since we excluded 'audit_logs', it's safe.

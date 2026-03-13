@@ -4,6 +4,7 @@
 import { chromium, FullConfig, Page } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
+import { ensureSeedExecuted, loginAsAdmin, loginAsLawyer } from './helpers/auth-helper';
 
 const DEBUG_DIR = path.resolve(process.cwd(), 'tests/e2e/.debug');
 
@@ -38,7 +39,6 @@ async function globalSetup(config: FullConfig) {
   
   // ─── SEED GATE: Abort early if seed not executed ───
   try {
-    const { ensureSeedExecuted } = await import('./helpers/auth-helper');
     await ensureSeedExecuted(baseURL);
   } catch (seedError: unknown) {
     const errMsg = seedError instanceof Error ? seedError.message : String(seedError);
@@ -54,9 +54,12 @@ async function globalSetup(config: FullConfig) {
 
   // Extract port and protocol to check connectivity on localhost/IP directly
   // This bypasses issues where Node cannot resolve *.localhost
-  const checkUrl = `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`;
+  const isVercelDeployment = baseUrlObject.hostname.includes('vercel.app');
+  const checkUrl = isVercelDeployment
+    ? `${baseURL}/auth/login`
+    : `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`;
 
-  console.log(`🔍 Checking connectivity at ${checkUrl} (bypassing DNS for check)...`);
+  console.log(`🔍 Checking connectivity at ${checkUrl}${isVercelDeployment ? ' (Vercel deployment)' : ' (bypassing DNS for check)'}...`);
   
   // Aguarda o servidor estar realmente acessível antes de prosseguir
   const maxWaitTime = 180000; // 3 minutos
@@ -90,53 +93,26 @@ async function globalSetup(config: FullConfig) {
   
   const browser = await chromium.launch();
   let adminPage: Page | undefined;
+  const vercelShareUrl = process.env.VERCEL_SHARE_URL;
   
   try {
     // 1. Autenticar como ADMIN
     adminPage = await browser.newPage();
-    await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await adminPage.waitForTimeout(5000);
 
-    if (!isDemoTenant) {
-      // Wait for tenant selector to be populated
-      await adminPage.waitForSelector('[data-ai-id="auth-login-tenant-select"]', { timeout: 30000 });
-
-      // Select "Tenant Principal" (ID: 1) which is where admin@bidexpert.com.br belongs
-      try {
-        const tenantSelector = adminPage.locator('[data-ai-id="auth-login-tenant-select"]');
-        await tenantSelector.click();
-        await adminPage.waitForTimeout(1000);
-
-        const tenantOption = adminPage.locator('[role="option"]').filter({ hasText: /Tenant Principal|LANDLORD|Principal/i }).first();
-
-        if (await tenantOption.count() > 0) {
-          await tenantOption.click();
-        } else {
-          const lastOption = adminPage.locator('[role="option"]').last();
-          await lastOption.click();
-        }
-
-        await adminPage.waitForTimeout(1000);
-      } catch (e) {
-        console.log('⚠️  Tenant selector interaction failed, continuing anyway:', e);
-      }
+    // Vercel deployment protection bypass: visit share URL in same context
+    if (vercelShareUrl) {
+      console.log('🔗 Configurando cookie de acesso Vercel via share URL...');
+      await adminPage.goto(vercelShareUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      await adminPage.waitForTimeout(3000);
+      console.log('✅ Cookie Vercel configurado para contexto admin');
     }
-
-    const adminEmailInput = adminPage.locator('[data-ai-id="auth-login-email-input"]');
-    const adminPasswordInput = adminPage.locator('[data-ai-id="auth-login-password-input"]');
-    const adminSubmitButton = adminPage.locator('[data-ai-id="auth-login-submit-button"]');
-    
-    await adminEmailInput.fill(adminEmail);
-    await adminPasswordInput.fill(adminPassword);
-    await adminSubmitButton.click();
-
     try {
-      await adminPage.waitForURL(/\/admin|\/dashboard|\/$/i, { timeout: 60000 });
+      await loginAsAdmin(adminPage, baseURL);
     } catch (e) {
       console.error('❌ Timeout waiting for redirect. Current URL:', adminPage.url());
-      await adminPage.screenshot({ path: 'tests/e2e/.debug/admin-login-failure.png', fullPage: true });
+      await captureDebugArtifacts(adminPage, 'admin-login-failure');
       const content = await adminPage.content();
-      fs.writeFileSync('tests/e2e/.debug/admin-login-failure.html', content);
+      fs.writeFileSync(path.join(DEBUG_DIR, 'admin-login-failure.html'), content);
       throw e;
     }
     await adminPage.waitForTimeout(2000);
@@ -146,12 +122,8 @@ async function globalSetup(config: FullConfig) {
     
     if (!adminSessionCookie) {
       console.warn('⚠️  Session cookie não encontrado, tentando senha alternativa...');
-      await adminPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded' });
-      await adminPage.waitForTimeout(5000);
-      await adminEmailInput.fill(adminEmail);
-      await adminPasswordInput.fill(fallbackAdminPassword);
-      await adminSubmitButton.click();
-      await adminPage.waitForURL(/\/admin|\/dashboard|\/$/i, { timeout: 60000 });
+      process.env.ADMIN_PASSWORD = fallbackAdminPassword;
+      await loginAsAdmin(adminPage, baseURL);
       await adminPage.waitForTimeout(2000);
     }
 
@@ -162,16 +134,14 @@ async function globalSetup(config: FullConfig) {
     if (shouldAuthLawyer) {
       // 2. Autenticar como ADVOGADO
       const lawyerPage = await browser.newPage();
-      await lawyerPage.goto(`${baseURL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await lawyerPage.waitForTimeout(5000);
 
-      const lawyerEmailInput = lawyerPage.locator('[data-ai-id="auth-login-email-input"]');
-      const lawyerPasswordInput = lawyerPage.locator('[data-ai-id="auth-login-password-input"]');
-      const lawyerSubmitButton = lawyerPage.locator('[data-ai-id="auth-login-submit-button"]');
+      // Vercel deployment protection bypass for lawyer context
+      if (vercelShareUrl) {
+        await lawyerPage.goto(vercelShareUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+        await lawyerPage.waitForTimeout(2000);
+      }
 
-      await lawyerEmailInput.fill('advogado@bidexpert.com');
-      await lawyerPasswordInput.fill('Test@12345');
-      await lawyerSubmitButton.click();
+      await loginAsLawyer(lawyerPage, baseURL);
 
       try {
         await lawyerPage.waitForLoadState('networkidle', { timeout: 60000 });

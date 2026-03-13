@@ -75,7 +75,7 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
 # Schema PostgreSQL
-$postgresSchema = "prisma\alternatives\schema.postgresql.prisma"
+$postgresSchema = "prisma\schema.postgresql.prisma"
 if (-not (Test-Path $postgresSchema)) {
     Write-Host "❌ Arquivo $postgresSchema não encontrado!" -ForegroundColor Red
     exit 1

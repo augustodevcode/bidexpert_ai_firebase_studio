@@ -13,10 +13,13 @@ export class BidRepository {
 
     // Transação Atômica com Auditoria e Trava Otimista
     return await prisma.$transaction(async (tx) => {
-      // 1. Auditoria: Seta o usuário da sessão para o pgAudit logar
-      // Proteção contra SQL injection via parâmetros (embora aqui seja numérico/string controlado)
-      await tx.$executeRaw`SET LOCAL app.current_user_id = ${bidderIdStr}`;
-      await tx.$executeRaw`SET LOCAL app.current_tenant_id = ${tenantId?.toString() || '0'}`;
+      // 1. Auditoria: Seta o usuário da sessão para o pgAudit logar (PostgreSQL only)
+      try {
+        await tx.$executeRaw`SET LOCAL app.current_user_id = ${bidderIdStr}`;
+        await tx.$executeRaw`SET LOCAL app.current_tenant_id = ${tenantId?.toString() || '0'}`;
+      } catch {
+        // SET LOCAL is PostgreSQL-specific; silently skip on MySQL
+      }
 
       // 2. Atomic Update aka "Check-and-Set"
       // Tenta atualizar o Lote APENAS SE o novo lance for maior que o preço atual (ou inicial)

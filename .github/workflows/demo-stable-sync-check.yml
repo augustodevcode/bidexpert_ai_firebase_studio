@@ -1,0 +1,345 @@
+# ==============================================================================
+# GitHub Action: Verificação de Sincronização demo-stable → main
+# ==============================================================================
+# Objetivo: Detectar e reportar commits presentes em demo-stable que ainda
+#           não foram mergeados em main.
+#
+# Triggers:
+#   - Push em demo-stable (notificação imediata)
+#   - Agendado (diariamente às 08:00 UTC)
+#   - Manual (workflow_dispatch)
+#
+# O que o workflow faz:
+#   1. Compara demo-stable com main (commits pendentes)
+#   2. Gera relatório detalhado no Step Summary
+#   3. Abre ou atualiza uma issue de rastreamento se houver divergência
+#   4. Falha (exit 1) se houver commits pendentes, para visibilidade no CI
+# ==============================================================================
+
+name: Verificação demo-stable → main
+
+on:
+  push:
+    branches:
+      - demo-stable
+  schedule:
+    # Diariamente às 08:00 UTC (05:00 BRT)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      create_issue:
+        description: 'Abrir/atualizar issue de rastreamento se houver divergência? (true/false)'
+        required: false
+        default: 'true'
+        type: string
+      create_pr:
+        description: 'Criar PR demo-stable → main automaticamente se houver divergência? (true/false)'
+        required: false
+        default: 'true'
+        type: string
+
+jobs:
+  # ============================================================================
+  # JOB: Verificar divergência demo-stable vs main
+  # ============================================================================
+  check-divergence:
+    name: 🔍 Commits em demo-stable fora do main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: 📥 Checkout com histórico completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📡 Buscar branches remotas (garante refs atualizadas)
+        # Necessário para garantir que origin/main e origin/demo-stable
+        # estejam disponíveis mesmo em checkouts de branches de feature.
+        run: |
+          git fetch origin main:refs/remotes/origin/main
+          git fetch origin demo-stable:refs/remotes/origin/demo-stable
+
+      - name: 🔍 Analisar divergência
+        id: divergence
+        run: |
+          AHEAD=$(git rev-list --count origin/main..origin/demo-stable)
+          BEHIND=$(git rev-list --count origin/demo-stable..origin/main)
+          MERGE_BASE=$(git merge-base origin/main origin/demo-stable)
+          DEMO_SHA=$(git rev-parse origin/demo-stable)
+          MAIN_SHA=$(git rev-parse origin/main)
+
+          echo "ahead=${AHEAD}"   >> $GITHUB_OUTPUT
+          echo "behind=${BEHIND}" >> $GITHUB_OUTPUT
+          echo "merge_base=${MERGE_BASE}" >> $GITHUB_OUTPUT
+          echo "demo_sha=${DEMO_SHA}"     >> $GITHUB_OUTPUT
+          echo "main_sha=${MAIN_SHA}"     >> $GITHUB_OUTPUT
+
+          echo "============================================"
+          echo "📊 DIVERGÊNCIA: demo-stable vs main"
+          echo "============================================"
+          echo "✅ main HEAD:        ${MAIN_SHA:0:8}"
+          echo "🟢 demo-stable HEAD: ${DEMO_SHA:0:8}"
+          echo "🔗 Merge base:       ${MERGE_BASE:0:8}"
+          echo "--------------------------------------------"
+          echo "📤 demo-stable tem ${AHEAD} commit(s) NÃO presente(s) em main"
+          echo "📥 main tem ${BEHIND} commit(s) NÃO presente(s) em demo-stable"
+          echo "============================================"
+
+      - name: 📋 Listar commits pendentes
+        id: commits
+        run: |
+          AHEAD=${{ steps.divergence.outputs.ahead }}
+
+          if [ "${AHEAD}" -eq 0 ]; then
+            echo "✅ Nenhum commit pendente. demo-stable está sincronizado com main."
+            echo "list=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Gerar lista de commits (sha curto + mensagem)
+          COMMIT_LIST=$(git log --oneline origin/main..origin/demo-stable)
+          echo "Commits pendentes:"
+          echo "${COMMIT_LIST}"
+
+          # Salvar lista como output (escapando quebras de linha)
+          {
+            echo "list<<EOF"
+            echo "${COMMIT_LIST}"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: 📊 Gerar Step Summary
+        run: |
+          AHEAD=${{ steps.divergence.outputs.ahead }}
+          BEHIND=${{ steps.divergence.outputs.behind }}
+          DEMO_SHA=${{ steps.divergence.outputs.demo_sha }}
+          MAIN_SHA=${{ steps.divergence.outputs.main_sha }}
+          MERGE_BASE=${{ steps.divergence.outputs.merge_base }}
+
+          echo "## 🔍 Verificação demo-stable → main" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Informação | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| \`main\` HEAD | \`${MAIN_SHA:0:8}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`demo-stable\` HEAD | \`${DEMO_SHA:0:8}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Merge base comum | \`${MERGE_BASE:0:8}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commits em demo-stable **fora** do main | **${AHEAD}** |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commits em main **fora** do demo-stable | ${BEHIND} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${AHEAD}" -eq 0 ]; then
+            echo "### ✅ Branches sincronizadas" >> $GITHUB_STEP_SUMMARY
+            echo "Nenhum commit pendente. \`demo-stable\` está sincronizado com \`main\`." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⚠️ ${AHEAD} commit(s) em demo-stable NÃO estão em main" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Estes commits precisam ser mergeados em \`main\` via Pull Request:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            git log --oneline origin/main..origin/demo-stable >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Ação recomendada:** Crie um Pull Request de \`demo-stable\` → \`main\` (ou dispare este workflow com \`create_pr=true\`)." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🐛 Abrir/Atualizar issue de rastreamento
+        if: >
+          steps.divergence.outputs.ahead != '0' &&
+          (
+            github.event_name == 'push' ||
+            github.event_name == 'schedule' ||
+            github.event.inputs.create_issue == 'true'
+          )
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ahead  = ${{ steps.divergence.outputs.ahead }};
+            const behind = ${{ steps.divergence.outputs.behind }};
+            const demoSha = '${{ steps.divergence.outputs.demo_sha }}'.substring(0, 8);
+            const mainSha = '${{ steps.divergence.outputs.main_sha }}'.substring(0, 8);
+            const commitList = ${{ toJSON(steps.commits.outputs.list) }};
+
+            const title = `⚠️ [Sync] demo-stable tem ${ahead} commit(s) pendente(s) em main`;
+
+            const body = [
+              `## ⚠️ Divergência: \`demo-stable\` → \`main\``,
+              ``,
+              `Detectado automaticamente pelo workflow **Verificação demo-stable → main**.`,
+              ``,
+              `| | SHA |`,
+              `|---|---|`,
+              `| \`main\` HEAD | \`${mainSha}\` |`,
+              `| \`demo-stable\` HEAD | \`${demoSha}\` |`,
+              ``,
+              `### 📤 Commits em \`demo-stable\` NÃO presentes em \`main\` (${ahead})`,
+              ``,
+              `\`\`\``,
+              commitList,
+              `\`\`\``,
+              ``,
+              `### ✅ Ação Requerida`,
+              ``,
+              `Crie um Pull Request de \`demo-stable\` → \`main\` para incluir estes commits na produção.`,
+              ``,
+              `> Atualizado em: ${new Date().toISOString()}`,
+            ].join('\n');
+
+            // Procurar issue existente com a label
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'sync-demo-stable-main',
+            });
+
+            if (issues.length > 0) {
+              // Atualizar issue existente
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                title,
+                body,
+              });
+              console.log(`Issue #${issues[0].number} atualizada.`);
+            } else {
+              // Criar nova issue com label de rastreamento
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: 'sync-demo-stable-main',
+                  color: 'e4e669',
+                  description: 'Rastreamento de sincronização demo-stable → main',
+                });
+              } catch (err) {
+                // 422 = label já existe — ignorar; qualquer outro erro deve ser logado
+                if (err.status !== 422) {
+                  core.warning(`Falha ao criar label: ${err.message}`);
+                }
+              }
+
+              const { data: newIssue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['sync-demo-stable-main'],
+              });
+              console.log(`Issue #${newIssue.number} criada.`);
+            }
+
+      - name: ✅ Fechar issue de rastreamento (branches sincronizadas)
+        if: >
+          steps.divergence.outputs.ahead == '0' &&
+          (
+            github.event_name == 'push' ||
+            github.event_name == 'schedule' ||
+            github.event.inputs.create_issue == 'true'
+          )
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'sync-demo-stable-main',
+            });
+
+            for (const issue of issues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '✅ `demo-stable` agora está sincronizado com `main`. Issue fechada automaticamente.',
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+              console.log(`Issue #${issue.number} fechada.`);
+            }
+
+      - name: 🔀 Criar/Atualizar PR demo-stable → main
+        if: >
+          steps.divergence.outputs.ahead != '0' &&
+          (
+            github.event_name == 'push' ||
+            github.event_name == 'schedule' ||
+            github.event.inputs.create_pr == 'true'
+          )
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ahead   = ${{ steps.divergence.outputs.ahead }};
+            const demoSha = '${{ steps.divergence.outputs.demo_sha }}'.substring(0, 8);
+            const mainSha = '${{ steps.divergence.outputs.main_sha }}'.substring(0, 8);
+
+            const prTitle = `🔀 Sync: demo-stable → main (${ahead} commit(s) pendente(s))`;
+
+            const prBody = [
+              `## 🔀 Sincronização \`demo-stable\` → \`main\``,
+              ``,
+              `Este PR foi criado automaticamente pelo workflow **Verificação demo-stable → main**.`,
+              ``,
+              `### 📊 Resumo`,
+              ``,
+              `| | SHA |`,
+              `|---|---|`,
+              `| \`main\` HEAD | \`${mainSha}\` |`,
+              `| \`demo-stable\` HEAD | \`${demoSha}\` |`,
+              `| Commits pendentes | **${ahead}** |`,
+              ``,
+              `### ✅ Ação`,
+              ``,
+              `Revise os commits e aprove o merge para promover as mudanças de \`demo-stable\` para produção (\`main\`).`,
+              ``,
+              `> Gerado automaticamente em: ${new Date().toISOString()}`,
+            ].join('\n');
+
+            // Verificar se já existe PR aberto de demo-stable → main
+            const { data: existingPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:demo-stable`,
+              base: 'main',
+            });
+
+            if (existingPRs.length > 0) {
+              const pr = existingPRs[0];
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                title: prTitle,
+                body: prBody,
+              });
+              console.log(`PR #${pr.number} atualizado: ${pr.html_url}`);
+              core.summary.addRaw(`\n### 🔀 PR Atualizado\n\nPR existente atualizado: [#${pr.number} — ${prTitle}](${pr.html_url})\n`);
+            } else {
+              const { data: newPR } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: prTitle,
+                body: prBody,
+                head: 'demo-stable',
+                base: 'main',
+              });
+              console.log(`PR #${newPR.number} criado: ${newPR.html_url}`);
+              core.summary.addRaw(`\n### 🔀 PR Criado\n\nNovo PR criado: [#${newPR.number} — ${prTitle}](${newPR.html_url})\n`);
+            }
+
+      - name: ❌ Falhar se houver commits pendentes
+        if: steps.divergence.outputs.ahead != '0'
+        run: |
+          echo "::error::demo-stable tem ${{ steps.divergence.outputs.ahead }} commit(s) que não estão em main."
+          echo "::error::Crie um Pull Request de demo-stable → main para sincronizar."
+          exit 1

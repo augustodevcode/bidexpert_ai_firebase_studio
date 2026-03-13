@@ -116,7 +116,10 @@ export class JudicialProcessService {
         ...processData,
         publicId: `PROC-${uuidv4()}`,
         JudicialParty: {
-          create: parties as any,
+          create: (parties || []).map((p: any) => ({
+            ...p,
+            Tenant: { connect: { id: BigInt(tenantId) } },
+          })),
         },
         Tenant: { connect: { id: BigInt(tenantId) } },
       };

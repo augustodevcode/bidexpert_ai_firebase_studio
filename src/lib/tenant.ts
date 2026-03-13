@@ -5,6 +5,7 @@
 'use server';
 
 import { headers } from 'next/headers';
+import { normalizeTenantToken } from '@/lib/tenant-token';
 
 export interface TenantContext {
   tenantId: string;
@@ -19,8 +20,8 @@ export interface TenantContext {
 export async function getCurrentTenant(): Promise<TenantContext | null> {
   try {
     const headersList = await headers();
-    const tenantId = headersList.get('x-tenant-id') || '';
-    const subdomain = headersList.get('x-tenant-subdomain') || '';
+    const tenantId = normalizeTenantToken(headersList.get('x-tenant-id'), { lowercase: false }) || '';
+    const subdomain = normalizeTenantToken(headersList.get('x-tenant-subdomain')) || '';
 
     if (!tenantId && !subdomain) {
       // Em ambiente de desenvolvimento, usar tenant padrão

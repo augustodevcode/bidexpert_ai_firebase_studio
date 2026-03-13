@@ -27,6 +27,8 @@ jobs:
   typecheck:
     name: 🔍 Type Check & Lint
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
     
     steps:
       - name: 📥 Checkout code
@@ -65,6 +67,8 @@ jobs:
   build:
     name: 🏗️ Build Test
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
     
     steps:
       - name: 📥 Checkout code
@@ -90,6 +94,8 @@ jobs:
         env:
           # Dummy values for build (não acessa DB)
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          POSTGRES_PRISMA_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          POSTGRES_URL_NON_POOLING: "postgresql://dummy:dummy@localhost:5432/dummy"
           NEXTAUTH_SECRET: "dummy-secret-for-build-only"
           AUTH_SECRET: "dummy-secret-for-build-only"
           SESSION_SECRET: "ci-session-secret-key-at-least-32-chars-long!"
@@ -101,6 +107,8 @@ jobs:
     name: 🧪 Unit Tests
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
 
     steps:
       - name: 📥 Checkout code

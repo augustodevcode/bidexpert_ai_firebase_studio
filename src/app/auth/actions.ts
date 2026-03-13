@@ -20,6 +20,7 @@ import type { UserProfileWithPermissions } from '@/types';
 import bcryptjs from 'bcryptjs';
 import { prisma as basePrisma } from '@/lib/prisma';
 import { UserService } from '@/services/user.service';
+import { normalizeTenantToken } from '@/lib/tenant-token';
 
 /**
  * Realiza o processo de login de um usuário.
@@ -57,7 +58,7 @@ export async function login(values: { email: string, password?: string, tenantId
     // Strict Tenant Check: If tenantId was NOT provided by user, check the context header
     if (!tenantId) {
         const headersList = await headers();
-        const contextTenantId = headersList.get('x-tenant-id');
+      const contextTenantId = normalizeTenantToken(headersList.get('x-tenant-id'), { lowercase: false });
         const LANDLORD_ID = '1';
 
         if (contextTenantId && contextTenantId !== LANDLORD_ID) {
@@ -69,6 +70,8 @@ export async function login(values: { email: string, password?: string, tenantId
     // NOTA: O modelo Tenant NÃO possui campo 'slug' — apenas 'subdomain'.
     // O middleware passa o subdomain como x-tenant-id (ex: "demo", "dev").
     // Aqui resolvemos o slug/subdomain para o ID numérico real.
+    tenantId = normalizeTenantToken(tenantId, { lowercase: false }) || tenantId;
+
     if (tenantId && isNaN(Number(tenantId))) {
          console.log(`[Login Action] Resolvendo tenantId slug/subdomain '${tenantId}'...`);
          // Busca exata por subdomain
@@ -209,8 +212,8 @@ export async function getAdminUserForDev(): Promise<UserProfileWithPermissions |
  */
 export async function getCurrentTenantContext() {
   const headersList = await headers();
-  const tenantIdOrSlug = headersList.get('x-tenant-id') || '1';
-  const subdomain = headersList.get('x-tenant-subdomain') || '';
+  const tenantIdOrSlug = normalizeTenantToken(headersList.get('x-tenant-id'), { lowercase: false }) || '1';
+  const subdomain = normalizeTenantToken(headersList.get('x-tenant-subdomain')) || '';
   
   console.log(`[getCurrentTenantContext] Headers: x-tenant-id='${tenantIdOrSlug}', x-tenant-subdomain='${subdomain}'`);
   

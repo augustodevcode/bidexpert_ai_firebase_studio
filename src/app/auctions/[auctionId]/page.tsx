@@ -35,7 +35,7 @@ async function getAuctionPageData(id: string): Promise<{
     ] = await Promise.all([
     getPlatformSettings(),
     getAuction(id, true), // Public call
-    getLotCategories(),
+    getLotCategories(true),
     getSellers(true), // Public call
     getAuctioneers(true) // Public call
   ]);

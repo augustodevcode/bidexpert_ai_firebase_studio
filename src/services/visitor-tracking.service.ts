@@ -107,6 +107,7 @@ export class VisitorTrackingService {
           country: geoData.country,
           region: geoData.region,
           city: geoData.city,
+          updatedAt: new Date(),
         }
       });
 
@@ -136,6 +137,7 @@ export class VisitorTrackingService {
           country: geoData.country,
           region: geoData.region,
           city: geoData.city,
+          updatedAt: new Date(),
         }
       });
 

@@ -43,11 +43,11 @@ export class AssetService {
    */
   private mapAssetsWithDetails(assets: any[]): Asset[] {
     return assets.map(asset => {
-        const primaryLot = asset.lots?.[0]?.lot;
+        const primaryLot = asset.AssetsOnLots?.[0]?.Lot;
         const lotInfo = primaryLot ? `Lote ${primaryLot.number || primaryLot.id.toString().substring(0,4)}: ${primaryLot.title}` : null;
         
-        // Destructure lots out to avoid sending it if it contains Decimals
-        const { lots, ...assetWithoutLots } = asset;
+        // Destructure AssetsOnLots out to avoid sending it if it contains Decimals
+        const { AssetsOnLots, LotCategory, Subcategory: SubcategoryRel, JudicialProcess, Seller: SellerRel, ...assetWithoutLots } = asset;
 
         return {
             ...assetWithoutLots,
@@ -63,33 +63,33 @@ export class AssetService {
             longitude: asset.longitude ? Number(asset.longitude) : null,
             totalArea: asset.totalArea ? Number(asset.totalArea) : null,
             builtArea: asset.builtArea ? Number(asset.builtArea) : null,
-            categoryName: asset.category?.name,
-            subcategoryName: asset.subcategory?.name,
-            judicialProcessNumber: asset.judicialProcess?.processNumber,
-            sellerName: asset.seller?.name,
+            categoryName: LotCategory?.name,
+            subcategoryName: SubcategoryRel?.name,
+            judicialProcessNumber: JudicialProcess?.processNumber,
+            sellerName: SellerRel?.name,
             lotInfo: lotInfo,
             occupationStatus: asset.occupationStatus || null,
             occupationNotes: asset.occupationNotes,
             occupationLastVerified: asset.occupationLastVerified,
             occupationUpdatedBy: asset.occupationUpdatedBy ? asset.occupationUpdatedBy.toString() : null,
-            lots: asset.lots ? asset.lots.map((l: any) => ({
+            lots: AssetsOnLots ? AssetsOnLots.map((l: any) => ({
                 ...l,
-                lot: l.lot ? {
-                    ...l.lot,
-                    id: l.lot.id.toString(),
-                    price: l.lot.price ? Number(l.lot.price) : null,
-                    initialPrice: l.lot.initialPrice ? Number(l.lot.initialPrice) : null,
-                    secondInitialPrice: l.lot.secondInitialPrice ? Number(l.lot.secondInitialPrice) : null,
-                    bidIncrementStep: l.lot.bidIncrementStep ? Number(l.lot.bidIncrementStep) : null,
-                    auctionId: l.lot.auctionId?.toString(),
-                    categoryId: l.lot.categoryId?.toString(),
-                    subcategoryId: l.lot.subcategoryId?.toString(),
-                    sellerId: l.lot.sellerId?.toString(),
-                    auctioneerId: l.lot.auctioneerId?.toString(),
-                    cityId: l.lot.cityId?.toString(),
-                    stateId: l.lot.stateId?.toString(),
-                    tenantId: l.lot.tenantId?.toString(),
-                    original_lot_id: l.lot.original_lot_id?.toString(),
+                lot: l.Lot ? {
+                    ...l.Lot,
+                    id: l.Lot.id.toString(),
+                    price: l.Lot.price ? Number(l.Lot.price) : null,
+                    initialPrice: l.Lot.initialPrice ? Number(l.Lot.initialPrice) : null,
+                    secondInitialPrice: l.Lot.secondInitialPrice ? Number(l.Lot.secondInitialPrice) : null,
+                    bidIncrementStep: l.Lot.bidIncrementStep ? Number(l.Lot.bidIncrementStep) : null,
+                    auctionId: l.Lot.auctionId?.toString(),
+                    categoryId: l.Lot.categoryId?.toString(),
+                    subcategoryId: l.Lot.subcategoryId?.toString(),
+                    sellerId: l.Lot.sellerId?.toString(),
+                    auctioneerId: l.Lot.auctioneerId?.toString(),
+                    cityId: l.Lot.cityId?.toString(),
+                    stateId: l.Lot.stateId?.toString(),
+                    tenantId: l.Lot.tenantId?.toString(),
+                    original_lot_id: l.Lot.original_lot_id?.toString(),
                 } : null
             })) : [],
         }
@@ -140,6 +140,7 @@ export class AssetService {
         categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, 
         street, number, complement, neighborhood, zipCode,
         mediaItemIds,
+        imageMediaId, occupationUpdatedBy,
         ...assetData 
       } = data;
 
@@ -181,6 +182,8 @@ export class AssetService {
       if (subcategoryId) (dataToCreate as any).Subcategory = { connect: { id: BigInt(subcategoryId) } };
       if (judicialProcessId) (dataToCreate as any).JudicialProcess = { connect: { id: BigInt(judicialProcessId) } };
       if (sellerId) (dataToCreate as any).Seller = { connect: { id: BigInt(sellerId) } };
+      if (imageMediaId) (dataToCreate as any).CoverImage = { connect: { id: BigInt(imageMediaId) } };
+      if (occupationUpdatedBy) (dataToCreate as any).User = { connect: { id: BigInt(occupationUpdatedBy) } };
       
       // Atualiza locationCity e locationState baseado nos IDs se fornecidos
       if (cityId) {
@@ -232,6 +235,7 @@ export class AssetService {
       const { 
         categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, 
         street, number, complement, neighborhood, zipCode,
+        imageMediaId, occupationUpdatedBy,
         ...assetData 
       } = data;
 
@@ -264,6 +268,8 @@ export class AssetService {
       if (subcategoryId) dataToUpdate.subcategory = { connect: { id: BigInt(subcategoryId) } };
       if (judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
       if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } };
+      if (imageMediaId) (dataToUpdate as any).CoverImage = { connect: { id: BigInt(imageMediaId) } };
+      if (occupationUpdatedBy) (dataToUpdate as any).User = { connect: { id: BigInt(occupationUpdatedBy) } };
       
       // Atualiza locationCity e locationState baseado nos IDs se fornecidos
       if (cityId) {

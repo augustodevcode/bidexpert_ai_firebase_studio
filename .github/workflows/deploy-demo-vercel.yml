@@ -15,18 +15,18 @@ on:
   workflow_dispatch:
     inputs:
       run_migrate:
-        description: 'Executar db push (schema sync)?'
+        description: "Executar db push (schema sync)?"
         required: false
         default: true
         type: boolean
       run_seed:
-        description: 'Executar seed (popular dados)?'
+        description: "Executar seed (popular dados)?"
         required: false
         default: false
         type: boolean
 
 env:
-  PRISMA_SCHEMA: prisma/alternatives/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma/schema.postgresql.prisma
 
 jobs:
   # ============================================================================
@@ -36,23 +36,23 @@ jobs:
     name: 🔨 Build Validation
     runs-on: ubuntu-latest
     environment: Demo
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-        
+
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          
+          node-version: "20"
+          cache: "npm"
+
       - name: 📚 Install dependencies
         run: npm ci
-        
+
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
-        
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
 
@@ -67,24 +67,19 @@ jobs:
           else
             echo "⚠️  Branch hml não encontrada remotamente — verificação de promoção ignorada."
           fi
-        
+
       - name: 🔍 Type Check
         run: npm run typecheck:soft
-        
+
       - name: 🏗️ Build
         run: npm run build
         env:
-          # Neon variables required by prisma/schema.postgresql.prisma.
-          # POSTGRES_PRISMA_URL = pgbouncer-pooled URL (runtime). REQUIRED.
-          # POSTGRES_URL_NON_POOLING = direct URL (Prisma CLI). REQUIRED.
-          # DATABASE_URL kept for backward compatibility with legacy code paths.
-          # Do NOT use PRISMA_DEMO_* here — that integration is SUSPENDED.
-          POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          DATABASE_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          PRISMA_DEMO_POSTGRES_URL: ${{ secrets.PRISMA_DEMO_POSTGRES_URL || secrets.PRISMA_DEMO_PRISMA_DATABASE_URL || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
-          NEXTAUTH_SECRET: ${{ secrets.DEMO_NEXTAUTH_SECRET }}
+          # DEMO = Neon PostgreSQL.
+          # Prefer environment-specific secrets and keep legacy fallbacks during migration.
+          POSTGRES_PRISMA_URL: ${{ secrets.DEMO_POSTGRES_PRISMA_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.DEMO_POSTGRES_URL_NON_POOLING || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DEMO_POSTGRES_PRISMA_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.DEMO_NEXTAUTH_SECRET || secrets.NEXTAUTH_SECRET }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-demo-secret-key-at-least-32-chars-long!' }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.DEMO_APP_URL }}
 
@@ -102,32 +97,30 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       contains(github.event.head_commit.message, '[migrate]') ||
       contains(github.event.head_commit.message, '[seed]')
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-        
+
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          
+          node-version: "20"
+          cache: "npm"
+
       - name: 📚 Install dependencies
         run: npm ci
-        
+
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
-        
+        run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
         env:
-          DATABASE_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          PRISMA_DEMO_POSTGRES_URL: ${{ secrets.PRISMA_DEMO_POSTGRES_URL || secrets.PRISMA_DEMO_PRISMA_DATABASE_URL || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
-        
+          DATABASE_URL: ${{ secrets.DEMO_POSTGRES_PRISMA_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_PRISMA_URL: ${{ secrets.DEMO_POSTGRES_PRISMA_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.DEMO_POSTGRES_URL_NON_POOLING || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+
       - name: 🗃️ Push Schema to Database
         if: >
           (github.event_name == 'workflow_dispatch' && github.event.inputs.run_migrate == 'true') ||
@@ -137,10 +130,10 @@ jobs:
           # Schema operations (db push) REQUIRE a direct (non-pooled) connection.
           # POSTGRES_URL_NON_POOLING must be configured in GitHub secrets.
           # Fallback to DATABASE_URL warns: pooled URLs may fail for migrations.
-          DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          
+          DATABASE_URL: ${{ secrets.DEMO_POSTGRES_URL_NON_POOLING || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_PRISMA_URL: ${{ secrets.DEMO_POSTGRES_PRISMA_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.DEMO_POSTGRES_URL_NON_POOLING || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+
       - name: 🌱 Run Seed (Master Data)
         if: >
           (github.event_name == 'workflow_dispatch' && github.event.inputs.run_seed == 'true') ||
@@ -148,10 +141,10 @@ jobs:
         run: npx tsx scripts/ultimate-master-seed.ts
         env:
           # Seed also benefits from a direct connection to avoid pgbouncer limits.
-          DATABASE_URL: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          
+          DATABASE_URL: ${{ secrets.DEMO_POSTGRES_URL_NON_POOLING || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_PRISMA_URL: ${{ secrets.DEMO_POSTGRES_PRISMA_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.DEMO_POSTGRES_URL_NON_POOLING || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+
       - name: ✅ Verify Data
         run: |
           echo "🔍 Verificando dados inseridos..."
@@ -181,11 +174,38 @@ jobs:
             .finally(() => p.\$disconnect());
           "
         env:
-          DATABASE_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL || secrets.DEMO_DATABASE_URL }}
-          PRISMA_DEMO_POSTGRES_URL: ${{ secrets.PRISMA_DEMO_POSTGRES_URL || secrets.PRISMA_DEMO_PRISMA_DATABASE_URL || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
-          POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DEMO_POSTGRES_PRISMA_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_PRISMA_URL: ${{ secrets.DEMO_POSTGRES_PRISMA_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+          POSTGRES_URL_NON_POOLING: ${{ secrets.DEMO_POSTGRES_URL_NON_POOLING || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL_DIRECT || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL }}
+
+  alias:
+    name: 🔗 Assign Stable DEMO Alias
+    runs-on: ubuntu-latest
+    environment: Demo
+    needs: build
+    if: needs.build.result == 'success'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🔗 Assign stable alias
+        run: node scripts/ci-cd/assign-vercel-branch-alias.mjs
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_BRANCH_NAME: demo-stable
+          VERCEL_TARGET: preview
+          VERCEL_COMMIT_SHA: ${{ github.sha }}
+          VERCEL_ALIAS_DOMAIN: bidexpert-demo-demo-stable.vercel.app
+          VERCEL_ALIAS_MAX_ATTEMPTS: '40'
+          VERCEL_ALIAS_POLL_MS: '15000'
 
   # ============================================================================
   # JOB 3: Status Report
@@ -194,9 +214,9 @@ jobs:
     name: 📢 Status Report
     runs-on: ubuntu-latest
     environment: Demo
-    needs: [build, migrate]
+    needs: [build, migrate, alias]
     if: always()
-    
+
     steps:
       - name: 📢 Status Report
         run: |
@@ -205,10 +225,12 @@ jobs:
           echo "============================================"
           echo "🔨 Build: ${{ needs.build.result }}"
           echo "🗃️ Migrate/Seed: ${{ needs.migrate.result || 'skipped' }}"
+          echo "🔗 Alias: ${{ needs.alias.result || 'skipped' }}"
           echo "============================================"
           if [ "${{ needs.build.result }}" = "success" ]; then
             echo "✅ Build passou! Deploy automático pelo Vercel Git Integration."
             echo "🌐 URL: ${{ secrets.DEMO_APP_URL }}"
+            echo "🌐 Stable Alias: https://bidexpert-demo-demo-stable.vercel.app"
           else
             echo "❌ Build falhou! Verifique os logs."
           fi

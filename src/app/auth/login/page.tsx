@@ -92,8 +92,10 @@ function LoginPageContent() {
             currentSubdomain = pathMatch[1].toLowerCase();
         }
 
-        // Fallback to CI/CD configured default tenant if no subdomain is found (e.g. on Vercel)
-        if (!currentSubdomain && hostname.includes('vercel.app') && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
+        // Fallback: use NEXT_PUBLIC_DEFAULT_TENANT when no subdomain is detected.
+        // This env var is set per-environment in Vercel (hml, demo, production) and
+        // in CI/CD workflows so the correct workspace is auto-locked on each deployment.
+        if (!currentSubdomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
             currentSubdomain = process.env.NEXT_PUBLIC_DEFAULT_TENANT;
         }
 
@@ -113,7 +115,7 @@ function LoginPageContent() {
 
         // Fallback to server action if client-side detection fails
         getCurrentTenantContext().then(context => {
-            if (context.tenantId && context.tenantId !== '1') {
+            if (context.tenantId) {
                 setLockedTenantId(context.tenantId);
                 setLockedTenantName(context.tenantName);
                 setSelectedTenantId(context.tenantId);

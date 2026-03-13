@@ -37,17 +37,16 @@ export class AuditService {
     newValues?: Record<string, any>
   ): Promise<void> {
     try {
-      // @ts-ignore - prisma.audit_logs might be typed differently based on generation
-      await prisma.audit_logs.create({
+      await (prisma as any).auditLog.create({
         data: {
           tenantId: BigInt(tenantId),
           userId: BigInt(userId),
           entityType,
-          action: action as any, // Enum casing might differ
+          action: action as any,
           entityId: BigInt(entityId),
-          changes: changes ? JSON.stringify(changes) : Prisma.JsonNull,
-          oldValues: oldValues ? JSON.stringify(oldValues) : Prisma.JsonNull,
-          newValues: newValues ? JSON.stringify(newValues) : Prisma.JsonNull,
+          changes: changes ?? Prisma.JsonNull,
+          oldValues: oldValues ?? Prisma.JsonNull,
+          newValues: newValues ?? Prisma.JsonNull,
           traceId: traceId || null,
           timestamp: new Date(),
           ipAddress,
@@ -99,8 +98,7 @@ export class AuditService {
       offset = 0,
     } = options;
 
-    // @ts-ignore
-    const logs = await prisma.audit_logs.findMany({
+    const logs = await (prisma as any).auditLog.findMany({
       where: {
         tenantId: BigInt(tenantId),
         ...(userId && { userId: BigInt(userId) }),
@@ -150,8 +148,7 @@ export class AuditService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // @ts-ignore
-    const logs = await prisma.audit_logs.groupBy({
+    const logs = await (prisma as any).auditLog.groupBy({
       by: ['entityType', 'action'],
       where: {
         tenantId: BigInt(tenantId),
@@ -174,8 +171,7 @@ export class AuditService {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
-    // @ts-ignore
-    const result = await prisma.audit_logs.deleteMany({
+    const result = await (prisma as any).auditLog.deleteMany({
       where: {
         tenantId: BigInt(tenantId),
         timestamp: { lt: cutoffDate },

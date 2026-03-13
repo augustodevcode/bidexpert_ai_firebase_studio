@@ -75,7 +75,7 @@ export async function createReportAction(data: {
         name: data.name,
         description: data.description || null,
         definition: data.definition as unknown,
-        createdById: session.user.id,
+        createdById: session.userId,
       },
       tenantId
     );
@@ -387,7 +387,7 @@ export async function copyPredefinedReportAction(reportCode: string, newName: st
         name: newName,
         description: `Cópia de "${predefinedReport.name}". ${predefinedReport.description}`,
         definition: predefinedReport.definition as any,
-        createdById: session.user.id,
+        createdById: session.userId,
       },
       tenantId
     );
