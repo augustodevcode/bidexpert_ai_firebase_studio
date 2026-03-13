@@ -12,8 +12,8 @@ import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
 import { Field } from '@/components/admin-plus/forms/field';
 import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { ADMIN_PLUS_BASE_PATH } from '@/lib/admin-plus/constants';
-import { createVehicleMakeSchema, type CreateVehicleMakeInput } from './schema';
-import { createVehicleMakeAction } from './actions';
+import { createVehicleMakeSchema, type CreateVehicleMakeInput } from '../schema';
+import { createVehicleMakeAction } from '../actions';
 
 export default function NewVehicleMakePage() {
   const router = useRouter();
