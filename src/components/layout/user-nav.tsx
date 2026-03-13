@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck } from 'lucide-react';
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useCallback } from 'react';
@@ -151,6 +151,11 @@ export default function UserNav() {
               <DropdownMenuItem asChild data-ai-id="user-nav-item-admin">
                 <Link href="/admin/dashboard" className="link-menu-user">
                   <ShieldCheck className="icon-menu-user" /> Painel Admin
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild data-ai-id="user-nav-item-admin-plus">
+                <Link href="/admin-plus/dashboard" className="link-menu-user">
+                  <Sparkles className="icon-menu-user" /> Admin Plus
                 </Link>
               </DropdownMenuItem>
             </>

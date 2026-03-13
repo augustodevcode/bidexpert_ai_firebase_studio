@@ -54,9 +54,12 @@ async function globalSetup(config: FullConfig) {
 
   // Extract port and protocol to check connectivity on localhost/IP directly
   // This bypasses issues where Node cannot resolve *.localhost
-  const checkUrl = `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`;
+  const isVercelDeployment = baseUrlObject.hostname.includes('vercel.app');
+  const checkUrl = isVercelDeployment
+    ? `${baseURL}/auth/login`
+    : `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`;
 
-  console.log(`🔍 Checking connectivity at ${checkUrl} (bypassing DNS for check)...`);
+  console.log(`🔍 Checking connectivity at ${checkUrl}${isVercelDeployment ? ' (Vercel deployment)' : ' (bypassing DNS for check)'}...`);
   
   // Aguarda o servidor estar realmente acessível antes de prosseguir
   const maxWaitTime = 180000; // 3 minutos
@@ -90,10 +93,19 @@ async function globalSetup(config: FullConfig) {
   
   const browser = await chromium.launch();
   let adminPage: Page | undefined;
+  const vercelShareUrl = process.env.VERCEL_SHARE_URL;
   
   try {
     // 1. Autenticar como ADMIN
     adminPage = await browser.newPage();
+
+    // Vercel deployment protection bypass: visit share URL in same context
+    if (vercelShareUrl) {
+      console.log('🔗 Configurando cookie de acesso Vercel via share URL...');
+      await adminPage.goto(vercelShareUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      await adminPage.waitForTimeout(3000);
+      console.log('✅ Cookie Vercel configurado para contexto admin');
+    }
     try {
       await loginAsAdmin(adminPage, baseURL);
     } catch (e) {
@@ -122,6 +134,13 @@ async function globalSetup(config: FullConfig) {
     if (shouldAuthLawyer) {
       // 2. Autenticar como ADVOGADO
       const lawyerPage = await browser.newPage();
+
+      // Vercel deployment protection bypass for lawyer context
+      if (vercelShareUrl) {
+        await lawyerPage.goto(vercelShareUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+        await lawyerPage.waitForTimeout(2000);
+      }
+
       await loginAsLawyer(lawyerPage, baseURL);
 
       try {

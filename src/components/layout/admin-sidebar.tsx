@@ -27,6 +27,7 @@ import Image from 'next/image';
 
 const topLevelNavItems = [
     { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+    { title: 'Admin Plus', href: '/admin-plus/dashboard', icon: Zap },
     { title: 'Pregões ao Vivo', href: '/live-dashboard', icon: Tv },
     { title: 'Assistente de Leilão', href: '/admin/wizard', icon: Rocket },
 ];

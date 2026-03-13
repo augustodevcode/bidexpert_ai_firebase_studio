@@ -1,8 +1,8 @@
 # REGRAS DE NEGÓCIO E ESPECIFICAÇÕES - BIDEXPERT
 ## Documento Consolidado e Oficial
 
-**Data:** 13 de Dezembro de 2025  
-**Status:** ✅ Atualizado com implementações de Dezembro/2025 (incluindo ParticipantCard)  
+**Data:** 05 de Março de 2026  
+**Status:** ✅ Atualizado com implementações de Março/2026 (Admin Plus Panel — 63 entidades CRUD)  
 **Próximos passos:** caso haja novas implementações, atualize esse documento com as orientações do usuário
 
 ---
@@ -15,6 +15,9 @@
 5. [Componentes Principais](#componentes-principais)
 6. [Funcionalidades em Desenvolvimento](#funcionalidades-em-desenvolvimento)
 7. [APIs e Integrações](#apis-e-integrações)
+8. [Admin Plus — Painel Administrativo Avançado](#admin-plus--painel-administrativo-avançado)
+9. [Linhagem do Leilão — Visualização de Cadeia de Valor](#linhagem-do-leilão--visualização-de-cadeia-de-valor)
+10. [Testes E2E em Ambientes Vercel (Deployment Protection)](#testes-e2e-em-ambientes-vercel-deployment-protection)
 
 ---
 
@@ -1307,7 +1310,7 @@ Arquivo de testes Playwright: `tests/e2e/search-page-filters.spec.ts`
 ---
 
 **Documento mantido por:** Equipe de Desenvolvimento BidExpert  
-**Última atualização:** 18/12/2025  
+**Última atualização:** 05/03/2026  
 **Changelog**: Ver histórico de resoluções acima para atualizações recentes
 
 ---
@@ -2391,3 +2394,913 @@ Gerencia dados do dashboard do investidor.
 | Dropdown exclui moeda selecionada | `currency-selector-trigger` | Ao abrir, listar apenas moedas não selecionadas |
 
 **Arquivo de Teste:** `tests/e2e/header-search-currency.spec.ts`
+
+---
+
+## Admin Plus — Painel Administrativo Avançado
+
+**Data de Implementação:** Março 2026  
+**Objetivo:** Painel administrativo moderno, padronizado e extensível para gerenciar TODAS as 63 entidades do sistema BidExpert com CRUD completo.  
+**Rota Base:** `/admin-plus` (route group `(adminplus)`)  
+**Total de Entidades:** 63 — organizadas em 13 grupos temáticos e 7 tiers de dependência
+
+---
+
+### RN-AP-001: Arquitetura Geral do Admin Plus
+
+**Decisões Arquiteturais:**
+- Route group Next.js `(adminplus)` isolado do admin legado existente em `(admin)`
+- Cada entidade possui sua própria pasta em `src/app/(adminplus)/admin-plus/[entity-slug]/`
+- Cada entidade segue rigorosamente o **Padrão de 6 Arquivos** (ver RN-AP-002)
+- Layout com sidebar colapsável e header com breadcrumbs via `AdminShell`
+- Todas as operações CRUD acontecem em Sheet lateral (sem navegação para páginas separadas)
+- Listagem com `DataTablePlus` (TanStack Table v8 com paginação server-side)
+
+**Tiers de Dependência (ordem de implementação):**
+
+| Tier | Descrição | Entidades | Quantidade |
+|------|-----------|-----------|------------|
+| 0 | Fundação (sem FK entre si) | States, Courts, DocumentTypes, DataSources, Roles, VehicleMakes | 6 |
+| 1 | Base (dependem só de Tier 0) | Cities, VehicleModels, Tenants, Users | 4 |
+| 2 | Configuração (dependem de Tenants) | PlatformSettings, ThemeSettings, BiddingSettings, MapSettings, NotificationSettings, PaymentGatewaySettings, RealtimeSettings, MentalTriggerSettings, SectionBadgeVisibility, IdMasks, CounterStates, VariableIncrementRules | 12 |
+| 3 | Participantes (dependem de Users/Tenants) | UserOnTenants, Sellers, Auctioneers, BidderProfiles, UsersOnRoles, PasswordResetTokens, UserDocuments | 7 |
+| 4 | Catálogo e Judicial | LotCategories, Subcategories, MediaItems, DocumentTemplates, JudicialDistricts, JudicialBranches, JudicialProcesses, JudicialParties | 8 |
+| 5 | Negócio (dependem de catálogo + participantes) | Auctions, Assets, Lots, AuctionStages, AssetsOnLots, LotDocuments, LotQuestions, LotRisks, LotStagePrices, AuctionHabilitations | 10 + transações |
+| 6 | Transações, Pós-venda, Comunicações, Analytics | Bids, InstallmentPayments, DirectSaleOffers, PaymentMethods, UserLotMaxBids, TenantInvoices, UserWins, WonLots, Notifications, ContactMessages, BidderNotifications, Reviews, Subscribers, AuditLogs, ParticipationHistory, ITSMTickets | 16 |
+
+**Grupos no ENTITY_REGISTRY:**
+
+| Grupo | Entidades | Descrição |
+|-------|-----------|-----------|
+| `foundation` | 6 | Tabelas-base sem FK mútua |
+| `base` | 4 | Dependem apenas de foundation |
+| `config` | 12 | Configurações do tenant |
+| `participants` | 7 | Usuários e perfis |
+| `catalog` | 4 | Categorias, mídia, templates |
+| `judicial` | 4 | Comarcas, varas, processos |
+| `business` | 11 | Leilões, lotes, ativos, praças |
+| `transactions` | 6 | Lances, pagamentos, ofertas |
+| `post-sale` | 2 | Arrematações |
+| `communications` | 5 | Notificações, contatos, avaliações |
+| `analytics` | 2 | Auditoria e histórico |
+| `support` | 1 | Tickets ITSM |
+| `validation` | 0 | Reservado para futuro |
+
+---
+
+### RN-AP-002: Padrão de 6 Arquivos por Entidade
+
+**REGRA OBRIGATÓRIA:** Toda entidade Admin Plus DEVE ter exatamente 6 arquivos em sua pasta:
+
+| # | Arquivo | Diretiva | Responsabilidade |
+|---|---------|----------|-----------------|
+| 1 | `schema.ts` | — | Schemas Zod de criação e edição + arrays de enum const |
+| 2 | `types.ts` | — | Interface `Row` + type `FormValues` derivado do Zod |
+| 3 | `columns.tsx` | `'use client'` | Fábrica `getColumns(onEdit, onDelete)` retornando `ColumnDef<Row>[]` |
+| 4 | `actions.ts` | `'use server'` | Server Actions CRUD (list, create, update, delete) via `createAdminAction` |
+| 5 | `form.tsx` | `'use client'` | Componente `EntityForm` com React Hook Form + Zod, renderizado dentro de `CrudFormShell` (Sheet) |
+| 6 | `page.tsx` | `'use client'` | Página com `DataTablePlus`, `useDataTable`, `ConfirmationDialog` e `PageHeader` |
+
+**Estrutura de Diretório:**
+```
+src/app/(adminplus)/admin-plus/
+├── layout.tsx              ← AdminShell (sidebar + header)
+├── dashboard/page.tsx      ← Dashboard geral
+├── auctions/
+│   ├── schema.ts
+│   ├── types.ts
+│   ├── columns.tsx
+│   ├── actions.ts
+│   ├── form.tsx
+│   └── page.tsx
+├── lots/
+│   ├── schema.ts
+│   ├── types.ts
+│   ├── columns.tsx
+│   ├── actions.ts
+│   ├── form.tsx
+│   └── page.tsx
+└── ... (63 entidades no total)
+```
+
+---
+
+### RN-AP-003: Factory de Server Actions (`createAdminAction`)
+
+**Localização:** `src/lib/admin-plus/create-admin-action.ts`
+
+**Comportamento:**
+1. Valida sessão JWT via `getSession()`
+2. Carrega permissões do usuário para o tenant
+3. Verifica permissão exigida via `hasPermission()`
+4. Executa o handler passando `ActionContext`
+5. Wrapa retorno em `{ success: true, data }` ou `{ success: false, error }`
+6. Chama `sanitizeResponse()` para converter BigInt→string, Decimal→number, Date→ISO
+
+**ActionContext passado ao handler:**
+```typescript
+interface ActionContext {
+  userId: string;
+  tenantId: string;
+  tenantIdBigInt: bigint;
+  permissions: string[];
+}
+```
+
+**REGRA:** O handler NUNCA retorna `{ success: true, data }` — retorna dados brutos e a factory envolve.
+
+**Exemplo de handler:**
+```typescript
+export const listEntities = createAdminAction(
+  'entities:read',
+  async (params: ListParams, ctx: ActionContext) => {
+    const { page, pageSize, sortField, sortDirection, search } = params;
+    const where: Prisma.EntityWhereInput = { tenantId: ctx.tenantIdBigInt };
+    if (search) { where.name = { contains: search }; }
+    const [data, total] = await Promise.all([
+      prisma.entity.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { [sortField]: sortDirection } }),
+      prisma.entity.count({ where }),
+    ]);
+    return { data: data.map(toRow), total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+  }
+);
+```
+
+---
+
+### RN-AP-004: Padrões de Filtro por TenantId
+
+Existem 3 padrões de filtragem multi-tenant implementados:
+
+**Padrão 1 — Standard (maioria das entidades):**
+```typescript
+where: { tenantId: ctx.tenantIdBigInt }
+```
+Usado por: Auctions, Lots, Assets, Users, Sellers, Auctioneers, Bids, etc.
+
+**Padrão 2 — Nullable OR (entidades com tenantId opcional):**
+```typescript
+where: {
+  OR: [
+    { tenantId: ctx.tenantIdBigInt },
+    { tenantId: null }
+  ]
+}
+```
+Usado por: AuditLog, BidderNotification, ITSM_Ticket, PaymentMethod
+
+**Padrão 3 — Global (sem tenantId):**
+```typescript
+// Sem filtro de tenantId
+where: { /* apenas filtros de negócio */ }
+```
+Usado por: DocumentTemplate, ContactMessage
+
+---
+
+### RN-AP-005: Hook `useDataTable` — Duas Assinaturas
+
+**Localização:** `src/hooks/admin-plus/use-data-table.ts`
+
+**Assinatura 1 — Standard (entidades com PK simples BigInt):**
+```typescript
+const table = useDataTable({
+  listAction,
+  createAction,
+  updateAction,
+  deleteAction,
+  entityLabel: 'Leilão',
+  defaultSort: { id: 'startDate', desc: true },
+});
+```
+Inclui: `rows`, `loading`, `pagination`, `sort`, `search`, `handleCreate`, `handleUpdate`, `handleDelete`, `refetch`
+
+**Assinatura 2 — Custom Fetch (entidades com PK composta ou lógica especial):**
+```typescript
+const table = useDataTable({
+  fetchFn: async (params) => { /* custom fetch */ },
+  defaultSort: { field: 'createdAt', direction: 'desc' },
+});
+```
+Usado por: AssetsOnLots, UsersOnRoles, LotStagePrices (PKs compostas), e entidades que precisam de params extras na listagem.
+
+**Padrão de página (page.tsx):**
+```typescript
+'use client';
+export default function EntityPage() {
+  const table = useDataTable({ listAction, createAction, updateAction, deleteAction, entityLabel: 'Entidade', defaultSort: { id: 'createdAt', desc: true } });
+  const [editing, setEditing] = useState<Row | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; row: Row | null }>({ open: false, row: null });
+
+  // ... handlers de open/close/save/delete
+
+  return (
+    <>
+      <PageHeader title="Entidades" onAdd={() => { setEditing(null); setFormOpen(true); }} />
+      <DataTablePlus columns={getColumns(handleEdit, handleDelete)} {...table} />
+      <EntityForm open={formOpen} onOpenChange={setFormOpen} onSubmit={handleSubmit} defaultValues={editing} loading={table.loading} />
+      <ConfirmationDialog open={confirmDialog.open} onConfirm={confirmDelete} onCancel={() => setConfirmDialog({ open: false, row: null })} title="Excluir" description="Tem certeza?" />
+    </>
+  );
+}
+```
+
+---
+
+### RN-AP-006: Padrões de Formulário (`form.tsx`)
+
+**Componente wrapper:** `CrudFormShell` (Sheet lateral com header e footer padronizados)
+
+**Padrões implementados:**
+
+1. **FK Select com carregamento dinâmico:**
+```typescript
+const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
+useEffect(() => {
+  loadParentEntities().then(res => {
+    if (res.success) setOptions(res.data.data.map(r => ({ value: r.id, label: r.name })));
+  });
+}, []);
+// <Select> com options
+```
+
+2. **Campos condicionais (watch + setValue):**
+```typescript
+const watchedField = form.watch('type');
+useEffect(() => {
+  if (watchedField !== 'SPECIFIC_VALUE') form.setValue('conditionalField', '');
+}, [watchedField]);
+```
+
+3. **Checkbox para booleanos:**
+```typescript
+<FormField name="isActive" render={({ field }) => (
+  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+)} />
+```
+
+4. **Select de enum via arrays constantes:**
+```typescript
+// schema.ts
+export const STATUS_OPTIONS = ['ACTIVE', 'INACTIVE', 'SUSPENDED'] as const;
+// form.tsx
+{STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+```
+
+---
+
+### RN-AP-007: Tratamento de Tipos de Dados
+
+| Tipo Prisma | Leitura (toRow) | Escrita (create/update) |
+|-------------|-----------------|------------------------|
+| `BigInt` (id) | `.toString()` | `BigInt(stringId)` |
+| `BigInt` (FK) | `.toString()` | `BigInt(formValue)` |
+| `Decimal` | `.toNumber()` ou `Number()` | `parseFloat(formValue)` |
+| `DateTime` | `.toISOString()` | `new Date(formValue)` |
+| `Json` | `JSON.stringify(field)` | `JSON.parse(formValue)` ou valor direto |
+| `Boolean` | Direto (`true/false`) | Direto |
+| `Int/Float` | Direto ou `.toFixed(2)` | `parseInt()` / `parseFloat()` |
+
+**Função `toRow()`:** Cada `actions.ts` define uma função `toRow(record)` que converte o registro Prisma para a interface `Row` do `types.ts`, aplicando as conversões acima.
+
+**`sanitizeResponse<T>`** (de `src/lib/serialization-helper.ts`): Aplicada automaticamente pela factory `createAdminAction` — converte recursivamente BigInt→string, Decimal→number, Date→ISO string em qualquer resposta.
+
+---
+
+### RN-AP-008: ENTITY_REGISTRY — Registro Central de Metadados
+
+**Localização:** `src/lib/admin-plus/constants.ts`
+
+**Tipo:**
+```typescript
+interface EntityConfig {
+  slug: string;            // URL slug (ex: 'auctions')
+  label: string;           // Singular (ex: 'Leilão')
+  labelPlural: string;     // Plural (ex: 'Leilões')
+  icon: string;            // Nome do ícone Lucide (ex: 'Gavel')
+  group: EntityGroup;      // Grupo temático
+  hasTenantId: boolean;    // Se filtra por tenantId
+  paginationMode: 'server' | 'client';
+  permissions: {
+    read: string;          // Ex: 'auctions:read'
+    create: string;
+    update: string;
+    delete: string;
+  };
+}
+```
+
+**Total:** 63 entidades registradas em 13 grupos.
+
+**Uso:** A sidebar do Admin Plus itera sobre `ENTITY_REGISTRY` para gerar o menu de navegação agrupado. O dashboard usa os dados para exibir contadores. Ferramentas de geração de código podem consultar o registro para scaffolding.
+
+---
+
+### RN-AP-009: Componentes de Infraestrutura
+
+**Componentes compartilhados em `src/components/admin-plus/`:**
+
+| Componente | Arquivo | Responsabilidade |
+|-----------|---------|-----------------|
+| `AdminShell` | `admin-shell.tsx` | Layout com sidebar colapsável + header com breadcrumbs |
+| `DataTablePlus` | `data-table-plus.tsx` | Tabela com 6 subcomponentes: Header, Body, Pagination, Search, Toolbar, BulkActions |
+| `CrudFormShell` | `crud-form-shell.tsx` | Sheet lateral com form header/footer padronizados |
+| `Field` | `field.tsx` | Wrapper para `FormField` com label, error e description |
+| `ConfirmationDialog` | `confirmation-dialog.tsx` | Dialog de confirmação para ações destrutivas |
+| `PageHeader` | `page-header.tsx` | Header de página com título, botão "+ Novo" e breadcrumbs |
+| `EntitySelector` | (via FK Select) | Select com busca para selecionar entidades relacionadas |
+
+**`DataTablePlus` — Recursos:**
+- Paginação server-side com `PAGE_SIZE_OPTIONS: [10, 25, 50, 100]`
+- Ordenação manual por coluna (asc/desc)
+- Busca textual com debounce
+- Seleção de linhas para ações em lote (`BulkAction<T>` com `onExecute`)
+- Toolbar com filtros ativos e contador de resultados
+- Loading skeleton durante fetch
+
+---
+
+### RN-AP-010: Modelo de Permissões
+
+**Permissão SuperAdmin:** `manage_all` — acesso irrestrito a todas as entidades e ações.
+
+**Permissões por recurso (granulares):**
+```
+auctions:read    auctions:create    auctions:update    auctions:delete
+lots:read        lots:create        lots:update        lots:delete
+assets:read      assets:create      assets:update      assets:delete
+users:read       users:create       users:update       users:delete
+settings:read    settings:create    settings:update    settings:delete
+... (padrão [entity]:[action] para todas as 63 entidades)
+```
+
+**Verificação:** `createAdminAction` recebe a permissão exigida como 1º parâmetro e valida via `hasPermission(userProfileWithPermissions, requiredPermission)` antes de executar o handler.
+
+**Fallback:** Se o usuário não tem a permissão exigida, retorna `{ success: false, error: 'Sem permissão' }` sem executar a lógica.
+
+---
+
+### RN-AP-011: `PaginatedResponse<T>` — Contrato de Resposta
+
+**REGRA CRÍTICA:** Todas as actions de listagem retornam o formato FLAT (sem `.meta`):
+
+```typescript
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+```
+
+**PROIBIDO:** Retornar `{ data: T[], meta: { total, page, ... } }`. O `useDataTable` espera o formato flat.
+
+---
+
+### RN-AP-012: Convenções de Nomeação
+
+| Elemento | Padrão | Exemplo |
+|----------|--------|---------|
+| Pasta da entidade | kebab-case (plural) | `auction-stages/` |
+| Slug no ENTITY_REGISTRY | kebab-case (plural) | `auction-stages` |
+| Schema Zod | PascalCase + `Schema` | `AuctionStageCreateSchema` |
+| Interface Row | PascalCase + `Row` | `AuctionStageRow` |
+| Função de colunas | `getColumns` | `getColumns(onEdit, onDelete)` |
+| Server Actions | camelCase + verbo | `listAuctionStages`, `createAuctionStage` |
+| Componente Form | PascalCase + `Form` | `AuctionStageForm` |
+| Componente Page | `default export` | `AuctionStagesPage` |
+| `data-ai-id` | kebab-case | `admin-plus-auction-stages-page` |
+| Permissão | kebab:verbo | `auction-stages:read` |
+
+---
+
+### RN-AP-013: Tratamento `data-ai-id` Obrigatório
+
+Todos os elementos interativos do Admin Plus DEVEM possuir `data-ai-id` para testabilidade:
+
+| Elemento | Padrão de `data-ai-id` |
+|----------|----------------------|
+| Página | `admin-plus-{entity-slug}-page` |
+| Botão Novo | `admin-plus-{entity-slug}-add-btn` |
+| Tabela | `admin-plus-{entity-slug}-table` |
+| Linha da tabela | `admin-plus-{entity-slug}-row-{id}` |
+| Botão Editar (linha) | `admin-plus-{entity-slug}-edit-{id}` |
+| Botão Excluir (linha) | `admin-plus-{entity-slug}-delete-{id}` |
+| Sheet do formulário | `admin-plus-{entity-slug}-form-sheet` |
+| Botão Salvar (form) | `admin-plus-{entity-slug}-save-btn` |
+| Campo do formulário | `admin-plus-{entity-slug}-field-{fieldName}` |
+
+---
+
+### RN-AP-014: BDD — Cenários de Teste Obrigatórios por Entidade
+
+```gherkin
+Feature: CRUD Admin Plus - [NomeEntidade]
+  Como um administrador com permissão [entity]:read/create/update/delete
+  Eu quero gerenciar registros de [NomeEntidade]
+  Para manter o cadastro do sistema atualizado
+
+  Scenario: Listar registros com paginação
+    Given que estou autenticado como admin na rota /admin-plus/[slug]
+    When a página carrega
+    Then a DataTablePlus exibe os registros paginados do tenant atual
+    And o total de registros é exibido no footer da tabela
+
+  Scenario: Criar novo registro via Sheet
+    Given que estou na página de listagem de [NomeEntidade]
+    When clico no botão "+ Novo"
+    Then um Sheet lateral abre com o formulário vazio
+    When preencho os campos obrigatórios e clico em "Salvar"
+    Then o registro é criado e a tabela é atualizada via refetch
+    And um toast de sucesso é exibido
+
+  Scenario: Editar registro existente
+    Given que existe um registro na tabela
+    When clico no botão de editar na linha do registro
+    Then o Sheet abre com os dados preenchidos
+    When altero campos e clico em "Salvar"
+    Then o registro é atualizado e a tabela recarrega
+
+  Scenario: Excluir registro com confirmação
+    Given que existe um registro na tabela
+    When clico no botão de excluir na linha do registro
+    Then um ConfirmationDialog é exibido
+    When confirmo a exclusão
+    Then o registro é removido e a tabela recarrega
+
+  Scenario: Busca textual
+    Given que existem registros na tabela
+    When digito um termo na barra de busca
+    Then a tabela filtra mostrando apenas registros que contêm o termo
+
+  Scenario: Ordenação por coluna
+    Given que a tabela tem registros
+    When clico no header de uma coluna
+    Then os registros são reordenados (asc/desc)
+```
+
+---
+
+### RN-AP-015: Histórico de Implementação
+
+**Março 2026:**
+- ✅ Infraestrutura completa (20+ componentes/hooks/utils)
+- ✅ Shared Form Components (CrudFormShell, Field, EntitySelector)
+- ✅ 63 entidades × 6 arquivos = **378 arquivos de entidade**
+- ✅ ENTITY_REGISTRY com 63 entidades em 13 grupos
+- ✅ Layout AdminShell com sidebar e navegação agrupada
+- ✅ DataTablePlus com paginação server-side, busca, ordenação, bulk actions
+- ✅ createAdminAction factory com validação de sessão/permissão/tenant
+- ✅ sanitizeResponse para serialização segura de BigInt/Decimal/Date
+- ✅ Links de navegação no menu do usuário e sidebar do admin legado (RN-AP-016)
+
+**Próximos Passos:**
+- [ ] Testes E2E para cada entidade (BDD)
+- [ ] Testes unitários para cada `actions.ts`
+- [ ] Dashboard com contadores por grupo
+- [ ] Exportação CSV/Excel nas listagens
+
+---
+
+### RN-AP-016: Navegação e Acesso ao Admin Plus
+
+**Data de Implementação:** Março 2026
+
+**Pontos de Acesso:**
+
+| Origem | Componente | Localização | Ícone | Condição de Visibilidade |
+|--------|-----------|-------------|-------|--------------------------|
+| Menu do Usuário (dropdown) | `user-nav.tsx` | Seção "Administração" | `Sparkles` | `showAdminSectionLinks` = `manage_all` ou role `AUCTION_ANALYST` |
+| Sidebar do Admin Legado | `admin-sidebar.tsx` | `topLevelNavItems` (após "Dashboard") | `Zap` | Visível para todos com acesso ao admin legado |
+| URL Direta | — | Barra de endereço | — | Qualquer usuário autenticado com permissões adequadas |
+
+**URLs de Acesso:**
+- **Dashboard:** `/admin-plus/dashboard`
+- **Entidade específica:** `/admin-plus/[entity-slug]` (ex: `/admin-plus/auctions`, `/admin-plus/lots`)
+- **URL completa (dev):** `http://demo.localhost:<porta>/admin-plus/dashboard`
+
+**Proteção de Acesso:**
+- O layout `(adminplus)/layout.tsx` verifica autenticação via `getCurrentUser()`
+- Usuários não autenticados são redirecionados para `/auth/login?redirect=/admin-plus`
+- Permissões validadas: `manage_all`, `auctions:read`, `lots:read`, `users:read`, `settings:read`
+- Sem nenhuma dessas permissões, uma tela de "Acesso Negado" é renderizada
+
+**Atributos de Testabilidade:**
+- Link no dropdown do usuário: `data-ai-id="user-nav-item-admin-plus"`
+- Link no sidebar admin legado: identificável pelo `href="/admin-plus/dashboard"` no `topLevelNavItems`
+- [ ] Filtros avançados por entidade
+- [ ] Auditoria de alterações (integração com AuditLog)
+
+---
+
+## Linhagem do Leilão — Visualização de Cadeia de Valor
+
+**Data de Implementação:** Março 2026
+**Objetivo:** Aba "Linhagem" no Auction Control Center que exibe a cadeia de valor completa de um leilão como um grafo interativo, permitindo ao administrador visualizar, personalizar e exportar a árvore de relacionamentos do leilão.
+**Rota:** `/admin/auctions/[id]/auction-control-center` → Tab "Linhagem"
+**Biblioteca de Grafos:** ReactFlow (@xyflow/react) + dagre (layout automático)
+
+---
+
+### RN-LIN-001: Arquitetura da Aba Linhagem
+
+**Decisões Arquiteturais:**
+- A aba Linhagem é uma tab dentro do `AuctionPreparationDashboard` (Auction Control Center)
+- Usa ReactFlow para renderizar o grafo de nós e arestas
+- Layout automático hierarchical (top-down) via biblioteca `dagre`
+- Grafo é read-only (nós são draggáveis mas não editáveis inline)
+- Cada tipo de nó possui card visual com ícone, badge de status e contadores
+
+**Tipos de Nó (LineageNodeType):**
+
+| Tipo | Ícone | Descrição |
+|------|-------|-----------|
+| `auction` | Gavel | Nó raiz — o leilão em análise |
+| `seller` | Building2 | Comitente (vendedor) |
+| `auctioneer` | User | Leiloeiro responsável |
+| `category` | Tag | Categoria do lote |
+| `city` | MapPin | Cidade do lote |
+| `state` | Map | Estado (UF) |
+| `lot` | Package | Lote vinculado ao leilão |
+| `stage` | Clock | Praça (etapa) do leilão |
+| `habilitation` | ShieldCheck | Habilitação de participante |
+| `asset` | Box | Ativo (bem) no loteamento |
+| `judicial-process` | Scale | Processo judicial |
+| `judicial-branch` | Landmark | Vara judicial |
+| `court` | Building | Tribunal |
+
+**Estrutura de Arquivos:**
+
+```
+src/
+├── types/auction-lineage.ts                     # Types: LineageNodeType, LineageNodeData, AuctionLineageData, LineageEdge
+├── services/auction-lineage.service.ts           # Service: getAuctionLineage() — busca cadeia completa no Prisma
+├── app/admin/auctions/lineage-actions.ts         # Server Action: fetchAuctionLineageAction()
+└── components/admin/auction-preparation/
+    ├── auction-preparation-dashboard.tsx          # Dashboard com tab "Linhagem"
+    └── tabs/
+        ├── lineage-tab.tsx                        # Tab principal com ReactFlow canvas
+        └── lineage/
+            ├── LineageNode.tsx                     # Custom node component (card com ícone+status+badge)
+            ├── LineageHoverCard.tsx                # HoverCard com detalhes ao passar o mouse
+            ├── LineageEditModal.tsx                # Modal de edição (double-click no nó)
+            ├── LineageThemePanel.tsx               # Popover para customizar cores dos nós
+            ├── LineageExportButton.tsx             # Botão de exportação PNG via html-to-image
+            ├── useLineageGraph.ts                  # Hook: converte LineageData → ReactFlow nodes/edges
+            └── useLineageTheme.ts                  # Hook: gerencia tema de cores persistido em localStorage
+```
+
+---
+
+### RN-LIN-002: Server Action e Service de Dados
+
+**Service (`auction-lineage.service.ts`):**
+- Função `getAuctionLineage(auctionId: number): Promise<AuctionLineageData>`
+- Realiza query Prisma incluindo relações:
+  - Leilão → Lotes → Categorias, Cidades, Estados
+  - Leilão → Praças (AuctionStage)
+  - Leilão → Leiloeiro, Comitente
+  - Lotes → Loteamento → Ativos
+  - Lotes → Habilitações
+  - Processos Judiciais → Vara → Tribunal (se `isJudicial`)
+- Retorna `AuctionLineageData` com arrays de `nodes[]` e `edges[]`
+- Nós raízes (`auction`) conectam-se a filhos diretos; filhos conectam-se a netos
+
+**Server Action (`lineage-actions.ts`):**
+- `fetchAuctionLineageAction(auctionId: number)` — validação de sessão + tenant
+- Retorna `{ success: true, data: AuctionLineageData }` ou `{ success: false, error: string }`
+
+**REGRA:** O service DEVE validar integridade referencial completa antes de incluir nós:
+- Leilão deve existir
+- Cada lote deve ter `categoryId` e `cityId` válidos
+- Praças (AuctionStage) devem estar vinculadas
+- Se `isJudicial = true`, buscar processos judiciais associados
+
+---
+
+### RN-LIN-003: Grafo ReactFlow — Hooks e Layout
+
+**`useLineageGraph` hook:**
+- Converte `AuctionLineageData` em `Node[]` e `Edge[]` do ReactFlow
+- Aplica layout automático via dagre: `rankdir: 'TB'` (top-to-bottom), `nodesep: 80`, `ranksep: 100`
+- Cada nó posicionado pelo dagre com largura/altura padrão (280×100)
+- Edges com `type: 'smoothstep'` e `animated: true`
+
+**`useLineageTheme` hook:**
+- Gerencia mapa de cores `Record<LineageNodeType, LineageNodeColorScheme>`
+- Persiste tema em `localStorage` sob key `bidexpert-lineage-theme`
+- Tema padrão: cores com semântica (azul para leilão, verde para lote, roxo para judicial, etc.)
+- `updateNodeColor(nodeType, colorScheme)` atualiza uma cor e persiste
+- `resetTheme()` restaura defaults
+
+---
+
+### RN-LIN-004: Componentes Visuais
+
+**LineageNode (Custom Node):**
+- Card com: ícone do tipo, label, subtitle, badge de status, contador
+- Cor de fundo, borda, texto e ícone configuráveis via tema
+- `data-ai-id="lineage-node-{nodeType}"` para testabilidade
+- Suporta drag & drop (ReactFlow built-in)
+
+**LineageHoverCard:**
+- Exibe detalhes expandidos ao hover
+- Mostra metadata do nó em formato key-value
+- Popover do shadcn/ui (HoverCard)
+
+**LineageEditModal:**
+- Abre em double-click no nó
+- Exibe informações completas da entidade
+- Link de navegação para a página de edição real da entidade
+- `data-ai-id="lineage-edit-modal"`
+
+**LineageThemePanel:**
+- Popover acionado pelo botão "Cores" na toolbar
+- Lista todos os tipos de nó com swatch de cor editável
+- Permite alterar bg, border, text e iconColor de cada tipo
+- `data-ai-id="lineage-theme-panel"`
+
+**LineageExportButton:**
+- Botão "Exportar" na toolbar
+- Usa `html-to-image` (toPng) para capturar o canvas ReactFlow
+- Gera download de PNG com nome `linhagem-leilao-{id}.png`
+- `data-ai-id="lineage-export-btn"`
+
+---
+
+### RN-LIN-005: Identificadores `data-ai-id` (Testabilidade)
+
+**REGRA OBRIGATÓRIA:** Todos os elementos interativos da aba Linhagem DEVEM possuir `data-ai-id` para facilitar testes E2E.
+
+| Elemento | `data-ai-id` |
+|----------|--------------|
+| Container da aba | `lineage-tab-content` |
+| Canvas ReactFlow | `lineage-reactflow-canvas` |
+| Nó genérico | `lineage-node-{nodeType}` |
+| Botão Resetar Layout | `lineage-reset-layout-btn` |
+| Botão Exportar | `lineage-export-btn` |
+| Botão Cores (tema) | `lineage-theme-btn` |
+| Painel de tema | `lineage-theme-panel` |
+| Modal de edição | `lineage-edit-modal` |
+| Controles do ReactFlow | `lineage-controls` |
+| MiniMap | `lineage-minimap` |
+
+---
+
+### RN-LIN-006: Testes E2E (BDD + Playwright)
+
+**Arquivo de Teste:** `tests/e2e/auction-lineage.spec.ts`
+**Perfil:** Admin (storageState from global-setup)
+**Cenários BDD (8 testes):**
+
+```gherkin
+Feature: Auction Lineage Visualization
+
+  Scenario: View lineage tab
+    Given I am logged in as admin
+    And I navigate to an auction's edit page
+    When I click the "Linhagem" tab
+    Then the ReactFlow canvas should be visible
+
+  Scenario: ReactFlow canvas renders with nodes
+    Given I am on the lineage tab
+    Then at least one lineage node should be rendered
+    And nodes should be visible within the canvas
+
+  Scenario: Nodes have correct data-ai-id attributes
+    Given I am on the lineage tab
+    Then nodes should have data-ai-id attributes matching their types
+
+  Scenario: Theme panel opens with color swatches
+    Given I am on the lineage tab
+    When I click the "Cores" button
+    Then the theme panel popover should open
+    And color swatches should be visible
+
+  Scenario: Reset layout button works
+    Given I am on the lineage tab
+    When I click "Resetar Layout"
+    Then nodes should return to dagre-computed positions
+
+  Scenario: Export button is clickable
+    Given I am on the lineage tab
+    When I click "Exportar"
+    Then the export should start without errors
+
+  Scenario: Double-click node opens edit modal
+    Given I am on the lineage tab
+    When I double-click a node
+    Then the edit modal should open with node details
+
+  Scenario: Controls and minimap are present
+    Given I am on the lineage tab
+    Then ReactFlow controls (zoom in/out/fit) should be visible
+    And the minimap should be present
+```
+
+**Comportamento Graceful Skip:**
+- Se não houver leilão com dados de seed, o teste faz `test.skip(true, 'No auction found')` — sem falha
+- Se lineage data estiver vazia, faz `test.skip(true, 'Lineage data is empty')` — sem falha
+- Isso permite rodar o mesmo arquivo de teste em ambientes com e sem seed
+
+---
+
+### RN-LIN-007: Histórico de Implementação
+
+**Março 2026:**
+- ✅ 11 arquivos implementados (types, service, action, 7 componentes React)
+- ✅ Hook `useLineageGraph` com layout automático dagre
+- ✅ Hook `useLineageTheme` com persistência em localStorage
+- ✅ 8 testes E2E Playwright (BDD) — todos passando
+- ✅ PR #467 merged to demo-stable (squash, SHA: `d100399a`)
+- ✅ PR #460 syn demo-stable → main (merge, SHA: `adb69e5e`)
+- ✅ Deploy verificado no Vercel (demo-stable + main)
+- ✅ E2E 8/8 PASSED no Vercel demo-stable
+
+**Próximos Passos:**
+- [ ] Filtros por tipo de nó (mostrar/ocultar tipos)
+- [ ] Exportação PDF além de PNG
+- [ ] Animação de highlight ao clicar em um nó
+- [ ] Legenda automática com tipos de nó presentes
+- [ ] Persistência de posições customizadas (drag) no servidor
+
+---
+
+## Testes E2E em Ambientes Vercel (Deployment Protection)
+
+**Data de Implementação:** Março 2026
+**Objetivo:** Permitir execução de testes E2E Playwright contra deployments Vercel protegidos por Deployment Protection (SSO/auth), sem desabilitar a proteção.
+
+---
+
+### RN-VERCEL-E2E-001: Problema — Deployment Protection
+
+**Contexto:**
+Vercel ativa por padrão "Deployment Protection" em projetos de equipe (Team). Deployments de preview e, opcionalmente, de produção recebem um gate de autenticação SSO que redireciona visitantes não autenticados para `https://vercel.com/login`.
+
+**Impacto nos Testes:**
+- O Playwright navega para a URL do deploy Vercel
+- Vercel intercepta e redireciona para login SSO
+- A página de login da aplicação nunca carrega
+- Todos os testes falham por timeout
+
+**Solução NÃO Recomendada:**
+- ❌ Desabilitar Deployment Protection no projeto Vercel
+- ❌ Usar passwords compartilhados (inseguro)
+
+---
+
+### RN-VERCEL-E2E-002: Solução — Share URL + Cookie Bypass
+
+**Mecanismo:**
+1. Obter uma **Shareable URL** do Vercel via API (`mcp_com_vercel_ve_get_access_to_vercel_url`)
+2. Configurar a variável de ambiente `VERCEL_SHARE_URL` com essa URL
+3. No `global-setup.ts` (Playwright), antes de fazer login aplicacional:
+   - Navegar até a share URL **na mesma instância de Page** que fará o login
+   - A navegação seta automaticamente o cookie `_vercel_jwt` no browser context
+   - Após isso, o Playwright pode navegar normalmente para qualquer rota do deploy
+
+**Importante — Isolamento de Contexto:**
+- Cada `browser.newPage()` cria um contexto de cookies separado
+- O cookie `_vercel_jwt` deve ser setado na MESMA Page que fará o login
+- Se o global-setup autentica admin e lawyer em Pages separadas, ambas precisam visitar a share URL
+
+**Variáveis de Ambiente:**
+
+| Variável | Descrição | Exemplo |
+|----------|-----------|---------|
+| `BASE_URL` | URL do deploy Vercel alvo | `https://bidexpertaifirebasestudio-xxx.vercel.app` |
+| `VERCEL_SHARE_URL` | URL compartilhável (válida por tempo limitado) | `https://vercel.live/open-feedback/xxx?via=login-wall` |
+| `PLAYWRIGHT_SKIP_WEBSERVER` | Pular inicialização do webserver local | `1` |
+| `PLAYWRIGHT_SKIP_LAWYER` | Pular autenticação do lawyer (se não existir no DB) | `1` |
+
+---
+
+### RN-VERCEL-E2E-003: Alterações no `global-setup.ts`
+
+**Arquivo:** `tests/e2e/global-setup.ts`
+
+**Mudanças implementadas:**
+
+1. **Detecção de deploy Vercel:**
+```typescript
+const isVercelDeployment = baseUrlObject.hostname.includes('vercel.app');
+```
+
+2. **Connectivity check adaptado:**
+```typescript
+const checkUrl = isVercelDeployment
+  ? `${baseURL}/auth/login`
+  : `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`;
+```
+- Em Vercel: usa URL direta (não há localhost)
+- Em local: usa `localhost:PORT` para bypass de DNS `*.localhost`
+
+3. **Cookie de proteção antes do login:**
+```typescript
+const vercelShareUrl = process.env.VERCEL_SHARE_URL;
+
+// Antes do login admin:
+if (vercelShareUrl) {
+  await adminPage.goto(vercelShareUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await adminPage.waitForTimeout(3000);
+}
+
+// Antes do login lawyer (se habilitado):
+if (vercelShareUrl) {
+  await lawyerPage.goto(vercelShareUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await lawyerPage.waitForTimeout(3000);
+}
+```
+
+4. **Skip lawyer via env var:**
+```typescript
+if (process.env.PLAYWRIGHT_SKIP_LAWYER === '1') {
+  console.log('ℹ️  Login do advogado pulado.');
+} else {
+  // ... autenticação completa
+}
+```
+
+---
+
+### RN-VERCEL-E2E-004: Comando Completo de Execução
+
+**Para rodar E2E contra Vercel demo-stable:**
+```powershell
+$env:BASE_URL = "https://bidexpertaifirebasestudio-xxx.vercel.app"
+$env:VERCEL_SHARE_URL = "https://vercel.live/open-feedback/xxx?via=login-wall"
+$env:PLAYWRIGHT_SKIP_WEBSERVER = "1"
+$env:PLAYWRIGHT_SKIP_LAWYER = "1"
+npx playwright test tests/e2e/auction-lineage.spec.ts --config=playwright.config.local.ts --reporter=list --timeout=120000
+```
+
+**Para rodar E2E contra Vercel main (production):**
+```powershell
+$env:BASE_URL = "https://bidexpertaifirebasestudio.vercel.app"
+$env:PLAYWRIGHT_SKIP_WEBSERVER = "1"
+$env:PLAYWRIGHT_SKIP_LAWYER = "1"
+# Production pode não precisar de VERCEL_SHARE_URL se Deployment Protection estiver desabilitada
+npx playwright test tests/e2e/auction-lineage.spec.ts --config=playwright.config.local.ts --reporter=list --timeout=120000
+```
+
+**Observação sobre banco de produção:**
+Se o banco de produção não possuir dados de seed, os testes farão `test.skip` gracefully (sem falha). Isso é by-design.
+
+---
+
+### RN-VERCEL-E2E-005: Middleware Multi-Tenant em Vercel
+
+**Regra:** O `src/middleware.ts` trata URLs `*.vercel.app` como domínio landlord (sem roteamento por subdomínio).
+
+```typescript
+// Trecho relevante do middleware:
+const isVercelApp = host.endsWith('.vercel.app');
+if (isVercelApp) {
+  // Trata como landlord domain — resolve tenant pelo DB default
+}
+```
+
+**Implicação para testes:**
+- Em Vercel, não há subdomínio `demo.` — o tenant é resolvido como default
+- O `auth-helper.ts` detecta ausência de subdomínio e tenta selecionar tenant manualmente
+- Se o tenant selector estiver auto-locked (exibe "BidExpert" ou similar), o login funciona sem seleção manual
+
+---
+
+### RN-VERCEL-E2E-006: Seed Gate em Ambientes Remotos
+
+**Comportamento:**
+- O `global-setup.ts` executa `ensureSeedExecuted(baseUrl)` que faz `GET /api/public/tenants`
+- Em Vercel com Deployment Protection, o fetch pode retornar 401 (sem cookie `_vercel_jwt` pois fetch() não tem o cookie do browser)
+- O código trata gracefully: imprime warning e continua — o login pode funcionar se o DB já tiver dados
+
+```typescript
+try {
+  await ensureSeedExecuted(baseURL);
+} catch (seedError) {
+  console.warn('⚠️ Seed gate check falhou:', seedError.message);
+  console.warn('Continuando setup — o login falhará se seed realmente não existe.');
+}
+```
+
+**REGRA:** Nunca bloquear a execução de testes por falha no seed gate em ambientes Vercel. O gate é informativo, não bloqueante para deploys remotos.
+
+---
+
+### RN-VERCEL-E2E-007: Histórico de Validação
+
+**Março 2026:**
+- ✅ E2E 8/8 PASSED no Vercel demo-stable (preview deployment)
+- ✅ E2E 8/8 SKIPPED no Vercel main (production — banco sem seed, comportamento esperado)
+- ✅ Build READY em ambos os ambientes (demo-stable + main)
+- ✅ Login admin funciona via share URL + cookie bypass
+- ✅ Seed gate opera gracefully em Vercel (warn + continue)
+
+**Próximos Passos:**
+- [ ] Automatizar obtenção de share URL no CI/CD (GitHub Actions)
+- [ ] Popular banco de produção com seed para habilitar E2E completo em main
+- [ ] Implementar retry automático se share URL expirar
+- [ ] Integrar no pipeline: `deploy → get share URL → run E2E → report`
