@@ -1,6 +1,6 @@
 /**
- * @fileoverview Página de configurações Realtime e Feature Flags — Admin Plus.
- * Formulário com 5 seções: Blockchain, Soft Close, Portal Advogado, Estratégias, Feature Flags.
+ * @fileoverview PÃ¡gina de configuraÃ§Ãµes Realtime e Feature Flags â€” Admin Plus.
+ * FormulÃ¡rio com 5 seÃ§Ãµes: Blockchain, Soft Close, Portal Advogado, EstratÃ©gias, Feature Flags.
  */
 'use client';
 
@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Radio, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
 import { Field } from '@/components/admin-plus/forms/field';
 import { Button } from '@/components/ui/button';
@@ -81,7 +81,7 @@ export default function RealtimeSettingsPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar configurações realtime.');
+        toast.error('Erro ao carregar configuraÃ§Ãµes realtime.');
       } finally {
         setLoading(false);
       }
@@ -93,7 +93,7 @@ export default function RealtimeSettingsPage() {
     try {
       const res = await updateRealtimeSettingsAction(values);
       if (res?.success) {
-        toast.success('Configurações realtime salvas com sucesso.');
+        toast.success('ConfiguraÃ§Ãµes realtime salvas com sucesso.');
       } else {
         toast.error(res?.error ?? 'Erro ao salvar.');
       }
@@ -115,10 +115,10 @@ export default function RealtimeSettingsPage() {
 
   return (
     <div data-ai-id="realtime-settings-page">
-      <PageHeader title="Configurações Realtime e Feature Flags" icon={Radio} />
+      <PageHeader title="ConfiguraÃ§Ãµes Realtime e Feature Flags" icon={Radio} />
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
-        {/* ── Blockchain ── */}
+        {/* â”€â”€ Blockchain â”€â”€ */}
         <h3 className="text-base font-semibold">Blockchain</h3>
         <Separator className="mb-4" />
         <div className="grid gap-4 sm:grid-cols-2 mb-6">
@@ -134,7 +134,7 @@ export default function RealtimeSettingsPage() {
           </Field>
         </div>
 
-        {/* ── Soft Close ── */}
+        {/* â”€â”€ Soft Close â”€â”€ */}
         <h3 className="text-base font-semibold">Soft Close (Encerramento Estendido)</h3>
         <Separator className="mb-4" />
         <div className="grid gap-4 sm:grid-cols-2 mb-6">
@@ -145,12 +145,12 @@ export default function RealtimeSettingsPage() {
               data-ai-id="realtime-softclose-enabled"
             />
           </Field>
-          <Field label="Minutos de Extensão">
+          <Field label="Minutos de ExtensÃ£o">
             <Input type="number" min={1} {...form.register('softCloseMinutes', { valueAsNumber: true })} data-ai-id="realtime-softclose-minutes" />
           </Field>
         </div>
 
-        {/* ── Portal do Advogado ── */}
+        {/* â”€â”€ Portal do Advogado â”€â”€ */}
         <h3 className="text-base font-semibold">Portal do Advogado</h3>
         <Separator className="mb-4" />
         <div className="grid gap-4 sm:grid-cols-2 mb-6">
@@ -161,7 +161,7 @@ export default function RealtimeSettingsPage() {
               data-ai-id="realtime-lawyer-portal"
             />
           </Field>
-          <Field label="Modelo de Monetização">
+          <Field label="Modelo de MonetizaÃ§Ã£o">
             <Select
               value={form.watch('lawyerMonetizationModel') ?? 'SUBSCRIPTION'}
               onValueChange={(v) => form.setValue('lawyerMonetizationModel', v, { shouldDirty: true })}
@@ -176,10 +176,10 @@ export default function RealtimeSettingsPage() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Preço Assinatura (centavos)">
+          <Field label="PreÃ§o Assinatura (centavos)">
             <Input type="number" {...form.register('lawyerSubscriptionPrice', { valueAsNumber: true })} data-ai-id="realtime-lawyer-sub-price" />
           </Field>
-          <Field label="Preço Por Uso (centavos)">
+          <Field label="PreÃ§o Por Uso (centavos)">
             <Input type="number" {...form.register('lawyerPerUsePrice', { valueAsNumber: true })} data-ai-id="realtime-lawyer-peruse-price" />
           </Field>
           <Field label="Revenue Share (%)">
@@ -187,11 +187,11 @@ export default function RealtimeSettingsPage() {
           </Field>
         </div>
 
-        {/* ── Estratégias V2 ── */}
-        <h3 className="text-base font-semibold">Estratégias de Comunicação</h3>
+        {/* â”€â”€ EstratÃ©gias V2 â”€â”€ */}
+        <h3 className="text-base font-semibold">EstratÃ©gias de ComunicaÃ§Ã£o</h3>
         <Separator className="mb-4" />
         <div className="grid gap-4 sm:grid-cols-3 mb-6">
-          <Field label="Comunicação">
+          <Field label="ComunicaÃ§Ã£o">
             <Select
               value={form.watch('communicationStrategy')}
               onValueChange={(v) => form.setValue('communicationStrategy', v as 'WEBSOCKET' | 'POLLING', { shouldDirty: true })}
@@ -205,7 +205,7 @@ export default function RealtimeSettingsPage() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Vídeo">
+          <Field label="VÃ­deo">
             <Select
               value={form.watch('videoStrategy')}
               onValueChange={(v) => form.setValue('videoStrategy', v as 'HLS' | 'WEBRTC' | 'DISABLED', { shouldDirty: true })}
@@ -220,7 +220,7 @@ export default function RealtimeSettingsPage() {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Idempotência">
+          <Field label="IdempotÃªncia">
             <Select
               value={form.watch('idempotencyStrategy')}
               onValueChange={(v) => form.setValue('idempotencyStrategy', v as 'SERVER_HASH' | 'CLIENT_UUID', { shouldDirty: true })}
@@ -236,17 +236,17 @@ export default function RealtimeSettingsPage() {
           </Field>
         </div>
 
-        {/* ── Feature Flags ── */}
+        {/* â”€â”€ Feature Flags â”€â”€ */}
         <h3 className="text-base font-semibold">Feature Flags</h3>
         <Separator className="mb-4" />
         <div className="grid gap-4 sm:grid-cols-2">
           {([
-            ['fipeIntegrationEnabled', 'Integração FIPE'],
-            ['cartorioIntegrationEnabled', 'Integração Cartório'],
-            ['tribunalIntegrationEnabled', 'Integração Tribunal'],
+            ['fipeIntegrationEnabled', 'IntegraÃ§Ã£o FIPE'],
+            ['cartorioIntegrationEnabled', 'IntegraÃ§Ã£o CartÃ³rio'],
+            ['tribunalIntegrationEnabled', 'IntegraÃ§Ã£o Tribunal'],
             ['pwaEnabled', 'PWA Habilitado'],
             ['offlineFirstEnabled', 'Offline-First'],
-            ['maintenanceMode', 'Modo Manutenção'],
+            ['maintenanceMode', 'Modo ManutenÃ§Ã£o'],
             ['debugLogsEnabled', 'Debug Logs'],
           ] as const).map(([key, label]) => (
             <div key={key} className="flex items-center justify-between gap-4 rounded-lg border p-3">
@@ -263,7 +263,7 @@ export default function RealtimeSettingsPage() {
         <div className="flex justify-end pt-6">
           <Button type="submit" disabled={saving} data-ai-id="realtime-settings-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar Configurações
+            Salvar ConfiguraÃ§Ãµes
           </Button>
         </div>
       </CrudFormShell>

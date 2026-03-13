@@ -1,15 +1,15 @@
 /**
- * @fileoverview Página CRUD de PasswordResetToken — Admin Plus.
- * Tokens efêmeros: criação + exclusão, sem edição.
+ * @fileoverview PÃ¡gina CRUD de PasswordResetToken â€” Admin Plus.
+ * Tokens efÃªmeros: criaÃ§Ã£o + exclusÃ£o, sem ediÃ§Ã£o.
  */
 'use client';
 
 import { useState, useCallback } from 'react';
 import { KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { columns } from './columns';
 import { listPasswordResetTokens, createPasswordResetToken, deletePasswordResetToken } from './actions';
@@ -46,7 +46,7 @@ export default function PasswordResetTokensPage() {
     if (!deleteRow) return;
     const res = await deletePasswordResetToken({ id: deleteRow.id });
     if (res?.data?.success) {
-      toast.success('Token excluído');
+      toast.success('Token excluÃ­do');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -58,7 +58,7 @@ export default function PasswordResetTokensPage() {
     <div className="space-y-6" data-ai-id="password-reset-tokens-page">
       <PageHeader
         title="Tokens de Reset de Senha"
-        description="Tokens gerados para recuperação de senha"
+        description="Tokens gerados para recuperaÃ§Ã£o de senha"
         icon={KeyRound}
         onAdd={() => setFormOpen(true)}
         data-ai-id="prt-page-header"

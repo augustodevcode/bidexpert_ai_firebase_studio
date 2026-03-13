@@ -1,6 +1,6 @@
 /**
- * @fileoverview Página de Configurações Gerais da Plataforma — Admin Plus.
- * Formulário com 7 seções: Branding, Cores, E-mail/SMS, Features, Busca/Exibição, Marketing, Suporte + JSON avançado.
+ * @fileoverview PÃ¡gina de ConfiguraÃ§Ãµes Gerais da Plataforma â€” Admin Plus.
+ * FormulÃ¡rio com 7 seÃ§Ãµes: Branding, Cores, E-mail/SMS, Features, Busca/ExibiÃ§Ã£o, Marketing, Suporte + JSON avanÃ§ado.
  */
 'use client';
 
@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Settings, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
 import { Field } from '@/components/admin-plus/forms/field';
 import { Button } from '@/components/ui/button';
@@ -91,7 +91,7 @@ export default function PlatformSettingsPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar configurações da plataforma.');
+        toast.error('Erro ao carregar configuraÃ§Ãµes da plataforma.');
       } finally {
         setLoading(false);
       }
@@ -104,7 +104,7 @@ export default function PlatformSettingsPage() {
     for (const [key, text] of Object.entries(jsonFields)) {
       const parsed = safeParse(text);
       if (text.trim() && parsed === undefined) {
-        toast.error(`JSON inválido em "${key}".`);
+        toast.error(`JSON invÃ¡lido em "${key}".`);
         return;
       }
       jsonParsed[key] = parsed ?? null;
@@ -114,7 +114,7 @@ export default function PlatformSettingsPage() {
     try {
       const res = await updatePlatformSettingsAction({ ...values, ...jsonParsed });
       if (res?.success) {
-        toast.success('Configurações da plataforma salvas com sucesso.');
+        toast.success('ConfiguraÃ§Ãµes da plataforma salvas com sucesso.');
       } else {
         toast.error(res?.error ?? 'Erro ao salvar.');
       }
@@ -143,13 +143,13 @@ export default function PlatformSettingsPage() {
 
   return (
     <div data-ai-id="platform-settings-page">
-      <PageHeader title="Configurações Gerais da Plataforma" icon={Settings} />
+      <PageHeader title="ConfiguraÃ§Ãµes Gerais da Plataforma" icon={Settings} />
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
-        {/* ── BRANDING ── */}
+        {/* â”€â”€ BRANDING â”€â”€ */}
         <SectionTitle>Branding e Identidade</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 mb-6">
-          <Field label="Título do Site">
+          <Field label="TÃ­tulo do Site">
             <Input {...form.register('siteTitle')} data-ai-id="ps-site-title" />
           </Field>
           <Field label="Tagline">
@@ -176,7 +176,7 @@ export default function PlatformSettingsPage() {
           </Field>
         </div>
 
-        {/* ── CORES ── */}
+        {/* â”€â”€ CORES â”€â”€ */}
         <SectionTitle>Cores HSL do Tema</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
           {([
@@ -201,13 +201,13 @@ export default function PlatformSettingsPage() {
           </Field>
         </div>
 
-        {/* ── EMAIL / SMS ── */}
+        {/* â”€â”€ EMAIL / SMS â”€â”€ */}
         <SectionTitle>E-mail e SMS</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-3 mb-6">
           <Field label="Nome Remetente E-mail">
             <Input {...form.register('emailFromName')} data-ai-id="ps-email-name" />
           </Field>
-          <Field label="Endereço Remetente">
+          <Field label="EndereÃ§o Remetente">
             <Input {...form.register('emailFromAddress')} data-ai-id="ps-email-address" />
           </Field>
           <Field label="Nome Remetente SMS">
@@ -215,7 +215,7 @@ export default function PlatformSettingsPage() {
           </Field>
         </div>
 
-        {/* ── FEATURES ── */}
+        {/* â”€â”€ FEATURES â”€â”€ */}
         <SectionTitle>Feature Toggles</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
           {([
@@ -237,10 +237,10 @@ export default function PlatformSettingsPage() {
           ))}
         </div>
 
-        {/* ── CRUD / STORAGE ── */}
+        {/* â”€â”€ CRUD / STORAGE â”€â”€ */}
         <SectionTitle>CRUD e Armazenamento</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 mb-6">
-          <Field label="Modo de Formulário CRUD">
+          <Field label="Modo de FormulÃ¡rio CRUD">
             <Select
               value={form.watch('crudFormMode') ?? 'modal'}
               onValueChange={(v) => form.setValue('crudFormMode', v, { shouldDirty: true })}
@@ -250,7 +250,7 @@ export default function PlatformSettingsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="modal">Modal</SelectItem>
-                <SelectItem value="page">Página</SelectItem>
+                <SelectItem value="page">PÃ¡gina</SelectItem>
                 <SelectItem value="drawer">Drawer</SelectItem>
               </SelectContent>
             </Select>
@@ -277,10 +277,10 @@ export default function PlatformSettingsPage() {
           </Field>
         </div>
 
-        {/* ── BUSCA E EXIBIÇÃO ── */}
-        <SectionTitle>Busca e Exibição</SectionTitle>
+        {/* â”€â”€ BUSCA E EXIBIÃ‡ÃƒO â”€â”€ */}
+        <SectionTitle>Busca e ExibiÃ§Ã£o</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
-          <Field label="Tipo de Paginação">
+          <Field label="Tipo de PaginaÃ§Ã£o">
             <Select
               value={form.watch('searchPaginationType') ?? ''}
               onValueChange={(v) => form.setValue('searchPaginationType', v as 'loadMore' | 'numberedPages', { shouldDirty: true })}
@@ -290,11 +290,11 @@ export default function PlatformSettingsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="loadMore">Carregar Mais</SelectItem>
-                <SelectItem value="numberedPages">Paginação Numerada</SelectItem>
+                <SelectItem value="numberedPages">PaginaÃ§Ã£o Numerada</SelectItem>
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Itens por Página (Busca)">
+          <Field label="Itens por PÃ¡gina (Busca)">
             <Input type="number" {...form.register('searchItemsPerPage', { valueAsNumber: true })} data-ai-id="ps-search-per-page" />
           </Field>
           <Field label="Load More Count">
@@ -303,10 +303,10 @@ export default function PlatformSettingsPage() {
           <Field label="Lotes Relacionados (qtd)">
             <Input type="number" {...form.register('relatedLotsCount', { valueAsNumber: true })} data-ai-id="ps-related-count" />
           </Field>
-          <Field label="Timer Urgência (horas)">
+          <Field label="Timer UrgÃªncia (horas)">
             <Input type="number" {...form.register('defaultUrgencyTimerHours', { valueAsNumber: true })} data-ai-id="ps-urgency-hours" />
           </Field>
-          <Field label="Itens por Página (Listas)">
+          <Field label="Itens por PÃ¡gina (Listas)">
             <Input type="number" {...form.register('defaultListItemsPerPage', { valueAsNumber: true })} data-ai-id="ps-list-per-page" />
           </Field>
         </div>
@@ -327,7 +327,7 @@ export default function PlatformSettingsPage() {
           ))}
         </div>
 
-        {/* ── MARKETING ── */}
+        {/* â”€â”€ MARKETING â”€â”€ */}
         <SectionTitle>Marketing / Super Oportunidades</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-3 mb-6">
           <Field label="Habilitado">
@@ -345,7 +345,7 @@ export default function PlatformSettingsPage() {
           </Field>
         </div>
 
-        {/* ── SUPORTE ── */}
+        {/* â”€â”€ SUPORTE â”€â”€ */}
         <SectionTitle>Suporte</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 mb-6">
           <Field label="E-mail de Suporte">
@@ -357,15 +357,15 @@ export default function PlatformSettingsPage() {
           <Field label="WhatsApp">
             <Input {...form.register('supportWhatsApp')} data-ai-id="ps-support-whatsapp" />
           </Field>
-          <Field label="Horário de Funcionamento">
+          <Field label="HorÃ¡rio de Funcionamento">
             <Input {...form.register('supportBusinessHours')} data-ai-id="ps-support-hours" />
           </Field>
-          <Field label="Endereço" className="sm:col-span-2">
+          <Field label="EndereÃ§o" className="sm:col-span-2">
             <Input {...form.register('supportAddress')} data-ai-id="ps-support-address" />
           </Field>
         </div>
 
-        {/* ── CSS / SCRIPTS ── */}
+        {/* â”€â”€ CSS / SCRIPTS â”€â”€ */}
         <SectionTitle>CSS e Scripts Customizados</SectionTitle>
         <div className="grid gap-4 mb-6">
           <Field label="CSS Customizado">
@@ -376,8 +376,8 @@ export default function PlatformSettingsPage() {
           </Field>
         </div>
 
-        {/* ── JSON AVANÇADO ── */}
-        <SectionTitle>Configurações Avançadas (JSON)</SectionTitle>
+        {/* â”€â”€ JSON AVANÃ‡ADO â”€â”€ */}
+        <SectionTitle>ConfiguraÃ§Ãµes AvanÃ§adas (JSON)</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 mb-6">
           {([
             ['auditTrailConfig', 'Audit Trail Config'],
@@ -400,7 +400,7 @@ export default function PlatformSettingsPage() {
         <div className="flex justify-end pt-6">
           <Button type="submit" disabled={saving} data-ai-id="platform-settings-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar Configurações
+            Salvar ConfiguraÃ§Ãµes
           </Button>
         </div>
       </CrudFormShell>

@@ -6,9 +6,9 @@
 import { useMemo, useState, useCallback } from 'react';
 import { FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getLotDocumentColumns } from './columns';
 import { listLotDocuments, deleteLotDocument } from './actions';
@@ -27,7 +27,7 @@ export default function LotDocumentsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleting) return;
     const res = await deleteLotDocument({ id: deleting.id });
-    if (res.success) { toast.success('Documento excluído'); refresh(); } else toast.error(res.error ?? 'Erro ao excluir');
+    if (res.success) { toast.success('Documento excluÃ­do'); refresh(); } else toast.error(res.error ?? 'Erro ao excluir');
     setDeleting(null);
   }, [deleting, refresh]);
 

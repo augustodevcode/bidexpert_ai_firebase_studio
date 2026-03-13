@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página CRUD de LotCategory — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de LotCategory â€” Admin Plus.
  */
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
 import { Tag } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getLotCategoryColumns } from './columns';
 import {
@@ -66,7 +66,7 @@ export default function LotCategoriesPage() {
     if (!deleteRow) return;
     const res = await deleteLotCategory({ id: deleteRow.id });
     if (res?.success) {
-      toast.success('Categoria excluída');
+      toast.success('Categoria excluÃ­da');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -106,7 +106,7 @@ export default function LotCategoriesPage() {
         onOpenChange={(v) => !v && setDeleteRow(null)}
         onConfirm={handleConfirmDelete}
         title="Excluir Categoria"
-        description={`Excluir a categoria "${deleteRow?.name}"? Esta ação não pode ser desfeita.`}
+        description={`Excluir a categoria "${deleteRow?.name}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
         data-ai-id="lot-categories-delete-dialog"
       />
     </div>

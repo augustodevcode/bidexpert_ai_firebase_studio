@@ -1,14 +1,14 @@
 /**
- * Página CRUD de Subscriber no Admin Plus.
+ * PÃ¡gina CRUD de Subscriber no Admin Plus.
  */
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
 import { Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { listSubscribers, createSubscriber, updateSubscriber, deleteSubscriber } from './actions';
 import { getSubscriberColumns } from './columns';
@@ -45,7 +45,7 @@ export default function SubscribersPage() {
     if (!deleteTarget) return;
     const res = await deleteSubscriber({ id: deleteTarget.id });
     if (!res.success) { toast.error(res.error ?? 'Erro ao excluir'); return; }
-    toast.success('Excluído!');
+    toast.success('ExcluÃ­do!');
     setDeleteTarget(null); refresh();
   };
 
@@ -61,7 +61,7 @@ export default function SubscribersPage() {
       />
       <SubscriberForm open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) setEditing(null); }} onSubmit={handleSubmit} initialData={editing} />
       <ConfirmationDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }} onConfirm={confirmDelete}
-        title="Confirmar exclusão" description={`Deseja excluir o assinante ${deleteTarget?.email}?`} />
+        title="Confirmar exclusÃ£o" description={`Deseja excluir o assinante ${deleteTarget?.email}?`} />
     </div>
   );
 }

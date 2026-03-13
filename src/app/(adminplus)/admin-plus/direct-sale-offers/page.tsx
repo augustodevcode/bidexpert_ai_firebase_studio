@@ -1,5 +1,5 @@
 /**
- * Página de listagem de Ofertas de Venda Direta (DirectSaleOffer).
+ * PÃ¡gina de listagem de Ofertas de Venda Direta (DirectSaleOffer).
  */
 'use client';
 
@@ -9,8 +9,8 @@ import { toast } from 'sonner';
 
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { PageHeader } from '@/components/admin-plus/page-header';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 
 import { getDirectSaleOfferColumns } from './columns';
 import { listDirectSaleOffers, createDirectSaleOffer, updateDirectSaleOffer, deleteDirectSaleOffer } from './actions';
@@ -39,7 +39,7 @@ export default function DirectSaleOffersPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     const res = await deleteDirectSaleOffer({ id: deleteTarget.id });
-    if (res.success) { toast.success('Oferta excluída'); table.refresh(); }
+    if (res.success) { toast.success('Oferta excluÃ­da'); table.refresh(); }
     else toast.error(res.error || 'Erro ao excluir');
     setDeleteTarget(null);
   }, [deleteTarget, table]);

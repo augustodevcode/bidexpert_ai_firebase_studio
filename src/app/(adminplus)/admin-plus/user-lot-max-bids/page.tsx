@@ -1,11 +1,11 @@
 /**
- * Página de listagem de Lances Máximos por Lote/Usuário (UserLotMaxBid).
+ * PÃ¡gina de listagem de Lances MÃ¡ximos por Lote/UsuÃ¡rio (UserLotMaxBid).
  */
 'use client';
 
 import { useMemo } from 'react';
 import { TrendingUp } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getUserLotMaxBidColumns } from './columns';
@@ -20,7 +20,7 @@ export default function UserLotMaxBidsPage() {
     createAction: createUserLotMaxBid,
     updateAction: updateUserLotMaxBid,
     deleteAction: deleteUserLotMaxBid,
-    entityLabel: 'Lance Máximo',
+    entityLabel: 'Lance MÃ¡ximo',
     defaultSort: { id: 'createdAt', desc: true },
   });
 
@@ -28,7 +28,7 @@ export default function UserLotMaxBidsPage() {
 
   return (
     <div className="space-y-4" data-ai-id="user-lot-max-bids-page">
-      <PageHeader title="Lances Máximos" icon={TrendingUp} onAdd={() => dt.setFormOpen(true)} />
+      <PageHeader title="Lances MÃ¡ximos" icon={TrendingUp} onAdd={() => dt.setFormOpen(true)} />
       <DataTablePlus columns={columns} data={dt.data} total={dt.total} page={dt.page} pageSize={dt.pageSize} onPageChange={dt.setPage} onPageSizeChange={dt.setPageSize} sorting={dt.sorting} onSortingChange={dt.setSorting} search={dt.search} onSearchChange={dt.setSearch} isLoading={dt.isLoading} onRowDoubleClick={dt.handleEdit} />
       <UserLotMaxBidForm open={dt.formOpen} onOpenChange={dt.setFormOpen} onSubmit={dt.handleSubmit} defaultValues={dt.editingRow} />
       {dt.confirmDelete}

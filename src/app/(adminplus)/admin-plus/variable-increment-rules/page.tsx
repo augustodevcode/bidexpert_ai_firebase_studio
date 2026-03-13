@@ -1,15 +1,15 @@
 /**
- * @fileoverview Página de listagem CRUD para VariableIncrementRule — Admin Plus.
- * Regras de incremento variável vinculadas ao PlatformSettings do tenant.
+ * @fileoverview PÃ¡gina de listagem CRUD para VariableIncrementRule â€” Admin Plus.
+ * Regras de incremento variÃ¡vel vinculadas ao PlatformSettings do tenant.
  */
 'use client';
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { TrendingUp } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { columns } from './columns';
 import { VariableIncrementRuleForm } from './form';
@@ -82,7 +82,7 @@ export default function VariableIncrementRulesPage() {
         toast.error(res.error ?? 'Erro ao excluir regra.');
         return;
       }
-      toast.success('Regra excluída.');
+      toast.success('Regra excluÃ­da.');
       setDeleteRow(null);
       table.refresh();
     } finally {
@@ -93,8 +93,8 @@ export default function VariableIncrementRulesPage() {
   return (
     <div className="space-y-6" data-ai-id="variable-increment-rules-page">
       <PageHeader
-        title="Regras de Incremento Variável"
-        description="Defina faixas de valor e incrementos para lances automáticos."
+        title="Regras de Incremento VariÃ¡vel"
+        description="Defina faixas de valor e incrementos para lances automÃ¡ticos."
         icon={TrendingUp}
         onAdd={handleCreate}
       />
@@ -121,7 +121,7 @@ export default function VariableIncrementRulesPage() {
         open={!!deleteRow}
         onOpenChange={(open) => !open && setDeleteRow(null)}
         title="Excluir Regra de Incremento"
-        description={`Deseja excluir a regra de R$ ${deleteRow?.from?.toLocaleString('pt-BR')} até ${deleteRow?.to != null ? 'R$ ' + deleteRow.to.toLocaleString('pt-BR') : '∞'}?`}
+        description={`Deseja excluir a regra de R$ ${deleteRow?.from?.toLocaleString('pt-BR')} atÃ© ${deleteRow?.to != null ? 'R$ ' + deleteRow.to.toLocaleString('pt-BR') : 'âˆž'}?`}
         onConfirm={handleDelete}
         loading={submitting}
       />

@@ -6,9 +6,9 @@
 import { useMemo, useState, useCallback } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getLotQuestionColumns } from './columns';
 import { listLotQuestions, deleteLotQuestion } from './actions';
@@ -27,7 +27,7 @@ export default function LotQuestionsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleting) return;
     const res = await deleteLotQuestion({ id: deleting.id });
-    if (res.success) { toast.success('Pergunta excluída'); refresh(); } else toast.error(res.error ?? 'Erro ao excluir');
+    if (res.success) { toast.success('Pergunta excluÃ­da'); refresh(); } else toast.error(res.error ?? 'Erro ao excluir');
     setDeleting(null);
   }, [deleting, refresh]);
 

@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página de listagem de Auctions — Admin Plus.
+ * @fileoverview PÃ¡gina de listagem de Auctions â€” Admin Plus.
  */
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
 import { Gavel } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getAuctionColumns } from './columns';
 import { listAuctions, createAuction, updateAuction, deleteAuction } from './actions';
@@ -31,7 +31,7 @@ export default function AuctionsPage() {
   const handleSubmit = async (values: AuctionSchema) => {
     const res = editing ? await updateAuction(editing.id, values) : await createAuction(values);
     if (res?.success) {
-      toast.success(editing ? 'Leilão atualizado.' : 'Leilão criado.');
+      toast.success(editing ? 'LeilÃ£o atualizado.' : 'LeilÃ£o criado.');
       setFormOpen(false); setEditing(null); table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao salvar.');
@@ -41,15 +41,15 @@ export default function AuctionsPage() {
   const handleConfirmDelete = async () => {
     if (!deleting) return;
     const res = await deleteAuction(deleting.id);
-    if (res?.success) { toast.success('Leilão excluído.'); setDeleting(null); table.refresh(); }
+    if (res?.success) { toast.success('LeilÃ£o excluÃ­do.'); setDeleting(null); table.refresh(); }
     else toast.error(res?.error ?? 'Erro ao excluir.');
   };
 
   return (
     <div className="space-y-6" data-ai-id="auctions-page">
       <PageHeader
-        title="Leilões"
-        description="Gerencie os leilões da plataforma."
+        title="LeilÃµes"
+        description="Gerencie os leilÃµes da plataforma."
         icon={Gavel}
         onAdd={() => { setEditing(null); setFormOpen(true); }}
       />
@@ -78,7 +78,7 @@ export default function AuctionsPage() {
         open={!!deleting}
         onOpenChange={(o) => { if (!o) setDeleting(null); }}
         onConfirm={handleConfirmDelete}
-        title="Excluir Leilão"
+        title="Excluir LeilÃ£o"
         description={`Deseja realmente excluir "${deleting?.title}"?`}
       />
     </div>

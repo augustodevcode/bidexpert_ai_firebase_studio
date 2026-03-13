@@ -1,15 +1,15 @@
 /**
- * Página principal de listagem de WonLot (Lotes Arrematados) no Admin Plus.
+ * PÃ¡gina principal de listagem de WonLot (Lotes Arrematados) no Admin Plus.
  */
 'use client';
 
 import { useCallback, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getWonLotColumns } from './columns';
 import type { WonLotRow } from './types';
 import { listWonLots, deleteWonLot } from './actions';
@@ -36,7 +36,7 @@ export default function WonLotsPage() {
     setDeleting(true);
     try {
       const res = await deleteWonLot({ id: deleteTarget.id });
-      if (res?.success) { toast.success('Excluído!'); table.refresh(); } else toast.error(res?.error ?? 'Erro');
+      if (res?.success) { toast.success('ExcluÃ­do!'); table.refresh(); } else toast.error(res?.error ?? 'Erro');
     } catch { toast.error('Erro ao excluir'); } finally { setDeleting(false); setDeleteTarget(null); }
   };
 

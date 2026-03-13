@@ -1,5 +1,5 @@
 /**
- * @fileoverview Página CRUD de associação User ↔ Tenant — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de associaÃ§Ã£o User â†” Tenant â€” Admin Plus.
  * Junction table com chave composta [userId, tenantId].
  */
 'use client';
@@ -7,9 +7,9 @@
 import { useState } from 'react';
 import { Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { columns } from './columns';
 import { listUserOnTenants, deleteUserOnTenant } from './actions';
@@ -31,7 +31,7 @@ export default function UserOnTenantsPage() {
     const [userId, tenantId] = deleteTarget.compositeId.split(':');
     const res = await deleteUserOnTenant({ userId, tenantId });
     if (res?.success) {
-      toast.success('Associação removida');
+      toast.success('AssociaÃ§Ã£o removida');
       table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao remover');
@@ -42,11 +42,11 @@ export default function UserOnTenantsPage() {
   return (
     <div className="space-y-6" data-ai-id="user-on-tenants-page">
       <PageHeader
-        title="Usuários por Tenant"
-        description="Gerencie as associações entre usuários e tenants"
+        title="UsuÃ¡rios por Tenant"
+        description="Gerencie as associaÃ§Ãµes entre usuÃ¡rios e tenants"
         icon={Users}
         onAdd={() => setFormOpen(true)}
-        addLabel="Nova Associação"
+        addLabel="Nova AssociaÃ§Ã£o"
       />
 
       <DataTablePlus
@@ -79,8 +79,8 @@ export default function UserOnTenantsPage() {
       <ConfirmationDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Remover associação"
-        description={`Deseja remover a associação de "${deleteTarget?.userName ?? ''}" com "${deleteTarget?.tenantName ?? ''}"?`}
+        title="Remover associaÃ§Ã£o"
+        description={`Deseja remover a associaÃ§Ã£o de "${deleteTarget?.userName ?? ''}" com "${deleteTarget?.tenantName ?? ''}"?`}
         onConfirm={handleDelete}
       />
     </div>

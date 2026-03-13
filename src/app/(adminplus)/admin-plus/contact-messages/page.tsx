@@ -1,14 +1,14 @@
 /**
- * Página principal do CRUD de ContactMessage (Mensagens de Contato) no Admin Plus.
+ * PÃ¡gina principal do CRUD de ContactMessage (Mensagens de Contato) no Admin Plus.
  */
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
 import { Mail } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getContactMessageColumns } from './columns';
 import { listContactMessages, deleteContactMessage } from './actions';
 import { ContactMessageForm } from './form';
@@ -27,7 +27,7 @@ export default function ContactMessagesPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     const res = await deleteContactMessage({ id: deleteTarget.id });
-    if (res.success) { toast.success('Mensagem excluída'); table.refresh(); } else { toast.error(res.error || 'Erro'); }
+    if (res.success) { toast.success('Mensagem excluÃ­da'); table.refresh(); } else { toast.error(res.error || 'Erro'); }
     setDeleteTarget(null);
   }, [deleteTarget, table]);
 
@@ -35,7 +35,7 @@ export default function ContactMessagesPage() {
 
   return (
     <div className="space-y-4" data-ai-id="contact-messages-page">
-      <PageHeader title="Mensagens de Contato" description="Mensagens recebidas pelo formulário de contato" icon={Mail}
+      <PageHeader title="Mensagens de Contato" description="Mensagens recebidas pelo formulÃ¡rio de contato" icon={Mail}
         onAdd={() => { setEditData(null); setFormOpen(true); }} />
       <DataTablePlus data={table.data} columns={columns} isLoading={table.isLoading}
         pageCount={table.totalPages} pageIndex={table.page - 1} pageSize={table.pageSize}

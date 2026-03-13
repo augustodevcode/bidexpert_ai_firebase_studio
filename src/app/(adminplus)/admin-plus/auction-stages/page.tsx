@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página de listagem de AuctionStage — Admin Plus.
+ * @fileoverview PÃ¡gina de listagem de AuctionStage â€” Admin Plus.
  */
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
 import { Layers } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getAuctionStageColumns } from './columns';
 import { listAuctionStages, createAuctionStage, updateAuctionStage, deleteAuctionStage } from './actions';
@@ -31,7 +31,7 @@ export default function AuctionStagesPage() {
   const handleSubmit = async (values: AuctionStageSchema) => {
     const res = editing ? await updateAuctionStage(editing.id, values) : await createAuctionStage(values);
     if (res?.success) {
-      toast.success(editing ? 'Praça atualizada.' : 'Praça criada.');
+      toast.success(editing ? 'PraÃ§a atualizada.' : 'PraÃ§a criada.');
       setFormOpen(false); setEditing(null); table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao salvar.');
@@ -41,15 +41,15 @@ export default function AuctionStagesPage() {
   const handleConfirmDelete = async () => {
     if (!deleting) return;
     const res = await deleteAuctionStage(deleting.id);
-    if (res?.success) { toast.success('Praça excluída.'); setDeleting(null); table.refresh(); }
+    if (res?.success) { toast.success('PraÃ§a excluÃ­da.'); setDeleting(null); table.refresh(); }
     else toast.error(res?.error ?? 'Erro ao excluir.');
   };
 
   return (
     <div className="space-y-6" data-ai-id="auction-stages-page">
       <PageHeader
-        title="Praças"
-        description="Gerencie as praças dos leilões."
+        title="PraÃ§as"
+        description="Gerencie as praÃ§as dos leilÃµes."
         icon={Layers}
         onAdd={() => { setEditing(null); setFormOpen(true); }}
       />
@@ -78,7 +78,7 @@ export default function AuctionStagesPage() {
         open={!!deleting}
         onOpenChange={(o) => { if (!o) setDeleting(null); }}
         onConfirm={handleConfirmDelete}
-        title="Excluir Praça"
+        title="Excluir PraÃ§a"
         description={`Deseja realmente excluir "${deleting?.name}"?`}
       />
     </div>

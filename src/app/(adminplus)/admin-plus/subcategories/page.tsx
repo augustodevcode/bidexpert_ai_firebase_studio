@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página CRUD de Subcategory — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de Subcategory â€” Admin Plus.
  */
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
 import { Tags } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getSubcategoryColumns } from './columns';
 import {
@@ -66,7 +66,7 @@ export default function SubcategoriesPage() {
     if (!deleteRow) return;
     const res = await deleteSubcategory({ id: deleteRow.id });
     if (res?.success) {
-      toast.success('Subcategoria excluída');
+      toast.success('Subcategoria excluÃ­da');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -106,7 +106,7 @@ export default function SubcategoriesPage() {
         onOpenChange={(v) => !v && setDeleteRow(null)}
         onConfirm={handleConfirmDelete}
         title="Excluir Subcategoria"
-        description={`Excluir a subcategoria "${deleteRow?.name}"? Esta ação não pode ser desfeita.`}
+        description={`Excluir a subcategoria "${deleteRow?.name}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
         data-ai-id="subcategories-delete-dialog"
       />
     </div>

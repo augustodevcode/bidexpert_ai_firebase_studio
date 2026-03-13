@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página CRUD de Asset (Ativo) — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de Asset (Ativo) â€” Admin Plus.
  */
 'use client';
 
 import { useMemo, useState } from 'react';
 import { Package } from 'lucide-react';
 import { toast } from 'sonner';
-import PageHeader from '@/components/admin-plus/page-header';
+import PageHeader from '@/components/admin-plus/forms/page-header';
 import DataTablePlus from '@/components/admin-plus/data-table-plus';
-import ConfirmationDialog from '@/components/admin-plus/confirmation-dialog';
+import ConfirmationDialog from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getAssetColumns } from './columns';
 import type { AssetRow } from './types';
@@ -26,7 +26,7 @@ export default function AssetsPage() {
   const handleConfirmDelete = async () => {
     if (!deleting) return;
     const res = await deleteAsset(deleting.id);
-    if (res.success) { toast.success('Ativo excluído!'); table.refresh(); } else toast.error(res.error ?? 'Erro');
+    if (res.success) { toast.success('Ativo excluÃ­do!'); table.refresh(); } else toast.error(res.error ?? 'Erro');
     setDeleting(null);
   };
 

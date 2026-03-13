@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página CRUD de UserDocument — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de UserDocument â€” Admin Plus.
  */
 'use client';
 
 import { useState, useCallback } from 'react';
 import { FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { columns } from './columns';
 import {
@@ -55,7 +55,7 @@ export default function UserDocumentsPage() {
     if (!deleteRow) return;
     const res = await deleteUserDocument({ id: deleteRow.id });
     if (res?.data?.success) {
-      toast.success('Documento excluído');
+      toast.success('Documento excluÃ­do');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -66,8 +66,8 @@ export default function UserDocumentsPage() {
   return (
     <div className="space-y-6" data-ai-id="user-documents-page">
       <PageHeader
-        title="Documentos de Usuários"
-        description="Gerenciar documentos enviados pelos usuários"
+        title="Documentos de UsuÃ¡rios"
+        description="Gerenciar documentos enviados pelos usuÃ¡rios"
         icon={FileText}
         onAdd={() => { setEditRow(null); setFormOpen(true); }}
         data-ai-id="ud-page-header"
@@ -100,7 +100,7 @@ export default function UserDocumentsPage() {
         onOpenChange={(v) => !v && setDeleteRow(null)}
         onConfirm={handleDelete}
         title="Excluir Documento"
-        description={`Excluir documento "${deleteRow?.fileName || deleteRow?.id}" do usuário "${deleteRow?.userName}"?`}
+        description={`Excluir documento "${deleteRow?.fileName || deleteRow?.id}" do usuÃ¡rio "${deleteRow?.userName}"?`}
         data-ai-id="ud-delete-dialog"
       />
     </div>

@@ -7,9 +7,9 @@
 import { useMemo, useState, useCallback } from 'react';
 import { Gavel } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getLotColumns } from './columns';
 import { listLots, createLot, updateLot, deleteLot } from './actions';
@@ -70,7 +70,7 @@ export default function LotsPage() {
     if (!deleteTarget) return;
     const res = await deleteLot({ id: deleteTarget.id });
     if (res.success) {
-      toast.success('Lote excluído');
+      toast.success('Lote excluÃ­do');
       setDeleteTarget(undefined);
       table.refresh();
     } else {
@@ -83,7 +83,7 @@ export default function LotsPage() {
       <PageHeader
         title="Lotes"
         icon={Gavel}
-        subtitle="Gerenciar lotes de leilão"
+        subtitle="Gerenciar lotes de leilÃ£o"
         onAdd={() => { setEditing(undefined); setFormOpen(true); }}
       />
 

@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página CRUD de MediaItem — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de MediaItem â€” Admin Plus.
  */
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
 import { Image } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getMediaItemColumns } from './columns';
 import {
@@ -51,7 +51,7 @@ export default function MediaItemsPage() {
         ? await updateMediaItem({ id: editRow.id, data: values as Parameters<typeof updateMediaItem>[0]['data'] })
         : await createMediaItem(values as Parameters<typeof createMediaItem>[0]);
       if (res?.success) {
-        toast.success(editRow ? 'Mídia atualizada' : 'Mídia criada');
+        toast.success(editRow ? 'MÃ­dia atualizada' : 'MÃ­dia criada');
         setFormOpen(false);
         setEditRow(null);
         table.refresh();
@@ -66,7 +66,7 @@ export default function MediaItemsPage() {
     if (!deleteRow) return;
     const res = await deleteMediaItem({ id: deleteRow.id });
     if (res?.success) {
-      toast.success('Mídia excluída');
+      toast.success('MÃ­dia excluÃ­da');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -77,11 +77,11 @@ export default function MediaItemsPage() {
   return (
     <div className="space-y-6" data-ai-id="media-items-page">
       <PageHeader
-        title="Mídias"
-        description="Gerenciar itens de mídia (imagens, documentos)"
+        title="MÃ­dias"
+        description="Gerenciar itens de mÃ­dia (imagens, documentos)"
         icon={Image}
         onAdd={() => { setEditRow(null); setFormOpen(true); }}
-        addLabel="Nova Mídia"
+        addLabel="Nova MÃ­dia"
       />
 
       <DataTablePlus
@@ -105,8 +105,8 @@ export default function MediaItemsPage() {
         open={!!deleteRow}
         onOpenChange={(v) => !v && setDeleteRow(null)}
         onConfirm={handleConfirmDelete}
-        title="Excluir Mídia"
-        description={`Excluir "${deleteRow?.fileName}"? Esta ação não pode ser desfeita.`}
+        title="Excluir MÃ­dia"
+        description={`Excluir "${deleteRow?.fileName}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
         data-ai-id="media-items-delete-dialog"
       />
     </div>
