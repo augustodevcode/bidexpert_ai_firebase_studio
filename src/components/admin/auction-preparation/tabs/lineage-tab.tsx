@@ -37,6 +37,7 @@ interface LineageTabProps {
 }
 
 const CANVAS_ID = 'lineage-canvas-wrapper';
+const PANEL_CLASS_NAME = 'flex h-full min-h-0 w-full flex-1 flex-col';
 
 export function LineageTab({ auctionId }: LineageTabProps) {
   const [lineageData, setLineageData] = useState<AuctionLineageData | null>(null);
@@ -131,8 +132,8 @@ export function LineageTab({ auctionId }: LineageTabProps) {
   // Loading state
   if (loading) {
     return (
-      <Card data-ai-id="lineage-tab-loading">
-        <CardContent className="flex items-center justify-center h-96">
+      <Card className={PANEL_CLASS_NAME} data-ai-id="lineage-tab-loading">
+        <CardContent className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Carregando linhagem...</p>
@@ -145,8 +146,8 @@ export function LineageTab({ auctionId }: LineageTabProps) {
   // Error state
   if (error) {
     return (
-      <Card data-ai-id="lineage-tab-error">
-        <CardContent className="flex items-center justify-center h-96">
+      <Card className={PANEL_CLASS_NAME} data-ai-id="lineage-tab-error">
+        <CardContent className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <AlertTriangle className="h-8 w-8 text-destructive" />
             <p className="text-sm text-destructive">{error}</p>
@@ -162,8 +163,8 @@ export function LineageTab({ auctionId }: LineageTabProps) {
   // Empty state
   if (!lineageData || lineageData.nodes.length === 0) {
     return (
-      <Card data-ai-id="lineage-tab-empty">
-        <CardContent className="flex items-center justify-center h-96">
+      <Card className={PANEL_CLASS_NAME} data-ai-id="lineage-tab-empty">
+        <CardContent className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <GitBranch className="h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Nenhum dado de linhagem encontrado</p>
@@ -174,8 +175,8 @@ export function LineageTab({ auctionId }: LineageTabProps) {
   }
 
   return (
-    <Card data-ai-id="lineage-tab-container">
-      <CardHeader className="pb-3">
+    <Card className={PANEL_CLASS_NAME} data-ai-id="lineage-tab-container">
+      <CardHeader className="shrink-0 pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <GitBranch className="h-5 w-5" aria-hidden="true" />
@@ -204,10 +205,10 @@ export function LineageTab({ auctionId }: LineageTabProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="flex min-h-0 flex-1 flex-col p-0">
         <div
           id={CANVAS_ID}
-          className="h-[600px] w-full border-t"
+          className="flex min-h-0 flex-1 w-full border-t"
           data-ai-id="lineage-canvas"
         >
           <ReactFlow
