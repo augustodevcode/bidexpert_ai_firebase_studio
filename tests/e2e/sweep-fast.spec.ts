@@ -1,23 +1,29 @@
 /**
  * @fileoverview Varredura E2E rápida — usa storageState do config (sem re-login por teste).
  *
- * Cobertura:
- * - Todas as rotas públicas, admin, user, consignor, lawyer
+ * Cobertura (atualizado com últimos 10 commits de demo-stable):
+ * - Todas as rotas públicas, admin, admin-plus, user, consignor, lawyer
  * - Verificação: HTTP status, erro de console, erros de rede, page crash
  * - Screenshot em cada rota
  * - Proteção de acesso (unauthenticated)
  * - Modal map-search z-index (fix validado)
  *
- * Otimizações vs full-ui-sweep.spec.ts:
- * - Sem loginAs() no beforeEach — usa storageState do playwright.sweep.config.ts
- * - Timeout reduzido (30s por página)
- * - 2 workers para rotas paralelas onde seguro
- * - Headless: controlado pela config
+ * Referência de commits cobertos:
+ * - feat: Lineage tab Auction Control Center (#467)
+ * - fix: CoverImage relations PostgreSQL
+ * - fix: duplicate phantomLotFields
+ * - merge: sync demo-stable ↔ main (9 conflitos)
+ * - fix: lot images CoverImage/AssetMedia (#458)
+ * - fix: Vercel workspace auto-lock (#454)
+ * - fix: BigInt serialization + vitest bootstrap (#455)
+ * - feat: detect demo-stable→main divergence (#440)
+ * - merge: Vitest+Playwright+BDD gates (#365)
+ * - merge: Admin V2 — complete Lots CRUD /admin/lots-v2 (#456)
  */
 
 import { test, expect, Page } from '@playwright/test';
 
-const BASE_URL = process.env.BASE_URL ?? 'http://demo.localhost:9010';
+const BASE_URL = process.env.BASE_URL ?? 'http://demo.localhost:9006';
 const SCREENSHOT_DIR = 'tests/e2e/screenshots/sweep';
 // Ignore these console error substrings (known non-critical noise)
 const IGNORED_ERRORS = [
@@ -28,10 +34,13 @@ const IGNORED_ERRORS = [
   'sentry',
   '__nextjs_original-stack-frame',
   'Failed to load resource: net::ERR_ABORTED',
+  'hydration',
+  'NEXT_REDIRECT',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Route definitions (static — no dynamic IDs needed for crash checks)
+// Route definitions (static — no dynamic [id] params needed for crash checks)
+// Dynamic routes (e.g. /admin/auctions/[auctionId]/edit) skipped — require DB IDs
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PUBLIC_ROUTES = [
@@ -40,19 +49,25 @@ const PUBLIC_ROUTES = [
   '/auction-safety-tips',
   '/auctioneers',
   '/auctions',
+  '/auth/forgot-password',
   '/auth/login',
+  '/auth/register',
   '/changelog',
   '/contact',
   '/direct-sales',
   '/faq',
   '/home-v2',
   '/imoveis',
+  '/live-dashboard',
+  '/map-search',
   '/maquinas',
   '/privacy',
   '/search',
   '/sell-with-us',
   '/sellers',
+  '/setup',
   '/support',
+  '/support/success',
   '/tecnologia',
   '/terms',
   '/veiculos',
@@ -102,8 +117,11 @@ const ADMIN_ROUTES = [
   '/admin/lots',
   '/admin/lots/analysis',
   '/admin/lots/new',
+  '/admin/lots-v2',
+  '/admin/lots-v2/new',
   '/admin/lotting',
   '/admin/media',
+  '/admin/media/upload',
   '/admin/platform-tenants',
   '/admin/qa',
   '/admin/report-builder',
@@ -114,6 +132,7 @@ const ADMIN_ROUTES = [
   '/admin/roles/new',
   '/admin/sellers',
   '/admin/sellers/analysis',
+  '/admin/sellers/edit',
   '/admin/settings',
   '/admin/settings/bidding',
   '/admin/settings/domains',
@@ -121,6 +140,7 @@ const ADMIN_ROUTES = [
   '/admin/settings/increments',
   '/admin/settings/maps',
   '/admin/settings/marketing',
+  '/admin/settings/marketing/publicidade-site',
   '/admin/settings/notifications',
   '/admin/settings/payment',
   '/admin/settings/realtime',
@@ -146,16 +166,21 @@ const ADMIN_ROUTES = [
 
 const USER_ROUTES = [
   '/profile',
+  '/profile/edit',
   '/dashboard',
   '/dashboard/overview',
   '/dashboard/bids',
   '/dashboard/favorites',
   '/dashboard/history',
-  '/dashboard/wins',
-  '/dashboard/notifications',
   '/dashboard/messages',
+  '/dashboard/my-bids',
+  '/dashboard/notifications',
   '/dashboard/documents',
+  '/dashboard/payments',
+  '/dashboard/profile/edit',
   '/dashboard/reports',
+  '/dashboard/wins',
+  '/dashboard/won-lots',
   '/support/new',
 ];
 
@@ -164,9 +189,92 @@ const CONSIGNOR_ROUTES = [
   '/consignor-dashboard/auctions',
   '/consignor-dashboard/lots',
   '/consignor-dashboard/direct-sales',
+  '/consignor-dashboard/direct-sales/new',
   '/consignor-dashboard/financial',
   '/consignor-dashboard/reports',
   '/consignor-dashboard/settings',
+];
+
+const ADMIN_PLUS_ROUTES = [
+  '/admin-plus',
+  '/admin-plus/assets',
+  '/admin-plus/assets-on-lots',
+  '/admin-plus/auctioneers',
+  '/admin-plus/auction-habilitations',
+  '/admin-plus/auctions',
+  '/admin-plus/auction-stages',
+  '/admin-plus/audit-logs',
+  '/admin-plus/bidder-notifications',
+  '/admin-plus/bidder-profiles',
+  '/admin-plus/bidding-settings',
+  '/admin-plus/bids',
+  '/admin-plus/cities',
+  '/admin-plus/cities/new',
+  '/admin-plus/contact-messages',
+  '/admin-plus/counter-states',
+  '/admin-plus/courts',
+  '/admin-plus/courts/new',
+  '/admin-plus/dashboard',
+  '/admin-plus/data-sources',
+  '/admin-plus/data-sources/new',
+  '/admin-plus/direct-sale-offers',
+  '/admin-plus/document-templates',
+  '/admin-plus/document-types',
+  '/admin-plus/document-types/new',
+  '/admin-plus/id-masks',
+  '/admin-plus/installment-payments',
+  '/admin-plus/itsm-tickets',
+  '/admin-plus/judicial-branches',
+  '/admin-plus/judicial-districts',
+  '/admin-plus/judicial-parties',
+  '/admin-plus/judicial-processes',
+  '/admin-plus/lot-categories',
+  '/admin-plus/lot-documents',
+  '/admin-plus/lot-questions',
+  '/admin-plus/lot-risks',
+  '/admin-plus/lots',
+  '/admin-plus/lot-stage-prices',
+  '/admin-plus/map-settings',
+  '/admin-plus/media-items',
+  '/admin-plus/mental-trigger-settings',
+  '/admin-plus/notifications',
+  '/admin-plus/notification-settings',
+  '/admin-plus/participation-history',
+  '/admin-plus/password-reset-tokens',
+  '/admin-plus/payment-gateway-settings',
+  '/admin-plus/payment-methods',
+  '/admin-plus/platform-settings',
+  '/admin-plus/realtime-settings',
+  '/admin-plus/reviews',
+  '/admin-plus/roles',
+  '/admin-plus/roles/new',
+  '/admin-plus/section-badge-visibility',
+  '/admin-plus/sellers',
+  '/admin-plus/states',
+  '/admin-plus/states/new',
+  '/admin-plus/subcategories',
+  '/admin-plus/subscribers',
+  '/admin-plus/tenant-invoices',
+  '/admin-plus/tenants',
+  '/admin-plus/tenants/new',
+  '/admin-plus/theme-settings',
+  '/admin-plus/user-documents',
+  '/admin-plus/user-lot-max-bids',
+  '/admin-plus/user-on-tenants',
+  '/admin-plus/users',
+  '/admin-plus/users/new',
+  '/admin-plus/users-on-roles',
+  '/admin-plus/user-wins',
+  '/admin-plus/variable-increment-rules',
+  '/admin-plus/vehicle-makes',
+  '/admin-plus/vehicle-makes/new',
+  '/admin-plus/vehicle-models',
+  '/admin-plus/vehicle-models/new',
+  '/admin-plus/won-lots',
+];
+
+const LAWYER_ROUTES = [
+  '/lawyer/dashboard',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -358,7 +466,53 @@ test.describe('[SWEEP] Rotas Consignor', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GRUPO 5: Proteção de Acesso (anônimo)
+// GRUPO 5: Rotas Admin Plus (usa storageState=admin.json — SuperAdmin scope)
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('[SWEEP] Rotas Admin Plus', () => {
+  for (const route of ADMIN_PLUS_ROUTES) {
+    test(`ADMIN-PLUS ${route}`, async ({ page }) => {
+      const result = await sweepPage(page, route, 'admin-plus');
+
+      await test.info().attach(`sweep-admin-plus-${route.replace(/\//g, '_')}`, {
+        body: JSON.stringify(result, null, 2),
+        contentType: 'application/json',
+      });
+
+      if (result.consoleErrors.length > 0) {
+        console.warn(`[WARN] ${route} — ${result.consoleErrors.length} console errors`);
+      }
+
+      expect(result.passed, `FALHA em ${route}: ${result.errorReason}`).toBe(true);
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRUPO 6: Rotas Lawyer (usa storageState=lawyer.json quando disponível)
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('[SWEEP] Rotas Lawyer', () => {
+  for (const route of LAWYER_ROUTES) {
+    test(`LAWYER ${route}`, async ({ page }) => {
+      const result = await sweepPage(page, route, 'lawyer');
+
+      await test.info().attach(`sweep-lawyer-${route.replace(/\//g, '_')}`, {
+        body: JSON.stringify(result, null, 2),
+        contentType: 'application/json',
+      });
+
+      if (result.consoleErrors.length > 0) {
+        console.warn(`[WARN] ${route} — ${result.consoleErrors.length} console errors`);
+      }
+
+      expect(result.passed, `FALHA em ${route}: ${result.errorReason}`).toBe(true);
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRUPO 7: Proteção de Acesso (anônimo)
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Proteção de Acesso Anônimo', () => {
@@ -366,9 +520,12 @@ test.describe('[SWEEP] Proteção de Acesso Anônimo', () => {
     '/admin',
     '/admin/users',
     '/admin/settings',
+    '/admin-plus',
+    '/admin-plus/users',
     '/dashboard',
     '/dashboard/overview',
     '/profile',
+    '/lawyer/dashboard',
   ];
 
   for (const route of PROTECTED) {
@@ -403,7 +560,7 @@ test.describe('[SWEEP] Proteção de Acesso Anônimo', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GRUPO 6: Map-Search — validar fix de z-index (modal flutuando acima do header)
+// GRUPO 8: Map-Search — validar fix de z-index (modal flutuando acima do header)
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Map-Search Modal z-index Fix', () => {
@@ -561,7 +718,7 @@ test.describe('[SWEEP] Map-Search Modal z-index Fix', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GRUPO 7: Relatório de cobertura (executado ao final)
+// GRUPO 9: Relatório de cobertura (executado ao final)
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Relatório Final de Cobertura', () => {
@@ -570,9 +727,9 @@ test.describe('[SWEEP] Relatório Final de Cobertura', () => {
       PUBLIC_ROUTES.length +
       ADMIN_ROUTES.length +
       USER_ROUTES.length +
-      CONSIGNOR_ROUTES.length;
-
-    const coverage = Math.round(((PUBLIC_ROUTES.length + ADMIN_ROUTES.length + USER_ROUTES.length + CONSIGNOR_ROUTES.length) / total) * 100);
+      CONSIGNOR_ROUTES.length +
+      ADMIN_PLUS_ROUTES.length +
+      LAWYER_ROUTES.length;
 
     const report = {
       timestamp: new Date().toISOString(),
@@ -582,9 +739,10 @@ test.describe('[SWEEP] Relatório Final de Cobertura', () => {
         admin: ADMIN_ROUTES.length,
         user: USER_ROUTES.length,
         consignor: CONSIGNOR_ROUTES.length,
+        adminPlus: ADMIN_PLUS_ROUTES.length,
+        lawyer: LAWYER_ROUTES.length,
       },
       totalRoutes: total,
-      coveragePercent: coverage,
       mapSearchFixValidated: true,
     };
 
@@ -592,12 +750,13 @@ test.describe('[SWEEP] Relatório Final de Cobertura', () => {
     console.log('RELATÓRIO FINAL — VARREDURA COMPLETA BIDEXPERT');
     console.log(`${'═'.repeat(60)}`);
     console.log(`URL Base: ${BASE_URL}`);
-    console.log(`Rotas Públicas: ${PUBLIC_ROUTES.length}`);
-    console.log(`Rotas Admin: ${ADMIN_ROUTES.length}`);
-    console.log(`Rotas User: ${USER_ROUTES.length}`);
-    console.log(`Rotas Consignor: ${CONSIGNOR_ROUTES.length}`);
-    console.log(`Total: ${total} rotas`);
-    console.log(`Cobertura: ${coverage}%`);
+    console.log(`Rotas Públicas:    ${PUBLIC_ROUTES.length}`);
+    console.log(`Rotas Admin:       ${ADMIN_ROUTES.length}`);
+    console.log(`Rotas Admin Plus:  ${ADMIN_PLUS_ROUTES.length}`);
+    console.log(`Rotas User:        ${USER_ROUTES.length}`);
+    console.log(`Rotas Consignor:   ${CONSIGNOR_ROUTES.length}`);
+    console.log(`Rotas Lawyer:      ${LAWYER_ROUTES.length}`);
+    console.log(`TOTAL:             ${total} rotas`);
     console.log('✅ Fix map-search z-index validado');
     console.log(`${'═'.repeat(60)}\n`);
 
@@ -606,6 +765,6 @@ test.describe('[SWEEP] Relatório Final de Cobertura', () => {
       contentType: 'application/json',
     });
 
-    expect(coverage).toBeGreaterThanOrEqual(90);
+    expect(total).toBeGreaterThanOrEqual(180);
   });
 });

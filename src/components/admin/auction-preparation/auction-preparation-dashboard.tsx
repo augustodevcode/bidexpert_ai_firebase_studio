@@ -50,9 +50,9 @@ export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboar
   ];
 
   return (
-    <div className="w-full h-full">
+    <div className="flex h-full min-h-0 min-w-0 w-full flex-col">
       {/* Auction Header */}
-      <div className="mb-6">
+      <div className="mb-6 shrink-0">
         <h1 className="text-3xl font-bold tracking-tight">Central de Gerenciamento do Leilão</h1>
         <p className="text-muted-foreground mt-2">
           {auction.title} - {auction.publicId}
@@ -60,8 +60,8 @@ export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboar
       </div>
 
       {/* Navigation Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 xl:grid-cols-10 mb-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-0 w-full flex-1 flex-col">
+        <TabsList className="mb-6 grid w-full shrink-0 grid-cols-3 lg:grid-cols-5 xl:grid-cols-10">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -119,7 +119,7 @@ export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboar
             userWins={userWins}
           />
         </TabsContent>
-        <TabsContent value="lineage" className="space-y-4">
+        <TabsContent value="lineage" className="mt-0 flex min-h-0 flex-1 flex-col">
           <LineageTab auctionId={Number(auction.id)} />
         </TabsContent>
       </Tabs>
