@@ -3,7 +3,6 @@
  * Fornece createAdminAction que encapsula autenticação, permissões,
  * validação Zod e tratamento de erros em um resultado padronizado ActionResult.
  */
-'use server';
 
 import { z } from 'zod';
 import type { ActionResult } from './types';
