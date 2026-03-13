@@ -6,7 +6,6 @@
 
 import { useCallback, useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
-import { toPng } from 'html-to-image';
 import { Button } from '@/components/ui/button';
 
 interface LineageExportButtonProps {
@@ -27,6 +26,7 @@ export function LineageExportButton({
 
     setIsExporting(true);
     try {
+      const { toPng } = await import('html-to-image');
       const dataUrl = await toPng(element, {
         backgroundColor: 'white',
         pixelRatio: 2,
