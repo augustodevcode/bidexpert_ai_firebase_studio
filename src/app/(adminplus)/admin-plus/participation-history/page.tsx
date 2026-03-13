@@ -1,14 +1,14 @@
 /**
- * Página CRUD de ParticipationHistory no Admin Plus.
+ * PÃ¡gina CRUD de ParticipationHistory no Admin Plus.
  */
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
 import { History } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { listParticipationHistory, createParticipationHistory, updateParticipationHistory, deleteParticipationHistory } from './actions';
 import { getParticipationHistoryColumns } from './columns';
@@ -45,13 +45,13 @@ export default function ParticipationHistoryPage() {
     if (!deleteTarget) return;
     const res = await deleteParticipationHistory({ id: deleteTarget.id });
     if (!res.success) { toast.error(res.error ?? 'Erro ao excluir'); return; }
-    toast.success('Excluído!');
+    toast.success('ExcluÃ­do!');
     setDeleteTarget(null); refresh();
   };
 
   return (
     <div className="space-y-4" data-ai-id="participation-history-page">
-      <PageHeader title="Histórico de Participações" icon={History} onAdd={() => { setEditing(null); setFormOpen(true); }} />
+      <PageHeader title="HistÃ³rico de ParticipaÃ§Ãµes" icon={History} onAdd={() => { setEditing(null); setFormOpen(true); }} />
       <DataTablePlus
         columns={columns} data={tableData} totalRows={totalRows}
         page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize}
@@ -61,7 +61,7 @@ export default function ParticipationHistoryPage() {
       />
       <ParticipationHistoryForm open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) setEditing(null); }} onSubmit={handleSubmit} initialData={editing} />
       <ConfirmationDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }} onConfirm={confirmDelete}
-        title="Confirmar exclusão" description={`Deseja excluir a participação "${deleteTarget?.title}"?`} />
+        title="Confirmar exclusÃ£o" description={`Deseja excluir a participaÃ§Ã£o "${deleteTarget?.title}"?`} />
     </div>
   );
 }

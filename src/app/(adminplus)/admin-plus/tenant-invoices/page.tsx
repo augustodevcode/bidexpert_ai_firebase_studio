@@ -1,15 +1,15 @@
 /**
- * Página de listagem CRUD de TenantInvoice no Admin Plus.
+ * PÃ¡gina de listagem CRUD de TenantInvoice no Admin Plus.
  */
 'use client';
 
 import React, { useCallback, useState } from 'react';
 import { Receipt } from 'lucide-react';
 import { toast } from 'sonner';
-import PageHeader from '@/components/admin-plus/page-header';
+import PageHeader from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getTenantInvoiceColumns } from './columns';
 import type { TenantInvoiceRow } from './types';
 import type { TenantInvoiceFormData } from './schema';
@@ -47,7 +47,7 @@ export default function TenantInvoicesPage() {
   const confirmDelete = async () => {
     if (!deleting) return;
     const res: any = await deleteTenantInvoice({ id: deleting.id });
-    if (res?.success) { toast.success('Fatura excluída.'); table.refresh(); } else { toast.error(res?.error || 'Erro ao excluir.'); }
+    if (res?.success) { toast.success('Fatura excluÃ­da.'); table.refresh(); } else { toast.error(res?.error || 'Erro ao excluir.'); }
     setDeleting(null);
   };
 

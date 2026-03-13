@@ -1,5 +1,5 @@
 /**
- * @fileoverview Página CRUD de Processos Judiciais — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de Processos Judiciais â€” Admin Plus.
  */
 'use client';
 
@@ -8,8 +8,8 @@ import { Gavel } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { PageHeader } from '@/components/admin-plus/page-header';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { listJudicialProcesses, createJudicialProcess, updateJudicialProcess, deleteJudicialProcess } from './actions';
 import { getJudicialProcessColumns } from './columns';
@@ -56,7 +56,7 @@ export default function JudicialProcessesPage() {
     if (!deleting) return;
     const res = await deleteJudicialProcess(deleting.id);
     if (res?.success) {
-      toast.success('Processo excluído.');
+      toast.success('Processo excluÃ­do.');
       setDeleting(null);
       refresh();
     } else {
@@ -68,7 +68,7 @@ export default function JudicialProcessesPage() {
     <div className="space-y-6" data-ai-id="judicial-processes-page">
       <PageHeader
         title="Processos Judiciais"
-        description="Gerencie os processos judiciais vinculados aos leilões."
+        description="Gerencie os processos judiciais vinculados aos leilÃµes."
         icon={Gavel}
       >
         <Button onClick={() => { setEditing(null); setFormOpen(true); }} data-ai-id="judicial-process-btn-new">

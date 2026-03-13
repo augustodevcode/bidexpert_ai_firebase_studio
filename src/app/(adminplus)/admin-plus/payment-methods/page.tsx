@@ -1,15 +1,15 @@
 /**
- * Página principal de listagem de PaymentMethod no Admin Plus.
+ * PÃ¡gina principal de listagem de PaymentMethod no Admin Plus.
  */
 'use client';
 
 import { useCallback, useState } from 'react';
 import { CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getPaymentMethodColumns } from './columns';
 import type { PaymentMethodRow } from './types';
 import { listPaymentMethods, deletePaymentMethod } from './actions';
@@ -36,7 +36,7 @@ export default function PaymentMethodsPage() {
     setDeleting(true);
     try {
       const res = await deletePaymentMethod({ id: deleteTarget.id });
-      if (res?.success) { toast.success('Excluído!'); table.refresh(); } else toast.error(res?.error ?? 'Erro');
+      if (res?.success) { toast.success('ExcluÃ­do!'); table.refresh(); } else toast.error(res?.error ?? 'Erro');
     } catch { toast.error('Erro ao excluir'); } finally { setDeleting(false); setDeleteTarget(null); }
   };
 
@@ -44,10 +44,10 @@ export default function PaymentMethodsPage() {
 
   return (
     <div className="space-y-4" data-ai-id="payment-methods-page">
-      <PageHeader title="Métodos de Pagamento" icon={CreditCard} onAdd={() => { setEditItem(null); setFormOpen(true); }} />
+      <PageHeader title="MÃ©todos de Pagamento" icon={CreditCard} onAdd={() => { setEditItem(null); setFormOpen(true); }} />
       <DataTablePlus columns={columns} data={table.data} totalItems={table.total} page={table.page} pageSize={table.pageSize} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} onSortChange={table.setSorting} onSearchChange={table.setSearch} sorting={table.sorting} isLoading={table.isLoading} />
       <PaymentMethodForm open={formOpen} onOpenChange={setFormOpen} editItem={editItem} onSuccess={table.refresh} />
-      <ConfirmationDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }} onConfirm={confirmDelete} loading={deleting} title="Excluir método de pagamento?" description={`Deseja excluir o método "${deleteTarget?.type ?? ''}"?`} />
+      <ConfirmationDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }} onConfirm={confirmDelete} loading={deleting} title="Excluir mÃ©todo de pagamento?" description={`Deseja excluir o mÃ©todo "${deleteTarget?.type ?? ''}"?`} />
     </div>
   );
 }

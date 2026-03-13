@@ -1,13 +1,13 @@
 /**
- * Página de listagem de UserWin (Arrematações).
+ * PÃ¡gina de listagem de UserWin (ArremataÃ§Ãµes).
  */
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
 import { Trophy } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { toast } from 'sonner';
 import { getUserWinColumns } from './columns';
@@ -28,7 +28,7 @@ export default function UserWinsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleting) return;
     const res = await deleteUserWin({ id: deleting.id });
-    if (res?.success) { toast.success('Excluído!'); refresh(); } else toast.error(res?.error ?? 'Erro');
+    if (res?.success) { toast.success('ExcluÃ­do!'); refresh(); } else toast.error(res?.error ?? 'Erro');
     setDeleting(null);
   }, [deleting, refresh]);
 
@@ -36,10 +36,10 @@ export default function UserWinsPage() {
 
   return (
     <div className="space-y-4" data-ai-id="user-wins-page">
-      <PageHeader title="Arrematações" icon={Trophy} onAdd={() => { setEditing(null); setFormOpen(true); }} />
+      <PageHeader title="ArremataÃ§Ãµes" icon={Trophy} onAdd={() => { setEditing(null); setFormOpen(true); }} />
       <DataTablePlus columns={columns} data={data?.data ?? []} isLoading={isLoading} pagination={pagination} sorting={sorting} onSortingChange={setSorting} onSearchChange={setSearch} onRowDoubleClick={handleEdit} />
       <UserWinForm open={formOpen} onOpenChange={setFormOpen} editingItem={editing} onSuccess={refresh} />
-      <ConfirmationDialog open={!!deleting} onOpenChange={o => !o && setDeleting(null)} onConfirm={handleConfirmDelete} title="Excluir Arrematação" description={`Excluir arrematação #${deleting?.id}?`} />
+      <ConfirmationDialog open={!!deleting} onOpenChange={o => !o && setDeleting(null)} onConfirm={handleConfirmDelete} title="Excluir ArremataÃ§Ã£o" description={`Excluir arremataÃ§Ã£o #${deleting?.id}?`} />
     </div>
   );
 }

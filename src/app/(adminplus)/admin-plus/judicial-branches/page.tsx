@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página de listagem de Varas Judiciais — Admin Plus.
+ * @fileoverview PÃ¡gina de listagem de Varas Judiciais â€” Admin Plus.
  */
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
 import { Scale } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import type { JudicialBranchRow } from './types';
 import { getJudicialBranchColumns } from './columns';
@@ -58,7 +58,7 @@ export default function JudicialBranchesPage() {
     if (!deleting) return;
     const res = await deleteJudicialBranch({ id: deleting.id });
     if (res?.success) {
-      toast.success('Vara excluída');
+      toast.success('Vara excluÃ­da');
       setDeleting(null);
       refresh();
     } else {

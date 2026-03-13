@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página CRUD de BidderProfile (Perfil do Arrematante) — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de BidderProfile (Perfil do Arrematante) â€” Admin Plus.
  */
 'use client';
 
 import { useState } from 'react';
 import { UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { columns } from './columns';
 import { listBidderProfiles, deleteBidderProfile } from './actions';
@@ -35,7 +35,7 @@ export default function BidderProfilesPage() {
     if (!deleteTarget) return;
     const res = await deleteBidderProfile({ id: deleteTarget.id });
     if (res?.success) {
-      toast.success('Perfil excluído');
+      toast.success('Perfil excluÃ­do');
       table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao excluir');
@@ -82,7 +82,7 @@ export default function BidderProfilesPage() {
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Excluir perfil"
-        description={`Deseja excluir o perfil de "${deleteTarget?.fullName ?? deleteTarget?.userName ?? ''}"? Esta ação não pode ser desfeita.`}
+        description={`Deseja excluir o perfil de "${deleteTarget?.fullName ?? deleteTarget?.userName ?? ''}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
         onConfirm={handleDelete}
       />
     </div>

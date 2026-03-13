@@ -1,5 +1,5 @@
 /**
- * @fileoverview Página CRUD de associação Users ↔ Roles — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de associaÃ§Ã£o Users â†” Roles â€” Admin Plus.
  * Junction table com chave composta [userId, roleId].
  */
 'use client';
@@ -7,9 +7,9 @@
 import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { columns } from './columns';
 import { listUsersOnRoles, deleteUsersOnRoles } from './actions';
@@ -31,7 +31,7 @@ export default function UsersOnRolesPage() {
     const [userId, roleId] = deleteTarget.compositeId.split(':');
     const res = await deleteUsersOnRoles({ userId, roleId });
     if (res?.success) {
-      toast.success('Associação removida');
+      toast.success('AssociaÃ§Ã£o removida');
       table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao remover');
@@ -42,11 +42,11 @@ export default function UsersOnRolesPage() {
   return (
     <div className="space-y-6" data-ai-id="users-on-roles-page">
       <PageHeader
-        title="Perfis por Usuário"
-        description="Gerencie as associações entre usuários e perfis de acesso"
+        title="Perfis por UsuÃ¡rio"
+        description="Gerencie as associaÃ§Ãµes entre usuÃ¡rios e perfis de acesso"
         icon={ShieldCheck}
         onAdd={() => setFormOpen(true)}
-        addLabel="Nova Atribuição"
+        addLabel="Nova AtribuiÃ§Ã£o"
       />
 
       <DataTablePlus
@@ -79,8 +79,8 @@ export default function UsersOnRolesPage() {
       <ConfirmationDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Remover atribuição"
-        description={`Deseja remover o perfil "${deleteTarget?.roleName ?? ''}" do usuário "${deleteTarget?.userName ?? ''}"?`}
+        title="Remover atribuiÃ§Ã£o"
+        description={`Deseja remover o perfil "${deleteTarget?.roleName ?? ''}" do usuÃ¡rio "${deleteTarget?.userName ?? ''}"?`}
         onConfirm={handleDelete}
       />
     </div>

@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página de listagem de Comarcas — Admin Plus.
+ * @fileoverview PÃ¡gina de listagem de Comarcas â€” Admin Plus.
  */
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
 import { Landmark } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import type { JudicialDistrictRow } from './types';
 import { getJudicialDistrictColumns } from './columns';
@@ -58,7 +58,7 @@ export default function JudicialDistrictsPage() {
     if (!deleting) return;
     const res = await deleteJudicialDistrict({ id: deleting.id });
     if (res?.success) {
-      toast.success('Comarca excluída');
+      toast.success('Comarca excluÃ­da');
       setDeleting(null);
       refresh();
     } else {

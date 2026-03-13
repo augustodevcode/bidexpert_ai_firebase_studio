@@ -1,6 +1,6 @@
 /**
- * @fileoverview Página de máscaras de ID — Admin Plus.
- * Formulário com 8 campos de máscara para identificadores de entidades.
+ * @fileoverview PÃ¡gina de mÃ¡scaras de ID â€” Admin Plus.
+ * FormulÃ¡rio com 8 campos de mÃ¡scara para identificadores de entidades.
  */
 'use client';
 
@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Hash, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
 import { Field } from '@/components/admin-plus/forms/field';
 import { Button } from '@/components/ui/button';
@@ -21,11 +21,11 @@ import { idMasksSchema, type IdMasksFormValues } from './schema';
 import { getIdMasksAction, updateIdMasksAction } from './actions';
 
 const MASK_FIELDS = [
-  { key: 'auctionIdMask' as const, label: 'Leilão', placeholder: 'LEI-{YYYY}-{SEQ:6}' },
+  { key: 'auctionIdMask' as const, label: 'LeilÃ£o', placeholder: 'LEI-{YYYY}-{SEQ:6}' },
   { key: 'lotIdMask' as const, label: 'Lote', placeholder: 'LOT-{YYYY}-{SEQ:8}' },
   { key: 'bidIdMask' as const, label: 'Lance', placeholder: 'BID-{SEQ:10}' },
   { key: 'invoiceIdMask' as const, label: 'Fatura', placeholder: 'FAT-{YYYY}{MM}-{SEQ:6}' },
-  { key: 'userIdMask' as const, label: 'Usuário', placeholder: 'USR-{SEQ:6}' },
+  { key: 'userIdMask' as const, label: 'UsuÃ¡rio', placeholder: 'USR-{SEQ:6}' },
   { key: 'processIdMask' as const, label: 'Processo', placeholder: 'PROC-{YYYY}-{SEQ:8}' },
   { key: 'contractIdMask' as const, label: 'Contrato', placeholder: 'CTR-{YYYY}-{SEQ:6}' },
   { key: 'receiptIdMask' as const, label: 'Recibo', placeholder: 'REC-{SEQ:8}' },
@@ -66,7 +66,7 @@ export default function IdMasksPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar máscaras de ID.');
+        toast.error('Erro ao carregar mÃ¡scaras de ID.');
       } finally {
         setLoading(false);
       }
@@ -78,7 +78,7 @@ export default function IdMasksPage() {
     try {
       const res = await updateIdMasksAction(values);
       if (res?.success) {
-        toast.success('Máscaras de ID salvas com sucesso.');
+        toast.success('MÃ¡scaras de ID salvas com sucesso.');
       } else {
         toast.error(res?.error ?? 'Erro ao salvar.');
       }
@@ -100,15 +100,15 @@ export default function IdMasksPage() {
 
   return (
     <div data-ai-id="id-masks-page">
-      <PageHeader title="Máscaras de Identificadores" icon={Hash} />
+      <PageHeader title="MÃ¡scaras de Identificadores" icon={Hash} />
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
         <p className="text-sm text-muted-foreground mb-4">
-          Defina os padrões de formatação dos IDs gerados pelo sistema. Use tokens como{' '}
+          Defina os padrÃµes de formataÃ§Ã£o dos IDs gerados pelo sistema. Use tokens como{' '}
           <code className="text-xs bg-muted px-1 py-0.5 rounded">{'{YYYY}'}</code>,{' '}
           <code className="text-xs bg-muted px-1 py-0.5 rounded">{'{MM}'}</code>,{' '}
           <code className="text-xs bg-muted px-1 py-0.5 rounded">{'{SEQ:N}'}</code>{' '}
-          para sequencial com N dígitos.
+          para sequencial com N dÃ­gitos.
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -126,7 +126,7 @@ export default function IdMasksPage() {
         <div className="flex justify-end pt-6">
           <Button type="submit" disabled={saving} data-ai-id="id-masks-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar Máscaras
+            Salvar MÃ¡scaras
           </Button>
         </div>
       </CrudFormShell>

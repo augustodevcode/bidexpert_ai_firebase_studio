@@ -1,15 +1,15 @@
 /**
- * Página de listagem CRUD de ITSM_Ticket no Admin Plus.
+ * PÃ¡gina de listagem CRUD de ITSM_Ticket no Admin Plus.
  */
 'use client';
 
 import React, { useCallback, useState } from 'react';
 import { Headset } from 'lucide-react';
 import { toast } from 'sonner';
-import PageHeader from '@/components/admin-plus/page-header';
+import PageHeader from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getItsmTicketColumns } from './columns';
 import type { ItsmTicketRow } from './types';
 import type { ItsmTicketFormData } from './schema';
@@ -47,7 +47,7 @@ export default function ItsmTicketsPage() {
   const confirmDelete = async () => {
     if (!deleting) return;
     const res: any = await deleteItsmTicket({ id: deleting.id });
-    if (res?.success) { toast.success('Ticket excluído.'); table.refresh(); } else { toast.error(res?.error || 'Erro ao excluir.'); }
+    if (res?.success) { toast.success('Ticket excluÃ­do.'); table.refresh(); } else { toast.error(res?.error || 'Erro ao excluir.'); }
     setDeleting(null);
   };
 

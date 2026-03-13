@@ -1,14 +1,14 @@
 /**
- * @fileoverview Página CRUD de Sellers (Vendedores) — Admin Plus.
+ * @fileoverview PÃ¡gina CRUD de Sellers (Vendedores) â€” Admin Plus.
  */
 'use client';
 
 import { useState } from 'react';
 import { Store } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { columns } from './columns';
 import { listSellers, deleteSeller } from './actions';
@@ -35,7 +35,7 @@ export default function SellersPage() {
     if (!deleteTarget) return;
     const res = await deleteSeller({ id: deleteTarget.id });
     if (res?.success) {
-      toast.success('Vendedor excluído');
+      toast.success('Vendedor excluÃ­do');
       table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao excluir');
@@ -82,7 +82,7 @@ export default function SellersPage() {
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Excluir vendedor"
-        description={`Deseja excluir o vendedor "${deleteTarget?.name ?? ''}"? Esta ação não pode ser desfeita.`}
+        description={`Deseja excluir o vendedor "${deleteTarget?.name ?? ''}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
         onConfirm={handleDelete}
       />
     </div>

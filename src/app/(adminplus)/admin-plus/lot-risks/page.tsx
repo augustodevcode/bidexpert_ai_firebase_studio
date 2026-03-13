@@ -1,14 +1,14 @@
 /**
- * Página CRUD de Riscos de Lotes (LotRisk).
+ * PÃ¡gina CRUD de Riscos de Lotes (LotRisk).
  */
 'use client';
 
 import React, { useMemo } from 'react';
 import { ShieldAlert } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import DataTablePlus from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import LotRiskForm from './form';
 import { getLotRiskColumns } from './columns';
 import { listLotRisks, deleteLotRisk } from './actions';

@@ -1,13 +1,13 @@
 /**
- * Página de listagem de InstallmentPayment (Parcelas de Pagamento).
+ * PÃ¡gina de listagem de InstallmentPayment (Parcelas de Pagamento).
  */
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
 import { CreditCard } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { toast } from 'sonner';
 import { getInstallmentPaymentColumns } from './columns';
@@ -28,7 +28,7 @@ export default function InstallmentPaymentsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleting) return;
     const res = await deleteInstallmentPayment({ id: deleting.id });
-    if (res?.success) { toast.success('Excluído!'); refresh(); } else toast.error(res?.error ?? 'Erro');
+    if (res?.success) { toast.success('ExcluÃ­do!'); refresh(); } else toast.error(res?.error ?? 'Erro');
     setDeleting(null);
   }, [deleting, refresh]);
 

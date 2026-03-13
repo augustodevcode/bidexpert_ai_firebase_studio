@@ -1,14 +1,14 @@
 /**
- * Página principal do CRUD de Notification (Notificações) no Admin Plus.
+ * PÃ¡gina principal do CRUD de Notification (NotificaÃ§Ãµes) no Admin Plus.
  */
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
 import { Bell } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getNotificationColumns } from './columns';
 import { listNotifications, deleteNotification } from './actions';
 import { NotificationForm } from './form';
@@ -27,7 +27,7 @@ export default function NotificationsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     const res = await deleteNotification({ id: deleteTarget.id });
-    if (res.success) { toast.success('Notificação excluída'); table.refresh(); } else { toast.error(res.error || 'Erro'); }
+    if (res.success) { toast.success('NotificaÃ§Ã£o excluÃ­da'); table.refresh(); } else { toast.error(res.error || 'Erro'); }
     setDeleteTarget(null);
   }, [deleteTarget, table]);
 
@@ -35,7 +35,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-4" data-ai-id="notifications-page">
-      <PageHeader title="Notificações" description="Gerenciamento de notificações dos usuários" icon={Bell}
+      <PageHeader title="NotificaÃ§Ãµes" description="Gerenciamento de notificaÃ§Ãµes dos usuÃ¡rios" icon={Bell}
         onAdd={() => { setEditData(null); setFormOpen(true); }} />
       <DataTablePlus data={table.data} columns={columns} isLoading={table.isLoading}
         pageCount={table.totalPages} pageIndex={table.page - 1} pageSize={table.pageSize}
@@ -44,7 +44,7 @@ export default function NotificationsPage() {
         onRowDoubleClick={handleEdit} />
       <NotificationForm open={formOpen} onOpenChange={setFormOpen} editData={editData} onSuccess={table.refresh} />
       <ConfirmationDialog open={!!deleteTarget} onOpenChange={o => { if (!o) setDeleteTarget(null); }}
-        title="Excluir Notificação" description={`Deseja excluir a notificação #${deleteTarget?.id}?`}
+        title="Excluir NotificaÃ§Ã£o" description={`Deseja excluir a notificaÃ§Ã£o #${deleteTarget?.id}?`}
         onConfirm={handleConfirmDelete} />
     </div>
   );

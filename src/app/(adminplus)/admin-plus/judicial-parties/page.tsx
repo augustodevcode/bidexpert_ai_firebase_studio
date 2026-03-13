@@ -1,5 +1,5 @@
 /**
- * Página de listagem de Partes Processuais (JudicialParty).
+ * PÃ¡gina de listagem de Partes Processuais (JudicialParty).
  */
 'use client';
 
@@ -9,8 +9,8 @@ import { toast } from 'sonner';
 
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { PageHeader } from '@/components/admin-plus/page-header';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 
 import { getJudicialPartyColumns } from './columns';
 import { listJudicialParties, createJudicialParty, updateJudicialParty, deleteJudicialParty } from './actions';
@@ -26,7 +26,7 @@ export default function JudicialPartiesPage() {
 
   const handleEdit = useCallback((row: JudicialPartyRow) => { setEditing(row); setFormOpen(true); }, []);
   const handleDelete = useCallback((row: JudicialPartyRow) => { setDeleteTarget(row); }, []);
-  const handleConfirmDelete = useCallback(async () => { if (!deleteTarget) return; const res = await deleteJudicialParty({ id: deleteTarget.id }); if (res.success) { toast.success('Parte excluída'); table.refresh(); } else toast.error(res.error || 'Erro'); setDeleteTarget(null); }, [deleteTarget, table]);
+  const handleConfirmDelete = useCallback(async () => { if (!deleteTarget) return; const res = await deleteJudicialParty({ id: deleteTarget.id }); if (res.success) { toast.success('Parte excluÃ­da'); table.refresh(); } else toast.error(res.error || 'Erro'); setDeleteTarget(null); }, [deleteTarget, table]);
   const handleSubmit = useCallback(async (data: any) => { const res = editing ? await updateJudicialParty({ ...data, id: editing.id }) : await createJudicialParty(data); if (res.success) { toast.success(editing ? 'Atualizado' : 'Criado'); setFormOpen(false); setEditing(null); table.refresh(); } else toast.error(res.error || 'Erro'); }, [editing, table]);
 
   const columns = useMemo(() => getJudicialPartyColumns({ onEdit: handleEdit, onDelete: handleDelete }), [handleEdit, handleDelete]);

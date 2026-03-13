@@ -1,6 +1,6 @@
 /**
- * @fileoverview Página de configurações de notificação (NotificationSettings) — Admin Plus.
- * Formulário singleton com 4 toggles booleanos.
+ * @fileoverview PÃ¡gina de configuraÃ§Ãµes de notificaÃ§Ã£o (NotificationSettings) â€” Admin Plus.
+ * FormulÃ¡rio singleton com 4 toggles booleanos.
  */
 'use client';
 
@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Bell, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
 import { Field } from '@/components/admin-plus/forms/field';
 import { Button } from '@/components/ui/button';
@@ -48,7 +48,7 @@ export default function NotificationSettingsPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar configurações de notificação.');
+        toast.error('Erro ao carregar configuraÃ§Ãµes de notificaÃ§Ã£o.');
       } finally {
         setLoading(false);
       }
@@ -60,12 +60,12 @@ export default function NotificationSettingsPage() {
     try {
       const res = await updateNotificationSettingsAction(values);
       if (res?.success) {
-        toast.success('Configurações de notificação salvas com sucesso.');
+        toast.success('ConfiguraÃ§Ãµes de notificaÃ§Ã£o salvas com sucesso.');
       } else {
         toast.error(res?.error ?? 'Erro ao salvar.');
       }
     } catch {
-      toast.error('Erro inesperado ao salvar configurações.');
+      toast.error('Erro inesperado ao salvar configuraÃ§Ãµes.');
     } finally {
       setSaving(false);
     }
@@ -84,16 +84,16 @@ export default function NotificationSettingsPage() {
 
   return (
     <div data-ai-id="notification-settings-page">
-      <PageHeader title="Configurações de Notificação" icon={Bell} />
+      <PageHeader title="ConfiguraÃ§Ãµes de NotificaÃ§Ã£o" icon={Bell} />
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
         <p className="text-sm text-muted-foreground mb-4">
-          Controle quais notificações são enviadas aos usuários da plataforma.
+          Controle quais notificaÃ§Ãµes sÃ£o enviadas aos usuÃ¡rios da plataforma.
         </p>
         <Separator className="mb-6" />
 
         <div className="space-y-6">
-          <Field label="Notificar sobre novos leilões" description="Envia notificação quando um novo leilão é publicado.">
+          <Field label="Notificar sobre novos leilÃµes" description="Envia notificaÃ§Ã£o quando um novo leilÃ£o Ã© publicado.">
             <Switch
               checked={form.watch('notifyOnNewAuction')}
               onCheckedChange={(v) => form.setValue('notifyOnNewAuction', v, { shouldDirty: true })}
@@ -101,7 +101,7 @@ export default function NotificationSettingsPage() {
             />
           </Field>
 
-          <Field label="Notificar sobre lotes em destaque" description="Envia notificação quando um lote é marcado como destaque.">
+          <Field label="Notificar sobre lotes em destaque" description="Envia notificaÃ§Ã£o quando um lote Ã© marcado como destaque.">
             <Switch
               checked={form.watch('notifyOnFeaturedLot')}
               onCheckedChange={(v) => form.setValue('notifyOnFeaturedLot', v, { shouldDirty: true })}
@@ -109,7 +109,7 @@ export default function NotificationSettingsPage() {
             />
           </Field>
 
-          <Field label="Notificar sobre leilões encerrando" description="Envia notificação quando um leilão está próximo do encerramento.">
+          <Field label="Notificar sobre leilÃµes encerrando" description="Envia notificaÃ§Ã£o quando um leilÃ£o estÃ¡ prÃ³ximo do encerramento.">
             <Switch
               checked={form.watch('notifyOnAuctionEndingSoon')}
               onCheckedChange={(v) => form.setValue('notifyOnAuctionEndingSoon', v, { shouldDirty: true })}
@@ -117,7 +117,7 @@ export default function NotificationSettingsPage() {
             />
           </Field>
 
-          <Field label="Notificar sobre promoções" description="Envia notificação sobre promoções e ofertas especiais.">
+          <Field label="Notificar sobre promoÃ§Ãµes" description="Envia notificaÃ§Ã£o sobre promoÃ§Ãµes e ofertas especiais.">
             <Switch
               checked={form.watch('notifyOnPromotions')}
               onCheckedChange={(v) => form.setValue('notifyOnPromotions', v, { shouldDirty: true })}
@@ -129,7 +129,7 @@ export default function NotificationSettingsPage() {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={saving} data-ai-id="notification-settings-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar Configurações
+            Salvar ConfiguraÃ§Ãµes
           </Button>
         </div>
       </CrudFormShell>

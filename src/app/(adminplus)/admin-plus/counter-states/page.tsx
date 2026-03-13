@@ -1,6 +1,6 @@
 /**
- * @fileoverview Página de listagem de CounterState — Admin Plus.
- * CRUD completo com DataTablePlus, dialog form, confirmação de exclusão.
+ * @fileoverview PÃ¡gina de listagem de CounterState â€” Admin Plus.
+ * CRUD completo com DataTablePlus, dialog form, confirmaÃ§Ã£o de exclusÃ£o.
  */
 'use client';
 
@@ -8,7 +8,7 @@ import { useState, useCallback } from 'react';
 import { Hash, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
@@ -38,7 +38,7 @@ export default function CounterStatesPage() {
     if (!deleteRow) return;
     try {
       const res = await deleteCounterStateAction({ id: deleteRow.id });
-      if (res?.success) { toast.success('Contador excluído.'); table.refresh(); }
+      if (res?.success) { toast.success('Contador excluÃ­do.'); table.refresh(); }
       else toast.error(res?.error ?? 'Erro ao excluir.');
     } catch { toast.error('Erro inesperado.'); }
     setDeleteRow(null);
@@ -46,7 +46,7 @@ export default function CounterStatesPage() {
 
   return (
     <div data-ai-id="counter-states-page">
-      <PageHeader title="Contadores de Sequência" icon={Hash}>
+      <PageHeader title="Contadores de SequÃªncia" icon={Hash}>
         <Button onClick={handleNew} data-ai-id="counter-states-add">
           <Plus className="mr-2 h-4 w-4" /> Novo Contador
         </Button>

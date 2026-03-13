@@ -9,8 +9,8 @@ import { DollarSign } from 'lucide-react';
 
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { PageHeader } from '@/components/admin-plus/page-header';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getBidColumns } from './columns';
 import type { BidRow } from './types';
 import BidForm from './form';
@@ -40,7 +40,7 @@ export default function BidsPage() {
     if (!deleteItem) return;
     const res = await deleteBid({ id: deleteItem.id });
     if (res.success) {
-      toast.success('Lance excluído!');
+      toast.success('Lance excluÃ­do!');
       refresh();
     } else {
       toast.error(res.error ?? 'Erro ao excluir.');
@@ -54,7 +54,7 @@ export default function BidsPage() {
     <div className="space-y-4" data-ai-id="bids-page">
       <PageHeader
         title="Lances"
-        description="Gerenciamento de lances das praças"
+        description="Gerenciamento de lances das praÃ§as"
         icon={DollarSign}
         onAdd={() => { setEditItem(null); setFormOpen(true); }}
       />
