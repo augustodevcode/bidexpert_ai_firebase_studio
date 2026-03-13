@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { CrudFormShell } from '@/components/admin-plus/crud-form-shell';
-import { Field } from '@/components/admin-plus/field';
+import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
+import { Field } from '@/components/admin-plus/forms/field';
 import { variableIncrementRuleSchema, type VariableIncrementRuleFormData } from './schema';
 import type { VariableIncrementRuleRow } from './types';
 

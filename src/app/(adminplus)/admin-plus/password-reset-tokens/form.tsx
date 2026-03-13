@@ -7,8 +7,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CrudFormShell } from '@/components/admin-plus/crud-form-shell';
-import { Field } from '@/components/admin-plus/field';
+import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
+import { Field } from '@/components/admin-plus/forms/field';
 import { passwordResetTokenSchema } from './schema';
 import type { PasswordResetTokenRow } from './types';
 

@@ -20,8 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CrudFormShell } from '@/components/admin-plus/crud-form-shell';
-import { Field } from '@/components/admin-plus/field';
+import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
+import { Field } from '@/components/admin-plus/forms/field';
 import { usersOnRolesSchema, type UsersOnRolesInput } from './schema';
 import { createUsersOnRoles } from './actions';
 import { listUsers } from '../users/actions';

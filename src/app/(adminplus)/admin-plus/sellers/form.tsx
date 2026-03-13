@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { CrudFormShell } from '@/components/admin-plus/crud-form-shell';
-import { Field } from '@/components/admin-plus/field';
+import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
+import { Field } from '@/components/admin-plus/forms/field';
 import { sellerSchema, type SellerInput } from './schema';
 import { createSeller, updateSeller } from './actions';
 import type { SellerRow } from './types';
