@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react';
 import { TrendingUp } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { getUserLotMaxBidColumns } from './columns';

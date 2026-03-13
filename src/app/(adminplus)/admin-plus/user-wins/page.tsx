@@ -5,9 +5,9 @@
 
 import { useMemo, useState, useCallback } from 'react';
 import { Trophy } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { toast } from 'sonner';
 import { getUserWinColumns } from './columns';

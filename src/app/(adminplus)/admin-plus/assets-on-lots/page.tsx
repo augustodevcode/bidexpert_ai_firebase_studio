@@ -8,8 +8,8 @@ import { Link2 } from 'lucide-react';
 
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
-import { PageHeader } from '@/components/admin-plus/page-header';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getAssetsOnLotsColumns } from './columns';
 import type { AssetsOnLotsRow } from './types';
 import AssetsOnLotsForm from './form';

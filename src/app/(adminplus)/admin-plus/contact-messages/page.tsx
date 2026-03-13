@@ -5,10 +5,10 @@
 
 import { useMemo, useState, useCallback } from 'react';
 import { Mail } from 'lucide-react';
-import { PageHeader } from '@/components/admin-plus/page-header';
+import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { useDataTable } from '@/hooks/admin-plus/use-data-table';
-import { ConfirmationDialog } from '@/components/admin-plus/confirmation-dialog';
+import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getContactMessageColumns } from './columns';
 import { listContactMessages, deleteContactMessage } from './actions';
 import { ContactMessageForm } from './form';
