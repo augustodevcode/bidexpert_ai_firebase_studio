@@ -87,6 +87,11 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
   options: CreateAdminActionOptions<TInput, TOutput>,
 ): (...args: unknown[]) => Promise<ActionResult<TOutput>>;
 
+export function createAdminAction<TInput extends z.ZodTypeAny, TOutput = unknown>(
+  schema: TInput,
+  handler: (input: z.infer<TInput>, ctx?: ActionContext) => Promise<TOutput>,
+): (...args: unknown[]) => Promise<ActionResult<TOutput>>;
+
 /**
  * Factory de Server Actions autenticadas + validadas para Admin Plus.
  *
@@ -98,10 +103,25 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
  * 5. Retorna ActionResult<TOutput> padronizado
  */
 export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.ZodVoid, TOutput = unknown>(
-  optionsOrHandler: CreateAdminActionOptions<TInput, TOutput> | LegacyAdminActionHandler<unknown, TOutput>,
+  optionsOrHandler: CreateAdminActionOptions<TInput, TOutput> | LegacyAdminActionHandler<unknown, TOutput> | TInput,
+  twoArgHandler?: (input: unknown, ctx?: ActionContext) => Promise<TOutput>,
 ) {
   return async (...rawArgs: unknown[]): Promise<ActionResult<TOutput>> => {
     try {
+      let legacyHandler: LegacyAdminActionHandler<unknown, TOutput> | null = null;
+      let options: CreateAdminActionOptions<TInput, TOutput> | null = null;
+
+      if (twoArgHandler && optionsOrHandler instanceof z.ZodType) {
+        options = {
+          inputSchema: optionsOrHandler as TInput,
+          handler: ((input: unknown, ctx?: ActionContext) => twoArgHandler(input, ctx)) as (...args: any[]) => Promise<TOutput>,
+        };
+      } else if (typeof optionsOrHandler === 'function') {
+        legacyHandler = optionsOrHandler;
+      } else {
+        options = optionsOrHandler as CreateAdminActionOptions<TInput, TOutput>;
+      }
+
       // 1. Autenticação
       const session = await getSession();
       if (!session?.userId) {
@@ -138,7 +158,6 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
       }
 
       // 2. Verificação de permissão
-      const options = typeof optionsOrHandler === 'function' ? null : optionsOrHandler;
       const requiredPermissions = options?.permissions?.length
         ? options.permissions
         : options?.requiredPermission
@@ -178,9 +197,10 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
       }
 
       // 4. Executar handler
-      const data = typeof optionsOrHandler === 'function'
-        ? await optionsOrHandler(ctx, ...rawArgs)
-        : await invokeOptionsHandler(options.handler, validatedInput, ctx);
+      const [inputArg, ...restArgs] = rawArgs;
+      const data = legacyHandler
+        ? await legacyHandler(ctx, inputArg, ...restArgs)
+        : await invokeOptionsHandler(options!.handler, validatedInput, ctx);
 
       return { success: true, data };
     } catch (error) {

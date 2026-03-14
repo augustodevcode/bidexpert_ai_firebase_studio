@@ -1,4 +1,6 @@
 id	timestamp	description	status	errors_before	errors_after	delta	kept	notes
 1	2026-03-14T15:45	Fix safe-action.ts TInput threading	SUCCESS	2439	2136	-303	YES	TS18046: 321->61
 2	2026-03-14T16:10	SortInput union type for useDataTable	SUCCESS	2136	2114	-22	YES	TS2353: 91->69. Single file change in LegacyAdminActionHandler type.
-3	2026-03-14T17:30	DataTablePlus props + UseDataTableReturn methods + fetchAction alias	SUCCESS	2114	2022	-92	YES	TS2339: 519->466, TS2551: 108->81. Added legacy compat props/methods.
+3	2026-03-14T17:30	DataTablePlus props + UseDataTableReturn methods + fetchAction alias	SUCCESS	2114	2022	-92	YES	TS2339: 519->466, TS2551: 108->81
+4	2026-03-14T19:00	Relax handler type unknown[]→any[] in CreateAdminActionOptions	SUCCESS	2022	1715	-307	YES	TS2769: 150->6, TS2322: 671->519. Added legacy compat props/methods.
+5	2026-03-14T19:25	Optional CrudFormShell cancel + createAdminAction(schema, handler) overload	SUCCESS	1715	1657	-58	YES	TS2741: 18->0, TS2554: 40->28. Kept helper cleanup to preserve local type safety.
