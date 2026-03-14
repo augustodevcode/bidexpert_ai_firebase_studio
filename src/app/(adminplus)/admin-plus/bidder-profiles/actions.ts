@@ -26,14 +26,14 @@ export const listBidderProfiles = createAdminAction({
       where.OR = [
         { fullName: { contains: search } },
         { cpf: { contains: search } },
-        { User: { name: { contains: search } } },
+        { User: { fullName: { contains: search } } },
         { User: { email: { contains: search } } },
       ];
     }
     const [data, total] = await Promise.all([
       prisma.bidderProfile.findMany({
         where,
-        include: { User: { select: { name: true, email: true } } },
+        include: { User: { select: { fullName: true, email: true } } },
         orderBy: { [sortField]: sortOrder },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -42,7 +42,7 @@ export const listBidderProfiles = createAdminAction({
     ]);
     const rows = data.map((d) => ({
       ...d,
-      userName: d.User?.name ?? '—',
+      userName: d.User?.fullName ?? '—',
       userEmail: d.User?.email ?? '—',
     }));
     return sanitizeResponse({

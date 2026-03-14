@@ -28,7 +28,7 @@ export const listUserOnTenants = createAdminAction({
     const where = search
       ? {
           OR: [
-            { User: { name: { contains: search } } },
+            { User: { fullName: { contains: search } } },
             { User: { email: { contains: search } } },
             { Tenant: { name: { contains: search } } },
           ],
@@ -46,7 +46,7 @@ export const listUserOnTenants = createAdminAction({
         take: pageSize,
         orderBy,
         include: {
-          User: { select: { id: true, name: true, email: true } },
+          User: { select: { id: true, fullName: true, email: true } },
           Tenant: { select: { id: true, name: true } },
         },
       }),
@@ -59,7 +59,7 @@ export const listUserOnTenants = createAdminAction({
       tenantId: r.tenantId.toString(),
       assignedAt: r.assignedAt.toISOString(),
       assignedBy: r.assignedBy,
-      userName: r.User?.name ?? undefined,
+      userName: r.User?.fullName ?? undefined,
       userEmail: r.User?.email ?? undefined,
       tenantName: r.Tenant?.name ?? undefined,
     }));

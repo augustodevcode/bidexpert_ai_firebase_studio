@@ -28,7 +28,7 @@ export const listUsersOnRoles = createAdminAction({
     const where = search
       ? {
           OR: [
-            { User: { name: { contains: search } } },
+            { User: { fullName: { contains: search } } },
             { User: { email: { contains: search } } },
             { Role: { name: { contains: search } } },
           ],
@@ -46,7 +46,7 @@ export const listUsersOnRoles = createAdminAction({
         take: pageSize,
         orderBy,
         include: {
-          User: { select: { id: true, name: true, email: true } },
+          User: { select: { id: true, fullName: true, email: true } },
           Role: { select: { id: true, name: true } },
         },
       }),
@@ -59,7 +59,7 @@ export const listUsersOnRoles = createAdminAction({
       roleId: r.roleId.toString(),
       assignedAt: r.assignedAt.toISOString(),
       assignedBy: r.assignedBy ?? '',
-      userName: r.User?.name ?? undefined,
+      userName: r.User?.fullName ?? undefined,
       userEmail: r.User?.email ?? undefined,
       roleName: r.Role?.name ?? undefined,
     }));
