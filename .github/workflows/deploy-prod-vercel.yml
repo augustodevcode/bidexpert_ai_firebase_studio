@@ -26,7 +26,7 @@ on:
         type: boolean
 
 env:
-  PRISMA_SCHEMA: prisma/deploy/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma-deploy/schema.postgresql.prisma
 
 jobs:
   build:
@@ -48,7 +48,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🔐 Validate DATABASE_URL Protocol (PostgreSQL)
         run: |
@@ -115,7 +115,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🔐 Validate DATABASE_URL Protocol (PostgreSQL)
         run: |

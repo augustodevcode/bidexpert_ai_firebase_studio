@@ -1,16 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build",
+  "buildCommand": "cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "regions": ["gru1"],
   "env": {
-    "PRISMA_SCHEMA": "prisma/deploy/schema.postgresql.prisma"
+    "PRISMA_SCHEMA": "prisma-deploy/schema.postgresql.prisma"
   },
   "build": {
     "env": {
-      "PRISMA_SCHEMA": "prisma/deploy/schema.postgresql.prisma",
+      "PRISMA_SCHEMA": "prisma-deploy/schema.postgresql.prisma",
       "NEXT_TELEMETRY_DISABLED": "1"
     }
   },

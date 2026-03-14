@@ -48,7 +48,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -227,7 +227,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate

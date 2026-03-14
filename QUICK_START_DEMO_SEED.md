@@ -119,7 +119,7 @@ WHERE table_schema = 'public';
 
 ```powershell
 # 1. Garantir cliente PostgreSQL ativo
-Copy-Item prisma/deploy/schema.postgresql.prisma prisma/schema.prisma -Force
+Copy-Item prisma-deploy/schema.postgresql.prisma prisma/schema.prisma -Force
 npx prisma generate --no-engine
 
 # 2. Executar seed via Accelerate
@@ -206,7 +206,7 @@ Deve exibir grid com:
 **Solução**:
 ```powershell
 Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
-Copy-Item prisma/deploy/schema.postgresql.prisma prisma/schema.prisma -Force
+Copy-Item prisma-deploy/schema.postgresql.prisma prisma/schema.prisma -Force
 Remove-Item node_modules\.prisma -Recurse -Force
 npx prisma generate --no-engine
 ```

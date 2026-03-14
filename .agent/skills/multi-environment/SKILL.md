@@ -192,7 +192,7 @@ const results = await prisma.auction.findMany({
 ### Prisma Schemas
 
 - **`prisma/schema.prisma`**: Schema MySQL (desenvolvimento local)
-- **`prisma/deploy/schema.postgresql.prisma`**: Schema PostgreSQL (Vercel)
+- **`prisma-deploy/schema.postgresql.prisma`**: Schema PostgreSQL (Vercel)
 
 ### Scripts
 
@@ -271,7 +271,7 @@ import { insensitiveContains } from '@/lib/prisma/query-helpers';
 
 ```powershell
 # Copiar schema PostgreSQL
-cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 npx prisma validate
 ```
 

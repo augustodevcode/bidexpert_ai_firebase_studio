@@ -270,7 +270,7 @@ echo "feat(scope): description" | npx commitlint --verbose
 
 ```bash
 # Reproduzir localmente
-cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 npx prisma generate
 npm run lint
 npm run typecheck

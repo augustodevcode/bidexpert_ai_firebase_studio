@@ -33,7 +33,7 @@ on:
     - cron: '0 6 * * 1'
 
 env:
-  PRISMA_SCHEMA: prisma/deploy/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma-deploy/schema.postgresql.prisma
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 

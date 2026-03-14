@@ -175,7 +175,7 @@ Whenever admin/backoffice/compliance topics are detected, automatically apply th
 
 ## Regras Gerais
 - **Stack:** Next.js, React, TypeScript, Zod, Prisma, ShadCN UI, Tailwind CSS, Genkit (MVC + Server Actions)
-- **Schemas Prisma Duais:** `prisma/schema.prisma` (MySQL) + `prisma/deploy/schema.postgresql.prisma` (PostgreSQL). Alterar AMBOS ao mudar schema.
+- **Schemas Prisma Duais:** `prisma/schema.prisma` (MySQL) + `prisma-deploy/schema.postgresql.prisma` (PostgreSQL). Alterar AMBOS ao mudar schema.
 - **Testes:** Sempre rodar dentro do container. Evidência JSON obrigatória.
 - **Documentação:** Todo arquivo `.ts`/`.tsx` deve começar com docblock explicando propósito.
 - **SEO:** Semantic HTML, meta tags, JSON-LD, lazy loading para imagens.

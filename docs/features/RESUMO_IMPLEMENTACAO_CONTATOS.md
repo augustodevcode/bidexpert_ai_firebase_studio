@@ -23,7 +23,7 @@ Implementar sistema hierárquico de contatos para leilões com herança:
 - **Auction**: Adicionados `supportPhone`, `supportEmail`, `supportWhatsApp`
 - **Auctioneer**: Adicionado `supportWhatsApp` (phone e email já existiam)
 
-#### `prisma/deploy/schema.postgresql.prisma` ✅
+#### `prisma-deploy/schema.postgresql.prisma` ✅
 - Mesmas alterações aplicadas para compatibilidade PostgreSQL
 
 ### 2. Services (Business Logic)

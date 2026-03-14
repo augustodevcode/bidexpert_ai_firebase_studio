@@ -75,7 +75,7 @@ MySQL / PostgreSQL
 | Arquivo | Ambiente | Banco |
 |---------|----------|-------|
 | `prisma/schema.prisma` | DEV local | MySQL |
-| `prisma/deploy/schema.postgresql.prisma` | Vercel/PROD | PostgreSQL (Neon) |
+| `prisma-deploy/schema.postgresql.prisma` | Vercel/PROD | PostgreSQL (Neon) |
 
 ### Regra Crítica
 - **SEMPRE alterar AMBOS** os schemas ao modificar modelos
@@ -201,7 +201,7 @@ where: { title: { contains: 'termo', mode: 'insensitive' } }
 ## 11. Deploy Vercel — Regras Críticas
 
 - ❌ **NUNCA** incluir `prisma db push` ou `prisma migrate deploy` no `buildCommand` do `vercel.json`
-- ✅ Build command correto: `cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build`
+- ✅ Build command correto: `cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build`
 - ✅ API routes dinâmicas DEVEM ter: `export const dynamic = 'force-dynamic'`
 - ✅ Middleware trata `*.vercel.app` dinamicamente (nunca redirecionar para subdomínios em `.vercel.app`)
 - ✅ Deploy sempre via Git + PR (nunca push direto em `main`)

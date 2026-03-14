@@ -18,7 +18,7 @@ on:
       - demo-stable
 
 env:
-  PRISMA_SCHEMA: prisma/deploy/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma-deploy/schema.postgresql.prisma
 
 jobs:
   # ============================================================================
@@ -44,7 +44,7 @@ jobs:
         run: npm ci
         
       - name: � Copy PostgreSQL schema
-        run: cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: �🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -84,7 +84,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
         
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -124,7 +124,7 @@ jobs:
         run: npm ci
 
       - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
         
       - name: 🗄️ Generate Prisma Client
         run: npx prisma generate
@@ -164,8 +164,8 @@ jobs:
         
       - name: 🔍 Validate PostgreSQL Schema
         run: |
-          if [ -f "prisma/deploy/schema.postgresql.prisma" ]; then
-            npx prisma validate --schema=prisma/deploy/schema.postgresql.prisma
+          if [ -f "prisma-deploy/schema.postgresql.prisma" ]; then
+            npx prisma validate --schema=prisma-deploy/schema.postgresql.prisma
           else
             echo "⚠️ PostgreSQL schema not found, skipping"
           fi
