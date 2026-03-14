@@ -251,6 +251,36 @@ DATABASE_URL="mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_dev"
 NODE_ENV=development
 ```
 
+---
+
+## Diferenças Vercel vs Local para E2E (OBRIGATÓRIO)
+
+Ao escrever ou depurar testes E2E, considere que **o comportamento difere** entre ambientes:
+
+| Aspecto | Local (`npm run dev`) | Local (`npm start`) | Vercel (produção) |
+|---------|----------------------|---------------------|-------------------|
+| Lazy compilation | ✅ Sim (20-130s) | ❌ Não | ❌ Não |
+| `waitUntil: 'networkidle'` | Pode travar | Pode travar | Pode travar |
+| `form.submit()` | Funciona | Funciona | Pode falhar |
+| Tabs com count=0 | Visíveis | Visíveis | Podem estar ocultas |
+| Hydration timing | Rápido | Rápido | Variável |
+| WebSocket polling | Contínuo | Contínuo | Contínuo |
+
+### Regras Derivadas
+1. **SEMPRE** usar `waitUntil: 'domcontentloaded'` (nunca `'networkidle'`)
+2. **SEMPRE** usar `requestSubmit()` ao invés de `submit()`
+3. **SEMPRE** verificar `.isVisible()` antes de clicar em tabs/elementos dinâmicos
+4. **SEMPRE** usar URL com subdomínio: `demo.localhost:PORT` (não `localhost:PORT`)
+5. Para E2E estável, preferir `npm run build && npm start` ao invés de `npm run dev`
+6. Em dev mode, pré-aquecer páginas no `beforeAll` com timeout de 120s
+
+### Worktree: Checklist de Configuração
+Ao criar worktree para testes E2E:
+- [ ] Copiar `.env` da raiz (DATABASE_URL, NEXTAUTH_SECRET)
+- [ ] Copiar/criar `.env.local` com PORT correto
+- [ ] Executar `npx prisma generate`
+- [ ] Verificar porta livre antes de iniciar servidor
+
 ### DEMO (Vercel PostgreSQL)
 
 ```env

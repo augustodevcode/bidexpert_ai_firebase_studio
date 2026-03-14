@@ -110,7 +110,15 @@ git worktree list
 # 2. Criar worktree + nova branch a partir de demo-stable
 git worktree add worktrees/bidexpert-feat-X -b feat/X-$(date +%Y%m%d-%H%M) origin/demo-stable
 cd worktrees/bidexpert-feat-X
-PORT=9006 npm install && npm run dev
+
+# ⚠️ OBRIGATÓRIO: Copiar .env da raiz (não é copiado pelo worktree)
+cp ../../.env .env
+cp ../../.env.local .env.local 2>/dev/null; true
+
+# Ajustar porta no .env.local
+sed -i 's/PORT=.*/PORT=9006/' .env.local
+
+PORT=9006 npm install && npx prisma generate && npm run dev
 # → http://dev.localhost:9006
 
 # 3. Limpeza após merge
@@ -119,6 +127,42 @@ git branch -d feat/X-...
 ```
 
 **Skill completa:** `.github/skills/git-worktree-isolation/SKILL.md`
+
+---
+
+## 🧪 Anti-Patterns E2E — Lições Aprendidas (OBRIGATÓRIO)
+
+Regras extraídas de bugs reais em sessões de debugging E2E. Todo agente Claude DEVE seguir:
+
+### URLs e Subdomínios
+- **SEMPRE** `demo.localhost:PORT`, **NUNCA** `localhost:PORT` — middleware redireciona bare localhost para `crm.localhost`
+
+### Worktree Setup
+- **SEMPRE** copiar `.env` E `.env.local` da raiz — Git Worktree NÃO copia
+- **SEMPRE** executar `npx prisma generate` após `npm install` — senão `PrismaClientInitializationError`
+
+### Navigation e Waiting
+- Usar `waitUntil: 'domcontentloaded'`, **NUNCA** `'networkidle'` — WebSockets causam hang
+- Em dev mode, pré-aquecer páginas no `beforeAll` (lazy compilation 20-130s)
+- Preferir `npm run build && npm start` para E2E estável
+
+### Vercel vs Local
+- Tabs/badges count=0 podem estar ocultas no Vercel — verificar `.isVisible()` antes
+- Usar `requestSubmit()`, não `submit()` — Vercel compat
+- Verificar existência do elemento antes de assertar: `await expect(el).toBeVisible()`
+
+### Login
+- Usar `loginAsAdmin()` do helper centralizado — NUNCA reimplementar inline
+- Credenciais canônicas: `admin@bidexpert.com.br / Admin@123` — `senha@123` é INCORRETA
+
+### Port Management
+- Verificar porta livre antes de iniciar: `netstat -ano | findstr ":9005"`
+- Matar Node órfãos: `Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue`
+
+### Commits Docs-Only
+- Usar `--no-verify` para commits que alteram apenas `.md` (skip typecheck hook)
+
+**Referência completa:** `context/REGRAS_NEGOCIO_CONSOLIDADO.md` seção RN-GUIA-001 a 010
 
 ---
 

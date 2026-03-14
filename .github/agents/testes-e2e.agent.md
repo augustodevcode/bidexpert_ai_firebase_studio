@@ -94,7 +94,107 @@ Sem evidência visual, o PR não deve ser aprovado nem mergeado.
    - Verifique timeouts e seletores.
 5. **Documentar**: Adicione docblocks explicando o propósito do teste.
 
-## 6. Comandos Úteis Consolidados
+## 6. Anti-Patterns E2E — Lições Aprendidas (OBRIGATÓRIO)
+
+As regras abaixo foram extraídas de bugs reais encontrados em sessões de teste. **TODO agente DEVE segui-las.**
+
+### 6.1 URLs — SEMPRE com Subdomínio
+```
+# ✅ CORRETO
+http://demo.localhost:9005
+http://dev.localhost:9006
+
+# ❌ INCORRETO — middleware redireciona para crm.localhost, quebrando testes
+http://localhost:9005
+http://localhost:3000
+```
+**Causa raiz:** O middleware (`src/middleware.ts`) redireciona `localhost` (sem subdomínio) para `crm.localhost`, causando timeouts silenciosos.
+
+### 6.2 Vercel vs Local — Diferenças Críticas
+| Aspecto | Local (dev/start) | Vercel (produção) |
+|---------|-------------------|-------------------|
+| Lazy compilation | Sim (`npm run dev`) | Não |
+| Tabs com count=0 | Visíveis | Podem estar ocultas |
+| `form.submit()` | Funciona | Pode falhar |
+| `form.requestSubmit()` | Funciona | **Obrigatório** |
+| Hydration timing | Rápido | Variável |
+
+**Regras derivadas:**
+- SEMPRE verificar visibilidade do elemento ANTES de assertar conteúdo: `await expect(el).toBeVisible()`
+- SEMPRE usar `requestSubmit()` ao invés de `submit()` para compatibilidade Vercel
+- Tabs/badges com contagem zero podem estar ocultas no Vercel — verificar antes de clicar
+
+### 6.3 Pre-Warm de Páginas (Dev Mode)
+Em `npm run dev`, a primeira navegação para qualquer página leva **20-130 segundos** (lazy compilation). Para evitar timeouts:
+```typescript
+// Pre-warm antes dos testes
+test.beforeAll(async ({ browser }) => {
+  const warmPage = await browser.newPage();
+  await warmPage.goto(BASE_URL + '/admin', { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  await warmPage.close();
+});
+```
+**Preferível:** Use `npm run build && npm start` para eliminar lazy compilation.
+
+### 6.4 waitUntil — Usar `domcontentloaded`
+```typescript
+// ✅ CORRETO — retorna assim que o DOM está pronto
+await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+// ❌ INCORRETO — espera TODAS as requisições de rede cessarem (WebSockets, polling = timeout)
+await page.goto(url, { waitUntil: 'networkidle' });
+```
+
+### 6.5 Port Management
+Antes de iniciar servidor para testes, SEMPRE verificar se a porta está livre:
+```powershell
+# Verificar porta
+netstat -ano | Select-String ":9005 "
+
+# Matar processos Node órfãos
+Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
+```
+
+### 6.6 Helper de Login — NUNCA Reimplementar
+```typescript
+// ✅ CORRETO — usar helper centralizado
+import { loginAsAdmin, loginAs } from './helpers/auth-helper';
+await loginAsAdmin(page, BASE_URL);
+
+// ❌ INCORRETO — reimplementar lógica de login inline
+await page.fill('[name="email"]', 'admin@bidexpert.com.br');
+await page.fill('[name="password"]', 'Admin@123');
+await page.click('button[type="submit"]');
+```
+
+### 6.7 Verificação de Existência Antes de Assertion
+```typescript
+// ✅ CORRETO — verificar existência primeiro
+const tab = page.getByRole('tab', { name: /Leilões/ });
+if (await tab.isVisible()) {
+  await tab.click();
+  await expect(page.getByRole('tabpanel')).toBeVisible();
+}
+
+// ❌ INCORRETO — assumir que o elemento existe
+await page.getByRole('tab', { name: /Leilões/ }).click(); // pode falhar no Vercel
+```
+
+### 6.8 Robot Tests — Variáveis de Ambiente
+Scripts robot (`scripts/robot-*.mjs`) precisam de variáveis de ambiente:
+```powershell
+$env:ROBOT_BASE_URL = "http://demo.localhost:9005"
+$env:PREGAO_BASE_URL = "http://demo.localhost:9005"
+node scripts/robot-test.mjs
+```
+
+### 6.9 Commits Docs-Only
+Para commits que alteram APENAS arquivos `.md`, use `--no-verify` para pular o typecheck hook:
+```powershell
+git commit -m "docs: add testing guide" --no-verify
+```
+
+## 7. Comandos Úteis Consolidados
 
 ```bash
 # Executar todos os testes unitários/integração

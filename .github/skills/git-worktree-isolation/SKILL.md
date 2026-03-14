@@ -92,45 +92,66 @@ Write-Host "   Porta: $porta" -ForegroundColor Cyan
 
 ---
 
-### Passo 2 — Configurar .env Local no Worktree
+### Passo 2 — Configurar .env e .env.local no Worktree
 
-Cada worktree precisa de um `.env.local` próprio com a porta correta:
+**⚠️ CRÍTICO:** Git Worktree NÃO copia arquivos `.env*` automaticamente. Sem isso, Prisma não conecta ao banco e variáveis de ambiente ficam vazias.
+
+Cada worktree precisa dos seguintes arquivos copiados da raiz:
 
 ```powershell
 # Entrar no diretório do worktree
 Set-Location $dir
 
+# ⚠️ OBRIGATÓRIO: Copiar .env principal (DATABASE_URL, secrets, etc.)
+$rootDir = (git rev-parse --show-toplevel)
+Copy-Item "$rootDir\.env" .\.env -Force -ErrorAction SilentlyContinue
+
 # Copiar .env.local base e ajustar a porta
-Copy-Item .env.local .env.local.bak -ErrorAction SilentlyContinue
+$envLocalSource = "$rootDir\.env.local"
+if (Test-Path $envLocalSource) {
+    Copy-Item $envLocalSource .\.env.local -Force
+} elseif (Test-Path "$rootDir\.env.example") {
+    Copy-Item "$rootDir\.env.example" .\.env.local -Force
+}
+
+# Substituir/adicionar PORT no .env.local
 $envContent = Get-Content .env.local -Raw -ErrorAction SilentlyContinue
-if (-not $envContent) {
-    $envContent = Get-Content .env.example -Raw
+if ($envContent) {
+    $envContent = $envContent -replace "PORT=\d+", "PORT=$porta"
+    if ($envContent -notmatch "PORT=") {
+        $envContent += "`nPORT=$porta"
+    }
+    Set-Content .env.local $envContent
 }
 
-# Substituir/adicionar PORT
-$envContent = $envContent -replace "PORT=\d+", "PORT=$porta"
-if ($envContent -notmatch "PORT=") {
-    $envContent += "`nPORT=$porta"
-}
-Set-Content .env.local $envContent
-
-Write-Host "✅ .env.local configurado com PORT=$porta" -ForegroundColor Green
+Write-Host "✅ .env e .env.local configurados com PORT=$porta" -ForegroundColor Green
 ```
+
+> **Checklist de arquivos** que devem existir no worktree após Passo 2:
+> - `.env` — DATABASE_URL, NEXTAUTH_SECRET, etc.
+> - `.env.local` — PORT, overrides locais
 
 ---
 
-### Passo 3 — Instalar Dependências e Iniciar Servidor
+### Passo 3 — Instalar Dependências, Gerar Prisma e Iniciar Servidor
 
 ```powershell
 # Ainda dentro do diretório do worktree
 npm install
+
+# ⚠️ OBRIGATÓRIO: Gerar cliente Prisma (worktree não herda node_modules/.prisma)
+npx prisma generate
 
 # Iniciar servidor na porta correta
 $env:PORT = $porta
 npm run dev
 ```
 
+> **Sem `npx prisma generate`**, o servidor falhará com erro `PrismaClientInitializationError` ou queries retornarão undefined.
+
 O servidor estará disponível em `http://dev.localhost:$porta`.
+
+> **Para E2E estável:** Prefira `npm run build && npm start` ao invés de `npm run dev` (evita lazy compilation timeouts).
 
 ---
 

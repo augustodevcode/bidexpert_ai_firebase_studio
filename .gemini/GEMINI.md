@@ -104,6 +104,27 @@ Remove-Item .coordination/dev1.flag -ErrorAction SilentlyContinue
 main (produção - PROTEGIDO)
   │
   └── demo-stable (base estável para features)
+```
+
+---
+
+## 🧪 Anti-Patterns E2E — Lições Aprendidas (OBRIGATÓRIO)
+
+Regras extraídas de bugs reais. Todo agente Gemini DEVE seguir:
+
+1. **URL**: SEMPRE `demo.localhost:PORT`, NUNCA `localhost:PORT` (middleware redireciona)
+2. **Worktree .env**: Copiar `.env` E `.env.local` da raiz — Git Worktree NÃO copia
+3. **Prisma**: Executar `npx prisma generate` após `npm install` no worktree
+4. **Pre-warm**: Em dev mode, pré-aquecer páginas no `beforeAll` (lazy compilation 20-130s)
+5. **waitUntil**: Usar `'domcontentloaded'`, NUNCA `'networkidle'` (WebSockets = hang)
+6. **Visibilidade**: Verificar `.isVisible()` antes de clicar/assertar (Vercel oculta tabs count=0)
+7. **Credenciais**: `admin@bidexpert.com.br / Admin@123` — senha `senha@123` é INCORRETA
+8. **Login**: Usar `loginAsAdmin()` do helper — NUNCA reimplementar inline
+9. **Form submit**: Usar `requestSubmit()`, não `submit()` (Vercel compat)
+10. **E2E estável**: Preferir `npm run build && npm start` ao invés de `npm run dev`
+11. **Docs commits**: Usar `--no-verify` para commits que alteram apenas `.md`
+
+**Referência completa:** `context/REGRAS_NEGOCIO_CONSOLIDADO.md` seção RN-GUIA-001 a 010
         │
         ├── feat/auction-filter-20260131-1430
         ├── fix/login-bug-20260131-1500

@@ -71,6 +71,27 @@ Ao atingir 0 falhas, publique registro tabular:
 ### Anti-patterns Proibidos
 - NUNCA inserir `page.waitForTimeout(N)` como fix de timing
 - NUNCA ignorar `[BROWSER_REQUEST_FAILED]` — sempre correlacionar com a falha
+- NUNCA usar `waitUntil: 'networkidle'` — WebSockets e polling causam hang. Usar `'domcontentloaded'`
+- NUNCA usar `form.submit()` — usar `form.requestSubmit()` para compatibilidade Vercel
+- NUNCA usar `localhost:PORT` sem subdomínio — usar `demo.localhost:PORT` (middleware redireciona)
+- NUNCA reimplementar login inline — usar `loginAsAdmin()`/`loginAs()` do helper centralizado
+- NUNCA assertar conteúdo de elemento sem verificar visibilidade antes (`await expect(el).toBeVisible()`)
+
+### Diferenças Vercel vs Local (OBRIGATÓRIO)
+Ao corrigir testes que falham apenas em Vercel:
+1. **Tabs com count=0**: Podem estar ocultas no Vercel — verificar `.isVisible()` antes de clicar
+2. **Form submission**: `submit()` pode falhar no Vercel; usar `requestSubmit()` sempre
+3. **Hydration timing**: Componentes podem demorar mais no Vercel — usar `waitFor` ao invés de timeout fixo
+4. **Lazy compilation**: Em dev mode, primeira navegação leva 20-130s — pré-aquecer páginas no `beforeAll` ou usar `npm run build && npm start`
+
+### Pre-Warm em Dev Mode
+```typescript
+test.beforeAll(async ({ browser }) => {
+  const page = await browser.newPage();
+  await page.goto(BASE_URL + '/path', { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  await page.close();
+});
+```
 - NUNCA aumentar timeout como correção permanente
 - NUNCA modificar o componente React para satisfazer o teste (modifique o teste)
 

@@ -144,6 +144,41 @@ $env:PORT=9006 ; npm install ; npm run dev
 
 **Restrição:** O uso de URLs genéricas (ex: `localhost:3000` ou `localhost:9005`) sem o slug correto causará timeouts e falhas de login, pois os tenants não serão resolvidos corretamente. Todas as requisições de teste devem apontar para o slug específico.
 
+## 9.1 Anti-Patterns E2E — Lições Aprendidas de Bugs Reais (OBRIGATÓRIO)
+
+**As 14 regras abaixo foram extraídas de sessões de debugging reais. TODO agente AI DEVE segui-las.**
+
+### URLs e Subdomínios
+1. **SEMPRE** usar `demo.localhost:PORT`, **NUNCA** `localhost:PORT` — o middleware redireciona bare localhost para `crm.localhost`, quebrando testes silenciosamente.
+
+### Git Worktree — Setup Correto
+2. **SEMPRE** copiar `.env` da raiz ao criar worktree — Git Worktree NÃO copia arquivos `.env*`.
+3. **SEMPRE** executar `npx prisma generate` após `npm install` no worktree — senão Prisma falha com `PrismaClientInitializationError`.
+
+### Lazy Compilation e Pre-Warming
+4. Em `npm run dev`, pré-aquecer páginas no `beforeAll` com timeout 120s (lazy compilation leva 20-130s).
+5. **Preferir `npm run build && npm start`** para testes E2E estáveis.
+
+### Navigation e Waiting
+6. **SEMPRE** usar `waitUntil: 'domcontentloaded'`, **NUNCA** `'networkidle'` — WebSockets/polling causam hang infinito.
+7. Verificar existência do elemento antes de assertar: `await expect(el).toBeVisible()`.
+
+### Credenciais e Login
+8. Usar credenciais canônicas do seed: `admin@bidexpert.com.br / Admin@123` — senha `senha@123` é INCORRETA.
+9. **NUNCA** reimplementar login inline — usar `loginAsAdmin()`/`loginAs()` do helper centralizado.
+
+### Port Management
+10. Verificar porta livre ANTES de iniciar servidor: `netstat -ano | Select-String ":9005 "`.
+11. Matar processos Node órfãos: `Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue`.
+
+### Diferenças Vercel vs Local
+12. Tabs/badges com count=0 podem estar **ocultas** no Vercel — verificar `.isVisible()` antes de clicar.
+13. Usar `requestSubmit()` ao invés de `submit()` — `submit()` pode falhar no Vercel.
+14. Robot tests precisam de `ROBOT_BASE_URL` e `PREGAO_BASE_URL` como variáveis de ambiente.
+
+### Commits Docs-Only
+15. Para commits que alteram APENAS `.md`, usar `--no-verify` para pular typecheck hook.
+
 ## 10. Diretrizes de Codificação e Melhores Práticas
 
 You always use the latest version of HTML, Tailwind CSS and vanilla JavaScript, and you are familiar with the latest features and best practices.

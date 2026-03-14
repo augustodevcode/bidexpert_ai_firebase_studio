@@ -82,6 +82,39 @@ export async function loginAs(page: Page, role: CredentialRole, baseUrl: string,
 export async function loginAsAdmin(page: Page, baseUrl: string): Promise<void>;
 export async function loginAsLawyer(page: Page, baseUrl: string): Promise<void>;
 export async function loginAsBuyer(page: Page, baseUrl: string): Promise<void>;
+```
+
+## Anti-Patterns de Autenticação E2E (Lições Aprendidas)
+
+### ❌ NUNCA reimplementar login inline
+```typescript
+// ❌ INCORRETO
+await page.fill('[name="email"]', 'admin@bidexpert.com.br');
+await page.fill('[name="password"]', 'Admin@123');
+await page.click('button[type="submit"]');
+
+// ✅ CORRETO — usar helper
+import { loginAsAdmin } from './helpers/auth-helper';
+await loginAsAdmin(page, BASE_URL);
+```
+
+### ❌ NUNCA usar `form.submit()` — usar `requestSubmit()`
+Em ambientes Vercel/produção, `submit()` pode não disparar validações. O helper já usa `requestSubmit()`.
+
+### ❌ NUNCA usar URL sem subdomínio
+```typescript
+// ❌ — middleware redireciona para crm.localhost
+const BASE_URL = 'http://localhost:9005';
+
+// ✅ — resolve tenant corretamente
+const BASE_URL = 'http://demo.localhost:9005';
+```
+
+### ⚠️ Verificar visibilidade antes de interagir com formulário de login
+No Vercel, o formulário pode ter hydration delay. Sempre aguardar visibilidade:
+```typescript
+await expect(page.getByRole('button', { name: /entrar|login/i })).toBeVisible();
+```
 export async function loginAsAuctioneer(page: Page, baseUrl: string): Promise<void>;
 
 // Seed Gate

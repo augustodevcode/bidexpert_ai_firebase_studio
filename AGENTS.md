@@ -186,6 +186,40 @@ import { loginAsAdmin, loginAs, CREDENTIALS, ensureSeedExecuted } from './helper
 ### Seed Gate
 `global-setup.ts` chama `ensureSeedExecuted(baseUrl)` automaticamente. Se o banco estiver vazio, executa `npm run db:seed`.
 
+## 🧪 Anti-Patterns E2E — Lições Aprendidas (OBRIGATÓRIO)
+
+Regras extraídas de bugs reais em sessões de debugging E2E. Todo agente DEVE seguir:
+
+### URLs e Subdomínios
+- **SEMPRE** `demo.localhost:PORT`, **NUNCA** `localhost:PORT` — middleware redireciona bare localhost para `crm.localhost`
+
+### Worktree Setup
+- **SEMPRE** copiar `.env` E `.env.local` da raiz — Git Worktree NÃO copia
+- **SEMPRE** executar `npx prisma generate` após `npm install` — senão `PrismaClientInitializationError`
+
+### Navigation e Waiting
+- Usar `waitUntil: 'domcontentloaded'`, **NUNCA** `'networkidle'` — WebSockets causam hang
+- Em dev mode, pré-aquecer páginas no `beforeAll` (lazy compilation 20-130s)
+- Preferir `npm run build && npm start` para E2E estável
+
+### Vercel vs Local
+- Tabs/badges count=0 podem estar ocultas no Vercel — verificar `.isVisible()` antes
+- Usar `requestSubmit()`, não `submit()` — Vercel compat
+- Verificar existência do elemento antes de assertar: `await expect(el).toBeVisible()`
+
+### Login
+- Usar `loginAsAdmin()` do helper centralizado — NUNCA reimplementar inline
+- Credenciais canônicas: `admin@bidexpert.com.br / Admin@123` — `senha@123` é INCORRETA
+
+### Port Management
+- Verificar porta livre antes de iniciar: `netstat -ano | findstr ":9005"`
+- Matar Node órfãos: `Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue`
+
+### Commits Docs-Only
+- Usar `--no-verify` para commits que alteram apenas `.md` (skip typecheck hook)
+
+**Referência completa:** `context/REGRAS_NEGOCIO_CONSOLIDADO.md` seção RN-GUIA-001 a 010
+
 ## Estratégia de Observabilidade (Logs do Browser + Servidor)
 Os agentes devem sempre buscar a visão completa do problema:
 1. **Logs do Browser**: Execute scripts Playwright (como `tests/e2e/console-error-detection.spec.ts`) para ver erros de console (`TypeError`, `404`, `500 network`) que não aparecem no terminal do servidor.
