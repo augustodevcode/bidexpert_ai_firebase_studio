@@ -28,7 +28,8 @@ interface CreateAdminActionOptions<TInput extends z.ZodTypeAny | undefined, TOut
   /** Alias legado para múltiplas permissões aceitas. */
   permissions?: string[];
   /** Handler que recebe input validado + contexto autenticado. */
-  handler: (...args: unknown[]) => Promise<TOutput>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: (...args: any[]) => Promise<TOutput>;
 }
 
 type LegacyAdminActionHandler<TInput = unknown, TOutput = unknown> = (
@@ -48,18 +49,18 @@ function getFunctionParams(source: string): string {
   return '';
 }
 
-function shouldUseEnvelope(handler: (...args: unknown[]) => Promise<unknown>) {
+function shouldUseEnvelope(handler: (...args: any[]) => Promise<unknown>) {
   const params = getFunctionParams(handler.toString());
   return params.startsWith('{');
 }
 
-function isCtxFirst(handler: (...args: unknown[]) => Promise<unknown>) {
+function isCtxFirst(handler: (...args: any[]) => Promise<unknown>) {
   const params = getFunctionParams(handler.toString());
   return params.startsWith('ctx') || params.startsWith('_ctx');
 }
 
 async function invokeOptionsHandler<TOutput>(
-  handler: (...args: unknown[]) => Promise<TOutput>,
+  handler: (...args: any[]) => Promise<TOutput>,
   input: unknown,
   ctx: ActionContext,
 ) {
