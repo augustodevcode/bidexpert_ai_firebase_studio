@@ -1,12 +1,184 @@
-[AI_REPORTER] Execução iniciada em 2026-03-06T00:09:32.542Z
+[AI_REPORTER] Execução iniciada em 2026-03-11T04:57:17.269Z
+TEST_FAIL: lineage tab is visible and clickable in auction dashboard
+  FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:108
+  ROOT_CAUSE: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: getByRole('tab', { name: /Linhagem/i })
+Expected: visible
+Timeout: 30000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toBeVisible" with timeout 30000ms[22m
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i })[22m
+
+  STACK:
+Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: getByRole('tab', { name: /Linhagem/i })
+Expected: visible
+Timeout: 30000ms
+Error: element(s) not found
+
+Call log:
+---
+TEST_FAIL: ReactFlow canvas renders with nodes when lineage data exists
+  FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:126
+  ROOT_CAUSE: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  STACK:
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+at clickLineageTab (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:95:20)
+at E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:133:11
+---
+TEST_FAIL: lineage nodes have correct data-ai-id attributes
+  FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:158
+  ROOT_CAUSE: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  STACK:
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+at clickLineageTab (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:95:20)
+at E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:165:11
+---
+TEST_FAIL: theme panel opens and shows color swatches
+  FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:179
+  ROOT_CAUSE: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  STACK:
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+at clickLineageTab (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:95:20)
+at E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:186:11
+---
+TEST_FAIL: reset layout button is visible and clickable
+  FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:214
+  ROOT_CAUSE: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  STACK:
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+at clickLineageTab (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:95:20)
+at E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:221:11
+---
+TEST_FAIL: export button is visible and clickable
+  FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:242
+  ROOT_CAUSE: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  STACK:
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+at clickLineageTab (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:95:20)
+at E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:249:11
+---
+TEST_FAIL: double-clicking a node opens the edit modal
+  FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:270
+  ROOT_CAUSE: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  STACK:
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+at clickLineageTab (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:95:20)
+at E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:277:11
+---
+TEST_FAIL: ReactFlow controls and minimap are present
+  FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:307
+  ROOT_CAUSE: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  STACK:
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+at clickLineageTab (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:95:20)
+at E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:314:11
+---
 
 ═══════════════════════════════════════════════════════════
 [AI_SUMMARY]
-  STATUS: PASSED
-  TOTAL: 2
-  PASSED: 2
-  FAILED: 0
+  STATUS: FAILED
+  TOTAL: 8
+  PASSED: 0
+  FAILED: 8
   SKIPPED: 0
-  DURATION: 14s
-  SUCCESS_RATE: 100%
+  DURATION: 397s
+  SUCCESS_RATE: 0%
 ═══════════════════════════════════════════════════════════
+
+[AI_FAILED_TESTS_INDEX]
+  1. lineage tab is visible and clickable in auction dashboard
+     FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:108
+     ERROR: Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+Locator: getByRole('tab', { name: /Linhagem/i })
+Expected: visible
+Timeout: 30000ms
+Error: element(s) not fou
+  2. ReactFlow canvas renders with nodes when lineage data exists
+     FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:126
+     ERROR: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  3. lineage nodes have correct data-ai-id attributes
+     FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:158
+     ERROR: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  4. theme panel opens and shows color swatches
+     FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:179
+     ERROR: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  5. reset layout button is visible and clickable
+     FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:214
+     ERROR: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  6. export button is visible and clickable
+     FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:242
+     ERROR: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  7. double-clicking a node opens the edit modal
+     FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:270
+     ERROR: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
+
+  8. ReactFlow controls and minimap are present
+     FILE: E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-feat-lineage\tests\e2e\auction-lineage.spec.ts:307
+     ERROR: TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('tab', { name: /Linhagem/i }) to be visible[22m
