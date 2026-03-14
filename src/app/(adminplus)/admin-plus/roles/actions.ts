@@ -63,3 +63,9 @@ export const deleteRoleAction = createAdminAction({
     if (!result.success) throw new Error(result.message);
   },
 });
+
+export const listRoles = listRolesAction;
+export const getRoleById = getRoleByIdAction;
+export const createRole = createRoleAction;
+export const updateRole = updateRoleAction;
+export const deleteRole = deleteRoleAction;

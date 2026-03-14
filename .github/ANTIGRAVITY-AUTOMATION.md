@@ -6,6 +6,20 @@
 
 This document describes how the Auction Sniper & QA Agent integrates with Google Cloud Antigravity automations and CI/CD pipelines.
 
+## Mandatory Preflight for Antigravity Automations
+
+Before any Antigravity workflow opens fixes, files issues, or suggests code changes, it MUST classify the incident correctly:
+
+1. Confirm the active runtime belongs to the intended isolated environment or worktree.
+2. Validate runtime baseline for login/E2E: `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET`, `NEXTAUTH_SECRET`.
+3. Probe `/auth/login` and `/api/public/tenants` before assuming application regression.
+4. Treat cascaded `ERR_CONNECTION_REFUSED` as infrastructure failure, dead process, wrong port, or OOM until proven otherwise.
+5. If multiple Admin Plus routes show `input` or `ctx` `undefined`, inspect `src/lib/admin-plus/safe-action.ts` before opening route-specific fixes.
+6. Confirm Prisma field names from schema before suggesting `select`/`include` changes.
+7. Validation order for automated remediation: focused route reproduction → browser/server log correlation → code fix → focused rerun → broader sweep.
+
+Antigravity MUST NOT open multiple page-level fixes when the root cause is a dead server, wrong runtime, or shared wrapper bug.
+
 ---
 
 ## 1. Antigravity Automation Triggers

@@ -3,7 +3,7 @@
  */
 'use client';
 
-import { useCallback, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
@@ -36,7 +36,9 @@ export default function DocumentTypesListPage() {
     });
   }, []);
 
-  useState(() => { loadData(); });
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;

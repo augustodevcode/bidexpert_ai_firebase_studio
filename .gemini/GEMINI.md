@@ -8,6 +8,32 @@ Todas as regras detalhadas estão em:
 
 ---
 
+## 🚨 Protocolo Anti-Erros Reais (MÁXIMA PRIORIDADE)
+
+Antes de editar qualquer arquivo para corrigir bug, rota ou teste, agentes Gemini DEVEM executar este protocolo:
+
+1. **Confirmar o ambiente real em execução**
+  - Se estiver usando worktree, confirmar que o processo Node, logs e stack traces apontam para o worktree e não para a raiz do workspace.
+  - Se o terminal ignorar o diretório esperado, usar `npm --prefix "<worktree>" ...`.
+2. **Validar baseline de runtime**
+  - Garantir no `.env.local` do worktree: `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET`, `NEXTAUTH_SECRET`.
+  - Fazer probe em `/auth/login` e `/api/public/tenants` antes de diagnosticar login/E2E.
+3. **Browser interno primeiro para login complexo**
+  - Quando existir `Dev: Auto-login`, tenant selector ou subdomínio auto-locked, usar o browser interno do VS Code para verificar o estado visual real antes de editar código.
+4. **Separar bug de aplicação de queda do servidor**
+  - `ERR_CONNECTION_REFUSED` em várias rotas seguidas indica processo morto, porta errada ou OOM. Não corrigir páginas em lote nesse estado.
+  - Se `next dev` cair em sweep longo, reiniciar com `NODE_OPTIONS=--max-old-space-size=8192`.
+5. **Server Actions**
+  - Padronizar handlers em `({ input, ctx })`.
+  - Se `input` ou `ctx` vierem `undefined` em várias páginas, corrigir `src/lib/admin-plus/safe-action.ts` primeiro.
+  - Para listagens, aceitar `input` ausente com defaults explícitos.
+6. **Prisma**
+  - Confirmar no schema o nome real do campo antes de usar `select`/`include` (`name` vs `title`).
+7. **Ordem de validação**
+  - Browser interno da rota → Playwright com `--grep` → lote maior/sweep.
+
+---
+
 ## 🐳 Container Sandbox - Workflow Obrigatório (MÁXIMA PRIORIDADE)
 
 **Automatic activation for ANY implementation/correction/feature request.**
@@ -82,8 +108,8 @@ Remove-Item .coordination/dev1.flag -ErrorAction SilentlyContinue
 - 🚫 **NUNCA** fazer push direto na `main` ou `demo-stable`
 - 🚫 **NUNCA** fazer merge sem autorização explícita do usuário
 - 🚫 **NUNCA** resolver conflitos automaticamente sem revisão
-- 🚫 **NUNCA** desenvolver fora do container sandbox (exceto edição de docs)
-- 🚫 **NUNCA** usar `npm run dev` bare-metal quando container estiver disponível
+- 🚫 **NUNCA** desenvolver fora de um ambiente isolado confirmado (Git Worktree ou container sandbox)
+- 🚫 **NUNCA** usar `npm run dev` bare-metal fora do worktree/ambiente isolado validado
 
 📖 **Workflow completo:** `.agent/workflows/parallel-development.md`
 📖 **Guia do Container:** `docs/CONTAINER-DEV-GUIDE.md`

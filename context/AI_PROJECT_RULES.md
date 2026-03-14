@@ -218,6 +218,37 @@ npm run build && npm start  # In a new terminal
 **Issue**: Server won't start after build
 **Solution**:
 1. Clean: `rm -rf .next node_modules`
+
+---
+
+## RULE 3: CRITICAL - Diagnose Runtime Before Editing Code
+
+**Status:** 🔴 ENFORCED AFTER ADMIN-PLUS SWEEP INCIDENT  
+**Severity:** CRITICAL  
+**Project Impact:** Prevents false fixes, duplicated patches, and regressions caused by wrong runtime diagnosis
+
+### Mandatory Classification Order
+
+Before changing application code for route, login, or Playwright failures, every AI assistant MUST:
+
+1. Confirm the running process belongs to the intended isolated worktree/environment.
+2. Validate worktree runtime baseline: `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET`, `NEXTAUTH_SECRET`.
+3. Probe `/auth/login` and `/api/public/tenants`.
+4. Correlate browser logs, server logs, and process state.
+5. Only then classify the issue as infrastructure, environment, shared wrapper, schema/query, or route-specific bug.
+
+### Mandatory Interpretations
+
+- Cascaded `ERR_CONNECTION_REFUSED` after previous healthy routes = process death, wrong port, or OOM until proven otherwise.
+- `/_next/static/*` returning HTML or `404` = invalid runtime for browser automation.
+- Repeated `input` or `ctx` `undefined` across Admin Plus actions = inspect `src/lib/admin-plus/safe-action.ts` first.
+- Prisma field mismatch errors require schema confirmation before renaming `select` fields.
+
+### Validation Order
+
+1. Internal browser or visual confirmation of the affected route.
+2. Focused Playwright rerun with `--grep`.
+3. Broader batch or full sweep only after focused validation passes.
 2. Reinstall: `npm install`
 3. Rebuild: `npm run build`
 4. Start: `npm start`

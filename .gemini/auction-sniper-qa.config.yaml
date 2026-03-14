@@ -34,6 +34,10 @@ googleCloud:
   # Antigravity automation integration
   antigravity:
     enabled: true
+    safeguards:
+      - "never-open-route-level-fixes-while-server-is-down"
+      - "require-browser-and-server-log-correlation"
+      - "require-focused-rerun-before-broad-sweep"
     rules: 
       - type: "workflow-trigger"
         condition: "on-code-change"
@@ -65,6 +69,15 @@ gemini:
     includeProofs: true
     requireStackTrace: true
     validateAgainstCheckpoints: 115
+    classifyInfraBeforeFix: true
+    requireRuntimeBaselineValidation: true
+    preflightChecklist:
+      - "Confirm active process belongs to intended worktree/environment"
+      - "Validate DATABASE_URL, SESSION_SECRET, AUTH_SECRET, NEXTAUTH_SECRET"
+      - "Probe /auth/login and /api/public/tenants before debugging routes"
+      - "Treat cascaded ERR_CONNECTION_REFUSED as infra/runtime failure first"
+      - "Inspect safe-action wrapper before route-level patches when input/ctx are undefined"
+      - "Confirm Prisma schema fields before changing select/include"
     auditBlocks:
       - "search-filters"
       - "ui-ux"

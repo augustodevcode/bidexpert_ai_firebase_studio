@@ -6,6 +6,19 @@ Este arquivo rastreia as interações e o contexto para as sessões do Gemini CL
 
 O Gemini CLI tem acesso completo às ferramentas de container do VSCode para gerenciar ambientes.
 
+## Protocolo Anti-Erros Reais para Gemini CLI
+
+Antes de qualquer correção automatizada:
+
+1. Confirmar que o servidor em execução pertence ao worktree/ambiente correto.
+2. Validar `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET` e `NEXTAUTH_SECRET` no `.env.local` do worktree.
+3. Fazer probe em `/auth/login` e `/api/public/tenants`.
+4. Se houver `ERR_CONNECTION_REFUSED` em várias rotas seguidas, classificar como servidor morto, porta errada ou OOM.
+5. Se a aplicação usar `Dev: Auto-login`, validar visualmente esse estado antes de alterar login.
+6. Se várias actions falharem com `input`/`ctx` `undefined`, inspecionar `src/lib/admin-plus/safe-action.ts` primeiro.
+7. Confirmar campos reais do schema Prisma antes de mudar `select`/`include`.
+8. Validar em ordem: browser interno → Playwright focado → lote maior.
+
 ### Configuração do Docker
 O projeto utiliza Docker Compose para gerenciar serviços. Arquivos de configuração:
 - `docker-compose.dev.yml` - Ambiente de desenvolvimento

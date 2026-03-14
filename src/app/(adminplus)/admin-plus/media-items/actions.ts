@@ -46,7 +46,13 @@ export const listMediaItems = createAdminAction({
   }),
   requiredPermission: 'media:read',
   handler: async ({ input, ctx }) => {
-    const { page, pageSize, search, sortField, sortDir } = input;
+    const { page = 1, pageSize = 25, search, sortField, sortDir } = (input ?? {}) as {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+      sortField?: string;
+      sortDir?: 'asc' | 'desc';
+    };
     const where: Record<string, unknown> = { tenantId: ctx.tenantIdBigInt };
     if (search) {
       where.OR = [

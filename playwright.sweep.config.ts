@@ -1,14 +1,14 @@
 /**
  * @fileoverview Playwright config for Fast Full UI Sweep (Varredura Completa).
  *
- * Usa port 9010 (environment DEV isolado).
+ * Usa port 9006 (worktree DEV isolado).
  * storageState do admin é aplicado globalmente — sem loginAs() por teste.
  * 1 worker para estabilidade em dev mode.
  */
 
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env.BASE_URL || 'http://demo.localhost:9010';
+const BASE_URL = process.env.BASE_URL || 'http://demo.localhost:9006';
 const HEADED = process.env.HEADED === '1';
 const ADMIN_AUTH = 'tests/e2e/.auth/admin.json';
 
@@ -16,11 +16,13 @@ export default defineConfig({
   testDir: './tests/e2e',
   testMatch: 'sweep-fast.spec.ts',
   globalSetup: './tests/e2e/global-setup.ts',
+  outputDir: 'test-results/sweep-artifacts',
+  preserveOutput: 'always',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 1,
   workers: 1,
-  timeout: 120_000,
+  timeout: 240_000,
   expect: {
     timeout: 20_000,
   },
@@ -31,12 +33,12 @@ export default defineConfig({
   ],
   use: {
     baseURL: BASE_URL,
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    video: 'off',
+    trace: 'on',
+    screenshot: 'on',
+    video: 'on',
     headless: !HEADED,
     actionTimeout: 20_000,
-    navigationTimeout: 60_000,
+    navigationTimeout: 90_000,
     viewport: { width: 1440, height: 900 },
     storageState: ADMIN_AUTH,
   },
@@ -50,7 +52,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'echo "Servidor já em execução em 9010"',
+    command: 'echo "Servidor já em execução em 9006"',
     url: BASE_URL,
     reuseExistingServer: true,
     timeout: 10_000,
