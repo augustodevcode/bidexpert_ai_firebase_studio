@@ -4,6 +4,16 @@ Instructions here apply to this project and are shared with team members.
 
 ## Context
 
+### Operational Guardrails Learned from Admin-Plus Sweep (2026-03)
+
+- Before editing any route after `ERR_CONNECTION_REFUSED`, confirm the server is still alive. Cascading route failures after many previous `200` responses usually mean process crash or OOM, not many simultaneous page bugs.
+- When working from a Git Worktree, verify the running server points to the worktree path. If logs reference the workspace root instead, restart using the correct worktree before changing code.
+- Worktree runtime baseline for login/E2E: `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET`, and `NEXTAUTH_SECRET` must exist in the worktree `.env.local`.
+- For login debugging in development, inspect the VS Code internal browser and confirm `Dev: Auto-login` or tenant auto-lock state before assuming an auth regression.
+- For Admin Plus server actions, prefer fixing `src/lib/admin-plus/safe-action.ts` when `input` or `ctx` arrive as `undefined` in multiple pages. Do not patch every page first.
+- For Prisma relation selects, confirm the model field name in schema (`name` vs `title`) before editing actions.
+- Validation order: internal browser → focused Playwright `--grep` route/test → larger sweep.
+
 ### 🕵️ Auction Sniper & QA Auto-Activation Protocol
 
 **Automatic activation in ALL Claude chats for auction/bidding/ROI/security contexts:**

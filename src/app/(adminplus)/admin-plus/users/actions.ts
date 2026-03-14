@@ -17,6 +17,7 @@ export const listUsersAction = createAdminAction({
     const users = await userService.getUsers();
     const data = users.map((u) => ({
       id: u.id,
+      name: u.fullName ?? '',
       fullName: u.fullName ?? '',
       email: u.email,
       accountType: (u.accountType as string) ?? 'PHYSICAL',
@@ -34,6 +35,12 @@ export const listUsersAction = createAdminAction({
     };
   },
 });
+
+export const listUsers = listUsersAction;
+export const getUserById = getUserByIdAction;
+export const createUser = createUserAction;
+export const updateUser = updateUserAction;
+export const deleteUser = deleteUserAction;
 
 export const getUserByIdAction = createAdminAction({
   inputSchema: z.object({ id: z.string() }),

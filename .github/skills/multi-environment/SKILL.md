@@ -24,6 +24,38 @@ Esta skill define o workflow de desenvolvimento com isolamento de ambientes para
 - Ao fazer deploy para Vercel
 - Ao criar/gerenciar branches
 
+## Guardrails Operacionais Aprendidos em Produção/DEV
+
+### 1. Confirmar identidade do servidor antes de depurar código
+- Se a task estiver em worktree, logs e stack traces DEVEM apontar para o worktree.
+- Se o processo ativo estiver rodando na raiz do workspace por engano, reiniciar no worktree correto antes de editar arquivos.
+- Em comandos não persistentes/background, preferir `npm --prefix "<worktree>" ...` para evitar `cwd` incorreto.
+
+### 2. Baseline obrigatória do `.env.local` do worktree
+Antes de qualquer validação de login, browser interno ou Playwright:
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `AUTH_SECRET`
+- `NEXTAUTH_SECRET`
+
+Após subir o servidor, validar obrigatoriamente:
+- `GET /auth/login`
+- `GET /api/public/tenants`
+
+### 3. Classificação de falha
+- `ERR_CONNECTION_REFUSED` em cascata após várias páginas saudáveis = servidor morto, OOM ou porta errada.
+- `_next/static/*` respondendo HTML/404 = runtime incorreto para browser automation.
+- Só tratar como bug de rota quando o servidor correto estiver comprovadamente vivo.
+
+### 4. Estabilidade de sweep longo
+- Para varreduras extensas com `next dev`, usar `NODE_OPTIONS=--max-old-space-size=8192` quando houver histórico de OOM.
+- Após qualquer reinício de servidor, revalidar primeiro a rota que falhou antes de expandir o sweep.
+
+### 5. Server Actions e Prisma
+- Se múltiplas pages exibirem `input`/`ctx` `undefined`, inspecionar `src/lib/admin-plus/safe-action.ts` antes de patch por página.
+- Em tabelas/listagens, aceitar `input` opcional com defaults.
+- Confirmar nomes de campos do schema Prisma antes de usar `select`/`include`.
+
 ## Arquitetura de Ambientes
 
 ```

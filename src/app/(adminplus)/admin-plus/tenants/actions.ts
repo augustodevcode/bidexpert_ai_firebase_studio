@@ -133,3 +133,9 @@ export const deleteTenantAction = createAdminAction({
     return { id: input.id };
   },
 });
+
+export const listTenants = listTenantsAction;
+export const getTenantById = getTenantByIdAction;
+export const createTenant = createTenantAction;
+export const updateTenant = updateTenantAction;
+export const deleteTenant = deleteTenantAction;

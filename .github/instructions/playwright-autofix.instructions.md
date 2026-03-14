@@ -38,12 +38,22 @@ Investigue as tags `[BROWSER_CONSOLE_ERROR]`, `[BROWSER_PAGE_ERROR]`, `[BROWSER_
 
 Quando disponível, use `browser_console_messages` do MCP Playwright para obter logs diretamente.
 
+### ETAPA 4.1 — DIAGNÓSTICO DE INFRAESTRUTURA ANTES DE EDITAR CÓDIGO
+Antes de corrigir seletor, componente ou server action, classifique a falha:
+- Se `page.goto` retornar `net::ERR_CONNECTION_REFUSED` em 2 ou mais rotas seguidas, trate como processo morto, OOM ou porta errada.
+- Se o stack/log apontar para a raiz do workspace enquanto a task usa worktree, o servidor está errado.
+- Se `/_next/static/*` responder `404` ou MIME `text/html`, o runtime ativo está inconsistente para browser automation.
+- Se o login ficar preso em `/auth/login`, verifique `Dev: Auto-login`, tenant/subdomínio e probes em `/auth/login` e `/api/public/tenants` antes de alterar a tela.
+
+**Ação obrigatória:** reinicie o servidor correto e reexecute o PRIMEIRO teste que falhou antes de modificar código.
+
 ### ETAPA 5 — SÍNTESE DE CORREÇÃO
 Munido com a causa discriminada:
 - **Seletor inexistente**: Atualize o seletor usando `getByRole()`, `getByText()` ou `data-ai-id`
 - **Timeout de elemento**: Adicione `waitForSelector` ou `waitForResponse` adequado; NUNCA use `waitForTimeout`
 - **Erro de rede/API**: Não corrija o teste, reporte que o backend precisa de fix
 - **Flakiness de timing**: Use `toBeVisible()` com `expect.poll()` quando necessário
+- **Server action com `input`/`ctx` undefined em múltiplas telas**: inspecione o wrapper compartilhado (`safe-action`) antes de criar patches duplicados
 - Edite silenciosamente e sem aprovação humana
 
 ### ETAPA 6 — AFERIÇÃO CÍCLICA

@@ -48,6 +48,19 @@ Eu sou programado para seguir estritamente as diretrizes definidas no arquivo `R
 
 A estratégia de testes está documentada no `README.md` e deve ser seguida para garantir a qualidade do código. Eu posso ser instruído a criar ou modificar testes que sigam essa estratégia.
 
+## 8. Protocolo Anti-Erros Reais
+
+Antes de editar código para corrigir bug, rota ou teste, o agente Windsurf DEVE:
+
+1. Confirmar que o processo ativo pertence ao worktree ou ambiente isolado correto.
+2. Validar no `.env.local` do worktree: `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET`, `NEXTAUTH_SECRET`.
+3. Fazer probe em `/auth/login` e `/api/public/tenants` antes de assumir falha funcional.
+4. Tratar `ERR_CONNECTION_REFUSED` em cascata como falha de processo, porta errada ou OOM, e não como múltiplos bugs de rota.
+5. Usar o browser interno/visual para validar `Dev: Auto-login`, tenant selector e subdomínio antes de alterar login.
+6. Se várias server actions acusarem `input`/`ctx` `undefined`, corrigir primeiro o wrapper compartilhado `src/lib/admin-plus/safe-action.ts`.
+7. Confirmar nomes reais de campos no schema Prisma antes de usar `select`/`include`.
+8. Validar em ordem: reprodução focada, logs do browser + servidor, correção, rerun focado, só depois sweep maior.
+
 
 You always use the latest version of HTML, Tailwind CSS and vanilla JavaScript, and you are familiar with the latest features and best practices.
 

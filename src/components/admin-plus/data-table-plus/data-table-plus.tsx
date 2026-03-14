@@ -33,7 +33,7 @@ export interface DataTablePlusProps<TData> {
   /** TanStack column definitions. */
   columns: ColumnDef<TData, unknown>[];
   /** Server response with data + pagination meta. */
-  data: PaginatedResponse<TData> | null;
+  data: PaginatedResponse<TData> | TData[] | null;
   /** Whether data is being loaded. */
   isLoading?: boolean;
   /** Searchable placeholder label. */
@@ -46,6 +46,15 @@ export interface DataTablePlusProps<TData> {
   toolbarExtra?: React.ReactNode;
   /** Callback when user double-clicks a row (navigate to edit). */
   onRowDoubleClick?: (row: TData) => void;
+  /** Legacy props kept for compatibility with older admin-plus pages. */
+  pageCount?: number;
+  totalRecords?: number;
+  pagination?: unknown;
+  onPaginationChange?: unknown;
+  sorting?: unknown;
+  onSortingChange?: unknown;
+  search?: string;
+  onSearchChange?: unknown;
   /** data-ai-id for root container. */
   'data-ai-id'?: string;
 }
@@ -61,6 +70,16 @@ export function DataTablePlus<TData>({
   onRowDoubleClick,
   'data-ai-id': dataAiId,
 }: DataTablePlusProps<TData>) {
+  const normalizedData = Array.isArray(data)
+    ? {
+        data,
+        total: data.length,
+        page: 1,
+        pageSize: data.length || 1,
+        totalPages: data.length > 0 ? 1 : 0,
+      }
+    : data;
+
   const {
     rowSelection,
     setRowSelection,
@@ -77,7 +96,7 @@ export function DataTablePlus<TData>({
   const { params, setPage, setPageSize, setSort, setSearch } = useServerPagination();
 
   const table = useReactTable({
-    data: data?.data ?? [],
+    data: normalizedData?.data ?? [],
     columns,
     state: {
       sorting,
@@ -87,7 +106,7 @@ export function DataTablePlus<TData>({
     },
     manualPagination: true,
     manualSorting: true,
-    pageCount: data?.totalPages ?? -1,
+    pageCount: normalizedData?.totalPages ?? -1,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: (updater) => {
@@ -165,12 +184,12 @@ export function DataTablePlus<TData>({
         </Table>
       </div>
 
-      {data && data.totalPages > 0 && (
+      {normalizedData && normalizedData.totalPages > 0 && (
         <DataTablePagination
-          page={data.page}
-          pageSize={data.pageSize}
-          totalItems={data.total}
-          totalPages={data.totalPages}
+          page={normalizedData.page}
+          pageSize={normalizedData.pageSize}
+          totalItems={normalizedData.total}
+          totalPages={normalizedData.totalPages}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
           selectedCount={selectedCount}
@@ -179,3 +198,5 @@ export function DataTablePlus<TData>({
     </div>
   );
 }
+
+export default DataTablePlus;

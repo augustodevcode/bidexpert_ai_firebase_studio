@@ -97,7 +97,7 @@ export function SubcategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
       data-ai-id="subcategory-form"
     >
       {/* Dados Básicos */}
-      <Field label="Nome" error={form.formState.errors.name?.message}>
+      <Field name="name" label="Nome" error={form.formState.errors.name?.message}>
         <input
           {...form.register('name')}
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -105,7 +105,7 @@ export function SubcategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
           data-ai-id="subcategory-form-name"
         />
       </Field>
-      <Field label="Slug" error={form.formState.errors.slug?.message}>
+      <Field name="slug" label="Slug" error={form.formState.errors.slug?.message}>
         <input
           {...form.register('slug')}
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -113,7 +113,7 @@ export function SubcategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
           data-ai-id="subcategory-form-slug"
         />
       </Field>
-      <Field label="Descrição" error={form.formState.errors.description?.message}>
+      <Field name="description" label="Descrição" error={form.formState.errors.description?.message}>
         <textarea
           {...form.register('description')}
           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -125,7 +125,7 @@ export function SubcategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
       <Separator />
 
       {/* FK: Categoria Pai */}
-      <Field label="Categoria Pai" error={form.formState.errors.parentCategoryId?.message}>
+      <Field name="parentCategoryId" label="Categoria Pai" error={form.formState.errors.parentCategoryId?.message}>
         <Select
           value={form.watch('parentCategoryId')}
           onValueChange={(v) => form.setValue('parentCategoryId', v, { shouldValidate: true })}
@@ -143,7 +143,7 @@ export function SubcategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
         </Select>
       </Field>
 
-      <Field label="Ordem de Exibição" error={form.formState.errors.displayOrder?.message}>
+      <Field name="displayOrder" label="Ordem de Exibição" error={form.formState.errors.displayOrder?.message}>
         <input
           type="number"
           {...form.register('displayOrder', { valueAsNumber: true })}
@@ -156,7 +156,7 @@ export function SubcategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
       <Separator />
 
       {/* Imagem */}
-      <Field label="URL do Ícone" error={form.formState.errors.iconUrl?.message}>
+      <Field name="iconUrl" label="URL do Ícone" error={form.formState.errors.iconUrl?.message}>
         <input
           {...form.register('iconUrl')}
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"

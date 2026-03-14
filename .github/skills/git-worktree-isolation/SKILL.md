@@ -34,6 +34,34 @@ repositório principal (.git)
 - Quando precisa revisar uma PR localmente sem parar a feature atual
 - Quando precisa fazer um hotfix de produção urgente sem interromper a feature em andamento
 
+## Guardrails Operacionais
+
+### Confirmar identidade do runtime
+- Se o servidor ativo estiver rodando fora do worktree esperado, todo diagnóstico posterior fica inválido.
+- Em execuções em background, preferir `npm --prefix "<worktree>" ...` para evitar `cwd` incorreto.
+- Se o stack trace apontar para a raiz do workspace em vez do worktree, reinicie o servidor correto antes de editar qualquer arquivo.
+
+### Baseline de `.env.local`
+Antes de login, browser interno ou Playwright no worktree:
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `AUTH_SECRET`
+- `NEXTAUTH_SECRET`
+
+Após subir o servidor, validar:
+- `GET /auth/login`
+- `GET /api/public/tenants`
+
+### Classificar falhas corretamente
+- `ERR_CONNECTION_REFUSED` em múltiplas rotas seguidas normalmente significa servidor morto, porta errada ou OOM, não vários bugs simultâneos.
+- Em sweeps longos com `next dev`, usar `NODE_OPTIONS=--max-old-space-size=8192` quando houver histórico de estouro de heap.
+- Se `/_next/static/*` responder `404` ou HTML, o runtime ativo está incorreto para browser automation.
+
+### Server Actions e Prisma
+- Se diferentes rotas acusarem `input`/`ctx` `undefined`, inspecione primeiro `src/lib/admin-plus/safe-action.ts`.
+- Em listagens, aceite `input` ausente com defaults.
+- Antes de usar `select`, confirme o nome real do campo no schema Prisma.
+
 ---
 
 ## 🚀 Workflow Obrigatório: Git Worktree

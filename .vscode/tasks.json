@@ -185,6 +185,19 @@
 				"HEAD"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Run adminplus-parity 9011",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"$env:PORT='9011'; $env:NODE_ENV='development'; $env:DATABASE_URL='mysql://root:M%21nh%40S3nha2025@localhost:3306/bidexpert_demo'; $env:SESSION_SECRET='bidexpert_local_session_secret_9011_len_40'; $env:AUTH_SECRET='bidexpert_local_auth_secret_9011_len_40__'; $env:NEXTAUTH_SECRET='bidexpert_local_nextauth_secret_9011_len_40'; npx prisma generate; npx next dev --port 9011 --hostname 0.0.0.0"
+			],
+			"isBackground": true,
+			"group": "build"
 		}
 	]
 }

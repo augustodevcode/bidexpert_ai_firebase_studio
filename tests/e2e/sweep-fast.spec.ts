@@ -21,10 +21,34 @@
  * - merge: Admin V2 — complete Lots CRUD /admin/lots-v2 (#456)
  */
 
+import path from 'node:path';
 import { test, expect, Page } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://demo.localhost:9006';
 const SCREENSHOT_DIR = 'tests/e2e/screenshots/sweep';
+const COLD_NAVIGATION_TIMEOUT_MS = 90_000;
+type SweepGroupKey = 'public' | 'admin' | 'user' | 'consignor' | 'admin_plus' | 'lawyer';
+
+function getRoutesForGroup(group: SweepGroupKey, routes: string[]) {
+  const envKey = `SWEEP_${group.toUpperCase()}_SLICE`;
+  const rawSlice = process.env[envKey] ?? process.env.SWEEP_SLICE;
+
+  if (!rawSlice) {
+    return routes;
+  }
+
+  const [startRaw, endRaw] = rawSlice.split(':');
+  const start = Number.parseInt(startRaw, 10);
+  const end = endRaw ? Number.parseInt(endRaw, 10) : routes.length;
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) {
+    console.warn(`[SWEEP] Ignorando slice inválido em ${envKey}: ${rawSlice}`);
+    return routes;
+  }
+
+  return routes.slice(start, Math.min(end, routes.length));
+}
+
 // Ignore these console error substrings (known non-critical noise)
 const IGNORED_ERRORS = [
   'favicon.ico',
@@ -324,7 +348,7 @@ async function sweepPage(page: Page, route: string, label: string): Promise<Swee
   try {
     const resp = await page.goto(`${BASE_URL}${route}`, {
       waitUntil: 'domcontentloaded',
-      timeout: 30_000,
+      timeout: COLD_NAVIGATION_TIMEOUT_MS,
     });
     httpStatus = resp?.status() ?? 0;
     // Wait for hydration
@@ -384,7 +408,7 @@ async function sweepPage(page: Page, route: string, label: string): Promise<Swee
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Rotas Públicas', () => {
-  for (const route of PUBLIC_ROUTES) {
+  for (const route of getRoutesForGroup('public', PUBLIC_ROUTES)) {
     test(`PUBLIC ${route}`, async ({ page }) => {
       // No auth for public routes - navigate fresh
       const result = await sweepPage(page, route, 'public');
@@ -409,7 +433,7 @@ test.describe('[SWEEP] Rotas Públicas', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Rotas Admin', () => {
-  for (const route of ADMIN_ROUTES) {
+  for (const route of getRoutesForGroup('admin', ADMIN_ROUTES)) {
     test(`ADMIN ${route}`, async ({ page }) => {
       const result = await sweepPage(page, route, 'admin');
 
@@ -432,7 +456,7 @@ test.describe('[SWEEP] Rotas Admin', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Rotas User/Dashboard', () => {
-  for (const route of USER_ROUTES) {
+  for (const route of getRoutesForGroup('user', USER_ROUTES)) {
     test(`USER ${route}`, async ({ page }) => {
       const result = await sweepPage(page, route, 'user');
 
@@ -451,7 +475,7 @@ test.describe('[SWEEP] Rotas User/Dashboard', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Rotas Consignor', () => {
-  for (const route of CONSIGNOR_ROUTES) {
+  for (const route of getRoutesForGroup('consignor', CONSIGNOR_ROUTES)) {
     test(`CONSIGNOR ${route}`, async ({ page }) => {
       const result = await sweepPage(page, route, 'consignor');
 
@@ -470,7 +494,7 @@ test.describe('[SWEEP] Rotas Consignor', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Rotas Admin Plus', () => {
-  for (const route of ADMIN_PLUS_ROUTES) {
+  for (const route of getRoutesForGroup('admin_plus', ADMIN_PLUS_ROUTES)) {
     test(`ADMIN-PLUS ${route}`, async ({ page }) => {
       const result = await sweepPage(page, route, 'admin-plus');
 
@@ -493,7 +517,7 @@ test.describe('[SWEEP] Rotas Admin Plus', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('[SWEEP] Rotas Lawyer', () => {
-  for (const route of LAWYER_ROUTES) {
+  for (const route of getRoutesForGroup('lawyer', LAWYER_ROUTES)) {
     test(`LAWYER ${route}`, async ({ page }) => {
       const result = await sweepPage(page, route, 'lawyer');
 
@@ -529,14 +553,19 @@ test.describe('[SWEEP] Proteção de Acesso Anônimo', () => {
   ];
 
   for (const route of PROTECTED) {
-    test(`ACCESS-ANON ${route}`, async ({ browser }) => {
+    test(`ACCESS-ANON ${route}`, async ({ browser }, testInfo) => {
       // Fresh context = no cookies
-      const ctx = await browser.newContext();
+      const ctx = await browser.newContext({
+        recordVideo: {
+          dir: path.dirname(testInfo.outputPath('access-anon-video.webm')),
+          size: { width: 1440, height: 900 },
+        },
+      });
       const page = await ctx.newPage();
 
       await page.goto(`${BASE_URL}${route}`, {
         waitUntil: 'domcontentloaded',
-        timeout: 30_000,
+        timeout: COLD_NAVIGATION_TIMEOUT_MS,
       });
       await page.waitForTimeout(1500);
 

@@ -24,7 +24,11 @@ export const listPasswordResetTokens = createAdminAction<
   }),
   requiredPermission: 'manage_all',
   handler: async ({ input }) => {
-    const { page, pageSize, search } = input;
+    const { page = 1, pageSize = 25, search } = (input ?? {}) as {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+    };
 
     const where = search
       ? { email: { contains: search } }

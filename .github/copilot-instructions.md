@@ -50,6 +50,33 @@ npm run dev
 3. Cruize as informações: Erro no Browser (Client) + Log no Servidor (Server) + Output do VSCode.
 4. Só então proponha a solução.
 
+### 4.1 Protocolo Anti-Erros Reais (OBRIGATÓRIO)
+**REGRA CRÍTICA:** Antes de editar código para corrigir rota, login ou teste, o agente DEVE classificar se o problema é de infraestrutura, ambiente ou aplicação.
+
+1. **Confirmar worktree real em execução**
+  - Se o terminal/background ignorar o diretório esperado, usar `npm --prefix "<worktree>" ...` ou um shell persistente já posicionado no worktree.
+  - Se o stack trace apontar para a raiz do workspace em vez do worktree isolado, o agente DEVE reiniciar o servidor no worktree correto antes de editar código.
+2. **Validar baseline de runtime do worktree**
+  - Antes de testar login ou E2E, garantir no `.env.local` do worktree: `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET` e `NEXTAUTH_SECRET`.
+  - Após subir o servidor, fazer probe em `/auth/login` e `/api/public/tenants` antes de iniciar diagnóstico funcional.
+3. **Usar browser interno corretamente**
+  - Em ambiente de desenvolvimento, o agente DEVE validar `Dev: Auto-login` e o tenant/subdomínio antes de concluir que o login está quebrado.
+  - Se o usuário já informou o perfil de auto-login, o agente não deve repetir tentativas cegas.
+4. **Separar falha de rota de queda do servidor**
+  - `page.goto: net::ERR_CONNECTION_REFUSED` em cascata após várias rotas `200` deve ser tratado como servidor morto, OOM ou porta errada, e NÃO como bug simultâneo em múltiplas páginas.
+  - Antes de abrir arquivos de várias rotas, o agente DEVE checar `netstat`, processo Node e log do servidor.
+5. **Estabilidade para sweeps longos**
+  - Se `next dev` cair após sweep prolongado, reiniciar com `NODE_OPTIONS=--max-old-space-size=8192` e só então retomar os testes.
+  - Se `next start` devolver `/_next/static/*` com MIME `text/html` ou `404`, descartar esse runtime para browser automation e voltar ao servidor correto.
+6. **Server Actions: corrigir a raiz, não só o sintoma**
+  - Para `createAdminAction`, preferir handlers no formato `handler: async ({ input, ctx }) => { ... }`.
+  - Se aparecer `Cannot destructure property 'page' of 'input'` ou `tenantIdBigInt` de `undefined`, o agente DEVE inspecionar `src/lib/admin-plus/safe-action.ts` antes de corrigir cada action isoladamente.
+  - Em listagens acionadas por tabelas, aceitar `input` ausente com defaults explícitos.
+7. **Prisma: validar schema antes de assumir nome de campo**
+  - Antes de usar `select`/`include`, confirmar no schema Prisma se o campo realmente existe (`title` vs `name`, etc.).
+8. **Ordem mínima de validação**
+  - Após a correção: browser interno da rota afetada → Playwright com `--grep` na rota/teste alvo → lote maior ou sweep completo.
+
 ### 5. No ÚLTIMO TODO do Chat - SOLICITAR AUTORIZAÇÃO
 **OBRIGATÓRIO:** Antes de finalizar, o agente DEVE:
 1. ✅ Garantir todos os testes passaram

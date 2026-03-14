@@ -35,9 +35,9 @@ let _encodedKey: Uint8Array | undefined;
  */
 function getEncodedKey(): Uint8Array {
     if (_encodedKey) return _encodedKey;
-    const key = process.env.SESSION_SECRET;
+    const key = process.env.SESSION_SECRET || process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
     if (!key || key.length < 32) {
-        throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
+        throw new Error('Uma das variáveis SESSION_SECRET, AUTH_SECRET ou NEXTAUTH_SECRET deve ser definida e ter pelo menos 32 caracteres.');
     }
     _encodedKey = new TextEncoder().encode(key);
     return _encodedKey;
