@@ -1,12 +1,12 @@
-[AI_REPORTER] Execução iniciada em 2026-03-06T00:09:32.542Z
+[AI_REPORTER] Execução iniciada em 2026-03-14T11:59:05.167Z
 
 ═══════════════════════════════════════════════════════════
 [AI_SUMMARY]
-  STATUS: PASSED
-  TOTAL: 2
-  PASSED: 2
+  STATUS: FAILED
+  TOTAL: 0
+  PASSED: 0
   FAILED: 0
   SKIPPED: 0
-  DURATION: 14s
-  SUCCESS_RATE: 100%
+  DURATION: 0s
+  SUCCESS_RATE: 0%
 ═══════════════════════════════════════════════════════════
