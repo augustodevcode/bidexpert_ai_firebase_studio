@@ -34,10 +34,9 @@ export default function MonitorLotList({ lots, currentLotId, onLotSelect }: Moni
                             <div
                                 key={lot.id}
                                 data-ai-id={`monitor-lot-item-${index}`}
-                                onClick={() => onLotSelect?.(lot)}
-                                role={onLotSelect ? 'button' : undefined}
-                                tabIndex={onLotSelect ? 0 : undefined}
-                                onKeyDown={e => e.key === 'Enter' && onLotSelect?.(lot)}
+                                onClick={onLotSelect ? () => onLotSelect(lot) : undefined}
+                                {...(onLotSelect ? { role: 'button', tabIndex: 0 } : {})}
+                                onKeyDown={onLotSelect ? (e) => { if (e.key === 'Enter') onLotSelect(lot); } : undefined}
                                 className={`p-4 rounded-none border-b transition-colors relative ${
                                     isCurrent
                                         ? 'bg-primary text-primary-foreground'

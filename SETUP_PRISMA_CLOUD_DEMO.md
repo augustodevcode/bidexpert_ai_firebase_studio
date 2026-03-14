@@ -85,7 +85,7 @@ Quando o schema estiver aplicado:
 
 ```powershell
 # Regenerar Prisma Client PostgreSQL (se necessário)
-Copy-Item prisma/schema.postgresql.prisma prisma/schema.prisma -Force
+Copy-Item prisma/deploy/schema.postgresql.prisma prisma/schema.prisma -Force
 npx prisma generate --no-engine
 
 # Executar seed via Accelerate

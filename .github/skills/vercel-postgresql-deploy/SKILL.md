@@ -36,7 +36,7 @@ Consulte `PRISMA_RELATION_NAMING.md` neste diretório para a tabela completa de 
 
 **Validação obrigatória antes do deploy:**
 ```powershell
-cp prisma/schema.postgresql.prisma prisma/schema.prisma; npx prisma generate; npm run build
+cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma; npx prisma generate; npm run build
 ```
 
 ## Regras de Deploy Vercel (OBRIGATÓRIAS)
@@ -56,7 +56,7 @@ Error: P1001 Can't reach database server at db.prisma.io:5432
 
 ```json
 {
-  "buildCommand": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build"
+  "buildCommand": "cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build"
 }
 ```
 
@@ -86,11 +86,11 @@ git push origin <feature-branch>
 
 O projeto mantém dois schemas Prisma:
 - `prisma/schema.prisma` — MySQL (desenvolvimento local)
-- `prisma/schema.postgresql.prisma` — PostgreSQL (Vercel)
+- `prisma/deploy/schema.postgresql.prisma` — PostgreSQL (Vercel)
 
 **No build do Vercel**, o schema PostgreSQL é copiado:
 ```bash
-cp prisma/schema.postgresql.prisma prisma/schema.prisma
+cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
 ```
 
 **Ao modificar o schema Prisma:**

@@ -252,6 +252,7 @@
         "vitest-browser-react": "^2.0.2"
     },
     "prisma": {
-        "seed": "npx tsx scripts/ultimate-master-seed.ts"
+        "seed": "npx tsx scripts/ultimate-master-seed.ts",
+        "schema": "prisma/schema.prisma"
     }
 }

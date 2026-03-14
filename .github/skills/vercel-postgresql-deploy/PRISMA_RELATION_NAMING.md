@@ -4,7 +4,7 @@
 
 The BidExpert project uses **dual Prisma schemas**:
 - `prisma/schema.prisma` → MySQL (local dev)
-- `prisma/schema.postgresql.prisma` → PostgreSQL (Vercel production)
+- `prisma/deploy/schema.postgresql.prisma` → PostgreSQL (Vercel production)
 
 ### Relation Name Convention
 
@@ -53,4 +53,4 @@ Before deploying to Vercel:
 1. Search for camelCase relation names in Prisma queries
 2. Verify `include:`, `connect:`, `_count.select:`, `where:` (relation filter), `orderBy:` 
 3. Verify result property access matches PascalCase
-4. Run: `cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build`
+4. Run: `cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build`

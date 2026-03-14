@@ -72,7 +72,7 @@ docker exec bidexpert-meu-id-app-1 npx tsx scripts/ultimate-master-seed.ts
 
 O projeto usa dois schemas Prisma:
 - `prisma/schema.prisma` → **MySQL** (dev local / container)
-- `prisma/schema.postgresql.prisma` → **PostgreSQL** (Vercel deploy)
+- `prisma/deploy/schema.postgresql.prisma` → **PostgreSQL** (Vercel deploy)
 
 > **IMPORTANTE:** O entrypoint do container (`docker-entrypoint-dev.sh`) corrige automaticamente o provider para MySQL, mesmo que o arquivo `schema.prisma` no host esteja com PostgreSQL.
 

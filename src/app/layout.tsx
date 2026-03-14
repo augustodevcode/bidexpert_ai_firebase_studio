@@ -25,6 +25,9 @@ console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 export const metadata: Metadata = {
   title: 'BidExpert - Leilões Online',
   description: 'Sua plataforma especialista em leilões online.',
+  icons: {
+    apple: '/icon-192x192.png',
+  },
 };
 
 // PWA viewport config
@@ -67,6 +70,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -74,7 +78,6 @@ export default async function RootLayout({
           rel="stylesheet"
         />
         {shouldExposeManifest ? <link rel="manifest" href="/manifest.json" /> : null}
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="BidExpert" />

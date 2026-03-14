@@ -74,7 +74,7 @@ node .vscode/start-9005.js
 #   - workspaceId: <seu-workspace>
 
 # 3. Copiar schema PostgreSQL
-Copy-Item -Path "prisma/schema.postgresql.prisma" -Destination "prisma/schema.prisma" -Force
+Copy-Item -Path "prisma/deploy/schema.postgresql.prisma" -Destination "prisma/schema.prisma" -Force
 
 # 4. Gerar Prisma Client
 $env:DATABASE_URL="<connection-string-do-prisma-postgres>"
@@ -121,7 +121,7 @@ git push origin feat/minha-feature
 **1. `vercel.json` — buildCommand (Vercel executa diretamente)**
 ```json
 {
-  "buildCommand": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build"
+  "buildCommand": "cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build"
 }
 ```
 Este comando é executado pelo Vercel a cada deploy. O primeiro passo já é a cópia do schema PostgreSQL.
@@ -132,7 +132,7 @@ Cada workflow de deploy (HML, DEMO, PROD) tem o step `🔄 Copy PostgreSQL schem
 
 ```yaml
 - name: 🔄 Copy PostgreSQL schema
-  run: cp prisma/schema.postgresql.prisma prisma/schema.prisma
+  run: cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma
 
 - name: 🗄️ Generate Prisma Client
   run: npx prisma generate
@@ -168,7 +168,7 @@ O `vercel.json` contém o build command que:
 
 ```json
 {
-  "buildCommand": "cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build"
+  "buildCommand": "cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build"
 }
 ```
 
@@ -196,7 +196,7 @@ O seed pode ser executado diretamente contra o banco de produção quando necess
 # ⚠️ ATENÇÃO: Isso afeta dados de produção!
 
 # 1. Copiar schema PostgreSQL
-Copy-Item -Path "prisma/schema.postgresql.prisma" -Destination "prisma/schema.prisma" -Force
+Copy-Item -Path "prisma/deploy/schema.postgresql.prisma" -Destination "prisma/schema.prisma" -Force
 
 # 2. Gerar Prisma Client
 $env:DATABASE_URL="<url-do-postgres-producao>"

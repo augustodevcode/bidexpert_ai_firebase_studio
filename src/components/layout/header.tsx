@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin, Radar } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { useEffect, useState, useRef, useCallback, forwardRef, useMemo, Suspense, type CSSProperties } from 'react';
+import { useEffect, useState, useRef, useCallback, forwardRef, useMemo, Suspense } from 'react';
 import { slugify } from '@/lib/ui-helpers';
 import UserNav from './user-nav';
 import MainNav, { type NavItem } from './main-nav';
@@ -43,8 +43,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useCurrency } from '@/contexts/currency-context';
 import CurrencyFlag from '@/components/ui/currency-flag';
 import { ThemeToggle } from './theme-toggle';
-
-type HeaderCSSVars = CSSProperties & { '--header-height'?: string };
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
 export const HistoryListItem = forwardRef<
@@ -355,14 +353,11 @@ export default function Header({
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
     ];
 
-  const headerStyle = useMemo<HeaderCSSVars>(() => ({ '--header-height': '15rem' }), []);
-
   return (
     <>
     <header
       className="header-main-sticky"
       data-ai-id="header-main"
-      style={headerStyle}
     >
       {/* Promotion Bar */}
       <div className="wrapper-promo-bar" data-ai-id="header-promo-bar">

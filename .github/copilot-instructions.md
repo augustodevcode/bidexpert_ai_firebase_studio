@@ -1261,7 +1261,7 @@ Get-Content .next/BUILD_ID
 
 ### Build Command no Vercel
 - **NUNCA** incluir `prisma db push`, `prisma migrate deploy` ou qualquer comando que conecte ao banco no `buildCommand` do `vercel.json`
-- O build command correto: `cp prisma/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build`
+- O build command correto: `cp prisma/deploy/schema.postgresql.prisma prisma/schema.prisma && npx prisma generate && npm run build`
 - Migrações e seeds devem ser executados separadamente (scripts locais ou API routes)
 
 ### Deploy via Git (NUNCA via MCP direto)
@@ -1290,7 +1290,7 @@ git push origin <feature-branch>
 
 ### Schemas Prisma Duais
 - `prisma/schema.prisma` → MySQL (dev local)
-- `prisma/schema.postgresql.prisma` → PostgreSQL (Vercel)
+- `prisma/deploy/schema.postgresql.prisma` → PostgreSQL (Vercel)
 - **SEMPRE alterar AMBOS** ao modificar o schema
 - Validar ambos: `npx prisma validate`
 
