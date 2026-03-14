@@ -26,7 +26,7 @@ export default function CounterStatesPage() {
 
   const fetchData = useCallback(async (params: { page: number; pageSize: number; search: string; sortField: string; sortOrder: 'asc' | 'desc' }) => {
     const res = await listCounterStatesAction(params);
-    if (res?.success && res.data) return res.data as { data: CounterStateRow[]; total: number; page: number; pageSize: number; totalPages: number };
+    if (res?.success && res.data) return res.data as unknown as { data: CounterStateRow[]; total: number; page: number; pageSize: number; totalPages: number };
     return { data: [], total: 0, page: 1, pageSize: params.pageSize, totalPages: 0 };
   }, []);
 
@@ -55,16 +55,16 @@ export default function CounterStatesPage() {
       <DataTablePlus
         columns={columns}
         data={table.data}
-        totalRows={table.total}
+        total={table.total}
         page={table.page}
         pageSize={table.pageSize}
         onPageChange={table.setPage}
         onPageSizeChange={table.setPageSize}
         onSearchChange={table.setSearch}
         onSortChange={table.setSort}
-        isLoading={table.loading}
-        onRowClick={handleEdit}
-        actions={(row) => [
+        isLoading={table.isLoading}
+        onRowDoubleClick={handleEdit}
+        rowActions={(row: CounterStateRow) => [
           { label: 'Editar', onClick: () => handleEdit(row) },
           { label: 'Excluir', onClick: () => setDeleteRow(row), variant: 'destructive' as const },
         ]}

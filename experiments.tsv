@@ -10,3 +10,4 @@ id	timestamp	description	status	errors_before	errors_after	delta	kept	notes
 9	2026-03-14T20:15	Preserve typed input in createAdminAction return signatures	FAILURE	1571	1661	90	NO	Fixed targeted unknown-parameter pages but broke too many legacy callers; discarded.
 10	2026-03-14T20:22	Narrow shared @/types alias restoration	FAILURE	1571	1600	29	NO	Even conservative aliases widened downstream incompatibilities; discarded.
 11	2026-03-14T20:35	Legacy DataTablePlus/loading compatibility shim	FAILURE	1571	1570	-1	NO	Tiny gain but introduced fresh shared-component diagnostics; discarded.
+12	2026-03-14T20:50	Update stale table props on counter-states and theme-settings pages	SUCCESS	1571	1564	-7	YES	Aligned two admin-plus pages with current DataTablePlus/useDataTable APIs.
