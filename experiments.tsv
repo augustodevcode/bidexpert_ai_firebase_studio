@@ -6,3 +6,7 @@ id	timestamp	description	status	errors_before	errors_after	delta	kept	notes
 5	2026-03-14T19:25	Optional CrudFormShell cancel + createAdminAction(schema, handler) overload	SUCCESS	1715	1657	-58	YES	TS2741: 18->0, TS2554: 40->28. Kept helper cleanup to preserve local type safety.
 6	2026-03-14T19:40	PageHeader legacy prop compat + relaxed Input/Textarea refs	SUCCESS	1657	1578	-79	YES	Cleared legacy PageHeader prop mismatches and react-hook-form ref spread errors in shared controls.
 7	2026-03-14T19:50	Broaden useDataTable fetch handler compatibility	SUCCESS	1578	1568	-10	YES	Shared hook now accepts legacy param shapes and wrapped/raw paginated results.
+8	2026-03-14T20:05	Broad shared @/types alias restoration	FAILURE	1571	1596	25	NO	Increased downstream mismatches; discarded. Post-exp7 recount corrected the working baseline to 1571.
+9	2026-03-14T20:15	Preserve typed input in createAdminAction return signatures	FAILURE	1571	1661	90	NO	Fixed targeted unknown-parameter pages but broke too many legacy callers; discarded.
+10	2026-03-14T20:22	Narrow shared @/types alias restoration	FAILURE	1571	1600	29	NO	Even conservative aliases widened downstream incompatibilities; discarded.
+11	2026-03-14T20:35	Legacy DataTablePlus/loading compatibility shim	FAILURE	1571	1570	-1	NO	Tiny gain but introduced fresh shared-component diagnostics; discarded.
