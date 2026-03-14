@@ -31,8 +31,9 @@ interface CreateAdminActionOptions<TInput extends z.ZodTypeAny | undefined, TOut
   handler: (...args: unknown[]) => Promise<TOutput>;
 }
 
-type LegacyAdminActionHandler<TOutput = unknown> = (
+type LegacyAdminActionHandler<TInput = unknown, TOutput = unknown> = (
   ctx: ActionContext,
+  input: TInput,
   ...args: unknown[]
 ) => Promise<TOutput>;
 
@@ -78,7 +79,7 @@ async function invokeOptionsHandler<TOutput>(
 }
 
 export function createAdminAction<TInput = unknown, TOutput = unknown>(
-  handler: LegacyAdminActionHandler<TOutput>,
+  handler: LegacyAdminActionHandler<TInput, TOutput>,
 ): (...args: unknown[]) => Promise<ActionResult<TOutput>>;
 
 export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.ZodVoid, TOutput = unknown>(
@@ -96,7 +97,7 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
  * 5. Retorna ActionResult<TOutput> padronizado
  */
 export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.ZodVoid, TOutput = unknown>(
-  optionsOrHandler: CreateAdminActionOptions<TInput, TOutput> | LegacyAdminActionHandler<TOutput>,
+  optionsOrHandler: CreateAdminActionOptions<TInput, TOutput> | LegacyAdminActionHandler<unknown, TOutput>,
 ) {
   return async (...rawArgs: unknown[]): Promise<ActionResult<TOutput>> => {
     try {
