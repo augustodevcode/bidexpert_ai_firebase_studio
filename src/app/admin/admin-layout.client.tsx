@@ -132,8 +132,14 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
               onSearchClick={() => setCommandPaletteOpen(true)}
               onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
             />
-            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto pb-[calc(var(--admin-query-monitor-height,0px)+1rem)]">
-              <div className="w-full">
+            <main
+              className={
+                isFullWidth
+                  ? 'flex flex-1 min-h-0 flex-col overflow-hidden p-4 pb-[calc(var(--admin-query-monitor-height,0px)+1rem)] sm:p-6 md:p-8'
+                  : 'flex-1 overflow-y-auto p-4 pb-[calc(var(--admin-query-monitor-height,0px)+1rem)] sm:p-6 md:p-8'
+              }
+            >
+              <div className={isFullWidth ? 'flex min-h-0 w-full flex-1 flex-col' : 'w-full'}>
                 {children}
                 <DevInfoIndicator
                   tenantId={resolvedTenantId}

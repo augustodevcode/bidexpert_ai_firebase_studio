@@ -171,8 +171,26 @@ function LoginPageContent() {
         setError(null);
 
         // Usa o tenantId dos values (passado diretamente) OU do estado
-        const effectiveTenantId = values.tenantId || lockedTenantId || selectedTenantId;
-        
+        let effectiveTenantId = values.tenantId || lockedTenantId || selectedTenantId;
+
+        // Fallback: se nenhum tenant detectado no cliente, tenta resolver via servidor.
+        // Cobre o caso de domínios Vercel (*.vercel.app) onde o middleware define
+        // x-tenant-id no header mas a detecção cliente pode não ter completado.
+        if (!effectiveTenantId) {
+            try {
+                const ctx = await getCurrentTenantContext();
+                if (ctx.tenantId) {
+                    effectiveTenantId = ctx.tenantId;
+                    setLockedTenantId(ctx.tenantId);
+                    setLockedTenantName(ctx.tenantName || null);
+                    setSelectedTenantId(ctx.tenantId);
+                    form.setValue('tenantId', ctx.tenantId);
+                }
+            } catch {
+                // Falha silenciosa — a validação abaixo cuidará do erro
+            }
+        }
+
         if (!effectiveTenantId) {
             const validationMessage = 'Selecione um espaço de trabalho antes de continuar.';
             setError(validationMessage);
@@ -374,7 +392,7 @@ function LoginPageContent() {
                             {error && <p className="text-auth-error-center">{error}</p>}
                         </CardContent>
                         <CardFooter className="footer-auth">
-                            <Button type="submit" className="btn-auth-submit" disabled={isLoading} data-ai-id="auth-login-submit-button">
+                            <Button type="submit" className="btn-auth-submit" disabled={isLoading || isFetchingTenants} data-ai-id="auth-login-submit-button">
                                 {isLoading ? <Loader2 className="icon-btn-spinner" /> : userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login'}
                             </Button>
                         </CardFooter>

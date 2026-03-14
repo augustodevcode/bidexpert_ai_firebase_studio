@@ -125,12 +125,14 @@ export const ENTITY_REGISTRY: EntityConfig[] = [
   // Tier 9 — Communications
   { slug: 'notifications', label: 'Notificação', labelPlural: 'Notificações', icon: 'Bell', group: 'communications', hasTenantId: true, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
   { slug: 'contact-messages', label: 'Mensagem', labelPlural: 'Mensagens', icon: 'Mail', group: 'communications', hasTenantId: true, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
+  { slug: 'email-logs', label: 'Log de E-mail', labelPlural: 'Logs de E-mail', icon: 'MailCheck', group: 'communications', hasTenantId: false, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
   { slug: 'bidder-notifications', label: 'Notif. Arrematante', labelPlural: 'Notif. Arrematantes', icon: 'BellDot', group: 'communications', hasTenantId: true, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
   { slug: 'reviews', label: 'Avaliação', labelPlural: 'Avaliações', icon: 'Star', group: 'communications', hasTenantId: true, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
   { slug: 'subscribers', label: 'Assinante', labelPlural: 'Assinantes', icon: 'UserPlus', group: 'communications', hasTenantId: true, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
 
   // Tier 10 — Analytics
   { slug: 'audit-logs', label: 'Log de Auditoria', labelPlural: 'Logs de Auditoria', icon: 'ScrollText', group: 'analytics', hasTenantId: true, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
+  { slug: 'reports', label: 'Relatório', labelPlural: 'Relatórios', icon: 'BarChart3', group: 'analytics', hasTenantId: true, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
   { slug: 'participation-history', label: 'Histórico Participação', labelPlural: 'Históricos de Participação', icon: 'History', group: 'analytics', hasTenantId: true, paginationMode: 'server', permissions: { read: 'manage_all', create: 'manage_all', update: 'manage_all', delete: 'manage_all' } },
 
   // Tier 11 — Support

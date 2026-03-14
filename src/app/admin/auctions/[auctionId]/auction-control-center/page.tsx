@@ -18,10 +18,10 @@ export default async function AuctionControlCenterPage({ params }: AuctionContro
   }
 
   return (
-    <div className="flex h-full min-h-[calc(100vh-8rem)] min-w-0 w-full flex-col">
+    <div className="flex h-full min-h-0 min-w-0 w-full flex-1 flex-col">
       <Suspense
         fallback={
-          <div className="flex min-h-[calc(100vh-14rem)] items-center justify-center">
+          <div className="flex flex-1 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         }
