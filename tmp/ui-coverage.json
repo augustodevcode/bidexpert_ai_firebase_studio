@@ -1,0 +1,107 @@
+{
+  "totalRoutesDiscovered": 171,
+  "totalRoutesScanned": 20,
+  "routesWithCurrencySwitch": 20,
+  "coverage": [
+    {
+      "route": "/",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/about",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/auction-safety-tips",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/auctioneers",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/auctions",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/auctions/live",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/auctions/lots",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/auctions/lots/v2",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/auctions/monitor",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/category",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/changelog",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/checkout",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/contact",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/direct-sales",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/faq",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/home-v2",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/imoveis",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/live-dashboard",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/lots",
+      "element": "header-currency-switch",
+      "status": "tested"
+    },
+    {
+      "route": "/map-search",
+      "element": "header-currency-switch",
+      "status": "tested"
+    }
+  ]
+}

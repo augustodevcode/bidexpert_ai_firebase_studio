@@ -1,102 +1,102 @@
 {
   "/": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 5
+    "hasCurrencySwitch": true,
+    "buttons": 57,
+    "links": 84
   },
   "/about": {
-    "hasCurrencySwitch": false,
-    "buttons": 8,
-    "links": 5
+    "hasCurrencySwitch": true,
+    "buttons": 12,
+    "links": 19
   },
   "/auction-safety-tips": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 13,
+    "links": 20
   },
   "/auctioneers": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 11,
+    "links": 19
   },
   "/auctions": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 13,
+    "links": 19
   },
   "/auctions/live": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 12,
+    "links": 21
   },
   "/auctions/lots": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 13,
+    "links": 21
   },
   "/auctions/lots/v2": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 12,
+    "links": 25
   },
   "/auctions/monitor": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 13,
+    "links": 21
   },
   "/category": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 13,
+    "links": 23
   },
   "/changelog": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 12,
+    "links": 19
   },
   "/checkout": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 13,
+    "links": 23
   },
   "/contact": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 14,
+    "links": 19
   },
   "/direct-sales": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 12,
+    "links": 19
   },
   "/faq": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 38,
+    "links": 19
   },
   "/home-v2": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 51,
+    "links": 58
   },
   "/imoveis": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 12,
+    "links": 19
   },
   "/live-dashboard": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 13,
+    "links": 19
   },
   "/lots": {
-    "hasCurrencySwitch": false,
-    "buttons": 0,
-    "links": 3
+    "hasCurrencySwitch": true,
+    "buttons": 13,
+    "links": 23
   },
   "/map-search": {
-    "hasCurrencySwitch": false,
-    "buttons": 8,
-    "links": 5
+    "hasCurrencySwitch": true,
+    "buttons": 23,
+    "links": 19
   }
 }
