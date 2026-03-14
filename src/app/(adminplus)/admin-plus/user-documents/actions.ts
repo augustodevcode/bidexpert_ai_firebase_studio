@@ -10,10 +10,10 @@ import { sanitizeResponse } from '@/lib/serialization-helper';
 import { createAdminAction } from '@/lib/admin-plus/safe-action';
 import { userDocumentSchema } from './schema';
 import type { UserDocumentRow } from './types';
-import type { PaginatedResponse, ActionResult } from '@/lib/admin-plus/types';
+import type { PaginatedResponse } from '@/lib/admin-plus/types';
 
 const include = {
-  User: { select: { name: true, email: true } },
+  User: { select: { fullName: true, email: true } },
   DocumentType: { select: { name: true } },
 };
 
@@ -27,7 +27,7 @@ function toRow(r: Record<string, unknown>): UserDocumentRow {
     fileUrl: String(r.fileUrl ?? ''),
     rejectionReason: String(r.rejectionReason ?? ''),
     userId: String(r.userId ?? ''),
-    userName: String(user?.name ?? ''),
+    userName: String(user?.fullName ?? ''),
     userEmail: String(user?.email ?? ''),
     documentTypeId: String(r.documentTypeId ?? ''),
     documentTypeName: String(docType?.name ?? ''),
@@ -38,10 +38,7 @@ function toRow(r: Record<string, unknown>): UserDocumentRow {
 }
 
 /* ───────── LIST ───────── */
-export const listUserDocuments = createAdminAction<
-  z.ZodObject<{ page: z.ZodNumber; pageSize: z.ZodNumber; search: z.ZodOptional<z.ZodString> }>,
-  PaginatedResponse<UserDocumentRow>
->({
+export const listUserDocuments = createAdminAction({
   inputSchema: z.object({
     page: z.number().min(1).default(1),
     pageSize: z.number().min(1).max(100).default(25),
@@ -54,7 +51,7 @@ export const listUserDocuments = createAdminAction<
     const where: Record<string, unknown> = { tenantId: ctx.tenantIdBigInt };
     if (search) {
       where.OR = [
-        { User: { name: { contains: search } } },
+        { User: { fullName: { contains: search } } },
         { User: { email: { contains: search } } },
         { fileName: { contains: search } },
       ];
@@ -72,7 +69,7 @@ export const listUserDocuments = createAdminAction<
     ]);
 
     const rows = (sanitizeResponse(data) as Record<string, unknown>[]).map(toRow);
-    return { data: rows, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+    return { data: rows, total, page, pageSize, totalPages: Math.ceil(total / pageSize) } satisfies PaginatedResponse<UserDocumentRow>;
   },
 });
 

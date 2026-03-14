@@ -15,7 +15,7 @@ function toRow(r: any): UserLotMaxBidRow {
   return {
     id: r.id.toString(),
     userId: r.userId?.toString() ?? '',
-    userName: r.User?.name ?? '',
+    userName: r.User?.fullName ?? '',
     lotId: r.lotId?.toString() ?? '',
     lotTitle: r.Lot?.title ?? '',
     maxAmount: Number(r.maxAmount),
@@ -25,17 +25,17 @@ function toRow(r: any): UserLotMaxBidRow {
   };
 }
 
-const includeRels = { User: { select: { name: true } }, Lot: { select: { title: true } } };
+const includeRels = { User: { select: { fullName: true } }, Lot: { select: { title: true } } };
 
 export const listUserLotMaxBids = createAdminAction(
   z.object({ page: z.number().optional(), pageSize: z.number().optional(), search: z.string().optional(), sortField: z.string().optional(), sortOrder: z.enum(['asc', 'desc']).optional() }),
   async (input, ctx): Promise<PaginatedResponse<UserLotMaxBidRow>> => {
     const page = input.page ?? 1;
     const pageSize = input.pageSize ?? 25;
-    const where: any = { tenantId: ctx.tenantIdBigInt };
+    const where: any = { tenantId: ctx!.tenantIdBigInt };
     if (input.search) {
       where.OR = [
-        { User: { name: { contains: input.search } } },
+        { User: { fullName: { contains: input.search } } },
         { Lot: { title: { contains: input.search } } },
       ];
     }
@@ -50,7 +50,7 @@ export const listUserLotMaxBids = createAdminAction(
 export const createUserLotMaxBid = createAdminAction(
   userLotMaxBidSchema,
   async (data, ctx) => {
-    const record = await prisma.userLotMaxBid.create({ data: { userId: BigInt(data.userId), lotId: BigInt(data.lotId), maxAmount: data.maxAmount, isActive: data.isActive, tenantId: ctx.tenantIdBigInt }, include: includeRels });
+    const record = await prisma.userLotMaxBid.create({ data: { userId: BigInt(data.userId), lotId: BigInt(data.lotId), maxAmount: data.maxAmount, isActive: data.isActive, tenantId: ctx!.tenantIdBigInt }, include: includeRels });
     return sanitizeResponse(toRow(record));
   }
 );
@@ -58,7 +58,7 @@ export const createUserLotMaxBid = createAdminAction(
 export const updateUserLotMaxBid = createAdminAction(
   userLotMaxBidSchema.extend({ id: z.string().min(1) }),
   async (data, ctx) => {
-    const record = await prisma.userLotMaxBid.update({ where: { id: BigInt(data.id), tenantId: ctx.tenantIdBigInt }, data: { userId: BigInt(data.userId), lotId: BigInt(data.lotId), maxAmount: data.maxAmount, isActive: data.isActive }, include: includeRels });
+    const record = await prisma.userLotMaxBid.update({ where: { id: BigInt(data.id), tenantId: ctx!.tenantIdBigInt }, data: { userId: BigInt(data.userId), lotId: BigInt(data.lotId), maxAmount: data.maxAmount, isActive: data.isActive }, include: includeRels });
     return sanitizeResponse(toRow(record));
   }
 );
@@ -66,7 +66,7 @@ export const updateUserLotMaxBid = createAdminAction(
 export const deleteUserLotMaxBid = createAdminAction(
   z.object({ id: z.string().min(1) }),
   async (data, ctx) => {
-    await prisma.userLotMaxBid.delete({ where: { id: BigInt(data.id), tenantId: ctx.tenantIdBigInt } });
+    await prisma.userLotMaxBid.delete({ where: { id: BigInt(data.id), tenantId: ctx!.tenantIdBigInt } });
     return { deleted: true };
   }
 );

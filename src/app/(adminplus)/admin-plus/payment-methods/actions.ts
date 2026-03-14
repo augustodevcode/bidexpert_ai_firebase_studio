@@ -14,7 +14,7 @@ function toRow(r: any): PaymentMethodRow {
   return {
     id: r.id.toString(),
     bidderId: r.bidderId?.toString() ?? '',
-    bidderName: r.BidderProfile?.User?.name ?? r.BidderProfile?.id?.toString() ?? '',
+    bidderName: r.BidderProfile?.User?.fullName ?? r.BidderProfile?.id?.toString() ?? '',
     type: r.type ?? '',
     isDefault: !!r.isDefault,
     isActive: !!r.isActive,
@@ -29,7 +29,7 @@ function toRow(r: any): PaymentMethodRow {
   };
 }
 
-const includeRelations = { BidderProfile: { include: { User: { select: { name: true } } } } };
+const includeRelations = { BidderProfile: { include: { User: { select: { fullName: true } } } } };
 
 /* ───── LIST ───── */
 export const listPaymentMethods = createAdminAction(async (ctx, params?: { page?: number; pageSize?: number; sortField?: string; sortDirection?: string; search?: string }) => {

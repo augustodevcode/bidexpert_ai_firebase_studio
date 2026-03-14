@@ -11,7 +11,7 @@ import type { PaginatedResponse } from '@/lib/admin-plus/types';
 import type { AuditLogRow } from './types';
 
 const FK_INCLUDE = {
-  User: { select: { name: true } },
+  User: { select: { fullName: true } },
 };
 
 function toRow(r: Record<string, unknown>): AuditLogRow {
@@ -19,7 +19,7 @@ function toRow(r: Record<string, unknown>): AuditLogRow {
   return {
     id: String(r.id),
     userId: String(r.userId),
-    userName: user.name ? String(user.name) : '',
+    userName: user.fullName ? String(user.fullName) : '',
     entityType: String(r.entityType ?? ''),
     entityId: String(r.entityId ?? ''),
     action: String(r.action ?? ''),
@@ -48,7 +48,7 @@ export const listAuditLogs = createAdminAction<
         OR: [
           { entityType: { contains: search } },
           { action: { contains: search } },
-          { User: { name: { contains: search } } },
+          { User: { fullName: { contains: search } } },
           { ipAddress: { contains: search } },
         ],
       },

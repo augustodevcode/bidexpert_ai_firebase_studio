@@ -12,7 +12,7 @@ import type { LotQuestionRow } from './types';
 const FK_INCLUDE = {
   Lot: { select: { id: true, title: true } },
   Auction: { select: { id: true, title: true } },
-  User: { select: { id: true, name: true } },
+  User: { select: { id: true, fullName: true } },
 } as const;
 
 function toRow(d: any): LotQuestionRow {
@@ -23,7 +23,7 @@ function toRow(d: any): LotQuestionRow {
     auctionId: d.auctionId.toString(),
     auctionTitle: d.Auction?.title ?? '',
     userId: d.userId.toString(),
-    userName: d.User?.name ?? '',
+    userName: d.User?.fullName ?? '',
     userDisplayName: d.userDisplayName,
     questionText: d.questionText,
     answerText: d.answerText ?? null,
@@ -68,7 +68,6 @@ export const createLotQuestion = createAdminAction(async (ctx, input: unknown) =
       answeredByUserDisplayName: parsed.answeredByUserDisplayName || null,
       answeredAt: parsed.answerText ? new Date() : null,
       tenantId: ctx.tenantIdBigInt,
-      updatedAt: new Date(),
     },
     include: FK_INCLUDE,
   });
@@ -78,7 +77,7 @@ export const createLotQuestion = createAdminAction(async (ctx, input: unknown) =
 export const updateLotQuestion = createAdminAction(async (ctx, input: unknown) => {
   const { id, ...rest } = input as any;
   const valid = lotQuestionSchema.parse(rest);
-  const data: any = { updatedAt: new Date() };
+  const data: any = {};
   if (valid.lotId) data.lotId = BigInt(valid.lotId);
   if (valid.auctionId) data.auctionId = BigInt(valid.auctionId);
   if (valid.userId) data.userId = BigInt(valid.userId);
