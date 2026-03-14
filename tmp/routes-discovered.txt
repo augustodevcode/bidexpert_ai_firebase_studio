@@ -54,6 +54,8 @@
 /admin/judicial-processes/edit
 /admin/judicial-processes/new
 /admin/lots
+/admin/lots-v2
+/admin/lots-v2/new
 /admin/lots/analysis
 /admin/lots/edit
 /admin/lots/new
@@ -137,11 +139,14 @@
 /dashboard/favorites
 /dashboard/history
 /dashboard/messages
+/dashboard/my-bids
 /dashboard/notifications
 /dashboard/overview
+/dashboard/payments
 /dashboard/profile/edit
 /dashboard/reports
 /dashboard/wins
+/dashboard/won-lots
 /direct-sales
 /faq
 /home-v2

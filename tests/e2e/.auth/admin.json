@@ -2,18 +2,18 @@
   "cookies": [
     {
       "name": "session",
-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiLCJtYW5hZ2VfYXVjdGlvbnMiLCJtYW5hZ2VfdXNlcnMiLCJtYW5hZ2VfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NzMyMDg5OTAsImV4cCI6MTc3MzgxMzc5MH0.FmoRm0rxjpZsJj09N4frYkxqF0V6pPFy-eqh3TpFJZ0",
-      "domain": "demo.localhost",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiJwcm9kIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiLCJtYW5hZ2VfYXVjdGlvbnMiLCJtYW5hZ2VfdXNlcnMiLCJtYW5hZ2VfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NzMzMzI1NjUsImV4cCI6MTc3MzkzNzM2NX0.z72vbfz3Eo-NybyWDMXwM1YBPMIkjqMQRjE5ey-8tQU",
+      "domain": "bidexpertaifirebasestudio.vercel.app",
       "path": "/",
-      "expires": 1773813790.045378,
+      "expires": 1773937364.203366,
       "httpOnly": true,
-      "secure": false,
+      "secure": true,
       "sameSite": "Lax"
     }
   ],
   "origins": [
     {
-      "origin": "http://demo.localhost:9007",
+      "origin": "https://bidexpertaifirebasestudio.vercel.app",
       "localStorage": [
         {
           "name": "bidexpert-widget-preferences",
@@ -21,11 +21,11 @@
         },
         {
           "name": "bidexpert:currency-rates-updated-at",
-          "value": "2026-03-11T06:03:12.042Z"
+          "value": "2026-03-12T16:22:46.010Z"
         },
         {
           "name": "bidexpert:currency-rates",
-          "value": "{\"BRL\":1,\"USD\":0.19313,\"EUR\":0.1659}"
+          "value": "{\"BRL\":1,\"USD\":0.19372,\"EUR\":0.16777}"
         }
       ]
     }
