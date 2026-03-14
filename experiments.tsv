@@ -13,3 +13,4 @@ id	timestamp	description	status	errors_before	errors_after	delta	kept	notes
 12	2026-03-14T20:50	Update stale table props on counter-states and theme-settings pages	SUCCESS	1571	1564	-7	YES	Aligned two admin-plus pages with current DataTablePlus/useDataTable APIs.
 13	2026-03-14T21:00	Normalize variable-increment-rules page to current table/form contracts	SUCCESS	1564	1557	-7	YES	Removed stale hook/table props and cast the serialized list response at the page boundary.
 14	2026-03-14T21:10	Rewrite user-lot-max-bids page to explicit current CRUD flow	SUCCESS	1557	1554	-3	YES	Replaced the removed multi-action table hook API with explicit page state, actions, and confirmation dialog handling.
+15	2026-03-14T21:20	Normalize password-reset-tokens and user-documents pages	SUCCESS	1554	1539	-15	YES	Switched both pages to direct ActionResult handling and current DataTablePlus prop names.

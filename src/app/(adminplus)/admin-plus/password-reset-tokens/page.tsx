@@ -21,22 +21,18 @@ export default function PasswordResetTokensPage() {
   const [deleteRow, setDeleteRow] = useState<PasswordResetTokenRow | null>(null);
 
   const table = useDataTable<PasswordResetTokenRow>({
-    fetchFn: async ({ page, pageSize, search }) => {
-      const res = await listPasswordResetTokens({ page, pageSize, search });
-      if (res?.data && 'data' in res.data) return res.data;
-      throw new Error(res?.data?.error ?? 'Erro ao carregar tokens');
-    },
+    fetchFn: listPasswordResetTokens,
   });
 
   const handleCreate = useCallback(
     async (values: Record<string, unknown>) => {
       const res = await createPasswordResetToken(values as Parameters<typeof createPasswordResetToken>[0]);
-      if (res?.data?.success) {
+      if (res?.success) {
         toast.success('Token criado');
         setFormOpen(false);
         table.refresh();
       } else {
-        toast.error(res?.data?.error ?? 'Erro ao criar token');
+        toast.error(res?.error ?? 'Erro ao criar token');
       }
     },
     [table],
@@ -45,12 +41,12 @@ export default function PasswordResetTokensPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteRow) return;
     const res = await deletePasswordResetToken({ id: deleteRow.id });
-    if (res?.data?.success) {
+    if (res?.success) {
       toast.success('Token excluÃ­do');
       setDeleteRow(null);
       table.refresh();
     } else {
-      toast.error(res?.data?.error ?? 'Erro ao excluir');
+      toast.error(res?.error ?? 'Erro ao excluir');
     }
   }, [deleteRow, table]);
 
@@ -67,14 +63,16 @@ export default function PasswordResetTokensPage() {
       <DataTablePlus
         columns={columns}
         data={table.data}
-        totalItems={table.total}
+        total={table.total}
         page={table.page}
         pageSize={table.pageSize}
         onPageChange={table.setPage}
         onPageSizeChange={table.setPageSize}
-        onSearch={table.setSearch}
+        onSearchChange={table.setSearch}
         isLoading={table.isLoading}
-        onDelete={(row) => setDeleteRow(row)}
+        rowActions={(row: PasswordResetTokenRow) => [
+          { label: 'Excluir', onClick: () => setDeleteRow(row), variant: 'destructive' as const },
+        ]}
         data-ai-id="prt-data-table"
       />
 
