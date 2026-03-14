@@ -1,8 +1,8 @@
 # REGRAS DE NEGÓCIO E ESPECIFICAÇÕES - BIDEXPERT
 ## Documento Consolidado e Oficial
 
-**Data:** 05 de Março de 2026  
-**Status:** ✅ Atualizado com implementações de Março/2026 (Admin Plus Panel — 63 entidades CRUD)  
+**Data:** 12 de Março de 2026  
+**Status:** ✅ Atualizado com Guia Operacional de Testes E2E e Simulação de Robôs (Março/2026)  
 **Próximos passos:** caso haja novas implementações, atualize esse documento com as orientações do usuário
 
 ---
@@ -18,6 +18,7 @@
 8. [Admin Plus — Painel Administrativo Avançado](#admin-plus--painel-administrativo-avançado)
 9. [Linhagem do Leilão — Visualização de Cadeia de Valor](#linhagem-do-leilão--visualização-de-cadeia-de-valor)
 10. [Testes E2E em Ambientes Vercel (Deployment Protection)](#testes-e2e-em-ambientes-vercel-deployment-protection)
+11. [Guia Operacional para Testes E2E — Lições Aprendidas](#guia-operacional-para-testes-e2e--lições-aprendidas)
 
 ---
 
@@ -3304,3 +3305,393 @@ try {
 - [ ] Popular banco de produção com seed para habilitar E2E completo em main
 - [ ] Implementar retry automático se share URL expirar
 - [ ] Integrar no pipeline: `deploy → get share URL → run E2E → report`
+
+---
+
+## Guia Operacional para Testes E2E — Lições Aprendidas
+
+> **Data:** Março 2026  
+> **Contexto:** Este guia documenta TODOS os problemas operacionais encontrados durante sessões de testes E2E com Playwright, para que futuros analistas de teste e agentes AI não repitam os mesmos erros.  
+> **Complementa:** A seção anterior (RN-VERCEL-E2E-001 a 007) cobre deployment protection do Vercel. Esta seção cobre operações locais, configurações, navegação e troubleshooting.
+
+---
+
+### RN-GUIA-001: Inicialização do Servidor Local — Procedimento Obrigatório
+
+**Problema encontrado:** O servidor Next.js em modo `dev` usa **lazy compilation** — cada página é compilada apenas no primeiro acesso, levando 20s a 130s. Testes E2E que tentam acessar páginas não compiladas falham por timeout.
+
+**Procedimento correto:**
+
+```powershell
+# 1. Verificar se a porta está livre
+Test-NetConnection -ComputerName 127.0.0.1 -Port 9005
+# ou
+netstat -ano | findstr ":9005"
+
+# 2. Matar processos Node anteriores se necessário
+Stop-Process -Name "node" -Force -ErrorAction SilentlyContinue
+
+# 3. Iniciar servidor com porta explícita
+$env:PORT = 9005
+npm run dev
+# ou para controle explícito:
+npx next dev --port 9005 --hostname 0.0.0.0
+
+# 4. AGUARDAR a mensagem "Ready in X.Xs" antes de rodar testes
+
+# 5. PRÉ-AQUECER páginas críticas (evita timeout de lazy compilation)
+# Abrir no navegador ou via curl:
+# - http://demo.localhost:9005/ (homepage)
+# - http://demo.localhost:9005/auth/login (login)
+# - http://demo.localhost:9005/admin (admin dashboard)
+```
+
+**REGRA CRÍTICA:** SEMPRE usar `demo.localhost:PORT` (com subdomínio), NUNCA `localhost:PORT` sem subdomínio. O middleware redireciona bare `localhost` para `crm.localhost`, que causa falhas em testes.
+
+**Para produção/E2E estável (recomendado):**
+```powershell
+npm run build    # Pré-compila TUDO (sem lazy compilation)
+npm start        # Production mode, todas as páginas prontas
+```
+
+---
+
+### RN-GUIA-002: Git Worktree — Setup Completo para Agentes AI
+
+**Problema encontrado:** Worktrees criados por agentes AI frequentemente têm (1) symlinks quebrados em `node_modules/.bin`, (2) arquivo `.env` ausente, (3) cliente Prisma desatualizado.
+
+**Checklist obrigatório ao criar worktree:**
+
+```powershell
+# 1. Criar worktree a partir de demo-stable
+git fetch origin demo-stable
+git worktree add worktrees\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao>-<timestamp> origin/demo-stable
+
+# 2. Entrar no worktree
+Set-Location worktrees\bidexpert-<tipo>-<descricao>
+
+# 3. Copiar .env do workspace principal (NÃO é copiado automaticamente!)
+Copy-Item "..\..\..\.env" ".env" -Force
+# OU copiar de outro local conforme estrutura do workspace
+
+# 4. Instalar dependências COMPLETAS (corrige symlinks quebrados)
+Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+npm install
+
+# 5. Gerar cliente Prisma
+npx prisma generate
+
+# 6. Definir porta dedicada e iniciar
+$env:PORT = 9006   # Nunca usar 9005 (reservada para usuário humano)
+npm run dev
+```
+
+**Tabela de portas:**
+
+| Porta | Uso | Quem |
+|-------|-----|------|
+| 9005 | Ambiente DEMO / Principal | Usuário humano |
+| 9006 | Worktree DEV #1 | Agente AI #1 |
+| 9007 | Worktree DEV #2 | Agente AI #2 |
+| 9008 | Hotfix / PR review | Ad-hoc |
+
+**Armadilhas comuns:**
+- ❌ `npm run dev` falha com "EADDRINUSE" → Porta já em uso, verifique `netstat`
+- ❌ `prisma generate` falha → `.env` ausente, copie primeiro
+- ❌ Comandos não encontrados (`next`, `prisma`) → Symlinks quebrados, `npm install` novamente
+- ❌ HMR crash ao reiniciar → Mate todos os processos Node antes: `Stop-Process -Name "node" -Force`
+
+---
+
+### RN-GUIA-003: Middleware Multi-Tenant — Comportamento Local vs Vercel
+
+**Problema encontrado:** O middleware extrai o slug do tenant pelo subdomínio. Sem subdomínio, o login falha silenciosamente.
+
+**Comportamento por ambiente:**
+
+| Cenário | URL | Tenant Resolution | Tenant Selector |
+|---------|-----|-------------------|-----------------|
+| Local com subdomínio | `http://demo.localhost:9005` | Resolvido pelo middleware via subdomínio `demo` | **Auto-locked** (desabilitado) |
+| Local sem subdomínio | `http://localhost:9005` | NÃO resolvido | **Aberto** — seleção manual obrigatória |
+| Vercel (production) | `https://bidexpertaifirebasestudio.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT="demo"` | **Auto-locked** |
+| Vercel (preview) | `https://xxxx.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT` env var | **Auto-locked** |
+
+**REGRA para testes E2E:** SEMPRE usar `http://demo.localhost:<porta>` em testes locais.
+
+**Código do middleware (resumo):**
+```typescript
+// src/middleware.ts
+const subdomainMatch = hostname.match(/^([a-z0-9-]+)\.localhost$/);
+if (subdomainMatch) {
+  headers.set('x-tenant-id', subdomainMatch[1]); // "demo"
+}
+```
+
+**Rotas que o middleware redireciona:**
+- `localhost:PORT/` → redireciona para `crm.localhost:PORT/` (causa falha em testes!)
+- `demo.localhost:PORT/` → funciona normalmente, tenant "demo" resolvido
+
+---
+
+### RN-GUIA-004: Autenticação em Testes E2E — Fluxo Completo
+
+**Problema encontrado:** Agentes AI gastam tempo tentando credenciais incorretas ou não sabem usar o helper centralizado.
+
+**Credenciais canônicas (fonte: `scripts/ultimate-master-seed.ts`):**
+
+| Perfil | Email | Senha | Notas |
+|--------|-------|-------|-------|
+| **Admin** | `admin@bidexpert.com.br` | `Admin@123` | SuperAdmin, backoffice completo |
+| **Leiloeiro** | `carlos.silva@construtoraabc.com.br` | `Test@12345` | Auctioneer, gerencia leilões |
+| **Comprador** | `comprador@bidexpert.com.br` | `Test@12345` | Buyer, participa de lances |
+| **Advogado** | `advogado@bidexpert.com.br` | `Test@12345` | Lawyer, análise jurídica |
+| **Vendedor** | `vendedor@bidexpert.com.br` | `Test@12345` | Seller, vende lotes |
+| **Analista** | `analista@lordland.com` | `password123` | Analyst role |
+
+**⚠️ NUNCA usar `senha@123` — é incorreta e causa falhas silenciosas.**
+
+**Helper centralizado — uso obrigatório:**
+```typescript
+import { loginAsAdmin, loginAs, selectTenant, CREDENTIALS } from '../helpers/auth-helper';
+
+// Login direto como admin
+await loginAsAdmin(page, BASE_URL);
+
+// Login como perfil específico
+await loginAs(page, 'comprador', BASE_URL);
+
+// O selectTenant() detecta auto-lock automaticamente:
+// - Em Vercel ou demo.localhost → pula seleção
+// - Em localhost sem subdomínio → seleciona tenant "Demo"
+```
+
+**Fluxo detalhado de login programático (para testes que precisam de login manual):**
+```typescript
+// 1. Navegar para login
+await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded' });
+
+// 2. Selecionar tenant (se necessário — verificar auto-lock)
+const tenantSelect = page.locator('[data-ai-id="auth-login-tenant-select"]');
+if (await tenantSelect.isVisible()) {
+  const isDisabled = await tenantSelect.isDisabled();
+  if (!isDisabled) {
+    await tenantSelect.selectOption({ label: 'Demo' });
+  }
+}
+
+// 3. Preencher credenciais
+await page.fill('[data-ai-id="auth-login-email"]', 'admin@bidexpert.com.br');
+await page.fill('[data-ai-id="auth-login-password"]', 'Admin@123');
+
+// 4. Submeter (requestSubmit para Vercel compatibilidade)
+const form = page.locator('form');
+await form.evaluate(f => (f as HTMLFormElement).requestSubmit());
+
+// 5. Aguardar navegação para admin
+await page.waitForURL('**/admin**', { timeout: 30000 });
+```
+
+---
+
+### RN-GUIA-005: Navegação Admin — Rotas e Seletores Importantes
+
+**Problema encontrado:** Agentes AI não sabem quais rotas existem nem como encontrar leilões no admin.
+
+**Mapa de rotas do admin:**
+
+| Rota | Descrição | Seletor de acesso |
+|------|-----------|-------------------|
+| `/admin` | Dashboard principal | Login automático redireciona aqui |
+| `/admin/auctions` | Lista de leilões | `data-ai-id="auction-dashboard-btn"` |
+| `/admin/auctions/{id}` | Detalhes do leilão | Links `a[href*="/auctions/"]` na lista |
+| `/admin/auctions/{id}/auction-control-center` | Centro de controle do leilão | Tab/link dentro do detalhe do leilão |
+| `/admin/auctions/{id}/lineage` | Linhagem (cadeia de valor) | Tab/link dentro do detalhe |
+
+**Como encontrar um leilão no admin (estratégia `findFirstAuctionId`):**
+```typescript
+// 1. Navegar para lista de leilões
+await page.click('[data-ai-id="auction-dashboard-btn"]');
+await page.waitForLoadState('domcontentloaded');
+
+// 2. Pegar o primeiro link de leilão
+const firstAuctionLink = page.locator('a[href*="/auctions/"]').first();
+const href = await firstAuctionLink.getAttribute('href');
+const auctionId = href?.match(/auctions\/([^\/]+)/)?.[1];
+
+// 3. Navegar para o centro de controle
+await page.goto(`${BASE_URL}/admin/auctions/${auctionId}/auction-control-center`);
+```
+
+**Seletores importantes (data-ai-id):**
+
+| Seletor | Elemento | Contexto |
+|---------|----------|----------|
+| `auth-login-tenant-select` | Select de tenant | Página de login |
+| `auth-login-email` | Input de email | Página de login |
+| `auth-login-password` | Input de senha | Página de login |
+| `auction-dashboard-btn` | Botão "Leilões" | Sidebar do admin |
+| `super-opportunities-section` | Seção Super Oportunidades | Homepage pública |
+
+**Verificação de tabs no centro de controle:**
+```typescript
+// CUIDADO: Tabs podem não renderizar em Vercel ou em páginas com poucos dados
+const tablist = page.getByRole('tablist');
+if (await tablist.isVisible({ timeout: 5000 }).catch(() => false)) {
+  const tabs = tablist.getByRole('tab');
+  const count = await tabs.count();
+  // Espera-se 10 tabs no centro de controle
+}
+```
+
+---
+
+### RN-GUIA-006: Diferenças Vercel vs Local — O Que Pode Divergir
+
+**Problema encontrado:** Testes que passam localmente podem falhar no Vercel por diferenças de rendering, dados e middleware.
+
+**Lista de diferenças conhecidas:**
+
+| Aspecto | Local (dev mode) | Vercel (production mode) |
+|---------|------------------|--------------------------|
+| **Compilação** | Lazy (sob demanda, lento) | Pré-compilada (tudo pronto) |
+| **Tenant resolution** | Via subdomínio `demo.localhost` | Via env `NEXT_PUBLIC_DEFAULT_TENANT` |
+| **Tabs do control center** | 10 tabs visíveis | **Pode ter 0 tabs** (dados/rendering diferente) |
+| **DevUserSelector** | Visível (lista 15 users para login rápido) | **Não aparece** (NODE_ENV=production) |
+| **Banco de dados** | MySQL local | PostgreSQL (Prisma Postgres/Neon) |
+| **Seed data** | Completo via `npm run db:seed` | Pode estar vazio se seed não executado |
+| **Deployment protection** | Não existe | Bypass via share URL + cookies |
+| **Timeout recomendado** | 15-30s por ação | 30-60s por ação (rede mais lenta) |
+
+**REGRA para testes cross-env:** SEMPRE verificar existência de elementos antes de assertar sobre eles:
+```typescript
+// ❌ Vai falhar se tablist não existir no Vercel
+expect(await page.getByRole('tab').count()).toBeGreaterThanOrEqual(5);
+
+// ✅ Verifica primeiro, skip se não visível
+const tablist = page.getByRole('tablist');
+const isVisible = await tablist.isVisible({ timeout: 5000 }).catch(() => false);
+if (!isVisible) {
+  test.skip('Tablist não visível neste ambiente');
+  return;
+}
+const count = await tablist.getByRole('tab').count();
+expect(count).toBeGreaterThanOrEqual(5);
+```
+
+---
+
+### RN-GUIA-007: Testes Robot — Simulação de Lances Automatizados
+
+**Problema encontrado:** Existem 2 scripts de simulação de robôs com configurações diferentes que devem ser compreendidos.
+
+**Script 1: `tests/e2e/robot-auction-simulation.spec.ts`**
+- **Config Playwright:** `playwright.robot.config.ts` (match: `**/robot-auction-simulation.spec.ts`)
+- **Timeout:** 1 hora (simulação longa)
+- **Variáveis de ambiente:**
+  - `ROBOT_BASE_URL` — URL do servidor alvo (default: `PLAYWRIGHT_BASE_URL` ou Vercel)
+  - `ROBOT_LOCAL_BASE_URL` — URL local (default: `http://localhost:9005`)
+- **Função `resolveBaseUrl()`:** Tenta múltiplos candidatos na ordem: `ROBOT_BASE_URL` → `PLAYWRIGHT_BASE_URL` → Vercel → `localhost:9005`
+- **Dados:** Cria leilão e buyers via Prisma direto
+- **Credenciais de robô:** email `robot-XXX@bidexpert.com.br`, senha `Bot@123456`
+- **Parâmetros:** `BID_INCREMENT=1000`, `TARGET_TOP_BID=100000`
+
+**Execução:**
+```powershell
+$env:ROBOT_BASE_URL = "http://demo.localhost:9005"
+npx playwright test --config=playwright.robot.config.ts
+```
+
+**Script 2: `tests/e2e/pregao-disputas-video.spec.ts`**
+- **Config Playwright:** Usa config padrão
+- **Variável:** `PREGAO_BASE_URL` (default: `http://demo.localhost:9005`)
+- **Comportamento:** Cria tenant, leilão e 10 robôs via Prisma, grava vídeo
+- **Artefatos:** `test-results/pregao-video/artifacts/` e `test-results/pregao-video/report/`
+
+**Execução:**
+```powershell
+$env:PREGAO_BASE_URL = "http://demo.localhost:9005"
+npx playwright test tests/e2e/pregao-disputas-video.spec.ts
+```
+
+**REGRA:** Ambos os scripts criam seus próprios dados via Prisma. O banco DEVE ter o schema atualizado (`npx prisma generate` e `npx prisma db push` se necessário).
+
+---
+
+### RN-GUIA-008: Troubleshooting — Checklist de Problemas Comuns
+
+**Problema:** Agentes AI gastam ciclos em problemas recorrentes. Este checklist resolve 90% dos casos.
+
+| Sintoma | Causa Provável | Solução |
+|---------|---------------|---------|
+| `EADDRINUSE` ao iniciar server | Porta já ocupada | `Stop-Process -Name "node" -Force` e verificar `netstat -ano \| findstr ":PORT"` |
+| Timeout 30s ao acessar página | Lazy compilation (primeira vez) | Pré-aquecer a página no browser antes do teste, ou usar `npm run build && npm start` |
+| Login falha silenciosamente | Sem tenant selecionado | Usar `demo.localhost:PORT` (com subdomínio), NUNCA `localhost:PORT` |
+| `Cannot find module 'next'` | Symlinks quebrados no worktree | `Remove-Item -Recurse node_modules` e `npm install` |
+| `Prisma client not generated` | .env ausente no worktree | Copiar `.env` do workspace principal e rodar `npx prisma generate` |
+| Tabs retornam count=0 | Rendering variável (Vercel) | Verificar visibilidade antes de assertar, usar `test.skip()` se ausente |
+| Redirect para `crm.localhost` | Middleware de roteamento | SEMPRE usar `demo.localhost:PORT`, nunca URL sem subdomínio |
+| `ERR_CONNECTION_REFUSED` | Servidor não iniciou | Verificar se "Ready in" apareceu no terminal, testar com `Test-NetConnection` |
+| HMR crash / rebuild infinito | Processo Node zumbi | `Stop-Process -Name "node" -Force` e reiniciar |
+| `requestSubmit is not a function` | Form element não encontrado | Garantir que `page.locator('form')` está correto, usar `evaluate` |
+| Seed gate timeout no Vercel | Banco sem dados de seed | Normal em Vercel sem seed; seed gate é informativo, não bloqueante |
+| Prisma query incompatível | MySQL vs PostgreSQL | Usar helpers de compatibilidade (`insensitiveContains`, etc.) |
+
+---
+
+### RN-GUIA-009: Variáveis de Ambiente para Testes
+
+**Referência rápida de todas as env vars relevantes para testes:**
+
+| Variável | Valor Padrão | Uso |
+|----------|-------------|-----|
+| `PORT` | `3000` | Porta do Next.js dev server |
+| `BASE_URL` | — | URL base para Playwright |
+| `PLAYWRIGHT_BASE_URL` | — | Fallback para URL base |
+| `PLAYWRIGHT_SKIP_WEBSERVER` | `0` | `1` para pular webserver (Vercel) |
+| `PLAYWRIGHT_SKIP_LAWYER` | `0` | `1` para pular testes de advogado |
+| `ROBOT_BASE_URL` | Vercel URL | URL para simulação de robôs |
+| `ROBOT_LOCAL_BASE_URL` | `http://localhost:9005` | URL local para robôs |
+| `PREGAO_BASE_URL` | `http://demo.localhost:9005` | URL para pregão com vídeo |
+| `DATABASE_URL` | `.env` | Conexão MySQL/PostgreSQL |
+| `NEXT_PUBLIC_DEFAULT_TENANT` | — | Auto-lock tenant em Vercel |
+| `NODE_ENV` | `development` | `production` esconde DevUserSelector |
+
+**Exemplo de setup completo para testes locais:**
+```powershell
+$env:PORT = "9005"
+$env:BASE_URL = "http://demo.localhost:9005"
+$env:PLAYWRIGHT_BASE_URL = "http://demo.localhost:9005"
+$env:ROBOT_BASE_URL = "http://demo.localhost:9005"
+$env:PREGAO_BASE_URL = "http://demo.localhost:9005"
+```
+
+**Exemplo para testes no Vercel:**
+```powershell
+$env:BASE_URL = "https://bidexpertaifirebasestudio.vercel.app"
+$env:PLAYWRIGHT_BASE_URL = "https://bidexpertaifirebasestudio.vercel.app"
+$env:PLAYWRIGHT_SKIP_WEBSERVER = "1"
+```
+
+---
+
+### RN-GUIA-010: Boas Práticas para Agentes AI em Testes
+
+**Lições aprendidas de múltiplas sessões de teste:**
+
+1. **Sempre verificar porta antes de iniciar:** `netstat -ano | findstr ":PORT"`
+2. **Nunca usar `localhost` sem subdomínio:** SEMPRE `demo.localhost:PORT`
+3. **Copiar `.env` ao criar worktree:** O arquivo NÃO é copiado automaticamente
+4. **Pré-aquecer páginas em dev mode:** Primeira visita compila a página (20-130s)
+5. **Usar `waitUntil: 'domcontentloaded'`:** Mais confiável que `'networkidle'` para SPAs
+6. **Verificar existência antes de assertar:** Elementos podem não renderizar em todos os ambientes
+7. **Timeout generoso em ações de navegação:** 30s local, 60s Vercel
+8. **Usar helper `loginAsAdmin()` sempre:** Nunca reimplementar lógica de login
+9. **Rodar `npx prisma generate` após criar worktree:** Cliente desatualizado causa erros enigmáticos
+10. **Para estabilidade E2E, preferir `npm run build && npm start`:** Production mode elimina lazy compilation
+
+**Fluxo recomendado para agente AI iniciar testes:**
+```
+1. Verificar porta → 2. Criar worktree → 3. Copiar .env → 4. npm install 
+→ 5. npx prisma generate → 6. npm run build → 7. npm start 
+→ 8. Rodar testes contra demo.localhost:PORT
+```
