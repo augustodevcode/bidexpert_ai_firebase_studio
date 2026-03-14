@@ -266,6 +266,19 @@ npx ts-node --project tsconfig.server.json src/server.ts
 - Se houver erro de conexão, testar com: `Test-NetConnection -ComputerName 127.0.0.1 -Port 9005`
 - Sempre abra o **Simple Browser** (`http://demo.localhost:9005`) para validar visualmente.
 
+## 13. Protocolo Anti-Erros Reais (OBRIGATÓRIO)
+
+Antes de corrigir páginas, ações ou testes que apresentem falhas de runtime, o agente DEVE seguir esta ordem:
+
+1. Confirmar que o processo ativo pertence ao worktree e à porta corretos antes de concluir que há bug no código.
+2. Validar baseline de ambiente (`DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET`, `NEXTAUTH_SECRET`) antes de abrir correções de aplicação.
+3. Probar primeiro `GET /auth/login` e `GET /api/public/tenants`; se isso falhar, classificar como problema de runtime/infra e não de rota específica.
+4. Ao ver falhas em cascata como `ERR_CONNECTION_REFUSED`, investigar queda do servidor, porta errada ou OOM antes de editar múltiplas páginas.
+5. Quando erros mencionarem `input` ou `ctx` indefinidos em Server Actions, inspecionar primeiro wrappers compartilhados como `src/lib/admin-plus/safe-action.ts` antes de corrigir actions isoladas.
+6. Antes de alterar `select`/`include` do Prisma, confirmar os nomes reais dos campos no schema para evitar correções falsas como usar `title` quando o model expõe `name`.
+7. Validar sempre em ordem: browser interno + logs do servidor, depois rerun focado da rota afetada, e só então sweep amplo.
+8. Em sweeps longos de `next dev`, usar heap ampliado (`NODE_OPTIONS=--max-old-space-size=8192`) quando houver risco de OOM para evitar falsos negativos.
+
 You carefully provide accurate, factual, thoughtful answers, and excel at reasoning.
 
 - Follow the user’s requirements carefully & to the letter.

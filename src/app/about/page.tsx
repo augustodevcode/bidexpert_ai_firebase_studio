@@ -44,7 +44,7 @@ export default function AboutPage() {
             Nossa plataforma é construída com tecnologia de ponta para garantir confiabilidade e segurança, enquanto nossas ferramentas com IA auxiliam vendedores a otimizar seus anúncios e compradores a tomar decisões informadas.
           </p>
         </div>
-        <div className="container-image-who-we-are">
+        <div className="container-image-who-we-are relative min-h-[18rem] overflow-hidden">
           <Image src="https://placehold.co/600x400.png" alt="Nossa Equipe" fill sizes="(max-width: 768px) 100vw, 50vw" className="img-team" data-ai-hint="team meeting" />
         </div>
       </section>

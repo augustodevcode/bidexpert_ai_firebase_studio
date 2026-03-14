@@ -4,14 +4,12 @@
  * Exibe o designer de relatórios e acesso rápido a templates.
  */
 
-import { Suspense } from 'react';
-import BidReportBuilder from '@/components/BidReportBuilder';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { FileSpreadsheet, FileText, BarChart3, Users, Briefcase } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import ReportBuilderDesignerPanel from './ReportBuilderDesignerPanel';
 
 // Import templates
 import { 
@@ -85,23 +83,7 @@ export default function ReportBuilderPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Designer */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold flex items-center">
-            <FileSpreadsheet className="h-5 w-5 mr-2 text-primary" />
-            Designer de Relatórios
-          </CardTitle>
-          <CardDescription>
-            Arraste e solte elementos para criar seu relatório personalizado.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
-            <BidReportBuilder />
-          </Suspense>
-        </CardContent>
-      </Card>
+      <ReportBuilderDesignerPanel />
     </div>
   );
 }

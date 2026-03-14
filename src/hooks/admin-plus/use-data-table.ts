@@ -39,6 +39,7 @@ interface UseDataTableOptions<T> {
   fetchData?: (params: FetchParams) => Promise<PaginatedResponse<T>>;
   /** Sort padrão quando URL não especifica. */
   defaultSort?: SortParam;
+  legacyRowIdKey?: keyof T;
 }
 
 /* ─── Retorno do hook ─── */
@@ -53,6 +54,22 @@ interface UseDataTableReturn<T> {
   total: number;
   page: number;
   pageSize: number;
+  pageCount: number;
+  pagination: { pageIndex: number; pageSize: number };
+  sorting: { id: string; desc: boolean }[];
+  search: string;
+  onPaginationChange: () => void;
+  onSortingChange: () => void;
+  onSearchChange: () => void;
+  formOpen: boolean;
+  setFormOpen: (open: boolean) => void;
+  editingRow: T | null;
+  deletingRow: T | null;
+  setDeletingRow: (row: T | null) => void;
+  handleAdd: () => void;
+  handleEdit: (row: T) => void;
+  handleDelete: (row: T) => void;
+  handleConfirmDelete: () => void;
 }
 
 export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableReturn<T> {
@@ -60,6 +77,9 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
   const [data, setData] = useState<PaginatedResponse<T> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [tick, setTick] = useState(0);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState<T | null>(null);
+  const [deletingRow, setDeletingRow] = useState<T | null>(null);
   const abortRef = useRef(0);
 
   /* Derivar params da URL */
@@ -74,6 +94,7 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
   const sortDir =
     (searchParams.get('sortDir') as 'asc' | 'desc' | null) ??
     options.defaultSort?.direction ??
+    ((options.defaultSort as SortParam & { order?: 'asc' | 'desc' } | undefined)?.order) ??
     'asc';
 
   useEffect(() => {
@@ -124,6 +145,20 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
   }, [page, pageSize, search, sortField, sortDir, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
+  const handleAdd = useCallback(() => {
+    setEditingRow(null);
+    setFormOpen(true);
+  }, []);
+  const handleEdit = useCallback((row: T) => {
+    setEditingRow(row);
+    setFormOpen(true);
+  }, []);
+  const handleDelete = useCallback((row: T) => {
+    setDeletingRow(row);
+  }, []);
+  const handleConfirmDelete = useCallback(() => {
+    setDeletingRow(null);
+  }, []);
 
   return {
     data,
@@ -132,5 +167,21 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
     total: data?.total ?? 0,
     page: data?.page ?? page,
     pageSize: data?.pageSize ?? pageSize,
+    pageCount: data?.totalPages ?? 0,
+    pagination: { pageIndex: Math.max(0, (data?.page ?? page) - 1), pageSize: data?.pageSize ?? pageSize },
+    sorting: sortField ? [{ id: sortField, desc: sortDir === 'desc' }] : [],
+    search,
+    onPaginationChange: () => {},
+    onSortingChange: () => {},
+    onSearchChange: () => {},
+    formOpen,
+    setFormOpen,
+    editingRow,
+    deletingRow,
+    setDeletingRow,
+    handleAdd,
+    handleEdit,
+    handleDelete,
+    handleConfirmDelete,
   };
 }

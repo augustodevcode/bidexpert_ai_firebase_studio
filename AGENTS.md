@@ -5,6 +5,19 @@
 Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriamente as instruções contidas no arquivo mestre:
 `.github/copilot-instructions.md`
 
+## Protocolo Anti-Erros Reais (OBRIGATÓRIO)
+
+Estes guardrails foram adicionados após falhas reais em sweep/admin-plus e DEVEM ser seguidos por qualquer agente antes de assumir bug de aplicação:
+
+1. Confirmar que o servidor ativo pertence ao worktree correto. Se logs/stacks apontarem para a raiz do workspace e não para o worktree isolado, reiniciar no worktree correto antes de editar código.
+2. Validar o `.env.local` do worktree antes de login/E2E. `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET` e `NEXTAUTH_SECRET` são baseline obrigatória.
+3. Usar o browser interno do VS Code para validar login e rota quando o fluxo depende de `Dev: Auto-login`, tenant auto-lock ou estado visual.
+4. Tratar `ERR_CONNECTION_REFUSED` em série como problema de processo, porta ou memória. Não abrir múltiplas correções de rota enquanto o servidor estiver morto.
+5. Se `next dev` cair em sweeps longos, reiniciar com `NODE_OPTIONS=--max-old-space-size=8192`.
+6. Se erros de `input`/`ctx` `undefined` surgirem em várias server actions, corrigir `src/lib/admin-plus/safe-action.ts` antes de duplicar patches por página.
+7. Antes de usar campos Prisma em `select`, confirmar o schema real. Não assumir `title` onde o model usa `name`.
+8. Ordem mínima de validação: browser interno → teste Playwright com `--grep` → lote maior.
+
 ## 🔀 Workflow de Branches (OBRIGATÓRIO)
 
 **REGRA CRÍTICA:** Todo agente AI DEVE:
@@ -156,6 +169,14 @@ Antes de iniciar qualquer task, o agente DEVE:
 2. Se ocupada → Usuário em DEMO → Usar DEV na porta 9006
 3. Criar branch a partir de `demo-stable`
 4. Testar em DEV antes de propor merge
+
+### Checklist Operacional de Runtime
+
+Antes de concluir que uma rota ou teste está quebrado, o agente DEVE validar:
+- processo Node escutando na porta esperada;
+- host correto (`demo.localhost:<porta>` ou `dev.localhost:<porta>`);
+- probes `GET /auth/login` e `GET /api/public/tenants` com sucesso;
+- se o erro é da aplicação ou apenas resultado de queda por OOM/servidor errado.
 
 ## Autenticação E2E: Helper Centralizado e Seed Gate
 

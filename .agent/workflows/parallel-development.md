@@ -36,6 +36,18 @@ repositório (.git compartilhado)
 
 ## 📋 Checklist Obrigatório — INÍCIO de Cada Task
 
+### Passo 0.1 — Protocolo Anti-Erros Reais
+
+Antes de diagnosticar bug de página, login ou teste, o agente DEVE executar este filtro:
+
+1. Confirmar que o processo em execução pertence ao worktree correto. Se logs ou stack traces apontarem para a raiz do workspace em vez do worktree, reiniciar no worktree correto antes de editar código.
+2. Validar o `.env.local` do worktree. `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET` e `NEXTAUTH_SECRET` são baseline obrigatória para login/E2E.
+3. Fazer probe em `/auth/login` e `/api/public/tenants` logo após subir o servidor.
+4. Se `ERR_CONNECTION_REFUSED` aparecer em cascata após várias rotas já saudáveis, classificar como queda de servidor, OOM ou porta errada. Não abrir múltiplas correções de rota nesse estado.
+5. Se o sweep for longo, preferir `NODE_OPTIONS=--max-old-space-size=8192` para `next dev`.
+6. Se erros de `input` ou `ctx` `undefined` aparecerem em várias server actions, corrigir primeiro o wrapper compartilhado (`src/lib/admin-plus/safe-action.ts`).
+7. Antes de editar queries Prisma, confirmar no schema o nome real do campo (`name` vs `title`, etc.).
+
 ### Passo 0 — Verificar o que já está em execução
 
 ```powershell
@@ -144,6 +156,8 @@ $env:PORT = $porta
 npm run dev
 # ➡ Disponível em http://dev.localhost:<porta>
 ```
+
+> **Guardrail:** em comandos não persistentes/background, preferir `npm --prefix "<worktree>" ...` quando houver risco do `cwd` ser ignorado pelo executor.
 
 > **Nota:** Para testes E2E, use `npm run build && $env:PORT=$porta ; npm start` (sem lazy compilation).
 

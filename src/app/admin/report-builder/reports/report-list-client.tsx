@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,8 +19,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { getReportsAction, deleteReportAction, copyPredefinedReportAction } from '../actions';
-import ReportWizard from '@/components/BidReportBuilder/components/ReportWizard';
-import PredefinedReportsGallery from '@/components/BidReportBuilder/components/PredefinedReportsGallery';
 import type { Report } from '@prisma/client';
 import type { ReportType, ReportDefinition } from '@/types/report-builder.types';
 import { REPORT_TYPE_LABELS } from '@/types/report-builder.types';
@@ -44,6 +43,20 @@ import {
   SlidersHorizontal,
   BookTemplate,
 } from 'lucide-react';
+
+const ReportWizard = dynamic(
+  () => import('@/components/BidReportBuilder/components/ReportWizard'),
+  {
+    ssr: false,
+  }
+);
+
+const PredefinedReportsGallery = dynamic(
+  () => import('@/components/BidReportBuilder/components/PredefinedReportsGallery'),
+  {
+    ssr: false,
+  }
+);
 
 // ============================================================================
 // TYPES

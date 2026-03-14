@@ -12,7 +12,7 @@ import type { LotStagePriceRow } from './types';
 const FK_INCLUDE = {
   Lot: { select: { id: true, title: true } },
   Auction: { select: { id: true, title: true } },
-  AuctionStage: { select: { id: true, title: true } },
+  AuctionStage: { select: { id: true, name: true } },
 } as const;
 
 function toRow(d: any): LotStagePriceRow {
@@ -23,7 +23,7 @@ function toRow(d: any): LotStagePriceRow {
     auctionId: d.auctionId.toString(),
     auctionTitle: d.Auction?.title ?? '',
     auctionStageId: d.auctionStageId.toString(),
-    auctionStageTitle: d.AuctionStage?.title ?? '',
+    auctionStageTitle: d.AuctionStage?.name ?? '',
     initialBid: d.initialBid != null ? Number(d.initialBid) : null,
     bidIncrement: d.bidIncrement != null ? Number(d.bidIncrement) : null,
   };
