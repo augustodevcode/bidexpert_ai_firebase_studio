@@ -70,17 +70,17 @@ export default function EditRolePage() {
 
   return (
     <div className="space-y-6" data-ai-id="role-edit-page">
-      <PageHeader heading="Editar Perfil" description="Altere os dados do perfil de acesso." />
-      <CrudFormShell form={form} onSubmit={onSubmit} cancelHref={`${ADMIN_PLUS_BASE_PATH}/roles`} isEditing>
+      <PageHeader title="Editar Perfil" description="Altere os dados do perfil de acesso." />
+      <CrudFormShell form={form} onSubmit={onSubmit} onCancel={() => router.push(`${ADMIN_PLUS_BASE_PATH}/roles`)}>
         <Field control={form.control} name="name" label="Nome" required>
-          {(field) => <Input {...field} placeholder="Ex: Administrador" data-ai-id="role-name-input" />}
+          {({ field }) => <Input {...field} value={String(field.value ?? '')} placeholder="Ex: Administrador" data-ai-id="role-name-input" />}
         </Field>
         <Field control={form.control} name="description" label="Descrição">
-          {(field) => <Textarea {...field} rows={3} placeholder="Descrição do perfil" data-ai-id="role-description-input" />}
+          {({ field }) => <Textarea {...field} value={String(field.value ?? '')} rows={3} placeholder="Descrição do perfil" data-ai-id="role-description-input" />}
         </Field>
         <Field control={form.control} name="permissions" label="Permissões (JSON)" hint='Array JSON de permissões. Ex: ["users:read","users:write"]'>
-          {(field) => (
-            <Textarea {...field} rows={6} className="font-mono text-sm" placeholder='["users:read", "users:write"]' data-ai-id="role-permissions-input" />
+          {({ field }) => (
+            <Textarea {...field} value={String(field.value ?? '')} rows={6} className="font-mono text-sm" placeholder='["users:read", "users:write"]' data-ai-id="role-permissions-input" />
           )}
         </Field>
       </CrudFormShell>
