@@ -1,9 +1,9 @@
-# ==============================================================================
-# GitHub Action: Deploy HML (Homologação) para Vercel
+﻿# ==============================================================================
+# GitHub Action: Deploy HML (HomologaÃ§Ã£o) para Vercel
 # ==============================================================================
 # Trigger: Push na branch hml
 # Database: Neon PostgreSQL (sa-east-1)
-# Objetivo: Testes massivos, validação de features e correções antes de PRD
+# Objetivo: Testes massivos, validaÃ§Ã£o de features e correÃ§Ãµes antes de PRD
 # ==============================================================================
 
 name: Deploy HML to Vercel
@@ -35,7 +35,7 @@ on:
         type: boolean
 
 env:
-  PRISMA_SCHEMA: prisma/alternatives/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma-alternatives/schema.postgresql.prisma
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
@@ -44,51 +44,51 @@ jobs:
   # JOB 1: Build Validation
   # ============================================================================
   build:
-    name: 🔨 Build Validation
+    name: ðŸ”¨ Build Validation
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: ðŸ“¥ Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: ðŸ“¦ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📚 Install dependencies
+      - name: ðŸ“š Install dependencies
         run: npm ci
 
-      - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
+      - name: ðŸ”„ Copy PostgreSQL schema
+        run: cp prisma-alternatives/schema.postgresql.prisma prisma/schema.prisma
 
-      - name: 🗄️ Generate Prisma Client
+      - name: ðŸ—„ï¸ Generate Prisma Client
         run: npx prisma generate
 
-      - name: 🔍 Verificar Equalização com demo-stable
+      - name: ðŸ” Verificar EqualizaÃ§Ã£o com demo-stable
         run: |
           git fetch origin demo-stable || true
           HML_SHA=$(git rev-parse HEAD)
           DEMO_SHA=$(git rev-parse origin/demo-stable 2>/dev/null || echo "N/A")
           echo "============================================"
-          echo "📊 VERIFICAÇÃO DE EQUALIZAÇÃO:"
+          echo "ðŸ“Š VERIFICAÃ‡ÃƒO DE EQUALIZAÃ‡ÃƒO:"
           echo "  hml HEAD:         $HML_SHA"
           echo "  demo-stable HEAD: $DEMO_SHA"
           echo "============================================"
           if [ "$HML_SHA" != "$DEMO_SHA" ] && [ "$DEMO_SHA" != "N/A" ]; then
             COMMITS_BEHIND=$(git rev-list --count HEAD..origin/demo-stable 2>/dev/null || echo "N/A")
-            echo "⚠️  ATENÇÃO: hml está $COMMITS_BEHIND commits atrás de demo-stable."
+            echo "âš ï¸  ATENÃ‡ÃƒO: hml estÃ¡ $COMMITS_BEHIND commits atrÃ¡s de demo-stable."
             echo "   Execute o workflow 'Equalizar HML com demo-stable' para sincronizar."
           else
-            echo "✅ hml está equalizada com demo-stable."
+            echo "âœ… hml estÃ¡ equalizada com demo-stable."
           fi
 
-      - name: 🔍 Type Check
+      - name: ðŸ” Type Check
         run: npm run typecheck:soft
         continue-on-error: false
 
-      - name: 🏗️ Build
+      - name: ðŸ—ï¸ Build
         run: npm run build
         env:
           POSTGRES_PRISMA_URL: ${{ secrets.HML_POSTGRES_PRISMA_URL || secrets.HML_DATABASE_URL }}
@@ -104,7 +104,7 @@ jobs:
   # JOB 2: Database Schema Push & Seed (condicional)
   # ============================================================================
   migrate:
-    name: 🗃️ Database Schema Push & Seed
+    name: ðŸ—ƒï¸ Database Schema Push & Seed
     runs-on: ubuntu-latest
     needs: build
     if: >
@@ -113,27 +113,27 @@ jobs:
       contains(github.event.head_commit.message, '[seed]')
 
     steps:
-      - name: 📥 Checkout code
+      - name: ðŸ“¥ Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: ðŸ“¦ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📚 Install dependencies
+      - name: ðŸ“š Install dependencies
         run: npm ci
 
-      - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
+      - name: ðŸ”„ Copy PostgreSQL schema
+        run: cp prisma-alternatives/schema.postgresql.prisma prisma/schema.prisma
 
-      - name: 🗄️ Generate Prisma Client
+      - name: ðŸ—„ï¸ Generate Prisma Client
         run: npx prisma generate
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL_DIRECT }}
 
-      - name: 🗃️ Push Schema to Database
+      - name: ðŸ—ƒï¸ Push Schema to Database
         if: >
           (github.event_name == 'workflow_dispatch' && github.event.inputs.run_migrate == 'true') ||
           contains(github.event.head_commit.message, '[migrate]')
@@ -141,7 +141,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL_DIRECT }}
 
-      - name: 🌱 Run Seed (Master Data)
+      - name: ðŸŒ± Run Seed (Master Data)
         if: >
           (github.event_name == 'workflow_dispatch' && github.event.inputs.run_seed == 'true') ||
           contains(github.event.head_commit.message, '[seed]')
@@ -149,9 +149,9 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL_DIRECT }}
 
-      - name: ✅ Verify Data
+      - name: âœ… Verify Data
         run: |
-          echo "🔍 Verificando dados no banco HML..."
+          echo "ðŸ” Verificando dados no banco HML..."
           npx tsx -e "
             import { PrismaClient } from '@prisma/client';
             const p = new PrismaClient();
@@ -164,22 +164,22 @@ jobs:
               p.role.count()
             ]).then(([u, t, a, l, b, r]) => {
               console.log('============================================');
-              console.log('📊 HML DATABASE STATUS:');
+              console.log('ðŸ“Š HML DATABASE STATUS:');
               console.log('============================================');
-              console.log('👤 Users:', u);
-              console.log('🏢 Tenants:', t);
-              console.log('🔨 Auctions:', a);
-              console.log('📦 Lots:', l);
-              console.log('💰 Bids:', b);
-              console.log('🔑 Roles:', r);
+              console.log('ðŸ‘¤ Users:', u);
+              console.log('ðŸ¢ Tenants:', t);
+              console.log('ðŸ”¨ Auctions:', a);
+              console.log('ðŸ“¦ Lots:', l);
+              console.log('ðŸ’° Bids:', b);
+              console.log('ðŸ”‘ Roles:', r);
               console.log('============================================');
               if (u === 0 && t === 0) {
-                console.log('⚠️  Database vazia - execute com [seed]');
+                console.log('âš ï¸  Database vazia - execute com [seed]');
                 process.exit(1);
               } else {
-                console.log('✅ HML Database com dados!');
+                console.log('âœ… HML Database com dados!');
               }
-            }).catch(e => { console.error('❌ Erro:', e.message); process.exit(1); })
+            }).catch(e => { console.error('âŒ Erro:', e.message); process.exit(1); })
             .finally(() => p.\$disconnect());
           "
         env:
@@ -189,7 +189,7 @@ jobs:
   # JOB 3: Testes E2E (condicional)
   # ============================================================================
   e2e-tests:
-    name: 🧪 E2E Tests
+    name: ðŸ§ª E2E Tests
     runs-on: ubuntu-latest
     needs: [build, migrate]
     if: >
@@ -202,35 +202,35 @@ jobs:
       )
 
     steps:
-      - name: 📥 Checkout code
+      - name: ðŸ“¥ Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: ðŸ“¦ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📚 Install dependencies
+      - name: ðŸ“š Install dependencies
         run: npm ci
 
-      - name: 🎭 Install Playwright browsers
+      - name: ðŸŽ­ Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: 🔄 Copy PostgreSQL schema
-        run: cp prisma/alternatives/schema.postgresql.prisma prisma/schema.prisma
+      - name: ðŸ”„ Copy PostgreSQL schema
+        run: cp prisma-alternatives/schema.postgresql.prisma prisma/schema.prisma
 
-      - name: 🗄️ Generate Prisma Client
+      - name: ðŸ—„ï¸ Generate Prisma Client
         run: npx prisma generate
 
-      - name: 🏗️ Build
+      - name: ðŸ—ï¸ Build
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-hml-secret-key-at-least-32-chars-long!' }}
 
-      - name: 🧪 Run E2E Tests
+      - name: ðŸ§ª Run E2E Tests
         run: npx playwright test --config=playwright.e2e.config.ts
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL }}
@@ -240,7 +240,7 @@ jobs:
           SMOKE_TEST_ADMIN_EMAIL: ${{ secrets.SMOKE_TEST_ADMIN_EMAIL }}
           SMOKE_TEST_ADMIN_PASSWORD: ${{ secrets.SMOKE_TEST_ADMIN_PASSWORD }}
 
-      - name: 📊 Upload Test Report
+      - name: ðŸ“Š Upload Test Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -252,25 +252,25 @@ jobs:
   # JOB 4: Status Report
   # ============================================================================
   notify:
-    name: 📢 HML Status Report
+    name: ðŸ“¢ HML Status Report
     runs-on: ubuntu-latest
     needs: [build, migrate, e2e-tests]
     if: always()
 
     steps:
-      - name: 📢 Status Report
+      - name: ðŸ“¢ Status Report
         run: |
           echo "============================================"
-          echo "📋 DEPLOY HML REPORT"
+          echo "ðŸ“‹ DEPLOY HML REPORT"
           echo "============================================"
-          echo "🔨 Build: ${{ needs.build.result }}"
-          echo "🗃️ Migrate/Seed: ${{ needs.migrate.result || 'skipped' }}"
-          echo "🧪 E2E Tests: ${{ needs.e2e-tests.result || 'skipped' }}"
+          echo "ðŸ”¨ Build: ${{ needs.build.result }}"
+          echo "ðŸ—ƒï¸ Migrate/Seed: ${{ needs.migrate.result || 'skipped' }}"
+          echo "ðŸ§ª E2E Tests: ${{ needs.e2e-tests.result || 'skipped' }}"
           echo "============================================"
           if [ "${{ needs.build.result }}" = "success" ]; then
-            echo "✅ Build OK! Deploy automático pelo Vercel Git Integration."
-            echo "🌐 URL: ${{ secrets.HML_APP_URL }}"
+            echo "âœ… Build OK! Deploy automÃ¡tico pelo Vercel Git Integration."
+            echo "ðŸŒ URL: ${{ secrets.HML_APP_URL }}"
           else
-            echo "❌ Build falhou! Deploy bloqueado."
+            echo "âŒ Build falhou! Deploy bloqueado."
             exit 1
           fi

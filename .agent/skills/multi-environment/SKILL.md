@@ -284,5 +284,5 @@ npx prisma validate
 ## Referências
 
 - [AGENTS.md](../../../AGENTS.md) - Diretrizes globais para agentes
-- [copilot-instructions.md](../../copilot-instructions.md) - Instruções detalhadas
+- [copilot-instructions.md](../../../.github/copilot-instructions.md) - Instruções detalhadas
 - [query-helpers.ts](../../../src/lib/prisma/query-helpers.ts) - Helpers de compatibilidade

@@ -1,6 +1,6 @@
 ﻿---
 description: 'Agente especializado em testes E2E e testes de interface (UI) usando Playwright e Vitest.'
-tools: ["run_in_terminal", "read_file", "run_task", "runTests"]
+tools: ["execute", "read", "runTests"]
 ---
 
 # Agente de Testes E2E (Vitest & Playwright)
