@@ -10,6 +10,19 @@ Permitir que **múltiplos desenvolvedores** (humanos ou agentes AI) trabalhem **
 - ✅ Sua própria **porta de desenvolvimento** (9005, 9006, 9007, etc.)
 - ✅ Seus próprios **testes isolados**
 
+## 🧠 Preflight Obrigatório: Memória Compartilhada
+
+> **REGRA CRÍTICA:** Nenhuma sessão de chat pode iniciar ou continuar trabalho no BidExpert sem antes verificar a memória compartilhada e o contexto recente do repositório.
+
+Antes de qualquer implementação, correção, revisão ou retomada de task, o agente DEVE:
+1. Ler os registros dos **últimos 30 dias** em `/memories/repo/shared-memory-preflight.md`, `/memories/repo/active-agent-sessions.md`, `/memories/repo/recent-agent-changes.md` e `/memories/repo/windows-worktree-notes.md`.
+2. Conferir `.coordination/queue.yaml` e `.coordination/ownership-map.yaml` para identificar trabalho concorrente, ownership e risco de conflito. Quando houver dúvida sobre eventos recentes, consultar também `.coordination/master-events.ndjson`.
+3. Revisar a branch ativa, worktrees existentes e mudanças recentes relevantes para a área da task antes de assumir que o contexto atual está livre ou inédito.
+4. Registrar a sessão atual em `/memories/repo/active-agent-sessions.md` antes de começar a editar arquivos, informando data, agente, branch, worktree, status e escopo.
+5. Atualizar `/memories/repo/recent-agent-changes.md` sempre que houver mudança relevante de escopo, blocker, handoff ou encerramento de sessão.
+
+**Escopo obrigatório da regra:** Este preflight deve permanecer alinhado entre `.github/copilot-instructions.md`, `AGENTS.md`, `.agent/workflows/parallel-development.md`, `.claude/CLAUDE.md`, `.gemini/GEMINI.md`, `context/GEMINI.md` e `.github/ANTIGRAVITY-AUTOMATION.md`.
+
 ## 📋 Checklist Obrigatório no INÍCIO de Cada Task/Chat
 
 ### 1. Criar Worktree + Branch a partir da demo-stable

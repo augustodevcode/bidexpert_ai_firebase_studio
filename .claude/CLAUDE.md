@@ -4,6 +4,13 @@ Instructions here apply to this project and are shared with team members.
 
 ## Context
 
+### Shared Memory Preflight (Mandatory)
+
+- Before any new or resumed task, review the last 30 days in `/memories/repo/shared-memory-preflight.md`, `/memories/repo/active-agent-sessions.md`, `/memories/repo/recent-agent-changes.md`, and `/memories/repo/windows-worktree-notes.md`.
+- Check `.coordination/queue.yaml` and `.coordination/ownership-map.yaml` before assuming a work area is free; use `.coordination/master-events.ndjson` when recent activity is unclear.
+- Register the current session in `/memories/repo/active-agent-sessions.md` before editing files, then append blockers, scope changes, and handoff notes to `/memories/repo/recent-agent-changes.md`.
+- No Claude session may start or continue implementation without completing this preflight.
+
 ### Operational Guardrails Learned from Admin-Plus Sweep (2026-03)
 
 - Before editing any route after `ERR_CONNECTION_REFUSED`, confirm the server is still alive. Cascading route failures after many previous `200` responses usually mean process crash or OOM, not many simultaneous page bugs.

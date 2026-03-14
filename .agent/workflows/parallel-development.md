@@ -36,6 +36,21 @@ repositório (.git compartilhado)
 
 ## 📋 Checklist Obrigatório — INÍCIO de Cada Task
 
+### Passo 0.0 — Verificar Memória Compartilhada (OBRIGATÓRIO)
+
+Antes de criar worktree, subir ambiente ou editar qualquer arquivo, o agente DEVE revisar os **últimos 30 dias** de contexto compartilhado em:
+
+1. `/memories/repo/shared-memory-preflight.md`
+2. `/memories/repo/active-agent-sessions.md`
+3. `/memories/repo/recent-agent-changes.md`
+4. `/memories/repo/windows-worktree-notes.md`
+5. `.coordination/queue.yaml`
+6. `.coordination/ownership-map.yaml`
+
+Se houver handoff recente, conflito potencial ou dúvida sobre atividade paralela, consultar também `.coordination/master-events.ndjson` e o histórico recente da branch/área antes de continuar.
+
+> **REGRA:** Nenhuma sessão pode iniciar ou continuar sem concluir este passo e registrar sua própria atividade em `/memories/repo/active-agent-sessions.md`.
+
 ### Passo 0.1 — Protocolo Anti-Erros Reais
 
 Antes de diagnosticar bug de página, login ou teste, o agente DEVE executar este filtro:
