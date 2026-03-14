@@ -26,6 +26,18 @@ export interface SortParam {
   direction: SortDirection;
 }
 
+/**
+ * Broader input type accepted by useDataTable's defaultSort.
+ * Covers three common conventions used across admin-plus pages:
+ *  - { field, direction } — canonical SortParam
+ *  - { field, order }     — alias used by some pages
+ *  - { id, desc }         — TanStack Table ColumnSort convention
+ */
+export type SortInput =
+  | { field: string; direction: SortDirection }
+  | { field: string; order: SortDirection }
+  | { id: string; desc: boolean };
+
 export interface FilterParam {
   field: string;
   operator: 'eq' | 'contains' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'not';

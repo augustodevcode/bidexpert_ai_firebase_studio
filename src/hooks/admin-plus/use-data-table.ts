@@ -12,7 +12,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/lib/admin-plus/constants';
-import type { PaginatedResponse, ActionResult, SortParam } from '@/lib/admin-plus/types';
+import type { PaginatedResponse, ActionResult, SortInput } from '@/lib/admin-plus/types';
 
 /* ─── Tipos de input para fetch ─── */
 interface FetchParams {
@@ -38,7 +38,7 @@ interface UseDataTableOptions<T> {
    */
   fetchData?: (params: FetchParams) => Promise<PaginatedResponse<T>>;
   /** Sort padrão quando URL não especifica. */
-  defaultSort?: SortParam;
+  defaultSort?: SortInput;
   legacyRowIdKey?: keyof T;
 }
 
@@ -89,13 +89,26 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
     ? rawSize
     : DEFAULT_PAGE_SIZE;
   const search = searchParams.get('q') ?? '';
+  /* Normalize defaultSort from any accepted shape */
+  const ds = options.defaultSort;
+  const normalizedField = ds
+    ? ('field' in ds ? ds.field : 'id' in ds ? ds.id : undefined)
+    : undefined;
+  const normalizedDir: 'asc' | 'desc' = ds
+    ? ('direction' in ds
+        ? ds.direction
+        : 'order' in ds
+          ? ds.order
+          : 'desc' in ds
+            ? (ds.desc ? 'desc' : 'asc')
+            : 'asc')
+    : 'asc';
+
   const sortField =
-    searchParams.get('sortField') ?? options.defaultSort?.field ?? undefined;
+    searchParams.get('sortField') ?? normalizedField ?? undefined;
   const sortDir =
     (searchParams.get('sortDir') as 'asc' | 'desc' | null) ??
-    options.defaultSort?.direction ??
-    ((options.defaultSort as SortParam & { order?: 'asc' | 'desc' } | undefined)?.order) ??
-    'asc';
+    normalizedDir;
 
   useEffect(() => {
     const id = ++abortRef.current;
