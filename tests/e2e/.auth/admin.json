@@ -2,10 +2,10 @@
   "cookies": [
     {
       "name": "session",
-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiLCJtYW5hZ2VfYXVjdGlvbnMiLCJtYW5hZ2VfdXNlcnMiLCJtYW5hZ2VfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NzE2MzE4OTUsImV4cCI6MTc3MjIzNjY5NX0.KNrsB-cgEUyW8ZMmM-AZ50g6lkHGRkXmFGKQ42W9Yr0",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiLCJtYW5hZ2VfYXVjdGlvbnMiLCJtYW5hZ2VfdXNlcnMiLCJtYW5hZ2VfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NzM0OTI0NTgsImV4cCI6MTc3NDA5NzI1OH0.QeRHsAs-6sd0oYtraGNVLyENmhp-T7CIKADAXx0Csro",
       "domain": "demo.localhost",
       "path": "/",
-      "expires": 1772236695.433713,
+      "expires": 1774097258.063513,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
@@ -13,11 +13,19 @@
   ],
   "origins": [
     {
-      "origin": "http://demo.localhost:9005",
+      "origin": "http://demo.localhost:9011",
       "localStorage": [
         {
           "name": "bidexpert-widget-preferences",
           "value": "[\"totalRevenue\",\"activeAuctions\",\"lotsSoldCount\",\"newUsers\"]"
+        },
+        {
+          "name": "bidexpert:currency-rates-updated-at",
+          "value": "2026-03-14T12:47:48.380Z"
+        },
+        {
+          "name": "bidexpert:currency-rates",
+          "value": "{\"BRL\":1,\"USD\":0.19072,\"EUR\":0.16619}"
         }
       ]
     }
