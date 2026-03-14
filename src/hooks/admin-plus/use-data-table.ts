@@ -23,6 +23,25 @@ interface FetchParams {
   sortOrder?: 'asc' | 'desc';
 }
 
+type FetchResult<T> = PaginatedResponse<T> | ActionResult<PaginatedResponse<T>>;
+type CompatibleFetchHandler<T> = (input: any) => Promise<FetchResult<T>>;
+
+function isActionResult<T>(result: FetchResult<T>): result is ActionResult<PaginatedResponse<T>> {
+  return typeof result === 'object' && result !== null && 'success' in result;
+}
+
+function unwrapFetchResult<T>(result: FetchResult<T>): PaginatedResponse<T> {
+  if (!isActionResult(result)) {
+    return result;
+  }
+
+  if (result.success && result.data) {
+    return result.data;
+  }
+
+  throw new Error(result.error ?? 'Erro ao carregar dados');
+}
+
 /* ─── Opções do hook ─── */
 interface UseDataTableOptions<T> {
   /** Chave de query (apenas informativa / futura cache key). */
@@ -31,16 +50,16 @@ interface UseDataTableOptions<T> {
    * Server action direta que retorna ActionResult<PaginatedResponse<T>>.
    * O hook faz o unwrap automaticamente.
    */
-  fetchFn?: (input: FetchParams) => Promise<ActionResult<PaginatedResponse<T>>>;
+  fetchFn?: CompatibleFetchHandler<T>;
   /**
    * Função de fetch já desembrulhada — deve retornar PaginatedResponse diretamente.
    * Se ambas fetchFn e fetchData forem fornecidas, fetchData tem precedência.
    */
-  fetchData?: (params: FetchParams) => Promise<PaginatedResponse<T>>;
+  fetchData?: CompatibleFetchHandler<T>;
   /** Sort padrão quando URL não especifica. */
   defaultSort?: SortInput;
   /** Alias for fetchFn used by some pages. */
-  fetchAction?: (input: FetchParams) => Promise<ActionResult<PaginatedResponse<T>>>;
+  fetchAction?: CompatibleFetchHandler<T>;
   legacyRowIdKey?: keyof T;
 }
 
@@ -143,15 +162,10 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
         let result: PaginatedResponse<T>;
 
         if (options.fetchData) {
-          result = await options.fetchData(fetchParams);
+          result = unwrapFetchResult(await options.fetchData(fetchParams));
         } else if (options.fetchFn || options.fetchAction) {
           const fn = options.fetchFn ?? options.fetchAction!;
-          const res = await fn(fetchParams);
-          if (res?.success && res.data) {
-            result = res.data;
-          } else {
-            throw new Error(res?.error ?? 'Erro ao carregar dados');
-          }
+          result = unwrapFetchResult(await fn(fetchParams));
         } else {
           throw new Error('useDataTable: fetchFn or fetchData required');
         }
