@@ -39,6 +39,8 @@ interface UseDataTableOptions<T> {
   fetchData?: (params: FetchParams) => Promise<PaginatedResponse<T>>;
   /** Sort padrão quando URL não especifica. */
   defaultSort?: SortInput;
+  /** Alias for fetchFn used by some pages. */
+  fetchAction?: (input: FetchParams) => Promise<ActionResult<PaginatedResponse<T>>>;
   legacyRowIdKey?: keyof T;
 }
 
@@ -55,12 +57,26 @@ interface UseDataTableReturn<T> {
   page: number;
   pageSize: number;
   pageCount: number;
+  totalPages: number;
   pagination: { pageIndex: number; pageSize: number };
   sorting: { id: string; desc: boolean }[];
   search: string;
+  searchQuery: string;
   onPaginationChange: () => void;
   onSortingChange: () => void;
   onSearchChange: () => void;
+  setPage: (page: number) => void;
+  setPageSize: (size: number) => void;
+  setSort: (sort: { field: string; direction: 'asc' | 'desc' } | null) => void;
+  setSorting: (sorting: unknown) => void;
+  setSearch: (search: string) => void;
+  setSearchQuery: (search: string) => void;
+  setPagination: (pagination: unknown) => void;
+  /** Aliases used by some older pages */
+  searchValue: string;
+  tableData: PaginatedResponse<T> | null;
+  totalRows: number;
+  confirmDelete: () => void;
   formOpen: boolean;
   setFormOpen: (open: boolean) => void;
   editingRow: T | null;
@@ -128,8 +144,9 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
 
         if (options.fetchData) {
           result = await options.fetchData(fetchParams);
-        } else if (options.fetchFn) {
-          const res = await options.fetchFn(fetchParams);
+        } else if (options.fetchFn || options.fetchAction) {
+          const fn = options.fetchFn ?? options.fetchAction!;
+          const res = await fn(fetchParams);
           if (res?.success && res.data) {
             result = res.data;
           } else {
@@ -173,6 +190,11 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
     setDeletingRow(null);
   }, []);
 
+  const pCount = data?.totalPages ?? 0;
+
+  /* ── No-op setters — DataTablePlus manages state via useServerPagination ── */
+  const noop = useCallback(() => {}, []);
+
   return {
     data,
     isLoading,
@@ -180,13 +202,26 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
     total: data?.total ?? 0,
     page: data?.page ?? page,
     pageSize: data?.pageSize ?? pageSize,
-    pageCount: data?.totalPages ?? 0,
+    pageCount: pCount,
+    totalPages: pCount,
     pagination: { pageIndex: Math.max(0, (data?.page ?? page) - 1), pageSize: data?.pageSize ?? pageSize },
     sorting: sortField ? [{ id: sortField, desc: sortDir === 'desc' }] : [],
     search,
-    onPaginationChange: () => {},
-    onSortingChange: () => {},
-    onSearchChange: () => {},
+    searchQuery: search,
+    onPaginationChange: noop,
+    onSortingChange: noop,
+    onSearchChange: noop,
+    setPage: noop as unknown as (p: number) => void,
+    setPageSize: noop as unknown as (s: number) => void,
+    setSort: noop as unknown as (sort: { field: string; direction: 'asc' | 'desc' } | null) => void,
+    setSorting: noop as unknown as (s: unknown) => void,
+    setSearch: noop as unknown as (s: string) => void,
+    setSearchQuery: noop as unknown as (s: string) => void,
+    setPagination: noop as unknown as (p: unknown) => void,
+    searchValue: search,
+    tableData: data,
+    totalRows: data?.total ?? 0,
+    confirmDelete: handleConfirmDelete,
     formOpen,
     setFormOpen,
     editingRow,
