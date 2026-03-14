@@ -438,9 +438,10 @@ function HomeExperienceBeta({
                 <Link href={`/category/${category.slug}`} className="link-card-trending">
                   <div className="wrapper-trending-image" data-ai-id="homepage-beta-segment-image-wrapper">
                     {category.coverImageUrl && (
-                      <div 
+                      <img 
+                        src={category.coverImageUrl}
+                        alt=""
                         className="img-trending-bg"
-                        style={{ backgroundImage: `url(${category.coverImageUrl})` }}
                       />
                     )}
                     <div className="wrapper-trending-label">
