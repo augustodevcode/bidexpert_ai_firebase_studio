@@ -1,17 +1,14 @@
 // =============================================================================
-// PRISMA SCHEMA - MySQL (Desenvolvimento Local / DEV)
+// PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
 // =============================================================================
-// Este é o schema principal do projeto, usando MySQL para desenvolvimento local.
+// Este schema ├® uma c├│pia do schema.prisma principal, com provider alterado
+// para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
 // 
-// USO: Este schema é o arquivo de referência no repositório Git.
-//      Para deploy no Vercel (PostgreSQL), o CI/CD copia automaticamente
-//      o arquivo prisma/schema.postgresql.prisma sobre este arquivo antes do build.
-//
-// IMPORTANTE: Não commitar alterações de provider neste arquivo.
-//             Manter sempre com provider = "mysql" para o ambiente de desenvolvimento.
+// USO: Este schema ├® usado automaticamente pelo workflow de deploy para Vercel
+//      atrav├®s do script prepare-vercel-demo.ps1 ou GitHub Action
 //
 // NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
-//       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
+//       s├úo todos compat├¡veis entre MySQL e PostgreSQL no Prisma.
 // =============================================================================
 
 generator client {
@@ -19,7 +16,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -35,22 +32,21 @@ model Asset {
   sellerId                   BigInt?
   evaluationValue            Decimal?                @db.Decimal(15, 2)
   imageUrl                   String?
-  imageMediaId               BigInt?
   CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
+  imageMediaId               BigInt?
   galleryImageUrls           Json?
   mediaItemIds               Json?
   dataAiHint                 String?
   locationCity               String?
   locationState              String?
   address                    String?
-  addressLink                String?                 @db.VarChar(500)
   latitude                   Decimal?
   longitude                  Decimal?
   lotId                      BigInt?
   lotInfo                    String?
   judicialProcessNumber      String?
   createdAt                  DateTime                @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId                   BigInt
   plate                      String?
   make                       String?
@@ -242,7 +238,6 @@ model Auction {
 
   onlineUrl                String?                @db.VarChar(500)
   address                  String?
-  addressLink              String?                @db.VarChar(500)
   zipCode                  String?                @db.VarChar(10)
   latitude                 Decimal?               @db.Decimal(10, 8)
   longitude                Decimal?               @db.Decimal(11, 8)
@@ -264,7 +259,6 @@ model Auction {
   auctioneerId             BigInt?
   sellerId                 BigInt?
   imageMediaId             BigInt?
-  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   isRelisted               Boolean                @default(false)
   relistCount              Int                    @default(0)
   originalAuctionId        BigInt?                @unique
@@ -279,6 +273,7 @@ model Auction {
   supportPhone             String?                @db.VarChar(50)
   supportEmail             String?                @db.VarChar(255)
   supportWhatsApp          String?                @db.VarChar(50)
+  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   Auctioneer               Auctioneer?            @relation(fields: [auctioneerId], references: [id])
   LotCategory              LotCategory?           @relation(fields: [categoryId], references: [id])
   City                     City?                  @relation(fields: [cityId], references: [id])
@@ -356,7 +351,6 @@ model Auctioneer {
   supportWhatsApp    String?
   contactName        String?
   address            String?
-  addressLink        String?   @db.VarChar(500)
   city               String?
   state              String?
   zipCode            String?
@@ -396,7 +390,7 @@ model Bid {
   bidderDisplay   String?
   tenantId        BigInt
 
-  // V2 Monitor Pregão - Idempotency & Audit
+  // V2 Monitor Preg├úo - Idempotency & Audit
   idempotencyKey  String?    @db.VarChar(128)
   clientTimestamp  DateTime?
   ipAddress       String?    @db.VarChar(45)
@@ -425,7 +419,7 @@ model BiddingSettings {
   biddingInfoCheckIntervalSeconds Int?             @default(1)
   defaultStageDurationDays        Int?             @default(7)
   defaultDaysBetweenStages        Int?             @default(1)
-  // V2 Monitor Pregão
+  // V2 Monitor Preg├úo
   proxyBiddingEnabled             Boolean          @default(true)
   softCloseTriggerMinutes         Int              @default(3)
   PlatformSettings                PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
@@ -452,7 +446,6 @@ model ContactMessage {
   id        BigInt   @id @default(autoincrement())
   name      String
   email     String
-  phone     String?  @db.VarChar(30)
   subject   String?
   message   String   @db.Text
   isRead    Boolean  @default(false)
@@ -727,12 +720,11 @@ model Lot {
   latitude                 Decimal?
   longitude                Decimal?
   mapAddress               String?
-  addressLink              String?              @db.VarChar(500)
   tenantId                 BigInt
   depositGuaranteeAmount   Decimal?             @db.Decimal(15, 2)
   depositGuaranteeInfo     String?              @db.Text
   requiresDepositGuarantee Boolean?             @default(false)
-  // V2 Monitor Pregão
+  // V2 Monitor Preg├úo
   reservePrice             Decimal?             @db.Decimal(15, 2)
   saleMode                 LotSaleMode          @default(LEILAO)
   AssetsOnLots             AssetsOnLots[]
@@ -1052,7 +1044,6 @@ model PlatformSettings {
   logoMediaId                BigInt?
   themeColorsDark            Json?
   themeColorsLight           Json?
-  featureFlags               Json?
   BiddingSettings            BiddingSettings?
   IdMasks                    IdMasks?
   MapSettings                MapSettings?
@@ -1081,7 +1072,7 @@ model RealtimeSettings {
   lawyerSubscriptionPrice   Int?
   lawyerPerUsePrice         Int?
   lawyerRevenueSharePercent Decimal?         @db.Decimal(5, 2)
-  // V2 Monitor Pregão - Admin Toggles
+  // V2 Monitor Preg├úo - Admin Toggles
   communicationStrategy     CommunicationStrategy @default(WEBSOCKET)
   videoStrategy             VideoStrategy         @default(DISABLED)
   idempotencyStrategy        IdempotencyStrategy   @default(SERVER_HASH)
@@ -1163,7 +1154,6 @@ model Seller {
   phone            String?           @db.Text
   contactName      String?
   address          String?           @db.Text
-  addressLink      String?           @db.VarChar(500)
   city             String?
   state            String?
   zipCode          String?
@@ -1926,7 +1916,7 @@ model WonLot {
 }
 
 // =============================================================================
-// ENUMS - IdÃªnticos ao schema MySQL (compatÃ­veis entre ambos os bancos)
+// ENUMS - Id├¬nticos ao schema MySQL (compat├¡veis entre ambos os bancos)
 // =============================================================================
 
 enum UserDocument_status {
@@ -2290,7 +2280,7 @@ enum Asset_occupationStatus {
   SHARED_POSSESSION
 }
 
-// V2 Monitor Pregão - New Enums
+// V2 Monitor Preg├úo - New Enums
 enum BidOrigin {
   MANUAL
   AUTO_BID
@@ -2320,7 +2310,7 @@ enum LotSaleMode {
   LANCE_CONDICIONAL
 }
 
-// V2 Monitor Pregão - Idempotency Log
+// V2 Monitor Preg├úo - Idempotency Log
 model BidIdempotencyLog {
   id              BigInt   @id @default(autoincrement())
   idempotencyKey  String   @db.VarChar(128)
@@ -2347,25 +2337,3 @@ model AuditConfig {
 
   @@map("audit_configs")
 }
-
-// EMAIL LOG
-enum EmailStatus {
-  PENDING
-  SENT
-  FAILED
-}
-
-model EmailLog {
-  id               BigInt      @id @default(autoincrement())
-  recipient        String
-  subject          String
-  content          String      @db.Text
-  provider         String
-  status           EmailStatus @default(PENDING)
-  sentAt           DateTime?
-  errorMessage     String?     @db.Text
-  contactMessageId BigInt?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-}
-
