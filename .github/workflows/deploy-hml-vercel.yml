@@ -35,7 +35,7 @@ on:
         type: boolean
 
 env:
-  PRISMA_SCHEMA: prisma-alternatives/schema.postgresql.prisma
+  PRISMA_SCHEMA: prisma-deploy/schema.postgresql.prisma
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
@@ -61,7 +61,7 @@ jobs:
         run: npm ci
 
       - name: ðŸ”„ Copy PostgreSQL schema
-        run: cp prisma-alternatives/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: ðŸ—„ï¸ Generate Prisma Client
         run: npx prisma generate
@@ -95,6 +95,7 @@ jobs:
           POSTGRES_URL_NON_POOLING: ${{ secrets.HML_POSTGRES_URL_NON_POOLING || secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL }}
           DATABASE_URL: ${{ secrets.HML_POSTGRES_PRISMA_URL || secrets.HML_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-hml-secret-key-at-least-32-chars-long!' }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.HML_APP_URL }}
           NEXT_PUBLIC_DEFAULT_TENANT: hml
@@ -126,7 +127,7 @@ jobs:
         run: npm ci
 
       - name: ðŸ”„ Copy PostgreSQL schema
-        run: cp prisma-alternatives/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: ðŸ—„ï¸ Generate Prisma Client
         run: npx prisma generate
@@ -218,7 +219,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: ðŸ”„ Copy PostgreSQL schema
-        run: cp prisma-alternatives/schema.postgresql.prisma prisma/schema.prisma
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: ðŸ—„ï¸ Generate Prisma Client
         run: npx prisma generate
@@ -228,6 +229,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-hml-secret-key-at-least-32-chars-long!' }}
 
       - name: ðŸ§ª Run E2E Tests
@@ -235,6 +237,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-hml-secret-key-at-least-32-chars-long!' }}
           BASE_URL: ${{ secrets.HML_APP_URL }}
           SMOKE_TEST_ADMIN_EMAIL: ${{ secrets.SMOKE_TEST_ADMIN_EMAIL }}

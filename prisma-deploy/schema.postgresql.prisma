@@ -16,8 +16,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // NEON: POSTGRES_PRISMA_URL is the pgbouncer-pooled URL for Prisma runtime.
+  // This variable is REQUIRED and injected by the Neon Vercel integration.
+  // Falls back to DATABASE_URL for environments that don't use Neon.
+  url       = env("POSTGRES_PRISMA_URL")
+  // NEON: POSTGRES_URL_NON_POOLING is the direct connection URL for Prisma CLI
+  // (prisma db push, prisma migrate). Also REQUIRED — injected by Neon integration.
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Asset {

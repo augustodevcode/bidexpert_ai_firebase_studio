@@ -42,7 +42,7 @@ function isMySqlLikeUrl(url?: string): boolean {
 
 function validateDatabaseUrlProtocol(url?: string) {
   if (!url) {
-    throw new Error('[Prisma] DATABASE_URL não definida. Defina uma URL válida antes de iniciar a aplicação.');
+    throw new Error('[Prisma] Nenhuma URL de banco encontrada (POSTGRES_PRISMA_URL / DATABASE_URL). Defina uma URL válida antes de iniciar a aplicação.');
   }
 
   const hasValidProtocol = isPostgresLikeUrl(url) || isMySqlLikeUrl(url);
@@ -77,7 +77,9 @@ function validateDatabaseUrlProtocol(url?: string) {
  * Automaticamente usa Prisma Accelerate quando detectado pela DATABASE_URL.
  */
 function createPrismaClient(databaseUrl?: string) {
-  const effectiveUrl = databaseUrl || process.env.DATABASE_URL;
+  // POSTGRES_PRISMA_URL is injected by Neon Vercel Integration (pooled connection).
+  // DATABASE_URL is the legacy/generic fallback.
+  const effectiveUrl = databaseUrl || process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL;
   validateDatabaseUrlProtocol(effectiveUrl);
   const useAccelerate = isPrismaAccelerateUrl(effectiveUrl);
   
