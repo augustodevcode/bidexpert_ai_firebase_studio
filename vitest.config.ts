@@ -40,6 +40,7 @@ export default defineConfig({
       ['tests/unit/ui-helpers.test.ts', 'node'],
       ['tests/unit/audit/**', 'node'],
       ['tests/unit/seed-min-50.spec.ts', 'node'],
+      ['tests/unit/generate-report-template-flow.spec.ts', 'node'],
     ],
     globals: true,
     include: [
