@@ -13,7 +13,7 @@ function toRow(r: any): ParticipationHistoryRow {
   return {
     id: r.id.toString(),
     bidderId: r.bidderId?.toString() ?? '',
-    bidderName: r.BidderProfile?.User?.name ?? r.BidderProfile?.id?.toString() ?? '',
+    bidderName: r.BidderProfile?.User?.fullName ?? r.BidderProfile?.id?.toString() ?? '',
     lotId: r.lotId?.toString() ?? '',
     auctionId: r.auctionId?.toString() ?? '',
     title: r.title ?? '',
@@ -27,7 +27,7 @@ function toRow(r: any): ParticipationHistoryRow {
   };
 }
 
-const includeRelations = { BidderProfile: { include: { User: { select: { name: true } } } } };
+const includeRelations = { BidderProfile: { include: { User: { select: { fullName: true } } } } };
 
 /* ───── LIST ───── */
 export const listParticipationHistory = createAdminAction(async (ctx, params?: { page?: number; pageSize?: number; sortField?: string; sortDirection?: string; search?: string }) => {

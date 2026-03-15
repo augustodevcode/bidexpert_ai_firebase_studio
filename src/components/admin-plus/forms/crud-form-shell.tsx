@@ -19,7 +19,7 @@ import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 interface CrudFormShellProps<T extends FieldValues> {
   form: UseFormReturn<T>;
   onSubmit: (data: T) => Promise<void> | void;
-  onCancel: () => void;
+  onCancel?: () => void;
   isSubmitting?: boolean;
   submitLabel?: string;
   children: ReactNode;
@@ -37,7 +37,7 @@ export function CrudFormShell<T extends FieldValues>({
   className,
   'data-ai-id': dataAiId,
 }: CrudFormShellProps<T>) {
-  useUnsavedChanges(form.formState.isDirty);
+  useUnsavedChanges({ isDirty: form.formState.isDirty });
 
   return (
     <FormProvider {...form}>
@@ -52,16 +52,18 @@ export function CrudFormShell<T extends FieldValues>({
           className="sticky bottom-0 flex items-center justify-end gap-3 border-t bg-background py-4"
           data-ai-id="crud-form-actions"
         >
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            data-ai-id="crud-form-cancel"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Cancelar
-          </Button>
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              data-ai-id="crud-form-cancel"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Cancelar
+            </Button>
+          )}
           <Button
             type="submit"
             disabled={isSubmitting}

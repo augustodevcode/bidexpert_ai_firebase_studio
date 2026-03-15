@@ -46,15 +46,27 @@ export interface DataTablePlusProps<TData> {
   toolbarExtra?: React.ReactNode;
   /** Callback when user double-clicks a row (navigate to edit). */
   onRowDoubleClick?: (row: TData) => void;
-  /** Legacy props kept for compatibility with older admin-plus pages. */
+
+  /* ── Legacy / backward-compat props (old page pattern) ── */
   pageCount?: number;
   totalRecords?: number;
+  total?: number;
+  page?: number;
+  pageSize?: number;
   pagination?: unknown;
   onPaginationChange?: unknown;
+  onPageChange?: ((page: number) => void) | unknown;
+  onPageSizeChange?: ((size: number) => void) | unknown;
   sorting?: unknown;
   onSortingChange?: unknown;
+  onSortChange?: unknown;
   search?: string;
+  searchQuery?: string;
   onSearchChange?: unknown;
+  rowActions?: unknown;
+  getRowId?: ((row: TData) => string) | unknown;
+  totalPages?: number;
+
   /** data-ai-id for root container. */
   'data-ai-id'?: string;
 }

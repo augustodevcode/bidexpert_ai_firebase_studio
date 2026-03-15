@@ -28,11 +28,13 @@ interface CreateAdminActionOptions<TInput extends z.ZodTypeAny | undefined, TOut
   /** Alias legado para múltiplas permissões aceitas. */
   permissions?: string[];
   /** Handler que recebe input validado + contexto autenticado. */
-  handler: (...args: unknown[]) => Promise<TOutput>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: (...args: any[]) => Promise<TOutput>;
 }
 
-type LegacyAdminActionHandler<TOutput = unknown> = (
+type LegacyAdminActionHandler<TInput = unknown, TOutput = unknown> = (
   ctx: ActionContext,
+  input: TInput,
   ...args: unknown[]
 ) => Promise<TOutput>;
 
@@ -47,18 +49,18 @@ function getFunctionParams(source: string): string {
   return '';
 }
 
-function shouldUseEnvelope(handler: (...args: unknown[]) => Promise<unknown>) {
+function shouldUseEnvelope(handler: (...args: any[]) => Promise<unknown>) {
   const params = getFunctionParams(handler.toString());
   return params.startsWith('{');
 }
 
-function isCtxFirst(handler: (...args: unknown[]) => Promise<unknown>) {
+function isCtxFirst(handler: (...args: any[]) => Promise<unknown>) {
   const params = getFunctionParams(handler.toString());
   return params.startsWith('ctx') || params.startsWith('_ctx');
 }
 
 async function invokeOptionsHandler<TOutput>(
-  handler: (...args: unknown[]) => Promise<TOutput>,
+  handler: (...args: any[]) => Promise<TOutput>,
   input: unknown,
   ctx: ActionContext,
 ) {
@@ -78,11 +80,16 @@ async function invokeOptionsHandler<TOutput>(
 }
 
 export function createAdminAction<TInput = unknown, TOutput = unknown>(
-  handler: LegacyAdminActionHandler<TOutput>,
+  handler: LegacyAdminActionHandler<TInput, TOutput>,
 ): (...args: unknown[]) => Promise<ActionResult<TOutput>>;
 
 export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.ZodVoid, TOutput = unknown>(
   options: CreateAdminActionOptions<TInput, TOutput>,
+): (...args: unknown[]) => Promise<ActionResult<TOutput>>;
+
+export function createAdminAction<TInput extends z.ZodTypeAny, TOutput = unknown>(
+  schema: TInput,
+  handler: (input: z.infer<TInput>, ctx?: ActionContext) => Promise<TOutput>,
 ): (...args: unknown[]) => Promise<ActionResult<TOutput>>;
 
 /**
@@ -96,10 +103,25 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
  * 5. Retorna ActionResult<TOutput> padronizado
  */
 export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.ZodVoid, TOutput = unknown>(
-  optionsOrHandler: CreateAdminActionOptions<TInput, TOutput> | LegacyAdminActionHandler<TOutput>,
+  optionsOrHandler: CreateAdminActionOptions<TInput, TOutput> | LegacyAdminActionHandler<unknown, TOutput> | TInput,
+  twoArgHandler?: (input: unknown, ctx?: ActionContext) => Promise<TOutput>,
 ) {
   return async (...rawArgs: unknown[]): Promise<ActionResult<TOutput>> => {
     try {
+      let legacyHandler: LegacyAdminActionHandler<unknown, TOutput> | null = null;
+      let options: CreateAdminActionOptions<TInput, TOutput> | null = null;
+
+      if (twoArgHandler && optionsOrHandler instanceof z.ZodType) {
+        options = {
+          inputSchema: optionsOrHandler as TInput,
+          handler: ((input: unknown, ctx?: ActionContext) => twoArgHandler(input, ctx)) as (...args: any[]) => Promise<TOutput>,
+        };
+      } else if (typeof optionsOrHandler === 'function') {
+        legacyHandler = optionsOrHandler;
+      } else {
+        options = optionsOrHandler as CreateAdminActionOptions<TInput, TOutput>;
+      }
+
       // 1. Autenticação
       const session = await getSession();
       if (!session?.userId) {
@@ -136,7 +158,6 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
       }
 
       // 2. Verificação de permissão
-      const options = typeof optionsOrHandler === 'function' ? null : optionsOrHandler;
       const requiredPermissions = options?.permissions?.length
         ? options.permissions
         : options?.requiredPermission
@@ -176,9 +197,10 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
       }
 
       // 4. Executar handler
-      const data = typeof optionsOrHandler === 'function'
-        ? await optionsOrHandler(ctx, ...rawArgs)
-        : await invokeOptionsHandler(options.handler, validatedInput, ctx);
+      const [inputArg, ...restArgs] = rawArgs;
+      const data = legacyHandler
+        ? await legacyHandler(ctx, inputArg, ...restArgs)
+        : await invokeOptionsHandler(options!.handler, validatedInput, ctx);
 
       return { success: true, data };
     } catch (error) {

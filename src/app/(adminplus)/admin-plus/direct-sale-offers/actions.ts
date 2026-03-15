@@ -25,7 +25,7 @@ function toRow(r: any): DirectSaleOfferRow {
     expiresAt: r.expiresAt?.toISOString?.() ?? r.expiresAt ?? '',
     categoryName: r.LotCategory?.name ?? '—',
     categoryId: r.categoryId?.toString() ?? '',
-    sellerName: r.sellerName ?? r.Seller?.companyName ?? '—',
+    sellerName: r.sellerName ?? r.Seller?.name ?? '—',
     sellerId: r.sellerId?.toString() ?? '',
     views: r.views ?? 0,
     createdAt: r.createdAt?.toISOString?.() ?? r.createdAt,
@@ -44,7 +44,7 @@ export const listDirectSaleOffers = createAdminAction({
     }
     const orderBy = sortField ? { [sortField]: sortOrder || 'asc' } : { createdAt: 'desc' as const };
     const [data, total] = await Promise.all([
-      prisma.directSaleOffer.findMany({ where, orderBy, skip: (page - 1) * pageSize, take: pageSize, include: { LotCategory: { select: { name: true } }, Seller: { select: { companyName: true } } } }),
+      prisma.directSaleOffer.findMany({ where, orderBy, skip: (page - 1) * pageSize, take: pageSize, include: { LotCategory: { select: { name: true } }, Seller: { select: { name: true } } } }),
       prisma.directSaleOffer.count({ where }),
     ]);
     return sanitizeResponse({ data: data.map(toRow), total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
@@ -76,7 +76,7 @@ export const createDirectSaleOffer = createAdminAction({
         tenantId: ctx.tenantIdBigInt,
         updatedAt: new Date(),
       },
-      include: { LotCategory: { select: { name: true } }, Seller: { select: { companyName: true } } },
+      include: { LotCategory: { select: { name: true } }, Seller: { select: { name: true } } },
     });
     return sanitizeResponse(toRow(r));
   },
@@ -104,7 +104,7 @@ export const updateDirectSaleOffer = createAdminAction({
         sellerId: BigInt(parsed.sellerId),
         sellerName: parsed.sellerName || null,
       },
-      include: { LotCategory: { select: { name: true } }, Seller: { select: { companyName: true } } },
+      include: { LotCategory: { select: { name: true } }, Seller: { select: { name: true } } },
     });
     return sanitizeResponse(toRow(r));
   },

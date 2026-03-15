@@ -66,17 +66,17 @@ export default function EditDataSourcePage() {
 
   return (
     <div className="space-y-6" data-ai-id="data-source-edit-page">
-      <PageHeader heading="Editar Data Source" description="Altere os dados da fonte de dados." />
-      <CrudFormShell form={form} onSubmit={onSubmit} cancelHref={`${ADMIN_PLUS_BASE_PATH}/data-sources`} isEditing>
+      <PageHeader title="Editar Data Source" description="Altere os dados da fonte de dados." />
+      <CrudFormShell form={form} onSubmit={onSubmit} onCancel={() => router.push(`${ADMIN_PLUS_BASE_PATH}/data-sources`)}>
         <Field control={form.control} name="name" label="Nome" required>
-          {(field) => <Input {...field} placeholder="Ex: Leilões Judiciais" data-ai-id="datasource-name-input" />}
+          {({ field }) => <Input {...field} value={String(field.value ?? '')} placeholder="Ex: Leilões Judiciais" data-ai-id="datasource-name-input" />}
         </Field>
         <Field control={form.control} name="modelName" label="Model Name" required hint="Nome do modelo Prisma associado">
-          {(field) => <Input {...field} placeholder="Ex: Auction" data-ai-id="datasource-model-input" />}
+          {({ field }) => <Input {...field} value={String(field.value ?? '')} placeholder="Ex: Auction" data-ai-id="datasource-model-input" />}
         </Field>
         <Field control={form.control} name="fields" label="Fields (JSON)" required hint="Array ou objeto JSON com a definição dos campos">
-          {(field) => (
-            <Textarea {...field} rows={8} className="font-mono text-sm" placeholder='[{"name":"title","type":"string"}]' data-ai-id="datasource-fields-input" />
+          {({ field }) => (
+            <Textarea {...field} value={String(field.value ?? '')} rows={8} className="font-mono text-sm" placeholder='[{"name":"title","type":"string"}]' data-ai-id="datasource-fields-input" />
           )}
         </Field>
       </CrudFormShell>

@@ -15,14 +15,14 @@ function toRow(r: any): ItsmTicketRow {
     id: r.id.toString(),
     publicId: r.publicId,
     userId: r.userId.toString(),
-    userName: r.User_itsm_tickets_userIdToUser?.name ?? '-',
+    userName: r.User_itsm_tickets_userIdToUser?.fullName ?? '-',
     title: r.title,
     description: r.description,
     status: r.status,
     priority: r.priority,
     category: r.category,
     assignedToUserId: r.assignedToUserId?.toString() ?? '',
-    assignedToUserName: r.User_itsm_tickets_assignedToUserIdToUser?.name ?? '',
+    assignedToUserName: r.User_itsm_tickets_assignedToUserIdToUser?.fullName ?? '',
     browserInfo: r.browserInfo ?? '',
     screenSize: r.screenSize ?? '',
     pageUrl: r.pageUrl ?? '',
@@ -35,14 +35,14 @@ function toRow(r: any): ItsmTicketRow {
 }
 
 const include = {
-  User_itsm_tickets_userIdToUser: { select: { name: true } },
-  User_itsm_tickets_assignedToUserIdToUser: { select: { name: true } },
+  User_itsm_tickets_userIdToUser: { select: { fullName: true } },
+  User_itsm_tickets_assignedToUserIdToUser: { select: { fullName: true } },
 };
 
 /* ── list ── */
 export const listItsmTickets = createAdminAction(async (ctx, params: { page: number; pageSize: number; sortField?: string; sortDirection?: string; search?: string }) => {
   const where: any = { OR: [{ tenantId: ctx.tenantIdBigInt }, { tenantId: null }] };
-  if (params.search) { where.AND = [{ OR: [{ title: { contains: params.search } }, { publicId: { contains: params.search } }, { User_itsm_tickets_userIdToUser: { name: { contains: params.search } } }] }]; }
+  if (params.search) { where.AND = [{ OR: [{ title: { contains: params.search } }, { publicId: { contains: params.search } }, { User_itsm_tickets_userIdToUser: { fullName: { contains: params.search } } }] }]; }
   const orderBy = params.sortField ? { [params.sortField]: params.sortDirection || 'asc' } : { createdAt: 'desc' as const };
   const [data, total] = await Promise.all([
     prisma.iTSM_Ticket.findMany({ where, include, orderBy, skip: (params.page - 1) * params.pageSize, take: params.pageSize }),

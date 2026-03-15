@@ -14,7 +14,7 @@ import { useDataTable } from '@/hooks/admin-plus/use-data-table';
 import { columns } from './columns';
 import { VariableIncrementRuleForm } from './form';
 import type { VariableIncrementRuleRow } from './types';
-import type { VariableIncrementRuleFormData } from './schema';
+import type { VariableIncrementRuleFormValues } from './schema';
 import {
   listVariableIncrementRules,
   createVariableIncrementRule,
@@ -29,18 +29,23 @@ export default function VariableIncrementRulesPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchData = useCallback(
-    async (params: { page: number; pageSize: number; sortField?: string; sortOrder?: 'asc' | 'desc' }) => {
+    async (params: any) => {
       const res = await listVariableIncrementRules(params);
       if (!res.success) throw new Error(res.error);
-      return res.data!;
+      return res.data as unknown as {
+        data: VariableIncrementRuleRow[];
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
+      };
     },
     [],
   );
 
   const table = useDataTable<VariableIncrementRuleRow>({
-    columns,
     fetchData,
-    defaultPageSize: 25,
+    defaultSort: { field: 'from', direction: 'asc' },
   });
 
   /* --- Handlers --- */
@@ -54,7 +59,7 @@ export default function VariableIncrementRulesPage() {
     setDialogOpen(true);
   };
 
-  const handleSubmit = async (data: VariableIncrementRuleFormData) => {
+  const handleSubmit = async (data: VariableIncrementRuleFormValues) => {
     setSubmitting(true);
     try {
       const res = editingRow
@@ -100,11 +105,14 @@ export default function VariableIncrementRulesPage() {
       />
 
       <DataTablePlus
-        table={table.table}
         columns={columns}
-        loading={table.loading}
-        onEdit={handleEdit}
-        onDelete={(row) => setDeleteRow(row)}
+        data={table.data}
+        isLoading={table.isLoading}
+        onRowDoubleClick={handleEdit}
+        rowActions={(row: VariableIncrementRuleRow) => [
+          { label: 'Editar', onClick: () => handleEdit(row) },
+          { label: 'Excluir', onClick: () => setDeleteRow(row), variant: 'destructive' as const },
+        ]}
         pagination={table.pagination}
         data-ai-id="variable-increment-rules-data-table"
       />
@@ -123,7 +131,6 @@ export default function VariableIncrementRulesPage() {
         title="Excluir Regra de Incremento"
         description={`Deseja excluir a regra de R$ ${deleteRow?.from?.toLocaleString('pt-BR')} atÃ© ${deleteRow?.to != null ? 'R$ ' + deleteRow.to.toLocaleString('pt-BR') : 'âˆž'}?`}
         onConfirm={handleDelete}
-        loading={submitting}
       />
     </div>
   );

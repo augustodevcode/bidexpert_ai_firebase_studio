@@ -21,14 +21,14 @@ import { idMasksSchema, type IdMasksFormValues } from './schema';
 import { getIdMasksAction, updateIdMasksAction } from './actions';
 
 const MASK_FIELDS = [
-  { key: 'auctionIdMask' as const, label: 'LeilÃ£o', placeholder: 'LEI-{YYYY}-{SEQ:6}' },
-  { key: 'lotIdMask' as const, label: 'Lote', placeholder: 'LOT-{YYYY}-{SEQ:8}' },
-  { key: 'bidIdMask' as const, label: 'Lance', placeholder: 'BID-{SEQ:10}' },
-  { key: 'invoiceIdMask' as const, label: 'Fatura', placeholder: 'FAT-{YYYY}{MM}-{SEQ:6}' },
-  { key: 'userIdMask' as const, label: 'UsuÃ¡rio', placeholder: 'USR-{SEQ:6}' },
-  { key: 'processIdMask' as const, label: 'Processo', placeholder: 'PROC-{YYYY}-{SEQ:8}' },
-  { key: 'contractIdMask' as const, label: 'Contrato', placeholder: 'CTR-{YYYY}-{SEQ:6}' },
-  { key: 'receiptIdMask' as const, label: 'Recibo', placeholder: 'REC-{SEQ:8}' },
+  { key: 'auctionCodeMask' as const, label: 'LeilÃ£o', placeholder: 'LEI-{YYYY}-{SEQ:6}' },
+  { key: 'lotCodeMask' as const, label: 'Lote', placeholder: 'LOT-{YYYY}-{SEQ:8}' },
+  { key: 'sellerCodeMask' as const, label: 'Vendedor', placeholder: 'VEN-{SEQ:6}' },
+  { key: 'auctioneerCodeMask' as const, label: 'Leiloeiro', placeholder: 'LEL-{SEQ:6}' },
+  { key: 'userCodeMask' as const, label: 'UsuÃ¡rio', placeholder: 'USR-{SEQ:6}' },
+  { key: 'assetCodeMask' as const, label: 'Ativo', placeholder: 'AST-{YYYY}-{SEQ:8}' },
+  { key: 'categoryCodeMask' as const, label: 'Categoria', placeholder: 'CAT-{SEQ:4}' },
+  { key: 'subcategoryCodeMask' as const, label: 'Subcategoria', placeholder: 'SUB-{SEQ:4}' },
 ] as const;
 
 export default function IdMasksPage() {
@@ -38,14 +38,14 @@ export default function IdMasksPage() {
   const form = useForm<IdMasksFormValues>({
     resolver: zodResolver(idMasksSchema),
     defaultValues: {
-      auctionIdMask: null,
-      lotIdMask: null,
-      bidIdMask: null,
-      invoiceIdMask: null,
-      userIdMask: null,
-      processIdMask: null,
-      contractIdMask: null,
-      receiptIdMask: null,
+      auctionCodeMask: null,
+      lotCodeMask: null,
+      sellerCodeMask: null,
+      auctioneerCodeMask: null,
+      userCodeMask: null,
+      assetCodeMask: null,
+      categoryCodeMask: null,
+      subcategoryCodeMask: null,
     },
   });
 
@@ -55,14 +55,14 @@ export default function IdMasksPage() {
         const res = await getIdMasksAction({});
         if (res?.success && res.data) {
           form.reset({
-            auctionIdMask: res.data.auctionIdMask ?? null,
-            lotIdMask: res.data.lotIdMask ?? null,
-            bidIdMask: res.data.bidIdMask ?? null,
-            invoiceIdMask: res.data.invoiceIdMask ?? null,
-            userIdMask: res.data.userIdMask ?? null,
-            processIdMask: res.data.processIdMask ?? null,
-            contractIdMask: res.data.contractIdMask ?? null,
-            receiptIdMask: res.data.receiptIdMask ?? null,
+            auctionCodeMask: res.data.auctionCodeMask ?? null,
+            lotCodeMask: res.data.lotCodeMask ?? null,
+            sellerCodeMask: res.data.sellerCodeMask ?? null,
+            auctioneerCodeMask: res.data.auctioneerCodeMask ?? null,
+            userCodeMask: res.data.userCodeMask ?? null,
+            assetCodeMask: res.data.assetCodeMask ?? null,
+            categoryCodeMask: res.data.categoryCodeMask ?? null,
+            subcategoryCodeMask: res.data.subcategoryCodeMask ?? null,
           });
         }
       } catch {

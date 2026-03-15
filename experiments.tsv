@@ -1,0 +1,22 @@
+id	timestamp	description	status	errors_before	errors_after	delta	kept	notes
+1	2026-03-14T15:45	Fix safe-action.ts TInput threading	SUCCESS	2439	2136	-303	YES	TS18046: 321->61
+2	2026-03-14T16:10	SortInput union type for useDataTable	SUCCESS	2136	2114	-22	YES	TS2353: 91->69. Single file change in LegacyAdminActionHandler type.
+3	2026-03-14T17:30	DataTablePlus props + UseDataTableReturn methods + fetchAction alias	SUCCESS	2114	2022	-92	YES	TS2339: 519->466, TS2551: 108->81
+4	2026-03-14T19:00	Relax handler type unknown[]→any[] in CreateAdminActionOptions	SUCCESS	2022	1715	-307	YES	TS2769: 150->6, TS2322: 671->519. Added legacy compat props/methods.
+5	2026-03-14T19:25	Optional CrudFormShell cancel + createAdminAction(schema, handler) overload	SUCCESS	1715	1657	-58	YES	TS2741: 18->0, TS2554: 40->28. Kept helper cleanup to preserve local type safety.
+6	2026-03-14T19:40	PageHeader legacy prop compat + relaxed Input/Textarea refs	SUCCESS	1657	1578	-79	YES	Cleared legacy PageHeader prop mismatches and react-hook-form ref spread errors in shared controls.
+7	2026-03-14T19:50	Broaden useDataTable fetch handler compatibility	SUCCESS	1578	1568	-10	YES	Shared hook now accepts legacy param shapes and wrapped/raw paginated results.
+8	2026-03-14T20:05	Broad shared @/types alias restoration	FAILURE	1571	1596	25	NO	Increased downstream mismatches; discarded. Post-exp7 recount corrected the working baseline to 1571.
+9	2026-03-14T20:15	Preserve typed input in createAdminAction return signatures	FAILURE	1571	1661	90	NO	Fixed targeted unknown-parameter pages but broke too many legacy callers; discarded.
+10	2026-03-14T20:22	Narrow shared @/types alias restoration	FAILURE	1571	1600	29	NO	Even conservative aliases widened downstream incompatibilities; discarded.
+11	2026-03-14T20:35	Legacy DataTablePlus/loading compatibility shim	FAILURE	1571	1570	-1	NO	Tiny gain but introduced fresh shared-component diagnostics; discarded.
+12	2026-03-14T20:50	Update stale table props on counter-states and theme-settings pages	SUCCESS	1571	1564	-7	YES	Aligned two admin-plus pages with current DataTablePlus/useDataTable APIs.
+13	2026-03-14T21:00	Normalize variable-increment-rules page to current table/form contracts	SUCCESS	1564	1557	-7	YES	Removed stale hook/table props and cast the serialized list response at the page boundary.
+14	2026-03-14T21:10	Rewrite user-lot-max-bids page to explicit current CRUD flow	SUCCESS	1557	1554	-3	YES	Replaced the removed multi-action table hook API with explicit page state, actions, and confirmation dialog handling.
+15	2026-03-14T21:20	Normalize password-reset-tokens and user-documents pages	SUCCESS	1554	1539	-15	YES	Switched both pages to direct ActionResult handling and current DataTablePlus prop names.
+16	2026-03-14T21:30	Fix stale Prisma select field names in repeated admin-plus actions	SUCCESS	1539	1518	-21	YES	Updated repeated User.fullName and Seller.name selects plus dependent row mappings across five action files.
+17	2026-03-14T21:55	Fix repeated User.fullName mismatches across remaining admin-plus actions	SUCCESS	1518	1483	-35	YES	Updated ten action files to use User.fullName, removed local residual regressions in lot-questions and user-documents, and cleared the targeted cluster from the full-project report.
+18	2026-03-14T22:05	Align id-masks page and schema with Prisma *CodeMask fields	SUCCESS	1483	1475	-8	YES	Replaced stale *IdMask form keys with the actual *CodeMask fields from the IdMasks model and cleared the entire id-masks hotspot.
+19	2026-03-14T22:10	Fix users action alias ordering	SUCCESS	1475	1467	-8	YES	Moved get/create/update/delete alias exports below their action declarations to eliminate the entire users/actions.ts use-before-declaration cluster.
+20	2026-03-14T22:20	Modernize data-sources new and edit pages to current form contracts	SUCCESS	1467	1457	-10	YES	Replaced legacy PageHeader and CrudFormShell props and stopped spreading compat field wrappers directly into Input/Textarea on both data-sources pages.
+21	2026-03-14T22:25	Modernize role new and edit pages to current form contracts	SUCCESS	1457	1447	-10	YES	Replaced legacy PageHeader and CrudFormShell props and stopped spreading compat field wrappers directly into Input/Textarea on both role pages.

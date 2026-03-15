@@ -12,7 +12,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/lib/admin-plus/constants';
-import type { PaginatedResponse, ActionResult, SortParam } from '@/lib/admin-plus/types';
+import type { PaginatedResponse, ActionResult, SortInput } from '@/lib/admin-plus/types';
 
 /* ─── Tipos de input para fetch ─── */
 interface FetchParams {
@@ -23,6 +23,25 @@ interface FetchParams {
   sortOrder?: 'asc' | 'desc';
 }
 
+type FetchResult<T> = PaginatedResponse<T> | ActionResult<PaginatedResponse<T>>;
+type CompatibleFetchHandler<T> = (input: any) => Promise<FetchResult<T>>;
+
+function isActionResult<T>(result: FetchResult<T>): result is ActionResult<PaginatedResponse<T>> {
+  return typeof result === 'object' && result !== null && 'success' in result;
+}
+
+function unwrapFetchResult<T>(result: FetchResult<T>): PaginatedResponse<T> {
+  if (!isActionResult(result)) {
+    return result;
+  }
+
+  if (result.success && result.data) {
+    return result.data;
+  }
+
+  throw new Error(result.error ?? 'Erro ao carregar dados');
+}
+
 /* ─── Opções do hook ─── */
 interface UseDataTableOptions<T> {
   /** Chave de query (apenas informativa / futura cache key). */
@@ -31,14 +50,16 @@ interface UseDataTableOptions<T> {
    * Server action direta que retorna ActionResult<PaginatedResponse<T>>.
    * O hook faz o unwrap automaticamente.
    */
-  fetchFn?: (input: FetchParams) => Promise<ActionResult<PaginatedResponse<T>>>;
+  fetchFn?: CompatibleFetchHandler<T>;
   /**
    * Função de fetch já desembrulhada — deve retornar PaginatedResponse diretamente.
    * Se ambas fetchFn e fetchData forem fornecidas, fetchData tem precedência.
    */
-  fetchData?: (params: FetchParams) => Promise<PaginatedResponse<T>>;
+  fetchData?: CompatibleFetchHandler<T>;
   /** Sort padrão quando URL não especifica. */
-  defaultSort?: SortParam;
+  defaultSort?: SortInput;
+  /** Alias for fetchFn used by some pages. */
+  fetchAction?: CompatibleFetchHandler<T>;
   legacyRowIdKey?: keyof T;
 }
 
@@ -55,12 +76,26 @@ interface UseDataTableReturn<T> {
   page: number;
   pageSize: number;
   pageCount: number;
+  totalPages: number;
   pagination: { pageIndex: number; pageSize: number };
   sorting: { id: string; desc: boolean }[];
   search: string;
+  searchQuery: string;
   onPaginationChange: () => void;
   onSortingChange: () => void;
   onSearchChange: () => void;
+  setPage: (page: number) => void;
+  setPageSize: (size: number) => void;
+  setSort: (sort: { field: string; direction: 'asc' | 'desc' } | null) => void;
+  setSorting: (sorting: unknown) => void;
+  setSearch: (search: string) => void;
+  setSearchQuery: (search: string) => void;
+  setPagination: (pagination: unknown) => void;
+  /** Aliases used by some older pages */
+  searchValue: string;
+  tableData: PaginatedResponse<T> | null;
+  totalRows: number;
+  confirmDelete: () => void;
   formOpen: boolean;
   setFormOpen: (open: boolean) => void;
   editingRow: T | null;
@@ -89,13 +124,26 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
     ? rawSize
     : DEFAULT_PAGE_SIZE;
   const search = searchParams.get('q') ?? '';
+  /* Normalize defaultSort from any accepted shape */
+  const ds = options.defaultSort;
+  const normalizedField = ds
+    ? ('field' in ds ? ds.field : 'id' in ds ? ds.id : undefined)
+    : undefined;
+  const normalizedDir: 'asc' | 'desc' = ds
+    ? ('direction' in ds
+        ? ds.direction
+        : 'order' in ds
+          ? ds.order
+          : 'desc' in ds
+            ? (ds.desc ? 'desc' : 'asc')
+            : 'asc')
+    : 'asc';
+
   const sortField =
-    searchParams.get('sortField') ?? options.defaultSort?.field ?? undefined;
+    searchParams.get('sortField') ?? normalizedField ?? undefined;
   const sortDir =
     (searchParams.get('sortDir') as 'asc' | 'desc' | null) ??
-    options.defaultSort?.direction ??
-    ((options.defaultSort as SortParam & { order?: 'asc' | 'desc' } | undefined)?.order) ??
-    'asc';
+    normalizedDir;
 
   useEffect(() => {
     const id = ++abortRef.current;
@@ -114,14 +162,10 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
         let result: PaginatedResponse<T>;
 
         if (options.fetchData) {
-          result = await options.fetchData(fetchParams);
-        } else if (options.fetchFn) {
-          const res = await options.fetchFn(fetchParams);
-          if (res?.success && res.data) {
-            result = res.data;
-          } else {
-            throw new Error(res?.error ?? 'Erro ao carregar dados');
-          }
+          result = unwrapFetchResult(await options.fetchData(fetchParams));
+        } else if (options.fetchFn || options.fetchAction) {
+          const fn = options.fetchFn ?? options.fetchAction!;
+          result = unwrapFetchResult(await fn(fetchParams));
         } else {
           throw new Error('useDataTable: fetchFn or fetchData required');
         }
@@ -160,6 +204,11 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
     setDeletingRow(null);
   }, []);
 
+  const pCount = data?.totalPages ?? 0;
+
+  /* ── No-op setters — DataTablePlus manages state via useServerPagination ── */
+  const noop = useCallback(() => {}, []);
+
   return {
     data,
     isLoading,
@@ -167,13 +216,26 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): UseDataTableRe
     total: data?.total ?? 0,
     page: data?.page ?? page,
     pageSize: data?.pageSize ?? pageSize,
-    pageCount: data?.totalPages ?? 0,
+    pageCount: pCount,
+    totalPages: pCount,
     pagination: { pageIndex: Math.max(0, (data?.page ?? page) - 1), pageSize: data?.pageSize ?? pageSize },
     sorting: sortField ? [{ id: sortField, desc: sortDir === 'desc' }] : [],
     search,
-    onPaginationChange: () => {},
-    onSortingChange: () => {},
-    onSearchChange: () => {},
+    searchQuery: search,
+    onPaginationChange: noop,
+    onSortingChange: noop,
+    onSearchChange: noop,
+    setPage: noop as unknown as (p: number) => void,
+    setPageSize: noop as unknown as (s: number) => void,
+    setSort: noop as unknown as (sort: { field: string; direction: 'asc' | 'desc' } | null) => void,
+    setSorting: noop as unknown as (s: unknown) => void,
+    setSearch: noop as unknown as (s: string) => void,
+    setSearchQuery: noop as unknown as (s: string) => void,
+    setPagination: noop as unknown as (p: unknown) => void,
+    searchValue: search,
+    tableData: data,
+    totalRows: data?.total ?? 0,
+    confirmDelete: handleConfirmDelete,
     formOpen,
     setFormOpen,
     editingRow,

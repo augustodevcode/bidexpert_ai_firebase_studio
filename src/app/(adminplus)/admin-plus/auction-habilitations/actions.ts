@@ -11,7 +11,7 @@ import type { PaginatedResponse } from '@/lib/admin-plus/types';
 import type { AuctionHabilitationRow } from './types';
 
 const FK_INCLUDE = {
-  User: { select: { name: true } },
+  User: { select: { fullName: true } },
   Auction: { select: { title: true } },
 };
 
@@ -20,7 +20,7 @@ function toRow(r: Record<string, unknown>): AuctionHabilitationRow {
   const auction = (r.Auction as Record<string, unknown>) ?? {};
   return {
     userId: String(r.userId),
-    userName: user.name ? String(user.name) : '',
+    userName: user.fullName ? String(user.fullName) : '',
     auctionId: String(r.auctionId),
     auctionTitle: auction.title ? String(auction.title) : '',
     habilitatedAt: r.habilitatedAt ? new Date(r.habilitatedAt as string).toISOString() : new Date().toISOString(),
@@ -39,7 +39,7 @@ export const listAuctionHabilitations = createAdminAction<
   const where: Record<string, unknown> = { tenantId: ctx.tenantIdBigInt };
   if (search) {
     where.OR = [
-      { User: { name: { contains: search } } },
+      { User: { fullName: { contains: search } } },
       { Auction: { title: { contains: search } } },
     ];
   }

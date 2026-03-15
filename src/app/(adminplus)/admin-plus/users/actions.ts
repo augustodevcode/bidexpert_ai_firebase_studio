@@ -37,10 +37,6 @@ export const listUsersAction = createAdminAction({
 });
 
 export const listUsers = listUsersAction;
-export const getUserById = getUserByIdAction;
-export const createUser = createUserAction;
-export const updateUser = updateUserAction;
-export const deleteUser = deleteUserAction;
 
 export const getUserByIdAction = createAdminAction({
   inputSchema: z.object({ id: z.string() }),
@@ -95,3 +91,8 @@ export const deleteUserAction = createAdminAction({
     return await userService.deleteUser(input.id);
   },
 });
+
+export const getUserById = getUserByIdAction;
+export const createUser = createUserAction;
+export const updateUser = updateUserAction;
+export const deleteUser = deleteUserAction;

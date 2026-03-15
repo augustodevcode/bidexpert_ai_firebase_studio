@@ -26,11 +26,7 @@ export default function UserDocumentsPage() {
   const [deleteRow, setDeleteRow] = useState<UserDocumentRow | null>(null);
 
   const table = useDataTable<UserDocumentRow>({
-    fetchFn: async ({ page, pageSize, search }) => {
-      const res = await listUserDocuments({ page, pageSize, search });
-      if (res?.data && 'data' in res.data) return res.data;
-      throw new Error(res?.data?.error ?? 'Erro ao carregar documentos');
-    },
+    fetchFn: listUserDocuments,
   });
 
   const handleSubmit = useCallback(
@@ -39,13 +35,13 @@ export default function UserDocumentsPage() {
         ? updateUserDocument({ ...values, id: editRow.id } as Parameters<typeof updateUserDocument>[0])
         : createUserDocument(values as Parameters<typeof createUserDocument>[0]);
       const res = await action;
-      if (res?.data?.success) {
+      if (res?.success) {
         toast.success(editRow ? 'Documento atualizado' : 'Documento criado');
         setFormOpen(false);
         setEditRow(null);
         table.refresh();
       } else {
-        toast.error(res?.data?.error ?? 'Erro ao salvar');
+        toast.error(res?.error ?? 'Erro ao salvar');
       }
     },
     [editRow, table],
@@ -54,12 +50,12 @@ export default function UserDocumentsPage() {
   const handleDelete = useCallback(async () => {
     if (!deleteRow) return;
     const res = await deleteUserDocument({ id: deleteRow.id });
-    if (res?.data?.success) {
+    if (res?.success) {
       toast.success('Documento excluÃ­do');
       setDeleteRow(null);
       table.refresh();
     } else {
-      toast.error(res?.data?.error ?? 'Erro ao excluir');
+      toast.error(res?.error ?? 'Erro ao excluir');
     }
   }, [deleteRow, table]);
 
@@ -76,15 +72,18 @@ export default function UserDocumentsPage() {
       <DataTablePlus
         columns={columns}
         data={table.data}
-        totalItems={table.total}
+        total={table.total}
         page={table.page}
         pageSize={table.pageSize}
         onPageChange={table.setPage}
         onPageSizeChange={table.setPageSize}
-        onSearch={table.setSearch}
+        onSearchChange={table.setSearch}
         isLoading={table.isLoading}
-        onEdit={(row) => { setEditRow(row); setFormOpen(true); }}
-        onDelete={(row) => setDeleteRow(row)}
+        onRowDoubleClick={(row) => { setEditRow(row); setFormOpen(true); }}
+        rowActions={(row: UserDocumentRow) => [
+          { label: 'Editar', onClick: () => { setEditRow(row); setFormOpen(true); } },
+          { label: 'Excluir', onClick: () => setDeleteRow(row), variant: 'destructive' as const },
+        ]}
         data-ai-id="ud-data-table"
       />
 
