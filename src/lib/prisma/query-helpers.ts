@@ -13,10 +13,10 @@
  */
 
 /**
- * Detecta o tipo de banco de dados a partir da DATABASE_URL
+ * Detecta o tipo de banco de dados a partir da DATABASE_URL ou POSTGRES_PRISMA_URL
  */
 export function getDatabaseType(): 'mysql' | 'postgresql' | 'unknown' {
-  const dbUrl = process.env.DATABASE_URL || '';
+  const dbUrl = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL || '';
   
   if (dbUrl.includes('mysql://')) {
     return 'mysql';
@@ -145,7 +145,7 @@ export function insensitiveEquals(value: string) {
  */
 export function logDatabaseType(): void {
   const dbType = getDatabaseType();
-  const dbUrl = process.env.DATABASE_URL || '';
+  const dbUrl = process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL || '';
   
   // Oculta a senha na URL para log seguro
   const safeUrl = dbUrl.replace(/:([^:@]+)@/, ':****@');
