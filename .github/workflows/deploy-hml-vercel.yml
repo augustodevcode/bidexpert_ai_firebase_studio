@@ -95,7 +95,7 @@ jobs:
           POSTGRES_URL_NON_POOLING: ${{ secrets.HML_POSTGRES_URL_NON_POOLING || secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL }}
           DATABASE_URL: ${{ secrets.HML_POSTGRES_PRISMA_URL || secrets.HML_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
-          AUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.HML_AUTH_SECRET || secrets.HML_NEXTAUTH_SECRET }}  # NextAuth v5 canonical name; falls back to HML_NEXTAUTH_SECRET if not set separately
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-hml-secret-key-at-least-32-chars-long!' }}
           NEXT_PUBLIC_APP_URL: ${{ secrets.HML_APP_URL }}
           NEXT_PUBLIC_DEFAULT_TENANT: hml
@@ -229,7 +229,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
-          AUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.HML_AUTH_SECRET || secrets.HML_NEXTAUTH_SECRET }}  # NextAuth v5 canonical name; falls back to HML_NEXTAUTH_SECRET if not set separately
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-hml-secret-key-at-least-32-chars-long!' }}
 
       - name: ðŸ§ª Run E2E Tests
@@ -237,7 +237,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
-          AUTH_SECRET: ${{ secrets.HML_NEXTAUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.HML_AUTH_SECRET || secrets.HML_NEXTAUTH_SECRET }}  # NextAuth v5 canonical name; falls back to HML_NEXTAUTH_SECRET if not set separately
           SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'ci-hml-secret-key-at-least-32-chars-long!' }}
           BASE_URL: ${{ secrets.HML_APP_URL }}
           SMOKE_TEST_ADMIN_EMAIL: ${{ secrets.SMOKE_TEST_ADMIN_EMAIL }}
