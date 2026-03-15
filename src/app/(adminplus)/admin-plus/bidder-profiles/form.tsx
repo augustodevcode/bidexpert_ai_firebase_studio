@@ -12,6 +12,7 @@ import { Field } from '@/components/admin-plus/forms/field';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { bidderProfileSchema, type BidderProfileFormValues } from './schema';
 import { createBidderProfile, updateBidderProfile } from './actions';
 import { listUsers } from '../users/actions';
@@ -111,15 +112,12 @@ export function BidderProfileForm({ open, onOpenChange, editItem, onSuccess }: P
   ];
 
   return (
-    <CrudFormShell
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEdit ? 'Editar Perfil de Arrematante' : 'Novo Perfil de Arrematante'}
-      form={form}
-      onSubmit={onSubmit}
-      className="max-w-xl"
-      data-ai-id="bidder-profile-form-dialog"
-    >
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-xl overflow-y-auto" data-ai-id="bidder-profile-form-dialog">
+        <SheetHeader>
+          <SheetTitle>{isEdit ? 'Editar Perfil de Arrematante' : 'Novo Perfil de Arrematante'}</SheetTitle>
+        </SheetHeader>
+        <CrudFormShell form={form} onSubmit={onSubmit}>
       <div className="space-y-6" data-ai-id="bidder-profile-form-content">
         {/* Usuário */}
         <Field label="Usuário" name="userId" form={form}>
@@ -207,6 +205,8 @@ export function BidderProfileForm({ open, onOpenChange, editItem, onSuccess }: P
           </Field>
         </div>
       </div>
-    </CrudFormShell>
+        </CrudFormShell>
+      </SheetContent>
+    </Sheet>
   );
 }

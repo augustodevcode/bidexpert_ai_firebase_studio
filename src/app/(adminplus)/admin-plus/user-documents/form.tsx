@@ -13,6 +13,7 @@ import { Field } from '@/components/admin-plus/forms/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { userDocumentSchema } from './schema';
 import { listUsersAction } from '../users/actions';
 import { listDocumentTypesAction } from '../document-types/actions';
@@ -92,14 +93,12 @@ export function UserDocumentForm({ open, onOpenChange, onSubmit, defaultValues }
   ];
 
   return (
-    <CrudFormShell
-      open={open}
-      onOpenChange={onOpenChange}
-      form={form}
-      onSubmit={onSubmit}
-      title={isEdit ? 'Editar Documento' : 'Novo Documento'}
-      data-ai-id="user-document-form"
-    >
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg overflow-y-auto" data-ai-id="user-document-form">
+        <SheetHeader>
+          <SheetTitle>{isEdit ? 'Editar Documento' : 'Novo Documento'}</SheetTitle>
+        </SheetHeader>
+        <CrudFormShell form={form} onSubmit={onSubmit}>
       {/* User */}
       <div className="space-y-2" data-ai-id="ud-field-user">
         <Label>Usuário *</Label>
@@ -156,6 +155,8 @@ export function UserDocumentForm({ open, onOpenChange, onSubmit, defaultValues }
       </div>
 
       <Field label="Motivo da Rejeição" name="rejectionReason" form={form} data-ai-id="ud-field-rejection" />
-    </CrudFormShell>
+        </CrudFormShell>
+      </SheetContent>
+    </Sheet>
   );
 }

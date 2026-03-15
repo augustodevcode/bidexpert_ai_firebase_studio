@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { subcategorySchema } from './schema';
 import { listLotCategories } from '../lot-categories/actions';
 import type { SubcategoryRow } from './types';
@@ -88,14 +89,12 @@ export function SubcategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
   }, [defaultValues, open, form]);
 
   return (
-    <CrudFormShell
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEdit ? 'Editar Subcategoria' : 'Nova Subcategoria'}
-      form={form}
-      onSubmit={onSubmit}
-      data-ai-id="subcategory-form"
-    >
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg overflow-y-auto" data-ai-id="subcategory-form">
+        <SheetHeader>
+          <SheetTitle>{isEdit ? 'Editar Subcategoria' : 'Nova Subcategoria'}</SheetTitle>
+        </SheetHeader>
+        <CrudFormShell form={form} onSubmit={onSubmit}>
       {/* Dados Básicos */}
       <Field name="name" label="Nome" error={form.formState.errors.name?.message}>
         <input
@@ -176,6 +175,8 @@ export function SubcategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
         />
         <Label htmlFor="subcategory-is-global">Subcategoria global (visível para todos os tenants)</Label>
       </div>
-    </CrudFormShell>
+        </CrudFormShell>
+      </SheetContent>
+    </Sheet>
   );
 }
