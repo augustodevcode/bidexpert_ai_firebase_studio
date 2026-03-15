@@ -11,6 +11,7 @@ import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
 import { Field } from '@/components/admin-plus/forms/field';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { auctioneerSchema, type AuctioneerFormValues } from './schema';
 import { createAuctioneer, updateAuctioneer } from './actions';
 import type { AuctioneerRow } from './types';
@@ -91,16 +92,13 @@ export function AuctioneerForm({ open, onOpenChange, editItem, onSuccess }: Prop
   };
 
   return (
-    <CrudFormShell
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEdit ? 'Editar Leiloeiro' : 'Novo Leiloeiro'}
-      form={form}
-      onSubmit={onSubmit}
-      className="max-w-2xl"
-      data-ai-id="auctioneer-form-dialog"
-    >
-      <div className="max-h-[85vh] overflow-y-auto space-y-6 pr-2" data-ai-id="auctioneer-form-content">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-2xl overflow-y-auto" data-ai-id="auctioneer-form-dialog">
+        <SheetHeader>
+          <SheetTitle>{isEdit ? 'Editar Leiloeiro' : 'Novo Leiloeiro'}</SheetTitle>
+        </SheetHeader>
+        <CrudFormShell form={form} onSubmit={onSubmit}>
+      <div className="space-y-6" data-ai-id="auctioneer-form-content">
         {/* Identificação */}
         <div>
           <h4 className="text-sm font-semibold mb-3">Identificação</h4>
@@ -169,6 +167,8 @@ export function AuctioneerForm({ open, onOpenChange, editItem, onSuccess }: Prop
           </div>
         </div>
       </div>
-    </CrudFormShell>
+        </CrudFormShell>
+      </SheetContent>
+    </Sheet>
   );
 }

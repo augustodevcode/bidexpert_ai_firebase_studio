@@ -13,6 +13,7 @@ import { Field } from '@/components/admin-plus/forms/field';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { lotCategorySchema } from './schema';
 import type { LotCategoryRow } from './types';
 
@@ -63,14 +64,12 @@ export function LotCategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
   }, [open, defaultValues, form]);
 
   return (
-    <CrudFormShell
-      title={isEdit ? 'Editar Categoria' : 'Nova Categoria'}
-      open={open}
-      onOpenChange={onOpenChange}
-      form={form}
-      onSubmit={onSubmit}
-      data-ai-id="lot-category-form"
-    >
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg overflow-y-auto" data-ai-id="lot-category-form">
+        <SheetHeader>
+          <SheetTitle>{isEdit ? 'Editar Categoria' : 'Nova Categoria'}</SheetTitle>
+        </SheetHeader>
+        <CrudFormShell form={form} onSubmit={onSubmit}>
       {/* ── Dados Básicos ── */}
       <Field label="Nome" name="name" register={form.register} error={form.formState.errors.name} required data-ai-id="lot-category-field-name" />
       <Field label="Slug" name="slug" register={form.register} error={form.formState.errors.slug} required data-ai-id="lot-category-field-slug" />
@@ -102,6 +101,8 @@ export function LotCategoryForm({ open, onOpenChange, onSubmit, defaultValues }:
           onCheckedChange={(v) => form.setValue('isGlobal', v)}
         />
       </div>
-    </CrudFormShell>
+        </CrudFormShell>
+      </SheetContent>
+    </Sheet>
   );
 }
