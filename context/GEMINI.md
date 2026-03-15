@@ -40,6 +40,18 @@ Eu sou programado para seguir estritamente as diretrizes definidas no arquivo `R
 
 **Regra:** Todo arquivo de código-fonte (`.ts`, `.tsx`) **deve** começar com um comentário em bloco (docblock) que explica de forma clara e concisa o propósito do arquivo.
 
+## 6.1 Preflight Obrigatório de Memória Compartilhada
+
+Antes de iniciar ou continuar qualquer implementação, alteração, correção ou investigação, agentes Gemini DEVEM revisar os **últimos 30 dias** de contexto compartilhado em:
+1. `/memories/repo/shared-memory-preflight.md`
+2. `/memories/repo/active-agent-sessions.md`
+3. `/memories/repo/recent-agent-changes.md`
+4. `/memories/repo/windows-worktree-notes.md`
+5. `.coordination/queue.yaml`
+6. `.coordination/ownership-map.yaml`
+
+Se houver handoff, atividade paralela ou conflito potencial, consultar também `.coordination/master-events.ndjson` e o histórico recente da branch/área. Antes de editar arquivos, o agente Gemini DEVE registrar sua sessão atual em `/memories/repo/active-agent-sessions.md`.
+
 ## 7. Estratégia de Testes e Segurança (MANDATÓRIO)
 
 A estratégia de testes segue o **Guia de Qualidade & Segurança de Código** (`context/QUALITY_SECURITY_WORKFLOW.md`).

@@ -5,6 +5,20 @@
 Todos os agentes e modelos que operam neste workspace DEVEM seguir obrigatoriamente as instruções contidas no arquivo mestre:
 `.github/copilot-instructions.md`
 
+## 🧠 Preflight de Memória Compartilhada (OBRIGATÓRIO)
+
+Antes de iniciar ou retomar qualquer task, todo agente DEVE executar o preflight de memória definido no arquivo mestre.
+
+Leitura mínima obrigatória dos últimos 30 dias:
+- `/memories/repo/shared-memory-preflight.md`
+- `/memories/repo/active-agent-sessions.md`
+- `/memories/repo/recent-agent-changes.md`
+- `/memories/repo/windows-worktree-notes.md`
+- `.coordination/queue.yaml`
+- `.coordination/ownership-map.yaml`
+
+Se houver risco de conflito, handoff recente ou dúvida sobre atividade paralela, consultar também `.coordination/master-events.ndjson` e o histórico recente da branch/área antes de editar arquivos.
+
 ## Protocolo Anti-Erros Reais (OBRIGATÓRIO)
 
 Estes guardrails foram adicionados após falhas reais em sweep/admin-plus e DEVEM ser seguidos por qualquer agente antes de assumir bug de aplicação:

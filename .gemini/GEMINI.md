@@ -6,6 +6,18 @@
 Todas as regras detalhadas estão em:
 `E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\.github\copilot-instructions.md`
 
+## 🧠 Preflight Obrigatório de Memória Compartilhada
+
+Antes de iniciar ou continuar qualquer implementação, alteração, correção ou investigação, agentes Gemini DEVEM revisar os **últimos 30 dias** de contexto compartilhado em:
+1. `/memories/repo/shared-memory-preflight.md`
+2. `/memories/repo/active-agent-sessions.md`
+3. `/memories/repo/recent-agent-changes.md`
+4. `/memories/repo/windows-worktree-notes.md`
+5. `.coordination/queue.yaml`
+6. `.coordination/ownership-map.yaml`
+
+Se houver handoff, atividade paralela ou conflito potencial, consultar também `.coordination/master-events.ndjson` e o histórico recente da branch/área. Antes de editar arquivos, o agente Gemini DEVE registrar sua sessão atual em `/memories/repo/active-agent-sessions.md`.
+
 ---
 
 ## 🚨 Protocolo Anti-Erros Reais (MÁXIMA PRIORIDADE)

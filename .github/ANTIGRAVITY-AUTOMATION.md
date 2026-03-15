@@ -10,13 +10,17 @@ This document describes how the Auction Sniper & QA Agent integrates with Google
 
 Before any Antigravity workflow opens fixes, files issues, or suggests code changes, it MUST classify the incident correctly:
 
-1. Confirm the active runtime belongs to the intended isolated environment or worktree.
-2. Validate runtime baseline for login/E2E: `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET`, `NEXTAUTH_SECRET`.
-3. Probe `/auth/login` and `/api/public/tenants` before assuming application regression.
-4. Treat cascaded `ERR_CONNECTION_REFUSED` as infrastructure failure, dead process, wrong port, or OOM until proven otherwise.
-5. If multiple Admin Plus routes show `input` or `ctx` `undefined`, inspect `src/lib/admin-plus/safe-action.ts` before opening route-specific fixes.
-6. Confirm Prisma field names from schema before suggesting `select`/`include` changes.
-7. Validation order for automated remediation: focused route reproduction → browser/server log correlation → code fix → focused rerun → broader sweep.
+1. Review the last 30 days in `/memories/repo/shared-memory-preflight.md`, `/memories/repo/active-agent-sessions.md`, `/memories/repo/recent-agent-changes.md`, and `/memories/repo/windows-worktree-notes.md` before opening fixes or suggesting remediation.
+2. Check `.coordination/queue.yaml` and `.coordination/ownership-map.yaml` to avoid duplicate or conflicting automated work. Use `.coordination/master-events.ndjson` when recent activity is unclear.
+3. Confirm the active runtime belongs to the intended isolated environment or worktree.
+4. Validate runtime baseline for login/E2E: `DATABASE_URL`, `SESSION_SECRET`, `AUTH_SECRET`, `NEXTAUTH_SECRET`.
+5. Probe `/auth/login` and `/api/public/tenants` before assuming application regression.
+6. Treat cascaded `ERR_CONNECTION_REFUSED` as infrastructure failure, dead process, wrong port, or OOM until proven otherwise.
+7. If multiple Admin Plus routes show `input` or `ctx` `undefined`, inspect `src/lib/admin-plus/safe-action.ts` before opening route-specific fixes.
+8. Confirm Prisma field names from schema before suggesting `select`/`include` changes.
+9. Validation order for automated remediation: focused route reproduction → browser/server log correlation → code fix → focused rerun → broader sweep.
+
+If Antigravity opens an issue, proposes a fix, or hands work off to another agent, it MUST append a concise summary to `/memories/repo/recent-agent-changes.md` so later sessions can see the automation history.
 
 Antigravity MUST NOT open multiple page-level fixes when the root cause is a dead server, wrong runtime, or shared wrapper bug.
 
