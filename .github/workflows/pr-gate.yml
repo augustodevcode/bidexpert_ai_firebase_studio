@@ -39,7 +39,7 @@ jobs:
       - name: Validate Prisma Schemas (MySQL + PostgreSQL)
         run: |
           DATABASE_URL='mysql://root:root@localhost:3306/bidexpert_test' npx prisma validate --schema=prisma/schema.prisma
-          DATABASE_URL='postgresql://dummy:dummy@localhost:5432/dummy' npx prisma validate --schema=prisma-deploy/schema.postgresql.prisma
+          DATABASE_URL='postgresql://dummy:dummy@localhost:5432/dummy' POSTGRES_PRISMA_URL='postgresql://dummy:dummy@localhost:5432/dummy' POSTGRES_URL_NON_POOLING='postgresql://dummy:dummy@localhost:5432/dummy' npx prisma validate --schema=prisma-deploy/schema.postgresql.prisma
 
       - name: Typecheck
         run: npm run typecheck
@@ -48,6 +48,8 @@ jobs:
         run: npm run build
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'mysql://root:root@localhost:3306/bidexpert_test' }}
+          POSTGRES_PRISMA_URL: 'postgresql://dummy:dummy@localhost:5432/dummy'
+          POSTGRES_URL_NON_POOLING: 'postgresql://dummy:dummy@localhost:5432/dummy'
           NEXTAUTH_SECRET: 'ci-test-secret-key-32-chars-long!'
           AUTH_SECRET: 'ci-test-secret-key-32-chars-long!'
           SESSION_SECRET: 'ci-test-secret-key-32-chars-long!'

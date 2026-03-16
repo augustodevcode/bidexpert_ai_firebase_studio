@@ -4,28 +4,28 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { Car } from 'lucide-react';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
-import { ADMIN_PLUS_BASE_PATH } from '@/lib/admin-plus/constants';
 import type { BulkAction } from '@/lib/admin-plus/types';
 import type { VehicleMake } from '@/types';
 import { getVehicleMakeColumns } from './columns';
-import { listVehicleMakesAction, deleteVehicleMakeAction } from './actions';
+import { listVehicleMakesAction, createVehicleMakeAction, updateVehicleMakeAction, deleteVehicleMakeAction } from './actions';
+import { VehicleMakeForm } from './form';
+import type { CreateVehicleMakeInput } from './schema';
 
 export default function VehicleMakesPage() {
-  const router = useRouter();
   const [data, setData] = useState<VehicleMake[]>([]);
   const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editRow, setEditRow] = useState<VehicleMake | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<VehicleMake | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const result = await listVehicleMakesAction();
+    const result = await listVehicleMakesAction(undefined as never);
     if (result.success && result.data) setData(result.data.data);
     else toast.error(result.error ?? 'Erro ao carregar marcas');
     setLoading(false);
@@ -34,8 +34,23 @@ export default function VehicleMakesPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleEdit = useCallback((row: VehicleMake) => {
-    router.push(`${ADMIN_PLUS_BASE_PATH}/vehicle-makes/${row.id}`);
-  }, [router]);
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
+
+  const handleSubmit = useCallback(async (values: CreateVehicleMakeInput) => {
+    const result = editRow
+      ? await updateVehicleMakeAction({ id: editRow.id, data: values })
+      : await createVehicleMakeAction(values);
+    if (result.success) {
+      toast.success(editRow ? 'Marca atualizada com sucesso' : 'Marca criada com sucesso');
+      setFormOpen(false);
+      setEditRow(null);
+      fetchData();
+    } else {
+      toast.error(result.error ?? 'Erro ao salvar');
+    }
+  }, [editRow, fetchData]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -65,13 +80,32 @@ export default function VehicleMakesPage() {
 
   return (
     <div className="space-y-6" data-ai-id="vehicle-makes-listing-page">
-      <PageHeader heading="Marcas de Veículos" description="Gerencie as marcas de veículos do sistema.">
-        <Button onClick={() => router.push(`${ADMIN_PLUS_BASE_PATH}/vehicle-makes/new`)} data-ai-id="vehicle-make-new-btn">
-          <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Nova Marca
-        </Button>
-      </PageHeader>
+      <PageHeader
+        title="Marcas de Veículos"
+        description="Gerencie as marcas de veículos do sistema."
+        icon={Car}
+        primaryAction={{
+          label: 'Nova Marca',
+          onClick: () => { setEditRow(null); setFormOpen(true); },
+        }}
+      />
 
-      <DataTablePlus columns={columns} data={data} loading={loading} bulkActions={bulkActions} searchColumn="name" searchPlaceholder="Buscar por marca…" />
+      <DataTablePlus
+        columns={columns}
+        data={data}
+        isLoading={loading}
+        bulkActions={bulkActions}
+        searchPlaceholder="Buscar por marca…"
+        onRowDoubleClick={handleEdit}
+        data-ai-id="vehicle-makes-data-table"
+      />
+
+      <VehicleMakeForm
+        open={formOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditRow(null); }}
+        onSubmit={handleSubmit}
+        defaultValues={editRow}
+      />
 
       <ConfirmationDialog
         open={!!deleteTarget}
