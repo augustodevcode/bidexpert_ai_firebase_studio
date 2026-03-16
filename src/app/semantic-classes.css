@@ -11,6 +11,23 @@
   .btn-go-back { @apply btn-outline; }
   .btn-filter-lots { @apply btn-outline; }
 
+  .chip-stage-visual { @apply inline-flex h-9 w-9 items-center justify-center rounded-full border shadow-glow; }
+  .chip-stage-visual-draft { @apply chip-stage-visual border-border bg-muted/60 text-muted-foreground; }
+  .chip-stage-visual-scheduled { @apply chip-stage-visual border-secondary bg-secondary/70 text-secondary-foreground; }
+  .chip-stage-visual-open { @apply chip-stage-visual border-primary/30 bg-primary/10 text-primary; }
+  .chip-stage-visual-cancelled { @apply chip-stage-visual border-destructive/30 bg-destructive/10 text-destructive; }
+  .chip-stage-visual-closed { @apply chip-stage-visual border-border bg-panel/80 text-panel-foreground; }
+  .chip-stage-visual-sold { @apply chip-stage-visual border-success/30 bg-success/10 text-success; }
+  .chip-stage-visual-unsold { @apply chip-stage-visual border-urgent/30 bg-urgent/10 text-urgent; }
+  .badge-stage-visual { @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]; }
+  .badge-stage-visual-draft { @apply badge-stage-visual border-border bg-muted/60 text-muted-foreground; }
+  .badge-stage-visual-scheduled { @apply badge-stage-visual border-secondary bg-secondary/80 text-secondary-foreground; }
+  .badge-stage-visual-open { @apply badge-stage-visual border-primary/30 bg-primary/10 text-primary; }
+  .badge-stage-visual-cancelled { @apply badge-stage-visual border-destructive/30 bg-destructive/10 text-destructive; }
+  .badge-stage-visual-closed { @apply badge-stage-visual border-border bg-panel/80 text-panel-foreground; }
+  .badge-stage-visual-sold { @apply badge-stage-visual border-success/30 bg-success/10 text-success; }
+  .badge-stage-visual-unsold { @apply badge-stage-visual border-urgent/30 bg-urgent/10 text-urgent; }
+
   /* Forms & Inputs */
   .form-container { @apply space-y-6; }
   .input-field { @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50; }

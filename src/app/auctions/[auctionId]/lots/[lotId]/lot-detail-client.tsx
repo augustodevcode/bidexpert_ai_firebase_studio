@@ -749,7 +749,7 @@ export default function LotDetailClientContent({
                           Cronograma de Praças
                         </h3>
                         <div className="wrapper-summary-timeline-content">
-                           <BidExpertAuctionStagesTimeline auction={auction} lot={lot} />
+                           <BidExpertAuctionStagesTimeline auction={auction} lot={lot} variant="detailed" surface="lot" showContextIcons />
                         </div>
                       </div>
                     )}

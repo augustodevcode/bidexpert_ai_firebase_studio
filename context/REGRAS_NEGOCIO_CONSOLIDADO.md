@@ -168,6 +168,27 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ OBRIGATÓRIO usar `BidExpertAuctionStagesTimeline`  
 ✅ Integrado em `AuctionCard` e `AuctionListItem`  
 ✅ Busca última etapa do leilão para countdown
+✅ Em superfícies de **leilão** (detalhes e modais), a timeline deve usar o **status bruto da praça** e **nunca** exibir valores monetários.
+✅ Em superfícies de **lote** (detalhes e modais), a timeline deve usar o **status derivado do lote na praça** e pode exibir valores por praça (`LotStagePrice`/fallback do lote).
+✅ Ícones contextuais de praça são obrigatórios em **detalhes**, **modais** e **forms**; são proibidos em **cards** e **listitems**, que devem permanecer compactos.
+
+**Cenário BDD - Leilão sem valores na timeline**
+- **Dado** um leilão com praças cadastradas
+- **Quando** o usuário acessa a página de detalhes ou o modal do leilão
+- **Então** a timeline mostra ícones e badges de status da praça
+- **E** nenhum valor monetário é exibido dentro da timeline do leilão
+
+**Cenário BDD - Lote com status visual derivado**
+- **Dado** um lote com preços por praça e status público definido
+- **Quando** o usuário acessa a página de detalhes ou o modal do lote
+- **Então** a timeline mostra ícones e badges derivados do status do lote na praça ativa
+- **E** os valores por praça são exibidos apenas nas superfícies do lote
+
+**Cenário BDD - Card/listitem continuam compactos**
+- **Dado** um card ou listitem de lote/leilão com timeline compacta
+- **Quando** a interface renderiza a timeline resumida
+- **Então** a compactação visual é preservada
+- **E** ícones contextuais de praça não são renderizados nesses componentes
 
 ### RN-009: Testes
 ✅ Playwright usa seletores `data-ai-id`  
