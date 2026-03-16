@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "sh -c 'export POSTGRES_PRISMA_URL=\"${POSTGRES_PRISMA_URL:-$DATABASE_URL}\"; export POSTGRES_URL_NON_POOLING=\"${POSTGRES_URL_NON_POOLING:-${POSTGRES_PRISMA_URL:-$DATABASE_URL}}\"; cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma; npx prisma generate; npm run build'",
+  "buildCommand": "sh -c 'if [ -z \"$POSTGRES_PRISMA_URL\" ]; then export POSTGRES_PRISMA_URL=\"$DATABASE_URL\"; fi; if [ -z \"$POSTGRES_URL_NON_POOLING\" ]; then export POSTGRES_URL_NON_POOLING=\"$POSTGRES_PRISMA_URL\"; fi; cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma; npx prisma generate; npm run build'",
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "regions": ["gru1"],
