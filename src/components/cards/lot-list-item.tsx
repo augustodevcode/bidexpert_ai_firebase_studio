@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, MapPin, Tag, Gavel } from 'lucide-react';
 import { isPast, differenceInDays } from 'date-fns';
-import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData, getLotDisplayPrice } from '@/lib/ui-helpers';
+import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData, getLotDisplayPrice, getEffectiveLotEndDate, getEffectiveLotStatus } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import EntityEditMenu from '../entity-edit-menu';
@@ -28,6 +28,8 @@ interface LotListItemProps {
 
 export default function LotListItem({ lot, auction, platformSettings, onUpdate, density = 'default' }: LotListItemProps) {
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction?.auctionType || undefined);
+  const effectiveLotStatus = React.useMemo(() => getEffectiveLotStatus(lot, auction) || lot.status, [lot, auction]);
+  const { effectiveLotEndDate } = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'N/A';
   const sellerName = auction?.seller?.name;
   const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction?.seller?.logoUrl : undefined;
@@ -38,8 +40,8 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
     const triggers: string[] = [];
     const now = new Date();
 
-    if (lot.endDate) {
-      const endDate = new Date(lot.endDate as string);
+    if (effectiveLotEndDate) {
+      const endDate = effectiveLotEndDate;
       if (!isPast(endDate)) {
         const daysDiff = differenceInDays(endDate, now);
         if (daysDiff === 0) triggers.push('ENCERRA HOJE');
@@ -56,7 +58,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
     }
 
     return Array.from(new Set(triggers));
-  }, [lot.endDate, lot.bidsCount, lot.isFeatured]);
+  }, [effectiveLotEndDate, lot.bidsCount, lot.isFeatured]);
 
   const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : `https://picsum.photos/seed/${lot.id}/600/400`;
 
@@ -109,12 +111,12 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
                   <Badge
                     className={cn(
                       badgeBaseClass,
-                      lot.status === 'ABERTO_PARA_LANCES' ? 'bg-green-600 text-white' : '',
-                      lot.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : '',
-                      ['ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO'].includes(lot.status) ? 'bg-gray-500 text-white' : ''
+                      effectiveLotStatus === 'ABERTO_PARA_LANCES' ? 'bg-green-600 text-white' : '',
+                      effectiveLotStatus === 'EM_BREVE' ? 'bg-blue-500 text-white' : '',
+                      ['ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO'].includes(effectiveLotStatus) ? 'bg-gray-500 text-white' : ''
                     )}
                   >
-                    {getAuctionStatusText(lot.status)}
+                    {getAuctionStatusText(effectiveLotStatus)}
                   </Badge>
                   {mentalTriggers.map(trigger => (
                     <Badge key={trigger} variant="secondary" className={cn('text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300', isCompact && 'text-[11px]')}>

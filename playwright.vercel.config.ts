@@ -21,7 +21,7 @@ export default defineConfig({
   use: {
     baseURL: VERCEL_URL,
     trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    screenshot: 'on',
     video: 'retain-on-failure',
     actionTimeout: 15000,
     navigationTimeout: 60000,

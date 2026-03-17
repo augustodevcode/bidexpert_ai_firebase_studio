@@ -328,6 +328,8 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                     stages={auction.auctionStages || []}
                     variant="extended"
                     auction={auction}
+                    surface="auction"
+                    showContextIcons
                 />
               </CardContent>
             </Card>

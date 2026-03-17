@@ -13,6 +13,7 @@ import { sanitizeResponse } from '@/lib/serialization-helper';
 import type { UserProfileData, UserDocument, UserHabilitationStatus, Role } from '@/types';
 import { RoleRepository } from '@/repositories/role.repository';
 import { UserService } from '@/services/user.service';
+import { biddingEligibilityService } from '@/services/bidding-eligibility.service';
 
 const roleRepository = new RoleRepository();
 const userService = new UserService();
@@ -59,6 +60,11 @@ export async function habilitateUserAction(userId: string): Promise<{ success: b
  */
 export async function habilitateForAuctionAction(userId: string, auctionId: string): Promise<{ success: boolean; message: string }> {
     try {
+    const validation = await biddingEligibilityService.assertCanSelfHabilitateForAuction(userId, auctionId);
+    if (!validation.success) {
+      return validation;
+    }
+
         // Convert string IDs to BigInt for Prisma
         const userIdBigInt = BigInt(userId);
         const auctionIdBigInt = BigInt(auctionId);

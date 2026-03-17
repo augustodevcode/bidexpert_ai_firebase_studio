@@ -2779,18 +2779,30 @@ async function main() {
     });
     auctionStages.push(stage1_2);
 
-    // Criar 1 praça para o Leilão Extrajudicial 2 (Veículos)
+    // Criar 2 praças para o Leilão Extrajudicial 2 (Veículos)
     const stage2_1 = await prisma.auctionStage.create({
       data: {
-        name: 'Praça Única',
+        name: '1ª Praça',
         auctionId: auctions[1].id,
         tenantId: tenants[0].id,
-        startDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-        status: 'AGUARDANDO_INICIO',
+        startDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        endDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        status: 'EM_ANDAMENTO',
       },
     });
     auctionStages.push(stage2_1);
+
+    const stage2_2 = await prisma.auctionStage.create({
+      data: {
+        name: '2ª Praça',
+        auctionId: auctions[1].id,
+        tenantId: tenants[0].id,
+        startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        status: 'AGENDADO',
+      },
+    });
+    auctionStages.push(stage2_2);
 
     // Criar 1 praça para o Leilão Particular 3 (Maquinários)
     const stage3_1 = await prisma.auctionStage.create({
@@ -3107,6 +3119,39 @@ async function main() {
       }),
     ]);
     console.log(`✅ ${lots.length} lots criados\n`);
+
+    console.log('💰 Criando preços por praça para cenários visuais de lotes...');
+    const lotsWithStages = [
+      { lot: lots[0], stage: stage1_1, multiplier: 1 },
+      { lot: lots[0], stage: stage1_2, multiplier: 0.6 },
+      { lot: lots[1], stage: stage1_1, multiplier: 1 },
+      { lot: lots[1], stage: stage1_2, multiplier: 0.6 },
+      { lot: lots[2], stage: stage1_1, multiplier: 1 },
+      { lot: lots[2], stage: stage1_2, multiplier: 0.6 },
+      { lot: lots[3], stage: stage2_1, multiplier: 1 },
+      { lot: lots[3], stage: stage2_2, multiplier: 0.85 },
+      { lot: lots[4], stage: stage2_1, multiplier: 1 },
+      { lot: lots[4], stage: stage2_2, multiplier: 0.85 },
+      { lot: lots[5], stage: stage2_1, multiplier: 1 },
+      { lot: lots[5], stage: stage2_2, multiplier: 0.85 },
+    ];
+
+    await prisma.lotStagePrice.createMany({
+      data: lotsWithStages.map(({ lot, stage, multiplier }) => {
+        const baseInitialPrice = Number(lot.initialPrice || lot.price || 0);
+        const baseBidIncrement = Number(lot.bidIncrementStep || 100);
+
+        return {
+          lotId: lot.id,
+          auctionId: lot.auctionId,
+          auctionStageId: stage.id,
+          tenantId: tenants[0].id,
+          initialBid: Number((baseInitialPrice * multiplier).toFixed(2)),
+          bidIncrement: baseBidIncrement,
+        };
+      }),
+    });
+    console.log('✅ Preços por praça criados para lotes com múltiplas superfícies\n');
 
     console.log('🖼️ Adicionando galerias de imagens aos lots...');
     for (const lot of lots) {

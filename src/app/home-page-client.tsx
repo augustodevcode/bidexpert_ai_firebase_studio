@@ -113,6 +113,8 @@ function HomeExperienceClassic({
         />
       )}
 
+      <TopCategories categories={categories.slice(0, 8)} />
+
       <section className="section-featured-lots" data-ai-id="homepage-featured-lots-section">
         <div className="wrapper-section-header" data-ai-id="homepage-featured-lots-header">
           <PublicSectionAdminTooltip
@@ -143,8 +145,6 @@ function HomeExperienceClassic({
           ))}
         </div>
       </section>
-
-      <TopCategories categories={categories.slice(0, 8)} />
 
       <div className="grid-promo-cards" data-ai-id="homepage-promo-grid">
         <PromoCard

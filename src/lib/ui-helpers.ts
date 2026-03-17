@@ -3,6 +3,13 @@ import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, Pa
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle, Gavel, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { isPast, isFuture } from 'date-fns';
 import React from 'react';
+import {
+  getAuctionStageChronologyError,
+  getEffectiveAuctionStatus,
+  getEffectiveLotStatus,
+  getLotEffectiveDates,
+  normalizeAuctionStages,
+} from '@/lib/auction-timing';
 
 // ============================================================================
 // PURE HELPER FUNCTIONS (CLIENT & SERVER SAFE)
@@ -39,6 +46,13 @@ export const isValidImageUrl = (url?: string | null): boolean => {
   } catch (e) {
     return false;
   }
+};
+
+export {
+  getAuctionStageChronologyError,
+  getEffectiveAuctionStatus,
+  getEffectiveLotStatus,
+  normalizeAuctionStages,
 };
 
 
@@ -210,40 +224,7 @@ export const getUniqueLotLocations = (lots: Lot[]): string[] => {
 
 export const getEffectiveLotEndDate = (lot: Lot, auction?: Auction): { effectiveLotEndDate: Date | null, effectiveLotStartDate: Date | null } => {
   if (!lot) return { effectiveLotEndDate: null, effectiveLotStartDate: null };
-
-  const now = new Date();
-
-  // Prioritize stage dates from the parent auction if available
-  if (auction?.auctionStages && auction.auctionStages.length > 0) {
-    const activeOrNextStage = auction.auctionStages
-      .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
-      .sort((a, b) => new Date(a.startDate as Date).getTime() - new Date(b.startDate as Date).getTime())[0];
-
-    if (activeOrNextStage) {
-      return {
-        effectiveLotEndDate: new Date(activeOrNextStage.endDate as string),
-        effectiveLotStartDate: new Date(activeOrNextStage.startDate as string)
-      };
-    }
-
-    // If all stages are in the past, find the most recent one
-    const lastFinishedStage = auction.auctionStages
-      .filter(stage => stage.endDate)
-      .sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
-
-    if (lastFinishedStage) {
-      return {
-        effectiveLotEndDate: new Date(lastFinishedStage.endDate as string),
-        effectiveLotStartDate: new Date(lastFinishedStage.startDate as string)
-      };
-    }
-  }
-
-  // Fallback to lot-specific dates
-  const endDate = lot.endDate ? new Date(lot.endDate as string) : (auction?.endDate ? new Date(auction.endDate as string) : null);
-  const startDate = lot.auctionDate ? new Date(lot.auctionDate as string) : (auction?.auctionDate ? new Date(auction.auctionDate as string) : null);
-
-  return { effectiveLotEndDate: endDate, effectiveLotStartDate: startDate };
+  return getLotEffectiveDates(lot, auction);
 }
 
 
@@ -253,12 +234,14 @@ export const getEffectiveLotEndDate = (lot: Lot, auction?: Auction): { effective
  * @returns The active AuctionStage, or null if no stage is currently active.
  */
 export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => {
-  if (!stages || stages.length === 0) {
+  const orderedStages = normalizeAuctionStages(stages);
+
+  if (orderedStages.length === 0) {
     return null;
   }
 
   const now = new Date();
-  const activeStages = stages.filter(stage => {
+  const activeStages = orderedStages.filter(stage => {
     const startDate = new Date(stage.startDate);
     const endDate = new Date(stage.endDate);
     return !isFuture(startDate) && isFuture(endDate);
@@ -269,7 +252,7 @@ export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => 
     return activeStages.sort((a, b) => new Date(b.startDate as Date).getTime() - new Date(a.startDate as Date).getTime())[0];
   }
 
-  return activeStages[0] || null;
+  return activeStages[0] || orderedStages[0] || null;
 };
 
 /**
@@ -363,6 +346,7 @@ export const getLotInitialPriceForStage = (
 export const getLotDisplayPrice = (lot: Lot, auction?: Auction): { value: number, label: string } => {
   const activeStage = getActiveStage(auction?.auctionStages);
   const hasBids = (lot.bidsCount || 0) > 0;
+  const orderedStages = normalizeAuctionStages(auction?.auctionStages);
 
   // Case 1: Has existing bids - always show current price (which is technically the last bid value, stored in price)
   if (hasBids) {
@@ -392,9 +376,9 @@ export const getLotDisplayPrice = (lot: Lot, auction?: Auction): { value: number
     // If activeStage is the FIRST stage, normally it's just "Lance Inicial".
     // If activeStage is NOT the first stage (e.g. 2nd Praça), it is "Lance Mínimo".
 
-    const isFirstStage = auction?.auctionStages && auction.auctionStages[0]?.id === activeStage.id;
+    const isFirstStage = orderedStages[0]?.id === activeStage.id;
 
-    if (!isFirstStage && auction?.auctionStages && auction.auctionStages.length > 1) {
+    if (!isFirstStage && orderedStages.length > 1) {
       return {
         value: discountedInitialFn,
         label: 'Lance Mínimo'

@@ -37,6 +37,7 @@ import { useRouter } from 'next/navigation';
 
 interface SubcategoriesColumnsProps {
   onDelete?: (id: string) => void;
+  onEdit?: (subcategory: Subcategory) => void;
 }
 
 export const createColumns = (props?: SubcategoriesColumnsProps): ColumnDef<Subcategory>[] => [
@@ -44,13 +45,15 @@ export const createColumns = (props?: SubcategoriesColumnsProps): ColumnDef<Subc
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome da Subcategoria" />,
     cell: ({ row }) => (
-      <Link 
-        href={`/admin/subcategories/${row.original.id}/edit`}
-        className="font-medium hover:text-primary"
+      <button
+        onClick={() => props?.onEdit?.(row.original)}
+        className="font-medium hover:text-primary text-left"
+        type="button"
+        title="Editar Subcategoria"
         data-ai-id={`subcategory-name-link-${row.original.id}`}
       >
         {row.getValue("name")}
-      </Link>
+      </button>
     ),
   },
   {
@@ -125,11 +128,9 @@ function SubcategoryActionsCell({ subcategory, onDelete }: { subcategory: Subcat
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Ações</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href={`/admin/subcategories/${subcategory.id}/edit`} data-ai-id={`subcategory-edit-link-${subcategory.id}`}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar
-            </Link>
+          <DropdownMenuItem onClick={() => props?.onEdit?.(subcategory)} data-ai-id={`subcategory-edit-link-${subcategory.id}`}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/admin/lots?subcategoryId=${subcategory.id}`} data-ai-id={`subcategory-view-lots-link-${subcategory.id}`}>

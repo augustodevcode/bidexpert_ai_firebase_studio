@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModalV2 from '@/components/lot-preview-modal-v2';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl, getActiveStage, getLotPriceForStage, getAuctionTypeDisplayData, getLotDisplayPrice } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl, getActiveStage, getLotPriceForStage, getAuctionTypeDisplayData, getLotDisplayPrice, getEffectiveLotStatus } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -63,6 +63,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const showCountdownOnThisCard = showCountdown && platformSettings.showCountdownOnCards !== false;
 
   const { effectiveLotEndDate } = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const effectiveLotStatus = React.useMemo(() => getEffectiveLotStatus(lot, auction) || lot.status, [lot, auction]);
   const activeStage = React.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
   const activeLotPrices = React.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
 
@@ -148,20 +149,20 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   }, [activeLotPrices, lot.evaluationValue, lot.discountPercentage]);
 
   const mentalTriggers = React.useMemo(() => {
-    const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    const triggers = Array.isArray(lot.additionalTriggers) ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
 
     if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
       triggers.push('MAIS VISITADO');
     }
-    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && effectiveLotStatus === 'ABERTO_PARA_LANCES') {
       triggers.push('LANCE QUENTE');
     }
     if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
       triggers.push('EXCLUSIVO');
     }
     return Array.from(new Set(triggers));
-  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
+  }, [lot.views, lot.bidsCount, effectiveLotStatus, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
   const imageUrlToDisplay = lot.imageUrl;
   const lotNumber = lot.number || String(lot.id).replace(/\D/g, '').padStart(3, '0');
 
@@ -183,8 +184,8 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             </div>
           </Link>
           <div className="wrapper-card-status-badges" data-ai-id="lot-card-status-badges">
-            <Badge className={cn("badge-lot-status", getLotStatusColor(lot.status))} data-ai-id="lot-card-status-badge">
-              {getAuctionStatusText(lot.status)}
+            <Badge className={cn("badge-lot-status", getLotStatusColor(effectiveLotStatus))} data-ai-id="lot-card-status-badge">
+              {getAuctionStatusText(effectiveLotStatus)}
             </Badge>
           </div>
           <div className="wrapper-card-mental-triggers" data-ai-id="lot-card-mental-triggers">
@@ -298,7 +299,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
               </p>
             )}
             {/* GAP-FIX: Next Bid Calculator - mostra próximo lance mínimo */}
-            {lot.status === 'ABERTO_PARA_LANCES' && lot.bidIncrementStep && (
+            {effectiveLotStatus === 'ABERTO_PARA_LANCES' && lot.bidIncrementStep && (
               <p className="text-card-next-bid" data-ai-id="lot-card-next-bid">
                 Próximo lance: {formatCurrency((getLotDisplayPrice(lot, auction).value || 0) + Number(lot.bidIncrementStep || 0), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
@@ -347,7 +348,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           </div>
 
           {showCountdownOnThisCard && effectiveLotEndDate && (
-            <LotCountdown endDate={effectiveLotEndDate} status={lot.status as any} variant="card" />
+            <LotCountdown endDate={effectiveLotEndDate} status={effectiveLotStatus as any} variant="card" />
           )}
         </CardContent>
 
