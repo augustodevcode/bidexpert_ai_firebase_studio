@@ -1,9 +1,9 @@
 ﻿// src/app/admin/roles/page.tsx
 /**
- * @fileoverview PÃ¡gina principal para listagem e gerenciamento de Perfis de UsuÃ¡rio (Roles).
+ * @fileoverview Página principal para listagem e gerenciamento de Perfis de Usuário (Roles).
  * Utiliza o componente BidExpertSearchResultsFrame para exibir os perfis de forma interativa,
- * permitindo busca, ordenaÃ§Ã£o e aÃ§Ãµes de ediÃ§Ã£o e exclusÃ£o. Protege perfis essenciais
- * do sistema contra exclusÃ£o para manter a integridade da plataforma.
+ * permitindo busca, ordenação e ações de edição e exclusão. Protege perfis essenciais
+ * do sistema contra exclusão para manter a integridade da plataforma.
  */
 'use client';
 
@@ -206,6 +206,7 @@ export default function AdminRolesPage() {
           formDescription="" // Removing description from inner form
           submitButtonText={modalState.isEditing ? "Salvar Alterações" : "Criar Perfil"}
           onSuccess={handleSuccess}
+          onCancel={closeModal}
         />
       </CrudFormContainer>
     </div>

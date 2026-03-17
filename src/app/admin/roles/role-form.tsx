@@ -8,7 +8,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -36,6 +36,7 @@ interface RoleFormProps {
   formDescription?: string;
   submitButtonText: string;
   onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 const groupedPermissions = predefinedPermissions.reduce((acc, permission) => {
@@ -53,7 +54,8 @@ export function RoleForm({
   formTitle,
   formDescription,
   submitButtonText,
-  onSuccess
+  onSuccess,
+  onCancel,
 }: RoleFormProps) {
   const [isPending, setIsPending] = React.useState(false);
   const { toast } = useToast();
@@ -74,12 +76,18 @@ export function RoleForm({
   async function onSubmit(values: RoleFormValues) {
     setIsPending(true);
     try {
-      if (isProtectedRole) {
-          toast({
-              title: "Ação não Permitida",
-              description: "O nome e descrição de perfis de sistema (como ADMINISTRADOR) não podem ser alterados, apenas as permissões.",
-              variant: "destructive"
-          });
+      const isProtectedNameOrDescriptionChanged =
+        !!isProtectedRole &&
+        (values.name.trim() !== (initialData?.name ?? '').trim() ||
+          values.description.trim() !== (initialData?.description ?? '').trim());
+
+      if (isProtectedNameOrDescriptionChanged) {
+        toast({
+          title: 'Ação não permitida',
+          description: 'O nome e descrição de perfis de sistema não podem ser alterados, apenas as permissões.',
+          variant: 'destructive',
+        });
+        return;
       }
 
       const result = await onSubmitAction(values);
@@ -99,7 +107,7 @@ export function RoleForm({
         });
       }
     } catch (error) {
-       console.error("Erro inesperado no onSubmit do RoleForm:", error);
+       console.error('Erro inesperado no onSubmit do RoleForm:', error);
        toast({
          title: 'Erro de Sistema',
          description: 'Ocorreu um erro inesperado ao salvar o perfil.',
@@ -287,7 +295,7 @@ export function RoleForm({
         </div>
 
         <div className="flex justify-end pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => onSuccess && onSuccess()} disabled={isPending} className="mr-2">
+      <Button type="button" variant="outline" onClick={() => onCancel && onCancel()} disabled={isPending} className="mr-2">
                 Cancelar
             </Button>
             <Button type="submit" disabled={isPending} className="min-w-[150px]">
