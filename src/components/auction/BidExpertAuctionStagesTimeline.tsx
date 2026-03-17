@@ -10,6 +10,7 @@ import { format, isPast, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { AuctionStage, Auction, Lot } from '@/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { normalizeAuctionStages } from '@/lib/ui-helpers';
 
 interface BidExpertAuctionStagesTimelineProps {
   stages?: Partial<AuctionStage>[];
@@ -38,7 +39,7 @@ function formatDate(date: Date | null) {
 }
 
 function formatMoney(value: number | null) {
-  if (!value && value !== 0) return 'R$ --';
+  if (value === null) return '';
   return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 }
 
@@ -56,7 +57,10 @@ export default function BidExpertAuctionStagesTimeline({
     setIsClient(true);
   }, []);
 
-  const stages = propStages || auction?.auctionStages || [];
+  const stages = React.useMemo(
+    () => normalizeAuctionStages(propStages || auction?.auctionStages || []),
+    [propStages, auction?.auctionStages],
+  );
 
   if (!isClient) {
     return <div className="h-10 w-full animate-pulse rounded-md bg-muted/20" data-ai-id="bidexpert-auction-timeline-skeleton" />;
@@ -96,7 +100,7 @@ export default function BidExpertAuctionStagesTimeline({
 
     if (lot) {
         const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
-        price = stagePrice?.initialBid || (index === 0 ? lot.initialPrice : lot.secondInitialPrice) || stage.initialPrice || null;
+        price = stagePrice?.initialBid ?? (index === 0 ? lot.initialPrice : lot.secondInitialPrice) ?? stage.initialPrice ?? null;
     } else if (auction) {
         // Auction view: show discount indication
         if (index === 0) {
@@ -161,7 +165,7 @@ export default function BidExpertAuctionStagesTimeline({
                       <div className="text-xs text-muted-foreground">Início: {formatDate(step.startDate)}</div>
                       <div className="text-xs text-muted-foreground">Fim: {formatDate(step.endDate)}</div>
                       <div className="text-xs font-semibold">
-                        {step.price !== null ? formatMoney(step.price) : (step.discountText || 'R$ --')}
+                        {step.price !== null ? formatMoney(step.price) : (step.discountText || 'Valor sob consulta')}
                       </div>
                       {step.status === 'active' && (
                         <div className="text-[11px] font-medium text-primary">Etapa atual</div>
@@ -244,7 +248,7 @@ export default function BidExpertAuctionStagesTimeline({
                   isCompleted && 'line-through opacity-70'
                 )}
               >
-                {step.price !== null ? formatMoney(step.price) : (step.discountText || 'R$ --')}
+                {step.price !== null ? formatMoney(step.price) : (step.discountText || 'Valor sob consulta')}
               </span>
             </div>
           </div>

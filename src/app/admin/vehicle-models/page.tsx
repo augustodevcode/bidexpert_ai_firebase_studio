@@ -13,7 +13,7 @@ import { createColumns } from './columns';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
-import CrudFormContainer from '@/components/ui/CrudFormContainer';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
 import VehicleModelForm from './vehicle-model-form';
 
 export default function AdminVehicleModelsPage() {
@@ -76,7 +76,7 @@ export default function AdminVehicleModelsPage() {
     for (const item of selectedItems) {
       await deleteVehicleModel(item.id);
     }
-    toast({ title: "Sucesso!", description: \\ modelo(s) excluído(s).\` });
+    toast({ title: "Sucesso!", description: `${selectedItems.length} modelo(s) excluído(s).` });
     setRefetchTrigger(c => c + 1);
   }, [toast]);
 

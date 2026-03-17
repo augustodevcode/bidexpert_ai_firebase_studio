@@ -10,13 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, Users } from 'lucide-react';
 import { isPast, differenceInDays } from 'date-fns';
-import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
+import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData, getEffectiveAuctionStatus } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import EntityEditMenu from '../entity-edit-menu';
 import ConsignorLogoBadge from '../consignor-logo-badge';
 import { cn } from '@/lib/utils';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
+import { getAuctionEffectiveDates } from '@/lib/auction-timing';
 
 
 interface AuctionListItemProps {
@@ -27,6 +28,8 @@ interface AuctionListItemProps {
 
 export default function AuctionListItem({ auction, onUpdate, density = 'default' }: AuctionListItemProps) {
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
+  const effectiveAuctionStatus = React.useMemo(() => getEffectiveAuctionStatus(auction) || auction.status, [auction]);
+  const effectiveAuctionDates = React.useMemo(() => getAuctionEffectiveDates(auction), [auction]);
   const AuctionTypeIcon = auctionTypeDisplay?.icon;
 
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
@@ -37,8 +40,8 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
     const triggers: string[] = [];
     const now = new Date();
 
-    if (auction.endDate) {
-        const endDate = new Date(auction.endDate as string);
+    if (effectiveAuctionDates.endDate) {
+      const endDate = effectiveAuctionDates.endDate;
         if (!isPast(endDate)) {
             const daysDiff = differenceInDays(endDate, now);
             if (daysDiff === 0) triggers.push('ENCERRA HOJE');
@@ -59,7 +62,7 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
     }
     
     return Array.from(new Set(triggers));
-  }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
+  }, [effectiveAuctionDates.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
   
   const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl! : `https://placehold.co/600x400.png?text=Leilao`;
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
@@ -115,12 +118,12 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
                         className={cn(
                           'text-xs px-1.5 py-0.5 shadow-sm',
                           isCompact && 'text-[11px] px-1 py-0.5',
-                          (auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO') && 'bg-green-600 text-white',
-                          auction.status === 'EM_BREVE' && 'bg-blue-500 text-white',
-                          ['ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO', 'RASCUNHO', 'EM_PREPARACAO'].includes(auction.status) && 'bg-gray-500 text-white'
+                          (effectiveAuctionStatus === 'ABERTO_PARA_LANCES' || effectiveAuctionStatus === 'ABERTO') && 'bg-green-600 text-white',
+                          effectiveAuctionStatus === 'EM_BREVE' && 'bg-blue-500 text-white',
+                          ['ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO', 'RASCUNHO', 'EM_PREPARACAO'].includes(effectiveAuctionStatus) && 'bg-gray-500 text-white'
                         )}
                         >
-                        {getAuctionStatusText(auction.status)}
+                        {getAuctionStatusText(effectiveAuctionStatus)}
                     </Badge>
                      {mentalTriggers.map(trigger => (
                         <Badge key={trigger} variant="secondary" className={cn('text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300', isCompact && 'text-[11px]')}>

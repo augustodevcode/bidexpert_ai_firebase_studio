@@ -20,7 +20,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import { CategoryForm } from './category-form';
+import CategoryForm from './category-form';
 
 type ModalState = {
   mode: 'closed' | 'create' | 'edit';

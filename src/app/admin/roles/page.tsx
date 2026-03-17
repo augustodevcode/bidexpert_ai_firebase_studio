@@ -18,7 +18,7 @@ import { createColumns } from './columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { CrudFormContainer } from '@/components/admin-plus/crud-layout/CrudFormContainer';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
 import { RoleForm } from './role-form';
 import type { RoleFormValues } from './role-form-schema';
 
@@ -85,7 +85,7 @@ export default function AdminRolesPage() {
 
     for (const item of selectedItems) {
       if (PROTECTED_ROLES_NORMALIZED.includes(item.nameNormalized)) {
-        toast({ title: \AÃ§Ã£o nÃ£o Permitida\, description: \O perfil "\" Ã© protegido e nÃ£o pode ser excluÃdo.\, variant: "destructive", duration: 5000 });
+        toast({ title: "Ação não permitida", description: `O perfil "${item.name}" é protegido e não pode ser excluído.`, variant: "destructive", duration: 5000 });
         errorCount++;
         continue;
       }
@@ -94,12 +94,12 @@ export default function AdminRolesPage() {
         successCount++;
       } else {
         errorCount++;
-        toast({ title: \Erro ao excluir \\, description: result.message, variant: "destructive", duration: 5000 });
+        toast({ title: `Erro ao excluir "${item.name}"`, description: result.message, variant: "destructive", duration: 5000 });
       }
     }
 
     if (successCount > 0) {
-      toast({ title: "ExclusÃ£o em Massa ConcluÃda", description: \\ perfil(is) excluÃdo(s) com sucesso.\ });
+      toast({ title: "Exclusão em massa concluída", description: `${successCount} perfil(is) excluído(s) com sucesso.` });
     }
     fetchPageData();
   }, [toast, fetchPageData]);
@@ -165,7 +165,7 @@ export default function AdminRolesPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <ShieldCheck className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Perfis de UsuÃ¡rio
+              Gerenciar Perfis de Usuário
             </CardTitle>
             <CardDescription>
               Crie, edite ou remova perfis (roles) para controlar o acesso na plataforma.
@@ -194,16 +194,17 @@ export default function AdminRolesPage() {
 
       <CrudFormContainer
         isOpen={modalState.isOpen}
-        onOpenChange={(open) => !open && closeModal()}
+        onClose={closeModal}
         title={modalState.isEditing ? "Editar Perfil" : "Novo Perfil"}
         description={modalState.isEditing ? "Edite os dados do perfil abaixo." : "Preencha os dados do novo perfil."}
+        mode={platformSettings?.crudFormMode || 'modal'}
       >
         <RoleForm
           initialData={modalState.data}
           onSubmitAction={handleSubmit}
           formTitle="" // Removing title from inner form to avoid duplication
           formDescription="" // Removing description from inner form
-          submitButtonText={modalState.isEditing ? "Salvar AlteraÃ§Ãµes" : "Criar Perfil"}
+          submitButtonText={modalState.isEditing ? "Salvar Alterações" : "Criar Perfil"}
           onSuccess={handleSuccess}
         />
       </CrudFormContainer>

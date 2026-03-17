@@ -217,13 +217,13 @@ export function RoleForm({
                               <div key={groupName} className="space-y-3">
                                   <div className="flex items-center space-x-2 pb-2 mb-2 border-b">
                                       <Checkbox
-                                          id={\group-\\}
+                                          id={`group-${groupName}`}
                                           checked={isAllSelectedInGroup ? true : isSomeSelectedInGroup ? "indeterminate" : false}
                                           onCheckedChange={(checked) => toggleAllInGroup(groupName, !!checked)}
                                           disabled={isPending}
                                       />
                                       <label
-                                          htmlFor={\group-\\}
+                                          htmlFor={`group-${groupName}`}
                                           className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-primary"
                                       >
                                           {groupName}
