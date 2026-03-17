@@ -6,61 +6,36 @@
  * TDD: Validar seleção explícita de cliente por subdomínio.
  */
 
-import { describe, expect, it, vi } from 'vitest';
-
-const originalEnv = {
-  DATABASE_URL: process.env.DATABASE_URL,
-  EXPECT_POSTGRESQL: process.env.EXPECT_POSTGRESQL,
-  POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL,
-  PRISMA_SCHEMA: process.env.PRISMA_SCHEMA,
-  USE_SEPARATE_DEMO_DB: process.env.USE_SEPARATE_DEMO_DB,
-};
-
-function resetPrismaSelectionEnv() {
-  process.env.DATABASE_URL = 'mysql://user:pass@localhost:3306/bidexpert_dev';
-  delete process.env.EXPECT_POSTGRESQL;
-  delete process.env.POSTGRES_PRISMA_URL;
-  delete process.env.PRISMA_SCHEMA;
-  delete process.env.USE_SEPARATE_DEMO_DB;
-}
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Prisma client selection', () => {
+  const savedEnv: Record<string, string | undefined> = {};
+
   beforeEach(() => {
     vi.resetModules();
-    resetPrismaSelectionEnv();
+
+    savedEnv.DATABASE_URL = process.env.DATABASE_URL;
+    savedEnv.EXPECT_POSTGRESQL = process.env.EXPECT_POSTGRESQL;
+    savedEnv.POSTGRES_PRISMA_URL = process.env.POSTGRES_PRISMA_URL;
+    savedEnv.PRISMA_SCHEMA = process.env.PRISMA_SCHEMA;
+    savedEnv.USE_SEPARATE_DEMO_DB = process.env.USE_SEPARATE_DEMO_DB;
+
+    process.env.DATABASE_URL = 'mysql://user:pass@localhost:3306/bidexpert_dev';
+    delete process.env.EXPECT_POSTGRESQL;
+    delete process.env.POSTGRES_PRISMA_URL;
+    delete process.env.PRISMA_SCHEMA;
+    delete process.env.USE_SEPARATE_DEMO_DB;
   });
 
   afterEach(() => {
     vi.resetModules();
 
-    if (originalEnv.DATABASE_URL === undefined) {
-      delete process.env.DATABASE_URL;
-    } else {
-      process.env.DATABASE_URL = originalEnv.DATABASE_URL;
-    }
-
-    if (originalEnv.EXPECT_POSTGRESQL === undefined) {
-      delete process.env.EXPECT_POSTGRESQL;
-    } else {
-      process.env.EXPECT_POSTGRESQL = originalEnv.EXPECT_POSTGRESQL;
-    }
-
-    if (originalEnv.POSTGRES_PRISMA_URL === undefined) {
-      delete process.env.POSTGRES_PRISMA_URL;
-    } else {
-      process.env.POSTGRES_PRISMA_URL = originalEnv.POSTGRES_PRISMA_URL;
-    }
-
-    if (originalEnv.PRISMA_SCHEMA === undefined) {
-      delete process.env.PRISMA_SCHEMA;
-    } else {
-      process.env.PRISMA_SCHEMA = originalEnv.PRISMA_SCHEMA;
-    }
-
-    if (originalEnv.USE_SEPARATE_DEMO_DB === undefined) {
-      delete process.env.USE_SEPARATE_DEMO_DB;
-    } else {
-      process.env.USE_SEPARATE_DEMO_DB = originalEnv.USE_SEPARATE_DEMO_DB;
+    for (const [key, value] of Object.entries(savedEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
     }
   });
 
