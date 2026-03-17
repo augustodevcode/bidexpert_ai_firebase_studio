@@ -12,13 +12,14 @@ import { Heart, Share2, Eye, X, Facebook, MessageSquareText, Mail, Clock, Users,
 import { isPast, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import AuctionPreviewModalV2 from '../auction-preview-modal-v2';
-import { isValidImageUrl, getAuctionStatusText, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
+import { isValidImageUrl, getAuctionStatusText, getAuctionTypeDisplayData, getEffectiveAuctionStatus } from '@/lib/ui-helpers';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from '../entity-edit-menu';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import ConsignorLogoBadge from '../consignor-logo-badge';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
+import { getAuctionEffectiveDates } from '@/lib/auction-timing';
 
 
 interface AuctionCardProps {
@@ -30,6 +31,8 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
   const [auctionFullUrl, setAuctionFullUrl] = React.useState<string>(`/auctions/${auction.publicId || auction.id}`);
+  const effectiveAuctionStatus = React.useMemo(() => getEffectiveAuctionStatus(auction) || auction.status, [auction]);
+  const effectiveAuctionDates = React.useMemo(() => getAuctionEffectiveDates(auction), [auction]);
 
   const soldLotsCount = React.useMemo(() => {
     if (!auction.lots || auction.lots.length === 0) return 0;
@@ -40,8 +43,8 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     const triggers: string[] = [];
     const now = new Date();
 
-    if (auction.endDate) {
-        const endDate = new Date(auction.endDate as string);
+    if (effectiveAuctionDates.endDate) {
+      const endDate = effectiveAuctionDates.endDate;
         if (!isPast(endDate)) {
             const daysDiff = differenceInDays(endDate, now);
             if (daysDiff === 0) triggers.push('ENCERRA HOJE');
@@ -57,12 +60,12 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
         triggers.push('DESTAQUE');
     }
 
-    if (auction.additionalTriggers) {
+    if (Array.isArray(auction.additionalTriggers)) {
         triggers.push(...auction.additionalTriggers);
     }
     
     return Array.from(new Set(triggers));
-  }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
+  }, [effectiveAuctionDates.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
 
 
   React.useEffect(() => {
@@ -106,19 +109,19 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
   
   const getStatusDisplay = () => {
-    if (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') {
+    if (effectiveAuctionStatus === 'ENCERRADO' || effectiveAuctionStatus === 'FINALIZADO') {
       if (soldLotsCount > 0) {
         return { text: `Vendido (${soldLotsCount}/${auction.totalLots})`, className: 'bg-green-600 text-white' };
       }
       return { text: 'Finalizado (Sem Venda)', className: 'bg-gray-500 text-white' };
     }
-    if (auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO') {
-      return { text: getAuctionStatusText(auction.status), className: 'bg-green-600 text-white' };
+    if (effectiveAuctionStatus === 'ABERTO_PARA_LANCES' || effectiveAuctionStatus === 'ABERTO') {
+      return { text: getAuctionStatusText(effectiveAuctionStatus), className: 'bg-green-600 text-white' };
     }
-    if (auction.status === 'EM_BREVE') {
-      return { text: getAuctionStatusText(auction.status), className: 'bg-blue-500 text-white' };
+    if (effectiveAuctionStatus === 'EM_BREVE') {
+      return { text: getAuctionStatusText(effectiveAuctionStatus), className: 'bg-blue-500 text-white' };
     }
-    return { text: getAuctionStatusText(auction.status), className: 'bg-gray-500 text-white' };
+    return { text: getAuctionStatusText(effectiveAuctionStatus), className: 'bg-gray-500 text-white' };
   };
 
   const statusDisplay = getStatusDisplay();

@@ -3,11 +3,9 @@
  * @fileoverview Página principal para listagem e gerenciamento de Cidades.
  * Utiliza o componente DataTable para exibir os dados de forma interativa,
  * permitindo busca, ordenação, filtros facetados por UF e ações como
- * exclusão em massa e individual.
+ * exclusão em massa e individual, com CRUD inline através do CrudFormContainer.
  */
 'use client';
-
-
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -19,6 +17,8 @@ import { PlusCircle, Building2, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { createColumns } from './columns';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
+import CityForm from './city-form';
 
 export default function AdminCitiesPage() {
   const [cities, setCities] = useState<CityInfo[]>([]);
@@ -26,6 +26,10 @@ export default function AdminCitiesPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+
+  // State for Modal
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingCity, setEditingCity] = useState<CityInfo | null>(null);
 
   const fetchPageData = useCallback(async () => {
       setIsLoading(true);
@@ -79,7 +83,28 @@ export default function AdminCitiesPage() {
     fetchPageData();
   }, [toast, fetchPageData]);
 
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  const handleEdit = useCallback((city: CityInfo) => {
+    setEditingCity(city);
+    setIsFormOpen(true);
+  }, []);
+
+  const handleCreateNew = () => {
+    setEditingCity(null);
+    setIsFormOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    setIsFormOpen(false);
+    setEditingCity(null);
+    setRefetchTrigger(prev => prev + 1);
+  };
+
+  const handleFormCancel = () => {
+    setIsFormOpen(false);
+    setEditingCity(null);
+  };
+
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEdit }), [handleDelete, handleEdit]);
   
   const stateOptions = useMemo(() => 
     [...new Set(cities.map(c => c.stateUf).filter(Boolean))]
@@ -89,7 +114,6 @@ export default function AdminCitiesPage() {
   const facetedFilterColumns = useMemo(() => [
     { id: 'stateUf', title: 'UF', options: stateOptions },
   ], [stateOptions]);
-
 
   return (
     <div className="space-y-6" data-ai-id="admin-cities-page-container">
@@ -110,10 +134,8 @@ export default function AdminCitiesPage() {
                     <BarChart3 className="mr-2 h-4 w-4" /> Ver Análise
                 </Link>
             </Button>
-            <Button asChild>
-                <Link href="/admin/cities/new">
+            <Button onClick={handleCreateNew}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Nova Cidade
-                </Link>
             </Button>
           </div>
         </CardHeader>
@@ -133,6 +155,20 @@ export default function AdminCitiesPage() {
             />
         </CardContent>
       </Card>
+
+      <CrudFormContainer
+        isOpen={isFormOpen}
+        onClose={handleFormCancel}
+        title={editingCity ? "Editar Cidade" : "Nova Cidade"}
+        description={editingCity ? "Faça alterações na cidade selecionada." : "Preencha os dados para cadastrar uma nova cidade."}
+        mode="modal"
+      >
+        <CityForm 
+          cityInfo={editingCity || undefined} 
+          onSuccess={handleFormSuccess}
+          onCancel={handleFormCancel}
+        />
+      </CrudFormContainer>
     </div>
   );
 }

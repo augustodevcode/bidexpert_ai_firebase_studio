@@ -23,6 +23,7 @@ import { nowInSaoPaulo } from '@/lib/timezone';
 import { prisma } from '@/lib/prisma';
 import { generatePublicId } from '@/lib/public-id-generator';
 import { createManualAuditLog } from '@/lib/audit-context';
+import { getAuctionStageChronologyError, normalizeAuctionStages } from '@/lib/auction-timing';
 
 // Status que NUNCA devem ser visíveis publicamente
 const NON_PUBLIC_STATUSES: Auction['status'][] = ['RASCUNHO', 'EM_PREPARACAO'];
@@ -447,8 +448,12 @@ export class AuctionService {
       if (!data.auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!data.sellerId) throw new Error("O ID do comitente é obrigatório.");
 
-      const derivedAuctionDate = (data.auctionStages && data.auctionStages.length > 0 && data.auctionStages[0].startDate)
-        ? new Date(data.auctionStages[0].startDate as Date)
+      const normalizedStages = normalizeAuctionStages(data.auctionStages);
+      const chronologyError = getAuctionStageChronologyError(normalizedStages);
+      if (chronologyError) throw new Error(chronologyError);
+
+      const derivedAuctionDate = (normalizedStages.length > 0 && normalizedStages[0].startDate)
+        ? new Date(normalizedStages[0].startDate as Date)
         : nowInSaoPaulo();
 
       const {
@@ -494,9 +499,9 @@ export class AuctionService {
           }
         });
 
-        if (data.auctionStages && data.auctionStages.length > 0) {
+        if (normalizedStages.length > 0) {
           await tx.auctionStage.createMany({
-            data: data.auctionStages.map((stage: any) => ({
+            data: normalizedStages.map((stage: any) => ({
               name: stage.name,
               startDate: new Date(stage.startDate as Date),
               endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
@@ -550,6 +555,10 @@ export class AuctionService {
         ...restOfData
       } = data;
 
+      const normalizedStages = normalizeAuctionStages(auctionStages);
+      const chronologyError = getAuctionStageChronologyError(normalizedStages);
+      if (chronologyError) throw new Error(chronologyError);
+
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
             ...(this.stripPhantomFields(restOfData) as any),
@@ -584,7 +593,7 @@ export class AuctionService {
         
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
 
-        const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
+        const derivedAuctionDate = (normalizedStages.length > 0 && normalizedStages[0].startDate) ? normalizedStages[0].startDate : (data.auctionDate || undefined);
         if (derivedAuctionDate) {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
@@ -606,7 +615,7 @@ export class AuctionService {
         if (auctionStages) {
             await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
             await tx.auctionStage.createMany({
-                data: auctionStages.map(stage => ({
+            data: normalizedStages.map(stage => ({
                     name: stage.name,
                     startDate: new Date(stage.startDate as Date),
                     endDate: stage.endDate ? new Date(stage.endDate as Date) : null,

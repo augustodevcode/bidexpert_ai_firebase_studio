@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { CityInfo } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<CityInfo>[] => [
+export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: string) => void, onEdit?: (city: CityInfo) => void }): ColumnDef<CityInfo>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -38,9 +38,20 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Cidade" />,
     cell: ({ row }) => (
-      <Link href={`/admin/cities/${row.original.id}/edit`} className="hover:text-primary font-medium">
+      <button 
+        type="button"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onEdit?.(row.original);
+          }
+        }}
+        onClick={() => onEdit?.(row.original)} 
+        className="hover:text-primary font-medium text-left bg-transparent border-none p-0 cursor-pointer"
+        aria-label={`Editar ${row.original.name}`}
+      >
         {row.getValue("name")}
-      </Link>
+      </button>
     ),
   },
   {
@@ -59,11 +70,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
       const city = row.original;
       return (
         <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/cities/${city.id}/edit`}>
-              <Pencil className="h-4 w-4" />
-              <span className="sr-only">Editar</span>
-            </Link>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit?.(city)}>
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">Editar</span>
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(city.id)}>
             <Trash2 className="h-4 w-4 text-destructive" />

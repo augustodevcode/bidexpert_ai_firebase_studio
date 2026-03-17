@@ -17,6 +17,7 @@ import {
   auctionParticipationValues, 
   auctionMethodValues 
 } from '@/lib/zod-enums';
+import { getAuctionStageChronologyError } from '@/lib/auction-timing';
 
 // Helper para validar URLs opcionais (aceita string vazia)
 const optionalUrlSchema = z
@@ -150,22 +151,9 @@ export const auctionFormSchema = z.object({
       },
     ])
     .refine(
-      (stages) => {
-        if (!stages || stages.length <= 1) return true;
-        for (let i = 1; i < stages.length; i++) {
-          if (
-            stages[i]?.startDate &&
-            stages[i - 1]?.endDate &&
-            stages[i].startDate! < stages[i - 1].endDate!
-          ) {
-            return false;
-          }
-        }
-        return true;
-      },
+      (stages) => !getAuctionStageChronologyError(stages),
       {
-        message:
-          'A data de início de uma etapa não pode ser anterior à data de término da etapa anterior.',
+        message: 'As etapas precisam ter datas válidas, ordenadas e sem sobreposição.',
         path: ['auctionStages'],
       }
     ),
