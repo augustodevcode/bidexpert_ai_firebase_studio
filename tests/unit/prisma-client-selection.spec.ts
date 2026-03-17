@@ -6,12 +6,34 @@
  * TDD: Validar seleção explícita de cliente por subdomínio.
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Prisma client selection', () => {
+  const savedEnv: Record<string, string | undefined> = {};
+
+  beforeEach(() => {
+    // Preserve env vars that may conflict with test-specific overrides
+    savedEnv.PRISMA_SCHEMA = process.env.PRISMA_SCHEMA;
+    savedEnv.EXPECT_POSTGRESQL = process.env.EXPECT_POSTGRESQL;
+    savedEnv.DATABASE_URL = process.env.DATABASE_URL;
+    savedEnv.POSTGRES_PRISMA_URL = process.env.POSTGRES_PRISMA_URL;
+
+    // Clear schema expectations so validateDatabaseUrlProtocol()
+    // does not reject mysql:// URLs when CI sets PRISMA_SCHEMA to postgresql
+    delete process.env.PRISMA_SCHEMA;
+    delete process.env.EXPECT_POSTGRESQL;
+  });
+
+  afterEach(() => {
+    // Restore original env vars
+    for (const [key, val] of Object.entries(savedEnv)) {
+      if (val === undefined) delete process.env[key];
+      else process.env[key] = val;
+    }
+  });
+
   it('seleciona demoPrisma quando subdomínio é demo', async () => {
     vi.resetModules();
-    // Set DATABASE_URL required for Prisma client initialization
     process.env.DATABASE_URL = 'mysql://user:pass@localhost:3306/bidexpert_dev';
     process.env.POSTGRES_PRISMA_URL = 'postgresql://user:pass@localhost:5432/bidexpert_demo';
 
