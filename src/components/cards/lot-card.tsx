@@ -148,7 +148,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   }, [activeLotPrices, lot.evaluationValue, lot.discountPercentage]);
 
   const mentalTriggers = React.useMemo(() => {
-    const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    const triggers = Array.isArray(lot.additionalTriggers) ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
 
     if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
