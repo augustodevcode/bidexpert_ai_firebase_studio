@@ -12,21 +12,28 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLotCategories } from './actions';
+import { getLotCategories, createLotCategory, updateLotCategory } from './actions';
 import type { LotCategory } from '@/types';
 import { ListChecks, PlusCircle, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useRouter } from 'next/navigation';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
+import { CategoryForm } from './category-form';
+
+type ModalState = {
+  mode: 'closed' | 'create' | 'edit';
+  data?: LotCategory;
+};
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<LotCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const router = useRouter();
+
+  const [modalState, setModalState] = useState<ModalState>({ mode: 'closed' });
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
@@ -51,8 +58,12 @@ export default function AdminCategoriesPage() {
   const handleDelete = useCallback((id: string) => {
     setCategories(prev => prev.filter(cat => cat.id !== id));
   }, []);
-  
-  const columns = useMemo(() => createColumns({ onDelete: handleDelete }), [handleDelete]);
+
+  const handleEdit = useCallback((category: LotCategory) => {
+    setModalState({ mode: 'edit', data: category });
+  }, []);
+
+  const columns = useMemo(() => createColumns({ onDelete: handleDelete, onEdit: handleEdit }), [handleDelete, handleEdit]);
 
   const renderSkeleton = () => (
      <div className="space-y-6">
@@ -90,10 +101,8 @@ export default function AdminCategoriesPage() {
                 <BarChart3 className="mr-2 h-4 w-4" /> Ver Análise
               </Link>
             </Button>
-            <Button asChild data-ai-id="new-category-button">
-              <Link href="/admin/categories/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Nova Categoria
-              </Link>
+            <Button onClick={() => setModalState({ mode: 'create' })} data-ai-id="new-category-button">
+              <PlusCircle className="mr-2 h-4 w-4" /> Nova Categoria
             </Button>
           </div>
         </CardHeader>
@@ -108,6 +117,29 @@ export default function AdminCategoriesPage() {
           />
         </CardContent>
       </Card>
+
+      <CrudFormContainer
+        isOpen={modalState.mode !== 'closed'}
+        onClose={() => setModalState({ mode: 'closed' })}
+        title={modalState.mode === 'create' ? 'Nova Categoria' : 'Editar Categoria'}
+        description={modalState.mode === 'create' ? 'Adicione uma nova categoria de lotes.' : 'Atualize os detalhes da categoria.'}
+        mode={modalState.mode === 'edit' ? 'sheet' : 'modal'}
+      >
+        <CategoryForm
+          initialData={modalState.data}
+          onSubmitAction={(data) => 
+            modalState.mode === 'edit' && modalState.data?.id
+              ? updateLotCategory(modalState.data.id, data)
+              : createLotCategory(data)
+          }
+          submitButtonText={modalState.mode === 'create' ? 'Criar Categoria' : 'Salvar Alterações'}
+          onSuccess={() => {
+            fetchCategories();
+            setModalState({ mode: 'closed' });
+          }}
+          onCancel={() => setModalState({ mode: 'closed' })}
+        />
+      </CrudFormContainer>
     </div>
   );
 }

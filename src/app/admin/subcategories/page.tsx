@@ -8,7 +8,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSubcategoriesByParentIdAction } from './actions';
+import { getSubcategoriesByParentIdAction, createSubcategoryAction, updateSubcategoryAction } from './actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import type { Subcategory, LotCategory } from '@/types';
 import { Layers, PlusCircle } from 'lucide-react';
@@ -17,8 +17,9 @@ import { useToast } from '@/hooks/use-toast';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
+import SubcategoryForm from './subcategory-form';
+import type { SubcategoryFormValues } from './subcategory-form-schema';
 
 export default function AdminSubcategoriesPage() {
   const [allParentCategories, setAllParentCategories] = useState<LotCategory[]>([]);
@@ -26,8 +27,11 @@ export default function AdminSubcategoriesPage() {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null);
+
   const { toast } = useToast();
-  const router = useRouter();
 
   useEffect(() => {
     let isMounted = true;
@@ -45,10 +49,10 @@ export default function AdminSubcategoriesPage() {
           }
         }
       } catch (e) {
-        console.error("Error fetching parent categories:", e);
+        console.error('Error fetching parent categories:', e);
         if (isMounted) {
-          setError("Falha ao buscar categorias principais.");
-          toast({ title: "Erro", description: "Falha ao buscar categorias principais.", variant: "destructive" });
+          setError('Falha ao buscar categorias principais.');
+          toast({ title: 'Erro', description: 'Falha ao buscar categorias principais.', variant: 'destructive' });
         }
       } finally {
         if (isMounted) {
@@ -60,46 +64,64 @@ export default function AdminSubcategoriesPage() {
     return () => { isMounted = false; };
   }, [toast, selectedParentCategoryId]);
 
+  const fetchSubcategories = useCallback(async () => {
+    if (!selectedParentCategoryId) {
+        setSubcategories([]);
+        return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+        const fetchedSubcategories = await getSubcategoriesByParentIdAction(selectedParentCategoryId);
+        const parentName = allParentCategories.find(c => c.id === selectedParentCategoryId)?.name || '';
+        setSubcategories(fetchedSubcategories.map(s => ({...s, parentCategoryName: parentName})));
+    } catch (e) {
+        console.error(`Error fetching subcategories for ${selectedParentCategoryId}:`, e);
+        setError('Falha ao buscar subcategorias.');
+        toast({ title: 'Erro', description: 'Falha ao buscar subcategorias.', variant: 'destructive' });
+        setSubcategories([]);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [selectedParentCategoryId, allParentCategories, toast]);
+
   useEffect(() => {
     let isMounted = true;
-    async function fetchSubcategories() {
-        if (!selectedParentCategoryId) {
-            setSubcategories([]);
-            return;
-        }
-        if (!isMounted) return;
-        setIsLoading(true);
-        setError(null);
-        try {
-            const fetchedSubcategories = await getSubcategoriesByParentIdAction(selectedParentCategoryId);
-            const parentName = allParentCategories.find(c => c.id === selectedParentCategoryId)?.name || '';
-            if (isMounted) {
-              setSubcategories(fetchedSubcategories.map(s => ({...s, parentCategoryName: parentName})));
-            }
-        } catch (e) {
-            console.error(`Error fetching subcategories for ${selectedParentCategoryId}:`, e);
-            if(isMounted) {
-              setError("Falha ao buscar subcategorias.");
-              toast({ title: "Erro", description: "Falha ao buscar subcategorias.", variant: "destructive" });
-              setSubcategories([]);
-            }
-        } finally {
-            if(isMounted) {
-              setIsLoading(false);
-            }
-        }
-    }
     if (allParentCategories.length > 0) {
-      fetchSubcategories();
+      if (isMounted) fetchSubcategories();
     }
     return () => { isMounted = false; };
-  }, [selectedParentCategoryId, toast, allParentCategories]);
+  }, [fetchSubcategories, allParentCategories]);
 
   const handleDelete = useCallback((id: string) => {
     setSubcategories(prev => prev.filter(sub => sub.id !== id));
   }, []);
-  
-  const columns = useMemo(() => createColumns({ onDelete: handleDelete }), [handleDelete]);
+
+  const handleEdit = useCallback((subcategory: Subcategory) => {
+    setEditingSubcategory(subcategory);
+    setIsFormOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsFormOpen(false);
+    setEditingSubcategory(null);
+  }, []);
+
+  const handleSubmitForm = async (data: SubcategoryFormValues) => {
+     let result;
+     if (!editingSubcategory) {
+       result = await createSubcategoryAction(data);
+     } else {
+       result = await updateSubcategoryAction(editingSubcategory.id, data);
+     }
+
+     if (result.success) {
+        await fetchSubcategories();
+     }
+     return result;
+  };
+
+  const columns = useMemo(() => createColumns({ onDelete: handleDelete, onEdit: handleEdit }), [handleDelete, handleEdit]);
 
   return (
     <div className="space-y-6" data-ai-id="admin-subcategories-page-container">
@@ -114,16 +136,14 @@ export default function AdminSubcategoriesPage() {
               Gerencie as subcategorias da plataforma. Adicione, edite ou exclua subcategorias.
             </CardDescription>
           </div>
-          <Button asChild data-ai-id="new-subcategory-button">
-            <Link href="/admin/subcategories/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Nova Subcategoria
-            </Link>
+          <Button onClick={() => { setEditingSubcategory(null); setIsFormOpen(true); }} data-ai-id="new-subcategory-button">
+            <PlusCircle className="mr-2 h-4 w-4" /> Nova Subcategoria
           </Button>
         </CardHeader>
         <CardContent>
             <div className="mb-4">
-              <Select 
-                value={selectedParentCategoryId} 
+              <Select
+                value={selectedParentCategoryId}
                 onValueChange={setSelectedParentCategoryId}
                 disabled={allParentCategories.length === 0 || isLoading}
               >
@@ -138,7 +158,7 @@ export default function AdminSubcategoriesPage() {
                 </SelectContent>
               </Select>
             </div>
-          
+
             <DataTable
               columns={columns}
               data={subcategories}
@@ -149,6 +169,25 @@ export default function AdminSubcategoriesPage() {
             />
         </CardContent>
       </Card>
+      
+      <CrudFormContainer
+        isOpen={isFormOpen}
+        onClose={handleCloseModal}
+        mode="modal"
+        title={!editingSubcategory ? "Nova Subcategoria" : "Editar Subcategoria"}
+        description={!editingSubcategory ? "Preencha os dados da nova subcategoria" : "Altere os dados da subcategoria"}
+      >
+        <SubcategoryForm
+          initialData={editingSubcategory}
+          parentCategories={allParentCategories}
+          onSubmitAction={handleSubmitForm}
+          onSuccess={handleCloseModal}
+          onCancel={handleCloseModal}
+          formTitle={!editingSubcategory ? "Nova Subcategoria" : "Editar Subcategoria"}
+          formDescription=""
+          submitButtonText={!editingSubcategory ? "Cadastrar Subcategoria" : "Salvar"}
+        />
+      </CrudFormContainer>
     </div>
   );
 }

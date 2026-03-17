@@ -1,17 +1,16 @@
-// src/app/admin/roles/page.tsx
+﻿// src/app/admin/roles/page.tsx
 /**
- * @fileoverview Página principal para listagem e gerenciamento de Perfis de Usuário (Roles).
+ * @fileoverview PÃ¡gina principal para listagem e gerenciamento de Perfis de UsuÃ¡rio (Roles).
  * Utiliza o componente BidExpertSearchResultsFrame para exibir os perfis de forma interativa,
- * permitindo busca, ordenação e ações de edição e exclusão. Protege perfis essenciais
- * do sistema contra exclusão para manter a integridade da plataforma.
+ * permitindo busca, ordenaÃ§Ã£o e aÃ§Ãµes de ediÃ§Ã£o e exclusÃ£o. Protege perfis essenciais
+ * do sistema contra exclusÃ£o para manter a integridade da plataforma.
  */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getRoles, deleteRole } from './actions';
+import { getRoles, deleteRole, createRole, updateRole } from './actions';
 import type { Role, PlatformSettings } from '@/types';
 import { PlusCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +18,9 @@ import { createColumns } from './columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
+import { CrudFormContainer } from '@/components/admin-plus/crud-layout/CrudFormContainer';
+import { RoleForm } from './role-form';
+import type { RoleFormValues } from './role-form-schema';
 
 const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER', 'TENANT_ADMIN'];
 
@@ -29,6 +31,17 @@ export default function AdminRolesPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+
+  // Modal State
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    isEditing: boolean;
+    data: Role | null;
+  }>({
+    isOpen: false,
+    isEditing: false,
+    data: null
+  });
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
@@ -49,7 +62,7 @@ export default function AdminRolesPage() {
       setIsLoading(false);
     }
   }, [toast]);
-  
+
   useEffect(() => {
     fetchPageData();
   }, [refetchTrigger, fetchPageData]);
@@ -66,13 +79,13 @@ export default function AdminRolesPage() {
 
   const handleDeleteSelected = useCallback(async (selectedItems: Role[]) => {
     if (selectedItems.length === 0) return;
-    
+
     let successCount = 0;
     let errorCount = 0;
-    
+
     for (const item of selectedItems) {
       if (PROTECTED_ROLES_NORMALIZED.includes(item.nameNormalized)) {
-        toast({ title: `Ação não Permitida`, description: `O perfil "${item.name}" é protegido e não pode ser excluído.`, variant: "destructive", duration: 5000 });
+        toast({ title: \AÃ§Ã£o nÃ£o Permitida\, description: \O perfil "\" Ã© protegido e nÃ£o pode ser excluÃdo.\, variant: "destructive", duration: 5000 });
         errorCount++;
         continue;
       }
@@ -81,17 +94,55 @@ export default function AdminRolesPage() {
         successCount++;
       } else {
         errorCount++;
-        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
+        toast({ title: \Erro ao excluir \\, description: result.message, variant: "destructive", duration: 5000 });
       }
     }
 
     if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} perfil(s) excluído(s) com sucesso.` });
+      toast({ title: "ExclusÃ£o em Massa ConcluÃda", description: \\ perfil(is) excluÃdo(s) com sucesso.\ });
     }
     fetchPageData();
   }, [toast, fetchPageData]);
-  
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
+  const handleEdit = useCallback((role: Role) => {
+    setModalState({
+      isOpen: true,
+      isEditing: true,
+      data: role
+    });
+  }, []);
+
+  const handleCreateNew = () => {
+    setModalState({
+      isOpen: true,
+      isEditing: false,
+      data: null
+    });
+  };
+
+  const closeModal = () => {
+    setModalState(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleSubmit = async (data: RoleFormValues) => {
+    try {
+      if (modalState.isEditing && modalState.data) {
+        return await updateRole(modalState.data.id, data);
+      } else {
+        return await createRole(data);
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      return { success: false, message: "Erro inesperado ao salvar." };
+    }
+  };
+
+  const handleSuccess = () => {
+    closeModal();
+    setRefetchTrigger(prev => prev + 1);
+  };
+
+  const columns = useMemo(() => createColumns({ handleDelete, handleEdit }), [handleDelete, handleEdit]);
 
   if (isLoading || !platformSettings) {
     return (
@@ -114,16 +165,14 @@ export default function AdminRolesPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <ShieldCheck className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Perfis de Usuário
+              Gerenciar Perfis de UsuÃ¡rio
             </CardTitle>
             <CardDescription>
               Crie, edite ou remova perfis (roles) para controlar o acesso na plataforma.
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/roles/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Perfil
-            </Link>
+          <Button onClick={handleCreateNew}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Novo Perfil
           </Button>
         </CardHeader>
         <CardContent>
@@ -142,6 +191,22 @@ export default function AdminRolesPage() {
             />
         </CardContent>
       </Card>
+
+      <CrudFormContainer
+        isOpen={modalState.isOpen}
+        onOpenChange={(open) => !open && closeModal()}
+        title={modalState.isEditing ? "Editar Perfil" : "Novo Perfil"}
+        description={modalState.isEditing ? "Edite os dados do perfil abaixo." : "Preencha os dados do novo perfil."}
+      >
+        <RoleForm
+          initialData={modalState.data}
+          onSubmitAction={handleSubmit}
+          formTitle="" // Removing title from inner form to avoid duplication
+          formDescription="" // Removing description from inner form
+          submitButtonText={modalState.isEditing ? "Salvar AlteraÃ§Ãµes" : "Criar Perfil"}
+          onSuccess={handleSuccess}
+        />
+      </CrudFormContainer>
     </div>
   );
 }
