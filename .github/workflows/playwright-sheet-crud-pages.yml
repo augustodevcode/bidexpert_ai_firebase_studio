@@ -9,7 +9,8 @@
 #
 # Triggers:
 #   - Manual (workflow_dispatch) — para gerar evidência sob demanda
-#   - Push em qualquer branch com alterações nos arquivos de Sheet CRUD
+#   - Push em main ou demo-stable (branches permitidas para Pages deployment)
+#   - Push em qualquer branch dispara os testes e sobe screenshots como artefato
 # ==============================================================================
 
 name: 🎭 Sheet CRUD Evidence → GitHub Pages
@@ -24,10 +25,6 @@ on:
   push:
     branches:
       - "**"
-    paths:
-      - "src/app/(adminplus)/admin-plus/*/form.tsx"
-      - "src/app/(adminplus)/admin-plus/*/page.tsx"
-      - "tests/e2e/admin/admin-plus-sheet-crud*.spec.ts"
 
 permissions:
   contents: read
@@ -36,12 +33,13 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
   # Job 1: Executar testes e gerar relatório com screenshots
+  # Roda em TODAS as branches — screenshots ficam disponíveis como artefato
   # ─────────────────────────────────────────────────────────────────────────────
   test-and-report:
     name: 🧪 Rodar testes Sheet CRUD
@@ -87,24 +85,19 @@ jobs:
           CI: true
         continue-on-error: true
 
-      - name: 🖼️ Adicionar index.html ao relatório para GitHub Pages
+      - name: 🖼️ Preparar relatório com banner de status
         run: |
-          # O Playwright gera o relatório em playwright-report-vercel/
-          # O diretório padrão no vercel config é playwright-report-vercel
           REPORT_DIR="playwright-report-vercel"
           if [ ! -d "$REPORT_DIR" ]; then
-            # Fallback para o diretório padrão
             REPORT_DIR="playwright-report"
           fi
           echo "Usando diretório de relatório: $REPORT_DIR"
           ls -la "$REPORT_DIR" || echo "Diretório de relatório não encontrado"
-          
-          # Criar diretório pages-output com o conteúdo do relatório
+
           mkdir -p pages-output
           if [ -d "$REPORT_DIR" ]; then
             cp -r "$REPORT_DIR/." pages-output/
           else
-            # Criar página mínima caso os testes não tenham gerado relatório
             cat > pages-output/index.html << 'EOF'
           <!DOCTYPE html>
           <html>
@@ -116,23 +109,21 @@ jobs:
           </html>
           EOF
           fi
-          
-          # Adicionar badge de status
+
           STATUS_CODE="${{ steps.run_tests.outputs.exit_code }}"
           if [ "$STATUS_CODE" = "0" ]; then
             BADGE="✅ PASSOU"
-            COLOR="green"
+            COLOR="#16a34a"
           else
             BADGE="❌ FALHOU"
-            COLOR="red"
-          fi
-          
-          # Injetar banner de status no topo do index.html
-          if [ -f "pages-output/index.html" ]; then
-            sed -i "s|<body>|<body><div style='background:$COLOR;color:white;padding:16px;font-family:sans-serif;font-size:18px;'><strong>Admin-Plus Sheet CRUD — Status: $BADGE</strong> | Run: <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' style='color:white'>Ver logs completos ↗</a></div>|" pages-output/index.html || true
+            COLOR="#dc2626"
           fi
 
-      - name: 📤 Upload artefato test-results (screenshots)
+          if [ -f "pages-output/index.html" ]; then
+            sed -i "s|<body>|<body><div style='background:$COLOR;color:white;padding:16px;font-family:sans-serif;font-size:18px;'><strong>Admin-Plus Sheet CRUD — Status: $BADGE</strong> | Branch: ${{ github.ref_name }} | Run: <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' style='color:white'>Ver logs completos ↗</a></div>|" pages-output/index.html || true
+          fi
+
+      - name: 📤 Upload screenshots como artefato (acessível em todas as branches)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -143,17 +134,20 @@ jobs:
           retention-days: 30
 
       - name: 📦 Preparar artefato para GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/demo-stable' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v3
         with:
           path: pages-output
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Job 2: Publicar relatório em GitHub Pages
+  # Só roda em main, demo-stable ou workflow_dispatch (branches permitidas)
   # ─────────────────────────────────────────────────────────────────────────────
   deploy-pages:
     name: 📄 Publicar em GitHub Pages
     needs: test-and-report
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/demo-stable' || github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -164,13 +158,14 @@ jobs:
         uses: actions/deploy-pages@v4
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Job 3: Comentar no PR com link para o relatório
+  # Job 3: Comentar no PR com link para o relatório e artefatos
+  # Roda em todas as branches quando há PR associado
   # ─────────────────────────────────────────────────────────────────────────────
   comment-on-pr:
     name: 💬 Comentar no PR
-    needs: [test-and-report, deploy-pages]
+    needs: test-and-report
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.event.pull_request.number != ''
+    if: always() && github.event_name == 'push'
 
     steps:
       - name: 💬 Adicionar comentário no PR com evidências
@@ -181,13 +176,18 @@ jobs:
             const exitCode = '${{ needs.test-and-report.outputs.test_status }}';
             const status = exitCode === '0' ? '✅ PASSOU' : '❌ FALHOU';
             const emoji = exitCode === '0' ? '🟢' : '🔴';
+            const isMainBranch = context.ref === 'refs/heads/main' || context.ref === 'refs/heads/demo-stable';
             const pagesUrl = 'https://augustodevcode.github.io/bidexpert_ai_firebase_studio/';
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const artifactUrl = `${runUrl}#artifacts`;
 
+            const screenshotLine = isMainBranch
+              ? `- **📊 Relatório GitHub Pages (com screenshots):** [Abrir relatório ↗](${pagesUrl})`
+              : `- **📸 Screenshots (artefatos da Action):** [Ver screenshots ↗](${artifactUrl})`;
+
             const body = `## ${emoji} Admin-Plus Sheet CRUD — Evidência Playwright
 
-            **Status:** ${status}
+            **Status:** ${status} | **Branch:** \`${context.ref.replace('refs/heads/', '')}\`
 
             | Recurso | Smoke | Sheet Renders | CRUD Cycle |
             |---------|-------|---------------|------------|
@@ -203,8 +203,7 @@ jobs:
             | tenants | ${status} | ${status} | — |
 
             ### 📸 Screenshots e Relatório Visual
-            - **Relatório GitHub Pages (com screenshots):** [Abrir relatório ↗](${pagesUrl})
-            - **Screenshots (artefatos):** [Ver artefatos ↗](${artifactUrl})
+            ${screenshotLine}
             - **Logs completos:** [Ver run ↗](${runUrl})
 
             > Testes executados contra: \`https://bidexpertaifirebasestudio.vercel.app\`
@@ -224,3 +223,4 @@ jobs:
                 body,
               });
             }
+
