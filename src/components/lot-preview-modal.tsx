@@ -75,7 +75,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
 
 
   const mentalTriggers = useMemo(() => {
-    const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    const triggers = Array.isArray(lot.additionalTriggers) ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
 
     if (settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) triggers.push('MAIS VISITADO');
@@ -137,6 +137,26 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
                     <p className="text-sm text-destructive font-semibold uppercase mb-1">Encerramento</p>
                     <LotCountdown endDate={effectiveLotEndDate} status={lot.status as any} />
                 </div>
+
+                {auction?.auctionStages && auction.auctionStages.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm md:text-base">
+                        <Calendar className="h-4 w-4 md:h-5 md:w-5" />
+                        Praças do Leilão
+                      </h3>
+                      <BidExpertAuctionStagesTimeline
+                        auctionOverallStartDate={auction.auctionDate ? new Date(auction.auctionDate as unknown as string) : new Date()}
+                        stages={auction.auctionStages}
+                        lot={lot}
+                        variant="detailed"
+                        surface="lot"
+                        showContextIcons
+                      />
+                    </div>
+                  </>
+                )}
                 
                  {keySpecs.length > 0 && (
                      <>

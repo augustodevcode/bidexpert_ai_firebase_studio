@@ -60,7 +60,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
         triggers.push('DESTAQUE');
     }
 
-    if (auction.additionalTriggers) {
+    if (Array.isArray(auction.additionalTriggers)) {
         triggers.push(...auction.additionalTriggers);
     }
     

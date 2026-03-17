@@ -57,7 +57,7 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
         triggers.push('DESTAQUE');
     }
 
-    if (auction.additionalTriggers) {
+    if (Array.isArray(auction.additionalTriggers)) {
         triggers.push(...auction.additionalTriggers);
     }
     

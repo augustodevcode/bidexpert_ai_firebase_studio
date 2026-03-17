@@ -309,6 +309,8 @@ export default function AuctionDetailsClientV2({
                       stages={auction.auctionStages || []}
                       variant="extended"
                       auction={auction}
+                      surface="auction"
+                      showContextIcons
                     />
                   </CardContent>
                 </Card>

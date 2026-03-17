@@ -458,6 +458,9 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
                       auctionOverallStartDate={auction.auctionDate ? new Date(auction.auctionDate as unknown as string) : new Date()}
                       stages={auction.auctionStages}
                       lot={lot}
+                      variant="detailed"
+                      surface="lot"
+                      showContextIcons
                     />
                   </div>
                 </>

@@ -29,7 +29,7 @@ export async function GET() {
 
   // Step 1: Test the EXACT Prisma query from getSegmentLots (with include)
   try {
-    const lots = await prisma.lot.findMany({
+    const queriedLots = await prisma.lot.findMany({
       where: {
         status: { in: ['ABERTO_PARA_LANCES', 'EM_BREVE'] },
         OR: patterns.flatMap(pattern => [
@@ -50,20 +50,36 @@ export async function GET() {
         LotStagePrice: true,
       },
       orderBy: [
-        { isFeatured: 'desc' },
-        { endDate: 'asc' },
+        { id: 'desc' },
       ],
-      take: 4,
+      take: 12,
     });
+    const lots = [...queriedLots]
+      .sort((left, right) => {
+        const leftScore = ((left.Auction?.AuctionStage || []).length * 10) + ((left.LotStagePrice || []).length * 5);
+        const rightScore = ((right.Auction?.AuctionStage || []).length * 10) + ((right.LotStagePrice || []).length * 5);
+        return rightScore - leftScore;
+      })
+      .slice(0, 4);
     results.step1_querySuccess = true;
     results.step1_lotsCount = lots.length;
     results.step1_lotIds = lots.map(l => Number(l.id));
+    results.step1_lotPublicIds = lots.map(l => l.publicId || l.id.toString());
     results.step1_lotTitles = lots.map(l => l.title);
+    results.step1_auctionIds = lots.map(l => l.Auction?.id?.toString() || null);
+    results.step1_auctionPublicIds = lots.map(l => l.Auction?.publicId || l.Auction?.id?.toString() || null);
+    results.step1_auctionTitles = lots.map(l => l.Auction?.title || null);
     results.step1_hasAuction = lots.map(l => !!l.Auction);
     results.step1_hasCategory = lots.map(l => !!l.LotCategory);
     results.step1_hasPrices = lots.map(l => (l.LotStagePrice || []).length);
     results.step1_hasAuctionSeller = lots.map(l => !!l.Auction?.Seller);
     results.step1_hasAuctionStage = lots.map(l => (l.Auction?.AuctionStage || []).length);
+    results.step1_routes = lots.map(l => ({
+      lotTitle: l.title,
+      lotId: l.publicId || l.id.toString(),
+      auctionId: l.Auction?.publicId || l.Auction?.id?.toString() || null,
+      auctionTitle: l.Auction?.title || null,
+    }));
 
     // Step 2: Test the transform (same as getSegmentLots)
     try {

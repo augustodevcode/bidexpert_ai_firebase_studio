@@ -3,10 +3,11 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { getFormStageVisualState, getStageVisualConfig } from '@/components/auction/auction-stage-visuals';
 
 interface AuctionStage {
   name: string;
@@ -72,8 +73,22 @@ export default function AuctionStagesForm({
 
       {stages.map((stage, index) => (
         <div key={index} className="border rounded-md p-4 space-y-4 bg-muted/30">
+          {(() => {
+            const visualState = getFormStageVisualState(stage);
+            const visual = getStageVisualConfig(visualState);
+            const VisualIcon = visual.icon;
+
+            return (
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-sm">Praça {index + 1}</h4>
+            <div className="flex items-center gap-3">
+              <div className={visual.chipClassName} data-ai-id={`auction-stage-form-icon-${index}`}>
+                <VisualIcon className="h-4 w-4" aria-hidden="true" />
+              </div>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                <h4 className="font-medium text-sm">Praça {index + 1}</h4>
+                <Badge className={visual.badgeClassName}>{visual.label}</Badge>
+              </div>
+            </div>
             {stages.length > 1 && (
               <Button
                 type="button"
@@ -85,6 +100,8 @@ export default function AuctionStagesForm({
               </Button>
             )}
           </div>
+            );
+          })()}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

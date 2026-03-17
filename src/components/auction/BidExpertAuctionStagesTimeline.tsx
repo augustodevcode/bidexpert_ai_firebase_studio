@@ -1,6 +1,6 @@
 /**
  * @fileoverview Componente unificado para visualização das etapas/praças de um leilão.
- * Suporta variantes de renderização (compact/extended) e estado vazio quando não há etapas.
+ * Suporta variantes de renderização (compact/extended/detailed) e estado vazio quando não há etapas.
  */
 'use client';
 
@@ -9,19 +9,29 @@ import { cn } from '@/lib/utils';
 import { format, isPast, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { AuctionStage, Auction, Lot } from '@/types';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { normalizeAuctionStages } from '@/lib/ui-helpers';
+import {
+  getAuctionStageVisualState,
+  getLotStageVisualState,
+  getStageVisualConfig,
+  type StageTimelineStatus,
+  type StageVisualState,
+} from '@/components/auction/auction-stage-visuals';
 
 interface BidExpertAuctionStagesTimelineProps {
   stages?: Partial<AuctionStage>[];
-  variant?: 'compact' | 'extended';
+  variant?: 'compact' | 'extended' | 'detailed';
   className?: string;
   auctionOverallStartDate?: Date;
   auction?: Auction;
   lot?: Lot;
+  surface?: 'auction' | 'lot';
+  showContextIcons?: boolean;
 }
 
-type StepStatus = 'completed' | 'active' | 'upcoming';
+type StepStatus = StageTimelineStatus;
 
 interface TimelineStep {
   key: string;
@@ -30,7 +40,8 @@ interface TimelineStep {
   endDate: Date | null;
   status: StepStatus;
   price: number | null;
-  discountText: string | null;
+  stageStatus?: string;
+  visualState: StageVisualState;
 }
 
 function formatDate(date: Date | null) {
@@ -49,7 +60,9 @@ export default function BidExpertAuctionStagesTimeline({
   className,
   auctionOverallStartDate: propStartDate,
   auction,
-  lot
+  lot,
+  surface,
+  showContextIcons,
 }: BidExpertAuctionStagesTimelineProps) {
   const [isClient, setIsClient] = React.useState(false);
 
@@ -61,6 +74,9 @@ export default function BidExpertAuctionStagesTimeline({
     () => normalizeAuctionStages(propStages || auction?.auctionStages || []),
     [propStages, auction?.auctionStages],
   );
+  const resolvedSurface = surface || (lot ? 'lot' : 'auction');
+  const shouldShowContextIcons = showContextIcons ?? variant !== 'compact';
+  const shouldShowMonetaryValues = resolvedSurface === 'lot';
 
   if (!isClient) {
     return <div className="h-10 w-full animate-pulse rounded-md bg-muted/20" data-ai-id="bidexpert-auction-timeline-skeleton" />;
@@ -81,7 +97,7 @@ export default function BidExpertAuctionStagesTimeline({
     );
   }
 
-  const steps: TimelineStep[] = stages.map((stage, index) => {
+  const baseSteps = stages.map((stage, index) => {
     const startDate = stage.startDate ? new Date(stage.startDate) : null;
     const endDate = stage.endDate ? new Date(stage.endDate) : null;
     let status: StepStatus = 'upcoming';
@@ -94,22 +110,11 @@ export default function BidExpertAuctionStagesTimeline({
       }
     }
 
-    // Calculate price if lot is provided, or discount text if not
     let price: number | null = null;
-    let discountText: string | null = null;
 
     if (lot) {
-        const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
-        price = stagePrice?.initialBid ?? (index === 0 ? lot.initialPrice : lot.secondInitialPrice) ?? stage.initialPrice ?? null;
-    } else if (auction) {
-        // Auction view: show discount indication
-        if (index === 0) {
-            discountText = "Valor da Avaliação";
-        } else {
-            // TODO: Retrieve actual discount percentage from auction configuration if available
-            // For now, we assume a standard 50% discount for the 2nd stage or display a generic message
-            discountText = "50% de desconto"; 
-        }
+      const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
+    price = stagePrice?.initialBid ?? (index === 0 ? lot.initialPrice : lot.secondInitialPrice) ?? stage.initialPrice ?? null;
     }
 
     return {
@@ -119,17 +124,23 @@ export default function BidExpertAuctionStagesTimeline({
       endDate,
       status,
       price,
-      discountText
+      stageStatus: typeof stage.status === 'string' ? stage.status : undefined,
     };
   });
 
-  let activeStep = steps.findIndex(s => s.status === 'active');
+  let activeStep = baseSteps.findIndex(s => s.status === 'active');
   if (activeStep === -1) {
-    // If no active step, find the first upcoming step to highlight as "next"
-    const firstUpcoming = steps.findIndex(s => s.status === 'upcoming');
-    // If we have an upcoming step, highlight it. If not (all completed), highlight the last one.
-    activeStep = firstUpcoming !== -1 ? firstUpcoming : steps.length - 1;
+    const firstUpcoming = baseSteps.findIndex(s => s.status === 'upcoming');
+    activeStep = firstUpcoming !== -1 ? firstUpcoming : baseSteps.length - 1;
   }
+
+  const steps: TimelineStep[] = baseSteps.map((step, index) => ({
+    ...step,
+    visualState:
+      resolvedSurface === 'lot'
+        ? getLotStageVisualState(lot?.status, step.status, index === activeStep, step.stageStatus)
+        : getAuctionStageVisualState(step.stageStatus, step.status),
+  }));
 
   const activeStepData = steps[activeStep];
 
@@ -164,9 +175,9 @@ export default function BidExpertAuctionStagesTimeline({
                       <div className="text-xs font-semibold">{step.label}</div>
                       <div className="text-xs text-muted-foreground">Início: {formatDate(step.startDate)}</div>
                       <div className="text-xs text-muted-foreground">Fim: {formatDate(step.endDate)}</div>
-                      <div className="text-xs font-semibold">
-                        {step.price !== null ? formatMoney(step.price) : (step.discountText || 'Valor sob consulta')}
-                      </div>
+                      {shouldShowMonetaryValues && (
+                        <div className="text-xs font-semibold">{formatMoney(step.price)}</div>
+                      )}
                       {step.status === 'active' && (
                         <div className="text-[11px] font-medium text-primary">Etapa atual</div>
                       )}
@@ -191,11 +202,62 @@ export default function BidExpertAuctionStagesTimeline({
     );
   }
 
+  if (variant === 'detailed') {
+    return (
+      <div className={cn('relative flex flex-col gap-4 border-l border-border/70 pl-6', className)} data-ai-id="bidexpert-auction-timeline" data-variant="detailed">
+        {steps.map((step, index) => {
+          const isHighlighted = index === activeStep;
+          const visual = getStageVisualConfig(step.visualState);
+          const VisualIcon = visual.icon;
+
+          return (
+            <article key={step.key} className="relative" data-ai-id={`bidexpert-auction-timeline-step-${index}`}>
+              <div className="absolute -left-[2.15rem] top-6 flex h-10 w-10 items-center justify-center rounded-full bg-background">
+                <div className={cn(visual.chipClassName)} data-ai-id={`bidexpert-auction-stage-icon-${index}`}>
+                  <VisualIcon className="h-4 w-4" aria-hidden="true" />
+                </div>
+              </div>
+              <div
+                className={cn(
+                  'rounded-2xl border bg-card p-5 shadow-soft transition-colors',
+                  isHighlighted ? 'border-primary/20 bg-primary/5 shadow-haze' : 'border-border/70 hover:bg-accent/30'
+                )}
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-lg font-semibold text-foreground">{step.label}</h3>
+                      <Badge className={visual.badgeClassName} data-ai-id={`bidexpert-auction-stage-badge-${index}`}>
+                        {visual.label}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground/85">Início:</span> {formatDate(step.startDate)}
+                      <span className="mx-2 text-border">|</span>
+                      <span className="font-medium text-foreground/85">Fim:</span> {formatDate(step.endDate)}
+                    </p>
+                  </div>
+                  {shouldShowMonetaryValues && (
+                    <div className="flex items-center gap-2 text-right">
+                      <span className="text-2xl font-bold text-foreground">{formatMoney(step.price)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className={cn('flex flex-col gap-2 w-full', className)} data-ai-id="bidexpert-auction-timeline" data-variant="extended">
       {steps.map((step, index) => {
         const isHighlighted = index === activeStep;
         const isCompleted = step.status === 'completed';
+        const visual = getStageVisualConfig(step.visualState);
+        const VisualIcon = visual.icon;
 
         return (
           <div
@@ -209,48 +271,63 @@ export default function BidExpertAuctionStagesTimeline({
             data-ai-id={`bidexpert-auction-timeline-step-${index}`}
           >
             <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'h-2.5 w-2.5 rounded-full flex-shrink-0',
-                  isHighlighted ? 'bg-primary' : 'bg-muted-foreground/30'
-                )}
-              />
+              {shouldShowContextIcons ? (
+                <div className={cn(visual.chipClassName, 'h-8 w-8')} data-ai-id={`bidexpert-auction-stage-icon-${index}`}>
+                  <VisualIcon className="h-4 w-4" aria-hidden="true" />
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    'h-2.5 w-2.5 rounded-full flex-shrink-0',
+                    isHighlighted ? 'bg-primary' : 'bg-muted-foreground/30'
+                  )}
+                />
+              )}
 
               <div className="flex flex-col">
-                <span
-                  className={cn(
-                    'text-sm font-semibold leading-none',
-                    isHighlighted ? 'text-foreground' : 'text-muted-foreground',
-                    isCompleted && 'line-through opacity-70'
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={cn(
+                      'text-sm font-semibold leading-none',
+                      isHighlighted ? 'text-foreground' : 'text-muted-foreground',
+                      isCompleted && 'line-through opacity-70'
+                    )}
+                  >
+                    {step.label}
+                  </span>
+                  {shouldShowContextIcons && (
+                    <Badge className={visual.badgeClassName} data-ai-id={`bidexpert-auction-stage-badge-${index}`}>
+                      {visual.label}
+                    </Badge>
                   )}
-                >
-                  {step.label}
-                </span>
+                </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={cn('text-xs text-muted-foreground', isCompleted && 'line-through opacity-70')}>
                     {formatDate(step.startDate)}
                   </span>
-                  {step.status === 'upcoming' && (
+                  {!shouldShowContextIcons && step.status === 'upcoming' && (
                     <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">Próxima</span>
                   )}
-                  {step.status === 'active' && (
+                  {!shouldShowContextIcons && step.status === 'active' && (
                     <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Em andamento</span>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="text-right">
-              <span
-                className={cn(
-                  'text-sm font-bold',
-                  isHighlighted ? 'text-foreground' : 'text-muted-foreground',
-                  isCompleted && 'line-through opacity-70'
-                )}
-              >
-                {step.price !== null ? formatMoney(step.price) : (step.discountText || 'Valor sob consulta')}
-              </span>
-            </div>
+            {shouldShowMonetaryValues && (
+              <div className="text-right">
+                <span
+                  className={cn(
+                    'text-sm font-bold',
+                    isHighlighted ? 'text-foreground' : 'text-muted-foreground',
+                    isCompleted && 'line-through opacity-70'
+                  )}
+                >
+                  {formatMoney(step.price)}
+                </span>
+              </div>
+            )}
           </div>
         );
       })}
