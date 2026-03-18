@@ -161,6 +161,7 @@ Regras extraídas de bugs reais. Todo agente Gemini DEVE seguir:
 9. **Form submit**: Usar `requestSubmit()`, não `submit()` (Vercel compat)
 10. **E2E estável**: Preferir `npm run build && npm start` ao invés de `npm run dev`
 11. **Docs commits**: Usar `--no-verify` para commits que alteram apenas `.md`
+12. **Tenant selector (Vercel)**: Com `NEXT_PUBLIC_DEFAULT_TENANT` mas **sem subdomínio** na URL (ex: `*.vercel.app`, `localhost:PORT`), o selector fica **LIVRE** (apenas pré-selecionado). Só é bloqueado quando a URL tem subdomínio real (`demo.localhost:PORT`) ou usa path-based routing (`/app/[slug]`).
 
 **Referência completa:** `context/REGRAS_NEGOCIO_CONSOLIDADO.md` seção RN-GUIA-001 a 010
         │

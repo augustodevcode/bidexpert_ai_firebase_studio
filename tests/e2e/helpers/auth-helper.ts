@@ -11,8 +11,9 @@
  * Fluxo de Tenant:
  * - Se a URL contém subdomínio (ex: demo.localhost:9005), o tenant é auto-locked
  *   no dropdown da página de login → não precisa selecionar manualmente.
- * - Se a URL é `localhost:PORT` (sem subdomínio), é necessário selecionar o tenant
- *   manualmente via combobox `[data-ai-id="auth-login-tenant-select"]`.
+ * - Se a URL é `localhost:PORT` (sem subdomínio) ou `*.vercel.app`, o selector fica
+ *   LIVRE mesmo que NEXT_PUBLIC_DEFAULT_TENANT esteja definido (neste caso o tenant
+ *   é apenas pré-selecionado, não bloqueado) → use selectTenant() para confirmar.
  * - O DevUserSelector (visível apenas em NODE_ENV=development) lista até 15 usuários
  *   com password hints, mas este helper preenche os campos diretamente.
  */
@@ -143,6 +144,10 @@ export async function ensureSeedExecuted(baseUrl: string): Promise<void> {
 /**
  * Verifica se a URL usa subdomínio (ex: demo.localhost).
  * Quando sim, o tenant é auto-locked e não precisa de seleção manual.
+ *
+ * NOTA: NEXT_PUBLIC_DEFAULT_TENANT em URLs sem subdomínio (ex: *.vercel.app,
+ * localhost:PORT) apenas PRÉ-SELECIONA o tenant — o selector permanece livre.
+ * Apenas subdomínio real ou path-based routing (/app/[slug]) bloqueiam o selector.
  */
 function hasSubdomain(baseUrl: string): boolean {
   const host = new URL(baseUrl).hostname;
