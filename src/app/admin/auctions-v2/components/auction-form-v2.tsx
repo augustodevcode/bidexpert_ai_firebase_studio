@@ -4,8 +4,7 @@
  */
 'use client';
 
-import { useMemo, useTransition, useState, useEffect, useRef, useCallback } from 'react';
-import type { Map as LeafletMap } from 'leaflet';
+import { useMemo, useTransition, useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
@@ -24,6 +23,7 @@ import EntitySelector from '@/components/ui/entity-selector';
 import { consultaCepAction } from '@/lib/actions/cep';
 import { useToast } from '@/hooks/use-toast';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import { getCitiesForState, shouldResetCitySelection } from '@/app/admin/auctions-v2/location-form-utils';
 import type {
   Auction,
   AuctionFormData,
@@ -37,19 +37,14 @@ import type {
   MediaItem,
 } from '@/types';
 
-// Dynamic import for map to avoid SSR issues
-const MapContainer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Marker),
-  { ssr: false }
-);
+const LocationMapPreview = dynamic(() => import('./location-map-preview'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-72 w-full items-center justify-center rounded-md bg-muted text-muted-foreground animate-pulse">
+      Carregando mapa...
+    </div>
+  ),
+});
 
 const auctionStatusValues = [
   'RASCUNHO',
@@ -58,8 +53,9 @@ const auctionStatusValues = [
   'ABERTO',
   'ABERTO_PARA_LANCES',
   'ENCERRADO',
-  'VENDIDO',
+  'FINALIZADO',
   'CANCELADO',
+  'SUSPENSO',
 ] as const;
 const auctionTypeValues = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'] as const;
 const auctionMethodValues = ['STANDARD', 'DUTCH', 'SILENT'] as const;
@@ -94,11 +90,19 @@ const toDateTimeLocal = (value?: string | Date | null) => {
   return new Date(parsed.getTime() - offset).toISOString().slice(0, 16);
 };
 
+const buildStageEndDate = (value?: string | Date | null) => {
+  const parsed = value ? (typeof value === 'string' ? new Date(value) : value) : new Date();
+  if (Number.isNaN(parsed.getTime())) {
+    return '';
+  }
+  return toDateTimeLocal(new Date(parsed.getTime() + 60 * 60 * 1000));
+};
+
 const stageSchema = z
   .object({
     name: z.string().min(2, 'Nome da praça obrigatório'),
     startDate: z.string().min(1, 'Defina o início'),
-    endDate: z.string().optional(),
+    endDate: z.string().min(1, 'Defina o encerramento'),
     discountPercent: z
       .string()
       .optional()
@@ -107,6 +111,34 @@ const stageSchema = z
         const num = Number(value);
         return !Number.isNaN(num) && num > 0 && num <= 100;
       }, { message: 'Informe um percentual válido (1-100)' }),
+  })
+  .superRefine((entry, ctx) => {
+    const startDate = new Date(entry.startDate);
+    const endDate = new Date(entry.endDate);
+
+    if (Number.isNaN(startDate.getTime())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Defina uma data de início válida',
+        path: ['startDate'],
+      });
+    }
+
+    if (Number.isNaN(endDate.getTime())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Defina uma data de encerramento válida',
+        path: ['endDate'],
+      });
+    }
+
+    if (!Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime()) && endDate <= startDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'O encerramento da praça deve ocorrer após o início',
+        path: ['endDate'],
+      });
+    }
   })
   .transform((entry) => ({
     ...entry,
@@ -121,8 +153,8 @@ const auctionFormV2Schema = z
     auctionType: z.enum(auctionTypeValues),
     auctionMethod: z.enum(auctionMethodValues),
     participation: z.enum(participationValues),
-    auctioneerId: z.string().optional(),
-    sellerId: z.string().optional(),
+    auctioneerId: z.string().min(1, 'Selecione o leiloeiro responsável'),
+    sellerId: z.string().min(1, 'Selecione o comitente'),
     judicialProcessId: z.string().optional(),
     latitude: z.number().nullable().optional(),
     longitude: z.number().nullable().optional(),
@@ -189,7 +221,7 @@ const getDefaultDiscountPercent = (index: number): string => {
 const buildStage = (index: number, stage?: StageFormValue) => ({
   name: stage?.name ?? `Praça ${index + 1}`,
   startDate: toDateTimeLocal(stage?.startDate),
-  endDate: stage?.endDate ? toDateTimeLocal(stage.endDate) : '',
+  endDate: stage?.endDate ? toDateTimeLocal(stage.endDate) : buildStageEndDate(stage?.startDate),
   discountPercent: stage?.discountPercent ?? getDefaultDiscountPercent(index),
 });
 
@@ -199,100 +231,7 @@ const cleanText = (value?: string) => {
   return trimmed.length ? trimmed : undefined;
 };
 
-// Componente interno de mapa para evitar SSR issues
-interface LocationMapPreviewProps {
-  latitude: number | null | undefined;
-  longitude: number | null | undefined;
-  setValue: (name: 'latitude' | 'longitude', value: number) => void;
-}
-
-function LocationMapPreview({ latitude, longitude, setValue }: LocationMapPreviewProps) {
-  const [isClient, setIsClient] = useState(false);
-  const [leafletLoaded, setLeafletLoaded] = useState(false);
-  const mapRef = useRef<LeafletMap | null>(null);
-  const [mapReady, setMapReady] = useState(false);
-
-  const hasCoordinates = typeof latitude === 'number' && typeof longitude === 'number' && !Number.isNaN(latitude) && !Number.isNaN(longitude);
-  const center: [number, number] = [
-    hasCoordinates ? (latitude as number) : -14.235,
-    hasCoordinates ? (longitude as number) : -51.9253,
-  ];
-  const zoom = hasCoordinates ? 16 : 4;
-
-  useEffect(() => {
-    setIsClient(true);
-    // Load Leaflet CSS
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    document.head.appendChild(link);
-    
-    // Fix Leaflet's default icon path issue
-    import('leaflet').then((L) => {
-      // @ts-ignore
-      delete L.Icon.Default.prototype._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
-      setLeafletLoaded(true);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!mapRef.current) return;
-    mapRef.current.invalidateSize();
-    if (hasCoordinates) {
-      mapRef.current.flyTo(center, 16, { duration: 0.45 });
-    }
-  }, [center[0], center[1], hasCoordinates, mapReady]);
-
-  if (!isClient || !leafletLoaded) {
-    return <div className="h-72 w-full bg-muted animate-pulse rounded-md flex items-center justify-center text-muted-foreground">Carregando mapa...</div>;
-  }
-
-  return (
-    <MapContainer 
-      ref={mapRef}
-      key={`${center.join('-')}-${zoom}`} 
-      center={center} 
-      zoom={zoom} 
-      scrollWheelZoom={true} 
-      className="h-72 w-full rounded-md z-0 border border-border"
-      data-testid="auction-location-map"
-      data-has-coordinates={hasCoordinates ? 'true' : 'false'}
-      whenReady={() => {
-        const target = mapRef.current;
-        if (!target) return;
-        setMapReady(true);
-        setTimeout(() => {
-          target.invalidateSize();
-          if (hasCoordinates) {
-            target.flyTo(center, 16, { duration: 0.45 });
-          }
-        }, 80);
-      }}
-      // @ts-ignore - onClick exists but not typed
-      onClick={(e: any) => {
-        if (e.latlng) {
-          setValue('latitude', Number(e.latlng.lat));
-          setValue('longitude', Number(e.latlng.lng));
-        }
-      }}
-    >
-      <TileLayer
-        // @ts-ignore
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {hasCoordinates && (
-        // @ts-ignore
-        <Marker position={[center[0], center[1]]} />
-      )}
-    </MapContainer>
-  );
-}
+const normalizeSelectValue = (value?: string | null) => value ?? '';
 
 interface AuctionFormV2Props {
   initialData?: Auction | null;
@@ -316,15 +255,17 @@ export default function AuctionFormV2({
   onSubmit,
 }: AuctionFormV2Props) {
   const initialStages = useMemo(() => {
-    const stages = initialData?.auctionStages?.map((stage: AuctionStage, index: number) => ({
-      name: stage?.name ?? `Praça ${index + 1}`,
-      startDate: toDateTimeLocal(stage?.startDate),
-      endDate: stage?.endDate ? toDateTimeLocal(stage.endDate) : '',
-      discountPercent:
-        stage?.discountPercent !== null && stage?.discountPercent !== undefined
-          ? String(stage.discountPercent)
-          : getDefaultDiscountPercent(index),
-    }));
+    const stages = initialData?.auctionStages?.map((stage: AuctionStage, index: number) =>
+      buildStage(index, {
+        name: stage?.name ?? `Praça ${index + 1}`,
+        startDate: toDateTimeLocal(stage?.startDate),
+        endDate: stage?.endDate ? toDateTimeLocal(stage.endDate) : buildStageEndDate(stage?.startDate),
+        discountPercent:
+          stage?.discountPercent !== null && stage?.discountPercent !== undefined
+            ? String(stage.discountPercent)
+            : getDefaultDiscountPercent(index),
+      })
+    );
     return stages && stages.length ? stages : [buildStage(0)];
   }, [initialData]);
 
@@ -364,11 +305,12 @@ export default function AuctionFormV2({
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'auctionStages' });
   const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
+  const selectedCityId = useWatch({ control: form.control, name: 'cityId' });
   const watchedLatitude = useWatch({ control: form.control, name: 'latitude' });
   const watchedLongitude = useWatch({ control: form.control, name: 'longitude' });
   const watchedImageId = useWatch({ control: form.control, name: 'imageMediaId' });
   const citiesForState = useMemo(
-    () => (selectedStateId ? allCities.filter((city) => city.stateId === selectedStateId) : []),
+    () => getCitiesForState(allCities, selectedStateId),
     [selectedStateId, allCities]
   );
   const [isCepPending, startCepTransition] = useTransition();
@@ -384,6 +326,17 @@ export default function AuctionFormV2({
       setImagePreviewUrl(img);
     }
   }, [initialData]);
+
+  useEffect(() => {
+    if (!shouldResetCitySelection({ cityId: selectedCityId, stateId: selectedStateId, cities: allCities })) {
+      return;
+    }
+
+    form.setValue('cityId', '', {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }, [allCities, form, selectedCityId, selectedStateId]);
 
   const runCepAndGeocode = useCallback(async (zip: string, markDirty = true) => {
     if (!zip || zip.replace(/\D/g, '').length !== 8) {
@@ -518,7 +471,7 @@ export default function AuctionFormV2({
       auctionStages: values.auctionStages.map((stage) => ({
         name: stage.name.trim(),
         startDate: new Date(stage.startDate),
-        endDate: stage.endDate ? new Date(stage.endDate) : new Date(stage.startDate),
+        endDate: new Date(stage.endDate),
         discountPercent: stage.discountPercent ? Number(stage.discountPercent) : 100,
       })) as AuctionFormData['auctionStages'],
     };
@@ -571,7 +524,7 @@ export default function AuctionFormV2({
                   <FormItem>
                     <FormLabel>Status</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={normalizeSelectValue(field.value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -595,7 +548,7 @@ export default function AuctionFormV2({
                   <FormItem>
                     <FormLabel>Modalidade</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={normalizeSelectValue(field.value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -619,7 +572,7 @@ export default function AuctionFormV2({
                   <FormItem>
                     <FormLabel>Método</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={normalizeSelectValue(field.value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
@@ -644,7 +597,7 @@ export default function AuctionFormV2({
                 <FormItem>
                   <FormLabel>Participação</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={normalizeSelectValue(field.value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -674,7 +627,7 @@ export default function AuctionFormV2({
               name="auctioneerId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Leiloeiro</FormLabel>
+                  <FormLabel>Leiloeiro <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                   <FormControl>
                     <EntitySelector
                       value={field.value}
@@ -695,7 +648,7 @@ export default function AuctionFormV2({
               name="sellerId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Comitente</FormLabel>
+                  <FormLabel>Comitente <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                   <FormControl>
                     <EntitySelector
                       value={field.value}
@@ -754,7 +707,7 @@ export default function AuctionFormV2({
                       <FormItem>
                         <FormLabel>Estado</FormLabel>
                         <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={normalizeSelectValue(field.value)}>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
@@ -778,7 +731,7 @@ export default function AuctionFormV2({
                       <FormItem>
                         <FormLabel>Cidade</FormLabel>
                         <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={normalizeSelectValue(field.value)}>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
@@ -994,6 +947,7 @@ export default function AuctionFormV2({
                   <p className="text-sm font-semibold">{`Praça ${index + 1}`}</p>
                   {fields.length > 1 && (
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => remove(index)}
@@ -1009,9 +963,9 @@ export default function AuctionFormV2({
                     name={`auctionStages.${index}.name` as const}
                     render={({ field: stageField }) => (
                       <FormItem>
-                        <FormLabel>Nome</FormLabel>
+                        <FormLabel>Nome *</FormLabel>
                         <FormControl>
-                          <Input {...stageField} />
+                          <Input required {...stageField} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1022,9 +976,9 @@ export default function AuctionFormV2({
                     name={`auctionStages.${index}.startDate` as const}
                     render={({ field: stageField }) => (
                       <FormItem>
-                        <FormLabel>Início</FormLabel>
+                        <FormLabel>Início *</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...stageField} />
+                          <Input type="datetime-local" required {...stageField} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1035,9 +989,9 @@ export default function AuctionFormV2({
                     name={`auctionStages.${index}.endDate` as const}
                     render={({ field: stageField }) => (
                       <FormItem>
-                        <FormLabel>Fim</FormLabel>
+                        <FormLabel>Fim *</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...stageField} />
+                          <Input type="datetime-local" required {...stageField} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

@@ -1,18 +1,30 @@
 import { Page, expect } from '@playwright/test';
 import { faker as fakerPtBr } from '@faker-js/faker/locale/pt_BR';
 import { attachBrowserConsoleTelemetry } from '../helpers/browser-console-telemetry';
+import { loginAsAdmin } from '../helpers/auth-helper';
 
 export const BASE_URL = process.env.BASE_URL || 'http://localhost:9002';
+
+async function hasAdminSession(page: Page) {
+  const cookies = await page.context().cookies(BASE_URL);
+  return cookies.some((cookie) => {
+    return ['session', 'next-auth.session-token'].includes(cookie.name) && cookie.value.length > 0;
+  });
+}
 
 export function randomImageUrl(seed?: string, w = 1200, h = 800) {
   const s = seed || fakerPtBr.string.alphanumeric(8);
   return `https://picsum.photos/seed/${s}/${w}/${h}`;
 }
 
-export async function ensureAdminSession(_page: Page) {
-  // Session is already loaded from storageState in playwright.config
-  attachBrowserConsoleTelemetry(_page);
-  return;
+export async function ensureAdminSession(page: Page) {
+  attachBrowserConsoleTelemetry(page);
+
+  if (await hasAdminSession(page)) {
+    return;
+  }
+
+  await loginAsAdmin(page, BASE_URL);
 }
 
 export function genAuctionData() {

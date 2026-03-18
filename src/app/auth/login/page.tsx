@@ -46,6 +46,8 @@ type TenantOption = {
     subdomain?: string | null;
 };
 
+const normalizeSelectValue = (value?: string | null) => value ?? '';
+
 
 function LoginPageContent() {
     const router = useRouter();
@@ -69,6 +71,7 @@ function LoginPageContent() {
         defaultValues: {
             email: '',
             password: '',
+            tenantId: '',
         },
     });
 
@@ -311,7 +314,7 @@ function LoginPageContent() {
                                         </Label>
                                         <FormControl>
                                             <Select
-                                                value={selectedTenantId || undefined}
+                                                value={normalizeSelectValue(selectedTenantId)}
                                                 onValueChange={(value) => {
                                                     setSelectedTenantId(value);
                                                     form.setValue('tenantId', value);
@@ -440,6 +443,7 @@ function LoginPageContent() {
 
 function DevUserSelector({ onSelect }: { onSelect: (u: any) => void }) {
     const [users, setUsers] = useState<any[]>([]);
+    const [selectedEmail, setSelectedEmail] = useState('');
 
     useEffect(() => {
         getDevUsers().then(setUsers);
@@ -450,7 +454,8 @@ function DevUserSelector({ onSelect }: { onSelect: (u: any) => void }) {
     return (
         <div className="px-6 pb-4">
             <Label className="text-xs text-muted-foreground mb-1 block">Dev: Auto-login (Ambiente de Teste)</Label>
-            <Select onValueChange={(email) => {
+            <Select value={selectedEmail} onValueChange={(email) => {
+                setSelectedEmail(email);
                 const u = users.find(user => user.email === email);
                 if (u) onSelect({ ...u, password: u.passwordHint });
             }}>

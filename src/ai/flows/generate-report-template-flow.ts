@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileoverview Genkit flow para geração de templates de relatórios com IA.
  * Gera HTML/CSS compatível com GrapesJS e Handlebars a partir de descrição textual
