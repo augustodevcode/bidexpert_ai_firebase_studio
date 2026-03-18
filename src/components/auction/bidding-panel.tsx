@@ -24,6 +24,8 @@ import { ptBR } from 'date-fns/locale';
 import LotAllBidsModal from './lot-all-bids-modal';
 import { getAuctionStatusText, calculateMinimumBid } from '@/lib/ui-helpers';
 import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
+import { getBidEligibilityState } from '@/lib/bidding-eligibility';
+import { getEffectiveAuctionStatus, getEffectiveLotStatus } from '@/lib/auction-timing';
 
 interface BiddingPanelProps {
   currentLot: Lot;
@@ -81,9 +83,17 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
 
   const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
   const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
-  const isDocHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
-  
-  const canUserBid = (isEffectivelySuperTestUser || hasAdminRights || (isDocHabilitado && isHabilitadoForThisAuction)) && currentLot?.status === 'ABERTO_PARA_LANCES';
+  const effectiveAuctionStatus = getEffectiveAuctionStatus(auction);
+  const effectiveLotStatus = getEffectiveLotStatus(currentLot, auction);
+  const bidEligibility = getBidEligibilityState({
+    isAuthenticated: !!userProfileWithPermissions,
+    lotStatus: effectiveLotStatus ?? currentLot?.status,
+    auctionStatus: effectiveAuctionStatus ?? auction?.status,
+    userHabilitationStatus: userProfileWithPermissions?.habilitationStatus,
+    isAuctionHabilitated: !!isHabilitadoForThisAuction,
+    isPrivilegedBypass: !!(isEffectivelySuperTestUser || hasAdminRights),
+  });
+  const canUserBid = bidEligibility.canBid;
 
   const fetchBidHistory = useCallback(async () => {
     // Se existe função de refresh compartilhada, usamos ela
@@ -236,30 +246,40 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
         );
     }
     
-    if (currentLot.status !== 'ABERTO_PARA_LANCES') {
+    if (bidEligibility.reason === 'LOT_NOT_OPEN') {
          return (
            <div className="text-sm text-center p-4 bg-muted/80 border border-muted text-muted-foreground rounded-md">
              <Info className="h-5 w-5 mx-auto mb-2" />
-             <p className="font-medium">Lances para este lote estão {getAuctionStatusText(currentLot.status).toLowerCase()}.</p>
+             <p className="font-medium">Lances para este lote estão {getAuctionStatusText(effectiveLotStatus ?? currentLot.status).toLowerCase()}.</p>
            </div>
          );
     }
 
-    if (!isDocHabilitado) {
+    if (bidEligibility.reason === 'AUCTION_NOT_ACTIVE') {
         return (
-          <div className="text-sm text-center p-4 bg-destructive/10 border border-destructive/30 text-destructive rounded-md">
+          <div className="text-sm text-center p-4 bg-muted/80 border border-muted text-muted-foreground rounded-md">
             <Info className="h-5 w-5 mx-auto mb-2" />
-            <p className="font-medium mb-1">Documentação Pendente</p>
-            <p className="text-xs">Sua documentação precisa ser aprovada para dar lances.</p>
+            <p className="font-medium mb-1">{bidEligibility.title}</p>
+            <p className="text-xs">{bidEligibility.description}</p>
           </div>
         );
     }
 
-    if (!isHabilitadoForThisAuction) {
+    if (bidEligibility.reason === 'DOCUMENTATION_PENDING') {
+        return (
+          <div className="text-sm text-center p-4 bg-destructive/10 border border-destructive/30 text-destructive rounded-md">
+            <Info className="h-5 w-5 mx-auto mb-2" />
+            <p className="font-medium mb-1">{bidEligibility.title}</p>
+            <p className="text-xs">{bidEligibility.description}</p>
+          </div>
+        );
+    }
+
+    if (bidEligibility.reason === 'AUCTION_HABILITATION_REQUIRED') {
         return (
             <div className="p-4 border-2 border-dashed border-primary/50 rounded-lg text-center space-y-3">
-                <h4 className="font-semibold text-foreground">Habilite-se para Participar</h4>
-                <p className="text-xs text-muted-foreground">Sua documentação está aprovada! Clique abaixo para se habilitar especificamente para este leilão.</p>
+                <h4 className="font-semibold text-foreground">{bidEligibility.title}</h4>
+                <p className="text-xs text-muted-foreground">{bidEligibility.description}</p>
                 <Button onClick={handleHabilitarClick} disabled={isHabilitando} className="w-full">
                    {isHabilitando ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gavel className="mr-2 h-4 w-4"/>} Habilitar-se para este Leilão
                 </Button>

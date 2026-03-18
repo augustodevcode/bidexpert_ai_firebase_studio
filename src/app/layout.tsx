@@ -93,7 +93,7 @@ export default async function RootLayout({
           <CurrencyProvider>
             <TooltipProvider delayDuration={0}>
               <AppContentWrapper
-                isSetupComplete={true}
+                isSetupComplete={isSetupComplete}
                 platformSettings={platformSettings}
               >
                 {children}

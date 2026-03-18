@@ -973,6 +973,12 @@ export class LotService {
 
   async placeMaxBid(lotId: string, userId: string, maxAmount: number): Promise<{ success: boolean; message: string }> {
     try {
+      const { biddingEligibilityService } = await import('@/services/bidding-eligibility.service');
+      const eligibility = await biddingEligibilityService.assertCanBid(lotId, userId);
+      if (!eligibility.success) {
+        return { success: false, message: eligibility.message };
+      }
+
       let numericLotId: bigint;
       if (/^\d+$/.test(lotId)) {
         numericLotId = BigInt(lotId);

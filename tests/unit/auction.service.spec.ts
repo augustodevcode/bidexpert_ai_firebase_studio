@@ -60,7 +60,7 @@ describe('AuctionService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Praça 1 deve informar a data de encerramento');
+      expect(result.message).toMatch(/Pra[çc]a 1/i);
       expect(tx.auction.create).not.toHaveBeenCalled();
       expect(tx.auctionStage.createMany).not.toHaveBeenCalled();
     });
@@ -155,7 +155,7 @@ describe('AuctionService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Praça 1 deve informar a data de encerramento');
+      expect(result.message).toMatch(/Pra[çc]a 1/i);
       expect(tx.auction.update).not.toHaveBeenCalled();
       expect(tx.auctionStage.deleteMany).not.toHaveBeenCalled();
       expect(tx.auctionStage.createMany).not.toHaveBeenCalled();

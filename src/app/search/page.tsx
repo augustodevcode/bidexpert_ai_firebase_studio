@@ -11,7 +11,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import type { ActiveFilters } from '@/components/BidExpertFilter';
 import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo } from '@/types';
-import { slugify } from '@/lib/ui-helpers';
+import { getEffectiveAuctionStatus, getEffectiveLotEndDate, getEffectiveLotStatus, slugify } from '@/lib/ui-helpers';
+import { getAuctionEffectiveDates } from '@/lib/auction-timing';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
@@ -311,8 +312,16 @@ function SearchPageContent() {
 
     // 2. Apply other filters
     const filteredItems = searchedItems.filter(item => {
+      const itemEffectiveStatus = itemTypeContext === 'auction'
+        ? getEffectiveAuctionStatus(item as Auction) || item.status
+        : itemTypeContext === 'lot'
+          ? getEffectiveLotStatus(item as Lot, allAuctions.find(a => a.id === item.auctionId)) || item.status
+          : item.status;
+
       if (activeFilters.category !== 'TODAS') {
-        const itemCategoryName = 'type' in item && item.type ? item.type : ('category' in item ? item.category?.name : undefined);
+        const itemCategoryName = 'type' in item && item.type
+          ? item.type
+          : ('category' in item ? (item.category?.name || undefined) : undefined);
         const category = allCategoriesForFilter.find(c => c.slug === activeFilters.category);
         if (!itemCategoryName || !category || (item.categoryId !== category.id && slugify(itemCategoryName) !== category.slug)) return false;
       }
@@ -331,7 +340,7 @@ function SearchPageContent() {
         if (!sellerName || !activeFilters.sellers.includes(sellerName)) return false;
       }
       if (activeFilters.status && activeFilters.status.length > 0) {
-        if (!item.status || !activeFilters.status.includes(item.status as string)) return false;
+        if (!itemEffectiveStatus || !activeFilters.status.includes(itemEffectiveStatus as string)) return false;
       }
       if (itemTypeContext === 'auction' && activeFilters.modality !== 'TODAS' && (item as Auction).auctionType?.toUpperCase() !== activeFilters.modality) return false;
       if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
@@ -366,10 +375,34 @@ function SearchPageContent() {
         filteredItems.sort((a, b) => String(b.id).localeCompare(String(a.id)));
         break;
       case 'endDate_asc':
-        filteredItems.sort((a, b) => new Date((a as any).endDate).getTime() - new Date((b as any).endDate).getTime());
+        filteredItems.sort((a, b) => {
+          const aTime = itemTypeContext === 'auction'
+            ? (getAuctionEffectiveDates(a as Auction).endDate?.getTime() ?? Number.MAX_SAFE_INTEGER)
+            : itemTypeContext === 'lot'
+              ? (getEffectiveLotEndDate(a as Lot, allAuctions.find(auction => auction.id === a.auctionId)).effectiveLotEndDate?.getTime() ?? Number.MAX_SAFE_INTEGER)
+              : new Date((a as any).endDate).getTime();
+          const bTime = itemTypeContext === 'auction'
+            ? (getAuctionEffectiveDates(b as Auction).endDate?.getTime() ?? Number.MAX_SAFE_INTEGER)
+            : itemTypeContext === 'lot'
+              ? (getEffectiveLotEndDate(b as Lot, allAuctions.find(auction => auction.id === b.auctionId)).effectiveLotEndDate?.getTime() ?? Number.MAX_SAFE_INTEGER)
+              : new Date((b as any).endDate).getTime();
+          return aTime - bTime;
+        });
         break;
       case 'endDate_desc':
-        filteredItems.sort((a, b) => new Date((b as any).endDate).getTime() - new Date((a as any).endDate).getTime());
+        filteredItems.sort((a, b) => {
+          const aTime = itemTypeContext === 'auction'
+            ? (getAuctionEffectiveDates(a as Auction).endDate?.getTime() ?? Number.MIN_SAFE_INTEGER)
+            : itemTypeContext === 'lot'
+              ? (getEffectiveLotEndDate(a as Lot, allAuctions.find(auction => auction.id === a.auctionId)).effectiveLotEndDate?.getTime() ?? Number.MIN_SAFE_INTEGER)
+              : new Date((a as any).endDate).getTime();
+          const bTime = itemTypeContext === 'auction'
+            ? (getAuctionEffectiveDates(b as Auction).endDate?.getTime() ?? Number.MIN_SAFE_INTEGER)
+            : itemTypeContext === 'lot'
+              ? (getEffectiveLotEndDate(b as Lot, allAuctions.find(auction => auction.id === b.auctionId)).effectiveLotEndDate?.getTime() ?? Number.MIN_SAFE_INTEGER)
+              : new Date((b as any).endDate).getTime();
+          return bTime - aTime;
+        });
         break;
       case 'price_asc':
         filteredItems.sort((a, b) => ((a as any).price ?? Infinity) - ((b as any).price ?? Infinity));

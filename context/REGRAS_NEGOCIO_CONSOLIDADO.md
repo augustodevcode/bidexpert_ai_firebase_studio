@@ -271,6 +271,8 @@ Com base na análise de código e documentação, foram identificados pontos que
 🚫 **Restrições**:  
 - Bloquear navegação para rotas órfãs (`/new`, `/[id]/edit`) se `CrudFormContainer` estiver ativo  
 - Usar estado local ou contexto para gerenciar abertura/fechamento
+- O `CrudFormContainer` é o padrão oficial para create/edit em listagens admin e admin-plus; `Dialog` ou `Sheet` isolados só podem permanecer quando houver justificativa técnica documentada.
+- Ao migrar uma listagem para `CrudFormContainer`, a rota órfã antiga deve ser removida ou redirecionada para a listagem de origem.
 
 ### RN-015: Configuração Global de Edição (Modal/Sheet)
 🎛️ **Configuração**:  
@@ -287,15 +289,41 @@ Com base na análise de código e documentação, foram identificados pontos que
 
 ✅ **Status**: Implementado via `CrudFormContainer.tsx` e campo `crudFormMode` no schema
 
+**BDD - Container global em listagens admin**
+- **Dado** uma listagem administrativa que suporte criar e editar registros
+- **Quando** o usuário aciona "Novo" ou "Editar"
+- **Então** o formulário deve abrir dentro do `CrudFormContainer`
+- **E** o modo final deve respeitar `crudFormMode` no desktop e forçar `sheet` no mobile
+
 ### RN-016: Setup Gate Obrigatório
 Bloquear acesso a rotas protegidas quando `isSetupComplete=false`  
 Exigir verificação de `isSetupComplete` em `layout.tsx` com fallback seguro  
 Adicionar teste de regressão para impedir loops/redirects indevidos
+O `SetupRedirect` não pode permanecer desabilitado em branches de integração, homologação, preview ou produção. Bypass local só é permitido de forma temporária e documentada durante debugging isolado.
+
+**BDD - Gate de setup ativo**
+- **Dado** um tenant com `isSetupComplete=false`
+- **Quando** um usuário acessa uma rota protegida diferente de `/setup`
+- **Então** ele deve ser redirecionado para `/setup`
+- **E** não deve ocorrer loop de navegação
+
+- **Dado** um tenant com `isSetupComplete=true`
+- **Quando** um usuário acessa `/setup`
+- **Então** ele deve ser redirecionado para a área administrativa padrão
 
 ### RN-017: Elegibilidade para Lance e Arremate
 Usuário só pode lançar se: estiver autenticado, habilitado no leilão, KYC/documentos aprovados (quando aplicável), termos aceitos  
 Ao tentar lançar sem elegibilidade: exibir modal com checklist e CTAs para completar  
 Arremate/checkout exige método de pagamento válido e endereço confirmado
+Toda decisão de elegibilidade deve ser centralizada em um service compartilhado consumido por UI, Server Actions e motor de lances. A UI pode orientar o usuário, mas a decisão final sempre pertence ao backend.
+
+**Checklist mínimo de elegibilidade**
+- Autenticado
+- Habilitado no leilão
+- Documentação/KYC aprovada quando exigido
+- Termos aceitos
+- Cadastro essencial completo
+- Método de pagamento e endereço válidos para arremate/checkout
 
 ### RN-018: Consistência Multi-Tenant em Navegação
 Todos os links/rotas geradas devem carregar `tenantId` do contexto  
@@ -306,6 +334,7 @@ Proibido aceitar `tenantId` vindo do cliente sem validação
 Finalizar APIs: `GET/POST /api/bidder/*` para lotes vencidos, pagamentos, notificações, histórico, perfil  
 Repositories e services com BigInt  
 Seções do dashboard só renderizam quando dados essenciais estiverem carregados (skeletons/spinners)
+É proibido manter `TODO` funcional em seções visíveis do dashboard do arrematante em branches de integração. Se um bloco não tiver backend pronto, deve renderizar estado vazio explícito e testável, nunca placeholder ambíguo.
 
 ### RN-020: Fluxo de Publicação de Leilão
 `Auction` só pode ir para "Publicado" quando: etapas e datas válidas, lotes associados, regras de mídia atendidas, comitente/leiloeiro vinculados e ativos  
@@ -476,6 +505,70 @@ Proibir mix de `cuid()` em novos docs/código
 - **Performance**: Lazy loading de contadores quando necessário  
 - **Feedback**: Loading states durante navegação  
 - **Consistência**: Mesmo padrão visual em todas as tabelas CRUD  
+
+### RN-026: Consistência Temporal e de Status nas Superfícies Públicas
+✅ Cards, list items, detalhes, modais e countdowns de leilões/lotes DEVEM usar um cálculo efetivo único de status visual.
+✅ É proibido exibir badge de status aberto quando a data efetiva de encerramento já passou.
+✅ É proibido exibir texto de encerrado no rodapé quando o mesmo item ainda estiver efetivamente aberto pela regra temporal vigente.
+✅ A data efetiva deve considerar, nesta ordem quando aplicável: `actualOpenDate`/`openDate`/`auctionDate` para abertura e a última praça válida ou `endDate` para encerramento.
+✅ Regras temporais compartilhadas DEVEM ser centralizadas em helper/service reutilizado por UI pública e admin.
+
+**BDD - Status visual consistente**
+- **Dado** um lote ou leilão com `status` persistido como `ABERTO_PARA_LANCES`
+- **E** a data efetiva de encerramento já passou
+- **Quando** a interface renderiza badge, timeline e cronômetro
+- **Então** todos os pontos da interface devem refletir estado encerrado de forma consistente
+
+- **Dado** um lote ou leilão dentro da janela temporal válida
+- **Quando** a interface renderiza badge, timeline e cronômetro
+- **Então** nenhum ponto da interface pode indicar estado encerrado
+
+### RN-027: Cronologia de Praças e Ordenação Temporal
+✅ A sequência de `AuctionStage` DEVE ser validada por data real, nunca apenas por ordem de inserção.
+✅ Cada praça deve respeitar `startDate <= endDate`.
+✅ A praça `n+1` não pode iniciar antes do término da praça `n`.
+✅ A UI deve renderizar as praças em ordem cronológica crescente.
+✅ Dados inválidos de cronologia devem bloquear publicação do leilão e gerar erro descritivo no service.
+
+**BDD - Bloqueio de cronologia impossível**
+- **Dado** um leilão com 2ª praça iniciando antes do fim da 1ª praça
+- **Quando** o usuário tenta salvar ou publicar o leilão
+- **Então** o sistema deve rejeitar a operação com mensagem descritiva
+
+- **Dado** um leilão com praças válidas
+- **Quando** a timeline é renderizada
+- **Então** as praças devem aparecer em ordem cronológica consistente
+
+### RN-028: Renderização Nula e Monetária em Superfícies Públicas
+✅ É proibido renderizar `R$ --`, `undefined`, `null`, `Não informada` ou campos vazios ambíguos em cards, list items, detalhes e banners públicos quando o dado puder ser validado previamente.
+✅ Valores monetários DEVEM usar formatador central e checagem explícita de `null`/`undefined`; valores `0` permanecem válidos e devem ser exibidos.
+✅ Itens com integridade referencial insuficiente para categoria, localização ou valor obrigatório DEVEM ser filtrados da superfície pública relevante.
+✅ Placeholders textuais só podem ser usados em painéis administrativos ou estados explicitamente documentados.
+
+**BDD - Valor zero não some da interface**
+- **Dado** um valor monetário igual a `0`
+- **Quando** a interface renderiza o campo
+- **Então** o valor formatado deve aparecer normalmente
+
+**BDD - Item público inválido é filtrado**
+- **Dado** um item sem categoria ou sem localização obrigatória para a superfície pública
+- **Quando** a listagem pública é montada
+- **Então** esse item não deve ser exibido
+
+### RN-029: QA em Preview Vercel com Bypass Controlado
+✅ O bypass de Deployment Protection em previews Vercel é permitido apenas para automação de QA e smoke test.
+✅ O fluxo oficial deve usar `x-vercel-protection-bypass` e/ou `VERCEL_SHARE_URL` na mesma sessão do browser que executará o login.
+✅ O app deve registrar quando estiver operando em fallback tolerado de preview para evitar falso positivo de ambiente saudável.
+✅ Testes em preview DEVEM diferenciar claramente falha mascarada por fallback de falha real com backend saudável.
+
+**BDD - Bypass controlado de preview**
+- **Dado** um deployment preview protegido por Vercel
+- **Quando** a suíte E2E inicializa com segredo de bypass ou share URL válido
+- **Então** a automação deve conseguir acessar a rota alvo sem desabilitar a proteção do projeto
+
+- **Dado** um preview em fallback tolerado por indisponibilidade de banco
+- **Quando** o smoke test roda
+- **Então** o log deve registrar explicitamente que a validação ocorreu em modo degradado
 
 ### RN-024: Impersonação Administrativa Segura
 🔐 **Objetivo**: Permitir que administradores visualizem dashboards de outros perfis sem comprometer segurança.

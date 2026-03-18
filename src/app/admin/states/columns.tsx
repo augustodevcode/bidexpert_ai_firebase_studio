@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { StateInfo } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<StateInfo>[] => [
+export const createColumns = ({ handleDelete, handleEdit }: { handleDelete: (id: string) => void; handleEdit?: (state: StateInfo) => void }): ColumnDef<StateInfo>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -38,9 +38,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
-      <Link href={`/admin/states/${row.original.id}/edit`} className="hover:text-primary font-medium">
+      <button onClick={() => handleEdit?.(row.original)} type="button" className="hover:text-primary font-medium text-left">
         {row.getValue("name")}
-      </Link>
+      </button>
     ),
   },
   {
@@ -59,11 +59,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
       const state = row.original;
       return (
          <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/states/${state.id}/edit`}>
-              <Pencil className="h-4 w-4" />
-              <span className="sr-only">Editar</span>
-            </Link>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit?.(state)} type="button">
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">Editar</span>
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(state.id)}>
             <Trash2 className="h-4 w-4 text-destructive" />

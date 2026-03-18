@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import type { AuctionStage, Auction, Lot } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { normalizeAuctionStages } from '@/lib/ui-helpers';
 import {
   getAuctionStageVisualState,
   getLotStageVisualState,
@@ -49,7 +50,7 @@ function formatDate(date: Date | null) {
 }
 
 function formatMoney(value: number | null) {
-  if (!value && value !== 0) return 'R$ --';
+  if (value === null) return '';
   return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 }
 
@@ -69,7 +70,10 @@ export default function BidExpertAuctionStagesTimeline({
     setIsClient(true);
   }, []);
 
-  const stages = propStages || auction?.auctionStages || [];
+  const stages = React.useMemo(
+    () => normalizeAuctionStages(propStages || auction?.auctionStages || []),
+    [propStages, auction?.auctionStages],
+  );
   const resolvedSurface = surface || (lot ? 'lot' : 'auction');
   const shouldShowContextIcons = showContextIcons ?? variant !== 'compact';
   const shouldShowMonetaryValues = resolvedSurface === 'lot';
@@ -110,7 +114,7 @@ export default function BidExpertAuctionStagesTimeline({
 
     if (lot) {
       const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
-      price = stagePrice?.initialBid || (index === 0 ? lot.initialPrice : lot.secondInitialPrice) || stage.initialPrice || null;
+    price = stagePrice?.initialBid ?? (index === 0 ? lot.initialPrice : lot.secondInitialPrice) ?? stage.initialPrice ?? null;
     }
 
     return {
