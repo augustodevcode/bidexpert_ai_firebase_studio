@@ -71,6 +71,96 @@ export class AuctionService {
     return cleaned;
   }
 
+  private validateAuctionStages(auctionStages?: Array<{
+    name?: string | null;
+    startDate?: string | Date | null;
+    endDate?: string | Date | null;
+  }> | null): string | null {
+    if (!auctionStages?.length) {
+      return null;
+    }
+
+    for (const [index, stage] of auctionStages.entries()) {
+      const stageName = stage?.name?.trim() || `Praça ${index + 1}`;
+
+      if (!stage?.name?.trim()) {
+        return `A praça ${index + 1} deve informar um nome válido.`;
+      }
+
+      if (!stage.startDate) {
+        return `${stageName} deve informar a data de início.`;
+      }
+
+      if (!stage.endDate) {
+        return `${stageName} deve informar a data de encerramento.`;
+      }
+
+      const startDate = new Date(stage.startDate);
+      const endDate = new Date(stage.endDate);
+
+      if (Number.isNaN(startDate.getTime())) {
+        return `${stageName} possui uma data de início inválida.`;
+      }
+
+      if (Number.isNaN(endDate.getTime())) {
+        return `${stageName} possui uma data de encerramento inválida.`;
+      }
+
+      if (endDate <= startDate) {
+        return `${stageName} deve encerrar após a data de início.`;
+      }
+    }
+
+    return null;
+  }
+
+  private mapAuctionStagesForPersistence(
+    auctionStages: Array<{
+      name?: string | null;
+      startDate?: string | Date | null;
+      endDate?: string | Date | null;
+      discountPercent?: number | string | null;
+    }> | null | undefined,
+    auctionId: bigint,
+    tenantId: string,
+  ) {
+    const validationError = this.validateAuctionStages(auctionStages);
+
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    return (auctionStages ?? []).map((stage) => ({
+      name: stage.name!.trim(),
+      startDate: new Date(stage.startDate as Date),
+      endDate: new Date(stage.endDate as Date),
+      discountPercent: stage.discountPercent ?? 100,
+      auctionId,
+      tenantId: BigInt(tenantId),
+    }));
+  }
+
+  private async validateCityStateRelation(data: Pick<Partial<AuctionFormData>, 'cityId' | 'stateId'>): Promise<string | null> {
+    if (!data.cityId || !data.stateId) {
+      return null;
+    }
+
+    const city = await this.prisma.city.findUnique({
+      where: { id: BigInt(data.cityId) },
+      select: { id: true, stateId: true },
+    });
+
+    if (!city) {
+      return 'A cidade informada não foi encontrada.';
+    }
+
+    if (city.stateId?.toString() !== data.stateId) {
+      return 'A cidade selecionada não pertence ao estado informado.';
+    }
+
+    return null;
+  }
+
   /**
    * Valida a integridade de um Leilão para verificar se pode ser aberto.
    * Regras verificadas:
@@ -447,6 +537,13 @@ export class AuctionService {
       if (!data.auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!data.sellerId) throw new Error("O ID do comitente é obrigatório.");
 
+      const cityStateValidationError = await this.validateCityStateRelation(data);
+      if (cityStateValidationError) {
+        throw new Error(cityStateValidationError);
+      }
+
+      const auctionStagesPayload = this.mapAuctionStagesForPersistence(data.auctionStages, 0n, tenantId);
+
       const derivedAuctionDate = (data.auctionStages && data.auctionStages.length > 0 && data.auctionStages[0].startDate)
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
@@ -494,15 +591,11 @@ export class AuctionService {
           }
         });
 
-        if (data.auctionStages && data.auctionStages.length > 0) {
+        if (auctionStagesPayload.length > 0) {
           await tx.auctionStage.createMany({
-            data: data.auctionStages.map((stage: any) => ({
-              name: stage.name,
-              startDate: new Date(stage.startDate as Date),
-              endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
-              discountPercent: stage.discountPercent ?? 100,
+            data: auctionStagesPayload.map((stage) => ({
+              ...stage,
               auctionId: createdAuction.id,
-              tenantId: BigInt(tenantId),
             })),
           });
         }
@@ -534,7 +627,16 @@ export class AuctionService {
       if (!auctionToUpdate) {
         return { success: false, message: 'Leilão não encontrado para este tenant.' };
       }
+
+      const cityStateValidationError = await this.validateCityStateRelation(data);
+      if (cityStateValidationError) {
+        throw new Error(cityStateValidationError);
+      }
+
       const internalId = BigInt(auctionToUpdate.id);
+      const auctionStagesPayload = data.auctionStages !== undefined
+        ? this.mapAuctionStagesForPersistence(data.auctionStages, internalId, tenantId)
+        : undefined;
 
       const {
         categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId,
@@ -605,16 +707,11 @@ export class AuctionService {
 
         if (auctionStages) {
             await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
+          if (auctionStagesPayload && auctionStagesPayload.length > 0) {
             await tx.auctionStage.createMany({
-                data: auctionStages.map(stage => ({
-                    name: stage.name,
-                    startDate: new Date(stage.startDate as Date),
-                    endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
-                    discountPercent: stage.discountPercent ?? 100,
-                    auctionId: internalId,
-                    tenantId: BigInt(tenantId),
-                })),
+              data: auctionStagesPayload,
             });
+          }
         }
       });
 

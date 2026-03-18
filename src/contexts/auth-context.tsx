@@ -9,6 +9,7 @@ import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions';
+import { isIgnorableServerActionError } from '@/contexts/auth-context-utils';
 
 interface AuthContextType {
   userProfileWithPermissions: UserProfileWithPermissions | null;
@@ -41,7 +42,9 @@ export function AuthProvider({
       const count = await getUnreadNotificationCountAction(userId);
       setUnreadNotificationsCount(count);
     } catch (e) {
-      console.error("Failed to fetch notification count:", e);
+      if (!isIgnorableServerActionError(e)) {
+        console.error("Failed to fetch notification count:", e);
+      }
       setUnreadNotificationsCount(0);
     }
   }, []);
@@ -81,7 +84,9 @@ export function AuthProvider({
           setActiveTenantId(tenantId);
         }
       } catch (e) {
-        console.error("Session check failed:", e);
+        if (!isIgnorableServerActionError(e)) {
+          console.error("Session check failed:", e);
+        }
         setUserProfileWithPermissions(null);
         setActiveTenantId(null);
       } finally {
