@@ -6,8 +6,10 @@ import { CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from 
 import { Button } from '@/components/ui/button';
 import { CodeBlock } from '@/components/setup/code-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { CheckCircle, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { markSetupAsComplete } from '@/app/setup/actions';
+import { useToast } from '@/hooks/use-toast';
 
 interface WelcomeStepProps {
   onNext: () => void;
@@ -15,12 +17,47 @@ interface WelcomeStepProps {
 
 export default function WelcomeStep({ onNext }: WelcomeStepProps) {
   const [activeDbSystem, setActiveDbSystem] = useState('');
-  
+  const [isSkipping, setIsSkipping] = useState(false);
+  const { toast } = useToast();
+
   useEffect(() => {
     setActiveDbSystem(process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA');
   }, []);
 
   const isMySqlOrPostgres = activeDbSystem === 'MYSQL' || activeDbSystem === 'POSTGRES';
+
+  const handleSkip = async () => {
+    setIsSkipping(true);
+    try {
+      console.log("[WelcomeStep] Botão Pular clicado. Marcando setup como completo no banco de dados...");
+      const result = await markSetupAsComplete();
+
+      if (result.success) {
+        console.log("[WelcomeStep] Setup marcado como completo no DB. Redirecionando...");
+        toast({
+          title: 'Configuração ignorada',
+          description: 'Redirecionando para o painel...',
+        });
+        window.location.href = '/admin/dashboard';
+      } else {
+        console.error("[WelcomeStep] Falha ao pular setup:", result.message);
+        toast({
+          title: 'Erro',
+          description: result.message || 'Falha ao pular configuração.',
+          variant: 'destructive',
+        });
+        setIsSkipping(false);
+      }
+    } catch (error: any) {
+      console.error("[WelcomeStep] Erro inesperado:", error);
+      toast({
+        title: 'Erro',
+        description: 'Erro inesperado ao pular configuração.',
+        variant: 'destructive',
+      });
+      setIsSkipping(false);
+    }
+  };
 
   return (
     <>
@@ -66,7 +103,17 @@ DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-end">
+      <CardFooter className="flex justify-between">
+        <Button variant="ghost" onClick={handleSkip} disabled={isSkipping} data-ai-id="setup-welcome-skip-button">
+            {isSkipping ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Pulando...
+              </>
+            ) : (
+              "Pular Configuração"
+            )}
+        </Button>
         <Button onClick={onNext} disabled={!isMySqlOrPostgres} data-ai-id="setup-welcome-next-button">
             {isMySqlOrPostgres ? "Avançar para Dados Iniciais" : "Configure o DB para Continuar"}
         </Button>
