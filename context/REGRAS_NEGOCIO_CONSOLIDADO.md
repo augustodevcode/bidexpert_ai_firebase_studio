@@ -3527,8 +3527,8 @@ npm run dev
 |---------|-----|-------------------|-----------------|
 | Local com subdomínio | `http://demo.localhost:9005` | Resolvido pelo middleware via subdomínio `demo` | **Auto-locked** (desabilitado) |
 | Local sem subdomínio | `http://localhost:9005` | NÃO resolvido | **Aberto** — seleção manual obrigatória |
-| Vercel (production) | `https://bidexpertaifirebasestudio.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT="demo"` | **Auto-locked** |
-| Vercel (preview) | `https://xxxx.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT` env var | **Auto-locked** |
+| Vercel (production) | `https://bidexpertaifirebasestudio.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT="demo"` | **Aberto** — pré-selecionado, mas editável |
+| Vercel (preview) | `https://xxxx.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT` env var | **Aberto** — pré-selecionado, mas editável |
 
 **REGRA para testes E2E:** SEMPRE usar `http://demo.localhost:<porta>` em testes locais.
 
@@ -3668,7 +3668,7 @@ if (await tablist.isVisible({ timeout: 5000 }).catch(() => false)) {
 | Aspecto | Local (dev mode) | Vercel (production mode) |
 |---------|------------------|--------------------------|
 | **Compilação** | Lazy (sob demanda, lento) | Pré-compilada (tudo pronto) |
-| **Tenant resolution** | Via subdomínio `demo.localhost` | Via env `NEXT_PUBLIC_DEFAULT_TENANT` |
+| **Tenant resolution** | Via subdomínio `demo.localhost` | Via env `NEXT_PUBLIC_DEFAULT_TENANT` (pré-seleção, sem lock) |
 | **Tabs do control center** | 10 tabs visíveis | **Pode ter 0 tabs** (dados/rendering diferente) |
 | **DevUserSelector** | Visível (lista 15 users para login rápido) | **Não aparece** (NODE_ENV=production) |
 | **Banco de dados** | MySQL local | PostgreSQL (Prisma Postgres/Neon) |
@@ -3767,7 +3767,7 @@ npx playwright test tests/e2e/pregao-disputas-video.spec.ts
 | `ROBOT_LOCAL_BASE_URL` | `http://localhost:9005` | URL local para robôs |
 | `PREGAO_BASE_URL` | `http://demo.localhost:9005` | URL para pregão com vídeo |
 | `DATABASE_URL` | `.env` | Conexão MySQL/PostgreSQL |
-| `NEXT_PUBLIC_DEFAULT_TENANT` | — | Auto-lock tenant em Vercel |
+| `NEXT_PUBLIC_DEFAULT_TENANT` | — | Pré-seleciona tenant em Vercel (sem bloqueio — selector continua editável) |
 | `NODE_ENV` | `development` | `production` esconde DevUserSelector |
 
 **Exemplo de setup completo para testes locais:**
