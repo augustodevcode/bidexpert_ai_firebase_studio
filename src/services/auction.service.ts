@@ -646,6 +646,10 @@ export class AuctionService {
       const chronologyError = getAuctionStageChronologyError(normalizedStages);
       if (chronologyError) throw new Error(chronologyError);
 
+      const normalizedStages = normalizeAuctionStages(auctionStages);
+      const chronologyError = getAuctionStageChronologyError(normalizedStages);
+      if (chronologyError) throw new Error(chronologyError);
+
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
             ...(this.stripPhantomFields(restOfData) as any),

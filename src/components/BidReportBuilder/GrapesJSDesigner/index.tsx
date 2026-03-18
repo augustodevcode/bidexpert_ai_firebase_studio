@@ -2,7 +2,8 @@
 /**
  * @fileoverview Componente principal do Report Designer baseado em GrapesJS.
  * Fornece interface visual drag-and-drop para criação de relatórios.
- * 
+ * Inclui painel de geração de templates via IA (Genkit + Google AI).
+ *
  * Arquitetura: Composite (GrapesJS + Puppeteer + Handlebars)
  * @see REPORT_BUILDER_ARCHITECTURE.md
  */
@@ -39,7 +40,9 @@ import {
   Tablet,
   Smartphone,
   Loader2,
+  Wand2,
 } from 'lucide-react';
+import { AITemplatePanel } from './AITemplatePanel';
 
 import type { ReportDefinition } from '@/types/report-builder.types';
 import { 
@@ -114,7 +117,7 @@ export function GrapesJSDesigner({
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
   const [pageSize, setPageSize] = useState<keyof typeof PAGE_SIZES>('A4');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activePanel, setActivePanel] = useState<'blocks' | 'styles' | 'layers' | 'settings'>('blocks');
+  const [activePanel, setActivePanel] = useState<'blocks' | 'styles' | 'layers' | 'settings' | 'ai'>('blocks');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // ============================================================================
@@ -292,17 +295,19 @@ export function GrapesJSDesigner({
 
       // Set canvas styles for A4 paper simulation
       const wrapper = editor.getWrapper();
-      wrapper.setStyle({
-        'width': PAGE_SIZES[pageSize].width,
-        'min-height': PAGE_SIZES[pageSize].height,
-        'margin': '0 auto',
-        'background': 'white',
-        'box-shadow': '0 0 10px rgba(0,0,0,0.1)',
-        'padding': '20mm',
-        'font-family': 'Arial, sans-serif',
-        'font-size': '12pt',
-        'line-height': '1.5',
-      });
+      if (wrapper) {
+        wrapper.setStyle({
+          'width': PAGE_SIZES[pageSize].width,
+          'min-height': PAGE_SIZES[pageSize].height,
+          'margin': '0 auto',
+          'background': 'white',
+          'box-shadow': '0 0 10px rgba(0,0,0,0.1)',
+          'padding': '20mm',
+          'font-family': 'Arial, sans-serif',
+          'font-size': '12pt',
+          'line-height': '1.5',
+        });
+      }
 
       grapesInstanceRef.current = editor;
       setIsLoading(false);
@@ -399,6 +404,31 @@ export function GrapesJSDesigner({
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
+
+  /**
+   * Applies an AI-generated template HTML/CSS into the GrapesJS editor canvas.
+   */
+  const handleAITemplateGenerated = useCallback(
+    (result: { html: string; css: string; description: string; suggestedName: string }) => {
+      const editor = grapesInstanceRef.current;
+      if (!editor) {
+        toast({
+          title: 'Editor não pronto',
+          description: 'Carregue o designer antes de gerar um template.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      editor.setComponents(result.html);
+      if (result.css) {
+        editor.setStyle(result.css);
+      }
+      setHasUnsavedChanges(true);
+      setActivePanel('blocks'); // Switch back to blocks panel after applying
+    },
+    [toast]
+  );
 
   // ============================================================================
   // RENDER
@@ -521,10 +551,10 @@ export function GrapesJSDesigner({
 
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel: Blocks/Styles/Layers */}
+        {/* Left Panel: Blocks/Styles/Layers/AI */}
         <div className="w-72 border-r bg-card flex flex-col">
           <Tabs value={activePanel} onValueChange={(v) => setActivePanel(v as typeof activePanel)} className="flex-1 flex flex-col">
-            <TabsList className="grid grid-cols-4 mx-2 mt-2">
+            <TabsList className="grid grid-cols-5 mx-2 mt-2">
               <TabsTrigger value="blocks" title="Blocos">
                 <FileText className="h-4 w-4" />
               </TabsTrigger>
@@ -536,6 +566,9 @@ export function GrapesJSDesigner({
               </TabsTrigger>
               <TabsTrigger value="settings" title="Configurações">
                 <Settings className="h-4 w-4" />
+              </TabsTrigger>
+              <TabsTrigger value="ai" title="Gerar com IA" data-ai-id="ai-panel-tab">
+                <Wand2 className="h-4 w-4" />
               </TabsTrigger>
             </TabsList>
             
@@ -604,6 +637,15 @@ export function GrapesJSDesigner({
                   </Button>
                 </div>
               </div>
+            </TabsContent>
+            
+            <TabsContent value="ai" className="flex-1 mt-0">
+              <ScrollArea className="h-full">
+                <AITemplatePanel
+                  contextType={selectedContext}
+                  onTemplateGenerated={handleAITemplateGenerated}
+                />
+              </ScrollArea>
             </TabsContent>
           </Tabs>
         </div>

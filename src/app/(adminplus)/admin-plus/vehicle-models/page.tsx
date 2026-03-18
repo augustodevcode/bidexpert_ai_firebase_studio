@@ -5,23 +5,29 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getVehicleModelColumns } from './columns';
-import { listVehicleModelsAction, deleteVehicleModelAction } from './actions';
+import {
+  listVehicleModelsAction,
+  createVehicleModelAction,
+  updateVehicleModelAction,
+  deleteVehicleModelAction,
+} from './actions';
+import { VehicleModelForm } from './form';
 import type { PaginatedResponse, BulkAction } from '@/lib/admin-plus/types';
 import type { VehicleModel } from '@/types';
+import type { CreateVehicleModelInput } from './schema';
 
 export default function VehicleModelsPage() {
-  const router = useRouter();
   const [data, setData] = useState<PaginatedResponse<VehicleModel> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editRow, setEditRow] = useState<VehicleModel | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<VehicleModel | null>(null);
 
   const loadData = useCallback(async () => {
@@ -39,12 +45,26 @@ export default function VehicleModelsPage() {
     loadData();
   }, [loadData]);
 
-  const handleEdit = useCallback(
-    (row: VehicleModel) => router.push(`/admin-plus/vehicle-models/${row.id}`),
-    [router],
-  );
+  const handleEdit = useCallback((row: VehicleModel) => {
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
 
   const handleDelete = useCallback((row: VehicleModel) => setDeleteTarget(row), []);
+
+  const handleSubmit = useCallback(async (values: CreateVehicleModelInput) => {
+    const result = editRow
+      ? await updateVehicleModelAction({ id: editRow.id, data: values })
+      : await createVehicleModelAction(values);
+    if (result.success) {
+      toast.success(editRow ? 'Modelo atualizado com sucesso' : 'Modelo criado com sucesso');
+      setFormOpen(false);
+      setEditRow(null);
+      loadData();
+    } else {
+      toast.error(result.error ?? 'Erro ao salvar modelo');
+    }
+  }, [editRow, loadData]);
 
   const confirmDelete = useCallback(() => {
     if (!deleteTarget) return;
@@ -88,13 +108,12 @@ export default function VehicleModelsPage() {
       <PageHeader
         title="Modelos de Veículo"
         description="Gerencie os modelos de veículo cadastrados no sistema."
+        primaryAction={{
+          label: 'Novo Modelo',
+          onClick: () => { setEditRow(null); setFormOpen(true); },
+        }}
         data-ai-id="vehicle-models-page-header"
-      >
-        <Button onClick={() => router.push('/admin-plus/vehicle-models/new')} data-ai-id="vehicle-models-btn-new">
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Modelo
-        </Button>
-      </PageHeader>
+      />
 
       <DataTablePlus
         columns={columns}
@@ -104,6 +123,13 @@ export default function VehicleModelsPage() {
         bulkActions={bulkActions}
         onRowDoubleClick={handleEdit}
         data-ai-id="vehicle-models-data-table"
+      />
+
+      <VehicleModelForm
+        open={formOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditRow(null); }}
+        onSubmit={handleSubmit}
+        defaultValues={editRow}
       />
 
       <ConfirmationDialog

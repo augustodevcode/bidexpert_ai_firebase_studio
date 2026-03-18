@@ -5,23 +5,24 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { MapPin, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getStateColumns } from './columns';
-import { listStatesAction, deleteStateAction } from './actions';
+import { listStatesAction, createStateAction, updateStateAction, deleteStateAction } from './actions';
+import { StateForm } from './form';
 import type { PaginatedResponse, BulkAction } from '@/lib/admin-plus/types';
 import type { StateInfo } from '@/types';
+import type { CreateStateInput } from './schema';
 
 export default function StatesPage() {
-  const router = useRouter();
   const [data, setData] = useState<PaginatedResponse<StateInfo> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editRow, setEditRow] = useState<StateInfo | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StateInfo | null>(null);
 
   const loadData = useCallback(async () => {
@@ -39,12 +40,26 @@ export default function StatesPage() {
     loadData();
   }, [loadData]);
 
-  const handleEdit = useCallback(
-    (row: StateInfo) => router.push(`/admin-plus/states/${row.id}`),
-    [router],
-  );
+  const handleEdit = useCallback((row: StateInfo) => {
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
 
   const handleDelete = useCallback((row: StateInfo) => setDeleteTarget(row), []);
+
+  const handleSubmit = useCallback(async (values: CreateStateInput) => {
+    const result = editRow
+      ? await updateStateAction({ id: editRow.id, data: values })
+      : await createStateAction(values);
+    if (result.success) {
+      toast.success(editRow ? 'Estado atualizado com sucesso' : 'Estado criado com sucesso');
+      setFormOpen(false);
+      setEditRow(null);
+      loadData();
+    } else {
+      toast.error(result.error ?? 'Erro ao salvar estado');
+    }
+  }, [editRow, loadData]);
 
   const confirmDelete = useCallback(() => {
     if (!deleteTarget) return;
@@ -88,13 +103,13 @@ export default function StatesPage() {
       <PageHeader
         title="Estados"
         description="Gerencie os estados (UFs) cadastrados no sistema."
+        icon={MapPin}
+        primaryAction={{
+          label: 'Novo Estado',
+          onClick: () => { setEditRow(null); setFormOpen(true); },
+        }}
         data-ai-id="states-page-header"
-      >
-        <Button onClick={() => router.push('/admin-plus/states/new')} data-ai-id="states-btn-new">
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Estado
-        </Button>
-      </PageHeader>
+      />
 
       <DataTablePlus
         columns={columns}
@@ -104,6 +119,13 @@ export default function StatesPage() {
         bulkActions={bulkActions}
         onRowDoubleClick={handleEdit}
         data-ai-id="states-data-table"
+      />
+
+      <StateForm
+        open={formOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditRow(null); }}
+        onSubmit={handleSubmit}
+        defaultValues={editRow}
       />
 
       <ConfirmationDialog

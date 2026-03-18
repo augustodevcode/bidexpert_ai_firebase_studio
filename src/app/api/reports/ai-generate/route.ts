@@ -1,0 +1,80 @@
+// src/app/api/reports/ai-generate/route.ts
+/**
+ * @fileoverview API Route para geração de templates de relatórios via IA.
+ * Aceita uma descrição textual ou texto extraído de documento e retorna
+ * um template HTML/CSS com variáveis Handlebars para uso no GrapesJS Designer.
+ *
+ * POST /api/reports/ai-generate
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { z } from 'zod';
+import {
+  generateReportTemplate,
+  type GenerateReportTemplateInput,
+} from '@/ai/flows/generate-report-template-flow';
+
+export const dynamic = 'force-dynamic';
+
+// ============================================================================
+// REQUEST SCHEMA
+// ============================================================================
+
+const RequestSchema = z.object({
+  contextType: z
+    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE', 'AUCTION_RESULT', 'APPRAISAL_REPORT', 'INVOICE'])
+    .default('AUCTION'),
+  prompt: z.string().min(10, 'Descreva o template com pelo menos 10 caracteres').max(1000, 'Prompt deve ter no máximo 1.000 caracteres'),
+  documentText: z.string().optional(),
+  tone: z.enum(['FORMAL_JURIDICO', 'TECNICO', 'COMERCIAL']).default('FORMAL_JURIDICO'),
+  language: z.string().default('pt-BR'),
+  pageSize: z.enum(['A4', 'Letter', 'Legal']).default('A4'),
+  orientation: z.enum(['portrait', 'landscape']).default('portrait'),
+});
+
+// ============================================================================
+// HANDLER
+// ============================================================================
+
+export async function POST(request: NextRequest) {
+  try {
+    // Authentication check
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    // Parse and validate request body
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Corpo da requisição inválido (JSON esperado)' }, { status: 400 });
+    }
+
+    const parseResult = RequestSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Parâmetros inválidos', details: parseResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const input: GenerateReportTemplateInput = parseResult.data;
+
+    // Generate template via Genkit flow
+    const result = await generateReportTemplate(input);
+
+    return NextResponse.json({ success: true, data: result }, { status: 200 });
+  } catch (error) {
+    console.error('[AI Generate Route] Erro ao gerar template:', error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Erro interno ao gerar template. Tente novamente.';
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

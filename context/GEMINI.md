@@ -187,6 +187,7 @@ $env:PORT=9006 ; npm install ; npm run dev
 12. Tabs/badges com count=0 podem estar **ocultas** no Vercel — verificar `.isVisible()` antes de clicar.
 13. Usar `requestSubmit()` ao invés de `submit()` — `submit()` pode falhar no Vercel.
 14. Robot tests precisam de `ROBOT_BASE_URL` e `PREGAO_BASE_URL` como variáveis de ambiente.
+15. **Tenant selector bloqueado SOMENTE com subdomínio real ou path-based**: `NEXT_PUBLIC_DEFAULT_TENANT` apenas pré-seleciona o tenant, mas o selector permanece **livre** quando acessado via URL Vercel (`*.vercel.app`) ou `localhost:PORT` sem subdomínio. Em testes E2E via URL genérica, sempre chamar `selectTenant()` após navegar para `/auth/login`.
 
 ### Commits Docs-Only
 15. Para commits que alteram APENAS `.md`, usar `--no-verify` para pular typecheck hook.

@@ -215,7 +215,9 @@ import { loginAsAdmin, loginAs, CREDENTIALS, ensureSeedExecuted } from './helper
 
 ### Tenant Auto-Lock vs Manual
 - **Com subdomínio** (`demo.localhost:9005`): tenant selector fica bloqueado (auto-locked)
-- **Sem subdomínio** (`localhost:9005`): usuário DEVE selecionar tenant manualmente
+- **Com path-based routing** (`/app/demo/...`): tenant selector fica bloqueado
+- **Sem subdomínio** (`localhost:9005` ou Vercel `*.vercel.app`): selector **livre** — usuário escolhe o tenant
+- **`NEXT_PUBLIC_DEFAULT_TENANT` definido + sem subdomínio**: selector **livre** mas pré-selecionado (usuário pode mudar)
 - **Em testes E2E:** SEMPRE usar URL com subdomínio
 
 ### Seed Gate

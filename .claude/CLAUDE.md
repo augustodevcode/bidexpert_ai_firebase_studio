@@ -212,8 +212,10 @@ import { loginAsAdmin, loginAs, CREDENTIALS } from './helpers/auth-helper';
 ```
 
 ### Tenant Resolution
-- `demo.localhost:9005` → auto-lock tenant selector
-- `localhost:9005` (sem subdomínio) → seleção manual obrigatória
+- `demo.localhost:9005` → **auto-lock** tenant selector (subdomain detected)
+- `/app/demo/...` (path-based) → **auto-lock** tenant selector
+- `localhost:9005` (sem subdomínio) → selector **livre**, seleção manual
+- `*.vercel.app` (URL Vercel sem subdomínio) → selector **livre**, seleção manual (pode ter pré-seleção via `NEXT_PUBLIC_DEFAULT_TENANT` mas sem bloqueio)
 - Em testes E2E, SEMPRE usar URL com subdomínio
 
 ### Seed Gate
