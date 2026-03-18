@@ -214,8 +214,9 @@ export async function getCurrentTenantContext() {
   const headersList = await headers();
   const tenantIdOrSlug = normalizeTenantToken(headersList.get('x-tenant-id'), { lowercase: false }) || '1';
   const subdomain = normalizeTenantToken(headersList.get('x-tenant-subdomain')) || '';
+  const isPathBased = headersList.get('x-tenant-is-path-based') === 'true';
   
-  console.log(`[getCurrentTenantContext] Headers: x-tenant-id='${tenantIdOrSlug}', x-tenant-subdomain='${subdomain}'`);
+  console.log(`[getCurrentTenantContext] Headers: x-tenant-id='${tenantIdOrSlug}', x-tenant-subdomain='${subdomain}', x-tenant-is-path-based='${isPathBased}'`);
   
   let resolvedTenantId = tenantIdOrSlug;
   let tenantName = 'BidExpert';
@@ -257,11 +258,17 @@ export async function getCurrentTenantContext() {
       }
   }
 
-  console.log(`[getCurrentTenantContext] Returning: tenantId=${resolvedTenantId}, subdomain=${subdomain}, tenantName=${tenantName}`);
+  console.log(`[getCurrentTenantContext] Returning: tenantId=${resolvedTenantId}, subdomain=${subdomain}, tenantName=${tenantName}, shouldLock=${subdomain !== '' || isPathBased}`);
   return {
     tenantId: resolvedTenantId,
     subdomain,
-    tenantName
+    tenantName,
+    // shouldLock is true ONLY when tenant was resolved via an actual URL subdomain or path-based
+    // routing (/app/[slug]). It is false when the tenant comes from NEXT_PUBLIC_DEFAULT_TENANT
+    // (a server-side default), which means the user should still be able to choose their tenant.
+    // Note: subdomain is '' (empty string) when no real URL subdomain exists — the middleware
+    // explicitly sets x-tenant-subdomain to '' for NEXT_PUBLIC_DEFAULT_TENANT cases.
+    shouldLock: subdomain !== '' || isPathBased,
   };
 }
 
