@@ -4,10 +4,11 @@
  * BDD: Verificar que a lógica de seleção de variáveis de contexto e parâmetros de entrada
  * do flow de geração de templates é correta, sem chamar a API de IA real.
  *
- * TDD: Cobrir parsing do schema de entrada, valores padrão, e estrutura do output esperado.
+ * TDD: Cobrir parsing do schema de entrada, valores padrão, seleção de provider e
+ * estrutura do output esperado.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { GenerateReportTemplateInputSchema } from '../../src/ai/flows/generate-report-template-flow';
 
 // ============================================================================
@@ -20,6 +21,12 @@ vi.mock('@/ai/genkit', () => ({
     defineFlow: vi.fn((config: unknown, handler: Function) => handler),
     generate: vi.fn(),
   },
+}));
+
+// Mock do provider Ollama
+vi.mock('@/lib/ai-providers/ollama-provider', () => ({
+  generateWithOllama: vi.fn(),
+  listOllamaModels: vi.fn().mockResolvedValue([]),
 }));
 
 // ============================================================================
@@ -39,7 +46,46 @@ describe('GenerateReportTemplateInputSchema', () => {
       expect(result.data.language).toBe('pt-BR');
       expect(result.data.pageSize).toBe('A4');
       expect(result.data.orientation).toBe('portrait');
+      expect(result.data.aiProvider).toBeUndefined();
+      expect(result.data.ollamaModel).toBeUndefined();
     }
+  });
+
+  it('aceita aiProvider "ollama" com modelo específico', () => {
+    const result = GenerateReportTemplateInputSchema.safeParse({
+      contextType: 'LOT',
+      prompt: 'Ficha técnica do lote com dados de avaliação',
+      aiProvider: 'ollama',
+      ollamaModel: 'mistral',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.aiProvider).toBe('ollama');
+      expect(result.data.ollamaModel).toBe('mistral');
+    }
+  });
+
+  it('aceita aiProvider "genkit"', () => {
+    const result = GenerateReportTemplateInputSchema.safeParse({
+      contextType: 'AUCTION',
+      prompt: 'Edital de leilão com provider Genkit',
+      aiProvider: 'genkit',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.aiProvider).toBe('genkit');
+    }
+  });
+
+  it('rejeita aiProvider inválido', () => {
+    const result = GenerateReportTemplateInputSchema.safeParse({
+      contextType: 'AUCTION',
+      prompt: 'Edital de leilão com provider inválido',
+      aiProvider: 'openai',
+    });
+    expect(result.success).toBe(false);
   });
 
   it('aceita todos os contextTypes válidos', () => {
@@ -139,7 +185,6 @@ describe('GenerateReportTemplateInputSchema', () => {
 
 describe('Estrutura de contexto de variáveis', () => {
   it('contextos de relatório cobrem todos os tipos da API de renderização', () => {
-    // Garante que os contextTypes do flow correspondem aos tipos suportados em /api/reports/render
     const supportedRenderContexts = ['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE'];
     const flowContextTypes = [
       'AUCTION',
@@ -153,6 +198,20 @@ describe('Estrutura de contexto de variáveis', () => {
 
     for (const ctx of supportedRenderContexts) {
       expect(flowContextTypes).toContain(ctx);
+    }
+  });
+});
+
+describe('AI Provider — tipos válidos', () => {
+  it('AIProvider aceita "genkit" e "ollama" conforme o schema', () => {
+    const providers = ['genkit', 'ollama'];
+    for (const aiProvider of providers) {
+      const result = GenerateReportTemplateInputSchema.safeParse({
+        contextType: 'AUCTION',
+        prompt: 'Template para testes de provider',
+        aiProvider,
+      });
+      expect(result.success, `aiProvider "${aiProvider}" deve ser aceito`).toBe(true);
     }
   });
 });
