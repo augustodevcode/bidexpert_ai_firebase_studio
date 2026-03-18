@@ -3,12 +3,13 @@
  * @fileoverview Painel de geração de templates via IA para o GrapesJS Designer.
  * Permite ao usuário descrever ou enviar um documento para gerar automaticamente
  * um template HTML com variáveis Handlebars no tom formal-jurídico.
+ * Suporta dois providers: Genkit (Google AI) e Ollama (modelos locais).
  */
 
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Wand2, Upload, FileText, Loader2, ChevronDown, Info } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Wand2, Upload, FileText, Loader2, ChevronDown, Info, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { ReportContextType } from '@/lib/report-builder/schemas/auction-context.schema';
+import type { AIProvider } from '@/lib/ai-providers/types';
 
 // ============================================================================
 // TYPES
@@ -53,6 +55,11 @@ const TONE_LABELS: Record<Tone, string> = {
   FORMAL_JURIDICO: 'Formal Jurídico',
   TECNICO: 'Técnico',
   COMERCIAL: 'Comercial',
+};
+
+const PROVIDER_LABELS: Record<AIProvider, string> = {
+  genkit: 'Google AI (Genkit)',
+  ollama: 'Ollama (local)',
 };
 
 const CONTEXT_LABELS: Record<ReportContextType, string> = {
@@ -96,15 +103,40 @@ export function AITemplatePanel({
 
   const [prompt, setPrompt] = useState('');
   const [tone, setTone] = useState<Tone>('FORMAL_JURIDICO');
+  const [provider, setProvider] = useState<AIProvider>('genkit');
+  const [ollamaModel, setOllamaModel] = useState('');
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [documentText, setDocumentText] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<AIGenerateResult | null>(null);
   const [showVariables, setShowVariables] = useState(false);
 
-  // ============================================================================
-  // HANDLERS
-  // ============================================================================
+  // Load Ollama models when provider switches to ollama
+  useEffect(() => {
+    if (provider !== 'ollama') return;
+    void fetchOllamaModels();
+  }, [provider]);
+
+  const fetchOllamaModels = async () => {
+    setIsLoadingModels(true);
+    try {
+      const response = await fetch('/api/reports/ai-generate');
+      if (!response.ok) return;
+      const data = await response.json();
+      const models: string[] = data.models ?? [];
+      setOllamaModels(models);
+      // Auto-select first model if current selection is missing from the new list
+      if (models.length > 0 && (!ollamaModel || !models.includes(ollamaModel))) {
+        setOllamaModel(models[0]);
+      }
+    } catch {
+      // Ollama not available — models list stays empty
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -200,6 +232,10 @@ export function AITemplatePanel({
     }
   };
 
+  // ============================================================================
+  // HANDLERS
+  // ============================================================================
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast({
@@ -223,6 +259,8 @@ export function AITemplatePanel({
           language: 'pt-BR',
           pageSize: 'A4',
           orientation: 'portrait',
+          aiProvider: provider,
+          ollamaModel: provider === 'ollama' && ollamaModel ? ollamaModel : undefined,
         }),
       });
 
@@ -314,6 +352,72 @@ export function AITemplatePanel({
           aria-label="Upload de documento para análise"
         />
       </div>
+
+      {/* AI Provider Selection */}
+      <div className="space-y-1">
+        <Label htmlFor="ai-provider-select" className="text-xs text-muted-foreground">
+          Provider de IA
+        </Label>
+        <Select value={provider} onValueChange={(v) => setProvider(v as AIProvider)}>
+          <SelectTrigger id="ai-provider-select" className="h-8 text-xs" data-ai-id="ai-provider-select">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.entries(PROVIDER_LABELS) as [AIProvider, string][]).map(([key, label]) => (
+              <SelectItem key={key} value={key} className="text-xs">
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Ollama Model Selection — only when provider is ollama */}
+      {provider === 'ollama' && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="ollama-model-select" className="text-xs text-muted-foreground">
+              Modelo Ollama
+            </Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 text-xs p-0 text-muted-foreground"
+              onClick={fetchOllamaModels}
+              disabled={isLoadingModels}
+              title="Recarregar modelos"
+              aria-label="Recarregar modelos Ollama"
+            >
+              <RefreshCw className={`h-3 w-3 ${isLoadingModels ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {isLoadingModels ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Carregando modelos...
+            </div>
+          ) : ollamaModels.length > 0 ? (
+            <Select value={ollamaModel} onValueChange={setOllamaModel}>
+              <SelectTrigger id="ollama-model-select" className="h-8 text-xs" data-ai-id="ollama-model-select">
+                <SelectValue placeholder="Selecione um modelo..." />
+              </SelectTrigger>
+              <SelectContent>
+                {ollamaModels.map((model) => (
+                  <SelectItem key={model} value={model} className="text-xs">
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="rounded-md border border-dashed p-2 text-xs text-muted-foreground">
+              Nenhum modelo encontrado. Certifique-se que o servidor Ollama está em execução
+              e que modelos estão instalados (<code>ollama pull llama3.2</code>).
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tone Selection */}
       <div className="space-y-1">
