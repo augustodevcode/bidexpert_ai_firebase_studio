@@ -163,6 +163,7 @@ jobs:
     environment: Production
     needs: build
     if: needs.build.result == 'success'
+    continue-on-error: true
 
     steps:
       - name: 📥 Checkout code
