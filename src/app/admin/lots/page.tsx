@@ -24,6 +24,7 @@ import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createColumns } from './columns';
+import { buildNewLotHref } from './new-lot-link';
 
 const sortOptions = [
   { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
@@ -232,6 +233,11 @@ export default function AdminLotsPage() {
           { id: 'auctionName', title: 'Leilão', options: auctionOptions }
       ];
   }, [lots, auctions]);
+
+  const newLotHref = useMemo(
+    () => buildNewLotHref({ auctionId, judicialProcessId }),
+    [auctionId, judicialProcessId]
+  );
   
   if (error) {
     return (
@@ -287,7 +293,7 @@ export default function AdminLotsPage() {
             </CardDescription>
           </div>
           <Button asChild>
-            <Link href="/admin/lots/new">
+            <Link href={newLotHref}>
               <PlusCircle className="mr-2 h-4 w-4" /> Novo Lote
             </Link>
           </Button>

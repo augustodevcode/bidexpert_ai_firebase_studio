@@ -340,10 +340,39 @@ Seções do dashboard só renderizam quando dados essenciais estiverem carregado
 `Auction` só pode ir para "Publicado" quando: etapas e datas válidas, lotes associados, regras de mídia atendidas, comitente/leiloeiro vinculados e ativos  
 Validar transitions no service com erros descritivos
 
+**Regras obrigatórias adicionais**
+- Cada praça (`AuctionStage`) DEVE ser persistida com `startDate` e `endDate` válidos.
+- O `endDate` de cada praça DEVE ser maior que o `startDate`; payloads inválidos DEVEM falhar no formulário e no service com mensagem descritiva.
+- Formulários administrativos de leilão DEVEM usar apenas status canônicos do domínio (`RASCUNHO`, `EM_PREPARACAO`, `EM_BREVE`, `ABERTO`, `ABERTO_PARA_LANCES`, `ENCERRADO`, `FINALIZADO`, `CANCELADO`, `SUSPENSO`).
+- Se `stateId` e `cityId` forem informados no cadastro/edição de leilão, a cidade DEVE pertencer ao estado selecionado; ao trocar o estado, seleções órfãs de cidade DEVEM ser limpas antes do submit.
+
+**Cenário BDD - Praça sem encerramento não pode ser salva**
+- **Dado** um formulário de leilão com pelo menos uma praça cadastrada
+- **Quando** a praça é enviada sem `endDate` ou com `endDate` menor/igual ao `startDate`
+- **Então** o sistema bloqueia a submissão e exibe erro descritivo antes de persistir no Prisma
+
+**Cenário BDD - Cidade inválida não sobrevive à troca de estado**
+- **Dado** um formulário de leilão com uma cidade já escolhida para determinado estado
+- **Quando** o usuário altera o estado para outro sem compatibilidade com a cidade atual
+- **Então** o campo de cidade volta ao placeholder no frontend e o backend rejeita combinações inconsistentes
+
+### RN-020A: Alias Canônico de Login
+✅ A rota pública `/login` DEVE redirecionar para `/auth/login` preservando query string relevante, incluindo `redirect`.
+✅ Fluxos administrativos que redirecionam usuários não autenticados DEVEM continuar apontando para a rota canônica `/auth/login`.
+
+**Cenário BDD - Alias público preserva destino**
+- **Dado** um usuário acessando `/login?redirect=/admin`
+- **Quando** a rota é resolvida no App Router
+- **Então** o usuário é redirecionado para `/auth/login?redirect=/admin`
+
 ### RN-021: Padrão de IDs BigInt em Front/Back
 Endpoints e services devem aceitar/retornar IDs numéricos  
 No frontend, converter string->number com validação e tratar `bigint` quando necessário  
 Proibir mix de `cuid()` em novos docs/código
+
+**Guardrail de serialização admin**
+- Server Actions administrativas que retornam um único registro para Client Components DEVEM aplicar `sanitizeResponse()` antes do retorno, mesmo fora de factories como `createAdminAction`.
+- Relações e FKs vindas do Prisma (`bigint`, `Decimal`, `Date`) NÃO podem ser expostas cruas para formulários client-side.
 
 ### RN-022: Pesquisa e Listagens Avançadas
 🔍 **Componentes Obrigatórios**:  
@@ -466,6 +495,7 @@ Proibir mix de `cuid()` em novos docs/código
 - **Componente Link**: Usar `Next.js Link` para navegação client-side  
 - **Parâmetros de Query**: Passar IDs via query string (`?auctionId=`, `?judicialProcessId=`)  
 - **Filtragem Automática**: Páginas de destino aplicam filtros automaticamente baseado nos parâmetros  
+- **Preservação de Contexto**: CTAs derivados de uma listagem filtrada (ex.: `Novo Lote`) DEVEM propagar o mesmo contexto (`auctionId`, `judicialProcessId`) ao abrir o formulário dependente  
 - **Contadores**: Exibir quantidade total de registros relacionados (ex: "3 Lotes", "5 Ativos")  
 - **Isolamento Multi-Tenant**: Todos os filtros respeitam isolamento por `tenantId`  
   

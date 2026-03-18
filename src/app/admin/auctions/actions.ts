@@ -49,12 +49,14 @@ export async function getAuctions(isPublicCall: boolean = false, limit?: number)
 
 export async function getAuction(id: string, isPublicCall: boolean = false): Promise<Auction | null> {
     const tenantId = await getTenantIdFromRequest(isPublicCall);
-    return auctionService.getAuctionById(tenantId, id, isPublicCall);
+    const auction = await auctionService.getAuctionById(tenantId, id, isPublicCall);
+    return sanitizeResponse(auction);
 }
 
 export async function getAuctionById(id: bigint, isPublicCall: boolean = false): Promise<Auction | null> {
     const tenantId = await getTenantIdFromRequest(isPublicCall);
-    return auctionService.getAuctionById(tenantId, id.toString(), isPublicCall);
+    const auction = await auctionService.getAuctionById(tenantId, id.toString(), isPublicCall);
+    return sanitizeResponse(auction);
 }
 
 export async function getAuctionPreparationData(auctionIdentifier: string): Promise<AuctionPreparationData | null> {

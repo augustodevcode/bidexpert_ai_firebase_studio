@@ -72,8 +72,9 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4" data-ai-id="admin-loading-state">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Carregando painel administrativo…</p>
       </div>
     );
   }
