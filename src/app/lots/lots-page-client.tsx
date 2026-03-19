@@ -4,9 +4,9 @@
  */
 'use client';
 
-import AuctionLotCardV2 from '../../components/cards/auction-lot-card-v2';
-import type { AuctionItem } from '../../components/cards/auction-lot-card-v2.types';
-import type { GroupedLots } from '../../services/lot-card-v2.service';
+import { AuctionLotCardV2 } from '@/components/cards/auction-lot-card-v2';
+import type { AuctionItem } from '@/components/cards/auction-lot-card-v2.types';
+import type { GroupedLots } from '@/services/lot-card-v2.service';
 
 /* ------------------------------------------------------------------ */
 /*  Section component                                                  */

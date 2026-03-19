@@ -139,9 +139,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     type: lot.LotCategory?.name ?? 'Geral',
     location: [lot.cityName, lot.stateUf].filter(Boolean).join(', ') || 'Brasil',
     title: lot.title,
-    specs: [lot.type, lot.condition].filter(
-      (value): value is string => typeof value === 'string' && value.length > 0,
-    ),
+    specs: lot.type || lot.condition || '',
     processNumber: lot.processNumber ?? undefined,
     stats: {
       visits: lot.views ?? 0,
@@ -193,6 +191,7 @@ export async function getLotsForV2Page(
     where: {
       status: { in: [...VISIBLE_STATUSES] },
       ...(tenantId ? { tenantId } : {}),
+      Auction: { isNot: null },
     },
     include: {
       Auction: {
