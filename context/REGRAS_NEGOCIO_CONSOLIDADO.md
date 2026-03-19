@@ -3295,6 +3295,21 @@ Vercel ativa por padrão "Deployment Protection" em projetos de equipe (Team). D
 - ❌ Desabilitar Deployment Protection no projeto Vercel
 - ❌ Usar passwords compartilhados (inseguro)
 
+### RN-VERCEL-E2E-001A: Triagem obrigatória antes do browser test
+
+**Contexto:**
+Há cenários em que o preview da PR falha antes mesmo do build real da aplicação. Nesses casos, o deployment abre a tela do próprio Vercel com `Deployment has failed` e o inspector mostra `Builds . [0ms]` ou nenhum evento útil.
+
+**Regra:**
+- ✅ Antes de executar Playwright/browser em preview Vercel, validar o estado do deployment com `vercel inspect`, status checks da PR e/ou inspector URL.
+- ✅ Se o preview renderizar a tela `Deployment has failed`, classificar primeiro como falha de infraestrutura/integration/provisioning do deploy.
+- ✅ Nessa condição, NÃO tratar a rota alvo como quebrada até existir evidência adicional de falha da aplicação.
+
+**BDD - Preview quebrado antes do build**
+- **Dado** um preview Vercel em estado `ERROR`
+- **Quando** o inspector exibe `Builds . [0ms]` ou não retorna eventos de build úteis
+- **Então** a validação deve registrar o bloqueio como falha de deploy da plataforma antes de culpar a aplicação
+
 ---
 
 ### RN-VERCEL-E2E-002: Solução — Share URL + Cookie Bypass
@@ -3320,6 +3335,18 @@ Vercel ativa por padrão "Deployment Protection" em projetos de equipe (Team). D
 | `VERCEL_SHARE_URL` | URL compartilhável (válida por tempo limitado) | `https://vercel.live/open-feedback/xxx?via=login-wall` |
 | `PLAYWRIGHT_SKIP_WEBSERVER` | Pular inicialização do webserver local | `1` |
 | `PLAYWRIGHT_SKIP_LAWYER` | Pular autenticação do lawyer (se não existir no DB) | `1` |
+
+### RN-VERCEL-E2E-002A: Promoção da feature antes da cobrança em `main`/`hml`
+
+**Regra:**
+- ✅ Rotas novas como `/lots` só podem ser exigidas em `main`, `hml` ou aliases de produção após a promoção explícita da branch/PR que introduz a feature.
+- ✅ Enquanto a feature existir apenas em branch/preview, `404` em `main` ou `hml` indica ausência de promoção e NÃO regressão automática do código da feature.
+- ✅ A evidência de validação deve distinguir claramente: `preview da PR`, `demo-stable`, `main` e `hml`.
+
+**BDD - Rota nova ainda não promovida**
+- **Dado** uma rota nova implementada apenas na branch de feature
+- **Quando** o teste acessa `main` ou `hml` antes do merge/promotion
+- **Então** um `404` deve ser registrado como ambiente ainda não promovido, e não como quebra da implementação da branch
 
 ---
 
