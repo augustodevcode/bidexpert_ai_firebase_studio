@@ -19,7 +19,6 @@ describe('Prisma client selection', () => {
     savedEnv.POSTGRES_PRISMA_URL = process.env.POSTGRES_PRISMA_URL;
     savedEnv.PRISMA_SCHEMA = process.env.PRISMA_SCHEMA;
     savedEnv.USE_SEPARATE_DEMO_DB = process.env.USE_SEPARATE_DEMO_DB;
-
     process.env.DATABASE_URL = 'mysql://user:pass@localhost:3306/bidexpert_dev';
     delete process.env.EXPECT_POSTGRESQL;
     delete process.env.POSTGRES_PRISMA_URL;
