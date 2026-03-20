@@ -5,25 +5,8 @@
  */
 'use client';
 
-import { useState, useCallback } from 'react';
-import {
-  Heart,
-  Eye,
-  Share2,
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-  BarChart3,
-  Users,
-  MousePointerClick,
-  Clock,
-  ArrowUpRight,
-  ThumbsUp,
-  Bookmark,
-  Gavel,
-  ShoppingCart,
-  FileText,
-} from 'lucide-react';
+import { useState, useCallback, Fragment } from 'react';
+import { Heart, Eye, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatCompact } from '@/lib/format';
 import type { AuctionItem, AuctionCategory } from './auction-lot-card-v2.types';
@@ -33,13 +16,28 @@ import type { AuctionItem, AuctionCategory } from './auction-lot-card-v2.types';
 function getStatusStyles(status: string) {
   switch (status) {
     case 'Em Andamento':
-      return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', dot: 'bg-emerald-400' };
+    case 'Aberto':
+      return {
+        dot: 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse',
+        text: 'text-green-500',
+        badge: 'bg-green-500 text-black',
+        date: 'text-gray-200',
+      };
     case 'Aguardando':
-      return { bg: 'bg-amber-500/20', text: 'text-amber-400', dot: 'bg-amber-400' };
+      return {
+        dot: 'bg-yellow-500',
+        text: 'text-yellow-500',
+        badge: 'bg-yellow-500 text-black',
+        date: 'text-gray-400',
+      };
     case 'Encerrada':
-      return { bg: 'bg-red-500/20', text: 'text-red-400', dot: 'bg-red-400' };
     default:
-      return { bg: 'bg-neutral-500/20', text: 'text-neutral-400', dot: 'bg-neutral-400' };
+      return {
+        dot: 'bg-neutral-700',
+        text: 'text-gray-400',
+        badge: 'bg-neutral-800 text-gray-500',
+        date: 'text-gray-500',
+      };
   }
 }
 
@@ -47,11 +45,11 @@ function getCategoryLabels(category: AuctionCategory) {
   switch (category) {
     case 'Judicial':
     case 'Extrajudicial':
-      return { priceLabel: 'Lance Mínimo', ctaLabel: 'DAR LANCE', CtaIcon: Gavel };
+      return { priceLabel: 'Lance Mínimo', ctaLabel: 'DAR LANCE', showIncrement: true };
     case 'Venda Direta':
-      return { priceLabel: 'Valor de Venda', ctaLabel: 'COMPRAR', CtaIcon: ShoppingCart };
+      return { priceLabel: 'Valor de Venda', ctaLabel: 'COMPRAR', showIncrement: false };
     case 'Tomada de Preços':
-      return { priceLabel: 'Valor de Referência', ctaLabel: 'ENVIAR PROPOSTA VINCULANTE', CtaIcon: FileText };
+      return { priceLabel: 'Valor de Referência', ctaLabel: 'ENVIAR PROPOSTA VINCULANTE', showIncrement: false };
   }
 }
 
@@ -66,13 +64,27 @@ interface AuctionLotCardV2Props {
 
 export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Props) {
   const [imgIdx, setImgIdx] = useState(0);
-  const [isFav, setIsFav] = useState(false);
   const images = item.images.length > 0 ? item.images : ['/images/placeholder-lot.webp'];
 
-  const prevImg = useCallback(() => setImgIdx((p) => (p === 0 ? images.length - 1 : p - 1)), [images.length]);
-  const nextImg = useCallback(() => setImgIdx((p) => (p === images.length - 1 ? 0 : p + 1)), [images.length]);
+  const prevImg = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setImgIdx((p) => (p === 0 ? images.length - 1 : p - 1));
+    },
+    [images.length],
+  );
+  const nextImg = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setImgIdx((p) => (p === images.length - 1 ? 0 : p + 1));
+    },
+    [images.length],
+  );
 
-  const { priceLabel, ctaLabel, CtaIcon } = getCategoryLabels(item.category);
+  const { priceLabel, ctaLabel, showIncrement } = getCategoryLabels(item.category);
+
+  const stage1Styles = getStatusStyles(item.timeline.stage1.status);
+  const stage2Styles = item.timeline.stage2 ? getStatusStyles(item.timeline.stage2.status) : null;
 
   return (
     <article
@@ -84,54 +96,76 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         className,
       )}
     >
-      {/* ─── Image Gallery ─── */}
-      <div className="relative group" data-ai-id="card-v2-gallery">
-        <div className="relative overflow-hidden aspect-[4/3]">
-          <img
-            src={images[imgIdx]}
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
-          {/* Hover actions */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="absolute bottom-4 left-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setIsFav(!isFav)}
-                className={cn(
-                  'p-2 rounded-full backdrop-blur-sm transition-all',
-                  isFav ? 'bg-red-500/80 text-white' : 'bg-white/10 text-white hover:bg-white/20',
-                )}
-                aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+      {/* ─── Top Media Section ─── */}
+      <div
+        className="relative h-[240px] w-full bg-neutral-800 shrink-0 overflow-hidden group"
+        data-ai-id="card-v2-gallery"
+      >
+        <img
+          src={images[imgIdx]}
+          alt={item.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+
+        {/* Hover Actions Overlay */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 z-20">
+          <button
+            type="button"
+            className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
+            aria-label="Adicionar aos favoritos"
+          >
+            <Heart className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
+            aria-label="Ver detalhes"
+          >
+            <Eye className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
+            aria-label="Compartilhar"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Consignor Logo — bottom-left with rich tooltip */}
+        <div className="absolute bottom-3 left-3 z-30 group/comitente">
+          <div className="w-14 h-14 rounded-full border-2 border-neutral-800 overflow-hidden bg-white shadow-lg">
+            <img
+              src={item.comitente?.logo || '/images/placeholder-logo.webp'}
+              alt={item.comitente?.name || 'Comitente'}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          {/* Tooltip */}
+          <div className="absolute left-0 bottom-full mb-2 opacity-0 group-hover/comitente:opacity-100 transition-opacity duration-200 pointer-events-none group-hover/comitente:pointer-events-auto z-40 w-48">
+            <div className="bg-neutral-900 text-white text-xs rounded-lg p-3 shadow-xl border border-white/10">
+              <div className="font-bold mb-1">{item.comitente?.name || 'Comitente'}</div>
+              <a
+                href={item.comitente?.url || '#'}
+                className="text-primary hover:underline block"
               >
-                <Heart className={cn('w-4 h-4', isFav && 'fill-current')} />
-              </button>
-              <button
-                type="button"
-                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
-                aria-label="Ver detalhes"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
-                aria-label="Compartilhar"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
+                Mais produtos desse comitente
+              </a>
+              {/* Arrow */}
+              <div className="absolute -bottom-1 left-6 w-2 h-2 bg-neutral-900 border-b border-r border-white/10 transform rotate-45" />
             </div>
           </div>
         </div>
 
-        {/* Gallery nav */}
+        {/* Gallery Navigation */}
         {images.length > 1 && (
           <>
             <button
               type="button"
               onClick={prevImg}
-              className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 z-30"
               aria-label="Imagem anterior"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -139,7 +173,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             <button
               type="button"
               onClick={nextImg}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 z-30"
               aria-label="Próxima imagem"
             >
               <ChevronRight className="w-4 h-4" />
@@ -147,207 +181,250 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           </>
         )}
 
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex gap-2">
-          {item.isOpen && (
-            <span className="bg-emerald-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-fast" />
+        {/* Open Badge — top-left */}
+        {item.isOpen && (
+          <div className="absolute top-3 left-3 flex items-center bg-[#10A34F] px-4 py-1.5 rounded-full shadow-lg z-30">
+            <span className="text-white text-[11px] font-bold uppercase tracking-wider">
               Aberto para Lances
             </span>
-          )}
-          {item.isLive && (
-            <span className="bg-red-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-fast" />
-              AO VIVO
-            </span>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Image counter */}
-        <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
+        {/* Live Badge — top-right */}
+        {item.isLive && (
+          <div className="absolute top-3 right-3 flex items-center gap-2 bg-[#10A34F] px-4 py-1.5 rounded-full shadow-lg z-30">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+            </span>
+            <span className="text-white text-[11px] font-bold uppercase tracking-wider">AO VIVO</span>
+          </div>
+        )}
+
+        {/* Image Counter — bottom-right */}
+        <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold text-white border border-white/10 z-30">
           {imgIdx + 1}/{images.length}
         </div>
+      </div>
 
-        {/* Comitente logo */}
-        {item.comitente && (
-          <div className="absolute top-3 right-3 group/tooltip">
-            <img
-              src={item.comitente.logo}
-              alt={item.comitente.name}
-              className="w-8 h-8 rounded-full border border-white/20 bg-white object-contain"
-              loading="lazy"
-            />
-            <div className="absolute right-0 top-full mt-1 bg-neutral-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-              {item.comitente.name}
-            </div>
+      {/* ─── Header Section ─── */}
+      <div className="p-4 pb-3" data-ai-id="card-v2-header">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-md border border-primary/20 uppercase">
+            {item.type}
+          </span>
+          <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-tight truncate">
+            {item.location}
+          </span>
+        </div>
+        <h3
+          className="font-[family-name:var(--font-card-display)] font-bold text-lg leading-tight mb-2 text-white line-clamp-2"
+          data-ai-id="card-v2-title"
+        >
+          {item.title}
+        </h3>
+        <div className="flex items-center gap-2 mb-3 text-gray-400 font-bold text-xs flex-wrap">
+          {(item.specs ?? []).map((spec, idx) => (
+            <Fragment key={idx}>
+              <span>{spec}</span>
+              {idx < (item.specs?.length ?? 0) - 1 && (
+                <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
+              )}
+            </Fragment>
+          ))}
+        </div>
+        {item.processNumber && (
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+            </svg>
+            <a className="underline hover:text-primary transition-colors truncate" href={`/lots/${item.id}`}>
+              Proc: {item.processNumber}
+            </a>
           </div>
         )}
       </div>
 
-      {/* ─── Header ─── */}
-      <div className="p-4 space-y-2" data-ai-id="card-v2-header">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
-            {item.category}
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-neutral-400" data-ai-id="card-v2-location">
-            <MapPin className="w-3 h-3" />
-            {item.location}
+      {/* ─── KPI Stats Row ─── */}
+      <div className="grid grid-cols-3 border-y border-neutral-800 bg-neutral-900/50" data-ai-id="card-v2-kpi">
+        <div className="kpi-border py-3 flex flex-col items-center">
+          <span className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-0.5">Visitas</span>
+          <span className="font-[family-name:var(--font-card-display)] text-sm font-bold text-white">
+            {item.stats.visits}
           </span>
         </div>
-        <h3 className="text-sm font-bold text-white leading-tight line-clamp-2 font-[family-name:var(--font-card-display)]" data-ai-id="card-v2-title">
-          {item.title}
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {(item.specs ?? []).map((spec) => (
-            <span key={spec} className="text-[10px] text-neutral-400 bg-neutral-800/50 px-2 py-0.5 rounded-full">
-              {spec}
-            </span>
-          ))}
+        <div className="kpi-border py-3 flex flex-col items-center">
+          <span className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-0.5">Habilitados</span>
+          <span className="font-[family-name:var(--font-card-display)] text-sm font-bold text-white">
+            {item.stats.qualified}
+          </span>
         </div>
-        {item.processNumber && (
-          <p className="text-[10px] text-neutral-500 truncate">Proc: {item.processNumber}</p>
-        )}
-      </div>
-
-      {/* ─── KPI row ─── */}
-      <div className="grid grid-cols-3 border-t border-neutral-800" data-ai-id="card-v2-kpi">
-        <div className="kpi-border flex flex-col items-center py-2.5 gap-0.5">
-          <BarChart3 className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" />
-          <span className="text-xs font-bold text-white">{formatCompact(item.stats.visits)}</span>
-          <span className="text-[9px] text-neutral-500 uppercase tracking-wider">Visitas</span>
-        </div>
-        <div className="kpi-border flex flex-col items-center py-2.5 gap-0.5">
-          <Users className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
-          <span className="text-xs font-bold text-white">{formatCompact(item.stats.qualified)}</span>
-          <span className="text-[9px] text-neutral-500 uppercase tracking-wider">Habilitados</span>
-        </div>
-        <div className="kpi-border flex flex-col items-center py-2.5 gap-0.5">
-          <MousePointerClick className="w-3.5 h-3.5 text-purple-400" aria-hidden="true" />
-          <span className="text-xs font-bold text-white">{formatCompact(item.stats.clicks)}</span>
-          <span className="text-[9px] text-neutral-500 uppercase tracking-wider">Lances</span>
+        <div className="kpi-border py-3 flex flex-col items-center">
+          <span className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-0.5">Cliques</span>
+          <span className="font-[family-name:var(--font-card-display)] text-sm font-bold text-white">
+            {item.stats.clicks}
+          </span>
         </div>
       </div>
 
-      {/* ─── Pricing ─── */}
-      <div className="p-4 bg-gradient-to-br from-orange-500/5 to-transparent" data-ai-id="card-v2-pricing">
-        <span className="text-[10px] text-neutral-400 uppercase tracking-wider">{priceLabel}</span>
-        <p className="text-xl font-bold text-orange-400 font-[family-name:var(--font-card-display)] mt-0.5">
-          {formatCurrency(item.pricing.minimumBid)}
-        </p>
-        <div className="flex items-center gap-3 mt-2">
-          {item.pricing.increment != null && (
-            <span className="text-[10px] text-neutral-400">
-              Incremento: <span className="text-white font-medium">{formatCurrency(item.pricing.increment)}</span>
+      {/* ─── Pricing & Economy Section ─── */}
+      <div className="p-4 bg-gradient-to-b from-[rgb(var(--color-card-surface))] to-black" data-ai-id="card-v2-pricing">
+        <div className="flex items-end justify-between">
+          <div>
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">
+              {priceLabel}
             </span>
-          )}
-          {item.pricing.discountPercentage != null && item.pricing.discountPercentage > 0 && (
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-              -{item.pricing.discountPercentage}%
+            <span className="text-primary font-[family-name:var(--font-card-display)] text-2xl font-bold leading-none">
+              {formatCurrency(item.pricing.minimumBid)}
             </span>
-          )}
-        </div>
-        <p className="text-[10px] text-neutral-500 mt-1">
-          Avaliação: <span className="text-neutral-300">{formatCurrency(item.pricing.evaluation)}</span>
-        </p>
-      </div>
-
-      {/* ─── Timeline (Judicial / Extrajudicial only) ─── */}
-      {hasTimeline(item.category) && (
-        <div className="px-4 pb-3" data-ai-id="card-v2-timeline">
-          <div className="flex items-start gap-3">
-            {/* Vertical line */}
-            <div className="flex flex-col items-center gap-0.5 pt-1">
-              <span className={cn('w-2 h-2 rounded-full', getStatusStyles(item.timeline.stage1.status).dot)} />
-              <span className="w-px h-5 bg-neutral-700" />
-              {item.timeline.stage2 && (
-                <span className={cn('w-2 h-2 rounded-full', getStatusStyles(item.timeline.stage2.status).dot)} />
-              )}
+            {showIncrement && item.pricing.increment != null && (
+              <span className="block text-[10px] text-gray-400 mt-1">
+                Incremento: {formatCurrency(item.pricing.increment)}
+              </span>
+            )}
+          </div>
+          <div className="text-right flex flex-col items-end gap-1">
+            {item.pricing.discountPercentage != null && item.pricing.discountPercentage > 0 && (
+              <span className="bg-green-500/10 text-green-500 text-[10px] font-black px-2 py-1 rounded-md border border-green-500/20">
+                {item.pricing.discountPercentage}% OFF
+              </span>
+            )}
+            <div className="text-[10px] text-gray-500 font-medium">
+              Avaliação: {formatCompact(item.pricing.evaluation)}
             </div>
-            {/* Stages */}
-            <div className="flex-1 space-y-2 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-white truncate">{item.timeline.stage1.name}</p>
-                  <p className="text-[9px] text-neutral-500">{item.timeline.stage1.date}</p>
-                </div>
-                <span
-                  className={cn(
-                    'text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
-                    getStatusStyles(item.timeline.stage1.status).bg,
-                    getStatusStyles(item.timeline.stage1.status).text,
-                  )}
-                >
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Timeline Section (Judicial / Extrajudicial only) ─── */}
+      {hasTimeline(item.category) && (
+        <div className="px-5 py-4 bg-neutral-900/30 flex-grow" data-ai-id="card-v2-timeline">
+          <div className="relative">
+            {/* Vertical line */}
+            <div className="absolute left-1.5 top-1 bottom-1 w-[1px] bg-neutral-800" />
+
+            {/* Stage 1 */}
+            <div
+              className={cn(
+                'relative pl-7',
+                item.timeline.stage2 && 'mb-4',
+                item.timeline.stage1.status === 'Encerrada' && 'opacity-50',
+              )}
+            >
+              <div
+                className={cn(
+                  'absolute left-0 top-1 w-3.5 h-3.5 rounded-full border-2 border-[rgb(var(--color-card-surface))] flex items-center justify-center',
+                  stage1Styles.dot,
+                )}
+              >
+                {item.timeline.stage1.status === 'Encerrada' && (
+                  <svg className="w-2 h-2 text-neutral-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex items-center justify-between mb-1">
+                <span className={cn('text-xs font-bold uppercase tracking-tight', stage1Styles.text)}>
+                  {item.timeline.stage1.name}
+                </span>
+                <span className={cn('text-[9px] px-1.5 py-0.5 rounded-sm uppercase font-bold', stage1Styles.badge)}>
                   {item.timeline.stage1.status}
                 </span>
               </div>
-              {item.timeline.stage2 && (
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-white truncate">{item.timeline.stage2.name}</p>
-                    <p className="text-[9px] text-neutral-500">{item.timeline.stage2.date}</p>
-                  </div>
-                  <span
-                    className={cn(
-                      'text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
-                      getStatusStyles(item.timeline.stage2.status).bg,
-                      getStatusStyles(item.timeline.stage2.status).text,
-                    )}
-                  >
+              <div className={cn('text-[10px] font-medium', stage1Styles.date)}>
+                {item.timeline.stage1.date}
+              </div>
+            </div>
+
+            {/* Stage 2 */}
+            {item.timeline.stage2 && stage2Styles && (
+              <div
+                className={cn(
+                  'relative pl-7',
+                  item.timeline.stage2.status === 'Encerrada' && 'opacity-50',
+                )}
+              >
+                <div
+                  className={cn(
+                    'absolute left-0 top-1 w-3.5 h-3.5 rounded-full border-2 border-[rgb(var(--color-card-surface))] flex items-center justify-center',
+                    stage2Styles.dot,
+                  )}
+                >
+                  {item.timeline.stage2.status === 'Encerrada' && (
+                    <svg className="w-2 h-2 text-neutral-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className={cn('text-xs font-bold uppercase tracking-tight', stage2Styles.text)}>
+                    {item.timeline.stage2.name}
+                  </span>
+                  <span className={cn('text-[9px] px-1.5 py-0.5 rounded-sm uppercase font-bold', stage2Styles.badge)}>
                     {item.timeline.stage2.status}
                   </span>
                 </div>
-              )}
-            </div>
+                <div className={cn('text-[11px] font-semibold leading-tight', stage2Styles.date)}>
+                  {item.timeline.stage2.date}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ─── Urgency ─── */}
-      <div className="px-4 pb-3 flex items-center gap-2" data-ai-id="card-v2-urgency">
-        <Clock className="w-3.5 h-3.5 text-orange-400 animate-pulse-fast" aria-hidden="true" />
-        <span className="text-[10px] text-neutral-300 font-medium">{item.timeline.timeRemaining}</span>
+      {/* ─── Urgency Row ─── */}
+      <div
+        className="px-4 py-3 flex items-center justify-between border-t border-neutral-800 bg-black/20 mt-auto"
+        data-ai-id="card-v2-urgency"
+      >
+        <div className="flex items-center gap-3">
+          <div className="animate-pulse-fast text-primary">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+            </svg>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-none mb-1">
+              Termina em
+            </span>
+            <span className="font-[family-name:var(--font-card-display)] font-bold text-sm text-primary">
+              {item.timeline.timeRemaining}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* ─── CTA + actions ─── */}
-      <div className="p-4 pt-0 mt-auto flex flex-col gap-2" data-ai-id="card-v2-actions">
+      {/* ─── Action Area ─── */}
+      <div className="p-4 pt-2 flex gap-3" data-ai-id="card-v2-actions">
         <a
           href={`/lots/${item.id}`}
-          className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.98]"
+          className="flex-[2] bg-primary hover:bg-orange-600 transition-all text-black font-[family-name:var(--font-card-display)] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(154,52,18,1)] active:translate-y-[2px] active:shadow-[0_2px_0_0_rgba(154,52,18,1)] text-xs sm:text-sm tracking-wide leading-tight text-center"
           data-ai-id="card-v2-cta"
         >
-          <CtaIcon className="w-4 h-4" aria-hidden="true" />
           {ctaLabel}
-          <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+          <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path clipRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" fillRule="evenodd" />
+          </svg>
         </a>
-        <div className="flex justify-center gap-4">
-          <button
-            type="button"
-            className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-white transition-colors"
-            aria-label="Compartilhar este lote"
-          >
-            <Share2 className="w-3.5 h-3.5" /> Compartilhar
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-white transition-colors"
-            aria-label="Votar neste lote"
-          >
-            <ThumbsUp className="w-3.5 h-3.5" /> Votar
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsFav(!isFav)}
-            className={cn(
-              'flex items-center gap-1 text-[10px] transition-colors',
-              isFav ? 'text-orange-400' : 'text-neutral-400 hover:text-white',
-            )}
-            aria-label={isFav ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
-          >
-            <Bookmark className={cn('w-3.5 h-3.5', isFav && 'fill-current')} />
-            {isFav ? 'Salvo' : 'Salvar'}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="flex-1 brutalist-border rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-colors"
+          aria-label="Compartilhar este lote"
+        >
+          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className="flex-1 brutalist-border rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-colors"
+          aria-label="Adicionar aos favoritos"
+        >
+          <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path clipRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" fillRule="evenodd" />
+          </svg>
+        </button>
       </div>
     </article>
   );
