@@ -199,7 +199,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           {item.title}
         </h3>
         <div className="flex flex-wrap gap-1.5">
-          {item.specs.map((spec) => (
+          {(item.specs ?? []).map((spec) => (
             <span key={spec} className="text-[10px] text-neutral-400 bg-neutral-800/50 px-2 py-0.5 rounded-full">
               {spec}
             </span>
