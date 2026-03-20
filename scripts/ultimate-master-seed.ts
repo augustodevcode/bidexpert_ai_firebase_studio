@@ -2724,6 +2724,25 @@ async function main() {
           updatedAt: new Date(),
         },
       }),
+      // Leilão 5: Venda Direta - Veículos e Sucatas
+      prisma.auction.create({
+        data: {
+          publicId: `auction-${timestamp}-5`,
+          slug: `auction-venda-direta-veiculos-${timestamp}-5`,
+          title: 'Venda Direta - Veículos Leves e Sucatas',
+          description: 'Venda direta de veículos leves, utilitários e sucatas aproveitáveis provenientes de renovação de frota.',
+          status: 'ABERTO_PARA_LANCES',
+          auctionDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+          tenantId: tenants[0].id,
+          auctionType: 'VENDA_DIRETA',
+          auctionMethod: 'STANDARD',
+          participation: 'ONLINE',
+          address: 'Pátio Central - Goiânia',
+          zipCode: capitalZipCodes['Goiânia'],
+          updatedAt: new Date(),
+        },
+      }),
     ]);
     console.log(`✅ ${auctions.length} auctions criados\n`);
 
@@ -2829,6 +2848,19 @@ async function main() {
       },
     });
     auctionStages.push(stage4_1);
+
+    // Criar 1 praça para o Leilão Venda Direta 5
+    const stage5_1 = await prisma.auctionStage.create({
+      data: {
+        name: 'Propostas',
+        auctionId: auctions[4].id,
+        tenantId: tenants[0].id,
+        startDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        status: 'EM_ANDAMENTO',
+      },
+    });
+    auctionStages.push(stage5_1);
 
     console.log(`✅ ${auctionStages.length} auction stages (praças) criados\n`);
 
@@ -2958,6 +2990,11 @@ async function main() {
       uno: { cityName: 'Rio de Janeiro', stateUf: 'RJ', address: 'Rua da Carioca, 100' },
       torno: { cityName: 'Belo Horizonte', stateUf: 'MG', address: 'Av. Amazonas, 1500' },
       cadeiras: { cityName: 'Brasília', stateUf: 'DF', address: 'SCS Quadra 1' },
+      mesas: { cityName: 'Brasília', stateUf: 'DF', address: 'SCS Quadra 3, Bloco A' },
+      impressoras: { cityName: 'Brasília', stateUf: 'DF', address: 'SBS Quadra 2, Lote 12' },
+      kombi: { cityName: 'Goiânia', stateUf: 'GO', address: 'Av. T-63, Setor Bueno' },
+      hilux: { cityName: 'Goiânia', stateUf: 'GO', address: 'Br-153, Km 3, Pátio DETRAN' },
+      palio: { cityName: 'Curitiba', stateUf: 'PR', address: 'Rua XV de Novembro, 900' },
     };
 
     const lots = await Promise.all([
@@ -3117,6 +3154,120 @@ async function main() {
           updatedAt: new Date(),
         },
       }),
+      prisma.lot.create({
+        data: {
+          publicId: `lot-${timestamp}-9`,
+          auctionId: auctions[3].id,
+          tenantId: tenants[0].id,
+          number: 'L002',
+          title: 'Lote de 30 Mesas de Escritório',
+          description: 'Mesas de escritório em L, tampo em MDF, com gavetas laterais, semi-novas.',
+          type: 'MOBILIARIO',
+          price: new Prisma.Decimal('18000.00'),
+          initialPrice: new Prisma.Decimal('14000.00'),
+          bidIncrementStep: new Prisma.Decimal('300.00'),
+          status: 'ABERTO_PARA_LANCES',
+          views: 42,
+          bidsCount: 3,
+          discountPercentage: 22,
+          cityName: lotLocations.mesas.cityName,
+          stateUf: lotLocations.mesas.stateUf,
+          mapAddress: lotLocations.mesas.address,
+          updatedAt: new Date(),
+        },
+      }),
+      prisma.lot.create({
+        data: {
+          publicId: `lot-${timestamp}-10`,
+          auctionId: auctions[3].id,
+          tenantId: tenants[0].id,
+          number: 'L003',
+          title: 'Impressoras e Scanners - Lote Misto',
+          description: 'Lote com 15 impressoras multifuncionais HP e 10 scanners Epson. Funcionamento verificado.',
+          type: 'EQUIPAMENTO',
+          price: new Prisma.Decimal('12000.00'),
+          initialPrice: new Prisma.Decimal('9500.00'),
+          bidIncrementStep: new Prisma.Decimal('200.00'),
+          status: 'EM_BREVE',
+          views: 28,
+          bidsCount: 0,
+          discountPercentage: 21,
+          cityName: lotLocations.impressoras.cityName,
+          stateUf: lotLocations.impressoras.stateUf,
+          mapAddress: lotLocations.impressoras.address,
+          updatedAt: new Date(),
+        },
+      }),
+      // Lotes do Leilão 5 (Venda Direta - Veículos e Sucatas)
+      prisma.lot.create({
+        data: {
+          publicId: `lot-${timestamp}-11`,
+          auctionId: auctions[4].id,
+          tenantId: tenants[0].id,
+          number: 'L001',
+          title: 'VW Kombi 2012 - Furgão',
+          description: 'Kombi furgão 2012, motor 1.4 flex, branca, 120.000 km. Ideal para food truck ou entregas.',
+          type: 'VEICULO',
+          price: new Prisma.Decimal('28000.00'),
+          initialPrice: new Prisma.Decimal('35000.00'),
+          secondInitialPrice: new Prisma.Decimal('22000.00'),
+          bidIncrementStep: new Prisma.Decimal('500.00'),
+          status: 'ABERTO_PARA_LANCES',
+          views: 87,
+          bidsCount: 5,
+          discountPercentage: 20,
+          cityName: lotLocations.kombi.cityName,
+          stateUf: lotLocations.kombi.stateUf,
+          mapAddress: lotLocations.kombi.address,
+          updatedAt: new Date(),
+        },
+      }),
+      prisma.lot.create({
+        data: {
+          publicId: `lot-${timestamp}-12`,
+          auctionId: auctions[4].id,
+          tenantId: tenants[0].id,
+          number: 'L002',
+          title: 'Toyota Hilux 2019 SW4 Diesel',
+          description: 'Hilux SW4 2.8 diesel 4x4, automática, prata, 65.000 km. Procedência de frota corporativa.',
+          type: 'VEICULO',
+          price: new Prisma.Decimal('165000.00'),
+          initialPrice: new Prisma.Decimal('210000.00'),
+          secondInitialPrice: new Prisma.Decimal('140000.00'),
+          bidIncrementStep: new Prisma.Decimal('2000.00'),
+          status: 'ABERTO_PARA_LANCES',
+          views: 153,
+          bidsCount: 12,
+          discountPercentage: 21,
+          cityName: lotLocations.hilux.cityName,
+          stateUf: lotLocations.hilux.stateUf,
+          mapAddress: lotLocations.hilux.address,
+          updatedAt: new Date(),
+        },
+      }),
+      prisma.lot.create({
+        data: {
+          publicId: `lot-${timestamp}-13`,
+          auctionId: auctions[4].id,
+          tenantId: tenants[0].id,
+          number: 'L003',
+          title: 'Fiat Palio 2015 Fire Economy',
+          description: 'Palio Fire 1.0 flex, branco, 4 portas, 95.000 km. Documentação ok, pronto para uso.',
+          type: 'VEICULO',
+          price: new Prisma.Decimal('22000.00'),
+          initialPrice: new Prisma.Decimal('30000.00'),
+          secondInitialPrice: new Prisma.Decimal('18000.00'),
+          bidIncrementStep: new Prisma.Decimal('300.00'),
+          status: 'EM_PREGAO',
+          views: 64,
+          bidsCount: 8,
+          discountPercentage: 27,
+          cityName: lotLocations.palio.cityName,
+          stateUf: lotLocations.palio.stateUf,
+          mapAddress: lotLocations.palio.address,
+          updatedAt: new Date(),
+        },
+      }),
     ]);
     console.log(`✅ ${lots.length} lots criados\n`);
 
@@ -3134,6 +3285,14 @@ async function main() {
       { lot: lots[4], stage: stage2_2, multiplier: 0.85 },
       { lot: lots[5], stage: stage2_1, multiplier: 1 },
       { lot: lots[5], stage: stage2_2, multiplier: 0.85 },
+      // TOMADA DE PREÇOS (auctions[3] / stage4_1)
+      { lot: lots[7], stage: stage4_1, multiplier: 1 },
+      { lot: lots[8], stage: stage4_1, multiplier: 1 },
+      { lot: lots[9], stage: stage4_1, multiplier: 1 },
+      // VENDA DIRETA (auctions[4] / stage5_1)
+      { lot: lots[10], stage: stage5_1, multiplier: 1 },
+      { lot: lots[11], stage: stage5_1, multiplier: 1 },
+      { lot: lots[12], stage: stage5_1, multiplier: 1 },
     ];
 
     await prisma.lotStagePrice.createMany({
