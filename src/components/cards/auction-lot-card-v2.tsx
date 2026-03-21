@@ -88,48 +88,53 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
       )}
     >
       {/* ─── Image Gallery ─── */}
-      <Link href={`/lots/${item.id}`} className="relative group" data-ai-id="card-v2-gallery">
-        <div className="relative overflow-hidden aspect-video">
-          <Image
-            src={images[imgIdx]}
-            alt={item.title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          {/* Hover actions */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="absolute bottom-4 left-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setIsFav(!isFav)}
-                className={cn(
-                  'p-2 rounded-full backdrop-blur-sm transition-all',
-                  isFav ? 'bg-red-500/80 text-white' : 'bg-white/10 text-white hover:bg-white/20',
-                )}
-                aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-              >
-                <Heart className={cn('w-4 h-4', isFav && 'fill-current')} />
-              </button>
-              <button
-                type="button"
-                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
-                aria-label="Ver detalhes"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
-                aria-label="Compartilhar"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
-            </div>
+      {/* Outer container is a plain div so interactive controls (buttons) are not nested inside the Link */}
+      <div className="relative group" data-ai-id="card-v2-gallery">
+        {/* Only the image itself is wrapped in the navigable Link */}
+        <Link href={`/lots/${item.id}`} className="block">
+          <div className="relative overflow-hidden aspect-video">
+            <Image
+              src={images[imgIdx]}
+              alt={item.title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
+        </Link>
+
+        {/* Hover actions — overlay is a sibling of Link (avoids nested interactive controls) */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute bottom-4 left-4 flex gap-2 pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => setIsFav(!isFav)}
+              className={cn(
+                'p-2 rounded-full backdrop-blur-sm transition-all',
+                isFav ? 'bg-red-500/80 text-white' : 'bg-white/10 text-white hover:bg-white/20',
+              )}
+              aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+            >
+              <Heart className={cn('w-4 h-4', isFav && 'fill-current')} />
+            </button>
+            <button
+              type="button"
+              className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
+              aria-label="Ver detalhes"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
+              aria-label="Compartilhar"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        {/* Gallery nav */}
+        {/* Gallery nav — siblings of Link, not nested inside it */}
         {images.length > 1 && (
           <>
             <button
@@ -194,7 +199,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </div>
           </div>
         )}
-      </Link>
+      </div>
 
       {/* ─── Header ─── */}
       <div className="p-4 space-y-2" data-ai-id="card-v2-header">
