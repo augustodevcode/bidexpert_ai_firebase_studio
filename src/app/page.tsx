@@ -48,7 +48,7 @@ export default async function HomePage({ searchParams }: { searchParams?: HomeSe
     ] = await Promise.allSettled([
             getPlatformSettings(),
             getAuctions(true, 10),
-            getLots(undefined, true, 12),
+            getLots(undefined, true, 20),
             getLotCategories(true),
             getSellers(true),
     ]);

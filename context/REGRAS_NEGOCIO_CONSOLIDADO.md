@@ -481,6 +481,42 @@ Proibir mix de `cuid()` em novos docs/código
 - Componente: `src/components/closing-soon-carousel.tsx`
 - Uso: `src/app/page.tsx`
 
+### RN-024A: Seção Paralela "Mais Lotes Ativos" na Home
+✅ **Preservação da Seção Principal**: A seção `homepage-featured-lots-section` DEVE permanecer inalterada como bloco primário da vitrine de lotes
+✅ **Fonte da Seção Paralela**: A seção `homepage-more-active-lots-section` DEVE usar apenas lotes com status `ABERTO_PARA_LANCES` que ainda nao foram renderizados na seção principal
+✅ **Limite e Ordenação**: A seção paralela DEVE exibir no maximo 8 cards, mantendo a ordem original recebida do pipeline de dados da home
+✅ **Nao Duplicação**: O mesmo lote NAO pode aparecer simultaneamente nas seções principal e paralela
+✅ **Renderização Condicional**: A seção paralela so deve aparecer quando existir ao menos 1 lote ativo adicional
+
+**Validações Obrigatórias**:
+1. `homepage-featured-lots-section` renderizada antes da seção paralela
+2. `homepage-more-active-lots-section` existe apenas quando houver lotes ativos restantes
+3. Grid da seção paralela limitado a 8 cards
+4. Interseção de lotes entre as duas seções deve ser vazia
+
+**BDD - Cenários de Teste**:
+- **Dado** que existem mais lotes ativos do que os exibidos na seção principal
+  **Quando** a home pública é carregada
+  **Então** a seção "Mais Lotes Ativos" deve ser exibida com os lotes restantes
+
+- **Dado** que um lote já foi exibido na seção principal
+  **Quando** a seção paralela é renderizada
+  **Então** esse lote não deve aparecer novamente na seção paralela
+
+- **Dado** que nao existem lotes ativos adicionais
+  **Quando** a home pública é carregada
+  **Então** a seção "Mais Lotes Ativos" não deve ser exibida
+
+**TDD - Cobertura Mínima Exigida**:
+- Teste unitário da regra de seleção de lotes restantes (`getMoreActiveLots`)
+- Teste E2E da homepage validando exibição condicional e ausência de duplicidade entre seções
+- Cenário BDD dedicado em `tests/itsm/features/home-more-active-lots.feature`
+
+**Implementação**:
+- Utilitário: `src/lib/home-lot-sections.ts`
+- Página cliente: `src/app/home-page-client.tsx`
+- Entrada de dados: `src/app/page.tsx`
+
 ### RN-025: Links Cruzados entre Entidades
 ✅ **Navegação Hierárquica**: Permitir navegação entre entidades relacionadas através de links diretos nas tabelas CRUD  
 ✅ **Relações Suportadas**:  
@@ -3702,6 +3738,9 @@ await page.goto(`${BASE_URL}/admin/auctions/${auctionId}/auction-control-center`
 | `auth-login-password` | Input de senha | Página de login |
 | `auction-dashboard-btn` | Botão "Leilões" | Sidebar do admin |
 | `super-opportunities-section` | Seção Super Oportunidades | Homepage pública |
+| `homepage-featured-lots-section` | Seção principal de lotes | Homepage pública |
+| `homepage-more-active-lots-section` | Seção paralela de lotes ativos | Homepage pública |
+| `homepage-more-active-lots-grid` | Grid de cards da seção paralela | Homepage pública |
 
 **Verificação de tabs no centro de controle:**
 ```typescript
