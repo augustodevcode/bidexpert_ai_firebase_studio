@@ -146,14 +146,15 @@ async function resolveTenantFromRequest(
       };
     }
     
-    // If NEXT_PUBLIC_DEFAULT_TENANT is configured, use it as the tenant for this landlord/Vercel domain.
-    // This env var is set per Vercel environment (hml, demo, production) to auto-lock the workspace
-    // without requiring subdomain routing. It is NOT set in local development.
+    // If NEXT_PUBLIC_DEFAULT_TENANT is configured, use it as the default tenant for this
+    // landlord/Vercel domain. It pre-selects the tenant but does NOT lock the selector,
+    // because there is no actual subdomain in the URL. The user can still change the tenant.
+    // subdomain is set to null intentionally so the login page keeps the selector editable.
     const defaultTenant = normalizeTenantToken(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
     if (defaultTenant) {
       return {
         tenantId: defaultTenant,
-        subdomain: defaultTenant,
+        subdomain: null, // Not a real URL subdomain — pre-select only, do NOT lock
         isCustomDomain: false,
         isPathBased: false,
       };

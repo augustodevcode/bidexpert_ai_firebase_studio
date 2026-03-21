@@ -1,0 +1,226 @@
+# ==============================================================================
+# GitHub Action: Playwright Admin-Plus Sheet CRUD Evidence → GitHub Pages
+# ==============================================================================
+# Executa os testes E2E de Sheet CRUD contra o deploy Vercel,
+# gera screenshots e publica o relatório HTML em GitHub Pages.
+#
+# Acesso ao relatório publicado:
+#   https://augustodevcode.github.io/bidexpert_ai_firebase_studio/
+#
+# Triggers:
+#   - Manual (workflow_dispatch) — para gerar evidência sob demanda
+#   - Push em main ou demo-stable (branches permitidas para Pages deployment)
+#   - Push em qualquer branch dispara os testes e sobe screenshots como artefato
+# ==============================================================================
+
+name: 🎭 Sheet CRUD Evidence → GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "URL do deploy (padrão: Vercel demo)"
+        required: false
+        default: "https://bidexpertaifirebasestudio.vercel.app"
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: Executar testes e gerar relatório com screenshots
+  # Roda em TODAS as branches — screenshots ficam disponíveis como artefato
+  # ─────────────────────────────────────────────────────────────────────────────
+  test-and-report:
+    name: 🧪 Rodar testes Sheet CRUD
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    outputs:
+      test_status: ${{ steps.run_tests.outputs.exit_code }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 📚 Instalar dependências
+        run: npm ci
+
+      - name: 🔄 Copiar schema PostgreSQL
+        run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
+
+      - name: 🗄️ Gerar Prisma Client
+        run: npx prisma generate
+
+      - name: 🎭 Instalar Playwright (Chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: 🧪 Executar testes Sheet CRUD (com screenshots sempre)
+        id: run_tests
+        run: |
+          PLAYWRIGHT_BASE_URL="${{ github.event.inputs.base_url || 'https://bidexpertaifirebasestudio.vercel.app' }}" \
+          npx playwright test \
+            --config=playwright.vercel.config.ts \
+            tests/e2e/admin/admin-plus-sheet-crud-vercel.spec.ts \
+            --reporter=list,html \
+            2>&1 | tee test-output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        env:
+          CI: true
+        continue-on-error: true
+
+      - name: 🖼️ Preparar relatório com banner de status
+        run: |
+          REPORT_DIR="playwright-report-vercel"
+          if [ ! -d "$REPORT_DIR" ]; then
+            REPORT_DIR="playwright-report"
+          fi
+          echo "Usando diretório de relatório: $REPORT_DIR"
+          ls -la "$REPORT_DIR" || echo "Diretório de relatório não encontrado"
+
+          mkdir -p pages-output
+          if [ -d "$REPORT_DIR" ]; then
+            cp -r "$REPORT_DIR/." pages-output/
+          else
+            cat > pages-output/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head><title>BidExpert - Playwright Report</title></head>
+          <body>
+          <h1>Relatório não disponível</h1>
+          <p>Os testes não geraram um relatório HTML. Verifique os logs da Action.</p>
+          </body>
+          </html>
+          EOF
+          fi
+
+          STATUS_CODE="${{ steps.run_tests.outputs.exit_code }}"
+          if [ "$STATUS_CODE" = "0" ]; then
+            BADGE="✅ PASSOU"
+            COLOR="#16a34a"
+          else
+            BADGE="❌ FALHOU"
+            COLOR="#dc2626"
+          fi
+
+          if [ -f "pages-output/index.html" ]; then
+            sed -i "s|<body>|<body><div style='background:$COLOR;color:white;padding:16px;font-family:sans-serif;font-size:18px;'><strong>Admin-Plus Sheet CRUD — Status: $BADGE</strong> | Branch: ${{ github.ref_name }} | Run: <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' style='color:white'>Ver logs completos ↗</a></div>|" pages-output/index.html || true
+          fi
+
+      - name: 📤 Upload screenshots como artefato (acessível em todas as branches)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sheet-crud-screenshots-${{ github.run_id }}
+          path: |
+            test-results/
+            pages-output/
+          retention-days: 30
+
+      - name: 📦 Preparar artefato para GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/demo-stable' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages-output
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 2: Publicar relatório em GitHub Pages
+  # Só roda em main, demo-stable ou workflow_dispatch (branches permitidas)
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy-pages:
+    name: 📄 Publicar em GitHub Pages
+    needs: test-and-report
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/demo-stable' || github.event_name == 'workflow_dispatch'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: 🚀 Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 3: Comentar no PR com link para o relatório e artefatos
+  # Roda em todas as branches quando há PR associado
+  # ─────────────────────────────────────────────────────────────────────────────
+  comment-on-pr:
+    name: 💬 Comentar no PR
+    needs: test-and-report
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'push'
+
+    steps:
+      - name: 💬 Adicionar comentário no PR com evidências
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const exitCode = '${{ needs.test-and-report.outputs.test_status }}';
+            const status = exitCode === '0' ? '✅ PASSOU' : '❌ FALHOU';
+            const emoji = exitCode === '0' ? '🟢' : '🔴';
+            const isMainBranch = context.ref === 'refs/heads/main' || context.ref === 'refs/heads/demo-stable';
+            const pagesUrl = 'https://augustodevcode.github.io/bidexpert_ai_firebase_studio/';
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const artifactUrl = `${runUrl}#artifacts`;
+
+            const screenshotLine = isMainBranch
+              ? `- **📊 Relatório GitHub Pages (com screenshots):** [Abrir relatório ↗](${pagesUrl})`
+              : `- **📸 Screenshots (artefatos da Action):** [Ver screenshots ↗](${artifactUrl})`;
+
+            const body = `## ${emoji} Admin-Plus Sheet CRUD — Evidência Playwright
+
+            **Status:** ${status} | **Branch:** \`${context.ref.replace('refs/heads/', '')}\`
+
+            | Recurso | Smoke | Sheet Renders | CRUD Cycle |
+            |---------|-------|---------------|------------|
+            | vehicle-makes | ${status} | ${status} | ${status} |
+            | vehicle-models | ${status} | ${status} | — |
+            | states | ${status} | ${status} | — |
+            | courts | ${status} | ${status} | ${status} |
+            | cities | ${status} | ${status} | — |
+            | roles | ${status} | ${status} | ${status} |
+            | document-types | ${status} | ${status} | ${status} |
+            | data-sources | ${status} | ${status} | ${status} |
+            | users | ${status} | ${status} | — |
+            | tenants | ${status} | ${status} | — |
+
+            ### 📸 Screenshots e Relatório Visual
+            ${screenshotLine}
+            - **Logs completos:** [Ver run ↗](${runUrl})
+
+            > Testes executados contra: \`https://bidexpertaifirebasestudio.vercel.app\`
+            `;
+
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
+
+            for (const pr of prs) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body,
+              });
+            }
+

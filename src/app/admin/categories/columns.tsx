@@ -39,6 +39,7 @@ import { useRouter } from 'next/navigation';
 
 interface CategoriesColumnsProps {
   onDelete?: (id: string) => void;
+  onEdit?: (category: LotCategory) => void;
 }
 
 export const createColumns = (props?: CategoriesColumnsProps): ColumnDef<LotCategory>[] => [
@@ -46,13 +47,13 @@ export const createColumns = (props?: CategoriesColumnsProps): ColumnDef<LotCate
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
-      <Link 
-        href={`/admin/categories/${row.original.id}/edit`} 
-        className="font-medium hover:text-primary"
+      <button 
+        onClick={() => props?.onEdit?.(row.original)}
+        className="font-medium hover:text-primary underline-offset-4 hover:underline bg-transparent border-none cursor-pointer"
         data-ai-id={`category-name-link-${row.original.id}`}
       >
         {row.getValue("name")}
-      </Link>
+      </button>
     ),
   },
   {
@@ -74,12 +75,12 @@ export const createColumns = (props?: CategoriesColumnsProps): ColumnDef<LotCate
     header: () => <div className="text-center">Ações</div>,
     cell: ({ row }) => {
       const category = row.original;
-      return <CategoryActionsCell category={category} onDelete={props?.onDelete} />;
+      return <CategoryActionsCell category={category} onDelete={props?.onDelete} onEdit={props?.onEdit} />;
     },
   },
 ];
 
-function CategoryActionsCell({ category, onDelete }: { category: LotCategory; onDelete?: (id: string) => void }) {
+function CategoryActionsCell({ category, onDelete, onEdit }: { category: LotCategory; onDelete?: (id: string) => void; onEdit?: (category: LotCategory) => void }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
@@ -127,11 +128,9 @@ function CategoryActionsCell({ category, onDelete }: { category: LotCategory; on
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Ações</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href={`/admin/categories/${category.id}/edit`} data-ai-id={`category-edit-link-${category.id}`}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar
-            </Link>
+          <DropdownMenuItem onClick={() => onEdit?.(category)} data-ai-id={`category-edit-link-${category.id}`}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/admin/lots?categoryId=${category.id}`} data-ai-id={`category-view-lots-link-${category.id}`}>

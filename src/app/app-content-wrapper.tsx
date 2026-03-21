@@ -33,10 +33,11 @@ export function AppContentWrapper({
 }) {
   const pathname = usePathname();
   const isMapSearchPage = pathname.startsWith('/map-search');
+  const setupRedirect = <SetupRedirect isSetupComplete={isSetupComplete} />;
 
   // If we are on the setup page, we don't want to render the main layout.
   if (pathname === '/setup') {
-    return <>{children}</>;
+    return <>{setupRedirect}{children}</>;
   }
 
   // Determine if the current path is a special dashboard/admin layout
@@ -50,6 +51,7 @@ export function AppContentWrapper({
         enableSystem
         disableTransitionOnChange
       >
+        {setupRedirect}
         <div className="flex min-h-screen flex-col bg-muted/40">
           {children}
         </div>
@@ -66,7 +68,7 @@ export function AppContentWrapper({
       disableTransitionOnChange
     >
       <FloatingActionsProvider>
-        <SetupRedirect isSetupComplete={isSetupComplete} />
+        {setupRedirect}
         <div className="flex flex-col min-h-screen">
           <Suspense fallback={<div className="flex items-center justify-center h-24 border-b"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
               <Header 

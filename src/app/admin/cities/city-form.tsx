@@ -36,6 +36,8 @@ interface CityFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 export default function CityForm({
@@ -45,6 +47,8 @@ export default function CityForm({
   formTitle,
   formDescription,
   submitButtonText,
+  onSuccess,
+  onCancel,
 }: CityFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -77,8 +81,12 @@ export default function CityForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/cities');
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/admin/cities');
+          router.refresh();
+        }
       } else {
         toast({
           title: 'Erro',
@@ -160,7 +168,7 @@ export default function CityForm({
             />
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/cities')} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => onCancel ? onCancel() : router.push('/admin/cities')} disabled={isSubmitting}>   
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>

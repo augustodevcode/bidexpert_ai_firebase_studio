@@ -4,16 +4,21 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FileText } from 'lucide-react';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import type { BulkAction, PaginatedResponse } from '@/lib/admin-plus/types';
-import { listDocumentTypesAction, deleteDocumentTypeAction } from './actions';
+import {
+  listDocumentTypesAction,
+  createDocumentTypeAction,
+  updateDocumentTypeAction,
+  deleteDocumentTypeAction,
+} from './actions';
 import { getDocumentTypeColumns } from './columns';
+import { DocumentTypeForm } from './form';
+import type { CreateDocumentTypeInput } from './schema';
 
 type DocTypeRow = {
   id: string;
@@ -24,9 +29,10 @@ type DocTypeRow = {
 };
 
 export default function DocumentTypesListPage() {
-  const router = useRouter();
   const [data, setData] = useState<PaginatedResponse<DocTypeRow>>({ data: [], total: 0, page: 1, pageSize: 25, totalPages: 1 });
   const [isLoading, startTransition] = useTransition();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editRow, setEditRow] = useState<DocTypeRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocTypeRow | null>(null);
 
   const loadData = useCallback(() => {
@@ -39,6 +45,25 @@ export default function DocumentTypesListPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleEdit = useCallback((row: DocTypeRow) => {
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
+
+  const handleSubmit = useCallback(async (values: CreateDocumentTypeInput) => {
+    const result = editRow
+      ? await updateDocumentTypeAction({ id: editRow.id, data: values })
+      : await createDocumentTypeAction(values);
+    if (result.success) {
+      toast.success(editRow ? 'Tipo de documento atualizado' : 'Tipo de documento criado');
+      setFormOpen(false);
+      setEditRow(null);
+      loadData();
+    } else {
+      toast.error(result.error ?? 'Erro ao salvar');
+    }
+  }, [editRow, loadData]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -55,10 +80,10 @@ export default function DocumentTypesListPage() {
   const columns = useMemo(
     () =>
       getDocumentTypeColumns({
-        onEdit: (row) => router.push(`/admin-plus/document-types/${row.id}`),
+        onEdit: handleEdit,
         onDelete: (row) => setDeleteTarget(row),
       }),
-    [router],
+    [handleEdit],
   );
 
   const bulkActions: BulkAction<DocTypeRow>[] = useMemo(
@@ -81,12 +106,13 @@ export default function DocumentTypesListPage() {
       <PageHeader
         title="Tipos de Documento"
         description="Gerencie os tipos de documento exigidos no cadastro."
+        icon={FileText}
+        primaryAction={{
+          label: 'Novo Tipo',
+          onClick: () => { setEditRow(null); setFormOpen(true); },
+        }}
         data-ai-id="document-types-page-header"
-      >
-        <Button onClick={() => router.push('/admin-plus/document-types/new')} data-ai-id="document-types-btn-new">
-          <Plus className="mr-2 h-4 w-4" /> Novo Tipo
-        </Button>
-      </PageHeader>
+      />
 
       <DataTablePlus
         columns={columns}
@@ -94,8 +120,15 @@ export default function DocumentTypesListPage() {
         isLoading={isLoading}
         onPaginationChange={loadData}
         bulkActions={bulkActions}
-        onRowDoubleClick={(row) => router.push(`/admin-plus/document-types/${row.id}`)}
+        onRowDoubleClick={handleEdit}
         data-ai-id="document-types-data-table"
+      />
+
+      <DocumentTypeForm
+        open={formOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditRow(null); }}
+        onSubmit={handleSubmit}
+        defaultValues={editRow}
       />
 
       <ConfirmationDialog

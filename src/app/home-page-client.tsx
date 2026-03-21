@@ -25,6 +25,7 @@ import { ptBR } from 'date-fns/locale';
 import { RadarOpportunityCard, RadarCalendar, RadarPreferencesModal } from '@/components/radar';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
+import { getMoreActiveLots } from '@/lib/home-lot-sections';
 
 type HomeVariant = 'classic' | 'beta';
 
@@ -70,6 +71,12 @@ function HomeExperienceClassic({
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     .slice(0, 8);
   const lotsToDisplay = featuredLots.length > 0 ? featuredLots : recentActiveLots;
+  const moreActiveLots = getMoreActiveLots({
+    allLots,
+    displayedLots: lotsToDisplay,
+    activeStatuses: activeLotStatuses,
+    limit: 8,
+  });
   const lotsTitle = featuredLots.length > 0 ? 'Lotes em Destaque' : 'Lotes Recentes';
 
   const featuredAuctions = allAuctions
@@ -113,6 +120,8 @@ function HomeExperienceClassic({
         />
       )}
 
+      <TopCategories categories={categories.slice(0, 8)} />
+
       <section className="section-featured-lots" data-ai-id="homepage-featured-lots-section">
         <div className="wrapper-section-header" data-ai-id="homepage-featured-lots-header">
           <PublicSectionAdminTooltip
@@ -143,8 +152,6 @@ function HomeExperienceClassic({
           ))}
         </div>
       </section>
-
-      <TopCategories categories={categories.slice(0, 8)} />
 
       <div className="grid-promo-cards" data-ai-id="homepage-promo-grid">
         <PromoCard
@@ -190,6 +197,38 @@ function HomeExperienceClassic({
       </section>
 
       <FeaturedSellers sellers={featuredSellers} />
+
+      {/* Mais Lotes Ativos - lotes além dos já exibidos na seção de destaque */}
+      {moreActiveLots.length > 0 && (
+        <section className="section-more-active-lots" data-ai-id="homepage-more-active-lots-section">
+          <div className="wrapper-section-header" data-ai-id="homepage-more-active-lots-header">
+            <PublicSectionAdminTooltip
+              sectionId="homepage-more-active-lots"
+              description="Nesta seção exibimos lotes com status ABERTO_PARA_LANCES que não foram exibidos na seção de destaque acima, ampliando a visibilidade de mais oportunidades ativas."
+            >
+              <h2 className="header-section-title" data-ai-id="homepage-more-active-lots-title">Mais Lotes Ativos</h2>
+            </PublicSectionAdminTooltip>
+            <div className="wrapper-section-actions" data-ai-id="homepage-more-active-lots-actions">
+              <Button variant="outline" size="sm" asChild className="btn-view-all" data-ai-id="homepage-view-all-more-lots">
+                <Link href="/search?type=lots">
+                  Ver Todos <ArrowRight className="icon-arrow-right" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+          <div className="grid-lots-grid-mode" data-ai-id="homepage-more-active-lots-grid">
+            {moreActiveLots.map(item => (
+              <BidExpertCard
+                key={item.id}
+                item={item}
+                type="lot"
+                platformSettings={platformSettings}
+                parentAuction={allAuctions.find(a => a.id === item.auctionId)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="section-browse-categories" data-ai-id="homepage-categories-section">
         <PublicSectionAdminTooltip

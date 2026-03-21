@@ -109,7 +109,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
                         </div>
                     </CardContent>
                 </Card>
-                 <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages || []} />
+                 <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages || []} variant="extended" surface="auction" showContextIcons />
                  <Card>
                     <CardHeader className="p-3">
                         <CardTitle className="text-md font-semibold flex items-center"><CalendarDays className="mr-2 h-4 w-4" /> Calendário</CardTitle>

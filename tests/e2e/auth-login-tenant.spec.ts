@@ -191,3 +191,27 @@ test.describe('BDD-AUTH-05: DevUserSelector em Dev Mode', () => {
     }
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BDD-AUTH-06: GIVEN usuário acessa /login com redirect
+//              WHEN a rota alias é resolvida
+//              THEN redireciona para /auth/login preservando query string
+// ─────────────────────────────────────────────────────────────────────────────
+test.describe('BDD-AUTH-06: Alias Público /login', () => {
+  test('alias /login redireciona para /auth/login mantendo redirect', async ({ page }) => {
+    await page.goto(`${BASE_URL}/login?redirect=%2Fadmin`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 120_000,
+    });
+
+    await page.waitForURL(/\/auth\/login/i, { timeout: 60_000 });
+
+    const currentUrl = new URL(page.url());
+    expect(currentUrl.pathname).toBe('/auth/login');
+    expect(currentUrl.searchParams.get('redirect')).toBe('/admin');
+
+    const emailInput = page.locator('[data-ai-id="auth-login-email-input"]')
+      .or(page.locator('input[type="email"]')).first();
+    await expect(emailInput).toBeVisible({ timeout: 60_000 });
+  });
+});

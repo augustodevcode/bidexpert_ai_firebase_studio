@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileoverview Motor de geração de templates de relatórios com IA.
  * Suporta dois providers: Genkit (Google AI) e Ollama (modelos locais).

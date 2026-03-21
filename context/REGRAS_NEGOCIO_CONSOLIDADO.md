@@ -168,6 +168,27 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ OBRIGATÓRIO usar `BidExpertAuctionStagesTimeline`  
 ✅ Integrado em `AuctionCard` e `AuctionListItem`  
 ✅ Busca última etapa do leilão para countdown
+✅ Em superfícies de **leilão** (detalhes e modais), a timeline deve usar o **status bruto da praça** e **nunca** exibir valores monetários.
+✅ Em superfícies de **lote** (detalhes e modais), a timeline deve usar o **status derivado do lote na praça** e pode exibir valores por praça (`LotStagePrice`/fallback do lote).
+✅ Ícones contextuais de praça são obrigatórios em **detalhes**, **modais** e **forms**; são proibidos em **cards** e **listitems**, que devem permanecer compactos.
+
+**Cenário BDD - Leilão sem valores na timeline**
+- **Dado** um leilão com praças cadastradas
+- **Quando** o usuário acessa a página de detalhes ou o modal do leilão
+- **Então** a timeline mostra ícones e badges de status da praça
+- **E** nenhum valor monetário é exibido dentro da timeline do leilão
+
+**Cenário BDD - Lote com status visual derivado**
+- **Dado** um lote com preços por praça e status público definido
+- **Quando** o usuário acessa a página de detalhes ou o modal do lote
+- **Então** a timeline mostra ícones e badges derivados do status do lote na praça ativa
+- **E** os valores por praça são exibidos apenas nas superfícies do lote
+
+**Cenário BDD - Card/listitem continuam compactos**
+- **Dado** um card ou listitem de lote/leilão com timeline compacta
+- **Quando** a interface renderiza a timeline resumida
+- **Então** a compactação visual é preservada
+- **E** ícones contextuais de praça não são renderizados nesses componentes
 
 ### RN-009: Testes
 ✅ Playwright usa seletores `data-ai-id`  
@@ -250,6 +271,8 @@ Com base na análise de código e documentação, foram identificados pontos que
 🚫 **Restrições**:  
 - Bloquear navegação para rotas órfãs (`/new`, `/[id]/edit`) se `CrudFormContainer` estiver ativo  
 - Usar estado local ou contexto para gerenciar abertura/fechamento
+- O `CrudFormContainer` é o padrão oficial para create/edit em listagens admin e admin-plus; `Dialog` ou `Sheet` isolados só podem permanecer quando houver justificativa técnica documentada.
+- Ao migrar uma listagem para `CrudFormContainer`, a rota órfã antiga deve ser removida ou redirecionada para a listagem de origem.
 
 ### RN-015: Configuração Global de Edição (Modal/Sheet)
 🎛️ **Configuração**:  
@@ -266,15 +289,41 @@ Com base na análise de código e documentação, foram identificados pontos que
 
 ✅ **Status**: Implementado via `CrudFormContainer.tsx` e campo `crudFormMode` no schema
 
+**BDD - Container global em listagens admin**
+- **Dado** uma listagem administrativa que suporte criar e editar registros
+- **Quando** o usuário aciona "Novo" ou "Editar"
+- **Então** o formulário deve abrir dentro do `CrudFormContainer`
+- **E** o modo final deve respeitar `crudFormMode` no desktop e forçar `sheet` no mobile
+
 ### RN-016: Setup Gate Obrigatório
 Bloquear acesso a rotas protegidas quando `isSetupComplete=false`  
 Exigir verificação de `isSetupComplete` em `layout.tsx` com fallback seguro  
 Adicionar teste de regressão para impedir loops/redirects indevidos
+O `SetupRedirect` não pode permanecer desabilitado em branches de integração, homologação, preview ou produção. Bypass local só é permitido de forma temporária e documentada durante debugging isolado.
+
+**BDD - Gate de setup ativo**
+- **Dado** um tenant com `isSetupComplete=false`
+- **Quando** um usuário acessa uma rota protegida diferente de `/setup`
+- **Então** ele deve ser redirecionado para `/setup`
+- **E** não deve ocorrer loop de navegação
+
+- **Dado** um tenant com `isSetupComplete=true`
+- **Quando** um usuário acessa `/setup`
+- **Então** ele deve ser redirecionado para a área administrativa padrão
 
 ### RN-017: Elegibilidade para Lance e Arremate
 Usuário só pode lançar se: estiver autenticado, habilitado no leilão, KYC/documentos aprovados (quando aplicável), termos aceitos  
 Ao tentar lançar sem elegibilidade: exibir modal com checklist e CTAs para completar  
 Arremate/checkout exige método de pagamento válido e endereço confirmado
+Toda decisão de elegibilidade deve ser centralizada em um service compartilhado consumido por UI, Server Actions e motor de lances. A UI pode orientar o usuário, mas a decisão final sempre pertence ao backend.
+
+**Checklist mínimo de elegibilidade**
+- Autenticado
+- Habilitado no leilão
+- Documentação/KYC aprovada quando exigido
+- Termos aceitos
+- Cadastro essencial completo
+- Método de pagamento e endereço válidos para arremate/checkout
 
 ### RN-018: Consistência Multi-Tenant em Navegação
 Todos os links/rotas geradas devem carregar `tenantId` do contexto  
@@ -285,15 +334,45 @@ Proibido aceitar `tenantId` vindo do cliente sem validação
 Finalizar APIs: `GET/POST /api/bidder/*` para lotes vencidos, pagamentos, notificações, histórico, perfil  
 Repositories e services com BigInt  
 Seções do dashboard só renderizam quando dados essenciais estiverem carregados (skeletons/spinners)
+É proibido manter `TODO` funcional em seções visíveis do dashboard do arrematante em branches de integração. Se um bloco não tiver backend pronto, deve renderizar estado vazio explícito e testável, nunca placeholder ambíguo.
 
 ### RN-020: Fluxo de Publicação de Leilão
 `Auction` só pode ir para "Publicado" quando: etapas e datas válidas, lotes associados, regras de mídia atendidas, comitente/leiloeiro vinculados e ativos  
 Validar transitions no service com erros descritivos
 
+**Regras obrigatórias adicionais**
+- Cada praça (`AuctionStage`) DEVE ser persistida com `startDate` e `endDate` válidos.
+- O `endDate` de cada praça DEVE ser maior que o `startDate`; payloads inválidos DEVEM falhar no formulário e no service com mensagem descritiva.
+- Formulários administrativos de leilão DEVEM usar apenas status canônicos do domínio (`RASCUNHO`, `EM_PREPARACAO`, `EM_BREVE`, `ABERTO`, `ABERTO_PARA_LANCES`, `ENCERRADO`, `FINALIZADO`, `CANCELADO`, `SUSPENSO`).
+- Se `stateId` e `cityId` forem informados no cadastro/edição de leilão, a cidade DEVE pertencer ao estado selecionado; ao trocar o estado, seleções órfãs de cidade DEVEM ser limpas antes do submit.
+
+**Cenário BDD - Praça sem encerramento não pode ser salva**
+- **Dado** um formulário de leilão com pelo menos uma praça cadastrada
+- **Quando** a praça é enviada sem `endDate` ou com `endDate` menor/igual ao `startDate`
+- **Então** o sistema bloqueia a submissão e exibe erro descritivo antes de persistir no Prisma
+
+**Cenário BDD - Cidade inválida não sobrevive à troca de estado**
+- **Dado** um formulário de leilão com uma cidade já escolhida para determinado estado
+- **Quando** o usuário altera o estado para outro sem compatibilidade com a cidade atual
+- **Então** o campo de cidade volta ao placeholder no frontend e o backend rejeita combinações inconsistentes
+
+### RN-020A: Alias Canônico de Login
+✅ A rota pública `/login` DEVE redirecionar para `/auth/login` preservando query string relevante, incluindo `redirect`.
+✅ Fluxos administrativos que redirecionam usuários não autenticados DEVEM continuar apontando para a rota canônica `/auth/login`.
+
+**Cenário BDD - Alias público preserva destino**
+- **Dado** um usuário acessando `/login?redirect=/admin`
+- **Quando** a rota é resolvida no App Router
+- **Então** o usuário é redirecionado para `/auth/login?redirect=/admin`
+
 ### RN-021: Padrão de IDs BigInt em Front/Back
 Endpoints e services devem aceitar/retornar IDs numéricos  
 No frontend, converter string->number com validação e tratar `bigint` quando necessário  
 Proibir mix de `cuid()` em novos docs/código
+
+**Guardrail de serialização admin**
+- Server Actions administrativas que retornam um único registro para Client Components DEVEM aplicar `sanitizeResponse()` antes do retorno, mesmo fora de factories como `createAdminAction`.
+- Relações e FKs vindas do Prisma (`bigint`, `Decimal`, `Date`) NÃO podem ser expostas cruas para formulários client-side.
 
 ### RN-022: Pesquisa e Listagens Avançadas
 🔍 **Componentes Obrigatórios**:  
@@ -402,6 +481,42 @@ Proibir mix de `cuid()` em novos docs/código
 - Componente: `src/components/closing-soon-carousel.tsx`
 - Uso: `src/app/page.tsx`
 
+### RN-024A: Seção Paralela "Mais Lotes Ativos" na Home
+✅ **Preservação da Seção Principal**: A seção `homepage-featured-lots-section` DEVE permanecer inalterada como bloco primário da vitrine de lotes
+✅ **Fonte da Seção Paralela**: A seção `homepage-more-active-lots-section` DEVE usar apenas lotes com status `ABERTO_PARA_LANCES` que ainda nao foram renderizados na seção principal
+✅ **Limite e Ordenação**: A seção paralela DEVE exibir no maximo 8 cards, mantendo a ordem original recebida do pipeline de dados da home
+✅ **Nao Duplicação**: O mesmo lote NAO pode aparecer simultaneamente nas seções principal e paralela
+✅ **Renderização Condicional**: A seção paralela so deve aparecer quando existir ao menos 1 lote ativo adicional
+
+**Validações Obrigatórias**:
+1. `homepage-featured-lots-section` renderizada antes da seção paralela
+2. `homepage-more-active-lots-section` existe apenas quando houver lotes ativos restantes
+3. Grid da seção paralela limitado a 8 cards
+4. Interseção de lotes entre as duas seções deve ser vazia
+
+**BDD - Cenários de Teste**:
+- **Dado** que existem mais lotes ativos do que os exibidos na seção principal
+  **Quando** a home pública é carregada
+  **Então** a seção "Mais Lotes Ativos" deve ser exibida com os lotes restantes
+
+- **Dado** que um lote já foi exibido na seção principal
+  **Quando** a seção paralela é renderizada
+  **Então** esse lote não deve aparecer novamente na seção paralela
+
+- **Dado** que nao existem lotes ativos adicionais
+  **Quando** a home pública é carregada
+  **Então** a seção "Mais Lotes Ativos" não deve ser exibida
+
+**TDD - Cobertura Mínima Exigida**:
+- Teste unitário da regra de seleção de lotes restantes (`getMoreActiveLots`)
+- Teste E2E da homepage validando exibição condicional e ausência de duplicidade entre seções
+- Cenário BDD dedicado em `tests/itsm/features/home-more-active-lots.feature`
+
+**Implementação**:
+- Utilitário: `src/lib/home-lot-sections.ts`
+- Página cliente: `src/app/home-page-client.tsx`
+- Entrada de dados: `src/app/page.tsx`
+
 ### RN-025: Links Cruzados entre Entidades
 ✅ **Navegação Hierárquica**: Permitir navegação entre entidades relacionadas através de links diretos nas tabelas CRUD  
 ✅ **Relações Suportadas**:  
@@ -416,6 +531,7 @@ Proibir mix de `cuid()` em novos docs/código
 - **Componente Link**: Usar `Next.js Link` para navegação client-side  
 - **Parâmetros de Query**: Passar IDs via query string (`?auctionId=`, `?judicialProcessId=`)  
 - **Filtragem Automática**: Páginas de destino aplicam filtros automaticamente baseado nos parâmetros  
+- **Preservação de Contexto**: CTAs derivados de uma listagem filtrada (ex.: `Novo Lote`) DEVEM propagar o mesmo contexto (`auctionId`, `judicialProcessId`) ao abrir o formulário dependente  
 - **Contadores**: Exibir quantidade total de registros relacionados (ex: "3 Lotes", "5 Ativos")  
 - **Isolamento Multi-Tenant**: Todos os filtros respeitam isolamento por `tenantId`  
   
@@ -425,6 +541,70 @@ Proibir mix de `cuid()` em novos docs/código
 - **Performance**: Lazy loading de contadores quando necessário  
 - **Feedback**: Loading states durante navegação  
 - **Consistência**: Mesmo padrão visual em todas as tabelas CRUD  
+
+### RN-026: Consistência Temporal e de Status nas Superfícies Públicas
+✅ Cards, list items, detalhes, modais e countdowns de leilões/lotes DEVEM usar um cálculo efetivo único de status visual.
+✅ É proibido exibir badge de status aberto quando a data efetiva de encerramento já passou.
+✅ É proibido exibir texto de encerrado no rodapé quando o mesmo item ainda estiver efetivamente aberto pela regra temporal vigente.
+✅ A data efetiva deve considerar, nesta ordem quando aplicável: `actualOpenDate`/`openDate`/`auctionDate` para abertura e a última praça válida ou `endDate` para encerramento.
+✅ Regras temporais compartilhadas DEVEM ser centralizadas em helper/service reutilizado por UI pública e admin.
+
+**BDD - Status visual consistente**
+- **Dado** um lote ou leilão com `status` persistido como `ABERTO_PARA_LANCES`
+- **E** a data efetiva de encerramento já passou
+- **Quando** a interface renderiza badge, timeline e cronômetro
+- **Então** todos os pontos da interface devem refletir estado encerrado de forma consistente
+
+- **Dado** um lote ou leilão dentro da janela temporal válida
+- **Quando** a interface renderiza badge, timeline e cronômetro
+- **Então** nenhum ponto da interface pode indicar estado encerrado
+
+### RN-027: Cronologia de Praças e Ordenação Temporal
+✅ A sequência de `AuctionStage` DEVE ser validada por data real, nunca apenas por ordem de inserção.
+✅ Cada praça deve respeitar `startDate <= endDate`.
+✅ A praça `n+1` não pode iniciar antes do término da praça `n`.
+✅ A UI deve renderizar as praças em ordem cronológica crescente.
+✅ Dados inválidos de cronologia devem bloquear publicação do leilão e gerar erro descritivo no service.
+
+**BDD - Bloqueio de cronologia impossível**
+- **Dado** um leilão com 2ª praça iniciando antes do fim da 1ª praça
+- **Quando** o usuário tenta salvar ou publicar o leilão
+- **Então** o sistema deve rejeitar a operação com mensagem descritiva
+
+- **Dado** um leilão com praças válidas
+- **Quando** a timeline é renderizada
+- **Então** as praças devem aparecer em ordem cronológica consistente
+
+### RN-028: Renderização Nula e Monetária em Superfícies Públicas
+✅ É proibido renderizar `R$ --`, `undefined`, `null`, `Não informada` ou campos vazios ambíguos em cards, list items, detalhes e banners públicos quando o dado puder ser validado previamente.
+✅ Valores monetários DEVEM usar formatador central e checagem explícita de `null`/`undefined`; valores `0` permanecem válidos e devem ser exibidos.
+✅ Itens com integridade referencial insuficiente para categoria, localização ou valor obrigatório DEVEM ser filtrados da superfície pública relevante.
+✅ Placeholders textuais só podem ser usados em painéis administrativos ou estados explicitamente documentados.
+
+**BDD - Valor zero não some da interface**
+- **Dado** um valor monetário igual a `0`
+- **Quando** a interface renderiza o campo
+- **Então** o valor formatado deve aparecer normalmente
+
+**BDD - Item público inválido é filtrado**
+- **Dado** um item sem categoria ou sem localização obrigatória para a superfície pública
+- **Quando** a listagem pública é montada
+- **Então** esse item não deve ser exibido
+
+### RN-029: QA em Preview Vercel com Bypass Controlado
+✅ O bypass de Deployment Protection em previews Vercel é permitido apenas para automação de QA e smoke test.
+✅ O fluxo oficial deve usar `x-vercel-protection-bypass` e/ou `VERCEL_SHARE_URL` na mesma sessão do browser que executará o login.
+✅ O app deve registrar quando estiver operando em fallback tolerado de preview para evitar falso positivo de ambiente saudável.
+✅ Testes em preview DEVEM diferenciar claramente falha mascarada por fallback de falha real com backend saudável.
+
+**BDD - Bypass controlado de preview**
+- **Dado** um deployment preview protegido por Vercel
+- **Quando** a suíte E2E inicializa com segredo de bypass ou share URL válido
+- **Então** a automação deve conseguir acessar a rota alvo sem desabilitar a proteção do projeto
+
+- **Dado** um preview em fallback tolerado por indisponibilidade de banco
+- **Quando** o smoke test roda
+- **Então** o log deve registrar explicitamente que a validação ocorreu em modo degradado
 
 ### RN-024: Impersonação Administrativa Segura
 🔐 **Objetivo**: Permitir que administradores visualizem dashboards de outros perfis sem comprometer segurança.
@@ -3151,6 +3331,21 @@ Vercel ativa por padrão "Deployment Protection" em projetos de equipe (Team). D
 - ❌ Desabilitar Deployment Protection no projeto Vercel
 - ❌ Usar passwords compartilhados (inseguro)
 
+### RN-VERCEL-E2E-001A: Triagem obrigatória antes do browser test
+
+**Contexto:**
+Há cenários em que o preview da PR falha antes mesmo do build real da aplicação. Nesses casos, o deployment abre a tela do próprio Vercel com `Deployment has failed` e o inspector mostra `Builds . [0ms]` ou nenhum evento útil.
+
+**Regra:**
+- ✅ Antes de executar Playwright/browser em preview Vercel, validar o estado do deployment com `vercel inspect`, status checks da PR e/ou inspector URL.
+- ✅ Se o preview renderizar a tela `Deployment has failed`, classificar primeiro como falha de infraestrutura/integration/provisioning do deploy.
+- ✅ Nessa condição, NÃO tratar a rota alvo como quebrada até existir evidência adicional de falha da aplicação.
+
+**BDD - Preview quebrado antes do build**
+- **Dado** um preview Vercel em estado `ERROR`
+- **Quando** o inspector exibe `Builds . [0ms]` ou não retorna eventos de build úteis
+- **Então** a validação deve registrar o bloqueio como falha de deploy da plataforma antes de culpar a aplicação
+
 ---
 
 ### RN-VERCEL-E2E-002: Solução — Share URL + Cookie Bypass
@@ -3176,6 +3371,18 @@ Vercel ativa por padrão "Deployment Protection" em projetos de equipe (Team). D
 | `VERCEL_SHARE_URL` | URL compartilhável (válida por tempo limitado) | `https://vercel.live/open-feedback/xxx?via=login-wall` |
 | `PLAYWRIGHT_SKIP_WEBSERVER` | Pular inicialização do webserver local | `1` |
 | `PLAYWRIGHT_SKIP_LAWYER` | Pular autenticação do lawyer (se não existir no DB) | `1` |
+
+### RN-VERCEL-E2E-002A: Promoção da feature antes da cobrança em `main`/`hml`
+
+**Regra:**
+- ✅ Rotas novas como `/lots` só podem ser exigidas em `main`, `hml` ou aliases de produção após a promoção explícita da branch/PR que introduz a feature.
+- ✅ Enquanto a feature existir apenas em branch/preview, `404` em `main` ou `hml` indica ausência de promoção e NÃO regressão automática do código da feature.
+- ✅ A evidência de validação deve distinguir claramente: `preview da PR`, `demo-stable`, `main` e `hml`.
+
+**BDD - Rota nova ainda não promovida**
+- **Dado** uma rota nova implementada apenas na branch de feature
+- **Quando** o teste acessa `main` ou `hml` antes do merge/promotion
+- **Então** um `404` deve ser registrado como ambiente ainda não promovido, e não como quebra da implementação da branch
 
 ---
 
@@ -3413,8 +3620,8 @@ npm run dev
 |---------|-----|-------------------|-----------------|
 | Local com subdomínio | `http://demo.localhost:9005` | Resolvido pelo middleware via subdomínio `demo` | **Auto-locked** (desabilitado) |
 | Local sem subdomínio | `http://localhost:9005` | NÃO resolvido | **Aberto** — seleção manual obrigatória |
-| Vercel (production) | `https://bidexpertaifirebasestudio.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT="demo"` | **Auto-locked** |
-| Vercel (preview) | `https://xxxx.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT` env var | **Auto-locked** |
+| Vercel (production) | `https://bidexpertaifirebasestudio.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT="demo"` | **Aberto** — pré-selecionado, mas editável |
+| Vercel (preview) | `https://xxxx.vercel.app` | Via `NEXT_PUBLIC_DEFAULT_TENANT` env var | **Aberto** — pré-selecionado, mas editável |
 
 **REGRA para testes E2E:** SEMPRE usar `http://demo.localhost:<porta>` em testes locais.
 
@@ -3531,6 +3738,9 @@ await page.goto(`${BASE_URL}/admin/auctions/${auctionId}/auction-control-center`
 | `auth-login-password` | Input de senha | Página de login |
 | `auction-dashboard-btn` | Botão "Leilões" | Sidebar do admin |
 | `super-opportunities-section` | Seção Super Oportunidades | Homepage pública |
+| `homepage-featured-lots-section` | Seção principal de lotes | Homepage pública |
+| `homepage-more-active-lots-section` | Seção paralela de lotes ativos | Homepage pública |
+| `homepage-more-active-lots-grid` | Grid de cards da seção paralela | Homepage pública |
 
 **Verificação de tabs no centro de controle:**
 ```typescript
@@ -3554,7 +3764,7 @@ if (await tablist.isVisible({ timeout: 5000 }).catch(() => false)) {
 | Aspecto | Local (dev mode) | Vercel (production mode) |
 |---------|------------------|--------------------------|
 | **Compilação** | Lazy (sob demanda, lento) | Pré-compilada (tudo pronto) |
-| **Tenant resolution** | Via subdomínio `demo.localhost` | Via env `NEXT_PUBLIC_DEFAULT_TENANT` |
+| **Tenant resolution** | Via subdomínio `demo.localhost` | Via env `NEXT_PUBLIC_DEFAULT_TENANT` (pré-seleção, sem lock) |
 | **Tabs do control center** | 10 tabs visíveis | **Pode ter 0 tabs** (dados/rendering diferente) |
 | **DevUserSelector** | Visível (lista 15 users para login rápido) | **Não aparece** (NODE_ENV=production) |
 | **Banco de dados** | MySQL local | PostgreSQL (Prisma Postgres/Neon) |
@@ -3653,7 +3863,7 @@ npx playwright test tests/e2e/pregao-disputas-video.spec.ts
 | `ROBOT_LOCAL_BASE_URL` | `http://localhost:9005` | URL local para robôs |
 | `PREGAO_BASE_URL` | `http://demo.localhost:9005` | URL para pregão com vídeo |
 | `DATABASE_URL` | `.env` | Conexão MySQL/PostgreSQL |
-| `NEXT_PUBLIC_DEFAULT_TENANT` | — | Auto-lock tenant em Vercel |
+| `NEXT_PUBLIC_DEFAULT_TENANT` | — | Pré-seleciona tenant em Vercel (sem bloqueio — selector continua editável) |
 | `NODE_ENV` | `development` | `production` esconde DevUserSelector |
 
 **Exemplo de setup completo para testes locais:**

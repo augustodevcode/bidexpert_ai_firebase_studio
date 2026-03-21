@@ -15,6 +15,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { bidEventEmitter } from '@/services/realtime-bids.service';
 import { AutoBidService } from '@/services/auto-bid.service';
+import { biddingEligibilityService } from '@/services/bidding-eligibility.service';
 import logger from '@/lib/logger';
 import { z } from 'zod';
 import { createHash } from 'crypto';
@@ -100,14 +101,17 @@ export class BidEngineV2 {
       },
     });
     if (!lot) return { success: false, message: 'Lote não encontrado.' };
-    if (lot.status !== 'ABERTO_PARA_LANCES' && lot.status !== 'EM_PREGAO') {
-      return { success: false, message: 'Este lote não está aberto para lances.' };
+
+    const eligibility = await biddingEligibilityService.assertCanBid(data.lotId, data.userId);
+    if (!eligibility.success) {
+      return { success: false, message: eligibility.message };
     }
 
     // 4. Validate auction status
     const auction = await prisma.auction.findUnique({ where: { id: lot.auctionId } });
-    const auctionOpen = auction && (auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO');
-    if (!auctionOpen) return { success: false, message: 'Leilão não está ativo.' };
+    if (!auction) {
+      return { success: false, message: 'Leilão não encontrado.' };
+    }
 
     // 5. Amount validation (must be > current price if bids exist)
     const hasBids = (lot.bidsCount ?? 0) > 0;
