@@ -6,6 +6,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
   Heart,
   Eye,
@@ -23,6 +25,7 @@ import {
   Gavel,
   ShoppingCart,
   FileText,
+  Percent,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatCompact } from '@/lib/format';
@@ -85,13 +88,14 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
       )}
     >
       {/* ─── Image Gallery ─── */}
-      <div className="relative group" data-ai-id="card-v2-gallery">
-        <div className="relative overflow-hidden aspect-[4/3]">
-          <img
+      <Link href={`/lots/${item.id}`} className="relative group" data-ai-id="card-v2-gallery">
+        <div className="relative overflow-hidden aspect-video">
+          <Image
             src={images[imgIdx]}
             alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           {/* Hover actions */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -162,7 +166,13 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </span>
           )}
         </div>
-
+        {/* Discount badge — mental trigger */}
+        {item.pricing.discountPercentage != null && item.pricing.discountPercentage > 0 && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-emerald-500/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm z-10" data-ai-id="card-v2-discount-badge">
+            <Percent className="w-3 h-3" aria-hidden="true" />
+            {item.pricing.discountPercentage}% OFF
+          </div>
+        )}
         {/* Image counter */}
         <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
           {imgIdx + 1}/{images.length}
@@ -182,7 +192,8 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </div>
           </div>
         )}
-      </div>
+      </Link>
+          </Link>
 
       {/* ─── Header ─── */}
       <div className="p-4 space-y-2" data-ai-id="card-v2-header">
@@ -199,7 +210,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           {item.title}
         </h3>
         <div className="flex flex-wrap gap-1.5">
-          {item.specs.map((spec) => (
+          {(item.specs ?? []).map((spec) => (
             <span key={spec} className="text-[10px] text-neutral-400 bg-neutral-800/50 px-2 py-0.5 rounded-full">
               {spec}
             </span>
@@ -231,6 +242,12 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
 
       {/* ─── Pricing ─── */}
       <div className="p-4 bg-gradient-to-br from-orange-500/5 to-transparent" data-ai-id="card-v2-pricing">
+        {/* Evaluation with strikethrough anchoring */}
+        {item.pricing.evaluation > 0 && item.pricing.discountPercentage != null && item.pricing.discountPercentage > 0 && (
+          <p className="text-card-v2-evaluation mb-1" data-ai-id="card-v2-evaluation">
+            Avaliação: <span className="line-through">{formatCurrency(item.pricing.evaluation)}</span>
+          </p>
+        )}
         <span className="text-[10px] text-neutral-400 uppercase tracking-wider">{priceLabel}</span>
         <p className="text-xl font-bold text-orange-400 font-[family-name:var(--font-card-display)] mt-0.5">
           {formatCurrency(item.pricing.minimumBid)}
@@ -242,14 +259,18 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </span>
           )}
           {item.pricing.discountPercentage != null && item.pricing.discountPercentage > 0 && (
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-              -{item.pricing.discountPercentage}%
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Percent className="w-2.5 h-2.5" aria-hidden="true" />
+              {item.pricing.discountPercentage}% OFF
             </span>
           )}
         </div>
-        <p className="text-[10px] text-neutral-500 mt-1">
-          Avaliação: <span className="text-neutral-300">{formatCurrency(item.pricing.evaluation)}</span>
-        </p>
+        {/* Show plain evaluation when no discount */}
+        {(item.pricing.discountPercentage == null || item.pricing.discountPercentage === 0) && item.pricing.evaluation > 0 && (
+          <p className="text-[10px] text-neutral-500 mt-1">
+            Avaliação: <span className="text-neutral-300">{formatCurrency(item.pricing.evaluation)}</span>
+          </p>
+        )}
       </div>
 
       {/* ─── Timeline (Judicial / Extrajudicial only) ─── */}
@@ -311,7 +332,11 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
 
       {/* ─── CTA + actions ─── */}
       <div className="p-4 pt-0 mt-auto flex flex-col gap-2" data-ai-id="card-v2-actions">
+<<<<<<< HEAD
+        <Link
+=======
         <a
+>>>>>>> origin/main
           href={`/lots/${item.id}`}
           className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.98]"
           data-ai-id="card-v2-cta"
@@ -319,7 +344,11 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           <CtaIcon className="w-4 h-4" aria-hidden="true" />
           {ctaLabel}
           <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+<<<<<<< HEAD
+        </Link>
+=======
         </a>
+>>>>>>> origin/main
         <div className="flex justify-center gap-4">
           <button
             type="button"
