@@ -30,6 +30,8 @@ export default function AuctionStagesForm({
   onRemoveStage,
   onStageChange,
 }: AuctionStagesFormProps) {
+  const [draftDateValues, setDraftDateValues] = React.useState<Record<string, string>>({});
+
   const formatDateForInput = (date: Date | null | undefined): string => {
     if (!date) return '';
     try {
@@ -47,10 +49,54 @@ export default function AuctionStagesForm({
     }
   };
 
+  const parseDateTimeLocal = (value: string): Date | null => {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+    if (!match) {
+      return null;
+    }
+
+    const [, yearText, monthText, dayText, hourText, minuteText] = match;
+    const year = Number(yearText);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const hour = Number(hourText);
+    const minute = Number(minuteText);
+
+    const parsed = new Date(year, month - 1, day, hour, minute, 0, 0);
+
+    if (
+      Number.isNaN(parsed.getTime()) ||
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day ||
+      parsed.getHours() !== hour ||
+      parsed.getMinutes() !== minute
+    ) {
+      return null;
+    }
+
+    return parsed;
+  };
+
+  React.useEffect(() => {
+    const nextDraftValues: Record<string, string> = {};
+
+    stages.forEach((stage, index) => {
+      nextDraftValues[`${index}-startDate`] = formatDateForInput(stage.startDate);
+      nextDraftValues[`${index}-endDate`] = formatDateForInput(stage.endDate);
+    });
+
+    setDraftDateValues(nextDraftValues);
+  }, [stages]);
+
   const handleDateChange = (index: number, field: 'startDate' | 'endDate', value: string) => {
-    if (!value) return;
-    const date = new Date(value);
-    if (!isNaN(date.getTime())) {
+    setDraftDateValues((current) => ({
+      ...current,
+      [`${index}-${field}`]: value,
+    }));
+
+    const date = parseDateTimeLocal(value);
+    if (date) {
       onStageChange(index, field, date);
     }
   };
@@ -168,11 +214,15 @@ export default function AuctionStagesForm({
               </Label>
               <Input
                 id={`stage-${index}-startDate`}
-                type="datetime-local"
-                value={formatDateForInput(stage.startDate)}
+                type="text"
+                value={draftDateValues[`${index}-startDate`] ?? formatDateForInput(stage.startDate)}
                 onChange={(e) => handleDateChange(index, 'startDate', e.target.value)}
+                data-ai-id={`auction-stage-start-date-${index}`}
+                placeholder="2026-03-30T23:22"
+                autoComplete="off"
                 required
               />
+              <p className="text-xs text-muted-foreground">Use o formato AAAA-MM-DDTHH:mm.</p>
             </div>
 
             <div className="space-y-2">
@@ -181,11 +231,15 @@ export default function AuctionStagesForm({
               </Label>
               <Input
                 id={`stage-${index}-endDate`}
-                type="datetime-local"
-                value={formatDateForInput(stage.endDate)}
+                type="text"
+                value={draftDateValues[`${index}-endDate`] ?? formatDateForInput(stage.endDate)}
                 onChange={(e) => handleDateChange(index, 'endDate', e.target.value)}
+                data-ai-id={`auction-stage-end-date-${index}`}
+                placeholder="2026-03-31T23:22"
+                autoComplete="off"
                 required
               />
+              <p className="text-xs text-muted-foreground">Use o formato AAAA-MM-DDTHH:mm.</p>
             </div>
           </div>
         </div>

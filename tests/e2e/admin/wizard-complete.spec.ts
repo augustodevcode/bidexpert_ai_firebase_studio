@@ -183,6 +183,16 @@ async function fillAuctionDetails(page: Page, auctionType: string) {
   await page.waitForTimeout(1000);
 }
 
+async function typeStageDate(page: Page, selector: string, value: string) {
+  const input = page.locator(selector);
+  await expect(input).toBeVisible({ timeout: 10000 });
+  await input.click();
+  await input.press('Control+A');
+  await input.press('Backspace');
+  await input.pressSequentially(value, { delay: 30 });
+  await expect(input).toHaveValue(value);
+}
+
 /**
  * Helper: Handle Step 4 - Lotting
  */
@@ -311,6 +321,37 @@ test.describe('Wizard - Fluxo Completo de Criação de Leilões', () => {
     await reviewAndPublish(page, false);
   });
 
+  test('Fluxo TOMADA_DE_PRECOS mantém ano correto ao digitar datas das praças', async ({ page }) => {
+    await selectAuctionType(page, 'TOMADA_DE_PRECOS');
+
+    await page.waitForSelector('[data-ai-id="admin-auction-form-card"]', { timeout: 30000 });
+
+    const titleInput = page.locator('input[name="title"]');
+    await titleInput.clear();
+    await titleInput.fill(`Leilão Teste Datas ${faker.number.int({ min: 100, max: 9999 })}`);
+
+    try {
+      await selectEntityByLabel(page, /Categoria Principal/i);
+      await selectEntityByLabel(page, /Leiloeiro/i);
+      await selectEntityByLabel(page, /Comitente/i);
+      await selectShadcnByLabel(page, /Participação/i, 'ONLINE');
+      await selectShadcnByLabel(page, /Método/i, 'STANDARD');
+    } catch (error) {
+      console.log('Dependent selector skipped during date typing test:', error);
+    }
+
+    await typeStageDate(page, '[data-ai-id="auction-stage-start-date-0"]', '2026-03-30T23:22');
+    await typeStageDate(page, '[data-ai-id="auction-stage-end-date-0"]', '2026-03-31T23:22');
+
+    await page.getByRole('button', { name: /próximo/i }).click();
+    await page.waitForSelector('[data-ai-id="wizard-step4-lotting"]', { timeout: 15000 });
+
+    await page.getByRole('button', { name: /próximo/i }).click();
+    await page.waitForSelector('[data-ai-id="wizard-step5-review-card"]', { timeout: 15000 });
+    await expect(page.locator('text=/Data de Início:/')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/0002|60330/')).toHaveCount(0);
+  });
+
   test('Navegação entre passos: Anterior e Próximo funcionam corretamente', async ({ page }) => {
     // Step 1: Select any type
     await selectAuctionType(page, 'EXTRAJUDICIAL');
@@ -396,6 +437,39 @@ test.describe('Wizard - Fluxo com Publicação', () => {
     await reviewAndPublish(page, true);
     
     // Verify redirect to auctions page
+    await expect(page).toHaveURL(/\/admin\/auctions/, { timeout: 30000 });
+  });
+
+  test('Fluxo EXTRAJUDICIAL Completo com Publicação', async ({ page }) => {
+    await navigateToWizard(page);
+
+    await selectAuctionType(page, 'EXTRAJUDICIAL');
+    await fillAuctionDetails(page, 'EXTRAJUDICIAL');
+    await handleLottingStep(page);
+    await reviewAndPublish(page, true);
+
+    await expect(page).toHaveURL(/\/admin\/auctions/, { timeout: 30000 });
+  });
+
+  test('Fluxo TOMADA_DE_PRECOS Completo com Publicação', async ({ page }) => {
+    await navigateToWizard(page);
+
+    await selectAuctionType(page, 'TOMADA_DE_PRECOS');
+    await fillAuctionDetails(page, 'TOMADA_DE_PRECOS');
+    await handleLottingStep(page);
+    await reviewAndPublish(page, true);
+
+    await expect(page).toHaveURL(/\/admin\/auctions/, { timeout: 30000 });
+  });
+
+  test('Fluxo PARTICULAR Completo com Publicação', async ({ page }) => {
+    await navigateToWizard(page);
+
+    await selectAuctionType(page, 'PARTICULAR');
+    await fillAuctionDetails(page, 'PARTICULAR');
+    await handleLottingStep(page);
+    await reviewAndPublish(page, true);
+
     await expect(page).toHaveURL(/\/admin\/auctions/, { timeout: 30000 });
   });
 });
