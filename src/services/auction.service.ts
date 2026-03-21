@@ -594,6 +594,7 @@ export class AuctionService {
               endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
               discountPercent: stage.discountPercent ?? 100,
               auctionId: createdAuction.id,
+              tenantId: BigInt(tenantId),
             })),
           });
         }

@@ -114,7 +114,7 @@ export async function getAuctionLotsV2(auctionId: string): Promise<Lot[]> {
         orderBy: { number: 'asc' },
     });
 
-    return lots.map((lot: PrismaLotWithIncludes) => ({
+    return sanitizeResponse(lots.map((lot: PrismaLotWithIncludes) => ({
         ...lot,
         id: lot.id.toString(),
         auctionId: lot.auctionId.toString(),
@@ -146,7 +146,7 @@ export async function getAuctionLotsV2(auctionId: string): Promise<Lot[]> {
             tenantId: la.Asset.tenantId.toString(),
             evaluationValue: decimalToNumber(la.Asset.evaluationValue),
         })),
-    })) as Lot[];
+    }))) as Lot[];
 }
 
 /**
@@ -220,7 +220,7 @@ export async function getAuctionAnalyticsV2(auctionId: string): Promise<{
         bidsByDayMap.set(dateKey, (bidsByDayMap.get(dateKey) || 0) + item._count);
     });
 
-    return {
+    return sanitizeResponse({
         totalLots: lotsCount,
         totalBids: bidsCount,
         totalHabilitatedUsers: habilitationsCount,
@@ -235,7 +235,7 @@ export async function getAuctionAnalyticsV2(auctionId: string): Promise<{
             date,
             count,
         })),
-    };
+    });
   } catch (error) {
     console.error('[getAuctionAnalyticsV2] Error:', error);
     return {
@@ -286,7 +286,7 @@ export async function getAuctionAuditHistoryV2(auctionId: string): Promise<{
         action: log.action,
         changedBy: log.User?.fullName || log.User?.email || 'Sistema',
         changedAt: log.timestamp,
-        changes: log.changes as AuditChanges,
+        changes: sanitizeResponse(log.changes as AuditChanges),
     }));
   } catch (error) {
     console.error('[getAuctionAuditHistoryV2] Error:', error);

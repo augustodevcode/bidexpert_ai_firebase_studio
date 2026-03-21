@@ -18,6 +18,16 @@ const globalForPrisma = globalThis as unknown as {
   demoPrisma: ReturnType<typeof createPrismaClient> | undefined;
 };
 
+if (typeof (BigInt.prototype as { toJSON?: () => string }).toJSON !== 'function') {
+  Object.defineProperty(BigInt.prototype, 'toJSON', {
+    value() {
+      return this.toString();
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
 /**
  * Detecta se a URL usa Prisma Accelerate (prisma+postgres://)
  */
