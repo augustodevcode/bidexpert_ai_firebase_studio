@@ -148,8 +148,9 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
 export async function markSetupAsComplete(): Promise<{ success: boolean; message: string }> {
   try {
     const settingsService = new PlatformSettingsService();
+    const landlordTenantIdBigInt = 1n;
     // The setup completion flag is a global setting tied to the Landlord tenant.
-    const result = await settingsService.updateSettings({ tenantId: landlordTenantIdBigInt, isSetupComplete: true });
+    const result = await settingsService.updateSettings(landlordTenantIdBigInt, { isSetupComplete: true });
 
     if (result.success) {
       console.log('[Setup Action] Platform setup marked as complete in the database.');

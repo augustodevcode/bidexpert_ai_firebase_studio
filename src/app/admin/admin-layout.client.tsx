@@ -45,6 +45,8 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isWidgetConfigModalOpen, setIsWidgetConfigModalOpen] = useState(false);
   const [queryMonitorEnabled, setQueryMonitorEnabled] = useState(ENV_QUERY_MONITOR);
+
+  const isFullWidth = pathname?.includes('/auction-control-center');
   
   // Read localStorage toggle for query monitor (client-side only)
   useEffect(() => {
@@ -63,13 +65,16 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
     }
   }, []);
 
-  // Check if current page should be full-width
-  const isFullWidth = pathname?.includes('/auction-control-center');
+  const handleQueryMonitorToggle = (enabled: boolean) => {
+    setQueryMonitorEnabled(enabled);
+    localStorage.setItem(QUERY_MONITOR_LS_KEY, enabled ? 'true' : 'false');
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4" data-ai-id="admin-loading-state">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Carregando painel administrativo…</p>
       </div>
     );
   }
@@ -131,6 +136,8 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
             <AdminHeader
               onSearchClick={() => setCommandPaletteOpen(true)}
               onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
+              queryMonitorEnabled={queryMonitorEnabled}
+              onQueryMonitorToggle={handleQueryMonitorToggle}
             />
             <main
               className={
@@ -147,7 +154,7 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
                 />
               </div>
             </main>
-            <AdminQueryMonitor />
+            {queryMonitorEnabled && <AdminQueryMonitor />}
           </div>
         </div>
         <WidgetConfigurationModal

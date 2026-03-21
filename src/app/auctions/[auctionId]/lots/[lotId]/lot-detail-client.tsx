@@ -42,7 +42,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage, getEffectiveLotStatus, getEffectiveAuctionStatus } from '@/lib/ui-helpers';
 
 import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction, getLotDocuments, getBidsForLot } from './actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
@@ -75,6 +75,7 @@ import { InvestorAnalysisSection } from '@/components/lots';
 import { ptBR } from 'date-fns/locale';
 import StickyBidBar from '@/components/auction/sticky-bid-bar';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
+import { getAuctionEffectiveDates } from '@/lib/auction-timing';
 
 
 const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
@@ -440,6 +441,9 @@ export default function LotDetailClientContent({
 
   const activeStage = useMemo(() => getActiveStage(auction?.auctionStages), [auction?.auctionStages]);
   const activeLotPrices = useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
+  const effectiveLotStatus = useMemo(() => getEffectiveLotStatus(lot, auction) || lot.status, [lot, auction]);
+  const effectiveAuctionStatus = useMemo(() => getEffectiveAuctionStatus(auction) || auction.status, [auction]);
+  const effectiveAuctionDates = useMemo(() => getAuctionEffectiveDates(auction), [auction]);
   
   const { effectiveLotEndDate, effectiveLotStartDate } = useMemo(() => {
     return getEffectiveLotEndDate(lot, auction);
@@ -453,8 +457,8 @@ export default function LotDetailClientContent({
     }
     
     // Format the date here to avoid hydration mismatch
-    if (isClient && auction.endDate && isValid(new Date(auction.endDate as string))) {
-      setFormattedAuctionEndDate(format(new Date(auction.endDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
+    if (isClient && effectiveAuctionDates.endDate && isValid(effectiveAuctionDates.endDate)) {
+      setFormattedAuctionEndDate(format(effectiveAuctionDates.endDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
     }
     
     if (lot?.id) {
@@ -486,7 +490,7 @@ export default function LotDetailClientContent({
       fetchData();
       fetchSharedBidHistory(); // Busca inicial do histórico de lances
     }
-  }, [lot?.id, lot.publicId, toast, auction.endDate, isClient, fetchSharedBidHistory]);
+  }, [lot?.id, lot.publicId, toast, effectiveAuctionDates.endDate, isClient, fetchSharedBidHistory]);
 
   const handleBidSuccess = (updatedLotData: Partial<Lot>, newBid?: BidInfo) => {
     setLot(prevLot => ({...prevLot!, ...updatedLotData}));
@@ -572,7 +576,7 @@ export default function LotDetailClientContent({
               <div className="wrapper-lot-title-info">
                 <h1 className="header-lot-title" data-ai-id="lot-detail-title">{lotTitle}</h1>
                 <div className="wrapper-lot-status-badge">
-                  <Badge className={cn("badge-lot-detail-status", getLotStatusColor(lot.status))} data-ai-id="lot-detail-status">{getAuctionStatusText(lot.status)}</Badge>
+                  <Badge className={cn("badge-lot-detail-status", getLotStatusColor(effectiveLotStatus))} data-ai-id="lot-detail-status">{getAuctionStatusText(effectiveLotStatus)}</Badge>
                 </div>
                 <div className="wrapper-lot-legal-badges" data-ai-id="lot-legal-badges">
                   { (lot.propertyMatricula || lot.propertyRegistrationNumber) && (
@@ -654,7 +658,7 @@ export default function LotDetailClientContent({
                            <span>Imagem principal não disponível</span>
                         </div>
                      )}
-                     {platformSettings.showCountdownOnLotDetail !== false && (<DetailTimeRemaining effectiveEndDate={effectiveLotEndDate} effectiveStartDate={effectiveLotStartDate} lotStatus={lot.status} className="rounded-b-md" />)}
+                     {platformSettings.showCountdownOnLotDetail !== false && (<DetailTimeRemaining effectiveEndDate={effectiveLotEndDate} effectiveStartDate={effectiveLotStartDate} lotStatus={effectiveLotStatus} className="rounded-b-md" />)}
                   </div>
 
                   {gallery.length > 1 && (
@@ -729,7 +733,7 @@ export default function LotDetailClientContent({
                           </div>
                           <div className="item-auction-summary-detail">
                             <Info className="icon-summary-detail" />
-                            <span>Status:<Badge variant="outline" className={cn("badge-summary-status", getAuctionStatusColor(auction.status))}>{getAuctionStatusText(auction.status)}</Badge></span>
+                            <span>Status:<Badge variant="outline" className={cn("badge-summary-status", getAuctionStatusColor(effectiveAuctionStatus))}>{getAuctionStatusText(effectiveAuctionStatus)}</Badge></span>
                           </div>
                           {auction.endDate && (
                             <div className="item-auction-summary-detail">
@@ -749,7 +753,7 @@ export default function LotDetailClientContent({
                           Cronograma de Praças
                         </h3>
                         <div className="wrapper-summary-timeline-content">
-                           <BidExpertAuctionStagesTimeline auction={auction} lot={lot} />
+                           <BidExpertAuctionStagesTimeline auction={auction} lot={lot} variant="detailed" surface="lot" showContextIcons />
                         </div>
                       </div>
                     )}
@@ -896,7 +900,7 @@ export default function LotDetailClientContent({
                     isLoadingSharedHistory={isLoadingBidHistory}
                     onRefreshBidHistory={fetchSharedBidHistory}
                   />
-                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.secondInitialPrice && <div className="flex justify-between"><span className="text-muted-foreground">2ª Praça (Lance Inicial):</span> <span className="font-semibold text-foreground">R$ {Number(lot.secondInitialPrice).toLocaleString('pt-BR')}</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{!activeLotPrices?.initialBid && !lot.secondInitialPrice && !lot.debtAmount && !lot.itbiValue && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
+                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid !== null && activeLotPrices?.initialBid !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.secondInitialPrice !== null && lot.secondInitialPrice !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">2ª Praça (Lance Inicial):</span> <span className="font-semibold text-foreground">R$ {Number(lot.secondInitialPrice).toLocaleString('pt-BR')}</span></div>}{lot.debtAmount !== null && lot.debtAmount !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue !== null && lot.itbiValue !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{activeLotPrices?.initialBid == null && lot.secondInitialPrice == null && lot.debtAmount == null && lot.itbiValue == null && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
                   
                   {/* Contact Info - Hierarquical: Auction -> Auctioneer -> Platform */}
                   <Card className="shadow-md" data-ai-id="auction-contact-info-card">

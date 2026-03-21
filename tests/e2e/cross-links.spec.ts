@@ -8,6 +8,8 @@ import { test, expect } from '@playwright/test';
 import { BASE_URL, ensureAdminSession } from './admin/admin-helpers';
 
 test.describe('Links Cruzados - Navegação Hierárquica', () => {
+  test.setTimeout(120_000);
+
   test.beforeEach(async ({ page }) => {
     await ensureAdminSession(page);
   });
@@ -72,6 +74,31 @@ test.describe('Links Cruzados - Navegação Hierárquica', () => {
     await lotsLink.click();
     await expect(page).toHaveURL(/\/admin\/lots\?judicialProcessId=/);
     await expect(page.locator('h1')).toContainText('Gerenciar Lotes - Processo:');
+  });
+
+  test('Lots filtered by auction keep context in "Novo Lote" CTA', async ({ page }) => {
+    await page.goto(`${BASE_URL}/admin/auctions`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 120_000,
+    });
+    await page.waitForSelector('[data-testid="auctions-table"]', { timeout: 60_000 });
+
+    const firstAuctionRow = page.locator('tbody tr').first();
+    const lotsLink = firstAuctionRow.locator('a[href*="admin/lots?auctionId="]');
+    await expect(lotsLink).toBeVisible();
+
+    const href = await lotsLink.getAttribute('href');
+    expect(href).toBeTruthy();
+
+    const auctionId = new URL(href!, BASE_URL).searchParams.get('auctionId');
+    expect(auctionId).toBeTruthy();
+
+    await lotsLink.click();
+    await expect(page).toHaveURL(new RegExp(`/admin/lots\\?auctionId=${auctionId}`), { timeout: 60_000 });
+
+    const newLotLink = page.locator('a[href*="/admin/lots/new"]').filter({ hasText: 'Novo Lote' }).first();
+    await expect(newLotLink).toBeVisible();
+    await expect(newLotLink).toHaveAttribute('href', `/admin/lots/new?auctionId=${auctionId}`);
   });
 
   test('JudicialProcess → Asset: Link na coluna "Ativos" filtra por processo', async ({ page }) => {

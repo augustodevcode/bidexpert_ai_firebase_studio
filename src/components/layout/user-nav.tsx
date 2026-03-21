@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { hasPermission, hasAnyPermission } from '@/lib/permissions';
 import {
   DropdownMenu,
@@ -20,44 +20,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from '../ui/skeleton';
-import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions';
 import { Badge } from '../ui/badge';
 
 
 export default function UserNav() {
-  const { userProfileWithPermissions, loading, logout } = useAuth();
+  const { userProfileWithPermissions, loading, logout, unreadNotificationsCount } = useAuth();
   const [isClient, setIsClient] = useState(false);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  const updateUnreadCount = useCallback(async () => {
-    if (userProfileWithPermissions?.id) {
-      try {
-        const count = await getUnreadNotificationCountAction(userProfileWithPermissions.id);
-        setUnreadNotificationsCount(count);
-      } catch (error) {
-        console.error("Failed to fetch notification count:", error);
-        setUnreadNotificationsCount(0);
-      }
-    } else {
-      setUnreadNotificationsCount(0);
-    }
-  }, [userProfileWithPermissions?.id]);
-
-  useEffect(() => {
-    if (isClient) {
-      updateUnreadCount();
-      window.addEventListener('notifications-updated', updateUnreadCount);
-    }
-    return () => {
-      if (isClient) {
-        window.removeEventListener('notifications-updated', updateUnreadCount);
-      }
-    };
-  }, [isClient, updateUnreadCount]);
 
 
   if (!isClient || loading) {

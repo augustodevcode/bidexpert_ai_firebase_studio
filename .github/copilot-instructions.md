@@ -186,7 +186,7 @@ Se não houver credenciais claras no seed, o assistente deve primeiro identifica
 
 **REGRA:** Nunca usar senhas diferentes das listadas acima em testes automatizados. A senha `senha@123` é INCORRETA e causa falhas silenciosas.
 
-## 7.3 Resolução de Tenant e Seleção no Login (Local Dev)
+## 7.3 Resolução de Tenant e Seleção no Login (Local Dev e Vercel)
 
 **Comportamento em `<slug>.localhost:<porta>`:**
 
@@ -194,10 +194,20 @@ Se não houver credenciais claras no seed, o assistente deve primeiro identifica
 2. O header `x-tenant-id` é definido com o valor do subdomínio (ex: `demo`, `dev`).
 3. Na página de login, o tenant selector (`data-ai-id="auth-login-tenant-select"`) é **auto-locked** (desabilitado) quando o subdomínio é detectado.
 
-**Quando NÃO há subdomínio** (ex: `localhost:9005`):
-- O tenant selector aparece como dropdown editável.
-- O usuário/agente DEVE selecionar manualmente o tenant antes de submeter o login.
+**Quando NÃO há subdomínio** (ex: `localhost:9005` ou URL Vercel `*.vercel.app`):
+- O tenant selector aparece como dropdown **editável** — o usuário pode escolher qualquer tenant.
+- Se `NEXT_PUBLIC_DEFAULT_TENANT` estiver definido, o tenant é **pré-selecionado** mas NÃO bloqueado (o usuário pode mudar).
 - Sem seleção de tenant, o login falhará silenciosamente.
+
+**Regra de bloqueio do selector:**
+
+| Cenário | Selector |
+|---------|----------|
+| `demo.localhost:9005` (subdomínio local) | **Bloqueado** — tenant fixo |
+| `/app/demo/...` (path-based routing) | **Bloqueado** — tenant fixo |
+| `bidexpert.vercel.app` (URL Vercel sem subdomínio) | **Livre** — usuário escolhe |
+| `localhost:9005` (sem subdomínio) | **Livre** — usuário escolhe |
+| Qualquer URL + `NEXT_PUBLIC_DEFAULT_TENANT` definido | **Livre** mas pré-selecionado |
 
 **REGRA:** Em testes E2E, SEMPRE usar URLs com subdomínio: `http://demo.localhost:9005` (não `http://localhost:9005`).
 

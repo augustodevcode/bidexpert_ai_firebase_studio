@@ -5,23 +5,24 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Building2, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
 import { getCityColumns } from './columns';
-import { listCitiesAction, deleteCityAction } from './actions';
+import { listCitiesAction, createCityAction, updateCityAction, deleteCityAction } from './actions';
+import { CityForm } from './form';
 import type { PaginatedResponse, BulkAction } from '@/lib/admin-plus/types';
 import type { CityInfo } from '@/types';
+import type { CreateCityInput } from './schema';
 
 export default function CitiesPage() {
-  const router = useRouter();
   const [data, setData] = useState<PaginatedResponse<CityInfo> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editRow, setEditRow] = useState<CityInfo | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CityInfo | null>(null);
 
   const loadData = useCallback(async () => {
@@ -39,12 +40,26 @@ export default function CitiesPage() {
     loadData();
   }, [loadData]);
 
-  const handleEdit = useCallback(
-    (row: CityInfo) => router.push(`/admin-plus/cities/${row.id}`),
-    [router],
-  );
+  const handleEdit = useCallback((row: CityInfo) => {
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
 
   const handleDelete = useCallback((row: CityInfo) => setDeleteTarget(row), []);
+
+  const handleSubmit = useCallback(async (values: CreateCityInput) => {
+    const result = editRow
+      ? await updateCityAction({ id: editRow.id, data: values })
+      : await createCityAction(values);
+    if (result.success) {
+      toast.success(editRow ? 'Cidade atualizada com sucesso' : 'Cidade criada com sucesso');
+      setFormOpen(false);
+      setEditRow(null);
+      loadData();
+    } else {
+      toast.error(result.error ?? 'Erro ao salvar cidade');
+    }
+  }, [editRow, loadData]);
 
   const confirmDelete = useCallback(() => {
     if (!deleteTarget) return;
@@ -88,13 +103,13 @@ export default function CitiesPage() {
       <PageHeader
         title="Cidades"
         description="Gerencie as cidades cadastradas no sistema."
+        icon={Building2}
+        primaryAction={{
+          label: 'Nova Cidade',
+          onClick: () => { setEditRow(null); setFormOpen(true); },
+        }}
         data-ai-id="cities-page-header"
-      >
-        <Button onClick={() => router.push('/admin-plus/cities/new')} data-ai-id="cities-btn-new">
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Cidade
-        </Button>
-      </PageHeader>
+      />
 
       <DataTablePlus
         columns={columns}
@@ -104,6 +119,13 @@ export default function CitiesPage() {
         bulkActions={bulkActions}
         onRowDoubleClick={handleEdit}
         data-ai-id="cities-data-table"
+      />
+
+      <CityForm
+        open={formOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditRow(null); }}
+        onSubmit={handleSubmit}
+        defaultValues={editRow}
       />
 
       <ConfirmationDialog

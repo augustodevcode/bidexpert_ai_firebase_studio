@@ -1,14 +1,14 @@
 // =============================================================================
 // PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
 // =============================================================================
-// Este schema ├® uma c├│pia do schema.prisma principal, com provider alterado
+// Este schema é uma cópia do schema.prisma principal, com provider alterado
 // para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
 // 
-// USO: Este schema ├® usado automaticamente pelo workflow de deploy para Vercel
-//      atrav├®s do script prepare-vercel-demo.ps1 ou GitHub Action
+// USO: Este schema é usado automaticamente pelo workflow de deploy para Vercel
+//      através do script prepare-vercel-demo.ps1 ou GitHub Action
 //
 // NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
-//       s├úo todos compat├¡veis entre MySQL e PostgreSQL no Prisma.
+//       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
 // =============================================================================
 
 generator client {
@@ -19,11 +19,11 @@ datasource db {
   provider  = "postgresql"
   // NEON: POSTGRES_PRISMA_URL is the pgbouncer-pooled URL for Prisma runtime.
   // This schema is ONLY used in Vercel/Neon deployments (not local development).
-  // The Neon Vercel integration automatically injects POSTGRES_PRISMA_URL.
+  // This variable is REQUIRED and injected by the Neon Vercel integration.
   // For CI validation, set this env var to a dummy postgresql:// URL.
   url       = env("POSTGRES_PRISMA_URL")
   // NEON: POSTGRES_URL_NON_POOLING is the direct connection URL for Prisma CLI
-  // (prisma db push, prisma migrate). Also injected by the Neon Vercel integration.
+  // (prisma db push, prisma migrate). Also REQUIRED and injected by the Neon Vercel integration.
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
@@ -39,7 +39,6 @@ model Asset {
   sellerId                   BigInt?
   evaluationValue            Decimal?                @db.Decimal(15, 2)
   imageUrl                   String?
-  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   imageMediaId               BigInt?
   galleryImageUrls           Json?
   mediaItemIds               Json?
@@ -47,6 +46,7 @@ model Asset {
   locationCity               String?
   locationState              String?
   address                    String?
+  addressLink                String?                 @db.VarChar(500)
   latitude                   Decimal?
   longitude                  Decimal?
   lotId                      BigInt?
@@ -171,6 +171,7 @@ model Asset {
   Seller                     Seller?                 @relation(fields: [sellerId], references: [id])
   Subcategory                Subcategory?            @relation(fields: [subcategoryId], references: [id])
   Tenant                     Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   AssetMedia                 AssetMedia[]
   AssetsOnLots               AssetsOnLots[]
 
@@ -245,6 +246,7 @@ model Auction {
 
   onlineUrl                String?                @db.VarChar(500)
   address                  String?
+  addressLink              String?                @db.VarChar(500)
   zipCode                  String?                @db.VarChar(10)
   latitude                 Decimal?               @db.Decimal(10, 8)
   longitude                Decimal?               @db.Decimal(11, 8)
@@ -280,7 +282,6 @@ model Auction {
   supportPhone             String?                @db.VarChar(50)
   supportEmail             String?                @db.VarChar(255)
   supportWhatsApp          String?                @db.VarChar(50)
-  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   Auctioneer               Auctioneer?            @relation(fields: [auctioneerId], references: [id])
   LotCategory              LotCategory?           @relation(fields: [categoryId], references: [id])
   City                     City?                  @relation(fields: [cityId], references: [id])
@@ -290,6 +291,7 @@ model Auction {
   Seller                   Seller?                @relation(fields: [sellerId], references: [id])
   State                    State?                 @relation(fields: [stateId], references: [id])
   Tenant                   Tenant                 @relation(fields: [tenantId], references: [id])
+  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   AuctionHabilitation      AuctionHabilitation[]
   AuctionStage             AuctionStage[]
   Bid                      Bid[]
@@ -358,6 +360,7 @@ model Auctioneer {
   supportWhatsApp    String?
   contactName        String?
   address            String?
+  addressLink        String?   @db.VarChar(500)
   city               String?
   state              String?
   zipCode            String?
@@ -397,7 +400,7 @@ model Bid {
   bidderDisplay   String?
   tenantId        BigInt
 
-  // V2 Monitor Preg├úo - Idempotency & Audit
+  // V2 Monitor Pregão - Idempotency & Audit
   idempotencyKey  String?    @db.VarChar(128)
   clientTimestamp  DateTime?
   ipAddress       String?    @db.VarChar(45)
@@ -426,7 +429,7 @@ model BiddingSettings {
   biddingInfoCheckIntervalSeconds Int?             @default(1)
   defaultStageDurationDays        Int?             @default(7)
   defaultDaysBetweenStages        Int?             @default(1)
-  // V2 Monitor Preg├úo
+  // V2 Monitor Pregão
   proxyBiddingEnabled             Boolean          @default(true)
   softCloseTriggerMinutes         Int              @default(3)
   PlatformSettings                PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
@@ -453,6 +456,7 @@ model ContactMessage {
   id        BigInt   @id @default(autoincrement())
   name      String
   email     String
+  phone     String?  @db.VarChar(30)
   subject   String?
   message   String   @db.Text
   isRead    Boolean  @default(false)
@@ -697,7 +701,6 @@ model Lot {
   discountPercentage       Int?
   additionalTriggers       Json?
   imageUrl                 String?              @db.Text
-  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   imageMediaId             BigInt?
   galleryImageUrls         Json?
   mediaItemIds             Json?
@@ -727,11 +730,12 @@ model Lot {
   latitude                 Decimal?
   longitude                Decimal?
   mapAddress               String?
+  addressLink              String?              @db.VarChar(500)
   tenantId                 BigInt
   depositGuaranteeAmount   Decimal?             @db.Decimal(15, 2)
   depositGuaranteeInfo     String?              @db.Text
   requiresDepositGuarantee Boolean?             @default(false)
-  // V2 Monitor Preg├úo
+  // V2 Monitor Pregão
   reservePrice             Decimal?             @db.Decimal(15, 2)
   saleMode                 LotSaleMode          @default(LEILAO)
   AssetsOnLots             AssetsOnLots[]
@@ -747,6 +751,7 @@ model Lot {
   Subcategory              Subcategory?         @relation(fields: [subcategoryId], references: [id])
   Tenant                   Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   User                     User?                @relation(fields: [winnerId], references: [id])
+  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   LotDocument              LotDocument[]
   LotQuestion              LotQuestion[]
   LotRisk                  LotRisk[]
@@ -1051,6 +1056,7 @@ model PlatformSettings {
   logoMediaId                BigInt?
   themeColorsDark            Json?
   themeColorsLight           Json?
+  featureFlags               Json?
   BiddingSettings            BiddingSettings?
   IdMasks                    IdMasks?
   MapSettings                MapSettings?
@@ -1079,7 +1085,7 @@ model RealtimeSettings {
   lawyerSubscriptionPrice   Int?
   lawyerPerUsePrice         Int?
   lawyerRevenueSharePercent Decimal?         @db.Decimal(5, 2)
-  // V2 Monitor Preg├úo - Admin Toggles
+  // V2 Monitor Pregão - Admin Toggles
   communicationStrategy     CommunicationStrategy @default(WEBSOCKET)
   videoStrategy             VideoStrategy         @default(DISABLED)
   idempotencyStrategy        IdempotencyStrategy   @default(SERVER_HASH)
@@ -1161,6 +1167,7 @@ model Seller {
   phone            String?           @db.Text
   contactName      String?
   address          String?           @db.Text
+  addressLink      String?           @db.VarChar(500)
   city             String?
   state            String?
   zipCode          String?
@@ -1923,7 +1930,7 @@ model WonLot {
 }
 
 // =============================================================================
-// ENUMS - Id├¬nticos ao schema MySQL (compat├¡veis entre ambos os bancos)
+// ENUMS - Idênticos ao schema MySQL (compatíveis entre ambos os bancos)
 // =============================================================================
 
 enum UserDocument_status {
@@ -2287,7 +2294,7 @@ enum Asset_occupationStatus {
   SHARED_POSSESSION
 }
 
-// V2 Monitor Preg├úo - New Enums
+// V2 Monitor Pregão - New Enums
 enum BidOrigin {
   MANUAL
   AUTO_BID
@@ -2317,7 +2324,7 @@ enum LotSaleMode {
   LANCE_CONDICIONAL
 }
 
-// V2 Monitor Preg├úo - Idempotency Log
+// V2 Monitor Pregão - Idempotency Log
 model BidIdempotencyLog {
   id              BigInt   @id @default(autoincrement())
   idempotencyKey  String   @db.VarChar(128)
@@ -2343,4 +2350,25 @@ model AuditConfig {
   createdAt DateTime @default(now())
 
   @@map("audit_configs")
+}
+
+// EMAIL LOG
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model EmailLog {
+  id               BigInt      @id @default(autoincrement())
+  recipient        String
+  subject          String
+  content          String      @db.Text
+  provider         String
+  status           EmailStatus @default(PENDING)
+  sentAt           DateTime?
+  errorMessage     String?     @db.Text
+  contactMessageId BigInt?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }

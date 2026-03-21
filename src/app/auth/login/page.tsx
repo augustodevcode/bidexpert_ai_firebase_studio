@@ -46,6 +46,8 @@ type TenantOption = {
     subdomain?: string | null;
 };
 
+const normalizeSelectValue = (value?: string | null) => value ?? '';
+
 
 function LoginPageContent() {
     const router = useRouter();
@@ -69,6 +71,7 @@ function LoginPageContent() {
         defaultValues: {
             email: '',
             password: '',
+            tenantId: '',
         },
     });
 
@@ -93,10 +96,12 @@ function LoginPageContent() {
         }
 
         // Fallback: use NEXT_PUBLIC_DEFAULT_TENANT when no subdomain is detected.
-        // This env var is set per-environment in Vercel (hml, demo, production) and
-        // in CI/CD workflows so the correct workspace is auto-locked on each deployment.
+        // This env var is set per-environment in Vercel (hml, demo, production) for
+        // convenience pre-selection only — it does NOT lock the selector, because the
+        // user arrived via a plain URL (no actual tenant subdomain). They can change it.
+        let defaultTenantPreselect: string | null = null;
         if (!currentSubdomain && process.env.NEXT_PUBLIC_DEFAULT_TENANT) {
-            currentSubdomain = process.env.NEXT_PUBLIC_DEFAULT_TENANT;
+            defaultTenantPreselect = process.env.NEXT_PUBLIC_DEFAULT_TENANT;
         }
 
         if (currentSubdomain && availableTenants.length > 0) {
@@ -113,11 +118,29 @@ function LoginPageContent() {
             }
         }
 
+        // Pre-select (but do NOT lock) when NEXT_PUBLIC_DEFAULT_TENANT fallback is active
+        if (defaultTenantPreselect && availableTenants.length > 0) {
+            const matchedTenant = availableTenants.find(t =>
+                t.subdomain === defaultTenantPreselect || t.slug === defaultTenantPreselect
+            );
+            if (matchedTenant) {
+                setSelectedTenantId(matchedTenant.id);
+                form.setValue('tenantId', matchedTenant.id);
+                return; // Pre-selected without locking
+            }
+        }
+
         // Fallback to server action if client-side detection fails
         getCurrentTenantContext().then(context => {
-            if (context.tenantId) {
+            // '1' is the LANDLORD_ID — not a real user tenant
+            if (context.shouldLock && context.tenantId && context.tenantId !== '1') {
+                // Real subdomain or path-based routing — lock the selector
                 setLockedTenantId(context.tenantId);
                 setLockedTenantName(context.tenantName);
+                setSelectedTenantId(context.tenantId);
+                form.setValue('tenantId', context.tenantId);
+            } else if (context.tenantId && context.tenantId !== '1') {
+                // Default tenant from env var — pre-select but keep selector editable
                 setSelectedTenantId(context.tenantId);
                 form.setValue('tenantId', context.tenantId);
             }
@@ -179,10 +202,14 @@ function LoginPageContent() {
         if (!effectiveTenantId) {
             try {
                 const ctx = await getCurrentTenantContext();
-                if (ctx.tenantId) {
+                // '1' is the LANDLORD_ID — skip it as it's not a real user tenant
+                if (ctx.tenantId && ctx.tenantId !== '1') {
                     effectiveTenantId = ctx.tenantId;
-                    setLockedTenantId(ctx.tenantId);
-                    setLockedTenantName(ctx.tenantName || null);
+                    // Only lock if the tenant came from a real subdomain or path-based routing
+                    if (ctx.shouldLock) {
+                        setLockedTenantId(ctx.tenantId);
+                        setLockedTenantName(ctx.tenantName || null);
+                    }
                     setSelectedTenantId(ctx.tenantId);
                     form.setValue('tenantId', ctx.tenantId);
                 }
@@ -287,7 +314,7 @@ function LoginPageContent() {
                                         </Label>
                                         <FormControl>
                                             <Select
-                                                value={selectedTenantId || undefined}
+                                                value={normalizeSelectValue(selectedTenantId)}
                                                 onValueChange={(value) => {
                                                     setSelectedTenantId(value);
                                                     form.setValue('tenantId', value);
@@ -416,6 +443,7 @@ function LoginPageContent() {
 
 function DevUserSelector({ onSelect }: { onSelect: (u: any) => void }) {
     const [users, setUsers] = useState<any[]>([]);
+    const [selectedEmail, setSelectedEmail] = useState('');
 
     useEffect(() => {
         getDevUsers().then(setUsers);
@@ -426,7 +454,8 @@ function DevUserSelector({ onSelect }: { onSelect: (u: any) => void }) {
     return (
         <div className="px-6 pb-4">
             <Label className="text-xs text-muted-foreground mb-1 block">Dev: Auto-login (Ambiente de Teste)</Label>
-            <Select onValueChange={(email) => {
+            <Select value={selectedEmail} onValueChange={(email) => {
+                setSelectedEmail(email);
                 const u = users.find(user => user.email === email);
                 if (u) onSelect({ ...u, password: u.passwordHint });
             }}>

@@ -13,7 +13,9 @@ import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-d
 import type { BulkAction, PaginatedResponse } from '@/lib/admin-plus/types';
 import { PAGE_SIZE_OPTIONS } from '@/lib/admin-plus/constants';
 import { columns, type UserRow } from './columns';
-import { listUsersAction, deleteUserAction } from './actions';
+import { listUsersAction, createUserAction, updateUserAction, deleteUserAction } from './actions';
+import { UserForm } from './form';
+import type { CreateUserInput, UpdateUserInput } from './schema';
 
 export default function UsersListPage() {
   const [data, setData] = useState<PaginatedResponse<UserRow>>({
@@ -24,6 +26,8 @@ export default function UsersListPage() {
     totalPages: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editRow, setEditRow] = useState<UserRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -40,6 +44,25 @@ export default function UsersListPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleEdit = useCallback((row: UserRow) => {
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
+
+  const handleSubmit = useCallback(async (values: CreateUserInput | UpdateUserInput) => {
+    const result = editRow
+      ? await updateUserAction({ id: editRow.id, data: values as UpdateUserInput })
+      : await createUserAction(values as CreateUserInput);
+    if (result.success) {
+      toast.success(editRow ? 'Usuário atualizado com sucesso' : 'Usuário criado com sucesso');
+      setFormOpen(false);
+      setEditRow(null);
+      fetchData();
+    } else {
+      toast.error(result.error ?? 'Erro ao salvar usuário');
+    }
+  }, [editRow, fetchData]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -83,8 +106,10 @@ export default function UsersListPage() {
         title="Usuários"
         description="Gerencie os usuários da plataforma."
         icon={Users}
-        createHref="/admin-plus/users/new"
-        createLabel="Novo Usuário"
+        primaryAction={{
+          label: 'Novo Usuário',
+          onClick: () => { setEditRow(null); setFormOpen(true); },
+        }}
         data-ai-id="users-list-page-header"
       />
 
@@ -95,7 +120,15 @@ export default function UsersListPage() {
         isLoading={isLoading}
         bulkActions={bulkActions}
         pageSizeOptions={PAGE_SIZE_OPTIONS as unknown as number[]}
+        onRowDoubleClick={handleEdit}
         data-ai-id="users-list-data-table"
+      />
+
+      <UserForm
+        open={formOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditRow(null); }}
+        onSubmit={handleSubmit}
+        defaultValues={editRow}
       />
 
       <ConfirmationDialog

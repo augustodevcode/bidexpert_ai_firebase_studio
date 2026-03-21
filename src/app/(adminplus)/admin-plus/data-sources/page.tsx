@@ -4,29 +4,34 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { Database } from 'lucide-react';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
-import { ADMIN_PLUS_BASE_PATH } from '@/lib/admin-plus/constants';
 import type { BulkAction } from '@/lib/admin-plus/types';
 import { getDataSourceColumns } from './columns';
-import { listDataSourcesAction, deleteDataSourceAction } from './actions';
+import {
+  listDataSourcesAction,
+  createDataSourceAction,
+  updateDataSourceAction,
+  deleteDataSourceAction,
+} from './actions';
+import { DataSourceForm } from './form';
+import type { CreateDataSourceInput } from './schema';
 
 type DSRow = { id: string; name: string; modelName: string; fields: string };
 
 export default function DataSourcesPage() {
-  const router = useRouter();
   const [data, setData] = useState<DSRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editRow, setEditRow] = useState<DSRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DSRow | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const result = await listDataSourcesAction();
+    const result = await listDataSourcesAction(undefined as never);
     if (result.success && result.data) setData(result.data.data);
     else toast.error(result.error ?? 'Erro ao carregar data sources');
     setLoading(false);
@@ -35,8 +40,23 @@ export default function DataSourcesPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleEdit = useCallback((row: DSRow) => {
-    router.push(`${ADMIN_PLUS_BASE_PATH}/data-sources/${row.id}`);
-  }, [router]);
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
+
+  const handleSubmit = useCallback(async (values: CreateDataSourceInput) => {
+    const result = editRow
+      ? await updateDataSourceAction({ id: editRow.id, data: values })
+      : await createDataSourceAction(values);
+    if (result.success) {
+      toast.success(editRow ? 'DataSource atualizado com sucesso' : 'DataSource criado com sucesso');
+      setFormOpen(false);
+      setEditRow(null);
+      fetchData();
+    } else {
+      toast.error(result.error ?? 'Erro ao salvar');
+    }
+  }, [editRow, fetchData]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -66,13 +86,32 @@ export default function DataSourcesPage() {
 
   return (
     <div className="space-y-6" data-ai-id="data-sources-listing-page">
-      <PageHeader heading="Data Sources" description="Gerencie as fontes de dados do sistema.">
-        <Button onClick={() => router.push(`${ADMIN_PLUS_BASE_PATH}/data-sources/new`)} data-ai-id="datasource-new-btn">
-          <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Novo Data Source
-        </Button>
-      </PageHeader>
+      <PageHeader
+        title="Data Sources"
+        description="Gerencie as fontes de dados do sistema."
+        icon={Database}
+        primaryAction={{
+          label: 'Novo Data Source',
+          onClick: () => { setEditRow(null); setFormOpen(true); },
+        }}
+      />
 
-      <DataTablePlus columns={columns} data={data} loading={loading} bulkActions={bulkActions} searchColumn="name" searchPlaceholder="Buscar por nome…" />
+      <DataTablePlus
+        columns={columns}
+        data={data}
+        isLoading={loading}
+        bulkActions={bulkActions}
+        searchPlaceholder="Buscar por nome…"
+        onRowDoubleClick={handleEdit}
+        data-ai-id="data-sources-data-table"
+      />
+
+      <DataSourceForm
+        open={formOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditRow(null); }}
+        onSubmit={handleSubmit}
+        defaultValues={editRow}
+      />
 
       <ConfirmationDialog
         open={!!deleteTarget}

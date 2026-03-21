@@ -4,28 +4,28 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { ShieldCheck } from 'lucide-react';
 import { DataTablePlus } from '@/components/admin-plus/data-table-plus';
 import { PageHeader } from '@/components/admin-plus/forms/page-header';
 import { ConfirmationDialog } from '@/components/admin-plus/forms/confirmation-dialog';
-import { ADMIN_PLUS_BASE_PATH } from '@/lib/admin-plus/constants';
 import type { BulkAction } from '@/lib/admin-plus/types';
 import type { Role } from '@/types';
 import { getRoleColumns } from './columns';
-import { listRolesAction, deleteRoleAction } from './actions';
+import { listRolesAction, createRoleAction, updateRoleAction, deleteRoleAction } from './actions';
+import { RoleForm } from './form';
+import type { CreateRoleInput } from './schema';
 
 export default function RolesPage() {
-  const router = useRouter();
   const [data, setData] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editRow, setEditRow] = useState<Role | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const result = await listRolesAction();
+    const result = await listRolesAction(undefined as never);
     if (result.success && result.data) setData(result.data.data);
     else toast.error(result.error ?? 'Erro ao carregar perfis');
     setLoading(false);
@@ -34,8 +34,23 @@ export default function RolesPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleEdit = useCallback((row: Role) => {
-    router.push(`${ADMIN_PLUS_BASE_PATH}/roles/${row.id}`);
-  }, [router]);
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
+
+  const handleSubmit = useCallback(async (values: CreateRoleInput) => {
+    const result = editRow
+      ? await updateRoleAction({ id: editRow.id, data: values })
+      : await createRoleAction(values);
+    if (result.success) {
+      toast.success(editRow ? 'Perfil atualizado com sucesso' : 'Perfil criado com sucesso');
+      setFormOpen(false);
+      setEditRow(null);
+      fetchData();
+    } else {
+      toast.error(result.error ?? 'Erro ao salvar');
+    }
+  }, [editRow, fetchData]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -65,13 +80,32 @@ export default function RolesPage() {
 
   return (
     <div className="space-y-6" data-ai-id="roles-listing-page">
-      <PageHeader heading="Perfis (Roles)" description="Gerencie os perfis de acesso do sistema.">
-        <Button onClick={() => router.push(`${ADMIN_PLUS_BASE_PATH}/roles/new`)} data-ai-id="role-new-btn">
-          <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> Novo Perfil
-        </Button>
-      </PageHeader>
+      <PageHeader
+        title="Perfis (Roles)"
+        description="Gerencie os perfis de acesso do sistema."
+        icon={ShieldCheck}
+        primaryAction={{
+          label: 'Novo Perfil',
+          onClick: () => { setEditRow(null); setFormOpen(true); },
+        }}
+      />
 
-      <DataTablePlus columns={columns} data={data} loading={loading} bulkActions={bulkActions} searchColumn="name" searchPlaceholder="Buscar por nome…" />
+      <DataTablePlus
+        columns={columns}
+        data={data}
+        isLoading={loading}
+        bulkActions={bulkActions}
+        searchPlaceholder="Buscar por nome…"
+        onRowDoubleClick={handleEdit}
+        data-ai-id="roles-data-table"
+      />
+
+      <RoleForm
+        open={formOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditRow(null); }}
+        onSubmit={handleSubmit}
+        defaultValues={editRow}
+      />
 
       <ConfirmationDialog
         open={!!deleteTarget}

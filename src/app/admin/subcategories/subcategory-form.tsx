@@ -31,6 +31,8 @@ interface SubcategoryFormProps {
   initialData?: Subcategory | null;
   parentCategories: LotCategory[];
   onSubmitAction: (data: SubcategoryFormValues) => Promise<{ success: boolean; message: string; subcategoryId?: string }>;
+  onSuccess?: () => void;
+  onCancel?: () => void;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
@@ -40,6 +42,8 @@ export default function SubcategoryForm({
   initialData,
   parentCategories: initialParentCategories,
   onSubmitAction,
+  onSuccess,
+  onCancel,
   formTitle,
   formDescription,
   submitButtonText,
@@ -96,8 +100,12 @@ export default function SubcategoryForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/subcategories');
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/admin/subcategories');
+          router.refresh();
+        }
       } else {
         toast({
           title: 'Erro',
@@ -237,7 +245,7 @@ export default function SubcategoryForm({
               />
             </CardContent>
             <CardFooter className="flex justify-end gap-2 p-6 border-t">
-              <Button type="button" variant="outline" onClick={() => router.push('/admin/subcategories')} disabled={isSubmitting}>
+              <Button type="button" variant="outline" onClick={() => onCancel ? onCancel() : router.push('/admin/subcategories')} disabled={isSubmitting}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting}>

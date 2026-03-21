@@ -27,7 +27,6 @@ import { useRouter } from 'next/navigation';
 import { categoryFormSchema, type CategoryFormValues } from './category-form-schema';
 import type { LotCategory, MediaItem } from '@/types';
 import { Loader2, Save, Image as ImageIcon, Tag, Sparkles } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
@@ -36,9 +35,9 @@ import IconPicker from '@/components/icon-picker';
 interface CategoryFormProps {
   initialData?: LotCategory | null;
   onSubmitAction: (data: CategoryFormValues) => Promise<{ success: boolean; message: string; categoryId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  submitButtonText?: string;
 }
 
 type DialogTarget = 'coverImageUrl' | 'megaMenuImageUrl' | 'logoUrl';
@@ -46,9 +45,9 @@ type DialogTarget = 'coverImageUrl' | 'megaMenuImageUrl' | 'logoUrl';
 export default function CategoryForm({
   initialData,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
+  onSuccess,
+  onCancel,
+  submitButtonText = 'Salvar',
 }: CategoryFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -106,8 +105,12 @@ export default function CategoryForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/categories');
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/admin/categories');
+          router.refresh();
+        }
       } else {
         toast({
           title: 'Erro',
@@ -168,14 +171,9 @@ export default function CategoryForm({
 
   return (
     <>
-    <Card className="max-w-2xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle>{formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-6 pt-1">
             <FormField
               control={form.control}
               name="name"
@@ -226,19 +224,23 @@ export default function CategoryForm({
               {renderImageInput('megaMenuImageUrl', 'Imagem do Mega Menu', 'Imagem promocional a ser exibida no mega menu.', megaMenuImageUrlPreview, 'megaMenuImageUrl')}
             </div>
 
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/categories')} disabled={isSubmitting}>
+          </div>
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onCancel ? onCancel() : router.push('/admin/categories')}
+              disabled={isSubmitting}
+            >
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {submitButtonText}
             </Button>
-          </CardFooter>
+          </div>
         </form>
       </Form>
-    </Card>
 
     <ChooseMediaDialog
       isOpen={isMediaDialogOpen}
