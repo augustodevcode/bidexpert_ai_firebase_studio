@@ -49,6 +49,17 @@ export default function AuctionStagesForm({
 
   const handleDateChange = (index: number, field: 'startDate' | 'endDate', value: string) => {
     if (!value) return;
+
+    // Fix bug ano 0002.
+    // The datetime-local input returns YYYY-MM-DDTHH:mm
+    const yearMatch = value.match(/^(\d{4})/);
+    if (yearMatch) {
+      const year = parseInt(yearMatch[1], 10);
+      if (year < 2000) {
+        return; // Ignore invalid typing
+      }
+    }
+
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
       onStageChange(index, field, date);

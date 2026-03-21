@@ -38,21 +38,30 @@ export default function Step5Review() {
 
   const handlePublish = async () => {
     setIsPublishing(true);
-    const result = await createAuctionFromWizard(wizardData);
-    if (result.success) {
+    try {
+      const result = await createAuctionFromWizard(wizardData);
+      if (result.success) {
         toast({
-            title: "Leilão Publicado!",
-            description: "O leilão e seus lotes foram criados com sucesso.",
+          title: "Leilão Publicado!",
+          description: "O leilão e seus lotes foram criados com sucesso.",
         });
         resetWizard();
         router.push(result.auctionId ? `/admin/auctions/${result.auctionId}/edit` : '/admin/auctions');
-    } else {
+      } else {
         toast({
-            title: "Erro ao Publicar",
-            description: result.message,
-            variant: "destructive",
+          title: "Erro ao Publicar",
+          description: result.message,
+          variant: "destructive",
         });
         setIsPublishing(false);
+      }
+    } catch (err: any) {
+      toast({
+        title: "Erro Crítico ao Publicar",
+        description: err.message || "Ocorreu um erro interno. Verifique o console.",
+        variant: "destructive",
+      });
+      setIsPublishing(false);
     }
   };
 
