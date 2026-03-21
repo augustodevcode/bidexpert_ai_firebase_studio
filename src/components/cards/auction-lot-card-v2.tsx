@@ -171,7 +171,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </span>
           )}
         </div>
-
         {/* Discount badge — mental trigger */}
         {item.pricing.discountPercentage != null && item.pricing.discountPercentage > 0 && (
           <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-emerald-500/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm z-10" data-ai-id="card-v2-discount-badge">
@@ -179,7 +178,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             {item.pricing.discountPercentage}% OFF
           </div>
         )}
-
         {/* Image counter */}
         <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
           {imgIdx + 1}/{images.length}
