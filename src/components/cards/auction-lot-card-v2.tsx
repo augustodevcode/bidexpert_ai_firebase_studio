@@ -166,7 +166,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </span>
           )}
         </div>
-
         {/* Discount badge — mental trigger */}
         {item.pricing.discountPercentage != null && item.pricing.discountPercentage > 0 && (
           <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-emerald-500/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm z-10" data-ai-id="card-v2-discount-badge">
@@ -174,7 +173,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             {item.pricing.discountPercentage}% OFF
           </div>
         )}
-
         {/* Image counter */}
         <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
           {imgIdx + 1}/{images.length}
@@ -195,6 +193,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           </div>
         )}
       </Link>
+          </Link>
 
       {/* ─── Header ─── */}
       <div className="p-4 space-y-2" data-ai-id="card-v2-header">
@@ -333,7 +332,11 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
 
       {/* ─── CTA + actions ─── */}
       <div className="p-4 pt-0 mt-auto flex flex-col gap-2" data-ai-id="card-v2-actions">
+<<<<<<< HEAD
         <Link
+=======
+        <a
+>>>>>>> origin/main
           href={`/lots/${item.id}`}
           className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.98]"
           data-ai-id="card-v2-cta"
@@ -341,7 +344,11 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           <CtaIcon className="w-4 h-4" aria-hidden="true" />
           {ctaLabel}
           <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+<<<<<<< HEAD
         </Link>
+=======
+        </a>
+>>>>>>> origin/main
         <div className="flex justify-center gap-4">
           <button
             type="button"
