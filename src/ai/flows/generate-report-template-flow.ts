@@ -1,11 +1,17 @@
 /**
- * @fileoverview Genkit flow para geração de templates de relatórios com IA.
- * Gera HTML/CSS compatível com GrapesJS e Handlebars a partir de descrição textual
- * ou análise de documentos, com tom formal jurídico para documentos de leilão.
+ * @fileoverview Motor de geração de templates de relatórios com IA.
+ * Suporta dois providers: Genkit (Google AI) e Ollama (modelos locais).
+ * O provider é selecionado via campo `aiProvider` no input ou pela variável
+ * de ambiente `AI_PROVIDER` (padrão: 'genkit').
+ *
+ * Provider Genkit: requer GOOGLEAI_API_KEY
+ * Provider Ollama: requer servidor Ollama em execução (configurar OLLAMA_HOST e OLLAMA_MODEL)
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { generateWithOllama } from '@/lib/ai-providers/ollama-provider';
+import type { AIProvider } from '@/lib/ai-providers/types';
 
 // ============================================================================
 // CONSTANTS
@@ -26,8 +32,8 @@ const MAX_DOCUMENT_CONTEXT_CHARS = 8000;
 
 export const GenerateReportTemplateInputSchema = z.object({
   contextType: z
-    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE', 'AUCTION_RESULT', 'APPRAISAL_REPORT', 'INVOICE'])
-    .describe('Tipo de contexto de dados do relatório'),
+    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE'])
+    .describe('Tipo de contexto de dados do relatório. Deve corresponder a um contexto implementado em /api/reports/render.'),
   prompt: z
     .string()
     .min(10, 'Descreva o template com pelo menos 10 caracteres')
@@ -53,6 +59,14 @@ export const GenerateReportTemplateInputSchema = z.object({
     .enum(['portrait', 'landscape'])
     .default('portrait')
     .describe('Orientação da página'),
+  aiProvider: z
+    .enum(['genkit', 'ollama'])
+    .optional()
+    .describe('Provider de IA: "genkit" (Google AI) ou "ollama" (local). Padrão: variável AI_PROVIDER ou "genkit"'),
+  ollamaModel: z
+    .string()
+    .optional()
+    .describe('Modelo Ollama a utilizar (ex: llama3.2, mistral). Padrão: variável OLLAMA_MODEL ou "llama3.2"'),
 });
 
 export type GenerateReportTemplateInput = z.infer<typeof GenerateReportTemplateInputSchema>;
@@ -81,7 +95,8 @@ export type GenerateReportTemplateOutput = z.infer<typeof GenerateReportTemplate
 
 /**
  * Mapa de variáveis Handlebars disponíveis por contexto.
- * Espelha as estruturas de fetchDataForContext em /api/reports/render.
+ * Espelha as estruturas implementadas por fetchDataForContext em /api/reports/render.
+ * Somente os 4 contextos implementados são listados aqui (AUCTION, LOT, BIDDER, COURT_CASE).
  */
 const CONTEXT_VARIABLES: Record<string, string> = {
   AUCTION: `
@@ -358,14 +373,13 @@ Sua tarefa é gerar um template HTML completo e profissional usando Handlebars p
 ## Regras obrigatórias:
 1. O HTML deve ser válido e bem estruturado, pronto para renderização em PDF via Puppeteer
 2. Use as variáveis Handlebars listadas abaixo — SOMENTE variáveis disponíveis no contexto
-3. O HTML deve ser auto-contido (CSS inline ou em bloco <style>)
+3. O HTML deve ser auto-contido com CSS inline ou em bloco <style> (não use CDN externo nem classes Tailwind)
 4. Inclua cabeçalho, corpo e rodapé adequados ao tipo de documento
 5. Use formatação profissional com fontes, bordas e espaçamentos adequados
 6. Respeite o tamanho de página ${input.pageSize} em orientação ${input.orientation}
 7. ${toneInstructions}
 8. NÃO use JavaScript no template (apenas HTML/CSS/Handlebars)
-9. Use classes Tailwind CSS quando necessário (disponível via CDN)
-10. Inclua números de página no rodapé quando pertinente
+9. Inclua números de página no rodapé quando pertinente
 
 ${HANDLEBARS_HELPERS}
 
@@ -373,26 +387,18 @@ ${contextVariables}`;
 }
 
 // ============================================================================
-// FLOW DEFINITION
+// PROMPT BUILDERS (shared between providers)
 // ============================================================================
 
-const generateReportTemplateFlow = ai.defineFlow(
-  {
-    name: 'generateReportTemplateFlow',
-    inputSchema: GenerateReportTemplateInputSchema,
-    outputSchema: GenerateReportTemplateOutputSchema,
-  },
-  async (input) => {
-    const systemPrompt = buildSystemPrompt(input);
+function buildUserPrompt(input: GenerateReportTemplateInput): string {
+  let userPrompt = `Gere um template HTML profissional para: ${input.prompt}`;
 
-    let userPrompt = `Gere um template HTML profissional para: ${input.prompt}`;
+  if (input.documentText) {
+    userPrompt += `\n\n## Documento de referência para análise:\n${input.documentText.substring(0, MAX_DOCUMENT_CONTEXT_CHARS)}`;
+    userPrompt += `\n\nAnalise o documento acima e gere um template HTML que reproduza sua estrutura com variáveis Handlebars dinâmicas no lugar dos dados específicos.`;
+  }
 
-    if (input.documentText) {
-      userPrompt += `\n\n## Documento de referência para análise:\n${input.documentText.substring(0, MAX_DOCUMENT_CONTEXT_CHARS)}`;
-      userPrompt += `\n\nAnalise o documento acima e gere um template HTML que reproduza sua estrutura com variáveis Handlebars dinâmicas no lugar dos dados específicos.`;
-    }
-
-    userPrompt += `\n\nResponda com um JSON válido contendo:
+  userPrompt += `\n\nResponda com um JSON válido contendo:
 {
   "html": "<string com o HTML completo do template>",
   "css": "<string com CSS adicional ou vazia>",
@@ -400,6 +406,70 @@ const generateReportTemplateFlow = ai.defineFlow(
   "variables": [{"path": "caminho.variavel", "label": "Rótulo legível", "type": "string|number|date|array"}],
   "suggestedName": "<nome sugerido para o template>"
 }`;
+
+  return userPrompt;
+}
+
+// ============================================================================
+// OUTPUT PARSER (shared — handles both Genkit and Ollama raw JSON)
+// ============================================================================
+
+function parseTemplateOutput(raw: string): GenerateReportTemplateOutput {
+  // Strip optional markdown code fence (```json ... ``` or ``` ... ```)
+  const CODE_FENCE_RE = /^```(?:json)?\s*/i;
+  const cleaned = raw.replace(CODE_FENCE_RE, '').replace(/\s*```\s*$/, '').trim();
+  
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    // Try to find JSON object in the text (some models prepend text)
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) {
+      throw new Error('O modelo não retornou JSON válido. Tente um modelo com maior capacidade de contexto.');
+    }
+    parsed = JSON.parse(match[0]);
+  }
+
+  const result = GenerateReportTemplateOutputSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(`Resposta da IA com estrutura inválida: ${result.error.message}`);
+  }
+  return result.data;
+}
+
+// ============================================================================
+// PROVIDER SELECTION
+// ============================================================================
+
+/**
+ * Resolves which AI provider to use.
+ * Priority: input.aiProvider > AI_PROVIDER env var > 'genkit'
+ */
+function resolveProvider(input: GenerateReportTemplateInput): AIProvider {
+  const fromInput = input.aiProvider;
+  const fromEnv = process.env.AI_PROVIDER as AIProvider | undefined;
+  const resolved = fromInput ?? fromEnv ?? 'genkit';
+  if (resolved !== 'genkit' && resolved !== 'ollama') {
+    console.warn(`[AI Provider] Valor inválido "${resolved}" — usando "genkit".`);
+    return 'genkit';
+  }
+  return resolved;
+}
+
+// ============================================================================
+// GENKIT FLOW (Google AI)
+// ============================================================================
+
+const generateReportTemplateGenkitFlow = ai.defineFlow(
+  {
+    name: 'generateReportTemplateFlow',
+    inputSchema: GenerateReportTemplateInputSchema,
+    outputSchema: GenerateReportTemplateOutputSchema,
+  },
+  async (input) => {
+    const systemPrompt = buildSystemPrompt(input);
+    const userPrompt = buildUserPrompt(input);
 
     const response = await ai.generate({
       system: systemPrompt,
@@ -415,7 +485,6 @@ const generateReportTemplateFlow = ai.defineFlow(
     });
 
     const result = response.output;
-
     if (!result) {
       throw new Error('A IA não retornou um resultado válido. Tente reformular a descrição do template.');
     }
@@ -425,17 +494,43 @@ const generateReportTemplateFlow = ai.defineFlow(
 );
 
 // ============================================================================
+// OLLAMA HANDLER
+// ============================================================================
+
+async function generateWithOllamaProvider(
+  input: GenerateReportTemplateInput
+): Promise<GenerateReportTemplateOutput> {
+  const systemPrompt = buildSystemPrompt(input);
+  const userPrompt = buildUserPrompt(input);
+
+  const raw = await generateWithOllama(
+    { systemPrompt, userPrompt, temperature: 0.3, maxTokens: 8192 },
+    { model: input.ollamaModel }
+  );
+
+  return parseTemplateOutput(raw.text);
+}
+
+// ============================================================================
 // EXPORTED WRAPPER
 // ============================================================================
 
 /**
- * Gera um template HTML/CSS para relatórios usando IA (Genkit + Google AI).
+ * Gera um template HTML/CSS para relatórios usando IA.
+ * Seleciona automaticamente o provider com base em `input.aiProvider`,
+ * na variável de ambiente `AI_PROVIDER`, ou usa Genkit (Google AI) por padrão.
  *
- * @param input - Parâmetros de geração: contexto, prompt, documento opcional, tom, etc.
+ * @param input - Parâmetros de geração: contexto, prompt, documento, tom, provider, etc.
  * @returns Template gerado com HTML, CSS, descrição e lista de variáveis.
  */
 export async function generateReportTemplate(
   input: GenerateReportTemplateInput
 ): Promise<GenerateReportTemplateOutput> {
-  return generateReportTemplateFlow(input);
+  const provider = resolveProvider(input);
+
+  if (provider === 'ollama') {
+    return generateWithOllamaProvider(input);
+  }
+
+  return generateReportTemplateGenkitFlow(input);
 }

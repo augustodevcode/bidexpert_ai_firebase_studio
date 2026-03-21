@@ -4,6 +4,8 @@
  * Utiliza mammoth para DOCX e pdf-parse para PDF.
  * O texto extraído é usado pelo painel de IA para gerar templates Handlebars.
  *
+ * Formatos suportados: .docx, .pdf, .txt (não suporta .doc binário)
+ *
  * POST /api/reports/extract-text
  * Content-Type: multipart/form-data
  */
@@ -46,20 +48,28 @@ export async function POST(request: NextRequest) {
 
     let extractedText = '';
     const mimeType = file.type;
+    const lowerName = file.name.toLowerCase();
 
     if (
       mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      mimeType === 'application/msword' ||
-      file.name.endsWith('.docx') ||
-      file.name.endsWith('.doc')
+      lowerName.endsWith('.docx')
     ) {
-      // Extract text from Word document using mammoth
+      // Extract text from Word document using mammoth (only supports .docx OpenXML format)
       const mammoth = await import('mammoth');
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value;
     } else if (
+      mimeType === 'application/msword' ||
+      lowerName.endsWith('.doc')
+    ) {
+      // Old binary .doc format is not supported by mammoth
+      return NextResponse.json(
+        { error: 'Formato .doc (Word 97-2003) não é suportado. Converta para .docx e tente novamente.' },
+        { status: 415 }
+      );
+    } else if (
       mimeType === 'application/pdf' ||
-      file.name.endsWith('.pdf')
+      lowerName.endsWith('.pdf')
     ) {
       // Extract text from PDF using pdf-parse
       // pdf-parse uses CJS export; cast to a callable to satisfy TypeScript
@@ -72,11 +82,11 @@ export async function POST(request: NextRequest) {
         max: 0, // Parse all pages
       });
       extractedText = result.text;
-    } else if (mimeType === 'text/plain' || file.name.endsWith('.txt')) {
+    } else if (mimeType === 'text/plain' || lowerName.endsWith('.txt')) {
       extractedText = buffer.toString('utf-8');
     } else {
       return NextResponse.json(
-        { error: 'Tipo de arquivo não suportado. Use .docx, .doc, .pdf ou .txt' },
+        { error: 'Tipo de arquivo não suportado. Use .docx, .pdf ou .txt' },
         { status: 415 }
       );
     }

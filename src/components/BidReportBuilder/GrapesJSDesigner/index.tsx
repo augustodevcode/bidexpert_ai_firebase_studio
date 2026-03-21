@@ -409,7 +409,7 @@ export function GrapesJSDesigner({
    * Applies an AI-generated template HTML/CSS into the GrapesJS editor canvas.
    */
   const handleAITemplateGenerated = useCallback(
-    (result: { html: string; css: string; description: string; suggestedName: string }) => {
+    (result: { html: string; css: string; description: string; suggestedName: string; variables: Array<{ path: string; label: string; type: string }> }) => {
       const editor = grapesInstanceRef.current;
       if (!editor) {
         toast({
