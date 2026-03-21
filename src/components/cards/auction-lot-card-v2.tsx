@@ -193,7 +193,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           </div>
         )}
       </Link>
-          </Link>
 
       {/* ─── Header ─── */}
       <div className="p-4 space-y-2" data-ai-id="card-v2-header">
@@ -332,11 +331,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
 
       {/* ─── CTA + actions ─── */}
       <div className="p-4 pt-0 mt-auto flex flex-col gap-2" data-ai-id="card-v2-actions">
-<<<<<<< HEAD
         <Link
-=======
-        <a
->>>>>>> origin/main
           href={`/lots/${item.id}`}
           className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.98]"
           data-ai-id="card-v2-cta"
@@ -344,11 +339,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           <CtaIcon className="w-4 h-4" aria-hidden="true" />
           {ctaLabel}
           <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
-<<<<<<< HEAD
         </Link>
-=======
-        </a>
->>>>>>> origin/main
         <div className="flex justify-center gap-4">
           <button
             type="button"

@@ -7,7 +7,7 @@
 
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Wand2, Upload, FileText, Loader2, ChevronDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -93,6 +93,23 @@ export function AITemplatePanel({
 }: AITemplatePanelProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [aiProviderLabel, setAiProviderLabel] = useState<string | null>(null);
+  const [aiProviderHealthy, setAiProviderHealthy] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch('/api/ai/status')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data) {
+          setAiProviderLabel(data.label as string);
+          if (data.ollamaHealthy !== undefined) {
+            setAiProviderHealthy(data.ollamaHealthy as boolean);
+          }
+        }
+      })
+      .catch(() => null);
+  }, []);
 
   const [prompt, setPrompt] = useState('');
   const [tone, setTone] = useState<Tone>('FORMAL_JURIDICO');
@@ -267,12 +284,22 @@ export function AITemplatePanel({
       data-ai-id="ai-template-panel"
     >
       {/* Header */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Wand2 className="h-4 w-4 text-primary" />
         <span className="text-sm font-semibold">Geração com IA</span>
         <Badge variant="secondary" className="text-xs">
           {CONTEXT_LABELS[contextType]}
         </Badge>
+        {aiProviderLabel && (
+          <Badge
+            variant={aiProviderHealthy === false ? 'destructive' : 'outline'}
+            className="text-xs ml-auto"
+            title={aiProviderHealthy === false ? 'Ollama offline — verifique se o serviço está rodando' : undefined}
+            data-ai-id="ai-provider-badge"
+          >
+            {aiProviderHealthy === false ? '⚠ ' : '✓ '}{aiProviderLabel}
+          </Badge>
+        )}
       </div>
 
       {/* Document Upload */}

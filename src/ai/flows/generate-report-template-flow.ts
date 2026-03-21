@@ -4,7 +4,8 @@
  * ou análise de documentos, com tom formal jurídico para documentos de leilão.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, AI_CONFIG } from '@/ai/genkit';
+import { callOllamaForJSON } from '@/lib/ai/provider';
 import { z } from 'zod';
 
 // ============================================================================
@@ -401,6 +402,31 @@ const generateReportTemplateFlow = ai.defineFlow(
   "suggestedName": "<nome sugerido para o template>"
 }`;
 
+    // Ollama path: direct REST call to local model
+    if (AI_CONFIG.provider === 'ollama') {
+      const result = await callOllamaForJSON<GenerateReportTemplateOutput>(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        { temperature: 0.3, maxTokens: 8192 }
+      );
+
+      // Validate required fields from Ollama response
+      if (!result?.html) {
+        throw new Error('Ollama não retornou HTML no template. Tente um modelo maior (ex: llama3.1:70b).');
+      }
+
+      return {
+        html: result.html ?? '',
+        css: result.css ?? '',
+        description: result.description ?? 'Template gerado com Ollama',
+        variables: Array.isArray(result.variables) ? result.variables : [],
+        suggestedName: result.suggestedName ?? 'template-ollama',
+      };
+    }
+
+    // Google AI path: use Genkit structured output
     const response = await ai.generate({
       system: systemPrompt,
       prompt: userPrompt,
