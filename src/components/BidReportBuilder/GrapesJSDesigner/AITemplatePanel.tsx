@@ -144,7 +144,6 @@ export function AITemplatePanel({
 
     const allowedTypes = [
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
       'text/plain',
       'application/pdf',
     ];
@@ -152,11 +151,30 @@ export function AITemplatePanel({
     if (!allowedTypes.includes(file.type)) {
       toast({
         title: 'Tipo de arquivo não suportado',
-        description: 'Envie um arquivo .docx, .doc, .txt ou .pdf',
+        description: 'Envie um arquivo .docx, .txt ou .pdf',
         variant: 'destructive',
       });
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
+
+    /** Sends file to the extraction API and returns the extracted text. */
+    const extractViaApi = async (f: File, fallback: string): Promise<string | null> => {
+      const formData = new FormData();
+      formData.append('file', f);
+      const response = await fetch('/api/reports/extract-text', { method: 'POST', body: formData });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        toast({
+          title: 'Erro na extração',
+          description: (errData as { error?: string }).error ?? fallback,
+          variant: 'destructive',
+        });
+        return null;
+      }
+      const data = await response.json();
+      return (data.text as string) || '';
+    };
 
     try {
       let text = '';
@@ -164,51 +182,15 @@ export function AITemplatePanel({
       if (file.type === 'text/plain') {
         text = await file.text();
       } else if (
-        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        file.type === 'application/msword'
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ) {
-        // Use FormData to send to extraction endpoint
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch('/api/reports/extract-text', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          // Fallback: read as plain text (may not decode correctly for binary)
-          toast({
-            title: 'Extração parcial',
-            description:
-              'Não foi possível extrair o texto completo do Word. Use um arquivo .txt como alternativa.',
-            variant: 'default',
-          });
-          return;
-        }
-
-        const data = await response.json();
-        text = data.text || '';
+        const extracted = await extractViaApi(file, 'Não foi possível extrair o texto do Word. Use um arquivo .txt como alternativa.');
+        if (extracted === null) return;
+        text = extracted;
       } else if (file.type === 'application/pdf') {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch('/api/reports/extract-text', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          toast({
-            title: 'Extração parcial',
-            description: 'Não foi possível extrair o texto do PDF. Use um arquivo .txt como alternativa.',
-            variant: 'default',
-          });
-          return;
-        }
-
-        const data = await response.json();
-        text = data.text || '';
+        const extracted = await extractViaApi(file, 'Não foi possível extrair o texto do PDF. Use um arquivo .txt como alternativa.');
+        if (extracted === null) return;
+        text = extracted;
       }
 
       setDocumentText(text);
@@ -224,11 +206,11 @@ export function AITemplatePanel({
         description: 'Não foi possível processar o documento.',
         variant: 'destructive',
       });
-    }
-
-    // Reset input so same file can be re-uploaded
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    } finally {
+      // Always reset so same file can be re-uploaded after any outcome
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -346,7 +328,7 @@ export function AITemplatePanel({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".docx,.doc,.txt,.pdf"
+          accept=".docx,.txt,.pdf"
           className="hidden"
           onChange={handleFileUpload}
           aria-label="Upload de documento para análise"

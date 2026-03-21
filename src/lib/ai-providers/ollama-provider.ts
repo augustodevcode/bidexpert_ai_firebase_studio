@@ -52,34 +52,47 @@ export async function generateWithOllama(
 
   const client = new OllamaClass({ host });
 
-  // Verify connectivity before calling generate
   try {
-    await client.list();
+    const response = await client.chat({
+      model,
+      messages: [
+        { role: 'system', content: params.systemPrompt },
+        { role: 'user', content: params.userPrompt },
+      ],
+      options: {
+        temperature: params.temperature ?? 0.3,
+        num_predict: params.maxTokens ?? 8192,
+      },
+      stream: false,
+    });
+
+    const text = response.message?.content ?? '';
+    if (!text) {
+      throw new Error(`Ollama (${model}) retornou uma resposta vazia. Tente um modelo diferente.`);
+    }
+
+    return { text, provider: 'ollama', model };
   } catch (err) {
-    throw new Error(
-      `Servidor Ollama não acessível em ${host}. Verifique se o serviço está em execução e configure OLLAMA_HOST se necessário. Detalhe: ${err instanceof Error ? err.message : String(err)}`
-    );
+    // Re-throw connection errors with a descriptive message
+    const isConnectionError =
+      err instanceof Error &&
+      (
+        // Node.js system error codes for connection refused/failure
+        (err as NodeJS.ErrnoException).code === 'ECONNREFUSED' ||
+        (err as NodeJS.ErrnoException).code === 'ENOTFOUND' ||
+        (err as NodeJS.ErrnoException).code === 'ECONNRESET' ||
+        // Fallback message patterns (fetch API on some platforms)
+        err.message.includes('fetch failed') ||
+        err.message.includes('ECONNREFUSED')
+      );
+
+    if (isConnectionError) {
+      throw new Error(
+        `Servidor Ollama não acessível em ${host}. Verifique se o serviço está em execução e configure OLLAMA_HOST se necessário. Detalhe: ${err.message}`
+      );
+    }
+    throw err;
   }
-
-  const response = await client.chat({
-    model,
-    messages: [
-      { role: 'system', content: params.systemPrompt },
-      { role: 'user', content: params.userPrompt },
-    ],
-    options: {
-      temperature: params.temperature ?? 0.3,
-      num_predict: params.maxTokens ?? 8192,
-    },
-    stream: false,
-  });
-
-  const text = response.message?.content ?? '';
-  if (!text) {
-    throw new Error(`Ollama (${model}) retornou uma resposta vazia. Tente um modelo diferente.`);
-  }
-
-  return { text, provider: 'ollama', model };
 }
 
 /**

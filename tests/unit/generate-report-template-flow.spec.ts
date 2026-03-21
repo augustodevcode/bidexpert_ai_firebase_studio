@@ -88,15 +88,12 @@ describe('GenerateReportTemplateInputSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('aceita todos os contextTypes válidos', () => {
+  it('aceita todos os contextTypes suportados pelo renderer', () => {
     const validTypes = [
       'AUCTION',
       'LOT',
       'BIDDER',
       'COURT_CASE',
-      'AUCTION_RESULT',
-      'APPRAISAL_REPORT',
-      'INVOICE',
     ];
 
     for (const contextType of validTypes) {
@@ -105,6 +102,18 @@ describe('GenerateReportTemplateInputSchema', () => {
         prompt: 'Template de teste para ' + contextType,
       });
       expect(result.success, `contextType "${contextType}" deve ser aceito`).toBe(true);
+    }
+  });
+
+  it('rejeita contextTypes não implementados no renderer', () => {
+    const unsupportedTypes = ['AUCTION_RESULT', 'APPRAISAL_REPORT', 'INVOICE'];
+
+    for (const contextType of unsupportedTypes) {
+      const result = GenerateReportTemplateInputSchema.safeParse({
+        contextType,
+        prompt: 'Template para contexto não suportado',
+      });
+      expect(result.success, `contextType "${contextType}" deve ser REJEITADO (não implementado no renderer)`).toBe(false);
     }
   });
 
@@ -144,7 +153,7 @@ describe('GenerateReportTemplateInputSchema', () => {
 
   it('aceita orientação landscape', () => {
     const result = GenerateReportTemplateInputSchema.safeParse({
-      contextType: 'AUCTION_RESULT',
+      contextType: 'AUCTION',
       prompt: 'Ata de resultado em formato paisagem',
       orientation: 'landscape',
     });
@@ -158,8 +167,8 @@ describe('GenerateReportTemplateInputSchema', () => {
   it('aceita tamanhos de página Letter e Legal', () => {
     for (const pageSize of ['Letter', 'Legal']) {
       const result = GenerateReportTemplateInputSchema.safeParse({
-        contextType: 'INVOICE',
-        prompt: 'Nota de arrematação no tamanho ' + pageSize,
+        contextType: 'LOT',
+        prompt: 'Ficha técnica no tamanho ' + pageSize,
         pageSize,
       });
       expect(result.success, `pageSize "${pageSize}" deve ser aceito`).toBe(true);
@@ -184,20 +193,23 @@ describe('GenerateReportTemplateInputSchema', () => {
 });
 
 describe('Estrutura de contexto de variáveis', () => {
-  it('contextos de relatório cobrem todos os tipos da API de renderização', () => {
-    const supportedRenderContexts = ['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE'];
-    const flowContextTypes = [
-      'AUCTION',
-      'LOT',
-      'BIDDER',
-      'COURT_CASE',
-      'AUCTION_RESULT',
-      'APPRAISAL_REPORT',
-      'INVOICE',
-    ];
+  it('contextos do flow AI coincidem exatamente com os implementados no renderer', () => {
+    // The AI generation contextType enum must match fetchDataForContext in /api/reports/render
+    const implementedRenderContexts = ['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE'];
+    const flowAllowedContexts = implementedRenderContexts; // same 4
 
-    for (const ctx of supportedRenderContexts) {
-      expect(flowContextTypes).toContain(ctx);
+    for (const ctx of implementedRenderContexts) {
+      expect(flowAllowedContexts).toContain(ctx);
+    }
+
+    // Contexts NOT in the renderer must also NOT be in the flow schema
+    const unsupported = ['AUCTION_RESULT', 'APPRAISAL_REPORT', 'INVOICE'];
+    for (const ctx of unsupported) {
+      const result = GenerateReportTemplateInputSchema.safeParse({
+        contextType: ctx,
+        prompt: 'Template sem suporte no renderer',
+      });
+      expect(result.success, `"${ctx}" não deve ser aceito pois não está implementado no renderer`).toBe(false);
     }
   });
 });

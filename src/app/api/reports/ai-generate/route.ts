@@ -8,6 +8,9 @@
  *   - "genkit" (padrão): Google AI / gemini-2.0-flash via Genkit
  *   - "ollama": Modelo local via servidor Ollama (configure OLLAMA_HOST e OLLAMA_MODEL)
  *
+ * contextType é restrito aos 4 contextos implementados em /api/reports/render:
+ *   AUCTION, LOT, BIDDER, COURT_CASE
+ *
  * POST /api/reports/ai-generate  — gera template
  * GET  /api/reports/ai-generate  — lista modelos Ollama disponíveis
  */
@@ -28,7 +31,7 @@ export const dynamic = 'force-dynamic';
 
 const RequestSchema = z.object({
   contextType: z
-    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE', 'AUCTION_RESULT', 'APPRAISAL_REPORT', 'INVOICE'])
+    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE'])
     .default('AUCTION'),
   prompt: z.string().min(10, 'Descreva o template com pelo menos 10 caracteres').max(1000, 'Prompt deve ter no máximo 1.000 caracteres'),
   documentText: z.string().optional(),
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
 // GET — lista modelos Ollama disponíveis
 // ============================================================================
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -98,9 +101,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { listOllamaModels } = await import('@/lib/ai-providers/ollama-provider');
-    const url = new URL(request.url);
-    const host = url.searchParams.get('host') ?? undefined;
-    const models = await listOllamaModels(host);
+    // Host is always taken from OLLAMA_HOST env var — no query param accepted to prevent SSRF
+    const models = await listOllamaModels();
 
     return NextResponse.json({
       success: true,

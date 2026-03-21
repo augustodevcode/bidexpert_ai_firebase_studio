@@ -34,8 +34,8 @@ const MAX_DOCUMENT_CONTEXT_CHARS = 8000;
 
 export const GenerateReportTemplateInputSchema = z.object({
   contextType: z
-    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE', 'AUCTION_RESULT', 'APPRAISAL_REPORT', 'INVOICE'])
-    .describe('Tipo de contexto de dados do relatório'),
+    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE'])
+    .describe('Tipo de contexto de dados do relatório. Deve corresponder a um contexto implementado em /api/reports/render.'),
   prompt: z
     .string()
     .min(10, 'Descreva o template com pelo menos 10 caracteres')
@@ -97,7 +97,8 @@ export type GenerateReportTemplateOutput = z.infer<typeof GenerateReportTemplate
 
 /**
  * Mapa de variáveis Handlebars disponíveis por contexto.
- * Espelha as estruturas de fetchDataForContext em /api/reports/render.
+ * Espelha as estruturas implementadas por fetchDataForContext em /api/reports/render.
+ * Somente os 4 contextos implementados são listados aqui (AUCTION, LOT, BIDDER, COURT_CASE).
  */
 const CONTEXT_VARIABLES: Record<string, string> = {
   AUCTION: `
@@ -374,14 +375,13 @@ Sua tarefa é gerar um template HTML completo e profissional usando Handlebars p
 ## Regras obrigatórias:
 1. O HTML deve ser válido e bem estruturado, pronto para renderização em PDF via Puppeteer
 2. Use as variáveis Handlebars listadas abaixo — SOMENTE variáveis disponíveis no contexto
-3. O HTML deve ser auto-contido (CSS inline ou em bloco <style>)
+3. O HTML deve ser auto-contido com CSS inline ou em bloco <style> (não use CDN externo nem classes Tailwind)
 4. Inclua cabeçalho, corpo e rodapé adequados ao tipo de documento
 5. Use formatação profissional com fontes, bordas e espaçamentos adequados
 6. Respeite o tamanho de página ${input.pageSize} em orientação ${input.orientation}
 7. ${toneInstructions}
 8. NÃO use JavaScript no template (apenas HTML/CSS/Handlebars)
-9. Use classes Tailwind CSS quando necessário (disponível via CDN)
-10. Inclua números de página no rodapé quando pertinente
+9. Inclua números de página no rodapé quando pertinente
 
 ${HANDLEBARS_HELPERS}
 

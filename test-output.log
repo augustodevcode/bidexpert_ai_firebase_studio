@@ -1,12 +1,42 @@
-[AI_REPORTER] Execução iniciada em 2026-03-12T13:06:53.119Z
 
-═══════════════════════════════════════════════════════════
-[AI_SUMMARY]
-  STATUS: PASSED
-  TOTAL: 0
-  PASSED: 0
-  FAILED: 0
-  SKIPPED: 0
-  DURATION: 0s
-  SUCCESS_RATE: 0%
-═══════════════════════════════════════════════════════════
+npm warn exec The following package was not found and will be installed: playwright@1.58.2
+Error: Cannot find module '@playwright/test'
+Require stack:
+- /home/runner/work/bidexpert_ai_firebase_studio/bidexpert_ai_firebase_studio/playwright.autofix.config.ts
+- /home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/transform/transform.js
+- /home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js
+- /home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/program.js
+- /home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/cli.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1456:15)
+    at Module.resolveFilename [as _resolveFilename] (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/transform/transform.js:247:36)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1556:12)
+    at require (node:internal/modules/helpers:152:16)
+    at Object.<anonymous> (/home/runner/work/bidexpert_ai_firebase_studio/bidexpert_ai_firebase_studio/playwright.autofix.config.ts:10:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Module.newCompile2 (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/third_party/pirates.js:46:29)
+    at Object.<anonymous> (node:internal/modules/cjs/loader:1943:10)
+    at Object.newLoader2 [as .ts] (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/third_party/pirates.js:52:22)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1556:12)
+    at require (node:internal/modules/helpers:152:16)
+    at requireOrImport (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/transform/transform.js:225:18)
+    at loadUserConfig (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js:107:89)
+    at loadConfig (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js:119:28)
+    at loadConfigFromFile (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js:331:10)
+    at runTests (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/program.js:197:18)
+    at i.<anonymous> (/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/program.js:70:7) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/home/runner/work/bidexpert_ai_firebase_studio/bidexpert_ai_firebase_studio/playwright.autofix.config.ts',
+    '/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/transform/transform.js',
+    '/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/common/configLoader.js',
+    '/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/lib/program.js',
+    '/home/runner/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/cli.js'
+  ]
+}
