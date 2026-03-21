@@ -192,7 +192,7 @@ export async function getLotsForV2Page(
   const lots = await prisma.lot.findMany({
     where: {
       status: { in: [...VISIBLE_STATUSES] },
-      ...(tenantId ? { tenantId } : {}),
+      ...(tenantId != null ? { tenantId } : {}),
     },
     include: {
       Auction: {
