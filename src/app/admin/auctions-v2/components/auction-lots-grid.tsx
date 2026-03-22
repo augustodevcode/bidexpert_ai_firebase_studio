@@ -224,7 +224,7 @@ export default function AuctionLotsGrid({ auctionId, onAddLot }: AuctionLotsGrid
               Atualizar
             </Button>
             {onAddLot && (
-              <Button size="sm" onClick={onAddLot}>
+              <Button size="sm" onClick={onAddLot} data-ai-id="btn-new-lot">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Novo Lote
               </Button>
@@ -314,7 +314,7 @@ export default function AuctionLotsGrid({ auctionId, onAddLot }: AuctionLotsGrid
                 : 'Nenhum lote encontrado com os filtros aplicados.'}
             </p>
             {lots.length === 0 && onAddLot && (
-              <Button className="mt-4" onClick={onAddLot}>
+              <Button className="mt-4" onClick={onAddLot} data-ai-id="btn-new-lot-empty">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Adicionar Primeiro Lote
               </Button>

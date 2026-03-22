@@ -147,7 +147,10 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
         cookieOptions.domain = cookieDomain;
     }
 
+    console.log('[Create Session] Chamando cookies().set com as opcoes:', JSON.stringify(cookieOptions));
     cookies().set('session', session, cookieOptions);
+    cookies().set('magic_cookie_test', 'test_from_action', { path: '/' });
+    console.log('[Create Session] cookies().set executado com sucesso.');
 }
 
 export async function getSession(): Promise<{ userId: string; tenantId: string;[key: string]: any } | null> {

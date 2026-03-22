@@ -8,6 +8,14 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+
+// @ts-ignore: Polyfill for BigInt serialization via JSON.stringify
+if (typeof (BigInt.prototype as any).toJSON === 'undefined') {
+  (BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+  };
+}
+
 import { withAccelerate } from '@prisma/extension-accelerate';
 import { headers } from 'next/headers';
 import { auditMiddleware } from './audit-middleware';

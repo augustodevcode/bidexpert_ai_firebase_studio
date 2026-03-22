@@ -214,7 +214,7 @@ export default function LotsPageV2() {
               <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
               <span className="sr-only">Recarregar</span>
             </Button>
-            <Button asChild>
+            <Button asChild data-ai-id="btn-new-lot">
               <Link href="/admin/lots-v2/new">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Novo Lote

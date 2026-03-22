@@ -28,6 +28,8 @@ import { normalizeTenantToken } from '@/lib/tenant-token';
  * uma sessão segura em caso de sucesso.
  */
 export async function login(values: { email: string, password?: string, tenantId?: string }): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
+  console.log(`[Login Action START] Invocado com values:`, values);
+  
   const { email, password, tenantId: initialTenantId } = values;
   let tenantId = initialTenantId;
 

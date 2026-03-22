@@ -24,10 +24,16 @@ const ADMIN_ACCESS_PERMISSIONS = [
   'judicial_processes:read'
 ];
 
+import { cookies } from 'next/headers';
+
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({ children }: AdminLayoutProps) {
+  const cList = cookies().getAll().map(c => c.name);
+  console.log(`[AdminLayout] acessado. Cookies presentes:`, cList);
+  
   const user = await getCurrentUser();
+  console.log(`[AdminLayout] user resolvido:`, user?.email || 'Nulo');
 
   if (!user) {
     redirect('/auth/login?redirect=/admin');

@@ -79,15 +79,32 @@ export default function NewAuctionPageV2() {
   }, [loadDependencies]);
 
   const handleCreateAuction = async (data: Partial<AuctionFormData>) => {
-    const result = await createAuctionV2(data as Record<string, unknown>);
-    if (result.success && result.auctionId) {
+    try {
+      const result = await createAuctionV2(data as Record<string, unknown>);
+      if (result.success && result.auctionId) {
+        toast({
+          title: 'Sucesso!',
+          description: 'Leilão criado com sucesso.',
+        });
+        router.push(`/admin/auctions-v2/${result.auctionId}`);
+      } else {
+        console.error('Falha ao criar leilão:', result);
+        toast({
+          title: 'Erro!',
+          description: result.message || 'Falha ao criar leilão. Verifique os dados e tente novamente.',
+          variant: 'destructive',
+        });
+      }
+      return result;
+    } catch (error: any) {
+      console.error('Exceção ao criar leilão:', error);
       toast({
-        title: 'Sucesso!',
-        description: 'Leilão criado com sucesso.',
+        title: 'Erro inesperado',
+        description: error?.message || 'Ocorreu um erro interno. Tente novamente mais tarde.',
+        variant: 'destructive',
       });
-      router.push(`/admin/auctions-v2/${result.auctionId}`);
+      return { success: false, message: error?.message || 'Erro interno' };
     }
-    return result;
   };
 
   if (isLoading) {

@@ -8,6 +8,7 @@
  */
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import '@/lib/bigint-serialization';
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';

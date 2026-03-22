@@ -720,6 +720,45 @@
   font-size: 10px;
 }
 
+/* ─── V2 Card Brutalist Styles ─── */
+:root {
+  --color-card-surface: 23 23 23;
+  --color-card-dark: 15 15 15;
+  --font-card-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-card-display: var(--font-heading, 'Space Grotesk', ui-sans-serif, system-ui, sans-serif);
+}
+
+@keyframes pulse-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@layer components {
+  .card-v2-surface {
+    background-color: rgb(var(--color-card-surface));
+  }
+  .card-v2-dark {
+    background-color: rgb(var(--color-card-dark));
+  }
+  .brutalist-border {
+    border: 1px solid rgb(38 38 38);
+  }
+  .kpi-border {
+    border-right: 1px solid rgb(38 38 38);
+  }
+  .kpi-border:last-child {
+    border-right: none;
+  }
+  .animate-pulse-fast {
+    animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  .text-card-v2-evaluation {
+    font-size: 11px;
+    text-decoration: line-through;
+    color: rgb(115 115 115);
+  }
+}
+
 .map-popup-values {
   margin-top: 0.15rem;
   display: flex;

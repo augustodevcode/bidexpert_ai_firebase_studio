@@ -49,6 +49,20 @@ export default function AuctionStagesForm({
 
   const handleDateChange = (index: number, field: 'startDate' | 'endDate', value: string) => {
     if (!value) return;
+    
+    // Check if the year is invalid (e.g. starting with 0 like 0002)
+    // The datetime-local input returns YYYY-MM-DDTHH:mm
+    const yearMatch = value.match(/^(\d{4})/);
+    if (yearMatch) {
+      const year = parseInt(yearMatch[1], 10);
+      // Wait for user to type at least a 4-digit valid year (e.g., >= 2000)
+      if (year < 2000) {
+        // We can either return early to ignore invalid years entirely while typing
+        // or just let it be if we want the user to fix it, but ignoring prevents 0002.
+        return;
+      }
+    }
+    
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
       onStageChange(index, field, date);

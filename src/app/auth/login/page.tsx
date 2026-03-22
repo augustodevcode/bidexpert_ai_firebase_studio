@@ -190,6 +190,7 @@ function LoginPageContent() {
     }, [tenantOptions, form, selectedTenantId, lockedTenantId]);
 
     const handleLogin = async (values: LoginFormValues) => {
+        console.log("FRONTEND: handleLogin triggered!", values);
         setIsLoading(true);
         setError(null);
 
@@ -298,7 +299,7 @@ function LoginPageContent() {
                 }} />
 
                 <Form {...form}>
-                    <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin)} className="form-auth">
+                    <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin, (err) => console.log('FORM ERRORS:', err))} className="form-auth">
                         <CardContent className="content-auth">
                             <FormField
                                 control={form.control}
