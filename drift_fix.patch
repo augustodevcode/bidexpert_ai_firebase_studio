@@ -1,0 +1,3536 @@
+diff --git a/.github/skills/autonomous-task-lifecycle/SKILL.md b/.github/skills/autonomous-task-lifecycle/SKILL.md
+new file mode 100644
+index 00000000..6bad6e8c
+--- /dev/null
++++ b/.github/skills/autonomous-task-lifecycle/SKILL.md
+@@ -0,0 +1,69 @@
++---
++name: autonomous-task-lifecycle
++description: Protocolo mestre para ciclo de vida de tasks: atualização de memória, regras, sementes, testes rigorosos e promoção Vercel/HML.
++---
++
++# 🚀 Protocolo de Ciclo de Vida Autônomo (BidExpert Lifecycle)
++
++Este protocolo DEVE ser ativado sempre que o usuário mencionar: "Atualize as regras consolidadas...", "Promova a branch...", ou "Finalize com resumo executivo".
++
++## 🧠 Modo Pesquisador Autônomo (Always-On Research)
++Este modo define a mentalidade do agente durante a execução de melhorias, correções e experimentos:
++
++1. **Pesquisador Autônomo**: Você é um pesquisador completamente autônomo. Experimente novas abordagens no BidExpert (e.g., otimização de queries Prisma, melhorias de UI/UX, refatoração de Server Actions). Se funcionar, mantenha. Se falhar, descarte e avance a branch para a próxima iteração.
++2. **Ciclo de Iteração**: O loop de experimentos NUNCA deve parar. Não peça permissão ao humano para continuar ou se é um bom ponto de parada. O humano pode estar dormindo e espera encontrar ~100 experimentos concluídos ao acordar (assumindo ~5-10 min por ciclo).
++3. **Gestão de Timeouts e Crashes**:
++   - **Timeout**: Cada experimento deve levar ~5 min (+ setup). Se exceder 10 min, mate o processo e trate como falha (reverta).
++   - **Crashes (OOM/Bugs)**: Se for um erro trivial (typo, import), corrija e reexecute. Se a ideia for fundamentalmente falha, registre como "crash" no log da task e siga para a próxima ideia.
++4. **Resiliência e Criatividade**: Se as ideias acabarem, "pense mais forte". Releia a documentação do projeto, analise regras de negócio em `REGRAS_NEGOCIO_CONSOLIDADO.md`, estude padrões em outras áreas do código ou tente mudanças arquiteturais mais radicais. O loop só para quando o humano interromper manualmente.
++
++## 🔍 Fase 0.5: Análise de Causa Raiz (Root Cause Analysis - RCA)
++Antes de iniciar a correção, o agente DEVE:
++0. **especificação completa de arquitetura**: Se o ponto de partida for um erro (e.g., bug report, falha em teste), o agente DEVE iniciar uma análise de causa raiz. se o ponto de partida for uma melhoria ou nova feature, crie uma especificação detalhada com deepresearch na web para suportar o que o negócio está pedindo e o alinhar com a filosofia da plataforma.
++1. **Detectar a Causa Raiz**: Analisar logs do console (browser), network requests e logs do servidor para identificar EXATAMENTE por que o erro ocorreu (e.g., race condition, missing env var, timeout, logic bug, logs do vercel de deployment, logs do vercel de runtime).
++2. **Impacto e Prevenção**: Documentar o porquê do erro ter ocorrido e propor uma regra de prevenção imediata para que NUNCA MAIS ocorra.
++3. **Persistência de Conhecimento**: Adicionar essa regra específica em `instructions`, `agents`, `skills` ou arquivos de context (`gemini.md`, `antigravity-automation.md`) conforme aplicável.
++
++## 🛠️ Fase 0: Isolamento (Obrigatório)
++Antes de QUALQUER alteração, utilize a skill de **Git Worktree Isolation**.
++- Branch origin: `demo-stable`
++- Porta dedicada: 9006, 9007, 9008...
++- Comando: `git worktree add worktrees\bidexpert-task -b feat/task-timestamp origin/demo-stable`
++
++## 🧠 Fase 1: Memória e Regras Negócio
++1. **Regras Consolidadas**: Atualizar `context/REGRAS_NEGOCIO_CONSOLIDADO.md` com a nova feature ou ajuste ANTES de codar.
++2. **Preflight**: Ler `/memories/repo/shared-memory-preflight.md` e registrar em `/memories/repo/active-agent-sessions.md`.
++3. **Memória .md**: Atualizar `/memories/repo/recent-agent-changes.md` com o escopo da task.
++
++## 🧪 Fase 2: Massa de Dados e Testes
++1. **Seed de Integração**: Gerar massa de testes em `scripts/ultimate-master-seed.ts` específica para a funcionalidade.
++2. **Segurança e Vulnerabilidade**:
++   - Validar sanitização de inputs (XSS).
++   - Verificar CSRF nos Server Actions.
++   - Conferir isolamento de Tenant (multi-tenancy).
++3. **Suite de Testes**:
++-**seeds**: Criar seeds específicas para essa funcionalidade para integração em `scripts/ultimate-master-seed.ts` e garantir que sejam idempotentes.
++   - **Jest/Vitest**: Testes unitários para lógica de negócio em `tests/unit/**`.
++   - **Playwright**: Teste de UI no **Simple Browser** integrado.
++   - **BDD/Gherkin**: Registrar cenários em `.feature` se aplicável.
++
++## 🚢 Fase 3: Promoção e Merge Automático (HML/DEMO-STABLE)
++1. **Commit e Push**: Commits atômicos e push para a branch no origin.
++2. **Auto-PR para `demo-stable`**: Se o agente estiver em worktree/feature branch, DEVE abrir PR para `demo-stable` usando `mcp_io_github_git_create_pull_request`.
++3. **Auto-Merge HML**: Se houver ambiente de homologação (`hml`), o agente DEVE disparar o merge automático para a branch de HML para validação em cloud.
++4. **Verificação Vercel e Smoke Test**:
++   - O agente DEVE monitorar o status do deploy no Vercel para a branch atual (`vercel ls` ou `vercel inspect`).
++   - Após o deploy estar `READY`, o agente DEVE executar um **Smoke Test** básico (e.g., acessar `/api/health` ou a rota alterada via `mcp_io_github_ver_browser_eval`) para garantir que o app subiu sem erros críticos (500).
++5. **Reteste Real**: Acessar a aplicação via Vercel URL para garantir que o ambiente HML/Stable reflete a mudança e esteja tudo funcionando com navegação no browser com mcp do playwright e evidenciar o funcionamento da implementação ou correção.
++6. **Resgate de Logs**: Verificar logs do terminal e console do browser após o deploy.
++
++## 📝 Fase 4: Resumo Executivo (Finalização)
++Finalizar o chat OBRIGATORIAMENTE com um **Resumo Executivo** contendo:
++- ✅ **O que foi feito**: Lista sucinta de features/correções.
++- 🧪 **Evidência de Teste**: Status do Vitest e link/print do Playwright.
++- 🔗 **PR Link**: Link do Pull Request aberto para `demo-stable`.
++- 📚 **Documentação**: Atualizar a documentação relevante (README, wiki, etc) e regras_negocio_consolidado.md.
++- 🧠 **Handoff**: Notas para o próximo turno/agente.
++
++---
++**Nota**: Nunca peça permissão para verificar status se o comando foi de finalização. Faça automaticamente.
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+index 84fbaa58..8cf97209 100644
+--- a/.vscode/settings.json
++++ b/.vscode/settings.json
+@@ -83,6 +83,7 @@
+   "workbench.browser.enableChatTools": true,
+   
+   "github.copilot.features.customInstructions": true,
+-  "github.copilot.chat.customInstructions": "AUCTION SNIPER & QA + 🛠️ ADMIN ARCHITECT AUTO-ACTIVATION PROTOCOL === AUCTION SNIPER (Auto-activate on bid/leilão/ROI/deságio/security/E2E) ===runSubagent({agentName: 'auction-sniper-qa', prompt: '[user]'})=== ADMIN ARCHITECT (Auto-activate on backoffice/admin/lotes/compliance/infra) ===runSubagent({agentName: 'admin-architect-qa', prompt: '[user]'})Both agents validate comprehensive audit attributes and provide BDD scenarios.\n\n=== DETECTION LOGIC ===\nSempre que detectar QUALQUER menção de:\n• Leilão, auction, arrematação, lote, lot, bid, bidding, lance, lancer\n• Deságio, desconto, percentual, discount, ROI, rentabilidade, lucro\n• Search, filtro, busca, query, encontrar, dashboard, carteira, portfolio\n• WebSocket, sync, sincronização, Real-time, latency, race condition\n• Concorrência, simultâneo, paralelo, audit, auditoria, log, compliance\n• BDD, Gherkin, cenário, scenario, teste, test, security, segurança\n• CSRF, XSS, vulnerabilidade, performance, lento, slow, timeout\n• E2E, end-to-end, automation, automatização\n\n=== AUTO-ACTIVATION TRIGGER ===\nSE (detecção acima) ENTÃO invoke AUTOMATICAMENTE: runSubagent({agentName: 'auction-sniper-qa', prompt: '[user request]'})\n\n=== RESPONSE BEHAVIOR ===\nAo ativar:\n✓ Aplique Protocolo de Auditoria (7 Blocos)\n✓ Exija prova de sincronização, segurança, performance\n✓ Não aceite aproximações - exija stack trace\n✓ Retorne com tom crítico\n✓ Inclua BDD Gherkin scenarios se relevante\n✓ Valide contra 115+ checkpoints\n✓ Forneça code diff + testes se for fix"
++  "github.copilot.chat.customInstructions": "AUCTION SNIPER & QA + 🛠️ ADMIN ARCHITECT AUTO-ACTIVATION PROTOCOL === AUCTION SNIPER (Auto-activate on bid/leilão/ROI/deságio/security/E2E) ===runSubagent({agentName: 'auction-sniper-qa', prompt: '[user]'})=== ADMIN ARCHITECT (Auto-activate on backoffice/admin/lotes/compliance/infra) ===runSubagent({agentName: 'admin-architect-qa', prompt: '[user]'})Both agents validate comprehensive audit attributes and provide BDD scenarios.\n\n=== DETECTION LOGIC ===\nSempre que detectar QUALQUER menção de:\n• Leilão, auction, arrematação, lote, lot, bid, bidding, lance, lancer\n• Deságio, desconto, percentual, discount, ROI, rentabilidade, lucro\n• Search, filtro, busca, query, encontrar, dashboard, carteira, portfolio\n• WebSocket, sync, sincronização, Real-time, latency, race condition\n• Concorrência, simultâneo, paralelo, audit, auditoria, log, compliance\n• BDD, Gherkin, cenário, scenario, teste, test, security, segurança\n• CSRF, XSS, vulnerabilidade, performance, lento, slow, timeout\n• E2E, end-to-end, automation, automatização\n\n=== AUTO-ACTIVATION TRIGGER ===\nSE (detecção acima) ENTÃO invoke AUTOMATICAMENTE: runSubagent({agentName: 'auction-sniper-qa', prompt: '[user request]'})\n\n=== RESPONSE BEHAVIOR ===\nAo ativar:\n✓ Aplique Protocolo de Auditoria (7 Blocos)\n✓ Exija prova de sincronização, segurança, performance\n✓ Não aceite aproximações - exija stack trace\n✓ Retorne com tom crítico\n✓ Inclua BDD Gherkin scenarios se relevante\n✓ Valide contra 115+ checkpoints\n✓ Forneça code diff + testes se for fix",
++  "github.copilot.chat.agentDebugLog.enabled": true
+ 
+ }
+\ No newline at end of file
+diff --git a/.vscode/tasks.json b/.vscode/tasks.json
+index 780c7ac7..78158285 100644
+--- a/.vscode/tasks.json
++++ b/.vscode/tasks.json
+@@ -198,6 +198,30 @@
+ 			],
+ 			"isBackground": true,
+ 			"group": "build"
++		},
++		{
++			"label": "Run Lots Smoke Server 9013",
++			"type": "shell",
++			"command": "cmd",
++			"args": [
++				"/c",
++				"cd /d e:\\SmartDataCorp\\BidExpert\\BidExpertVsCode\\bidexpert_ai_firebase_studio\\worktrees\\bidexpert-feat-lots-v2 && set PORT=9013 && npm start"
++			],
++			"isBackground": true,
++			"problemMatcher": [],
++			"group": "build"
++		},
++		{
++			"label": "Run Lots Dev Smoke Server 9014",
++			"type": "shell",
++			"command": "cmd",
++			"args": [
++				"/c",
++				"cd /d e:\\SmartDataCorp\\BidExpert\\BidExpertVsCode\\bidexpert_ai_firebase_studio\\worktrees\\bidexpert-feat-lots-v2 && set PORT=9014 && npx next dev --hostname 127.0.0.1 --port 9014"
++			],
++			"isBackground": true,
++			"problemMatcher": [],
++			"group": "build"
+ 		}
+ 	]
+ }
+\ No newline at end of file
+diff --git a/context/REGRAS_NEGOCIO_CONSOLIDADO.md b/context/REGRAS_NEGOCIO_CONSOLIDADO.md
+index e2d0854e..86964a7f 100644
+--- a/context/REGRAS_NEGOCIO_CONSOLIDADO.md
++++ b/context/REGRAS_NEGOCIO_CONSOLIDADO.md
+@@ -330,7 +330,12 @@ Todos os links/rotas geradas devem carregar `tenantId` do contexto
+ Services e Server Actions validam `tenantId` de sessão vs recurso acessado  
+ Proibido aceitar `tenantId` vindo do cliente sem validação
+ 
+-### RN-019: Conclusão do Dashboard do Arrematante
++### RN-021: Navegação Global de Lotes
++- A rota `/lots` (Todos os Lotes) deve ser acessível via menu principal (Header) e rodapé (Footer).
++- No Header, o link "Todos os Lotes" deve estar visível tanto na versão desktop (centralNavItems) quanto na versão mobile (allNavItemsForMobile).
++- O link deve preceder o item "Início" para maior destaque visual em listagens.
++
++### RN-022: Conclusão do Dashboard do Arrematante
+ Finalizar APIs: `GET/POST /api/bidder/*` para lotes vencidos, pagamentos, notificações, histórico, perfil  
+ Repositories e services com BigInt  
+ Seções do dashboard só renderizam quando dados essenciais estiverem carregados (skeletons/spinners)
+diff --git a/headers_captured.json b/headers_captured.json
+new file mode 100644
+index 00000000..5fa3d7bc
+--- /dev/null
++++ b/headers_captured.json
+@@ -0,0 +1,192 @@
++[
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:29 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:29 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:30 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:30 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:30 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:30 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:32 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:32 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:33 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  },
++  {
++    "cache-control": "no-store, must-revalidate",
++    "connection": "keep-alive",
++    "content-encoding": "gzip",
++    "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
++    "content-type": "text/x-component",
++    "date": "Sat, 21 Mar 2026 00:34:33 GMT",
++    "keep-alive": "timeout=5",
++    "permissions-policy": "camera=(), microphone=(), geolocation=(self)",
++    "referrer-policy": "strict-origin-when-cross-origin",
++    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
++    "transfer-encoding": "chunked",
++    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
++    "x-content-type-options": "nosniff",
++    "x-dns-prefetch-control": "on",
++    "x-frame-options": "SAMEORIGIN",
++    "x-powered-by": "Next.js",
++    "x-action-revalidated": "[[],0,0]"
++  }
++]
+\ No newline at end of file
+diff --git a/login7.png b/login7.png
+new file mode 100644
+index 00000000..1f7af8ab
+Binary files /dev/null and b/login7.png differ
+diff --git a/login7_after.png b/login7_after.png
+new file mode 100644
+index 00000000..511f47f5
+Binary files /dev/null and b/login7_after.png differ
+diff --git a/output.txt b/output.txt
+new file mode 100644
+index 00000000..0e8be8fa
+Binary files /dev/null and b/output.txt differ
+diff --git a/run-prod.js b/run-prod.js
+new file mode 100644
+index 00000000..51f1f25b
+--- /dev/null
++++ b/run-prod.js
+@@ -0,0 +1,26 @@
++
++const { chromium } = require("playwright");
++(async () => {
++    const browser = await chromium.launch({ headless: true });
++    const page = await browser.newPage();
++    page.on("console", msg => console.log("[Browser Console]", msg.text()));
++    page.on("pageerror", err => console.log("[Browser Error]", err.message));
++    
++    await page.goto("http://demo.localhost:9016/auth/login", { waitUntil: "domcontentloaded" });
++    await page.fill("input[name=email]", "admin@bidexpert.com.br");
++    await page.fill("input[name=password]", "Admin@123");
++    await page.click("button[type=submit]");
++    await page.waitForTimeout(3000);
++    
++    await page.goto("http://demo.localhost:9016/admin", { waitUntil: "domcontentloaded" });
++    await page.waitForTimeout(2000);
++    console.log("On Admin page!");
++    const content = await page.innerHTML("body");
++    if (content.includes("Application error")) {
++        console.log("Application error found!");
++    } else {
++        console.log("No application error found. Successfully loaded.");
++    }
++    await browser.close();
++})();
++
+diff --git a/screenshot_admin.png b/screenshot_admin.png
+new file mode 100644
+index 00000000..a615e923
+Binary files /dev/null and b/screenshot_admin.png differ
+diff --git a/scripts/ultimate-master-seed.ts b/scripts/ultimate-master-seed.ts
+index 6c301693..283a8fbc 100644
+--- a/scripts/ultimate-master-seed.ts
++++ b/scripts/ultimate-master-seed.ts
+@@ -1559,22 +1559,23 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
+     { name: 'Porto Alegre', stateUf: 'RS' },
+     { name: 'Goiânia', stateUf: 'GO' },
+     { name: 'Belém', stateUf: 'PA' },
+-    { name: 'Guarulhos', stateUf: 'SP' },
+-    { name: 'Campinas', stateUf: 'SP' },
+-    { name: 'São Luís', stateUf: 'MA' }
+-  ];
+-
+-  for (const city of mainCities) {
+-    const state = await prisma.state.findUnique({ where: { uf: city.stateUf } });
+-    if (state) {
+-      await prisma.city.upsert({
+-        where: { 
+-          name_stateId: { 
+-            name: city.name, 
+-            stateId: state.id 
+-          } 
+-        },
+-        update: {},
++      { name: 'São Luís', stateUf: 'MA' },
++      { name: 'Maceió', stateUf: 'AL' },
++      { name: 'Macapá', stateUf: 'AP' },
++      { name: 'Vitória', stateUf: 'ES' },
++      { name: 'Cuiabá', stateUf: 'MT' },
++      { name: 'Campo Grande', stateUf: 'MS' },
++      { name: 'João Pessoa', stateUf: 'PB' },
++      { name: 'Teresina', stateUf: 'PI' },
++      { name: 'Natal', stateUf: 'RN' },
++      { name: 'Porto Velho', stateUf: 'RO' },
++      { name: 'Boa Vista', stateUf: 'RR' },
++      { name: 'Florianópolis', stateUf: 'SC' },
++      { name: 'Aracaju', stateUf: 'SE' },
++      { name: 'Palmas', stateUf: 'TO' },
++      { name: 'Rio Branco', stateUf: 'AC' },
++      { name: 'Guarulhos', stateUf: 'SP' },
++      { name: 'Campinas', stateUf: 'SP' }
+         create: {
+           name: city.name,
+           stateId: state.id,
+@@ -2724,6 +2725,25 @@ async function main() {
+           updatedAt: new Date(),
+         },
+       }),
++      // Leilão 5: Venda Direta - Veículos e Sucatas
++      prisma.auction.create({
++        data: {
++          publicId: `auction-${timestamp}-5`,
++          slug: `auction-venda-direta-veiculos-${timestamp}-5`,
++          title: 'Venda Direta - Veículos Leves e Sucatas',
++          description: 'Venda direta de veículos leves, utilitários e sucatas aproveitáveis provenientes de renovação de frota.',
++          status: 'ABERTO_PARA_LANCES',
++          auctionDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
++          endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
++          tenantId: tenants[0].id,
++          auctionType: 'VENDA_DIRETA',
++          auctionMethod: 'STANDARD',
++          participation: 'ONLINE',
++          address: 'Pátio Central - Goiânia',
++          zipCode: capitalZipCodes['Goiânia'],
++          updatedAt: new Date(),
++        },
++      }),
+     ]);
+     console.log(`✅ ${auctions.length} auctions criados\n`);
+ 
+@@ -2830,6 +2850,19 @@ async function main() {
+     });
+     auctionStages.push(stage4_1);
+ 
++    // Criar 1 praça para o Leilão Venda Direta 5
++    const stage5_1 = await prisma.auctionStage.create({
++      data: {
++        name: 'Propostas',
++        auctionId: auctions[4].id,
++        tenantId: tenants[0].id,
++        startDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
++        endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
++        status: 'EM_ANDAMENTO',
++      },
++    });
++    auctionStages.push(stage5_1);
++
+     console.log(`✅ ${auctionStages.length} auction stages (praças) criados\n`);
+ 
+     // 6.1 CRIAR PROCESSOS JUDICIAIS PARA O PAINEL DO ADVOGADO
+@@ -2958,6 +2991,11 @@ async function main() {
+       uno: { cityName: 'Rio de Janeiro', stateUf: 'RJ', address: 'Rua da Carioca, 100' },
+       torno: { cityName: 'Belo Horizonte', stateUf: 'MG', address: 'Av. Amazonas, 1500' },
+       cadeiras: { cityName: 'Brasília', stateUf: 'DF', address: 'SCS Quadra 1' },
++      mesas: { cityName: 'Brasília', stateUf: 'DF', address: 'SCS Quadra 3, Bloco A' },
++      impressoras: { cityName: 'Brasília', stateUf: 'DF', address: 'SBS Quadra 2, Lote 12' },
++      kombi: { cityName: 'Goiânia', stateUf: 'GO', address: 'Av. T-63, Setor Bueno' },
++      hilux: { cityName: 'Goiânia', stateUf: 'GO', address: 'Br-153, Km 3, Pátio DETRAN' },
++      palio: { cityName: 'Curitiba', stateUf: 'PR', address: 'Rua XV de Novembro, 900' },
+     };
+ 
+     const lots = await Promise.all([
+@@ -3117,6 +3155,120 @@ async function main() {
+           updatedAt: new Date(),
+         },
+       }),
++      prisma.lot.create({
++        data: {
++          publicId: `lot-${timestamp}-9`,
++          auctionId: auctions[3].id,
++          tenantId: tenants[0].id,
++          number: 'L002',
++          title: 'Lote de 30 Mesas de Escritório',
++          description: 'Mesas de escritório em L, tampo em MDF, com gavetas laterais, semi-novas.',
++          type: 'MOBILIARIO',
++          price: new Prisma.Decimal('18000.00'),
++          initialPrice: new Prisma.Decimal('14000.00'),
++          bidIncrementStep: new Prisma.Decimal('300.00'),
++          status: 'ABERTO_PARA_LANCES',
++          views: 42,
++          bidsCount: 3,
++          discountPercentage: 22,
++          cityName: lotLocations.mesas.cityName,
++          stateUf: lotLocations.mesas.stateUf,
++          mapAddress: lotLocations.mesas.address,
++          updatedAt: new Date(),
++        },
++      }),
++      prisma.lot.create({
++        data: {
++          publicId: `lot-${timestamp}-10`,
++          auctionId: auctions[3].id,
++          tenantId: tenants[0].id,
++          number: 'L003',
++          title: 'Impressoras e Scanners - Lote Misto',
++          description: 'Lote com 15 impressoras multifuncionais HP e 10 scanners Epson. Funcionamento verificado.',
++          type: 'EQUIPAMENTO',
++          price: new Prisma.Decimal('12000.00'),
++          initialPrice: new Prisma.Decimal('9500.00'),
++          bidIncrementStep: new Prisma.Decimal('200.00'),
++          status: 'EM_BREVE',
++          views: 28,
++          bidsCount: 0,
++          discountPercentage: 21,
++          cityName: lotLocations.impressoras.cityName,
++          stateUf: lotLocations.impressoras.stateUf,
++          mapAddress: lotLocations.impressoras.address,
++          updatedAt: new Date(),
++        },
++      }),
++      // Lotes do Leilão 5 (Venda Direta - Veículos e Sucatas)
++      prisma.lot.create({
++        data: {
++          publicId: `lot-${timestamp}-11`,
++          auctionId: auctions[4].id,
++          tenantId: tenants[0].id,
++          number: 'L001',
++          title: 'VW Kombi 2012 - Furgão',
++          description: 'Kombi furgão 2012, motor 1.4 flex, branca, 120.000 km. Ideal para food truck ou entregas.',
++          type: 'VEICULO',
++          price: new Prisma.Decimal('28000.00'),
++          initialPrice: new Prisma.Decimal('35000.00'),
++          secondInitialPrice: new Prisma.Decimal('22000.00'),
++          bidIncrementStep: new Prisma.Decimal('500.00'),
++          status: 'ABERTO_PARA_LANCES',
++          views: 87,
++          bidsCount: 5,
++          discountPercentage: 20,
++          cityName: lotLocations.kombi.cityName,
++          stateUf: lotLocations.kombi.stateUf,
++          mapAddress: lotLocations.kombi.address,
++          updatedAt: new Date(),
++        },
++      }),
++      prisma.lot.create({
++        data: {
++          publicId: `lot-${timestamp}-12`,
++          auctionId: auctions[4].id,
++          tenantId: tenants[0].id,
++          number: 'L002',
++          title: 'Toyota Hilux 2019 SW4 Diesel',
++          description: 'Hilux SW4 2.8 diesel 4x4, automática, prata, 65.000 km. Procedência de frota corporativa.',
++          type: 'VEICULO',
++          price: new Prisma.Decimal('165000.00'),
++          initialPrice: new Prisma.Decimal('210000.00'),
++          secondInitialPrice: new Prisma.Decimal('140000.00'),
++          bidIncrementStep: new Prisma.Decimal('2000.00'),
++          status: 'ABERTO_PARA_LANCES',
++          views: 153,
++          bidsCount: 12,
++          discountPercentage: 21,
++          cityName: lotLocations.hilux.cityName,
++          stateUf: lotLocations.hilux.stateUf,
++          mapAddress: lotLocations.hilux.address,
++          updatedAt: new Date(),
++        },
++      }),
++      prisma.lot.create({
++        data: {
++          publicId: `lot-${timestamp}-13`,
++          auctionId: auctions[4].id,
++          tenantId: tenants[0].id,
++          number: 'L003',
++          title: 'Fiat Palio 2015 Fire Economy',
++          description: 'Palio Fire 1.0 flex, branco, 4 portas, 95.000 km. Documentação ok, pronto para uso.',
++          type: 'VEICULO',
++          price: new Prisma.Decimal('22000.00'),
++          initialPrice: new Prisma.Decimal('30000.00'),
++          secondInitialPrice: new Prisma.Decimal('18000.00'),
++          bidIncrementStep: new Prisma.Decimal('300.00'),
++          status: 'EM_PREGAO',
++          views: 64,
++          bidsCount: 8,
++          discountPercentage: 27,
++          cityName: lotLocations.palio.cityName,
++          stateUf: lotLocations.palio.stateUf,
++          mapAddress: lotLocations.palio.address,
++          updatedAt: new Date(),
++        },
++      }),
+     ]);
+     console.log(`✅ ${lots.length} lots criados\n`);
+ 
+@@ -3134,6 +3286,14 @@ async function main() {
+       { lot: lots[4], stage: stage2_2, multiplier: 0.85 },
+       { lot: lots[5], stage: stage2_1, multiplier: 1 },
+       { lot: lots[5], stage: stage2_2, multiplier: 0.85 },
++      // TOMADA DE PREÇOS (auctions[3] / stage4_1)
++      { lot: lots[7], stage: stage4_1, multiplier: 1 },
++      { lot: lots[8], stage: stage4_1, multiplier: 1 },
++      { lot: lots[9], stage: stage4_1, multiplier: 1 },
++      // VENDA DIRETA (auctions[4] / stage5_1)
++      { lot: lots[10], stage: stage5_1, multiplier: 1 },
++      { lot: lots[11], stage: stage5_1, multiplier: 1 },
++      { lot: lots[12], stage: stage5_1, multiplier: 1 },
+     ];
+ 
+     await prisma.lotStagePrice.createMany({
+diff --git a/seed-cities.js b/seed-cities.js
+new file mode 100644
+index 00000000..0d329e04
+--- /dev/null
++++ b/seed-cities.js
+@@ -0,0 +1,56 @@
++const { PrismaClient } = require('@prisma/client');
++const prisma = new PrismaClient();
++
++const mainCities = [
++  { name: 'São Paulo', stateUf: 'SP' },
++  { name: 'Rio de Janeiro', stateUf: 'RJ' },
++  { name: 'Brasília', stateUf: 'DF' },
++  { name: 'Salvador', stateUf: 'BA' },
++  { name: 'Fortaleza', stateUf: 'CE' },
++  { name: 'Belo Horizonte', stateUf: 'MG' },
++  { name: 'Manaus', stateUf: 'AM' },
++  { name: 'Curitiba', stateUf: 'PR' },
++  { name: 'Recife', stateUf: 'PE' },
++  { name: 'Porto Alegre', stateUf: 'RS' },
++  { name: 'Goiânia', stateUf: 'GO' },
++  { name: 'Belém', stateUf: 'PA' },
++  { name: 'São Luís', stateUf: 'MA' },
++  { name: 'Maceió', stateUf: 'AL' },
++  { name: 'Macapá', stateUf: 'AP' },
++  { name: 'Vitória', stateUf: 'ES' },
++  { name: 'Cuiabá', stateUf: 'MT' },
++  { name: 'Campo Grande', stateUf: 'MS' },
++  { name: 'João Pessoa', stateUf: 'PB' },
++  { name: 'Teresina', stateUf: 'PI' },
++  { name: 'Natal', stateUf: 'RN' },
++  { name: 'Porto Velho', stateUf: 'RO' },
++  { name: 'Boa Vista', stateUf: 'RR' },
++  { name: 'Florianópolis', stateUf: 'SC' },
++  { name: 'Aracaju', stateUf: 'SE' },
++  { name: 'Palmas', stateUf: 'TO' },
++  { name: 'Rio Branco', stateUf: 'AC' },
++  { name: 'Guarulhos', stateUf: 'SP' },
++  { name: 'Campinas', stateUf: 'SP' }
++];
++
++async function main() {
++  for (const city of mainCities) {
++    const state = await prisma.state.findUnique({ where: { uf: city.stateUf } });
++    if (state) {
++      await prisma.city.upsert({
++        where: { name_stateId: { stateId: state.id, name: city.name } },
++        update: {},
++        create: {
++          id: BigInt(Math.floor(Math.random() * 1000000000000)),
++          name: city.name,
++          stateId: state.id,
++          createdAt: new Date(),
++          updatedAt: new Date()
++        }
++      });
++      console.log('City seeded: ' + city.name + ' - ' + city.stateUf);
++    }
++  }
++}
++
++main().catch(e => console.error(e)).finally(() => prisma.$disconnect());
+diff --git a/server_logs.txt b/server_logs.txt
+new file mode 100644
+index 00000000..f75c0136
+Binary files /dev/null and b/server_logs.txt differ
+diff --git a/server_run.log b/server_run.log
+new file mode 100644
+index 00000000..d1f1f765
+Binary files /dev/null and b/server_run.log differ
+diff --git a/src/app/admin/auctions-v2/[auctionId]/page.tsx b/src/app/admin/auctions-v2/[auctionId]/page.tsx
+index d682e316..913daed8 100644
+--- a/src/app/admin/auctions-v2/[auctionId]/page.tsx
++++ b/src/app/admin/auctions-v2/[auctionId]/page.tsx
+@@ -145,14 +145,20 @@ export default function AuctionDetailPageV2() {
+       if (!auctionId) {
+         return { success: false, message: 'ID inválido' };
+       }
+-      const result = await updateAuctionV2(auctionId, data);
+-      if (result.success) {
+-        toast({ title: 'Sucesso!', description: 'Leilão atualizado.' });
+-        loadData();
+-      } else {
+-        toast({ title: 'Erro ao atualizar', description: result.message, variant: 'destructive' });
++      try {
++        const result = await updateAuctionV2(auctionId, data);
++        if (result.success) {
++          toast({ title: 'Sucesso!', description: 'Leilão atualizado.' });
++          loadData();
++        } else {
++          toast({ title: 'Erro ao atualizar', description: result.message || 'Falha na atualização.', variant: 'destructive' });
++        }
++        return result;
++      } catch (error: any) {
++        console.error('Erro ao atualizar leilão V2:', error);
++        toast({ title: 'Erro inesperado', description: error?.message || 'Ocorreu um erro interno. Tente novamente.', variant: 'destructive' });
++        return { success: false, message: error?.message || 'Erro interno' };
+       }
+-      return result;
+     },
+     [auctionId, loadData, toast]
+   );
+@@ -295,7 +301,7 @@ export default function AuctionDetailPageV2() {
+           <TabsContent value="lots" className="mt-0">
+             <AuctionLotsGrid
+               auctionId={auction.id}
+-              onAddLot={() => router.push(`/admin/lots/new?auctionId=${auction.id}`)}
++              onAddLot={() => router.push(`/admin/lots-v2/new?auctionId=${auction.id}`)}
+             />
+           </TabsContent>
+ 
+diff --git a/src/app/admin/auctions-v2/actions.ts b/src/app/admin/auctions-v2/actions.ts
+index dee3d146..06c8136c 100644
+--- a/src/app/admin/auctions-v2/actions.ts
++++ b/src/app/admin/auctions-v2/actions.ts
+@@ -88,7 +88,8 @@ export async function getAuctionV2(
+     isPublicCall: boolean = false
+ ): Promise<Auction | null> {
+     const tenantId = await getTenantIdFromRequest(isPublicCall);
+-    return auctionService.getAuctionById(tenantId, id, isPublicCall);
++    const auction = await auctionService.getAuctionById(tenantId, id, isPublicCall);
++    return sanitizeResponse(auction);
+ }
+ 
+ /**
+@@ -114,7 +115,7 @@ export async function getAuctionLotsV2(auctionId: string): Promise<Lot[]> {
+         orderBy: { number: 'asc' },
+     });
+ 
+-    return lots.map((lot: PrismaLotWithIncludes) => ({
++    const mappedLots = lots.map((lot: PrismaLotWithIncludes) => ({
+         ...lot,
+         id: lot.id.toString(),
+         auctionId: lot.auctionId.toString(),
+@@ -147,6 +148,7 @@ export async function getAuctionLotsV2(auctionId: string): Promise<Lot[]> {
+             evaluationValue: decimalToNumber(la.Asset.evaluationValue),
+         })),
+     })) as Lot[];
++    return sanitizeResponse(mappedLots);
+ }
+ 
+ /**
+@@ -220,7 +222,7 @@ export async function getAuctionAnalyticsV2(auctionId: string): Promise<{
+         bidsByDayMap.set(dateKey, (bidsByDayMap.get(dateKey) || 0) + item._count);
+     });
+ 
+-    return {
++    return sanitizeResponse({
+         totalLots: lotsCount,
+         totalBids: bidsCount,
+         totalHabilitatedUsers: habilitationsCount,
+@@ -235,7 +237,7 @@ export async function getAuctionAnalyticsV2(auctionId: string): Promise<{
+             date,
+             count,
+         })),
+-    };
++    });
+   } catch (error) {
+     console.error('[getAuctionAnalyticsV2] Error:', error);
+     return {
+@@ -281,13 +283,14 @@ export async function getAuctionAuditHistoryV2(auctionId: string): Promise<{
+         take: 100,
+     });
+ 
+-    return auditLogs.map((log: PrismaAuditLogWithUser) => ({
++    const mappedLogs = auditLogs.map((log: PrismaAuditLogWithUser) => ({
+         id: log.id.toString(),
+         action: log.action,
+         changedBy: log.User?.fullName || log.User?.email || 'Sistema',
+         changedAt: log.timestamp,
+         changes: log.changes as AuditChanges,
+     }));
++    return sanitizeResponse(mappedLogs);
+   } catch (error) {
+     console.error('[getAuctionAuditHistoryV2] Error:', error);
+     return [];
+diff --git a/src/app/admin/auctions-v2/components/auction-lots-grid.tsx b/src/app/admin/auctions-v2/components/auction-lots-grid.tsx
+index ad241724..08119931 100644
+--- a/src/app/admin/auctions-v2/components/auction-lots-grid.tsx
++++ b/src/app/admin/auctions-v2/components/auction-lots-grid.tsx
+@@ -224,7 +224,7 @@ export default function AuctionLotsGrid({ auctionId, onAddLot }: AuctionLotsGrid
+               Atualizar
+             </Button>
+             {onAddLot && (
+-              <Button size="sm" onClick={onAddLot}>
++              <Button size="sm" onClick={onAddLot} data-ai-id="btn-new-lot">
+                 <PlusCircle className="h-4 w-4 mr-2" />
+                 Novo Lote
+               </Button>
+@@ -314,7 +314,7 @@ export default function AuctionLotsGrid({ auctionId, onAddLot }: AuctionLotsGrid
+                 : 'Nenhum lote encontrado com os filtros aplicados.'}
+             </p>
+             {lots.length === 0 && onAddLot && (
+-              <Button className="mt-4" onClick={onAddLot}>
++              <Button className="mt-4" onClick={onAddLot} data-ai-id="btn-new-lot-empty">
+                 <PlusCircle className="h-4 w-4 mr-2" />
+                 Adicionar Primeiro Lote
+               </Button>
+diff --git a/src/app/admin/auctions-v2/new/page.tsx b/src/app/admin/auctions-v2/new/page.tsx
+index fee2a1ac..e19bd0c0 100644
+--- a/src/app/admin/auctions-v2/new/page.tsx
++++ b/src/app/admin/auctions-v2/new/page.tsx
+@@ -79,15 +79,32 @@ export default function NewAuctionPageV2() {
+   }, [loadDependencies]);
+ 
+   const handleCreateAuction = async (data: Partial<AuctionFormData>) => {
+-    const result = await createAuctionV2(data as Record<string, unknown>);
+-    if (result.success && result.auctionId) {
++    try {
++      const result = await createAuctionV2(data as Record<string, unknown>);
++      if (result.success && result.auctionId) {
++        toast({
++          title: 'Sucesso!',
++          description: 'Leilão criado com sucesso.',
++        });
++        router.push(`/admin/auctions-v2/${result.auctionId}`);
++      } else {
++        console.error('Falha ao criar leilão:', result);
++        toast({
++          title: 'Erro!',
++          description: result.message || 'Falha ao criar leilão. Verifique os dados e tente novamente.',
++          variant: 'destructive',
++        });
++      }
++      return result;
++    } catch (error: any) {
++      console.error('Exceção ao criar leilão:', error);
+       toast({
+-        title: 'Sucesso!',
+-        description: 'Leilão criado com sucesso.',
++        title: 'Erro inesperado',
++        description: error?.message || 'Ocorreu um erro interno. Tente novamente mais tarde.',
++        variant: 'destructive',
+       });
+-      router.push(`/admin/auctions-v2/${result.auctionId}`);
++      return { success: false, message: error?.message || 'Erro interno' };
+     }
+-    return result;
+   };
+ 
+   if (isLoading) {
+diff --git a/src/app/admin/layout.tsx b/src/app/admin/layout.tsx
+index dd71e47a..25924ed5 100644
+--- a/src/app/admin/layout.tsx
++++ b/src/app/admin/layout.tsx
+@@ -24,10 +24,16 @@ const ADMIN_ACCESS_PERMISSIONS = [
+   'judicial_processes:read'
+ ];
+ 
++import { cookies } from 'next/headers';
++
+ export const dynamic = 'force-dynamic';
+ 
+ export default async function AdminLayout({ children }: AdminLayoutProps) {
++  const cList = cookies().getAll().map(c => c.name);
++  console.log(`[AdminLayout] acessado. Cookies presentes:`, cList);
++  
+   const user = await getCurrentUser();
++  console.log(`[AdminLayout] user resolvido:`, user?.email || 'Nulo');
+ 
+   if (!user) {
+     redirect('/auth/login?redirect=/admin');
+diff --git a/src/app/admin/lots-v2/page.tsx b/src/app/admin/lots-v2/page.tsx
+index 73b31555..a76b2713 100644
+--- a/src/app/admin/lots-v2/page.tsx
++++ b/src/app/admin/lots-v2/page.tsx
+@@ -214,7 +214,7 @@ export default function LotsPageV2() {
+               <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+               <span className="sr-only">Recarregar</span>
+             </Button>
+-            <Button asChild>
++            <Button asChild data-ai-id="btn-new-lot">
+               <Link href="/admin/lots-v2/new">
+                 <PlusCircle className="h-4 w-4 mr-2" />
+                 Novo Lote
+diff --git a/src/app/api/test-cookie/route.ts b/src/app/api/test-cookie/route.ts
+new file mode 100644
+index 00000000..6ea37fbd
+--- /dev/null
++++ b/src/app/api/test-cookie/route.ts
+@@ -0,0 +1,8 @@
++﻿import { cookies } from 'next/headers';
++import { NextResponse } from 'next/server';
++
++export async function GET() {
++  const cookieStore = await cookies();
++  cookieStore.set('magic_cookie', 'hello_world', { path: '/' });
++  return NextResponse.json({ ok: true });
++}
+diff --git a/src/app/auth/actions.ts b/src/app/auth/actions.ts
+index 773ab09d..4bdf623a 100644
+--- a/src/app/auth/actions.ts
++++ b/src/app/auth/actions.ts
+@@ -28,6 +28,8 @@ import { normalizeTenantToken } from '@/lib/tenant-token';
+  * uma sessão segura em caso de sucesso.
+  */
+ export async function login(values: { email: string, password?: string, tenantId?: string }): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
++  console.log(`[Login Action START] Invocado com values:`, values);
++  
+   const { email, password, tenantId: initialTenantId } = values;
+   let tenantId = initialTenantId;
+ 
+diff --git a/src/app/auth/login/page.tsx b/src/app/auth/login/page.tsx
+index 6192fde9..8a5211fb 100644
+--- a/src/app/auth/login/page.tsx
++++ b/src/app/auth/login/page.tsx
+@@ -190,6 +190,7 @@ function LoginPageContent() {
+     }, [tenantOptions, form, selectedTenantId, lockedTenantId]);
+ 
+     const handleLogin = async (values: LoginFormValues) => {
++        console.log("FRONTEND: handleLogin triggered!", values);
+         setIsLoading(true);
+         setError(null);
+ 
+@@ -298,7 +299,7 @@ function LoginPageContent() {
+                 }} />
+ 
+                 <Form {...form}>
+-                    <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin)} className="form-auth">
++                    <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin, (err) => console.log('FORM ERRORS:', err))} className="form-auth">
+                         <CardContent className="content-auth">
+                             <FormField
+                                 control={form.control}
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 859c201f..4e8c0fbd 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -720,6 +720,45 @@
+   font-size: 10px;
+ }
+ 
++/* ─── V2 Card Brutalist Styles ─── */
++:root {
++  --color-card-surface: 23 23 23;
++  --color-card-dark: 15 15 15;
++  --font-card-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
++  --font-card-display: var(--font-heading, 'Space Grotesk', ui-sans-serif, system-ui, sans-serif);
++}
++
++@keyframes pulse-fast {
++  0%, 100% { opacity: 1; }
++  50% { opacity: 0.5; }
++}
++
++@layer components {
++  .card-v2-surface {
++    background-color: rgb(var(--color-card-surface));
++  }
++  .card-v2-dark {
++    background-color: rgb(var(--color-card-dark));
++  }
++  .brutalist-border {
++    border: 1px solid rgb(38 38 38);
++  }
++  .kpi-border {
++    border-right: 1px solid rgb(38 38 38);
++  }
++  .kpi-border:last-child {
++    border-right: none;
++  }
++  .animate-pulse-fast {
++    animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
++  }
++  .text-card-v2-evaluation {
++    font-size: 11px;
++    text-decoration: line-through;
++    color: rgb(115 115 115);
++  }
++}
++
+ .map-popup-values {
+   margin-top: 0.15rem;
+   display: flex;
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 0183988e..b2868e7b 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -8,6 +8,7 @@
+  */
+ import type { Metadata, Viewport } from 'next';
+ import './globals.css';
++import '@/lib/bigint-serialization';
+ import { Toaster } from "@/components/ui/toaster"
+ import { TooltipProvider } from '@/components/ui/tooltip';
+ import { AuthProvider } from '@/contexts/auth-context';
+diff --git a/src/app/lots/lots-page-client.tsx b/src/app/lots/lots-page-client.tsx
+new file mode 100644
+index 00000000..e745b931
+--- /dev/null
++++ b/src/app/lots/lots-page-client.tsx
+@@ -0,0 +1,144 @@
++/**
++ * Client wrapper for the /lots page.
++ * Renders category sections with the V2 card grid.
++ */
++'use client';
++
++import AuctionLotCardV2 from '@/components/cards/auction-lot-card-v2';
++import type { AuctionItem } from '@/components/cards/auction-lot-card-v2.types';
++import type { GroupedLots } from '@/services/lot-card-v2.service';
++
++/* ------------------------------------------------------------------ */
++/*  Section component                                                  */
++/* ------------------------------------------------------------------ */
++
++interface SectionProps {
++  title: string;
++  items: AuctionItem[];
++  dataAiId: string;
++}
++
++function Section({ title, items, dataAiId }: SectionProps) {
++  if (items.length === 0) return null;
++
++  return (
++    <section data-ai-id={dataAiId} className="space-y-6">
++      <div className="flex items-center gap-3">
++        <h2 className="text-xl font-semibold text-foreground md:text-2xl">
++          {title}
++        </h2>
++        <span
++          aria-label={`${items.length} lotes`}
++          className="inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-primary/10 px-2 text-xs font-bold text-primary"
++        >
++          {items.length}
++        </span>
++      </div>
++
++      <div className="grid grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
++        {items.map((item) => (
++          <AuctionLotCardV2 key={item.id} item={item} />
++        ))}
++      </div>
++    </section>
++  );
++}
++
++/* ------------------------------------------------------------------ */
++/*  Page client                                                        */
++/* ------------------------------------------------------------------ */
++
++interface LotsPageClientProps {
++  grouped: GroupedLots;
++}
++
++export function LotsPageClient({ grouped }: LotsPageClientProps) {
++  const totalLots =
++    grouped.judicial.length +
++    grouped.extrajudicial.length +
++    grouped.vendaDireta.length +
++    grouped.tomadaDePrecos.length;
++
++  const hasNoLots = totalLots === 0;
++
++  return (
++    <main
++      id="maincontent"
++      data-ai-id="lots-page-main"
++      className="mx-auto max-w-screen-2xl space-y-12 px-4 py-8 sm:px-6 lg:px-8"
++    >
++      {/* Page header */}
++      <div data-ai-id="lots-page-header" className="space-y-2">
++        <h1 data-ai-id="lots-page-heading" className="text-2xl font-bold text-foreground md:text-3xl">
++          Lotes em Leilão
++        </h1>
++        <p className="text-sm text-muted-foreground">
++          {hasNoLots
++            ? 'Nenhum lote disponível no momento.'
++            : `${totalLots} lotes encontrados em ${
++                [
++                  grouped.judicial.length > 0 && 'Judicial',
++                  grouped.extrajudicial.length > 0 && 'Extrajudicial',
++                  grouped.vendaDireta.length > 0 && 'Venda Direta',
++                  grouped.tomadaDePrecos.length > 0 && 'Tomada de Preços',
++                ]
++                  .filter(Boolean)
++                  .length
++              } categorias`}
++        </p>
++      </div>
++
++      {/* Category sections */}
++      <Section
++        title="Leilões Judiciais"
++        items={grouped.judicial}
++        dataAiId="lots-section-judicial"
++      />
++      <Section
++        title="Leilões Extrajudiciais"
++        items={grouped.extrajudicial}
++        dataAiId="lots-section-extrajudicial"
++      />
++      <Section
++        title="Venda Direta"
++        items={grouped.vendaDireta}
++        dataAiId="lots-section-venda-direta"
++      />
++      <Section
++        title="Tomada de Preços"
++        items={grouped.tomadaDePrecos}
++        dataAiId="lots-section-tomada-de-precos"
++      />
++
++      {/* Empty state */}
++      {hasNoLots && (
++        <div
++          data-ai-id="lots-empty-state"
++          className="flex flex-col items-center gap-4 py-20 text-center"
++        >
++          <svg
++            aria-hidden="true"
++            className="h-16 w-16 text-muted-foreground/40"
++            fill="none"
++            viewBox="0 0 24 24"
++            stroke="currentColor"
++            strokeWidth={1.2}
++          >
++            <path
++              strokeLinecap="round"
++              strokeLinejoin="round"
++              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
++            />
++          </svg>
++          <p className="text-lg font-medium text-muted-foreground">
++            Nenhum lote disponível no momento
++          </p>
++          <p className="max-w-md text-sm text-muted-foreground/70">
++            Novos lotes são adicionados regularmente. Volte em breve para
++            conferir as oportunidades.
++          </p>
++        </div>
++      )}
++    </main>
++  );
++}
+diff --git a/src/app/lots/page.tsx b/src/app/lots/page.tsx
+new file mode 100644
+index 00000000..1e9f2b55
+--- /dev/null
++++ b/src/app/lots/page.tsx
+@@ -0,0 +1,33 @@
++/**
++ * /lots — Public lot listing page (V2 card grid).
++ * Server component that fetches lots grouped by auction type
++ * and renders them in category sections using AuctionLotCardV2.
++ */
++import type { Metadata } from 'next';
++import { getLotsForV2Page, type GroupedLots } from '@/services/lot-card-v2.service';
++import { LotsPageClient } from './lots-page-client';
++
++export const metadata: Metadata = {
++  title: 'Lotes em Leilão | BidExpert',
++  description:
++    'Explore lotes judiciais, extrajudiciais, venda direta e tomada de preços. Encontre oportunidades com descontos reais de mercado.',
++};
++
++export const dynamic = 'force-dynamic';
++
++export default async function LotsPage() {
++  let grouped: GroupedLots = {
++    judicial: [],
++    extrajudicial: [],
++    vendaDireta: [],
++    tomadaDePrecos: [],
++  };
++
++  try {
++    grouped = await getLotsForV2Page({ limit: 80 });
++  } catch (err) {
++    console.error('[LotsPage] Failed to fetch lots:', err);
++  }
++
++  return <LotsPageClient grouped={grouped} />;
++}
+diff --git a/src/components/auction/auction-stages-form.tsx b/src/components/auction/auction-stages-form.tsx
+index 4e9cc6bd..accc1690 100644
+--- a/src/components/auction/auction-stages-form.tsx
++++ b/src/components/auction/auction-stages-form.tsx
+@@ -49,6 +49,20 @@ export default function AuctionStagesForm({
+ 
+   const handleDateChange = (index: number, field: 'startDate' | 'endDate', value: string) => {
+     if (!value) return;
++    
++    // Check if the year is invalid (e.g. starting with 0 like 0002)
++    // The datetime-local input returns YYYY-MM-DDTHH:mm
++    const yearMatch = value.match(/^(\d{4})/);
++    if (yearMatch) {
++      const year = parseInt(yearMatch[1], 10);
++      // Wait for user to type at least a 4-digit valid year (e.g., >= 2000)
++      if (year < 2000) {
++        // We can either return early to ignore invalid years entirely while typing
++        // or just let it be if we want the user to fix it, but ignoring prevents 0002.
++        return;
++      }
++    }
++    
+     const date = new Date(value);
+     if (!isNaN(date.getTime())) {
+       onStageChange(index, field, date);
+diff --git a/src/components/cards/auction-lot-card-v2.tsx b/src/components/cards/auction-lot-card-v2.tsx
+new file mode 100644
+index 00000000..06578ec9
+--- /dev/null
++++ b/src/components/cards/auction-lot-card-v2.tsx
+@@ -0,0 +1,394 @@
++/**
++ * AuctionLotCardV2 — Dark brutalist auction lot card.
++ * Ported from augustodevcode/BidExpertNovosCards, adapted for Next.js + BidExpert design system.
++ * Uses Plus Jakarta Sans (body) and Space Grotesk (display) fonts via CSS vars.
++ */
++'use client';
++
++import { useState, useCallback } from 'react';
++import Image from 'next/image';
++import Link from 'next/link';
++import {
++  Heart,
++  Eye,
++  Share2,
++  ChevronLeft,
++  ChevronRight,
++  MapPin,
++  BarChart3,
++  Users,
++  MousePointerClick,
++  Clock,
++  ArrowUpRight,
++  ThumbsUp,
++  Bookmark,
++  Gavel,
++  ShoppingCart,
++  FileText,
++  Percent,
++} from 'lucide-react';
++import { cn } from '@/lib/utils';
++import { formatCurrency, formatCompact } from '@/lib/format';
++import type { AuctionItem, AuctionCategory } from './auction-lot-card-v2.types';
++
++/* ─── Helpers ─── */
++
++function getStatusStyles(status: string) {
++  switch (status) {
++    case 'Em Andamento':
++      return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', dot: 'bg-emerald-400' };
++    case 'Aguardando':
++      return { bg: 'bg-amber-500/20', text: 'text-amber-400', dot: 'bg-amber-400' };
++    case 'Encerrada':
++      return { bg: 'bg-red-500/20', text: 'text-red-400', dot: 'bg-red-400' };
++    default:
++      return { bg: 'bg-neutral-500/20', text: 'text-neutral-400', dot: 'bg-neutral-400' };
++  }
++}
++
++function getCategoryLabels(category: AuctionCategory) {
++  switch (category) {
++    case 'Judicial':
++    case 'Extrajudicial':
++      return { priceLabel: 'Lance Mínimo', ctaLabel: 'DAR LANCE', CtaIcon: Gavel };
++    case 'Venda Direta':
++      return { priceLabel: 'Valor de Venda', ctaLabel: 'COMPRAR', CtaIcon: ShoppingCart };
++    case 'Tomada de Preços':
++      return { priceLabel: 'Valor de Referência', ctaLabel: 'ENVIAR PROPOSTA VINCULANTE', CtaIcon: FileText };
++  }
++}
++
++function getDisplayDiscountPercentage(minimumBid: number, evaluation: number, discountPercentage?: number | null) {
++  if (discountPercentage != null && discountPercentage > 0) {
++    return discountPercentage;
++  }
++
++  if (!Number.isFinite(evaluation) || evaluation <= 0 || minimumBid >= evaluation) {
++    return null;
++  }
++
++  const computedDiscount = Math.round(((evaluation - minimumBid) / evaluation) * 100);
++  return computedDiscount > 0 ? computedDiscount : null;
++}
++
++const hasTimeline = (cat: AuctionCategory) => cat === 'Judicial' || cat === 'Extrajudicial';
++
++/* ─── Component ─── */
++
++interface AuctionLotCardV2Props {
++  item: AuctionItem;
++  className?: string;
++}
++
++export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Props) {
++  const [imgIdx, setImgIdx] = useState(0);
++  const [isFav, setIsFav] = useState(false);
++  const images = item.images.length > 0 ? item.images : ['/images/placeholder-lot.webp'];
++
++  const prevImg = useCallback(() => setImgIdx((p) => (p === 0 ? images.length - 1 : p - 1)), [images.length]);
++  const nextImg = useCallback(() => setImgIdx((p) => (p === images.length - 1 ? 0 : p + 1)), [images.length]);
++
++  const { priceLabel, ctaLabel, CtaIcon } = getCategoryLabels(item.category);
++  const displayDiscountPercentage = getDisplayDiscountPercentage(
++    item.pricing.minimumBid,
++    item.pricing.evaluation,
++    item.pricing.discountPercentage,
++  );
++
++  return (
++    <article
++      data-ai-id="auction-lot-card-v2"
++      data-lot-id={item.id}
++      className={cn(
++        'w-full max-w-[380px] card-v2-surface brutalist-border rounded-2xl overflow-hidden shadow-2xl flex flex-col',
++        'font-[family-name:var(--font-card-sans)]',
++        className,
++      )}
++    >
++      {/* ─── Image Gallery ─── */}
++      <Link href={`/lots/${item.id}`} className="relative group" data-ai-id="card-v2-gallery">
++        <div className="relative overflow-hidden aspect-video">
++          <Image
++            src={images[imgIdx]}
++            alt={item.title}
++            fill
++            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
++            className="object-cover transition-transform duration-500 group-hover:scale-105"
++          />
++          {/* Hover actions */}
++          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
++            <div className="absolute bottom-4 left-4 flex gap-2">
++              <button
++                type="button"
++                onClick={() => setIsFav(!isFav)}
++                className={cn(
++                  'p-2 rounded-full backdrop-blur-sm transition-all',
++                  isFav ? 'bg-red-500/80 text-white' : 'bg-white/10 text-white hover:bg-white/20',
++                )}
++                aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
++              >
++                <Heart className={cn('w-4 h-4', isFav && 'fill-current')} />
++              </button>
++              <button
++                type="button"
++                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
++                aria-label="Ver detalhes"
++              >
++                <Eye className="w-4 h-4" />
++              </button>
++              <button
++                type="button"
++                className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
++                aria-label="Compartilhar"
++              >
++                <Share2 className="w-4 h-4" />
++              </button>
++            </div>
++          </div>
++        </div>
++
++        {/* Gallery nav */}
++        {images.length > 1 && (
++          <>
++            <button
++              type="button"
++              onClick={prevImg}
++              className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
++              aria-label="Imagem anterior"
++            >
++              <ChevronLeft className="w-4 h-4" />
++            </button>
++            <button
++              type="button"
++              onClick={nextImg}
++              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
++              aria-label="Próxima imagem"
++            >
++              <ChevronRight className="w-4 h-4" />
++            </button>
++          </>
++        )}
++
++        {/* Badges */}
++        <div className="absolute top-3 left-3 flex gap-2">
++          {item.isOpen && (
++            <span className="bg-emerald-500/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
++              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-fast" />
++              Aberto para Lances
++            </span>
++          )}
++          {item.isLive && (
++            <span className="bg-red-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
++              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-fast" />
++              AO VIVO
++            </span>
++          )}
++        </div>
++
++        {/* Discount badge — mental trigger */}
++        {displayDiscountPercentage != null && (
++          <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-emerald-500/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm z-10" data-ai-id="card-v2-discount-badge">
++            <Percent className="w-3 h-3" aria-hidden="true" />
++            {displayDiscountPercentage}% OFF
++          </div>
++        )}
++
++        {/* Image counter */}
++        <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
++          {imgIdx + 1}/{images.length}
++        </div>
++
++        {/* Comitente logo */}
++        {item.comitente && (
++          <div className="absolute top-3 right-3 group/tooltip">
++            <img
++              src={item.comitente.logo}
++              alt={item.comitente.name}
++              className="w-8 h-8 rounded-full border border-white/20 bg-white object-contain"
++              loading="lazy"
++            />
++            <div className="absolute right-0 top-full mt-1 bg-neutral-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
++              {item.comitente.name}
++            </div>
++          </div>
++        )}
++      </Link>
++
++      {/* ─── Header ─── */}
++      <div className="p-4 space-y-2" data-ai-id="card-v2-header">
++        <div className="flex items-center gap-2 flex-wrap">
++          <span className="text-[10px] font-bold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
++            {item.category}
++          </span>
++          <span className="flex items-center gap-1 text-[10px] text-neutral-400" data-ai-id="card-v2-location">
++            <MapPin className="w-3 h-3" />
++            {item.location}
++          </span>
++        </div>
++        <h3 className="text-sm font-bold text-white leading-tight line-clamp-2 font-[family-name:var(--font-card-display)]" data-ai-id="card-v2-title">
++          {item.title}
++        </h3>
++        <div className="flex flex-wrap gap-1.5">
++          {(item.specs ?? []).map((spec) => (
++            <span key={spec} className="text-[10px] text-neutral-400 bg-neutral-800/50 px-2 py-0.5 rounded-full">
++              {spec}
++            </span>
++          ))}
++        </div>
++        {item.processNumber && (
++          <p className="text-[10px] text-neutral-500 truncate">Proc: {item.processNumber}</p>
++        )}
++      </div>
++
++      {/* ─── KPI row ─── */}
++      <div className="grid grid-cols-3 border-t border-neutral-800" data-ai-id="card-v2-kpi">
++        <div className="kpi-border flex flex-col items-center py-2.5 gap-0.5">
++          <BarChart3 className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" />
++          <span className="text-xs font-bold text-white">{formatCompact(item.stats.visits)}</span>
++          <span className="text-[9px] text-neutral-500 uppercase tracking-wider">Visitas</span>
++        </div>
++        <div className="kpi-border flex flex-col items-center py-2.5 gap-0.5">
++          <Users className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
++          <span className="text-xs font-bold text-white">{formatCompact(item.stats.qualified)}</span>
++          <span className="text-[9px] text-neutral-500 uppercase tracking-wider">Habilitados</span>
++        </div>
++        <div className="kpi-border flex flex-col items-center py-2.5 gap-0.5">
++          <MousePointerClick className="w-3.5 h-3.5 text-purple-400" aria-hidden="true" />
++          <span className="text-xs font-bold text-white">{formatCompact(item.stats.clicks)}</span>
++          <span className="text-[9px] text-neutral-500 uppercase tracking-wider">Lances</span>
++        </div>
++      </div>
++
++      {/* ─── Pricing ─── */}
++      <div className="p-4 bg-gradient-to-br from-orange-500/5 to-transparent" data-ai-id="card-v2-pricing">
++        {/* Evaluation with strikethrough anchoring */}
++        {item.pricing.evaluation > 0 && displayDiscountPercentage != null && (
++          <p className="text-card-v2-evaluation mb-1" data-ai-id="card-v2-evaluation">
++            Avaliação: <span className="line-through">{formatCurrency(item.pricing.evaluation)}</span>
++          </p>
++        )}
++        <span className="text-[10px] text-neutral-400 uppercase tracking-wider">{priceLabel}</span>
++        <p className="text-xl font-bold text-orange-400 font-[family-name:var(--font-card-display)] mt-0.5">
++          {formatCurrency(item.pricing.minimumBid)}
++        </p>
++        <div className="flex items-center gap-3 mt-2">
++          {item.pricing.increment != null && (
++            <span className="text-[10px] text-neutral-400">
++              Incremento: <span className="text-white font-medium">{formatCurrency(item.pricing.increment)}</span>
++            </span>
++          )}
++          {displayDiscountPercentage != null && (
++            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
++              <Percent className="w-2.5 h-2.5" aria-hidden="true" />
++              {displayDiscountPercentage}% OFF
++            </span>
++          )}
++        </div>
++        {/* Show plain evaluation when no discount */}
++        {displayDiscountPercentage == null && item.pricing.evaluation > 0 && (
++          <p className="text-[10px] text-neutral-500 mt-1">
++            Avaliação: <span className="text-neutral-300">{formatCurrency(item.pricing.evaluation)}</span>
++          </p>
++        )}
++      </div>
++
++      {/* ─── Timeline (Judicial / Extrajudicial only) ─── */}
++      {hasTimeline(item.category) && (
++        <div className="px-4 pb-3" data-ai-id="card-v2-timeline">
++          <div className="flex items-start gap-3">
++            {/* Vertical line */}
++            <div className="flex flex-col items-center gap-0.5 pt-1">
++              <span className={cn('w-2 h-2 rounded-full', getStatusStyles(item.timeline.stage1.status).dot)} />
++              <span className="w-px h-5 bg-neutral-700" />
++              {item.timeline.stage2 && (
++                <span className={cn('w-2 h-2 rounded-full', getStatusStyles(item.timeline.stage2.status).dot)} />
++              )}
++            </div>
++            {/* Stages */}
++            <div className="flex-1 space-y-2 min-w-0">
++              <div className="flex items-center justify-between gap-2">
++                <div className="min-w-0">
++                  <p className="text-[11px] font-semibold text-white truncate">{item.timeline.stage1.name}</p>
++                  <p className="text-[9px] text-neutral-500">{item.timeline.stage1.date}</p>
++                </div>
++                <span
++                  className={cn(
++                    'text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
++                    getStatusStyles(item.timeline.stage1.status).bg,
++                    getStatusStyles(item.timeline.stage1.status).text,
++                  )}
++                >
++                  {item.timeline.stage1.status}
++                </span>
++              </div>
++              {item.timeline.stage2 && (
++                <div className="flex items-center justify-between gap-2">
++                  <div className="min-w-0">
++                    <p className="text-[11px] font-semibold text-white truncate">{item.timeline.stage2.name}</p>
++                    <p className="text-[9px] text-neutral-500">{item.timeline.stage2.date}</p>
++                  </div>
++                  <span
++                    className={cn(
++                      'text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
++                      getStatusStyles(item.timeline.stage2.status).bg,
++                      getStatusStyles(item.timeline.stage2.status).text,
++                    )}
++                  >
++                    {item.timeline.stage2.status}
++                  </span>
++                </div>
++              )}
++            </div>
++          </div>
++        </div>
++      )}
++
++      {/* ─── Urgency ─── */}
++      <div className="px-4 pb-3 flex items-center gap-2" data-ai-id="card-v2-urgency">
++        <Clock className="w-3.5 h-3.5 text-orange-400 animate-pulse-fast" aria-hidden="true" />
++        <span className="text-[10px] text-neutral-300 font-medium">{item.timeline.timeRemaining}</span>
++      </div>
++
++      {/* ─── CTA + actions ─── */}
++      <div className="p-4 pt-0 mt-auto flex flex-col gap-2" data-ai-id="card-v2-actions">
++        <Link
++          href={`/lots/${item.id}`}
++          className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-orange-500/25 active:scale-[0.98]"
++          data-ai-id="card-v2-cta"
++        >
++          <CtaIcon className="w-4 h-4" aria-hidden="true" />
++          {ctaLabel}
++          <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
++        </Link>
++        <div className="flex justify-center gap-4">
++          <button
++            type="button"
++            className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-white transition-colors"
++            aria-label="Compartilhar este lote"
++          >
++            <Share2 className="w-3.5 h-3.5" /> Compartilhar
++          </button>
++          <button
++            type="button"
++            className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-white transition-colors"
++            aria-label="Votar neste lote"
++          >
++            <ThumbsUp className="w-3.5 h-3.5" /> Votar
++          </button>
++          <button
++            type="button"
++            onClick={() => setIsFav(!isFav)}
++            className={cn(
++              'flex items-center gap-1 text-[10px] transition-colors',
++              isFav ? 'text-orange-400' : 'text-neutral-400 hover:text-white',
++            )}
++            aria-label={isFav ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
++          >
++            <Bookmark className={cn('w-3.5 h-3.5', isFav && 'fill-current')} />
++            {isFav ? 'Salvo' : 'Salvar'}
++          </button>
++        </div>
++      </div>
++    </article>
++  );
++}
+diff --git a/src/components/cards/auction-lot-card-v2.types.ts b/src/components/cards/auction-lot-card-v2.types.ts
+new file mode 100644
+index 00000000..00a7bcd3
+--- /dev/null
++++ b/src/components/cards/auction-lot-card-v2.types.ts
+@@ -0,0 +1,61 @@
++/**
++ * Types for the V2 Auction Lot Card component.
++ * Maps Prisma models (Lot, Auction, AuctionStage, Seller, LotCategory)
++ * into a display-ready shape consumed by AuctionLotCardV2.
++ */
++
++export type AuctionCategory =
++  | 'Judicial'
++  | 'Extrajudicial'
++  | 'Venda Direta'
++  | 'Tomada de Preços';
++
++export type StageStatus = 'Em Andamento' | 'Encerrada' | 'Aguardando';
++
++export interface StageInfo {
++  name: string;
++  status: StageStatus;
++  date: string;
++}
++
++export interface AuctionItemStats {
++  visits: number;
++  qualified: number;
++  clicks: number;
++}
++
++export interface AuctionItemPricing {
++  minimumBid: number;
++  evaluation: number;
++  discountPercentage?: number;
++  increment?: number;
++}
++
++export interface AuctionItemTimeline {
++  stage1: StageInfo;
++  stage2?: StageInfo;
++  timeRemaining: string;
++}
++
++export interface Comitente {
++  name: string;
++  logo: string;
++  url: string;
++}
++
++export interface AuctionItem {
++  id: string;
++  category: AuctionCategory;
++  type: string;
++  location: string;
++  title: string;
++  specs: string[];
++  processNumber?: string;
++  stats: AuctionItemStats;
++  pricing: AuctionItemPricing;
++  timeline: AuctionItemTimeline;
++  images: string[];
++  isLive: boolean;
++  isOpen: boolean;
++  comitente?: Comitente;
++}
+diff --git a/src/components/layout/footer.tsx b/src/components/layout/footer.tsx
+index 29aa03f3..590f6f0d 100644
+--- a/src/components/layout/footer.tsx
++++ b/src/components/layout/footer.tsx
+@@ -5,6 +5,7 @@ import DevInfoIndicator from '@/components/layout/dev-info-indicator';
+ 
+ export default function Footer() {
+   const quickLinks = [
++    { href: '/lots', label: 'Todos os Lotes' },
+     { href: '/about', label: 'Sobre Nós' },
+     { href: '/contact', label: 'Contato' },
+     { href: '/faq', label: 'FAQ' },
+diff --git a/src/components/layout/header.tsx b/src/components/layout/header.tsx
+index f3525738..f606b254 100644
+--- a/src/components/layout/header.tsx
++++ b/src/components/layout/header.tsx
+@@ -269,6 +269,7 @@ export default function Header({
+     { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
+     { href: '/', label: 'Início', icon: HomeIcon },
+     { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
++    { href: '/lots', label: 'Lotes', icon: ListChecks },
+     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
+     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
+     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
+@@ -281,6 +282,7 @@ export default function Header({
+     const centralNavItems: NavItem[] = [
+     { href: '/', label: 'Início', icon: HomeIcon },
+     { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
++    { href: '/lots', label: 'Lotes', icon: ListChecks },
+     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
+     {
+       label: 'Modalidades',
+diff --git a/src/lib/bigint-serialization.ts b/src/lib/bigint-serialization.ts
+new file mode 100644
+index 00000000..93c66e73
+--- /dev/null
++++ b/src/lib/bigint-serialization.ts
+@@ -0,0 +1,5 @@
++if (typeof BigInt !== 'undefined') {
++  (BigInt.prototype as any).toJSON = function () {
++    return this.toString();
++  };
++}
+\ No newline at end of file
+diff --git a/src/lib/prisma.ts b/src/lib/prisma.ts
+index 7d030a3f..c234ddae 100644
+--- a/src/lib/prisma.ts
++++ b/src/lib/prisma.ts
+@@ -8,6 +8,14 @@
+  */
+ 
+ import { PrismaClient } from '@prisma/client';
++
++// @ts-ignore: Polyfill for BigInt serialization via JSON.stringify
++if (typeof (BigInt.prototype as any).toJSON === 'undefined') {
++  (BigInt.prototype as any).toJSON = function () {
++    return this.toString();
++  };
++}
++
+ import { withAccelerate } from '@prisma/extension-accelerate';
+ import { headers } from 'next/headers';
+ import { auditMiddleware } from './audit-middleware';
+diff --git a/src/server/lib/session.ts b/src/server/lib/session.ts
+index 8a2700aa..ede706b1 100644
+--- a/src/server/lib/session.ts
++++ b/src/server/lib/session.ts
+@@ -147,7 +147,10 @@ export async function createSession(user: UserProfileWithPermissions, tenantId:
+         cookieOptions.domain = cookieDomain;
+     }
+ 
++    console.log('[Create Session] Chamando cookies().set com as opcoes:', JSON.stringify(cookieOptions));
+     cookies().set('session', session, cookieOptions);
++    cookies().set('magic_cookie_test', 'test_from_action', { path: '/' });
++    console.log('[Create Session] cookies().set executado com sucesso.');
+ }
+ 
+ export async function getSession(): Promise<{ userId: string; tenantId: string;[key: string]: any } | null> {
+diff --git a/src/services/lot-card-v2.service.ts b/src/services/lot-card-v2.service.ts
+new file mode 100644
+index 00000000..5e74059f
+--- /dev/null
++++ b/src/services/lot-card-v2.service.ts
+@@ -0,0 +1,238 @@
++/**
++ * Service layer for the /lots page V2 card grid.
++ * Fetches lots grouped by auction type with all relations
++ * needed by the AuctionLotCardV2 component.
++ */
++import { prisma } from '@/lib/prisma';
++import { formatDistanceToNow } from 'date-fns';
++import { ptBR } from 'date-fns/locale';
++import type {
++  AuctionItem,
++  AuctionCategory,
++  StageInfo,
++  StageStatus,
++} from '@/components/cards/auction-lot-card-v2.types';
++
++/* ------------------------------------------------------------------ */
++/*  Mapping helpers                                                    */
++/* ------------------------------------------------------------------ */
++
++const AUCTION_TYPE_TO_CATEGORY: Record<string, AuctionCategory> = {
++  JUDICIAL: 'Judicial',
++  EXTRAJUDICIAL: 'Extrajudicial',
++  VENDA_DIRETA: 'Venda Direta',
++  TOMADA_DE_PRECOS: 'Tomada de Preços',
++  PARTICULAR: 'Extrajudicial', // fallback
++};
++
++const STAGE_STATUS_MAP: Record<string, StageStatus> = {
++  ABERTO: 'Em Andamento',
++  EM_ANDAMENTO: 'Em Andamento',
++  AGUARDANDO_INICIO: 'Aguardando',
++  FECHADO: 'Encerrada',
++  CONCLUIDO: 'Encerrada',
++  CANCELADO: 'Encerrada',
++  SUSPENSO: 'Aguardando',
++  DESERTO: 'Encerrada',
++  FRUSTRADO: 'Encerrada',
++};
++
++/** Visible lot statuses for the public page. */
++const VISIBLE_STATUSES = [
++  'ABERTO_PARA_LANCES',
++  'EM_PREGAO',
++  'EM_BREVE',
++  'AGUARDANDO',
++] as const;
++
++/* ------------------------------------------------------------------ */
++/*  Time helpers                                                       */
++/* ------------------------------------------------------------------ */
++
++function computeTimeRemaining(endDate: Date | null): string {
++  if (!endDate) return 'A definir';
++  const now = new Date();
++  if (endDate <= now) return 'Encerrado';
++  return formatDistanceToNow(endDate, { addSuffix: false, locale: ptBR });
++}
++
++/* ------------------------------------------------------------------ */
++/*  Image helpers                                                      */
++/* ------------------------------------------------------------------ */
++
++function buildImageList(lot: {
++  imageUrl?: string | null;
++  galleryImageUrls?: unknown;
++  CoverImage?: { urlOriginal: string; urlMedium?: string | null } | null;
++}): string[] {
++  const imgs: string[] = [];
++
++  // 1. CoverImage (relation)
++  if (lot.CoverImage?.urlMedium) imgs.push(lot.CoverImage.urlMedium);
++  else if (lot.CoverImage?.urlOriginal) imgs.push(lot.CoverImage.urlOriginal);
++
++  // 2. Gallery JSON (array of strings)
++  if (Array.isArray(lot.galleryImageUrls)) {
++    for (const url of lot.galleryImageUrls) {
++      if (typeof url === 'string' && url.length > 0 && !imgs.includes(url)) {
++        imgs.push(url);
++      }
++    }
++  }
++
++  // 3. Standalone imageUrl
++  if (lot.imageUrl && !imgs.includes(lot.imageUrl)) {
++    imgs.push(lot.imageUrl);
++  }
++
++  // Fallback placeholder
++  if (imgs.length === 0) {
++    imgs.push('/images/placeholder-lot.webp');
++  }
++
++  return imgs;
++}
++
++/* ------------------------------------------------------------------ */
++/*  Adapter: Prisma row → AuctionItem                                  */
++/* ------------------------------------------------------------------ */
++
++// eslint-disable-next-line @typescript-eslint/no-explicit-any
++function mapLotToAuctionItem(lot: any): AuctionItem | null {
++  const auction = lot.Auction;
++  if (!auction) return null;
++
++  const auctionType = auction.auctionType ?? 'EXTRAJUDICIAL';
++  const category: AuctionCategory =
++    AUCTION_TYPE_TO_CATEGORY[auctionType] ?? 'Extrajudicial';
++
++  // Stages ordered by startDate
++  const stages = (auction.AuctionStage ?? [])
++    .slice()
++    .sort(
++      (a: { startDate: Date }, b: { startDate: Date }) =>
++        new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
++    );
++
++  const mapStage = (s: {
++    name: string;
++    status?: string;
++    startDate: Date;
++  }): StageInfo => ({
++    name: s.name,
++    status: STAGE_STATUS_MAP[s.status ?? ''] ?? 'Aguardando',
++    date: new Date(s.startDate).toLocaleDateString('pt-BR'),
++  });
++
++  const lastStage = stages[stages.length - 1];
++  const relevantEndDate = lastStage?.endDate
++    ? new Date(lastStage.endDate)
++    : lot.endDate
++      ? new Date(lot.endDate)
++      : null;
++
++  const seller = lot.Seller ?? auction.Seller;
++
++  return {
++    id: lot.id.toString(),
++    category,
++    type: lot.LotCategory?.name ?? 'Geral',
++    location: [lot.cityName, lot.stateUf].filter(Boolean).join(', ') || 'Brasil',
++    title: lot.title,
++    specs: [lot.type, lot.condition].filter(Boolean) as string[],
++    processNumber: lot.processNumber ?? undefined,
++    stats: {
++      visits: lot.views ?? 0,
++      qualified: auction.totalHabilitatedUsers ?? 0,
++      clicks: lot.bidsCount ?? 0,
++    },
++    pricing: {
++      minimumBid: Number(lot.price),
++      evaluation: lot.initialPrice ? Number(lot.initialPrice) : Number(lot.price),
++      discountPercentage: lot.discountPercentage ?? undefined,
++      increment: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : undefined,
++    },
++    timeline: {
++      stage1: stages[0] ? mapStage(stages[0]) : { name: '1ª Praça', status: 'Aguardando', date: '-' },
++      stage2: stages[1] ? mapStage(stages[1]) : undefined,
++      timeRemaining: computeTimeRemaining(relevantEndDate),
++    },
++    images: buildImageList(lot),
++    isLive: lot.status === 'EM_PREGAO',
++    isOpen: lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_PREGAO',
++    comitente: seller
++      ? { name: seller.name, logo: seller.logoUrl ?? '/placeholder-logo.svg', url: seller.website ?? '#' }
++      : undefined,
++  };
++}
++
++/* ------------------------------------------------------------------ */
++/*  Main query                                                         */
++/* ------------------------------------------------------------------ */
++
++export interface LotCardV2Options {
++  tenantId?: bigint;
++  limit?: number;
++}
++
++export interface GroupedLots {
++  judicial: AuctionItem[];
++  extrajudicial: AuctionItem[];
++  vendaDireta: AuctionItem[];
++  tomadaDePrecos: AuctionItem[];
++}
++
++export async function getLotsForV2Page(
++  options: LotCardV2Options = {},
++): Promise<GroupedLots> {
++  const { tenantId, limit = 50 } = options;
++
++  const lots = await prisma.lot.findMany({
++    where: {
++      status: { in: [...VISIBLE_STATUSES] },
++      ...(tenantId ? { tenantId } : {}),
++    },
++    include: {
++      Auction: {
++        include: {
++          AuctionStage: { orderBy: { startDate: 'asc' } },
++          Seller: true,
++        },
++      },
++      LotCategory: true,
++      Seller: true,
++      CoverImage: true,
++    },
++    orderBy: { updatedAt: 'desc' },
++    take: limit,
++  });
++
++  const grouped: GroupedLots = {
++    judicial: [],
++    extrajudicial: [],
++    vendaDireta: [],
++    tomadaDePrecos: [],
++  };
++
++  for (const lot of lots) {
++    const item = mapLotToAuctionItem(lot);
++    if (!item) continue;
++
++    switch (item.category) {
++      case 'Judicial':
++        grouped.judicial.push(item);
++        break;
++      case 'Extrajudicial':
++        grouped.extrajudicial.push(item);
++        break;
++      case 'Venda Direta':
++        grouped.vendaDireta.push(item);
++        break;
++      case 'Tomada de Preços':
++        grouped.tomadaDePrecos.push(item);
++        break;
++    }
++  }
++
++  return grouped;
++}
+diff --git a/test-output.log b/test-output.log
+index a586b8d6..c30ddbde 100644
+--- a/test-output.log
++++ b/test-output.log
+@@ -1,12 +1,12 @@
+-[AI_REPORTER] Execução iniciada em 2026-03-16T02:32:51.178Z
++[AI_REPORTER] Execução iniciada em 2026-03-19T11:56:09.291Z
+ 
+ ═══════════════════════════════════════════════════════════
+ [AI_SUMMARY]
+-  STATUS: PASSED
+-  TOTAL: 1
+-  PASSED: 1
++  STATUS: FAILED
++  TOTAL: 0
++  PASSED: 0
+   FAILED: 0
+   SKIPPED: 0
+-  DURATION: 45s
+-  SUCCESS_RATE: 100%
++  DURATION: 0s
++  SUCCESS_RATE: 0%
+ ═══════════════════════════════════════════════════════════
+\ No newline at end of file
+diff --git a/test.js b/test.js
+new file mode 100644
+index 00000000..81b91da5
+--- /dev/null
++++ b/test.js
+@@ -0,0 +1 @@
++const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); prisma.city.count().then(console.log).finally(() => prisma.$disconnect());
+\ No newline at end of file
+diff --git a/test2.js b/test2.js
+new file mode 100644
+index 00000000..81b91da5
+--- /dev/null
++++ b/test2.js
+@@ -0,0 +1 @@
++const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); prisma.city.count().then(console.log).finally(() => prisma.$disconnect());
+\ No newline at end of file
+diff --git a/test_cookie_server.js b/test_cookie_server.js
+new file mode 100644
+index 00000000..c0ddfbe6
+--- /dev/null
++++ b/test_cookie_server.js
+@@ -0,0 +1,3 @@
++﻿fetch('http://dev.localhost:9006/api/health')
++  .then(r => console.log('health ok'))
++  .catch(e => console.log('err'));
+diff --git a/test_fetch.js b/test_fetch.js
+new file mode 100644
+index 00000000..4a6703f1
+--- /dev/null
++++ b/test_fetch.js
+@@ -0,0 +1,9 @@
++﻿fetch('http://dev.localhost:9006/api/test-cookie')
++  .then(r => {
++    let output = '';
++    for(let [k,v] of r.headers.entries()) {
++      output += k + ': ' + v + '\n';
++    }
++    console.log(output);
++  })
++  .catch(console.error)
+diff --git a/test_login.js b/test_login.js
+new file mode 100644
+index 00000000..d2b5656e
+--- /dev/null
++++ b/test_login.js
+@@ -0,0 +1,23 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  
++  page.on('response', response => {
++    if (response.url().includes('/admin') || response.url().includes('/auth') || response.url().includes('/dashboard')) {
++        console.log('<<', response.status(), response.url());
++    }
++  });
++  
++  console.log('Navigating to login...');
++  await page.goto('http://dev.localhost:9006/auth/login?redirect=/admin');
++  
++  console.log('Clicking login...');
++  await page.fill('input[type="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[type="password"]', 'Admin@123');
++  await page.click('button[type="submit"]');
++  
++  console.log('Waiting for network idle...');
++  setTimeout(() => { console.log('Timeout reached. Final URL:', page.url()); browser.close(); process.exit(0); }, 15000);
++})();
+\ No newline at end of file
+diff --git a/test_login10.js b/test_login10.js
+new file mode 100644
+index 00000000..8f5bc64f
+--- /dev/null
++++ b/test_login10.js
+@@ -0,0 +1,20 @@
++﻿const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const page = await browser.newPage();
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  const btn = await page.locator('button[type="submit"]').first();
++  console.log('Button disabled?', await btn.isDisabled());
++  console.log('Button visible?', await btn.isVisible());
++  
++  await btn.click({ force: true });
++  console.log('Clicked');
++  
++  await page.waitForTimeout(3000);
++  await browser.close();
++})();
+diff --git a/test_login11.js b/test_login11.js
+new file mode 100644
+index 00000000..f1d99df0
+--- /dev/null
++++ b/test_login11.js
+@@ -0,0 +1,28 @@
++﻿const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const page = await browser.newPage();
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  console.log('Dispatching form submit event...');
++  await page.evaluate(() => {
++    const form = document.querySelector('form[data-ai-id="auth-login-form"]');
++    if (form) {
++      console.log('Form found, dispatching...');
++      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
++    }
++  });
++  
++  // Wait a moment for network and requests
++  await page.waitForTimeout(1000);
++  
++  // Add another wait in case there's navigation
++  await page.waitForURL('**/admin**', { timeout: 10000 }).catch(() => console.log('Did not navigate to /admin'));
++  console.log('Current URL:', page.url());
++  
++  await browser.close();
++})();
+diff --git a/test_login12.js b/test_login12.js
+new file mode 100644
+index 00000000..c9ff197a
+--- /dev/null
++++ b/test_login12.js
+@@ -0,0 +1,44 @@
++﻿const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const page = await browser.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  page.on('request', request => {
++    if (request.url().includes('login') || request.url().includes('auth') || request.method() === 'POST') {
++      console.log('>>', request.method(), request.url());
++    }
++  });
++  
++  page.on('response', async response => {
++    if (response.url().includes('login') || response.url().includes('auth') || response.request().method() === 'POST') {
++      console.log('<<', response.status(), response.url());
++      if (response.status() >= 400 || response.url().includes('login')) {
++         try {
++           const text = await response.text();
++           console.log('Response body:', text.substring(0, 200) + '...');
++         } catch(e) {}
++      }
++    }
++  });
++
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  console.log('Dispatching form submit event...');
++  await page.evaluate(() => {
++    const form = document.querySelector('form[data-ai-id="auth-login-form"]');
++    if (form) {
++      console.log('Form found, dispatching...');
++      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
++    }
++  });
++  
++  await page.waitForTimeout(3000);
++  console.log('Current URL:', page.url());
++  
++  await browser.close();
++})();
+diff --git a/test_login13.js b/test_login13.js
+new file mode 100644
+index 00000000..c5be5b3b
+--- /dev/null
++++ b/test_login13.js
+@@ -0,0 +1,31 @@
++﻿const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const page = await browser.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++  
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  // Also force filling the hidden input used by the Select component just in case
++  await page.evaluate(() => {
++    const input = document.querySelector('input[name="tenantId"]');
++    if (input) input.value = "dev";
++  });
++
++  console.log('Dispatching form submit event...');
++  await page.evaluate(() => {
++    const form = document.querySelector('form[data-ai-id="auth-login-form"]');
++    if (form) {
++      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
++    }
++  });
++
++  await page.waitForTimeout(4000);
++  console.log('Current URL:', page.url());
++  await browser.close();
++})();
+diff --git a/test_login14.js b/test_login14.js
+new file mode 100644
+index 00000000..e8816152
+--- /dev/null
++++ b/test_login14.js
+@@ -0,0 +1,25 @@
++﻿const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const page = await browser.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++  
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  console.log('Dispatching form submit event...');
++  await page.evaluate(() => {
++    const form = document.querySelector('form[data-ai-id="auth-login-form"]');
++    if (form) {
++      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
++    }
++  });
++
++  await page.waitForTimeout(8000);
++  console.log('Current URL:', page.url());
++  await browser.close();
++})();
+diff --git a/test_login15.js b/test_login15.js
+new file mode 100644
+index 00000000..34a05028
+--- /dev/null
++++ b/test_login15.js
+@@ -0,0 +1,26 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  page.on('console', msg => console.log('LOG:', msg.text()));
++
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  console.log('Clicking button via evaluate...');
++  await page.evaluate(() => {
++    const btn = document.querySelector('button[type="submit"]');
++    if (btn) btn.click();
++  });
++
++  await page.waitForTimeout(5000);
++  console.log('Current URL:', page.url());
++  const cookies = await context.cookies();
++  console.log('Cookies:', cookies);
++  await browser.close();
++})();
+diff --git a/test_login16.js b/test_login16.js
+new file mode 100644
+index 00000000..4dc8d728
+--- /dev/null
++++ b/test_login16.js
+@@ -0,0 +1,28 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  page.on('console', msg => console.log('LOG:', msg.text()));
++
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  console.log('Submitting via React Hook Form approach...');
++  await page.waitForTimeout(1000);
++  await page.locator('button[type="submit"]').click();
++
++  let ok = false;
++  try {
++    await page.waitForNavigation({ url: '**/admin*', timeout: 10000 });
++    ok = true;
++  } catch(e) { console.log('Navigation timeout'); }
++
++  console.log('Current URL:', page.url());
++  const cookies = await context.cookies();
++  console.log('Cookies:', cookies.map(c => c.name));
++  await browser.close();
++})();
+diff --git a/test_login17.js b/test_login17.js
+new file mode 100644
+index 00000000..1cf8cf95
+--- /dev/null
++++ b/test_login17.js
+@@ -0,0 +1,27 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  page.on('console', msg => console.log('LOG:', msg.text()));
++
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  console.log('Submitting via data-ai-id click...');
++  await page.locator('button[data-ai-id="auth-login-submit-button"]').click();
++
++  let ok = false;
++  try {
++    await page.waitForNavigation({ url: '**/admin*', timeout: 8000 });
++    ok = true;
++  } catch(e) { console.log('Navigation timeout'); }
++
++  console.log('Current URL:', page.url());
++  const cookies = await context.cookies();
++  console.log('Cookies:', cookies.map(c => c.name));
++  await browser.close();
++})();
+diff --git a/test_login18.js b/test_login18.js
+new file mode 100644
+index 00000000..0580202a
+--- /dev/null
++++ b/test_login18.js
+@@ -0,0 +1,31 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  page.on('console', msg => console.log('LOG:', msg.text()));
++
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  await page.locator('button[data-ai-id="auth-login-submit-button"]').click();
++
++  console.log('Waiting for login message...');
++  await page.waitForTimeout(3000);
++
++  const cookies = await context.cookies();
++  console.log('Cookies after login:', cookies.map(c => c.name));
++
++  console.log('Navigating to /admin explicitly...');
++  await page.goto('http://dev.localhost:9014/admin');
++  await page.waitForLoadState('networkidle');
++  console.log('Current URL after goto /admin:', page.url());
++
++  const cookiesAfter = await context.cookies();
++  console.log('Cookies after accessing /admin:', cookiesAfter.map(c => c.name));
++
++  await browser.close();
++})();
+diff --git a/test_login19.js b/test_login19.js
+new file mode 100644
+index 00000000..f6d6bc1f
+--- /dev/null
++++ b/test_login19.js
+@@ -0,0 +1,29 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  page.on('console', msg => console.log('LOG:', msg.text()));
++
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin');
++  await page.waitForLoadState('networkidle');
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  await page.locator('button[data-ai-id="auth-login-submit-button"]').click();
++
++  await page.waitForTimeout(3000);
++
++  const cookies = await context.cookies();
++  console.log('Cookies after login:', cookies.map(c => c.name));
++
++  await page.goto('http://dev.localhost:9014/admin/dashboard', { waitUntil: 'domcontentloaded' });
++  await page.waitForTimeout(2000);
++  console.log('Current URL after goto /admin:', page.url());
++
++  const cookiesAfter = await context.cookies();
++  console.log('Cookies after accessing /admin:', cookiesAfter.map(c => c.name));
++
++  await browser.close();
++})();
+diff --git a/test_login2.js b/test_login2.js
+new file mode 100644
+index 00000000..b837b1f0
+--- /dev/null
++++ b/test_login2.js
+@@ -0,0 +1,27 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  await page.addInitScript(() => {
++    const origFetch = window.fetch;
++    window.fetch = async (...args) => {
++      const resp = await origFetch(...args);
++      const clone = resp.clone();
++      clone.text().then(text => console.log('FETCH RES:', text.substring(0, 300)));
++      return resp;
++    };
++  });
++  
++  await page.goto('http://dev.localhost:9006/auth/login?redirect=/admin');
++  
++  await page.fill('#email', 'admin@bidexpert.com.br');
++  await page.fill('#password', 'Admin@123');
++  await page.click('button[type=submit]');
++  
++  await new Promise(r => setTimeout(r, 5000));
++  await browser.close();
++})();
+\ No newline at end of file
+diff --git a/test_login20.js b/test_login20.js
+new file mode 100644
+index 00000000..9b527210
+--- /dev/null
++++ b/test_login20.js
+@@ -0,0 +1,55 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++  
++  await page.waitForTimeout(2000);
++  
++  // Fill the form
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  console.log('Submitting form...');
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++  
++  try {
++    await page.waitForTimeout(5000); // give it time to submit and redirect
++    const url = page.url();
++    console.log('Current URL after submit:', url);
++    
++    // Check cookies
++    const cookies = await context.cookies();
++    console.log('Cookies after login:', cookies.map(c => c.name));
++    
++    // Check if there is an error in DOM
++    const html = await page.content();
++    if (html.includes('Failed to fetch')) {
++       console.log('Detected Failed to fetch in HTML');
++    }
++    
++    // if loading
++    const spinner = await page.locator('[data-ai-id="admin-loading-state"]').count();
++    console.log('Spinner count:', spinner);
++    
++    // Explicit navigate to /admin if not already there
++    if (!url.includes('/admin')) {
++        console.log('Navigating to /admin explicitly...');
++        await page.goto('http://demo.localhost:9014/admin', { waitUntil: 'domcontentloaded' });
++        await page.waitForTimeout(3000);
++        console.log('URL after explicit nav:', page.url());
++        
++        const c2 = await context.cookies();
++        console.log('Cookies:', c2.map(c => c.name));
++    }
++    
++  } catch (err) {
++    console.error('Error during wait:', err);
++  }
++
++  await browser.close();
++})();
+diff --git a/test_login21.js b/test_login21.js
+new file mode 100644
+index 00000000..4c2444c3
+--- /dev/null
++++ b/test_login21.js
+@@ -0,0 +1,41 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++  
++  await page.waitForTimeout(2000);
++  
++  // Fill the form
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  console.log('Submitting form...');
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++  
++  try {
++    await page.waitForTimeout(3000); // give it time to submit and redirect
++    const url = page.url();
++    console.log('Current URL after submit:', url);
++    
++    // screenshot
++    await page.screenshot({ path: 'worktrees/bidexpert-feat-lots-v2/screenshot_admin_loaded.png' });
++    console.log('Screenshot saved.');
++    
++    // Check if error
++    const count = await page.locator('text="Failed to fetch RSC payload"').count();
++    console.log('Failed to fetch count:', count);
++    
++    const h1 = await page.locator('h1').innerText({timeout: 1000}).catch(()=> 'NO H1');
++    console.log('Dashboard H1:', h1);
++    
++  } catch (err) {
++    console.error('Error during wait:', err);
++  }
++
++  await browser.close();
++})();
+diff --git a/test_login22.js b/test_login22.js
+new file mode 100644
+index 00000000..0dbfc6fd
+--- /dev/null
++++ b/test_login22.js
+@@ -0,0 +1,38 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++  
++  await page.waitForTimeout(2000);
++  
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++  
++  try {
++    await page.waitForTimeout(5000); // give it time to submit and redirect
++    const url = page.url();
++    console.log('Current URL after submit:', url);
++    
++    const bodyContent = await page.innerHTML('body');
++    const hasLoader = bodyContent.includes('admin-loading-state') || bodyContent.includes('lucide-loader-2');
++    const isError = bodyContent.includes('Application error: a client-side exception has occurred');
++    console.log('Has Loader?', hasLoader);
++    console.log('Is Error?', isError);
++    
++    // Dump a snippet of what rendered
++    console.log('Body start:', bodyContent.substring(0, 300));
++    console.log('Body end:', bodyContent.length > 500 ? bodyContent.substring(bodyContent.length - 300) : '');
++    
++  } catch (err) {
++    console.error('Error during wait:', err);
++  }
++
++  await browser.close();
++})();
+diff --git a/test_login23.js b/test_login23.js
+new file mode 100644
+index 00000000..cb134650
+--- /dev/null
++++ b/test_login23.js
+@@ -0,0 +1,35 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  page.on('pageerror', error => {
++    console.log('[PAGE ERROR]', error.message);
++  });
++  page.on('console', msg => {
++    if (msg.type() === 'error') {
++      console.log('[CONSOLE ERROR]', msg.text());
++    }
++  });
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++  
++  await page.waitForTimeout(2000);
++  
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++  
++  try {
++    await page.waitForTimeout(5000); // give it time to submit and crash
++    
++  } catch (err) {
++    console.error('Error during wait:', err);
++  }
++
++  await browser.close();
++})();
+diff --git a/test_login24.js b/test_login24.js
+new file mode 100644
+index 00000000..781bb567
+--- /dev/null
++++ b/test_login24.js
+@@ -0,0 +1,32 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++  
++  await page.waitForTimeout(2000);
++  
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++  
++  try {
++    await page.waitForTimeout(5000); // give it time to submit and redirect
++    const url = page.url();
++    console.log('Current URL after submit:', url);
++    
++    // Wait for the stat card to appear
++    await page.waitForSelector('text="Faturamento Total"', { timeout: 10000 });
++    console.log('Faturamento Total is visible!');
++    
++  } catch (err) {
++    console.error('Error during wait:', err);
++  }
++
++  await browser.close();
++})();
+diff --git a/test_login25.js b/test_login25.js
+new file mode 100644
+index 00000000..3a4618db
+--- /dev/null
++++ b/test_login25.js
+@@ -0,0 +1,27 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++  
++  await page.waitForTimeout(2000);
++  
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++  
++  try {
++    await page.waitForTimeout(5000); // give it time to submit and redirect
++    const bodyContent = await page.innerHTML('body');
++    console.log(bodyContent);
++  } catch (err) {
++    console.error('Error during wait:', err);
++  }
++
++  await browser.close();
++})();
+diff --git a/test_login26.js b/test_login26.js
+new file mode 100644
+index 00000000..77f24a22
+--- /dev/null
++++ b/test_login26.js
+@@ -0,0 +1,34 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  page.on('console', msg => {
++    if (msg.type() === 'error' || msg.type() === 'warning') {
++      const args = msg.args();
++      Promise.all(args.map(a => a.jsonValue().catch(() => a.toString()))).then(vals => {
++        console.log(`[${msg.type()}]`, ...vals);
++      });
++    }
++  });
++
++  page.on('pageerror', err => {
++    console.error('Page Error Stack:', err.stack || err);
++  });
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++
++  await page.waitForTimeout(2000);
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++
++  await page.waitForTimeout(5000);
++
++  await browser.close();
++})();
+diff --git a/test_login27.js b/test_login27.js
+new file mode 100644
+index 00000000..4799922d
+--- /dev/null
++++ b/test_login27.js
+@@ -0,0 +1,24 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++
++  await page.waitForTimeout(2000);
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++
++  await page.waitForTimeout(5000);
++
++  await page.screenshot({ path: 'screenshot_admin.png' });
++  console.log('Screenshot saved to screenshot_admin.png');
++
++  await browser.close();
++})();
+diff --git a/test_login28.js b/test_login28.js
+new file mode 100644
+index 00000000..36d91887
+--- /dev/null
++++ b/test_login28.js
+@@ -0,0 +1,24 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++
++  await page.waitForTimeout(2000);
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++
++  await page.waitForTimeout(5000);
++
++  const text = await page.innerText('body');
++  console.log(text.substring(0, 500));
++
++  await browser.close();
++})();
+diff --git a/test_login29.js b/test_login29.js
+new file mode 100644
+index 00000000..09dd7f0d
+--- /dev/null
++++ b/test_login29.js
+@@ -0,0 +1,31 @@
++const { chromium } = require('playwright');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  page.on('console', msg => {
++    if (msg.type() === 'error' || msg.type() === 'warning') {
++      console.log(`[${msg.type()}]`, msg.text());
++    }
++  });
++
++  page.on('pageerror', err => {
++    console.error('Page Error Stack:', err.stack || err);
++  });
++
++  console.log('Navigating to login...');
++  await page.goto('http://demo.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded' });
++
++  await page.waitForTimeout(2000);
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++
++  await page.locator('[data-ai-id="auth-login-submit-button"]').click();
++
++  await page.waitForTimeout(5000);
++
++  await browser.close();
++})();
+diff --git a/test_login3.js b/test_login3.js
+new file mode 100644
+index 00000000..330ef61b
+--- /dev/null
++++ b/test_login3.js
+@@ -0,0 +1,33 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  page.on('response', async res => {
++    if (res.url().includes('login') && res.request().method() === 'POST') {
++      try {
++        const text = await res.text();
++        console.log('--- POST LOGIN RESPONSE (' + res.status() + ') ---');
++        console.log(text.substring(0, 500));
++        console.log('------------------------------');
++      } catch(e) {
++        console.log('Error reading response body:', e.message);
++      }
++    }
++  });
++
++  await page.goto('http://dev.localhost:9006/auth/login?redirect=/admin');
++  
++  await page.fill('#email', 'admin@bidexpert.com.br');
++  await page.fill('#password', 'Admin@123');
++  await page.click('button[type=submit]');
++  
++  await new Promise(r => setTimeout(r, 6000));
++  const cookies = await context.cookies();
++  console.log("COOKIES:", cookies);
++
++  await browser.close();
++})();
+\ No newline at end of file
+diff --git a/test_login4.js b/test_login4.js
+new file mode 100644
+index 00000000..c2c675f0
+--- /dev/null
++++ b/test_login4.js
+@@ -0,0 +1,33 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  page.on('response', async res => {
++    if (res.url().includes('login') && res.request().method() === 'POST') {
++      try {
++        const text = await res.text();
++        console.log('--- POST LOGIN RESPONSE (' + res.status() + ') ---');
++        console.log(text.substring(0, 1000));
++        console.log('------------------------------');
++      } catch(e) {
++        console.log('Error reading response body:', e.message);
++      }
++    }
++  });
++
++  await page.goto('http://dev.localhost:9006/auth/login?redirect=/admin');
++  
++  await page.fill('#email', 'admin@bidexpert.com.br');
++  await page.fill('#password', 'Admin@123');
++  await page.click('button[type=submit]');
++  
++  await new Promise(r => setTimeout(r, 6000));
++  const cookies = await context.cookies();
++  console.log("COOKIES AFTER POST:", JSON.stringify(cookies, null, 2));
++
++  await browser.close();
++})();
+\ No newline at end of file
+diff --git a/test_login5.js b/test_login5.js
+new file mode 100644
+index 00000000..1e081cf6
+--- /dev/null
++++ b/test_login5.js
+@@ -0,0 +1,31 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  page.on('response', async res => {
++    if (res.url().includes('login') && res.request().method() === 'POST') {
++      try {
++        const headers = await res.headersArray();
++        const setCookies = headers.filter(h => h.name.toLowerCase() === 'set-cookie');
++        console.log('--- POST LOGIN HEADERS ---');
++        console.log(JSON.stringify(setCookies, null, 2));
++      } catch(e) {
++        console.log('Error reading headers:', e.message);
++      }
++    }
++  });
++
++  await page.goto('http://dev.localhost:9006/auth/login?redirect=/admin');
++  
++  await page.fill('#email', 'admin@bidexpert.com.br');
++  await page.fill('#password', 'Admin@123');
++  await page.click('button[type=submit]');
++  
++  await new Promise(r => setTimeout(r, 6000));
++  
++  await browser.close();
++})();
+\ No newline at end of file
+diff --git a/test_login6.js b/test_login6.js
+new file mode 100644
+index 00000000..11b76acf
+--- /dev/null
++++ b/test_login6.js
+@@ -0,0 +1,30 @@
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  page.on('response', async res => {
++    if (res.url().includes('login') && res.request().method() === 'POST') {
++      try {
++        console.log('--- POST LOGIN HEADERS ---');
++        console.log(await res.allHeaders());
++      } catch(e) {}
++    }
++  });
++
++  await page.goto('http://dev.localhost:9006/auth/login?redirect=/admin');
++  
++  // Wait for DevUserSelector button for ADMIN to appear
++  await page.waitForSelector('button:has-text("ADMIN")');
++  console.log('Clicking Admin Dev User...');
++  await page.click('button:has-text("ADMIN")');
++  
++  await new Promise(r => setTimeout(r, 6000));
++  
++  console.log("COOKIES NOW:", await context.cookies());
++
++  await browser.close();
++})();
+\ No newline at end of file
+diff --git a/test_login6_output.txt b/test_login6_output.txt
+new file mode 100644
+index 00000000..9759add4
+--- /dev/null
++++ b/test_login6_output.txt
+@@ -0,0 +1,120 @@
++e_studio>  /firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",     'content-
++type': 'text/x-component',         date: 'Fr
++i, 20 Mar 2026 23:51:05 GMT',      'keep-ali
++ve': 'timeout=5',       'permissi
++ons-policy': 'camera=(), microphone=(), geolocation=(self)',        'referrer
++-policy': 'strict-origin-when-cross-origin',  'strict-t
++ransport-security': 'max-age=63072000; includeSubDomains; preload',            'transfer
++-encoding': 'chunked',
++  vary: 'RS
++C, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding',  'x-conten
++t-type-options': 'nosniff',        'x-dns-pr
++efetch-control': 'on',  'x-frame-
++options': 'SAMEORIGIN',            'x-powere
++d-by': 'Next.js',       'x-action
++-revalidated': '[[],0,0]'        }
++--- POST LO
++GIN HEADERS ---       {
++  'cache-co
++ntrol': 'no-store, must-revalidate',          connectio
++n: 'keep-alive',        'content-
++encoding': 'gzip',      'content-
++security-policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",     'content-
++type': 'text/x-component',         date: 'Fr
++i, 20 Mar 2026 23:51:07 GMT',      'keep-ali
++ve': 'timeout=5',       'permissi
++ons-policy': 'camera=(), microphone=(), geolocation=(self)',        'referrer
++-policy': 'strict-origin-when-cross-origin',  'strict-t
++ransport-security': 'max-age=63072000; includeSubDomains; preload',            'transfer
++-encoding': 'chunked',
++  vary: 'RS
++C, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding',  'x-conten
++t-type-options': 'nosniff',        'x-dns-pr
++efetch-control': 'on',  'x-frame-
++options': 'SAMEORIGIN',            'x-powere
++d-by': 'Next.js',       'x-action
++-revalidated': '[[],0,0]'        }
++--- POST LO
++GIN HEADERS ---       {
++  'cache-co
++ntrol': 'no-store, must-revalidate',          connectio
++n: 'keep-alive',        'content-
++encoding': 'gzip',      'content-
++security-policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",     'content-
++type': 'text/x-component',         date: 'Fr
++i, 20 Mar 2026 23:51:07 GMT',      'keep-ali
++ve': 'timeout=5',       'permissi
++ons-policy': 'camera=(), microphone=(), geolocation=(self)',        'referrer
++-policy': 'strict-origin-when-cross-origin',  'strict-t
++ransport-security': 'max-age=63072000; includeSubDomains; preload',            'transfer
++-encoding': 'chunked',
++  vary: 'RS
++C, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding',  'x-conten
++t-type-options': 'nosniff',        'x-dns-pr
++efetch-control': 'on',  'x-frame-
++options': 'SAMEORIGIN',            'x-powere
++d-by': 'Next.js',       'x-action
++-revalidated': '[[],0,0]'        }
++--- POST LO
++GIN HEADERS ---       {
++  'cache-co
++ntrol': 'no-store, must-revalidate',          connectio
++n: 'keep-alive',        'content-
++encoding': 'gzip',      'content-
++security-policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",     'content-
++type': 'text/x-component',         date: 'Fr
++i, 20 Mar 2026 23:51:07 GMT',      'keep-ali
++ve': 'timeout=5',       'permissi
++ons-policy': 'camera=(), microphone=(), geolocation=(self)',        'referrer
++-policy': 'strict-origin-when-cross-origin',  'strict-t
++ransport-security': 'max-age=63072000; includeSubDomains; preload',            'transfer
++-encoding': 'chunked',
++  vary: 'RS
++C, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding',  'x-conten
++t-type-options': 'nosniff',        'x-dns-pr
++efetch-control': 'on',  'x-frame-
++options': 'SAMEORIGIN',            'x-powere
++d-by': 'Next.js',       'x-action
++-revalidated': '[[],0,0]'        }
++--- POST LO
++GIN HEADERS ---       {
++  'cache-co
++ntrol': 'no-store, must-revalidate',          connectio
++n: 'keep-alive',        'content-
++encoding': 'gzip',      'content-
++security-policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",     'content-
++type': 'text/x-component',         date: 'Fr
++i, 20 Mar 2026 23:51:07 GMT',      'keep-ali
++ve': 'timeout=5',       'permissi
++ons-policy': 'camera=(), microphone=(), geolocation=(self)',        'referrer
++-policy': 'strict-origin-when-cross-origin',  'strict-t
++ransport-security': 'max-age=63072000; includeSubDomains; preload',            'transfer
++-encoding': 'chunked',
++  vary: 'RS
++C, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding',  'x-conten
++t-type-options': 'nosniff',        'x-dns-pr
++efetch-control': 'on',  'x-frame-
++options': 'SAMEORIGIN',            'x-powere
++d-by': 'Next.js',       'x-action
++-revalidated': '[[],0,0]'        }
++LOG: %c[Ver
++cel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit    LOG: %c[Ver
++cel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {route: /auth/login, path: /auth/login} LOG: %c[Ver
++cel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {route: /auth/login, path: /auth/login} LOG: %c[Ver
++cel Web Analytics]%c [view] http://dev.localhost:9006/auth/login?redirect=/admin color: rgb(120, 120, 120) color: inherit {o: http://dev.localhost:9006/auth/login?redirect=/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.6.1, ts: 1774050668142} /_vercel/insights/viewLOG: %c[Ver
++cel Web Analytics]%c [view] http://dev.localhost:9006/auth/login?redirect=/admin color: rgb(120, 120, 120) color: inherit {o: http://dev.localhost:9006/auth/login?redirect=/admin, sv: 0.1.3, sdkn: @vercel/analytics/next, sdkv: 1.6.1, ts: 1774050668143} /_vercel/insights/viewnode:intern
++al/process/promises:394              trigger
++UncaughtException(err, true /* fromPromise */);            ^      
++
++page.waitFo
++rSelector: Timeout 30000ms exceeded.        Call log:  
++  - waiting
++ for locator('button:has-text("ADMIN")') to be visible 
++    at E:\S
++martDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\test_login6.js:21:14 {           name: 'Ti
++meoutError'}
++
++Node.js v24
++.13.0      
++
++Command exited with code 1
+\ No newline at end of file
+diff --git a/test_login7.js b/test_login7.js
+new file mode 100644
+index 00000000..97993024
+--- /dev/null
++++ b/test_login7.js
+@@ -0,0 +1,39 @@
++﻿const { chromium } = require('playwright');
++(async () => {
++  console.log('starting browser...');
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  
++  page.on('response', async res => {
++    if (res.url().includes('login') && res.request().method() === 'POST') {
++      try {
++        console.log('--- POST LOGIN RESPONSE HEADERS ---');
++        console.log(await res.allHeaders());
++      } catch(e) {}
++    }
++  });
++
++  console.log('navigating...');
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded', timeout: 120000 });
++  console.log('navigating done!');
++  
++  await new Promise(r => setTimeout(r, 4000));
++  
++  await page.screenshot({ path: 'login7.png' });
++
++  // login manually
++  console.log('filling inputs');
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  await page.click('button[type="submit"]');
++  
++  await new Promise(r => setTimeout(r, 6000));
++  
++  console.log("COOKIES NOW:", await context.cookies());
++  await page.screenshot({ path: 'login7_after.png' });
++
++  await browser.close();
++})();
+diff --git a/test_login8.js b/test_login8.js
+new file mode 100644
+index 00000000..99b64f17
+--- /dev/null
++++ b/test_login8.js
+@@ -0,0 +1,30 @@
++﻿const fs = require('fs');
++const { chromium } = require('playwright');
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++  
++  let allHeadersCaptured = [];
++
++  page.on('response', async res => {
++    if (res.url().includes('login') && res.request().method() === 'POST') {
++      try {
++        allHeadersCaptured.push(await res.allHeaders());
++      } catch(e) {}
++    }
++  });
++
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'domcontentloaded', timeout: 120000 });
++  
++  await new Promise(r => setTimeout(r, 2000));
++  
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  await page.click('button[type="submit"]');
++  
++  await new Promise(r => setTimeout(r, 6000));
++  fs.writeFileSync('headers_captured.json', JSON.stringify(allHeadersCaptured, null, 2));
++
++  await browser.close();
++})();
+diff --git a/test_login9.js b/test_login9.js
+new file mode 100644
+index 00000000..f465a185
+--- /dev/null
++++ b/test_login9.js
+@@ -0,0 +1,25 @@
++const { chromium } = require('playwright');
++const fs = require('fs');
++
++(async () => {
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext();
++  const page = await context.newPage();
++
++  page.on('console', msg => console.log('LOG:', msg.text()));
++  page.on('framenavigated', frame => {
++    if (frame === page.mainFrame()) console.log('NAVIGATED:', frame.url());
++  });
++
++  await page.goto('http://dev.localhost:9014/auth/login?redirect=/admin', { waitUntil: 'networkidle' });
++
++  await page.fill('input[name="email"]', 'admin@bidexpert.com.br');
++  await page.fill('input[name="password"]', 'Admin@123');
++  
++  console.log('Clicking via playwright');
++  await page.click('button[type="submit"]');
++
++  await page.waitForTimeout(5000);
++  
++  await browser.close();
++})();
+diff --git a/test_output.txt b/test_output.txt
+index 1d07b46b..14082ebb 100644
+Binary files a/test_output.txt and b/test_output.txt differ
+diff --git a/tests/e2e/.auth/admin.json b/tests/e2e/.auth/admin.json
+index bf4e6f7a..b8dad296 100644
+--- a/tests/e2e/.auth/admin.json
++++ b/tests/e2e/.auth/admin.json
+@@ -2,10 +2,10 @@
+   "cookies": [
+     {
+       "name": "session",
+-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiLCJtYW5hZ2VfYXVjdGlvbnMiLCJtYW5hZ2VfdXNlcnMiLCJtYW5hZ2VfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NzM2MjgzNTUsImV4cCI6MTc3NDIzMzE1NX0.R8zU3haP_zQnE-A85tgoHNnMWeAWyWO1TbAmuJ2f3I8",
++      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiLCJtYW5hZ2VfYXVjdGlvbnMiLCJtYW5hZ2VfdXNlcnMiLCJtYW5hZ2VfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NzM5Nzg5MTEsImV4cCI6MTc3NDU4MzcxMX0.SOzdXt_F69omgfgqbwHYGHQxbWS52YbUDz4dLoxysvU",
+       "domain": "demo.localhost",
+       "path": "/",
+-      "expires": 1774233155.445799,
++      "expires": 1774583711.361113,
+       "httpOnly": true,
+       "secure": false,
+       "sameSite": "Lax"
+@@ -13,7 +13,7 @@
+   ],
+   "origins": [
+     {
+-      "origin": "http://demo.localhost:9006",
++      "origin": "http://demo.localhost:9014",
+       "localStorage": [
+         {
+           "name": "bidexpert-widget-preferences",
+@@ -21,11 +21,11 @@
+         },
+         {
+           "name": "bidexpert:currency-rates-updated-at",
+-          "value": "2026-03-16T02:32:48.332Z"
++          "value": "2026-03-20T03:55:14.034Z"
+         },
+         {
+           "name": "bidexpert:currency-rates",
+-          "value": "{\"BRL\":1,\"USD\":0.19072,\"EUR\":0.16619}"
++          "value": "{\"BRL\":1,\"USD\":0.18872,\"EUR\":0.16427}"
+         }
+       ]
+     }
+diff --git a/tests/e2e/public/lots-page.spec.ts b/tests/e2e/public/lots-page.spec.ts
+new file mode 100644
+index 00000000..5addc42d
+--- /dev/null
++++ b/tests/e2e/public/lots-page.spec.ts
+@@ -0,0 +1,199 @@
++/**
++ * @fileoverview E2E tests for the public /lots page.
++ *
++ * Validates rendering of grouped lot categories (Judicial, Extrajudicial,
++ * Venda Direta, Tomada de Preços) using AuctionLotCardV2 components.
++ *
++ * BDD Scenarios:
++ * - Given a visitor navigates to /lots
++ *   When the page loads
++ *   Then the heading "Lotes em Leilão" is visible
++ *   And at least one category section is rendered with lot cards
++ *
++ * - Given lot cards are rendered
++ *   When the visitor inspects a card
++ *   Then it contains gallery, title, location, pricing, timeline, and CTA
++ *
++ * - Given the /lots page is rendered
++ *   When the visitor clicks "DAR LANCE" on a card
++ *   Then the browser navigates to the lot detail page
++ */
++import { test, expect, type Page } from '@playwright/test';
++
++const BASE = process.env.BASE_URL || 'http://demo.localhost:9014';
++
++test.describe('Public /lots Page', () => {
++  test.beforeEach(async ({ page }) => {
++    await page.goto(`${BASE}/lots`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
++  });
++
++  // ── Page structure ──────────────────────────────────────────────────
++
++  test('should render page heading and summary', async ({ page }) => {
++    const heading = page.locator('[data-ai-id="lots-page-heading"]');
++    await expect(heading).toBeVisible({ timeout: 30_000 });
++    await expect(heading).toHaveText('Lotes em Leilão');
++
++    // Summary line should show count and categories
++    const header = page.locator('[data-ai-id="lots-page-header"]');
++    await expect(header.locator('p')).toContainText(/\d+ lotes encontrados em \d+ categorias/);
++  });
++
++  test('should render at least one category section with lot cards', async ({ page }) => {
++    const sections = [
++      'lots-section-judicial',
++      'lots-section-extrajudicial',
++      'lots-section-venda-direta',
++      'lots-section-tomada-de-precos',
++    ];
++
++    let visibleSections = 0;
++
++    for (const sectionId of sections) {
++      const section = page.locator(`[data-ai-id="${sectionId}"]`);
++      if (await section.isVisible()) {
++        visibleSections++;
++        // Each visible section must contain at least one card
++        const cards = section.locator('[data-ai-id="auction-lot-card-v2"]');
++        await expect(cards.first()).toBeVisible({ timeout: 10_000 });
++      }
++    }
++
++    expect(visibleSections).toBeGreaterThanOrEqual(1);
++  });
++
++  test('should NOT show empty state when lots exist', async ({ page }) => {
++    const emptyState = page.locator('[data-ai-id="lots-empty-state"]');
++    await expect(emptyState).not.toBeVisible();
++  });
++
++  // ── Card anatomy ────────────────────────────────────────────────────
++
++  test('card should contain all required sub-sections', async ({ page }) => {
++    const firstCard = page.locator('[data-ai-id="auction-lot-card-v2"]').first();
++    await expect(firstCard).toBeVisible({ timeout: 30_000 });
++
++    // Gallery with image
++    const gallery = firstCard.locator('[data-ai-id="card-v2-gallery"]');
++    await expect(gallery).toBeVisible();
++    await expect(gallery.locator('img').first()).toBeVisible();
++
++    // Header with title
++    const title = firstCard.locator('[data-ai-id="card-v2-title"]');
++    await expect(title).toBeVisible();
++    const titleText = await title.textContent();
++    expect(titleText?.trim().length).toBeGreaterThan(0);
++
++    // Location
++    const location = firstCard.locator('[data-ai-id="card-v2-location"]');
++    await expect(location).toBeVisible();
++
++    // KPI row (visits, qualified, bids)
++    const kpi = firstCard.locator('[data-ai-id="card-v2-kpi"]');
++    await expect(kpi).toBeVisible();
++
++    // Pricing
++    const pricing = firstCard.locator('[data-ai-id="card-v2-pricing"]');
++    await expect(pricing).toBeVisible();
++    await expect(pricing).toContainText(/R\$/);
++
++    // Timeline
++    const timeline = firstCard.locator('[data-ai-id="card-v2-timeline"]');
++    await expect(timeline).toBeVisible();
++
++    // Actions with CTA
++    const actions = firstCard.locator('[data-ai-id="card-v2-actions"]');
++    await expect(actions).toBeVisible();
++    const cta = firstCard.locator('[data-ai-id="card-v2-cta"]');
++    await expect(cta).toBeVisible();
++    await expect(cta).toContainText(/DAR LANCE/i);
++  });
++
++  // ── Judicial section detail ─────────────────────────────────────────
++
++  test('Judicial section should show section title and badge count', async ({ page }) => {
++    const judicial = page.locator('[data-ai-id="lots-section-judicial"]');
++    if (!(await judicial.isVisible())) {
++      test.skip();
++      return;
++    }
++
++    // Section heading
++    await expect(judicial.getByRole('heading', { level: 2 })).toHaveText('Leilões Judiciais');
++
++    // Badge with count (number inside a span/badge next to heading)
++    const badge = judicial.locator('h2 + span, h2 ~ span').first();
++    const badgeText = await badge.textContent();
++    expect(Number(badgeText?.trim())).toBeGreaterThan(0);
++  });
++
++  // ── Navigation (CTA click) ─────────────────────────────────────────
++
++  test('clicking "DAR LANCE" should navigate to lot detail', async ({ page }) => {
++    const firstCta = page.locator('[data-ai-id="card-v2-cta"]').first();
++    await expect(firstCta).toBeVisible({ timeout: 30_000 });
++
++    const href = await firstCta.getAttribute('href');
++    expect(href).toMatch(/\/lots\/\d+/);
++
++    // CTA links to /lots/:id which may redirect to /auctions/:id/lots/:slug
++    await firstCta.click({ noWaitAfter: true });
++    // Wait for any navigation away from /lots listing page
++    await page.waitForURL((url) => !url.pathname.endsWith('/lots'), { timeout: 90_000 });
++    const finalUrl = page.url();
++    expect(finalUrl).toMatch(/\/(lots\/\d+|auctions\/\d+\/lots\/)/);
++  });
++
++  // ── Responsive grid ─────────────────────────────────────────────────
++
++  test('cards should be in a responsive grid layout', async ({ page }) => {
++    // At desktop viewport, there should be multiple cards per row
++    const section = page.locator('[data-ai-id="lots-section-judicial"], [data-ai-id="lots-section-extrajudicial"]').first();
++    if (!(await section.isVisible())) {
++      test.skip();
++      return;
++    }
++
++    const cards = section.locator('[data-ai-id="auction-lot-card-v2"]');
++    const cardCount = await cards.count();
++    expect(cardCount).toBeGreaterThanOrEqual(1);
++
++    // Cards should have non-zero dimensions
++    const firstCardBox = await cards.first().boundingBox();
++    expect(firstCardBox).not.toBeNull();
++    expect(firstCardBox!.width).toBeGreaterThan(200);
++    expect(firstCardBox!.height).toBeGreaterThan(200);
++  });
++
++  // ── Accessibility basics ────────────────────────────────────────────
++
++  test('page should have proper heading hierarchy', async ({ page }) => {
++    // Single h1
++    const h1s = page.getByRole('heading', { level: 1 });
++    await expect(h1s).toHaveCount(1);
++
++    // h2s for category sections
++    const h2s = page.locator('[data-ai-id^="lots-section-"] h2');
++    const h2Count = await h2s.count();
++    expect(h2Count).toBeGreaterThanOrEqual(1);
++
++    // h3s for card titles
++    const h3s = page.locator('[data-ai-id="card-v2-title"]');
++    const h3Count = await h3s.count();
++    expect(h3Count).toBeGreaterThanOrEqual(1);
++  });
++
++  test('CTA links should have accessible text', async ({ page }) => {
++    const ctas = page.locator('[data-ai-id="card-v2-cta"]');
++    const firstCta = ctas.first();
++    await expect(firstCta).toBeVisible({ timeout: 30_000 });
++
++    // CTA should be an anchor with text
++    const text = await firstCta.textContent();
++    expect(text?.trim().length).toBeGreaterThan(0);
++
++    // Should have href
++    const href = await firstCta.getAttribute('href');
++    expect(href).toBeTruthy();
++  });
++});
