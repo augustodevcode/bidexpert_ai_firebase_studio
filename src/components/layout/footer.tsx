@@ -5,6 +5,7 @@ import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 export default function Footer() {
   const quickLinks = [
+    { href: '/lots', label: 'Todos os Lotes' },
     { href: '/about', label: 'Sobre Nós' },
     { href: '/contact', label: 'Contato' },
     { href: '/faq', label: 'FAQ' },
