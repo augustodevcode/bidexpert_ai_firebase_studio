@@ -55,6 +55,27 @@ function getCategoryLabels(category: AuctionCategory) {
 
 const hasTimeline = (cat: AuctionCategory) => cat === 'Judicial' || cat === 'Extrajudicial';
 
+function getDisplayDiscountPercentage(
+  minimumBid: number,
+  evaluation: number,
+  discountPercentage?: number,
+): number | undefined {
+  if (typeof discountPercentage === 'number' && Number.isFinite(discountPercentage) && discountPercentage > 0) {
+    return Math.round(discountPercentage);
+  }
+
+  if (!Number.isFinite(minimumBid) || !Number.isFinite(evaluation) || minimumBid <= 0 || evaluation <= 0) {
+    return undefined;
+  }
+
+  if (evaluation <= minimumBid) {
+    return undefined;
+  }
+
+  const derivedPercentage = ((evaluation - minimumBid) / evaluation) * 100;
+  return derivedPercentage > 0 ? Math.round(derivedPercentage) : undefined;
+}
+
 /* ─── Component ─── */
 
 interface AuctionLotCardV2Props {
@@ -65,6 +86,11 @@ interface AuctionLotCardV2Props {
 export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Props) {
   const [imgIdx, setImgIdx] = useState(0);
   const images = item.images.length > 0 ? item.images : ['/images/placeholder-lot.webp'];
+  const displayDiscountPercentage = getDisplayDiscountPercentage(
+    item.pricing.minimumBid,
+    item.pricing.evaluation,
+    item.pricing.discountPercentage,
+  );
 
   const prevImg = useCallback(
     (e: React.MouseEvent) => {
@@ -275,9 +301,9 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             )}
           </div>
           <div className="text-right flex flex-col items-end gap-1">
-            {item.pricing.discountPercentage != null && item.pricing.discountPercentage > 0 && (
+            {displayDiscountPercentage != null && displayDiscountPercentage > 0 && (
               <span className="bg-green-500/10 text-green-500 text-[10px] font-black px-2 py-1 rounded-md border border-green-500/20">
-                {item.pricing.discountPercentage}% OFF
+                {displayDiscountPercentage}% OFF
               </span>
             )}
             <div className="text-[10px] text-gray-500 font-medium">
