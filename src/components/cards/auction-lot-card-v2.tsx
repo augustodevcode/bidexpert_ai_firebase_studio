@@ -5,11 +5,13 @@
  */
 'use client';
 
-import { useState, useCallback, Fragment } from 'react';
-import { Heart, Eye, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useCallback, Fragment, useEffect, useRef } from 'react';
+import { Heart, Eye, Share2, ChevronLeft, ChevronRight, X, Facebook, MessageSquareText, Mail, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatCompact } from '@/lib/format';
 import type { AuctionItem, AuctionCategory } from './auction-lot-card-v2.types';
+import { useToast } from '@/hooks/use-toast';
+import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 
 /* ─── Helpers ─── */
 
@@ -92,6 +94,90 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
     item.pricing.discountPercentage,
   );
 
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [lotFullUrl, setLotFullUrl] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [countdown, setCountdown] = useState(item.timeline.timeRemaining);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setIsFavorited(isLotFavoriteInStorage(item.id));
+    if (typeof window !== 'undefined') {
+      setLotFullUrl(`${window.location.origin}/lots/${item.id}`);
+    }
+  }, [item.id]);
+
+  useEffect(() => {
+    if (!item.timeline.endDate) return;
+    const calculate = () => {
+      const diff = new Date(item.timeline.endDate!).getTime() - Date.now();
+      if (diff <= 0) { setCountdown('Encerrado'); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const hh = String(h).padStart(2, '0');
+      const mm = String(m).padStart(2, '0');
+      const ss = String(s).padStart(2, '0');
+      setCountdown(d > 0 ? `${d}d ${hh}:${mm}:${ss}` : `${hh}:${mm}:${ss}`);
+    };
+    calculate();
+    const id = setInterval(calculate, 1000);
+    return () => clearInterval(id);
+  }, [item.timeline.endDate]);
+
+  useEffect(() => {
+    if (!showShareMenu) return;
+    const close = (e: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(e.target as Node)) {
+        setShowShareMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [showShareMenu]);
+
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = !isFavorited;
+    setIsFavorited(next);
+    if (next) addFavoriteLotIdToStorage(item.id);
+    else removeFavoriteLotIdFromStorage(item.id);
+    toast({
+      title: next ? 'Adicionado aos Favoritos' : 'Removido dos Favoritos',
+      description: `"${item.title}" foi ${next ? 'adicionado à' : 'removido da'} sua lista.`,
+    });
+  };
+
+  const handleShareToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowShareMenu((p) => !p);
+  };
+
+  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email') => {
+    const url = encodeURIComponent(lotFullUrl);
+    const title = encodeURIComponent(item.title);
+    switch (platform) {
+      case 'x': return `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+      case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      case 'whatsapp': return `https://api.whatsapp.com/send?text=${title}%20${url}`;
+      case 'email': return `mailto:?subject=${title}&body=${url}`;
+    }
+  };
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(lotFullUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   const prevImg = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -138,13 +224,15 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 z-20">
           <button
             type="button"
+            onClick={handleFavoriteToggle}
             className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
             aria-label="Adicionar aos favoritos"
           >
-            <Heart className="w-5 h-5" />
+            <Heart className={cn('w-5 h-5', isFavorited && 'fill-red-500 text-red-500')} />
           </button>
           <button
             type="button"
+            onClick={() => { window.location.href = `/lots/${item.id}`; }}
             className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
             aria-label="Ver detalhes"
           >
@@ -152,6 +240,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           </button>
           <button
             type="button"
+            onClick={handleShareToggle}
             className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
             aria-label="Compartilhar"
           >
@@ -401,10 +490,16 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
               Termina em
             </span>
             <span className="font-[family-name:var(--font-card-display)] font-bold text-sm text-primary">
-              {item.timeline.timeRemaining}
+              {countdown}
             </span>
           </div>
         </div>
+        {item.stats.visits > 0 && (
+          <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1.5">
+            <span className="inline-flex w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
+            {item.stats.visits} olhando
+          </span>
+        )}
       </div>
 
       <div className="p-4 pt-2 flex gap-3" data-ai-id="card-v2-actions">
@@ -418,23 +513,53 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             <path clipRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" fillRule="evenodd" />
           </svg>
         </a>
+        <div className="relative flex-1" ref={shareMenuRef}>
+          <button
+            type="button"
+            onClick={handleShareToggle}
+            className="w-full h-full brutalist-border rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-colors py-3.5"
+            aria-label="Compartilhar este lote"
+          >
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+            </svg>
+          </button>
+          {showShareMenu && (
+            <div
+              className="absolute bottom-full right-0 mb-2 w-48 bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl overflow-hidden z-50"
+              role="menu"
+            >
+              <a href={getSocialLink('x')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
+                <X className="h-4 w-4" /> Compartilhar no X
+              </a>
+              <a href={getSocialLink('facebook')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
+                <Facebook className="h-4 w-4" /> Facebook
+              </a>
+              <a href={getSocialLink('whatsapp')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
+                <MessageSquareText className="h-4 w-4" /> WhatsApp
+              </a>
+              <a href={getSocialLink('email')} className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
+                <Mail className="h-4 w-4" /> Email
+              </a>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors border-t border-neutral-700"
+                role="menuitem"
+              >
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                {copied ? 'Link copiado!' : 'Copiar link'}
+              </button>
+            </div>
+          )}
+        </div>
         <button
           type="button"
-          className="flex-1 brutalist-border rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-colors"
-          aria-label="Compartilhar este lote"
-        >
-          <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-          </svg>
-        </button>
-        <button
-          type="button"
+          onClick={handleFavoriteToggle}
           className="flex-1 brutalist-border rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-colors"
           aria-label="Adicionar aos favoritos"
         >
-          <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path clipRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" fillRule="evenodd" />
-          </svg>
+          <Heart className={cn('h-5 w-5', isFavorited ? 'fill-red-500 text-red-500' : 'text-red-500')} />
         </button>
       </div>
     </article>

@@ -35,6 +35,8 @@ export interface AuctionItemTimeline {
   stage1: StageInfo;
   stage2?: StageInfo;
   timeRemaining: string;
+  /** ISO date string used to compute a live countdown when provided */
+  endDate?: string;
 }
 
 export interface Comitente {
