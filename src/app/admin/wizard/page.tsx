@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
 import { AssetFormV2 } from '@/app/admin/assets/asset-form-v2';
+import { appendSessionAssetId, getSessionScopedAssets } from '@/components/admin/wizard/wizard-session-utils';
 
 
 const allSteps = [
@@ -75,16 +76,16 @@ function WizardContent({
   const assetsForLotting = useMemo(() => {
     if (!fetchedData?.availableAssets) return [];
 
-    if (wizardData.auctionType === 'JUDICIAL') {
-      return wizardData.judicialProcess
+    const scopedAssets = wizardData.auctionType === 'JUDICIAL'
+      ? (wizardData.judicialProcess
         ? fetchedData.availableAssets.filter(asset => asset.judicialProcessId === wizardData.judicialProcess!.id)
-        : [];
-    } else {
-      return wizardData.auctionDetails?.sellerId
+        : [])
+      : (wizardData.auctionDetails?.sellerId
         ? fetchedData.availableAssets.filter(asset => asset.sellerId === wizardData.auctionDetails!.sellerId)
-        : [];
-    }
-  }, [fetchedData?.availableAssets, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
+        : []);
+
+    return getSessionScopedAssets(scopedAssets, wizardData.sessionAssetIds);
+  }, [fetchedData?.availableAssets, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId, wizardData.sessionAssetIds]);
 
   const handleNextStep = () => {
     if (currentStepId === 'auction') {
@@ -104,8 +105,12 @@ function WizardContent({
     setIsDataRefetching(false);
   }
   
-  const handleAssetCreated = async () => {
+  const handleAssetCreated = async (assetId?: string) => {
     toast({ title: "Sucesso!", description: "Ativo cadastrado com sucesso." });
+    setWizardData((prev) => ({
+      ...prev,
+      sessionAssetIds: appendSessionAssetId(prev.sessionAssetIds, assetId),
+    }));
     setIsDataRefetching(true);
     await refetchData(wizardData.judicialProcess?.id?.toString());
     setWizardMode('main');

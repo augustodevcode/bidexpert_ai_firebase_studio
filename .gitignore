@@ -56,6 +56,8 @@ firestore-debug.log
 /blob-report/
 /playwright/.cache/
 .playwright-chrome-data/
+/tests/e2e/screenshots/
+/tests/e2e/.debug/
 
 # IDX specific
 .idx/
@@ -110,6 +112,8 @@ test_full*.txt
 test-output*.txt
 test_output*.txt
 test_partial*.txt
+test-run-output.txt
+_test_result.txt
 monitor_diff.txt
 monitor-test-results.txt
 last_build_check.txt
@@ -131,3 +135,10 @@ seed-output-*.log
 playwright-results.json
 test-media-library.png
 security-audit-results.log
+_inspect_auction_state.cjs
+_q.js
+_q2.js
+_q3.js
+start-dev.js
+scripts/cleanup-auction-185.js
+scripts/create-lots-189.ts
