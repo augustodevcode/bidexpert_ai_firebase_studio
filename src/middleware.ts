@@ -2,10 +2,17 @@
 /**
  * @fileoverview Middleware de roteamento multi-tenant inteligente para BidExpert.
  * 
- * Resolve o tenant através de três estratégias (em ordem de prioridade):
- * 1. Domínio Customizado - Se o host não for bidexpert.com.br
- * 2. Subdomínio - Se o host terminar em .bidexpert.com.br
- * 3. Path - Se a URL começar com /app/[slug]
+ * Resolve o tenant através de quatro estratégias (em ordem de prioridade):
+ * 1. Subdomínio localhost - demo.localhost:9005 → tenant "demo"
+ * 2. Domínio Landlord / Vercel - bidexpert.com.br, *.vercel.app → Landlord
+ * 3. Subdomínio de tenant - crm.bidexpert.com.br → tenant "crm"
+ *    (subdomínios reservados como hml, demo, www são tratados como landlord)
+ * 4. Domínio customizado - meusite.com → tenant via DNS CNAME
+ * 
+ * Ambientes Vercel por branch:
+ * - main → bidexpert.com.br (produção)
+ * - demo-stable → demo.bidexpert.com.br
+ * - hml → hml.bidexpert.com.br
  * 
  * Suporta SSL termination via X-Forwarded-Host para proxies reversos
  * (Nginx, Caddy, Cloudflare for SaaS).
@@ -42,10 +49,37 @@ const LANDLORD_ID = '1';
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:9002';
 const LANDLORD_URL = process.env.LANDLORD_URL || 'bidexpert.com.br';
 
+/**
+ * Subdomínios reservados que NÃO representam tenants.
+ * Quando acessados como <reserved>.bidexpert.com.br, são tratados como domínio landlord
+ * (ambiente/infraestrutura) em vez de subdomínio de tenant.
+ *
+ * - hml / demo / staging: Ambientes Vercel mapeados por branch
+ * - www / api / admin / app: Subdomínios de infraestrutura
+ * - mail / smtp / ftp / ns1 / ns2: Subdomínios DNS/infra
+ */
+const RESERVED_SUBDOMAINS = new Set([
+  'www',
+  'hml',
+  'demo',
+  'staging',
+  'api',
+  'admin',
+  'app',
+  'mail',
+  'smtp',
+  'ftp',
+  'ns1',
+  'ns2',
+]);
+
 // Domínios que resolvem para o Landlord (admin da plataforma)
 const LANDLORD_DOMAINS = [
   LANDLORD_URL,
   `www.${LANDLORD_URL}`,
+  `hml.${LANDLORD_URL}`,
+  `demo.${LANDLORD_URL}`,
+  `staging.${LANDLORD_URL}`,
   APP_DOMAIN,
   'localhost',
   'localhost:9002',
@@ -169,26 +203,42 @@ async function resolveTenantFromRequest(
   }
 
   // 3. Check for subdomain pattern: [subdomain].bidexpert.com.br
+  //    Also matches against LANDLORD_URL for production wildcard tenants.
   const appDomainNormalized = APP_DOMAIN.replace(/:\d+$/, '');
-  const subdomainPattern = new RegExp(
-    `^(?!www\\.)([a-z0-9-]+)\\.${appDomainNormalized.replace(/\./g, '\\.')}$`,
-    'i'
-  );
-  const subdomainMatch = hostWithoutPort.match(subdomainPattern);
+  const landlordUrlNormalized = LANDLORD_URL.replace(/:\d+$/, '');
   
-  if (subdomainMatch) {
-    const subdomain = normalizeTenantToken(subdomainMatch[1]);
-    if (!subdomain) {
+  // Match against both APP_DOMAIN and LANDLORD_URL (may differ in dev vs prod)
+  const domainsToCheck = new Set([appDomainNormalized, landlordUrlNormalized]);
+  let resolvedSubdomain: string | null = null;
+
+  for (const baseDomain of domainsToCheck) {
+    const subdomainPattern = new RegExp(
+      `^([a-z0-9-]+)\\.${baseDomain.replace(/\./g, '\\.')}$`,
+      'i'
+    );
+    const subdomainMatch = hostWithoutPort.match(subdomainPattern);
+    if (subdomainMatch) {
+      resolvedSubdomain = normalizeTenantToken(subdomainMatch[1]);
+      break;
+    }
+  }
+
+  if (resolvedSubdomain) {
+    // Reserved subdomains (hml, demo, www, api, etc.) are NOT tenants —
+    // they are infrastructure/environment endpoints treated as landlord.
+    if (RESERVED_SUBDOMAINS.has(resolvedSubdomain)) {
+      const defaultTenant = normalizeTenantToken(process.env.NEXT_PUBLIC_DEFAULT_TENANT);
       return {
-        tenantId: LANDLORD_ID,
-        subdomain: null,
+        tenantId: defaultTenant || LANDLORD_ID,
+        subdomain: null, // Not a tenant subdomain — keep selector editable
         isCustomDomain: false,
         isPathBased: false,
       };
     }
+
     return {
-      tenantId: subdomain, // Será resolvido para ID na rota
-      subdomain,
+      tenantId: resolvedSubdomain, // Será resolvido para ID na rota
+      subdomain: resolvedSubdomain,
       isCustomDomain: false,
       isPathBased: false,
     };
@@ -220,21 +270,34 @@ export async function middleware(req: NextRequest) {
 
   // REDIRECT STRATEGY: Root path on Landlord domain redirects to CRM (Sales Page)
   // Only applies if we are at root path '/' and resolved to Landlord (not a specific tenant subdomain)
+  // Also skips redirect for environment subdomains (hml.bidexpert.com.br, demo.bidexpert.com.br)
   if (resolution.tenantId === LANDLORD_ID && pathname === '/') {
     const protocol = req.nextUrl.protocol;
     const portSuffix = req.nextUrl.port ? `:${req.nextUrl.port}` : '';
-    // Determine base domain from hostname (remove subdomains if any, though LANDLORD mostly doesn't have them except www)
-    const baseDomain = hostname.replace('www.', '').replace(/:\d+$/, ''); 
+    const rawHost = (forwardedHost || hostname || '').toLowerCase().replace(/:\d+$/, '');
 
     // Skip redirect if accessing via IP address (avoids malformed URL crm.127.0.0.1)
-    if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(baseDomain)) {
+    if (/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(rawHost)) {
       return NextResponse.next();
     }
 
     // Skip redirect for .vercel.app domains (Vercel does NOT support wildcard subdomains)
-    if (/\.vercel\.app$/i.test(baseDomain)) {
+    if (/\.vercel\.app$/i.test(rawHost)) {
       return NextResponse.next();
     }
+
+    // Skip redirect for environment subdomains (hml.*, demo.*, staging.*)
+    // These are standalone apps that should NOT redirect to crm.*
+    const landlordUrlNorm = LANDLORD_URL.replace(/:\d+$/, '').toLowerCase();
+    const envSubdomainMatch = rawHost.match(
+      new RegExp(`^([a-z0-9-]+)\\.${landlordUrlNorm.replace(/\./g, '\\.')}$`)
+    );
+    if (envSubdomainMatch && RESERVED_SUBDOMAINS.has(envSubdomainMatch[1])) {
+      return NextResponse.next();
+    }
+
+    // Only redirect apex (bidexpert.com.br) or www to CRM
+    const baseDomain = rawHost.replace('www.', '');
     
     // Construct CRM URL
     const crmUrl = `${protocol}//crm.${baseDomain}${portSuffix}`;
