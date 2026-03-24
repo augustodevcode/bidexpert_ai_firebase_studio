@@ -168,8 +168,9 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ OBRIGATÓRIO usar `BidExpertAuctionStagesTimeline`  
 ✅ Integrado em `AuctionCard` e `AuctionListItem`  
 ✅ Busca última etapa do leilão para countdown
-✅ Em superfícies de **leilão** (detalhes e modais), a timeline deve usar o **status bruto da praça** e **nunca** exibir valores monetários.
+✅ Em superfícies de **leilão** (detalhes e modais), a timeline deve usar o **estado temporal efetivo da praça** (`startDate`/`endDate`) como fonte primária; `stage.status` bruto só pode complementar casos explícitos como rascunho/cancelado, e a timeline **nunca** pode exibir uma praça futura ou passada como aberta.
 ✅ Em superfícies de **lote** (detalhes e modais), a timeline deve usar o **status derivado do lote na praça** e pode exibir valores por praça (`LotStagePrice`/fallback do lote).
+✅ Cards, listitems e página de detalhes do mesmo lote/leilão DEVEM compartilhar a mesma máquina de estado temporal para badge, timeline e cronômetro; é proibido manter pipelines paralelos que derivem status diferentes para a mesma janela de tempo.
 ✅ Ícones contextuais de praça são obrigatórios em **detalhes**, **modais** e **forms**; são proibidos em **cards** e **listitems**, que devem permanecer compactos.
 
 **Cenário BDD - Leilão sem valores na timeline**
@@ -364,6 +365,21 @@ Validar transitions no service com erros descritivos
 - **Dado** um usuário acessando `/login?redirect=/admin`
 - **Quando** a rota é resolvida no App Router
 - **Então** o usuário é redirecionado para `/auth/login?redirect=/admin`
+
+### RN-020B: Isolamento de Sessão no Wizard de Leilão
+✅ O passo de loteamento do wizard DEVE operar apenas sobre os ativos explicitamente escolhidos ou criados na sessão corrente quando houver `assetId`s recém-criados em memória.
+✅ Refetches do wizard após criar processo ou ativo NÃO podem reintroduzir ativos antigos do mesmo comitente/processo na lista elegível de loteamento.
+✅ Cenários E2E do wizard DEVEM selecionar processo judicial por identidade determinística (`processNumber`) e ativos por identidade determinística (`title` ou `data-ai-id`), nunca pelo "primeiro disponível".
+
+**Cenário BDD - Refetch não contamina loteamento com ativos antigos**
+- **Dado** um wizard em andamento com ativos históricos já existentes para o mesmo comitente ou processo
+- **Quando** o usuário cria um novo ativo inline e o wizard refaz a carga de dados
+- **Então** a etapa de loteamento exibe somente os ativos da sessão corrente para loteamento individual
+
+**Cenário BDD - Seleção judicial determinística no wizard**
+- **Dado** que existem vários processos judiciais disponíveis no tenant
+- **Quando** o fluxo do wizard precisa vincular um processo específico de referência
+- **Então** a seleção deve ocorrer pelo número do processo e não pela primeira linha disponível na tabela
 
 ### RN-021: Padrão de IDs BigInt em Front/Back
 Endpoints e services devem aceitar/retornar IDs numéricos  

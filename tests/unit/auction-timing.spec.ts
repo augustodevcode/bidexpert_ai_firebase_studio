@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  getAuctionStageTimelineStatus,
   getAuctionStageChronologyError,
   getEffectiveAuctionStatus,
   getEffectiveLotStatus,
@@ -73,5 +74,31 @@ describe('auction-timing helpers', () => {
     );
 
     expect(status).toBe('EM_BREVE');
+  });
+
+  it('marca praça como encerrada pela data mesmo com status bruto aberto', () => {
+    const status = getAuctionStageTimelineStatus(
+      {
+        startDate: '2026-03-17T23:29:00Z',
+        endDate: '2026-03-18T23:29:00Z',
+      } as any,
+      new Date('2026-03-23T23:59:00Z'),
+    );
+
+    expect(status).toBe('completed');
+  });
+
+  it('normaliza lote em pregão para aberto quando a janela efetiva ainda está ativa', () => {
+    const status = getEffectiveLotStatus(
+      {
+        status: 'EM_PREGAO',
+        auctionDate: '2026-03-23T22:00:00Z',
+        endDate: '2026-03-24T01:00:00Z',
+      } as any,
+      undefined,
+      new Date('2026-03-23T23:00:00Z'),
+    );
+
+    expect(status).toBe('ABERTO_PARA_LANCES');
   });
 });

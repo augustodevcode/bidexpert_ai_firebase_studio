@@ -6,11 +6,15 @@
 import { prisma } from '@/lib/prisma';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  getAuctionStageTimelineStatus,
+  getEffectiveLotStatus,
+  getLotEffectiveDates,
+} from '@/lib/auction-timing';
 import type {
   AuctionItem,
   AuctionCategory,
   StageInfo,
-  StageStatus,
 } from '@/components/cards/auction-lot-card-v2.types';
 
 /* ------------------------------------------------------------------ */
@@ -23,18 +27,6 @@ const AUCTION_TYPE_TO_CATEGORY: Record<string, AuctionCategory> = {
   VENDA_DIRETA: 'Venda Direta',
   TOMADA_DE_PRECOS: 'Tomada de Preços',
   PARTICULAR: 'Extrajudicial', // fallback
-};
-
-const STAGE_STATUS_MAP: Record<string, StageStatus> = {
-  ABERTO: 'Em Andamento',
-  EM_ANDAMENTO: 'Em Andamento',
-  AGUARDANDO_INICIO: 'Aguardando',
-  FECHADO: 'Encerrada',
-  CONCLUIDO: 'Encerrada',
-  CANCELADO: 'Encerrada',
-  SUSPENSO: 'Aguardando',
-  DESERTO: 'Encerrada',
-  FRUSTRADO: 'Encerrada',
 };
 
 /** Visible lot statuses for the public page. */
@@ -118,18 +110,21 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     name: string;
     status?: string;
     startDate: Date;
+    endDate?: Date | null;
   }): StageInfo => ({
     name: s.name,
-    status: STAGE_STATUS_MAP[s.status ?? ''] ?? 'Aguardando',
+    status:
+      getAuctionStageTimelineStatus(s) === 'active'
+        ? 'Em Andamento'
+        : getAuctionStageTimelineStatus(s) === 'completed'
+          ? 'Encerrada'
+          : 'Aguardando',
     date: new Date(s.startDate).toLocaleDateString('pt-BR'),
   });
 
-  const lastStage = stages[stages.length - 1];
-  const relevantEndDate = lastStage?.endDate
-    ? new Date(lastStage.endDate)
-    : lot.endDate
-      ? new Date(lot.endDate)
-      : null;
+  const effectiveLotStatus = getEffectiveLotStatus(lot, auction) ?? lot.status;
+  const { effectiveLotEndDate } = getLotEffectiveDates(lot, auction);
+  const relevantEndDate = effectiveLotEndDate;
 
   const seller = lot.Seller ?? auction.Seller;
 
@@ -161,8 +156,8 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
       endDate: relevantEndDate ? relevantEndDate.toISOString() : undefined,
     },
     images: buildImageList(lot),
-    isLive: lot.status === 'EM_PREGAO',
-    isOpen: lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_PREGAO',
+    isLive: lot.status === 'EM_PREGAO' && effectiveLotStatus === 'ABERTO_PARA_LANCES',
+    isOpen: effectiveLotStatus === 'ABERTO_PARA_LANCES',
     comitente: seller
       ? { name: seller.name, logo: seller.logoUrl ?? '', url: seller.website ?? '#' }
       : undefined,

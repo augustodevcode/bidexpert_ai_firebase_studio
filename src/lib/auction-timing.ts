@@ -13,7 +13,9 @@ type StageLike = Partial<
 const TERMINAL_AUCTION_STATUSES = new Set<string>(['ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO']);
 const OPENISH_AUCTION_STATUSES = new Set<string>(['ABERTO', 'ABERTO_PARA_LANCES', 'EM_BREVE']);
 const TERMINAL_LOT_STATUSES = new Set<string>(['ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'RELISTADO', 'CANCELADO', 'RETIRADO']);
-const OPENISH_LOT_STATUSES = new Set<string>(['ABERTO_PARA_LANCES', 'EM_BREVE']);
+const OPENISH_LOT_STATUSES = new Set<string>(['ABERTO_PARA_LANCES', 'EM_BREVE', 'EM_PREGAO']);
+
+export type TemporalStageStatus = 'completed' | 'active' | 'upcoming';
 
 export const toValidDate = (value: DateLike): Date | null => {
   if (!value) {
@@ -88,6 +90,28 @@ export const getAuctionEffectiveDates = (
       toValidDate(orderedStages[orderedStages.length - 1]?.endDate) ||
       toValidDate(auction?.endDate),
   };
+};
+
+export const getAuctionStageTimelineStatus = (
+  stage?: Pick<AuctionStage, 'startDate' | 'endDate'> | null,
+  referenceDate = new Date(),
+): TemporalStageStatus => {
+  const startDate = toValidDate(stage?.startDate);
+  const endDate = toValidDate(stage?.endDate);
+
+  if (endDate && referenceDate.getTime() > endDate.getTime()) {
+    return 'completed';
+  }
+
+  if (
+    startDate &&
+    referenceDate.getTime() >= startDate.getTime() &&
+    (!endDate || referenceDate.getTime() <= endDate.getTime())
+  ) {
+    return 'active';
+  }
+
+  return 'upcoming';
 };
 
 export const getLotEffectiveDates = (
