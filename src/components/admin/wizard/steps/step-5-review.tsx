@@ -11,15 +11,27 @@ import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { createAuctionFromWizard } from '@/app/admin/wizard/actions';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
+import { buildWizardReviewSections, type WizardReviewItem } from '../wizard-review-sections';
+
+function ReviewItemList({ items, testId }: { items: WizardReviewItem[]; testId: string }) {
+  return (
+    <dl className="space-y-3 text-sm" data-ai-id={testId}>
+      {items.map((item) => (
+        <div key={item.label} className="grid grid-cols-1 gap-1 md:grid-cols-[220px_minmax(0,1fr)] md:gap-3">
+          <dt className="font-medium text-foreground">{item.label}</dt>
+          <dd className="break-all text-muted-foreground">{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 export default function Step5Review() {
-  const { wizardData, resetWizard } = useWizard();
+  const { wizardData } = useWizard();
   const [isPublishing, setIsPublishing] = useState(false);
   const { toast } = useToast();
-  const router = useRouter();
 
 
   const {
@@ -36,18 +48,19 @@ export default function Step5Review() {
     TOMADA_DE_PRECOS: 'Tomada de Preços',
     VENDA_DIRETA: 'Venda Direta',
   };
+  const reviewSections = buildWizardReviewSections(auctionDetails);
 
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
       const result = await createAuctionFromWizard(wizardData);
       if (result.success) {
+        const redirectTarget = result.auctionId ? `/admin/auctions/${result.auctionId}/edit` : '/admin/auctions';
         toast({
           title: "Leilão Publicado!",
           description: "O leilão e seus lotes foram criados com sucesso.",
         });
-        resetWizard();
-        router.push(result.auctionId ? `/admin/auctions/${result.auctionId}/edit` : '/admin/auctions');
+        window.location.href = redirectTarget;
       } else {
         toast({
           title: "Erro ao Publicar",
@@ -133,6 +146,36 @@ export default function Step5Review() {
               </div>
             ))
           )}
+        </CardContent>
+      </Card>
+
+      <Card data-ai-id="wizard-step5-support-summary-card">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Contato e Suporte</CardTitle>
+          <CardDescription>Dados públicos de contato confirmados antes da publicação.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ReviewItemList items={reviewSections.support} testId="wizard-step5-support-summary-items" />
+        </CardContent>
+      </Card>
+
+      <Card data-ai-id="wizard-step5-documents-summary-card">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Documentos e Referências</CardTitle>
+          <CardDescription>URLs e vínculos documentais informados no formulário.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ReviewItemList items={reviewSections.documents} testId="wizard-step5-documents-summary-items" />
+        </CardContent>
+      </Card>
+
+      <Card data-ai-id="wizard-step5-bidding-summary-card">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Regras de Lance e Opções</CardTitle>
+          <CardDescription>Configurações comerciais que impactam a disputa e o checkout.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ReviewItemList items={reviewSections.bidding} testId="wizard-step5-bidding-summary-items" />
         </CardContent>
       </Card>
       <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 border border-dashed border-green-500 rounded-lg">

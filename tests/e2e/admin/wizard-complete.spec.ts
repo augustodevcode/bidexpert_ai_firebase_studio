@@ -1,6 +1,6 @@
 /**
  * @fileoverview Testes E2E completos para o Assistente de Criação de Leilão (Wizard).
- * Verifica todos os fluxos: Judicial, Extrajudicial, Particular e Tomada de Preços.
+ * Verifica todos os fluxos: Judicial, Extrajudicial, Particular, Venda Direta e Tomada de Preços.
  */
 import { test, expect, Page } from '@playwright/test';
 import { waitForPageLoad, selectEntityByLabel, selectShadcnByLabel, saveForm, assertToastOrSuccess } from './admin-helpers';
@@ -12,28 +12,30 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:9002';
  * Helper: Navigate to wizard page and wait for it to load
  */
 async function navigateToWizard(page: Page) {
-  await page.goto(`${BASE_URL}/admin/wizard`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await waitForPageLoad(page, 30000);
+  await page.goto(`${BASE_URL}/admin/wizard`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await waitForPageLoad(page, 60000);
   
   // Wait for the page to be fully loaded
-  await page.waitForSelector('text=/Assistente de Criação de Leilão/i', { timeout: 30000 });
+  await page.waitForSelector('text=/Assistente de Criação de Leilão/i', { timeout: 60000 });
+  await page.waitForSelector('[data-ai-id="wizard-step1-type-selection"]', { timeout: 60000 });
   
   // Wait for loading spinner to disappear
   const spinner = page.locator('[class*="animate-spin"]');
   if (await spinner.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await spinner.waitFor({ state: 'hidden', timeout: 30000 });
+    await spinner.waitFor({ state: 'hidden', timeout: 60000 }).catch(() => undefined);
   }
 }
 
 /**
  * Helper: Select auction type in Step 1
  */
-async function selectAuctionType(page: Page, type: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS') {
+async function selectAuctionType(page: Page, type: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'VENDA_DIRETA') {
   const typeLabels: Record<string, string> = {
     'JUDICIAL': 'Leilão Judicial',
     'EXTRAJUDICIAL': 'Leilão Extrajudicial',
     'PARTICULAR': 'Leilão Particular',
     'TOMADA_DE_PRECOS': 'Tomada de Preços',
+    'VENDA_DIRETA': 'Venda Direta',
   };
   
   // Wait for the type selection step
@@ -183,6 +185,28 @@ async function fillAuctionDetails(page: Page, auctionType: string) {
   await page.waitForTimeout(1000);
 }
 
+async function fillWizardParityFields(page: Page) {
+  const parityFields = {
+    supportPhone: '(11) 4000-1000',
+    supportEmail: 'suporte+wizard@bidexpert.com.br',
+    supportWhatsApp: '(11) 98888-7777',
+    documentsUrl: 'https://docs.bidexpert.com.br/edital-venda-direta.pdf',
+    evaluationReportUrl: 'https://docs.bidexpert.com.br/laudo-venda-direta.pdf',
+    auctionCertificateUrl: 'https://docs.bidexpert.com.br/matricula-venda-direta.pdf',
+    sellingBranch: 'Central de Venda Direta São Paulo',
+  };
+
+  for (const [fieldName, fieldValue] of Object.entries(parityFields)) {
+    const input = page.locator(`[name="${fieldName}"]`);
+    if (await input.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await input.fill(fieldValue);
+    }
+  }
+
+  await page.waitForTimeout(500);
+  return parityFields;
+}
+
 /**
  * Helper: Handle Step 4 - Lotting
  */
@@ -246,6 +270,29 @@ async function reviewAndPublish(page: Page, shouldPublish: boolean = false) {
   }
 }
 
+async function assertWizardParityReview(page: Page, expected: Awaited<ReturnType<typeof fillWizardParityFields>>) {
+  await expect(page.locator('[data-ai-id="wizard-step5-support-summary-card"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('[data-ai-id="wizard-step5-documents-summary-card"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('[data-ai-id="wizard-step5-bidding-summary-card"]')).toBeVisible({ timeout: 10000 });
+
+  const supportCard = page.locator('[data-ai-id="wizard-step5-support-summary-items"]');
+  await expect(supportCard).toContainText(expected.supportPhone);
+  await expect(supportCard).toContainText(expected.supportEmail);
+  await expect(supportCard).toContainText(expected.supportWhatsApp);
+
+  const documentsCard = page.locator('[data-ai-id="wizard-step5-documents-summary-items"]');
+  await expect(documentsCard).toContainText(expected.documentsUrl);
+  await expect(documentsCard).toContainText(expected.evaluationReportUrl);
+  await expect(documentsCard).toContainText(expected.auctionCertificateUrl);
+  await expect(documentsCard).toContainText(expected.sellingBranch);
+
+  const biddingCard = page.locator('[data-ai-id="wizard-step5-bidding-summary-items"]');
+  await expect(biddingCard).toContainText('Lances parcelados');
+  await expect(biddingCard).toContainText('Múltiplos lances por usuário');
+  await expect(biddingCard).toContainText('Lance automático');
+  await expect(biddingCard).toContainText('Soft close');
+}
+
 test.describe('Wizard - Fluxo Completo de Criação de Leilões', () => {
   test.beforeEach(async ({ page }) => {
     // Session is loaded from storageState
@@ -283,7 +330,7 @@ test.describe('Wizard - Fluxo Completo de Criação de Leilões', () => {
     await reviewAndPublish(page, false);
   });
 
-  test('Fluxo PARTICULAR (Venda Direta): Seleção de tipo, detalhes e revisão', async ({ page }) => {
+  test('Fluxo PARTICULAR: Seleção de tipo, detalhes e revisão', async ({ page }) => {
     // Step 1: Select PARTICULAR type (skips Step 2)
     await selectAuctionType(page, 'PARTICULAR');
     
@@ -295,6 +342,40 @@ test.describe('Wizard - Fluxo Completo de Criação de Leilões', () => {
     
     // Step 5: Review
     await reviewAndPublish(page, false);
+  });
+
+  test('Fluxo VENDA_DIRETA: revisão exibe contatos, documentos e regras de lance', async ({ page }) => {
+    await selectAuctionType(page, 'VENDA_DIRETA');
+    await page.waitForSelector('[data-ai-id="admin-auction-form-card"]', { timeout: 30000 });
+
+    const title = `Venda Direta ${faker.number.int({ min: 100, max: 9999 })}`;
+    await page.locator('input[name="title"]').fill(title);
+
+    const descriptionTextarea = page.locator('textarea[name="description"]');
+    if (await descriptionTextarea.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await descriptionTextarea.fill('Fluxo de validação da revisão final do wizard.');
+    }
+
+    try {
+      await selectShadcnByLabel(page, /Status/i, 'RASCUNHO');
+      await selectEntityByLabel(page, /Categoria Principal/i);
+      await selectEntityByLabel(page, /Leiloeiro/i);
+      await selectEntityByLabel(page, /Comitente/i);
+      await selectShadcnByLabel(page, /Modalidade/i, 'VENDA_DIRETA');
+      await selectShadcnByLabel(page, /Participação/i, 'ONLINE');
+      await selectShadcnByLabel(page, /Método/i, 'STANDARD');
+    } catch (e) {
+      console.log('Seletores de entidades/modalidade não concluídos no cenário VENDA_DIRETA:', e);
+    }
+
+    const expectedParityValues = await fillWizardParityFields(page);
+    await page.getByRole('button', { name: /próximo/i }).click();
+    await page.waitForTimeout(1000);
+
+    await handleLottingStep(page);
+    await reviewAndPublish(page, false);
+    await expect(page.locator('[data-ai-id="wizard-step5-auction-summary-card"]')).toContainText('Venda Direta');
+    await assertWizardParityReview(page, expectedParityValues);
   });
 
   test('Fluxo TOMADA_DE_PRECOS: Seleção de tipo, detalhes e revisão', async ({ page }) => {

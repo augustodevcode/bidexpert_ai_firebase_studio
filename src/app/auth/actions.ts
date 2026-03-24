@@ -21,6 +21,41 @@ import bcryptjs from 'bcryptjs';
 import { prisma as basePrisma } from '@/lib/prisma';
 import { UserService } from '@/services/user.service';
 import { normalizeTenantToken } from '@/lib/tenant-token';
+import { sanitizeResponse } from '@/lib/serialization-helper';
+
+function buildSerializableUserProfile(user: any): UserProfileWithPermissions {
+  const roles = user.UsersOnRoles?.map((ur: any) => ({
+    id: ur.Role.id.toString(),
+    name: ur.Role.name,
+    permissions: []
+  })) || [];
+
+  const tenants = user.UsersOnTenants?.map((ut: any) => ({
+    id: ut.Tenant.id.toString(),
+    name: ut.Tenant.name,
+    slug: ut.Tenant.subdomain
+  })) || [{ id: '1', name: 'BidExpert', slug: 'bidexpert' }];
+
+  const roleNames = roles.map((role: { name: string }) => role.name);
+  const primaryRole = roleNames[0] || 'USER';
+  const { password: _password, UsersOnRoles: _usersOnRoles, UsersOnTenants: _usersOnTenants, ...safeUser } = user;
+
+  return sanitizeResponse({
+    ...safeUser,
+    id: user.id.toString(),
+    uid: user.id.toString(),
+    roles,
+    tenants,
+    roleIds: roles.map((role: { id: string }) => role.id),
+    roleNames,
+    permissions: primaryRole === 'ADMIN' ? ['manage_all', 'manage_auctions', 'manage_users', 'manage_lots'] :
+                 primaryRole === 'AUCTIONEER' ? ['manage_auctions', 'manage_lots'] :
+                 ['view_auctions', 'place_bids'],
+    roleName: primaryRole,
+    sellerId: user.sellerId?.toString() ?? null,
+    auctioneerId: user.auctioneerId?.toString() ?? null,
+  }) as UserProfileWithPermissions;
+}
 
 /**
  * Realiza o processo de login de um usuário.
@@ -110,35 +145,8 @@ export async function login(values: { email: string, password?: string, tenantId
       }
     }
 
-    // Format user with MySQL schema relations
-    const roles = user.UsersOnRoles?.map(ur => ({
-      id: ur.Role.id.toString(),
-      name: ur.Role.name,
-      permissions: []
-    })) || [];
-
-    const tenants = user.UsersOnTenants?.map(ut => ({
-      id: ut.Tenant.id.toString(),
-      name: ut.Tenant.name,
-      slug: ut.Tenant.subdomain
-    })) || [{ id: '1', name: 'BidExpert', slug: 'bidexpert' }];
-
-    const roleNames = roles.map(r => r.name);
-    const primaryRole = roleNames[0] || 'USER';
-
-    const userProfileWithPerms: UserProfileWithPermissions = {
-      ...user,
-      id: user.id.toString(),
-      uid: user.id.toString(),
-      roles: roles,
-      tenants: tenants,
-      roleIds: roles.map(r => r.id),
-      roleNames: roleNames,
-      permissions: primaryRole === 'ADMIN' ? ['manage_all', 'manage_auctions', 'manage_users', 'manage_lots'] :
-                   primaryRole === 'AUCTIONEER' ? ['manage_auctions', 'manage_lots'] :
-                   ['view_auctions', 'place_bids'],
-      roleName: primaryRole,
-    };
+    const userProfileWithPerms = buildSerializableUserProfile(user);
+    const tenants = userProfileWithPerms.tenants || [];
 
     // Set tenantId from user's tenant
     if (!tenantId) {

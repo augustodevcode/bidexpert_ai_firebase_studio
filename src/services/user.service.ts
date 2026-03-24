@@ -12,6 +12,7 @@ import bcrypt from 'bcryptjs';
 import type { Prisma, UserDocument, DocumentType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma as basePrisma } from '@/lib/prisma';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 
 
 export class UserService {
@@ -53,9 +54,11 @@ export class UserService {
         id: tenant.id.toString(), // Convert BigInt to string
       };
     });
+
+    const { password: _password, UsersOnRoles: _usersOnRoles, UsersOnTenants: _usersOnTenants, ...safeUser } = user;
     
-    return {
-      ...user,
+    return sanitizeResponse({
+      ...safeUser,
       id: user.id.toString(),
       uid: user.id.toString(), 
       roles,
@@ -66,7 +69,7 @@ export class UserService {
       roleName: roles[0]?.name,
       sellerId: user.sellerId?.toString() ?? null,
       auctioneerId: user.auctioneerId?.toString() ?? null,
-    };
+    }) as UserProfileWithPermissions;
   }
 
 
