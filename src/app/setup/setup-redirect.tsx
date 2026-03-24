@@ -13,16 +13,6 @@ interface SetupRedirectProps {
  * related to the application setup.
  */
 export function SetupRedirect({ isSetupComplete }: SetupRedirectProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isSetupComplete && pathname !== '/setup') {
-      router.replace('/setup');
-    } else if (isSetupComplete && pathname === '/setup') {
-      router.replace('/admin/dashboard');
-    }
-  }, [isSetupComplete, pathname, router]);
-
+  // Desabilitado globalmente conforme solicitado para mudança futura de estratégia.
   return null;
 }

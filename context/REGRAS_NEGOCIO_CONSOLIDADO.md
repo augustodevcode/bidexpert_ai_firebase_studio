@@ -213,6 +213,19 @@ TODAS as FKs relacionadas DEVEM ser `BigInt`
 Conversão em andamento - seguir `BIGINT_CONVERSION_PLAN.md`  
 Status: Schema  | Migração  | Código 
 
+### RN-013: Sentinels de UI não podem vazar para FKs BigInt
+✅ Valores semânticos de formulário/UI como `INHERIT`, `CUSTOM`, `AUTO`, slugs ou labels textuais DEVEM ser tratados como semântica de negócio e NUNCA como IDs persistíveis  
+✅ Antes de usar `BigInt(...)`, `Number(...)` ou `connect: { id: ... }`, Services e Server Actions DEVEM normalizar o payload e descartar ou resolver sentinels explicitamente  
+✅ Quando o sentinel representar herança de mídia/imagem, o comportamento correto é remover a relação customizada ou resolver fallback em leitura; é proibido persistir o sentinel em coluna `BigInt`  
+✅ Toda correção desse tipo DEVE incluir teste unitário cobrindo `create` e `update` com sentinel textual
+
+**Cenário BDD - Sentinel textual em FK de mídia**
+- **Dado** um formulário administrativo ou wizard que oferece a opção textual `INHERIT` para a imagem de capa
+- **Quando** o payload chega à camada de service para criar ou atualizar um leilão
+- **Então** o service normaliza o valor antes do Prisma
+- **E** nenhuma conversão `BigInt('INHERIT')` é executada
+- **E** a imagem final é resolvida por fallback/herança ou a relação customizada é desconectada
+
 ---
 
 ## LACUNAS QUEBRANDO AS JORNADAS (Diagnóstico)
@@ -300,7 +313,7 @@ Com base na análise de código e documentação, foram identificados pontos que
 Bloquear acesso a rotas protegidas quando `isSetupComplete=false`  
 Exigir verificação de `isSetupComplete` em `layout.tsx` com fallback seguro  
 Adicionar teste de regressão para impedir loops/redirects indevidos
-O `SetupRedirect` não pode permanecer desabilitado em branches de integração, homologação, preview ou produção. Bypass local só é permitido de forma temporária e documentada durante debugging isolado.
+O `SetupRedirect` está globalmente desabilitado conforme nova estratégia solicitada pelo usuário (2026-03).
 
 **BDD - Gate de setup ativo**
 - **Dado** um tenant com `isSetupComplete=false`
