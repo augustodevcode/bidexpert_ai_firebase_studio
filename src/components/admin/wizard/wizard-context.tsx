@@ -4,7 +4,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import type { Auction, Asset, JudicialProcess, Lot } from '@/types';
 
-type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
+type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'VENDA_DIRETA';
 
 export interface WizardData {
   auctionType?: AuctionType;

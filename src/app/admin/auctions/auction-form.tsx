@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings, AuctionStage } from '@/types';
 import { cn } from '@/lib/utils';
-import { Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save } from 'lucide-react';
+import { Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save, Phone, Mail, MessageCircle, FileCheck, Link2 } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
@@ -55,7 +55,7 @@ const auctionStatusOptions = [
   'CANCELADO',
   'SUSPENSO',
 ];
-const auctionTypeOptions = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'];
+const auctionTypeOptions = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'VENDA_DIRETA'];
 const auctionParticipationOptions = ['ONLINE', 'PRESENCIAL', 'HIBRIDO'];
 const auctionMethodOptions = ['STANDARD', 'DUTCH', 'SILENT'];
 
@@ -95,8 +95,8 @@ const renderSectionContent = (
   allCities: any[],
   initialStates: any[],
   isSubmitting: boolean,
-  watchedAuctionMethod: string,
-  watchedImageMediaId: string | null,
+  watchedAuctionMethod: string | undefined,
+  watchedImageMediaId: string | null | undefined,
   displayImageUrl: string | null | undefined,
   setIsMediaDialogOpen: React.Dispatch<React.SetStateAction<boolean>>,
   handleAddStageWithDefaults: () => void,
@@ -416,9 +416,87 @@ const renderSectionContent = (
           )}
         </div>
       );
+    case 'contato':
+      return (
+        <div className="space-y-4" data-ai-id="auction-form-section-contato">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField control={form.control} name="supportPhone" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1.5"><Phone className="h-4 w-4" />Telefone de Suporte</FormLabel>
+                <FormControl>
+                  <Input placeholder="(11) 99999-9999" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="supportEmail" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1.5"><Mail className="h-4 w-4" />Email de Suporte</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="suporte@empresa.com" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="supportWhatsApp" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1.5"><MessageCircle className="h-4 w-4" />WhatsApp</FormLabel>
+                <FormControl>
+                  <Input placeholder="(11) 99999-9999" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
+        </div>
+      );
+    case 'documentos':
+      return (
+        <div className="space-y-4" data-ai-id="auction-form-section-documentos">
+          <FormField control={form.control} name="documentsUrl" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-1.5"><FileCheck className="h-4 w-4" />URL dos Documentos do Leilão</FormLabel>
+              <FormControl>
+                <Input placeholder="https://docs.exemplo.com/edital.pdf" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormDescription>Link para edital, regulamento ou documentação completa.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField control={form.control} name="evaluationReportUrl" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1.5"><FileTextIcon className="h-4 w-4" />URL do Laudo de Avaliação</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://..." {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="auctionCertificateUrl" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1.5"><Link2 className="h-4 w-4" />URL da Certidão/Matrícula</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://..." {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
+          <FormField control={form.control} name="sellingBranch" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Vara/Filial de Venda</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex: 3ª Vara Cível de São Paulo" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+      );
     case 'opcoes':
       return (
-        <div className="space-y-4">
+        <div className="space-y-4" data-ai-id="auction-form-section-opcoes">
           {watchedAuctionMethod === 'DUTCH' && (
             <Card>
               <CardHeader>
@@ -468,6 +546,16 @@ const renderSectionContent = (
               </FormControl>
             </FormItem>
           )} />
+          <FormField control={form.control} name="marketplaceAnnouncementTitle" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título do Anúncio no Marketplace</FormLabel>
+              <FormControl>
+                <Input placeholder="Título alternativo para exibição na vitrine" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormDescription>Se vazio, será usado o título do leilão.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )} />
           <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
               <div className="space-y-0.5">
@@ -477,6 +565,71 @@ const renderSectionContent = (
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="allowMultipleBidsPerUser" render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
+              <div className="space-y-0.5">
+                <FormLabel>Permitir Múltiplos Lances por Usuário</FormLabel>
+                <FormDescription>Permite que um mesmo participante dê mais de um lance por lote.</FormDescription>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="silentBiddingEnabled" render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
+              <div className="space-y-0.5">
+                <FormLabel>Lances Sigilosos</FormLabel>
+                <FormDescription>Participantes não visualizam os lances de outros até o encerramento.</FormDescription>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="automaticBiddingEnabled" render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
+              <div className="space-y-0.5">
+                <FormLabel>Lance Automático</FormLabel>
+                <FormDescription>Permite que participantes configurem lances automáticos com limite máximo.</FormDescription>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )} />
+          <div className="flex flex-row items-center gap-4 rounded-lg border p-3 shadow-sm bg-background">
+            <FormField control={form.control} name="softCloseEnabled" render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-3 flex-1">
+                <div className="space-y-0.5">
+                  <FormLabel>Soft Close (Prorrogação)</FormLabel>
+                  <FormDescription>Estende o prazo se um lance chegar nos últimos minutos.</FormDescription>
+                </div>
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="softCloseMinutes" render={({ field }) => (
+              <FormItem className="w-32">
+                <FormLabel>Minutos</FormLabel>
+                <FormControl>
+                  <Input type="number" min={1} max={30} {...field} value={field.value ?? 2} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
+          <FormField control={form.control} name="estimatedRevenue" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Receita Estimada (R$)</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="0.00" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormDescription>Estimativa para fins de relatório interno.</FormDescription>
+              <FormMessage />
             </FormItem>
           )} />
         </div>
@@ -513,7 +666,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
     resolver: zodResolver(auctionFormSchema),
     mode: 'onChange',
     defaultValues: {
-      ...initialData,
+      ...(initialData as Partial<AuctionFormValues>),
       auctionType: initialData?.auctionType ?? '',
       auctionMethod: initialData?.auctionMethod ?? '',
       participation: initialData?.participation ?? '',
@@ -710,6 +863,56 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 <CardContent>
                   {renderSectionContent(
                     "prazos",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contato e Suporte</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderSectionContent(
+                    "contato",
+                    form,
+                    initialCategories,
+                    initialAuctioneers,
+                    initialSellers,
+                    initialJudicialProcesses || [],
+                    allCities,
+                    initialStates,
+                    isSubmitting,
+                    watchedAuctionMethod,
+                    watchedImageMediaId,
+                    displayImageUrl ?? null,
+                    setIsMediaDialogOpen,
+                    handleAddStageWithDefaults,
+                    remove
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Documentos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderSectionContent(
+                    "documentos",
                     form,
                     initialCategories,
                     initialAuctioneers,

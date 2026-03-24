@@ -34,25 +34,35 @@ export default function Step5Review() {
     EXTRAJUDICIAL: 'Leilão Extrajudicial',
     PARTICULAR: 'Leilão Particular',
     TOMADA_DE_PRECOS: 'Tomada de Preços',
+    VENDA_DIRETA: 'Venda Direta',
   };
 
   const handlePublish = async () => {
     setIsPublishing(true);
-    const result = await createAuctionFromWizard(wizardData);
-    if (result.success) {
+    try {
+      const result = await createAuctionFromWizard(wizardData);
+      if (result.success) {
         toast({
-            title: "Leilão Publicado!",
-            description: "O leilão e seus lotes foram criados com sucesso.",
+          title: "Leilão Publicado!",
+          description: "O leilão e seus lotes foram criados com sucesso.",
         });
         resetWizard();
         router.push(result.auctionId ? `/admin/auctions/${result.auctionId}/edit` : '/admin/auctions');
-    } else {
+      } else {
         toast({
-            title: "Erro ao Publicar",
-            description: result.message,
-            variant: "destructive",
+          title: "Erro ao Publicar",
+          description: result.message || 'Erro desconhecido ao criar o leilão.',
+          variant: "destructive",
         });
-        setIsPublishing(false);
+      }
+    } catch (err) {
+      toast({
+        title: "Erro Inesperado",
+        description: err instanceof Error ? err.message : 'Falha de comunicação com o servidor.',
+        variant: "destructive",
+      });
+    } finally {
+      setIsPublishing(false);
     }
   };
 

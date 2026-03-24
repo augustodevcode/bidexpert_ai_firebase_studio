@@ -34,6 +34,7 @@ export default function Step5Review() {
     EXTRAJUDICIAL: 'Leilão Extrajudicial',
     PARTICULAR: 'Leilão Particular',
     TOMADA_DE_PRECOS: 'Tomada de Preços',
+    VENDA_DIRETA: 'Venda Direta',
   };
 
   const handlePublish = async () => {
@@ -53,7 +54,6 @@ export default function Step5Review() {
           description: result.message,
           variant: "destructive",
         });
-        setIsPublishing(false);
       }
     } catch (err: any) {
       toast({
@@ -61,6 +61,7 @@ export default function Step5Review() {
         description: err.message || "Ocorreu um erro interno. Verifique o console.",
         variant: "destructive",
       });
+    } finally {
       setIsPublishing(false);
     }
   };
