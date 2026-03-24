@@ -1,0 +1,1043 @@
+diff --git a/context/REGRAS_NEGOCIO_CONSOLIDADO.md b/context/REGRAS_NEGOCIO_CONSOLIDADO.md
+index b8a98065..afb19d56 100644
+--- a/context/REGRAS_NEGOCIO_CONSOLIDADO.md
++++ b/context/REGRAS_NEGOCIO_CONSOLIDADO.md
+@@ -168,6 +168,27 @@ Controller (Server Action) ÔåÆ Service ÔåÆ Repository ÔåÆ ZOD ÔåÆ Prisma ORM ÔåÆ
+ Ô£à OBRIGAT+ôRIO usar `BidExpertAuctionStagesTimeline`  
+ Ô£à Integrado em `AuctionCard` e `AuctionListItem`  
+ Ô£à Busca +¦ltima etapa do leil+úo para countdown
++Ô£à Em superf+¡cies de **leil+úo** (detalhes e modais), a timeline deve usar o **status bruto da pra+ºa** e **nunca** exibir valores monet+írios.
++Ô£à Em superf+¡cies de **lote** (detalhes e modais), a timeline deve usar o **status derivado do lote na pra+ºa** e pode exibir valores por pra+ºa (`LotStagePrice`/fallback do lote).
++Ô£à +ìcones contextuais de pra+ºa s+úo obrigat+¦rios em **detalhes**, **modais** e **forms**; s+úo proibidos em **cards** e **listitems**, que devem permanecer compactos.
++
++**Cen+írio BDD - Leil+úo sem valores na timeline**
++- **Dado** um leil+úo com pra+ºas cadastradas
++- **Quando** o usu+írio acessa a p+ígina de detalhes ou o modal do leil+úo
++- **Ent+úo** a timeline mostra +¡cones e badges de status da pra+ºa
++- **E** nenhum valor monet+írio +® exibido dentro da timeline do leil+úo
++
++**Cen+írio BDD - Lote com status visual derivado**
++- **Dado** um lote com pre+ºos por pra+ºa e status p+¦blico definido
++- **Quando** o usu+írio acessa a p+ígina de detalhes ou o modal do lote
++- **Ent+úo** a timeline mostra +¡cones e badges derivados do status do lote na pra+ºa ativa
++- **E** os valores por pra+ºa s+úo exibidos apenas nas superf+¡cies do lote
++
++**Cen+írio BDD - Card/listitem continuam compactos**
++- **Dado** um card ou listitem de lote/leil+úo com timeline compacta
++- **Quando** a interface renderiza a timeline resumida
++- **Ent+úo** a compacta+º+úo visual +® preservada
++- **E** +¡cones contextuais de pra+ºa n+úo s+úo renderizados nesses componentes
+ 
+ ### RN-009: Testes
+ Ô£à Playwright usa seletores `data-ai-id`  
+diff --git a/experiments.tsv b/experiments.tsv
+index 2745f9d1..1fbd74f2 100644
+--- a/experiments.tsv
++++ b/experiments.tsv
+@@ -20,3 +20,4 @@ id	timestamp	description	status	errors_before	errors_after	delta	kept	notes
+ 19	2026-03-14T22:10	Fix users action alias ordering	SUCCESS	1475	1467	-8	YES	Moved get/create/update/delete alias exports below their action declarations to eliminate the entire users/actions.ts use-before-declaration cluster.
+ 20	2026-03-14T22:20	Modernize data-sources new and edit pages to current form contracts	SUCCESS	1467	1457	-10	YES	Replaced legacy PageHeader and CrudFormShell props and stopped spreading compat field wrappers directly into Input/Textarea on both data-sources pages.
+ 21	2026-03-14T22:25	Modernize role new and edit pages to current form contracts	SUCCESS	1457	1447	-10	YES	Replaced legacy PageHeader and CrudFormShell props and stopped spreading compat field wrappers directly into Input/Textarea on both role pages.
++22	2026-03-16T01:30	Stage timeline contextual visuals for lot vs auction surfaces	SUCCESS	0	0	0	YES	Added shared stage visual mapper, preserved compact card/listitem timeline, enabled icons on detail/modal/form surfaces, and seeded lot-stage prices for deterministic E2E coverage.
+diff --git a/scripts/ultimate-master-seed.ts b/scripts/ultimate-master-seed.ts
+index a2280bad..6c301693 100644
+--- a/scripts/ultimate-master-seed.ts
++++ b/scripts/ultimate-master-seed.ts
+@@ -2779,19 +2779,31 @@ async function main() {
+     });
+     auctionStages.push(stage1_2);
+ 
+-    // Criar 1 pra+ºa para o Leil+úo Extrajudicial 2 (Ve+¡culos)
++    // Criar 2 pra+ºas para o Leil+úo Extrajudicial 2 (Ve+¡culos)
+     const stage2_1 = await prisma.auctionStage.create({
+       data: {
+-        name: 'Pra+ºa +Ünica',
++        name: '1-¬ Pra+ºa',
+         auctionId: auctions[1].id,
+         tenantId: tenants[0].id,
+-        startDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+-        endDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+-        status: 'AGUARDANDO_INICIO',
++        startDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
++        endDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
++        status: 'EM_ANDAMENTO',
+       },
+     });
+     auctionStages.push(stage2_1);
+ 
++    const stage2_2 = await prisma.auctionStage.create({
++      data: {
++        name: '2-¬ Pra+ºa',
++        auctionId: auctions[1].id,
++        tenantId: tenants[0].id,
++        startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
++        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
++        status: 'AGENDADO',
++      },
++    });
++    auctionStages.push(stage2_2);
++
+     // Criar 1 pra+ºa para o Leil+úo Particular 3 (Maquin+írios)
+     const stage3_1 = await prisma.auctionStage.create({
+       data: {
+@@ -3108,6 +3120,39 @@ async function main() {
+     ]);
+     console.log(`Ô£à ${lots.length} lots criados\n`);
+ 
++    console.log('­ƒÆ¦ Criando pre+ºos por pra+ºa para cen+írios visuais de lotes...');
++    const lotsWithStages = [
++      { lot: lots[0], stage: stage1_1, multiplier: 1 },
++      { lot: lots[0], stage: stage1_2, multiplier: 0.6 },
++      { lot: lots[1], stage: stage1_1, multiplier: 1 },
++      { lot: lots[1], stage: stage1_2, multiplier: 0.6 },
++      { lot: lots[2], stage: stage1_1, multiplier: 1 },
++      { lot: lots[2], stage: stage1_2, multiplier: 0.6 },
++      { lot: lots[3], stage: stage2_1, multiplier: 1 },
++      { lot: lots[3], stage: stage2_2, multiplier: 0.85 },
++      { lot: lots[4], stage: stage2_1, multiplier: 1 },
++      { lot: lots[4], stage: stage2_2, multiplier: 0.85 },
++      { lot: lots[5], stage: stage2_1, multiplier: 1 },
++      { lot: lots[5], stage: stage2_2, multiplier: 0.85 },
++    ];
++
++    await prisma.lotStagePrice.createMany({
++      data: lotsWithStages.map(({ lot, stage, multiplier }) => {
++        const baseInitialPrice = Number(lot.initialPrice || lot.price || 0);
++        const baseBidIncrement = Number(lot.bidIncrementStep || 100);
++
++        return {
++          lotId: lot.id,
++          auctionId: lot.auctionId,
++          auctionStageId: stage.id,
++          tenantId: tenants[0].id,
++          initialBid: Number((baseInitialPrice * multiplier).toFixed(2)),
++          bidIncrement: baseBidIncrement,
++        };
++      }),
++    });
++    console.log('Ô£à Pre+ºos por pra+ºa criados para lotes com m+¦ltiplas superf+¡cies\n');
++
+     console.log('­ƒû+´©Å Adicionando galerias de imagens aos lots...');
+     for (const lot of lots) {
+       const lotIdentifier = lot.slug || lot.publicId || `lot-${lot.id}`;
+diff --git a/src/app/api/debug/lots/route.ts b/src/app/api/debug/lots/route.ts
+index cbd588c8..b39032b2 100644
+--- a/src/app/api/debug/lots/route.ts
++++ b/src/app/api/debug/lots/route.ts
+@@ -29,7 +29,7 @@ export async function GET() {
+ 
+   // Step 1: Test the EXACT Prisma query from getSegmentLots (with include)
+   try {
+-    const lots = await prisma.lot.findMany({
++    const queriedLots = await prisma.lot.findMany({
+       where: {
+         status: { in: ['ABERTO_PARA_LANCES', 'EM_BREVE'] },
+         OR: patterns.flatMap(pattern => [
+@@ -50,20 +50,36 @@ export async function GET() {
+         LotStagePrice: true,
+       },
+       orderBy: [
+-        { isFeatured: 'desc' },
+-        { endDate: 'asc' },
++        { id: 'desc' },
+       ],
+-      take: 4,
++      take: 12,
+     });
++    const lots = [...queriedLots]
++      .sort((left, right) => {
++        const leftScore = ((left.Auction?.AuctionStage || []).length * 10) + ((left.LotStagePrice || []).length * 5);
++        const rightScore = ((right.Auction?.AuctionStage || []).length * 10) + ((right.LotStagePrice || []).length * 5);
++        return rightScore - leftScore;
++      })
++      .slice(0, 4);
+     results.step1_querySuccess = true;
+     results.step1_lotsCount = lots.length;
+     results.step1_lotIds = lots.map(l => Number(l.id));
++    results.step1_lotPublicIds = lots.map(l => l.publicId || l.id.toString());
+     results.step1_lotTitles = lots.map(l => l.title);
++    results.step1_auctionIds = lots.map(l => l.Auction?.id?.toString() || null);
++    results.step1_auctionPublicIds = lots.map(l => l.Auction?.publicId || l.Auction?.id?.toString() || null);
++    results.step1_auctionTitles = lots.map(l => l.Auction?.title || null);
+     results.step1_hasAuction = lots.map(l => !!l.Auction);
+     results.step1_hasCategory = lots.map(l => !!l.LotCategory);
+     results.step1_hasPrices = lots.map(l => (l.LotStagePrice || []).length);
+     results.step1_hasAuctionSeller = lots.map(l => !!l.Auction?.Seller);
+     results.step1_hasAuctionStage = lots.map(l => (l.Auction?.AuctionStage || []).length);
++    results.step1_routes = lots.map(l => ({
++      lotTitle: l.title,
++      lotId: l.publicId || l.id.toString(),
++      auctionId: l.Auction?.publicId || l.Auction?.id?.toString() || null,
++      auctionTitle: l.Auction?.title || null,
++    }));
+ 
+     // Step 2: Test the transform (same as getSegmentLots)
+     try {
+diff --git a/src/app/auctions/[auctionId]/auction-details-client-v2.tsx b/src/app/auctions/[auctionId]/auction-details-client-v2.tsx
+index 645489fd..efe3154e 100644
+--- a/src/app/auctions/[auctionId]/auction-details-client-v2.tsx
++++ b/src/app/auctions/[auctionId]/auction-details-client-v2.tsx
+@@ -309,6 +309,8 @@ export default function AuctionDetailsClientV2({
+                       stages={auction.auctionStages || []}
+                       variant="extended"
+                       auction={auction}
++                      surface="auction"
++                      showContextIcons
+                     />
+                   </CardContent>
+                 </Card>
+diff --git a/src/app/auctions/[auctionId]/auction-details-client.tsx b/src/app/auctions/[auctionId]/auction-details-client.tsx
+index c0eb08a8..62ef3d62 100644
+--- a/src/app/auctions/[auctionId]/auction-details-client.tsx
++++ b/src/app/auctions/[auctionId]/auction-details-client.tsx
+@@ -328,6 +328,8 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
+                     stages={auction.auctionStages || []}
+                     variant="extended"
+                     auction={auction}
++                    surface="auction"
++                    showContextIcons
+                 />
+               </CardContent>
+             </Card>
+diff --git a/src/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client.tsx b/src/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client.tsx
+index 8856487e..a3a562cb 100644
+--- a/src/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client.tsx
++++ b/src/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client.tsx
+@@ -749,7 +749,7 @@ export default function LotDetailClientContent({
+                           Cronograma de Pra+ºas
+                         </h3>
+                         <div className="wrapper-summary-timeline-content">
+-                           <BidExpertAuctionStagesTimeline auction={auction} lot={lot} />
++                           <BidExpertAuctionStagesTimeline auction={auction} lot={lot} variant="detailed" surface="lot" showContextIcons />
+                         </div>
+                       </div>
+                     )}
+diff --git a/src/app/semantic-classes.css b/src/app/semantic-classes.css
+index 865b72ee..9c443ccd 100644
+--- a/src/app/semantic-classes.css
++++ b/src/app/semantic-classes.css
+@@ -11,6 +11,23 @@
+   .btn-go-back { @apply btn-outline; }
+   .btn-filter-lots { @apply btn-outline; }
+ 
++  .chip-stage-visual { @apply inline-flex h-9 w-9 items-center justify-center rounded-full border shadow-glow; }
++  .chip-stage-visual-draft { @apply chip-stage-visual border-border bg-muted/60 text-muted-foreground; }
++  .chip-stage-visual-scheduled { @apply chip-stage-visual border-secondary bg-secondary/70 text-secondary-foreground; }
++  .chip-stage-visual-open { @apply chip-stage-visual border-primary/30 bg-primary/10 text-primary; }
++  .chip-stage-visual-cancelled { @apply chip-stage-visual border-destructive/30 bg-destructive/10 text-destructive; }
++  .chip-stage-visual-closed { @apply chip-stage-visual border-border bg-panel/80 text-panel-foreground; }
++  .chip-stage-visual-sold { @apply chip-stage-visual border-success/30 bg-success/10 text-success; }
++  .chip-stage-visual-unsold { @apply chip-stage-visual border-urgent/30 bg-urgent/10 text-urgent; }
++  .badge-stage-visual { @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]; }
++  .badge-stage-visual-draft { @apply badge-stage-visual border-border bg-muted/60 text-muted-foreground; }
++  .badge-stage-visual-scheduled { @apply badge-stage-visual border-secondary bg-secondary/80 text-secondary-foreground; }
++  .badge-stage-visual-open { @apply badge-stage-visual border-primary/30 bg-primary/10 text-primary; }
++  .badge-stage-visual-cancelled { @apply badge-stage-visual border-destructive/30 bg-destructive/10 text-destructive; }
++  .badge-stage-visual-closed { @apply badge-stage-visual border-border bg-panel/80 text-panel-foreground; }
++  .badge-stage-visual-sold { @apply badge-stage-visual border-success/30 bg-success/10 text-success; }
++  .badge-stage-visual-unsold { @apply badge-stage-visual border-urgent/30 bg-urgent/10 text-urgent; }
++
+   /* Forms & Inputs */
+   .form-container { @apply space-y-6; }
+   .input-field { @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50; }
+diff --git a/src/components/auction-preview-modal-v2.tsx b/src/components/auction-preview-modal-v2.tsx
+index 6955061b..e66691e4 100644
+--- a/src/components/auction-preview-modal-v2.tsx
++++ b/src/components/auction-preview-modal-v2.tsx
+@@ -109,7 +109,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
+                         </div>
+                     </CardContent>
+                 </Card>
+-                 <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages || []} />
++                 <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages || []} variant="extended" surface="auction" showContextIcons />
+                  <Card>
+                     <CardHeader className="p-3">
+                         <CardTitle className="text-md font-semibold flex items-center"><CalendarDays className="mr-2 h-4 w-4" /> Calend+írio</CardTitle>
+diff --git a/src/components/auction/BidExpertAuctionStagesTimeline.tsx b/src/components/auction/BidExpertAuctionStagesTimeline.tsx
+index a58d3ec0..e91570d1 100644
+--- a/src/components/auction/BidExpertAuctionStagesTimeline.tsx
++++ b/src/components/auction/BidExpertAuctionStagesTimeline.tsx
+@@ -1,6 +1,6 @@
+ /**
+  * @fileoverview Componente unificado para visualiza+º+úo das etapas/pra+ºas de um leil+úo.
+- * Suporta variantes de renderiza+º+úo (compact/extended) e estado vazio quando n+úo h+í etapas.
++ * Suporta variantes de renderiza+º+úo (compact/extended/detailed) e estado vazio quando n+úo h+í etapas.
+  */
+ 'use client';
+ 
+@@ -9,18 +9,28 @@ import { cn } from '@/lib/utils';
+ import { format, isPast, isValid } from 'date-fns';
+ import { ptBR } from 'date-fns/locale';
+ import type { AuctionStage, Auction, Lot } from '@/types';
++import { Badge } from '@/components/ui/badge';
+ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
++import {
++  getAuctionStageVisualState,
++  getLotStageVisualState,
++  getStageVisualConfig,
++  type StageTimelineStatus,
++  type StageVisualState,
++} from '@/components/auction/auction-stage-visuals';
+ 
+ interface BidExpertAuctionStagesTimelineProps {
+   stages?: Partial<AuctionStage>[];
+-  variant?: 'compact' | 'extended';
++  variant?: 'compact' | 'extended' | 'detailed';
+   className?: string;
+   auctionOverallStartDate?: Date;
+   auction?: Auction;
+   lot?: Lot;
++  surface?: 'auction' | 'lot';
++  showContextIcons?: boolean;
+ }
+ 
+-type StepStatus = 'completed' | 'active' | 'upcoming';
++type StepStatus = StageTimelineStatus;
+ 
+ interface TimelineStep {
+   key: string;
+@@ -29,7 +39,8 @@ interface TimelineStep {
+   endDate: Date | null;
+   status: StepStatus;
+   price: number | null;
+-  discountText: string | null;
++  stageStatus?: string;
++  visualState: StageVisualState;
+ }
+ 
+ function formatDate(date: Date | null) {
+@@ -48,7 +59,9 @@ export default function BidExpertAuctionStagesTimeline({
+   className,
+   auctionOverallStartDate: propStartDate,
+   auction,
+-  lot
++  lot,
++  surface,
++  showContextIcons,
+ }: BidExpertAuctionStagesTimelineProps) {
+   const [isClient, setIsClient] = React.useState(false);
+ 
+@@ -57,6 +70,9 @@ export default function BidExpertAuctionStagesTimeline({
+   }, []);
+ 
+   const stages = propStages || auction?.auctionStages || [];
++  const resolvedSurface = surface || (lot ? 'lot' : 'auction');
++  const shouldShowContextIcons = showContextIcons ?? variant !== 'compact';
++  const shouldShowMonetaryValues = resolvedSurface === 'lot';
+ 
+   if (!isClient) {
+     return <div className="h-10 w-full animate-pulse rounded-md bg-muted/20" data-ai-id="bidexpert-auction-timeline-skeleton" />;
+@@ -77,7 +93,7 @@ export default function BidExpertAuctionStagesTimeline({
+     );
+   }
+ 
+-  const steps: TimelineStep[] = stages.map((stage, index) => {
++  const baseSteps = stages.map((stage, index) => {
+     const startDate = stage.startDate ? new Date(stage.startDate) : null;
+     const endDate = stage.endDate ? new Date(stage.endDate) : null;
+     let status: StepStatus = 'upcoming';
+@@ -90,22 +106,11 @@ export default function BidExpertAuctionStagesTimeline({
+       }
+     }
+ 
+-    // Calculate price if lot is provided, or discount text if not
+     let price: number | null = null;
+-    let discountText: string | null = null;
+ 
+     if (lot) {
+-        const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
+-        price = stagePrice?.initialBid || (index === 0 ? lot.initialPrice : lot.secondInitialPrice) || stage.initialPrice || null;
+-    } else if (auction) {
+-        // Auction view: show discount indication
+-        if (index === 0) {
+-            discountText = "Valor da Avalia+º+úo";
+-        } else {
+-            // TODO: Retrieve actual discount percentage from auction configuration if available
+-            // For now, we assume a standard 50% discount for the 2nd stage or display a generic message
+-            discountText = "50% de desconto"; 
+-        }
++      const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
++      price = stagePrice?.initialBid || (index === 0 ? lot.initialPrice : lot.secondInitialPrice) || stage.initialPrice || null;
+     }
+ 
+     return {
+@@ -115,18 +120,24 @@ export default function BidExpertAuctionStagesTimeline({
+       endDate,
+       status,
+       price,
+-      discountText
++      stageStatus: typeof stage.status === 'string' ? stage.status : undefined,
+     };
+   });
+ 
+-  let activeStep = steps.findIndex(s => s.status === 'active');
++  let activeStep = baseSteps.findIndex(s => s.status === 'active');
+   if (activeStep === -1) {
+-    // If no active step, find the first upcoming step to highlight as "next"
+-    const firstUpcoming = steps.findIndex(s => s.status === 'upcoming');
+-    // If we have an upcoming step, highlight it. If not (all completed), highlight the last one.
+-    activeStep = firstUpcoming !== -1 ? firstUpcoming : steps.length - 1;
++    const firstUpcoming = baseSteps.findIndex(s => s.status === 'upcoming');
++    activeStep = firstUpcoming !== -1 ? firstUpcoming : baseSteps.length - 1;
+   }
+ 
++  const steps: TimelineStep[] = baseSteps.map((step, index) => ({
++    ...step,
++    visualState:
++      resolvedSurface === 'lot'
++        ? getLotStageVisualState(lot?.status, step.status, index === activeStep, step.stageStatus)
++        : getAuctionStageVisualState(step.stageStatus, step.status),
++  }));
++
+   const activeStepData = steps[activeStep];
+ 
+   if (variant === 'compact') {
+@@ -160,9 +171,9 @@ export default function BidExpertAuctionStagesTimeline({
+                       <div className="text-xs font-semibold">{step.label}</div>
+                       <div className="text-xs text-muted-foreground">In+¡cio: {formatDate(step.startDate)}</div>
+                       <div className="text-xs text-muted-foreground">Fim: {formatDate(step.endDate)}</div>
+-                      <div className="text-xs font-semibold">
+-                        {step.price !== null ? formatMoney(step.price) : (step.discountText || 'R$ --')}
+-                      </div>
++                      {shouldShowMonetaryValues && (
++                        <div className="text-xs font-semibold">{formatMoney(step.price)}</div>
++                      )}
+                       {step.status === 'active' && (
+                         <div className="text-[11px] font-medium text-primary">Etapa atual</div>
+                       )}
+@@ -187,11 +198,62 @@ export default function BidExpertAuctionStagesTimeline({
+     );
+   }
+ 
++  if (variant === 'detailed') {
++    return (
++      <div className={cn('relative flex flex-col gap-4 border-l border-border/70 pl-6', className)} data-ai-id="bidexpert-auction-timeline" data-variant="detailed">
++        {steps.map((step, index) => {
++          const isHighlighted = index === activeStep;
++          const visual = getStageVisualConfig(step.visualState);
++          const VisualIcon = visual.icon;
++
++          return (
++            <article key={step.key} className="relative" data-ai-id={`bidexpert-auction-timeline-step-${index}`}>
++              <div className="absolute -left-[2.15rem] top-6 flex h-10 w-10 items-center justify-center rounded-full bg-background">
++                <div className={cn(visual.chipClassName)} data-ai-id={`bidexpert-auction-stage-icon-${index}`}>
++                  <VisualIcon className="h-4 w-4" aria-hidden="true" />
++                </div>
++              </div>
++              <div
++                className={cn(
++                  'rounded-2xl border bg-card p-5 shadow-soft transition-colors',
++                  isHighlighted ? 'border-primary/20 bg-primary/5 shadow-haze' : 'border-border/70 hover:bg-accent/30'
++                )}
++              >
++                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
++                  <div className="space-y-2">
++                    <div className="flex flex-wrap items-center gap-3">
++                      <h3 className="text-lg font-semibold text-foreground">{step.label}</h3>
++                      <Badge className={visual.badgeClassName} data-ai-id={`bidexpert-auction-stage-badge-${index}`}>
++                        {visual.label}
++                      </Badge>
++                    </div>
++                    <p className="text-sm text-muted-foreground">
++                      <span className="font-medium text-foreground/85">In+¡cio:</span> {formatDate(step.startDate)}
++                      <span className="mx-2 text-border">|</span>
++                      <span className="font-medium text-foreground/85">Fim:</span> {formatDate(step.endDate)}
++                    </p>
++                  </div>
++                  {shouldShowMonetaryValues && (
++                    <div className="flex items-center gap-2 text-right">
++                      <span className="text-2xl font-bold text-foreground">{formatMoney(step.price)}</span>
++                    </div>
++                  )}
++                </div>
++              </div>
++            </article>
++          );
++        })}
++      </div>
++    );
++  }
++
+   return (
+     <div className={cn('flex flex-col gap-2 w-full', className)} data-ai-id="bidexpert-auction-timeline" data-variant="extended">
+       {steps.map((step, index) => {
+         const isHighlighted = index === activeStep;
+         const isCompleted = step.status === 'completed';
++        const visual = getStageVisualConfig(step.visualState);
++        const VisualIcon = visual.icon;
+ 
+         return (
+           <div
+@@ -205,48 +267,63 @@ export default function BidExpertAuctionStagesTimeline({
+             data-ai-id={`bidexpert-auction-timeline-step-${index}`}
+           >
+             <div className="flex items-center gap-3">
+-              <div
+-                className={cn(
+-                  'h-2.5 w-2.5 rounded-full flex-shrink-0',
+-                  isHighlighted ? 'bg-primary' : 'bg-muted-foreground/30'
+-                )}
+-              />
++              {shouldShowContextIcons ? (
++                <div className={cn(visual.chipClassName, 'h-8 w-8')} data-ai-id={`bidexpert-auction-stage-icon-${index}`}>
++                  <VisualIcon className="h-4 w-4" aria-hidden="true" />
++                </div>
++              ) : (
++                <div
++                  className={cn(
++                    'h-2.5 w-2.5 rounded-full flex-shrink-0',
++                    isHighlighted ? 'bg-primary' : 'bg-muted-foreground/30'
++                  )}
++                />
++              )}
+ 
+               <div className="flex flex-col">
+-                <span
+-                  className={cn(
+-                    'text-sm font-semibold leading-none',
+-                    isHighlighted ? 'text-foreground' : 'text-muted-foreground',
+-                    isCompleted && 'line-through opacity-70'
++                <div className="flex flex-wrap items-center gap-2">
++                  <span
++                    className={cn(
++                      'text-sm font-semibold leading-none',
++                      isHighlighted ? 'text-foreground' : 'text-muted-foreground',
++                      isCompleted && 'line-through opacity-70'
++                    )}
++                  >
++                    {step.label}
++                  </span>
++                  {shouldShowContextIcons && (
++                    <Badge className={visual.badgeClassName} data-ai-id={`bidexpert-auction-stage-badge-${index}`}>
++                      {visual.label}
++                    </Badge>
+                   )}
+-                >
+-                  {step.label}
+-                </span>
++                </div>
+                 <div className="flex items-center gap-2 mt-1">
+                   <span className={cn('text-xs text-muted-foreground', isCompleted && 'line-through opacity-70')}>
+                     {formatDate(step.startDate)}
+                   </span>
+-                  {step.status === 'upcoming' && (
++                  {!shouldShowContextIcons && step.status === 'upcoming' && (
+                     <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">Pr+¦xima</span>
+                   )}
+-                  {step.status === 'active' && (
++                  {!shouldShowContextIcons && step.status === 'active' && (
+                     <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Em andamento</span>
+                   )}
+                 </div>
+               </div>
+             </div>
+ 
+-            <div className="text-right">
+-              <span
+-                className={cn(
+-                  'text-sm font-bold',
+-                  isHighlighted ? 'text-foreground' : 'text-muted-foreground',
+-                  isCompleted && 'line-through opacity-70'
+-                )}
+-              >
+-                {step.price !== null ? formatMoney(step.price) : (step.discountText || 'R$ --')}
+-              </span>
+-            </div>
++            {shouldShowMonetaryValues && (
++              <div className="text-right">
++                <span
++                  className={cn(
++                    'text-sm font-bold',
++                    isHighlighted ? 'text-foreground' : 'text-muted-foreground',
++                    isCompleted && 'line-through opacity-70'
++                  )}
++                >
++                  {formatMoney(step.price)}
++                </span>
++              </div>
++            )}
+           </div>
+         );
+       })}
+diff --git a/src/components/auction/auction-stage-visuals.tsx b/src/components/auction/auction-stage-visuals.tsx
+new file mode 100644
+index 00000000..26258e5d
+--- /dev/null
++++ b/src/components/auction/auction-stage-visuals.tsx
+@@ -0,0 +1,182 @@
++/**
++ * @fileoverview Helpers de estado visual para pra+ºas/leil+Áes.
++ * Centraliza o mapeamento de status para +¡cones, labels e classes visuais
++ * usados na timeline de pra+ºas e nos formul+írios de cadastro.
++ */
++'use client';
++
++import { Ban, CheckCircle2, Clock, DollarSign, FileText, Gavel, type LucideIcon, XCircle } from 'lucide-react';
++
++export type StageTimelineStatus = 'completed' | 'active' | 'upcoming';
++
++export type StageVisualState = 'draft' | 'scheduled' | 'open' | 'cancelled' | 'closed' | 'sold' | 'unsold';
++
++export interface StageVisualConfig {
++  label: string;
++  icon: LucideIcon;
++  chipClassName: string;
++  badgeClassName: string;
++}
++
++const STAGE_VISUAL_CONFIG: Record<StageVisualState, StageVisualConfig> = {
++  draft: {
++    label: 'Rascunho',
++    icon: FileText,
++    chipClassName: 'chip-stage-visual-draft',
++    badgeClassName: 'badge-stage-visual-draft',
++  },
++  scheduled: {
++    label: 'Em breve',
++    icon: Clock,
++    chipClassName: 'chip-stage-visual-scheduled',
++    badgeClassName: 'badge-stage-visual-scheduled',
++  },
++  open: {
++    label: 'Aberto',
++    icon: Gavel,
++    chipClassName: 'chip-stage-visual-open',
++    badgeClassName: 'badge-stage-visual-open',
++  },
++  cancelled: {
++    label: 'Cancelado',
++    icon: Ban,
++    chipClassName: 'chip-stage-visual-cancelled',
++    badgeClassName: 'badge-stage-visual-cancelled',
++  },
++  closed: {
++    label: 'Encerrado',
++    icon: CheckCircle2,
++    chipClassName: 'chip-stage-visual-closed',
++    badgeClassName: 'badge-stage-visual-closed',
++  },
++  sold: {
++    label: 'Com venda',
++    icon: DollarSign,
++    chipClassName: 'chip-stage-visual-sold',
++    badgeClassName: 'badge-stage-visual-sold',
++  },
++  unsold: {
++    label: 'Sem venda',
++    icon: XCircle,
++    chipClassName: 'chip-stage-visual-unsold',
++    badgeClassName: 'badge-stage-visual-unsold',
++  },
++};
++
++function normalizeStatus(status?: string | null): string {
++  return String(status || '').trim().toUpperCase();
++}
++
++function fallbackVisualState(stepStatus: StageTimelineStatus): StageVisualState {
++  switch (stepStatus) {
++    case 'active':
++      return 'open';
++    case 'completed':
++      return 'closed';
++    default:
++      return 'scheduled';
++  }
++}
++
++export function getStageVisualConfig(state: StageVisualState): StageVisualConfig {
++  return STAGE_VISUAL_CONFIG[state];
++}
++
++export function getAuctionStageVisualState(stageStatus: string | undefined, stepStatus: StageTimelineStatus): StageVisualState {
++  const normalized = normalizeStatus(stageStatus);
++
++  if (!normalized) {
++    return fallbackVisualState(stepStatus);
++  }
++
++  if (normalized === 'RASCUNHO') {
++    return 'draft';
++  }
++
++  if (normalized.includes('CANCEL')) {
++    return 'cancelled';
++  }
++
++  if (normalized === 'ENCERRADO' || normalized === 'FINALIZADO') {
++    return 'closed';
++  }
++
++  if (normalized === 'EM_ANDAMENTO' || normalized === 'ABERTO' || normalized === 'ABERTO_PARA_LANCES' || normalized === 'EM_PREGAO') {
++    return 'open';
++  }
++
++  if (normalized === 'AGENDADO' || normalized === 'AGUARDANDO_INICIO' || normalized === 'EM_BREVE') {
++    return 'scheduled';
++  }
++
++  return fallbackVisualState(stepStatus);
++}
++
++export function getLotStageVisualState(
++  lotStatus: string | undefined,
++  stepStatus: StageTimelineStatus,
++  isHighlighted: boolean,
++  fallbackStageStatus?: string | undefined,
++): StageVisualState {
++  const normalized = normalizeStatus(lotStatus);
++
++  if (!normalized) {
++    return getAuctionStageVisualState(fallbackStageStatus, stepStatus);
++  }
++
++  if (normalized === 'RASCUNHO') {
++    return 'draft';
++  }
++
++  if (normalized === 'CANCELADO' || normalized === 'RETIRADO') {
++    return 'cancelled';
++  }
++
++  if (isHighlighted) {
++    if (normalized === 'VENDIDO' || normalized === 'SOLD') {
++      return 'sold';
++    }
++
++    if (normalized === 'NAO_VENDIDO' || normalized === 'UNSOLD') {
++      return 'unsold';
++    }
++
++    if (normalized === 'ENCERRADO') {
++      return 'closed';
++    }
++
++    if (normalized === 'ABERTO_PARA_LANCES' || normalized === 'EM_PREGAO') {
++      return 'open';
++    }
++
++    if (normalized === 'EM_BREVE' || normalized === 'AGUARDANDO') {
++      return 'scheduled';
++    }
++  }
++
++  return fallbackVisualState(stepStatus);
++}
++
++export function getFormStageVisualState(stage: { name?: string; startDate?: Date | null; endDate?: Date | null }): StageVisualState {
++  if (!stage.name || !stage.startDate || !stage.endDate) {
++    return 'draft';
++  }
++
++  const now = Date.now();
++  const start = new Date(stage.startDate).getTime();
++  const end = new Date(stage.endDate).getTime();
++
++  if (Number.isNaN(start) || Number.isNaN(end)) {
++    return 'draft';
++  }
++
++  if (end < now) {
++    return 'closed';
++  }
++
++  if (start <= now && end >= now) {
++    return 'open';
++  }
++
++  return 'scheduled';
++}
+\ No newline at end of file
+diff --git a/src/components/auction/auction-stages-form.tsx b/src/components/auction/auction-stages-form.tsx
+index 5776f39b..4e9cc6bd 100644
+--- a/src/components/auction/auction-stages-form.tsx
++++ b/src/components/auction/auction-stages-form.tsx
+@@ -3,10 +3,11 @@
+ 
+ import React from 'react';
+ import { Button } from '@/components/ui/button';
++import { Badge } from '@/components/ui/badge';
+ import { Input } from '@/components/ui/input';
+ import { Label } from '@/components/ui/label';
+ import { PlusCircle, Trash2 } from 'lucide-react';
+-import { format } from 'date-fns';
++import { getFormStageVisualState, getStageVisualConfig } from '@/components/auction/auction-stage-visuals';
+ 
+ interface AuctionStage {
+   name: string;
+@@ -72,8 +73,22 @@ export default function AuctionStagesForm({
+ 
+       {stages.map((stage, index) => (
+         <div key={index} className="border rounded-md p-4 space-y-4 bg-muted/30">
++          {(() => {
++            const visualState = getFormStageVisualState(stage);
++            const visual = getStageVisualConfig(visualState);
++            const VisualIcon = visual.icon;
++
++            return (
+           <div className="flex items-center justify-between">
+-            <h4 className="font-medium text-sm">Pra+ºa {index + 1}</h4>
++            <div className="flex items-center gap-3">
++              <div className={visual.chipClassName} data-ai-id={`auction-stage-form-icon-${index}`}>
++                <VisualIcon className="h-4 w-4" aria-hidden="true" />
++              </div>
++              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
++                <h4 className="font-medium text-sm">Pra+ºa {index + 1}</h4>
++                <Badge className={visual.badgeClassName}>{visual.label}</Badge>
++              </div>
++            </div>
+             {stages.length > 1 && (
+               <Button
+                 type="button"
+@@ -85,6 +100,8 @@ export default function AuctionStagesForm({
+               </Button>
+             )}
+           </div>
++            );
++          })()}
+ 
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="space-y-2">
+diff --git a/src/components/lot-preview-modal-v2.tsx b/src/components/lot-preview-modal-v2.tsx
+index 638b6bdd..b0419e5d 100644
+--- a/src/components/lot-preview-modal-v2.tsx
++++ b/src/components/lot-preview-modal-v2.tsx
+@@ -458,6 +458,9 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
+                       auctionOverallStartDate={auction.auctionDate ? new Date(auction.auctionDate as unknown as string) : new Date()}
+                       stages={auction.auctionStages}
+                       lot={lot}
++                      variant="detailed"
++                      surface="lot"
++                      showContextIcons
+                     />
+                   </div>
+                 </>
+diff --git a/src/components/lot-preview-modal.tsx b/src/components/lot-preview-modal.tsx
+index 27407786..6c09734d 100644
+--- a/src/components/lot-preview-modal.tsx
++++ b/src/components/lot-preview-modal.tsx
+@@ -137,6 +137,26 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
+                     <p className="text-sm text-destructive font-semibold uppercase mb-1">Encerramento</p>
+                     <LotCountdown endDate={effectiveLotEndDate} status={lot.status as any} />
+                 </div>
++
++                {auction?.auctionStages && auction.auctionStages.length > 0 && (
++                  <>
++                    <Separator />
++                    <div>
++                      <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm md:text-base">
++                        <Calendar className="h-4 w-4 md:h-5 md:w-5" />
++                        Pra+ºas do Leil+úo
++                      </h3>
++                      <BidExpertAuctionStagesTimeline
++                        auctionOverallStartDate={auction.auctionDate ? new Date(auction.auctionDate as unknown as string) : new Date()}
++                        stages={auction.auctionStages}
++                        lot={lot}
++                        variant="detailed"
++                        surface="lot"
++                        showContextIcons
++                      />
++                    </div>
++                  </>
++                )}
+                 
+                  {keySpecs.length > 0 && (
+                      <>
+diff --git a/tailwind.config.ts b/tailwind.config.ts
+index 02ad34bf..10564f71 100644
+--- a/tailwind.config.ts
++++ b/tailwind.config.ts
+@@ -54,6 +54,14 @@ const config: Config = {
+           DEFAULT: 'hsl(var(--destructive))',
+           foreground: 'hsl(var(--destructive-foreground))',
+         },
++        success: {
++          DEFAULT: 'hsl(var(--success))',
++          foreground: 'hsl(var(--success-foreground))',
++        },
++        urgent: {
++          DEFAULT: 'hsl(var(--urgent))',
++          foreground: 'hsl(var(--urgent-foreground))',
++        },
+         surface: {
+           DEFAULT: 'hsl(var(--surface))',
+           foreground: 'hsl(var(--surface-foreground))',
+diff --git a/tests/e2e/admin/auction-stage-form-icons.spec.ts b/tests/e2e/admin/auction-stage-form-icons.spec.ts
+new file mode 100644
+index 00000000..e7844d7d
+--- /dev/null
++++ b/tests/e2e/admin/auction-stage-form-icons.spec.ts
+@@ -0,0 +1,21 @@
++import { test, expect } from '@playwright/test';
++import { BASE_URL, ensureAdminSession } from './admin-helpers';
++
++test.describe('Admin auction stages form', () => {
++  test('exibe +¡cones contextuais ao adicionar nova pra+ºa', async ({ page }, testInfo) => {
++    test.skip(/noauth/i.test(testInfo.project.name), 'Fluxo administrativo exige sess+úo autenticada.');
++
++    await ensureAdminSession(page);
++    await page.goto(`${BASE_URL}/admin/auctions/new`, { waitUntil: 'domcontentloaded' });
++
++    await page.locator('[data-ai-id="admin-auction-form-card"]').waitFor({ state: 'visible', timeout: 30000 });
++    await expect(page.locator('[data-ai-id="admin-auction-form-card"]')).toContainText('Datas e Prazos');
++
++    await expect(page.locator('[data-ai-id="auction-stage-form-icon-0"]')).toBeVisible();
++
++    await page.getByRole('button', { name: /adicionar pra+ºa/i }).click();
++
++    await expect(page.locator('[data-ai-id="auction-stage-form-icon-1"]')).toBeVisible();
++    await expect(page.getByText('Em breve').last()).toBeVisible();
++  });
++});
+\ No newline at end of file
+diff --git a/tests/e2e/auction-stage-contextual-visuals.spec.ts b/tests/e2e/auction-stage-contextual-visuals.spec.ts
+new file mode 100644
+index 00000000..ce326a96
+--- /dev/null
++++ b/tests/e2e/auction-stage-contextual-visuals.spec.ts
+@@ -0,0 +1,64 @@
++import { test, expect } from '@playwright/test';
++
++test.use({ storageState: { cookies: [], origins: [] } });
++
++async function resolveStageScenario(request: import('@playwright/test').APIRequestContext, baseUrl: string) {
++  const response = await request.get(`${baseUrl}/api/debug/lots`);
++  expect(response.ok()).toBeTruthy();
++
++  const payload = await response.json();
++  const routes = Array.isArray(payload.step1_routes) ? payload.step1_routes : [];
++  const stageCounts = Array.isArray(payload.step1_hasAuctionStage) ? payload.step1_hasAuctionStage : [];
++  const priceCounts = Array.isArray(payload.step1_hasPrices) ? payload.step1_hasPrices : [];
++  const scenarioIndex = routes.findIndex(
++    (_entry: { auctionId?: string | null; lotId?: string | null }, index: number) =>
++      routes[index]?.auctionId &&
++      routes[index]?.lotId &&
++      Number(stageCounts[index] || 0) > 1 &&
++      Number(priceCounts[index] || 0) > 1
++  );
++  const scenario = scenarioIndex >= 0 ? routes[scenarioIndex] : null;
++
++  expect(scenario).toBeTruthy();
++  return scenario as { auctionId: string; lotId: string; lotTitle: string; auctionTitle: string };
++}
++
++test.describe('Pra+ºas com visuais contextuais', () => {
++  test('renderiza +¡cones em detalhes e preserva compacta+º+úo em card/listitem', async ({ page, request, baseURL }) => {
++    const baseUrl = baseURL || 'http://demo.localhost:9007';
++    const scenario = await resolveStageScenario(request, baseUrl);
++
++    await page.goto(`${baseUrl}/auctions/${scenario.auctionId}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
++
++    const auctionTimeline = page.locator('[data-ai-id="bidexpert-auction-timeline"][data-variant="extended"]').first();
++    await expect(auctionTimeline).toBeVisible();
++    await expect(auctionTimeline.locator('[data-ai-id^="bidexpert-auction-stage-icon-"]').first()).toBeVisible();
++    await expect(auctionTimeline.locator('[data-ai-id^="bidexpert-auction-stage-badge-"]').first()).toBeVisible();
++    await expect(auctionTimeline).not.toContainText('R$');
++
++    const lotsTab = page.getByRole('tab', { name: /lotes/i });
++    if (await lotsTab.isVisible().catch(() => false)) {
++      await lotsTab.click();
++    }
++
++    const gridToggle = page.getByRole('button', { name: /visualiza+º+úo em grade/i });
++    if (await gridToggle.isVisible().catch(() => false)) {
++      await gridToggle.click();
++    }
++
++    const lotCard = page.locator('[data-ai-id^="lot-card-"]').filter({ hasText: scenario.lotTitle }).first();
++    await expect(lotCard).toBeVisible();
++    await expect(lotCard.locator('[data-ai-id="lot-card-timeline"] [data-ai-id^="bidexpert-auction-stage-icon-"]')).toHaveCount(0);
++
++    await page.goto(`${baseUrl}/auctions/${scenario.auctionId}/lots/${scenario.lotId}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
++
++    const detailedTimeline = page.locator('[data-ai-id="bidexpert-auction-timeline"][data-variant="detailed"]').first();
++    await expect(detailedTimeline).toBeVisible();
++    await expect(detailedTimeline.locator('[data-ai-id^="bidexpert-auction-stage-icon-"]').first()).toBeVisible();
++    await expect(detailedTimeline.locator('[data-ai-id^="bidexpert-auction-stage-badge-"]').first()).toBeVisible();
++    await expect(detailedTimeline).toContainText('R$');
++
++    const stepCount = await detailedTimeline.locator('[data-ai-id^="bidexpert-auction-timeline-step-"]').count();
++    expect(stepCount).toBeGreaterThan(1);
++  });
++});
+\ No newline at end of file
+diff --git a/tests/itsm/features/auction-stage-visuals.feature b/tests/itsm/features/auction-stage-visuals.feature
+new file mode 100644
+index 00000000..46f7472c
+--- /dev/null
++++ b/tests/itsm/features/auction-stage-visuals.feature
+@@ -0,0 +1,21 @@
++Funcionalidade: Timeline contextual de pra+ºas
++  Como visitante ou operador administrativo
++  Eu quero ver a pra+ºa com estado visual coerente com a superf+¡cie atual
++  Para entender rapidamente se a pra+ºa est+í agendada, aberta, encerrada ou com resultado do lote
++
++  Cen+írio: Exibir timeline de leil+úo sem valores monet+írios
++    Dado que existe um leil+úo com pra+ºas cadastradas
++    Quando eu acesso a p+ígina p+¦blica de detalhes do leil+úo
++    Ent+úo devo ver +¡cones e badges contextuais nas pra+ºas
++    E n+úo devo ver valores monet+írios dentro da timeline do leil+úo
++
++  Cen+írio: Exibir timeline detalhada do lote com pre+ºo por pra+ºa
++    Dado que existe um lote com pre+ºos por pra+ºa configurados
++    Quando eu acesso a p+ígina p+¦blica de detalhes do lote
++    Ent+úo devo ver +¡cones e badges contextuais nas pra+ºas do lote
++    E devo ver os valores monet+írios por pra+ºa na timeline detalhada
++
++  Cen+írio: Preservar a vers+úo compacta em cards e listitems
++    Dado que existem cards e listitems reutilizando a timeline compacta
++    Quando a p+ígina p+¦blica do leil+úo renderiza os lotes
++    Ent+úo os cards e listitems n+úo exibem +¡cones contextuais de pra+ºa
+\ No newline at end of file
+diff --git a/tests/unit/auction-stage-visuals.spec.ts b/tests/unit/auction-stage-visuals.spec.ts
+new file mode 100644
+index 00000000..780f7ba3
+--- /dev/null
++++ b/tests/unit/auction-stage-visuals.spec.ts
+@@ -0,0 +1,45 @@
++import { describe, expect, it, vi, afterEach } from 'vitest';
++import {
++  getAuctionStageVisualState,
++  getFormStageVisualState,
++  getLotStageVisualState,
++} from '../../src/components/auction/auction-stage-visuals';
++
++describe('auction-stage-visuals', () => {
++  afterEach(() => {
++    vi.useRealTimers();
++  });
++
++  it('mapeia status bruto da pra+ºa do leil+úo para aberto', () => {
++    expect(getAuctionStageVisualState('EM_ANDAMENTO', 'upcoming')).toBe('open');
++  });
++
++  it('mapeia status bruto da pra+ºa do leil+úo para encerrado', () => {
++    expect(getAuctionStageVisualState('ENCERRADO', 'active')).toBe('closed');
++  });
++
++  it('mapeia lote destacado vendido para estado com venda', () => {
++    expect(getLotStageVisualState('VENDIDO', 'completed', true, 'ENCERRADO')).toBe('sold');
++  });
++
++  it('mapeia lote destacado aberto para estado aberto', () => {
++    expect(getLotStageVisualState('ABERTO_PARA_LANCES', 'active', true, 'EM_ANDAMENTO')).toBe('open');
++  });
++
++  it('retorna rascunho no form quando faltam dados m+¡nimos', () => {
++    expect(getFormStageVisualState({ name: '', startDate: null, endDate: null })).toBe('draft');
++  });
++
++  it('retorna em breve no form quando a pra+ºa ainda n+úo iniciou', () => {
++    vi.useFakeTimers();
++    vi.setSystemTime(new Date('2026-03-16T12:00:00.000Z'));
++
++    expect(
++      getFormStageVisualState({
++        name: '2-¬ Pra+ºa',
++        startDate: new Date('2026-03-18T12:00:00.000Z'),
++        endDate: new Date('2026-03-19T12:00:00.000Z'),
++      })
++    ).toBe('scheduled');
++  });
++});
+\ No newline at end of file
