@@ -367,7 +367,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           </span>
         </div>
         <div className="kpi-border py-3 flex flex-col items-center">
-          <span className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-0.5">Cliques</span>
+          <span className="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-0.5">Lances</span>
           <span className="font-[family-name:var(--font-card-display)] text-sm font-bold text-white">
             {item.stats.clicks}
           </span>

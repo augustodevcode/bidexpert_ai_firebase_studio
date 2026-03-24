@@ -146,7 +146,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     stats: {
       visits: lot.views ?? 0,
       qualified: auction.totalHabilitatedUsers ?? 0,
-      clicks: lot.bidsCount ?? 0,
+      clicks: lot.bidsCount ?? 0, // bidsCount = lances realizados (displayed as "Lances" in card)
     },
     pricing: {
       minimumBid: Number(lot.price),
@@ -158,6 +158,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
       stage1: stages[0] ? mapStage(stages[0]) : { name: '1ª Praça', status: 'Aguardando', date: '-' },
       stage2: stages[1] ? mapStage(stages[1]) : undefined,
       timeRemaining: computeTimeRemaining(relevantEndDate),
+      endDate: relevantEndDate ? relevantEndDate.toISOString() : undefined,
     },
     images: buildImageList(lot),
     isLive: lot.status === 'EM_PREGAO',
@@ -192,6 +193,9 @@ export async function getLotsForV2Page(
   const lots = await prisma.lot.findMany({
     where: {
       status: { in: [...VISIBLE_STATUSES] },
+      Auction: {
+        status: { notIn: ['RASCUNHO', 'EM_PREPARACAO'] },
+      },
       ...(tenantId ? { tenantId } : {}),
     },
     include: {
