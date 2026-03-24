@@ -48,6 +48,7 @@ import { faker } from '@faker-js/faker/locale/pt_BR';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { seedWonLotsWithServices } from './seed-won-lots-lib';
+import { seedLeiloesCiaTenant } from './seed-leiloes-cia-lib';
 import { seedMin50ZeroTables } from './seed-min-50-lib';
 import { seedHabilitacoes } from './seed-habilitacoes-lib';
 
@@ -4852,6 +4853,8 @@ async function main() {
 
     // SEED DE HABILITAÇÕES - Grid de Documentos e Status
     // Cria 35 usuários com diferentes status de habilitação
+    await seedLeiloesCiaTenant(prisma);
+
     await seedHabilitacoes(prisma, mainTenantId, UsersOnTenantsModel);
 
     // EXECUTAR CORREÇÃO DE INCONSISTÊNCIAS DE AUDITORIA
