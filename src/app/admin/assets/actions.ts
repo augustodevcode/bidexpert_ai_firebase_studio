@@ -66,7 +66,9 @@ export async function createAsset(data: AssetFormData): Promise<{ success: boole
  * @returns {Promise<{ success: boolean; message: string; }>} O resultado da operação.
  */
 export async function updateAsset(id: string, data: Partial<AssetFormData>): Promise<{ success: boolean; message: string; }> {
+    console.log(`[updateAsset ACTION] id="${id}", fields=[${Object.keys(data).join(',')}]`);
     const result = await assetService.updateAsset(id, data);
+    console.log(`[updateAsset ACTION] result=`, JSON.stringify(result));
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/assets');
         revalidatePath(`/admin/assets/${id}/edit`);

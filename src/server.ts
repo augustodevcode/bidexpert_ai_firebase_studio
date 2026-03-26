@@ -68,7 +68,7 @@ app.prepare().then(async () => {
 
     // --- V2: Bridge bidEventEmitter → Socket.io broadcast ---
     try {
-        const { bidEventEmitter } = await import('@/services/realtime-bids.service');
+        const { bidEventEmitter } = await import('./services/realtime-bids.service');
 
         // Listen for ALL bid events (using wildcard via tenant/auction channels)
         // The emitter fires: bid:<lotId>, bid:tenant:<tenantId>, bid:auction:<auctionId>

@@ -107,8 +107,17 @@ export class AssetRepository {
   }
 
   async update(id: string, data: Partial<Prisma.AssetUpdateInput>): Promise<Asset> {
+    // Resolve the numeric BigInt id from publicId if necessary (e.g. "ASSET-0064")
+    let whereClause: any;
+    if (id.includes('-')) {
+      const found = await this.prisma.asset.findUnique({ where: { publicId: id }, select: { id: true } });
+      if (!found) throw new Error(`Asset not found with publicId: ${id}`);
+      whereClause = { id: found.id };
+    } else {
+      whereClause = { id: BigInt(id) };
+    }
     // @ts-ignore
-    return this.prisma.asset.update({ where: { id }, data });
+    return this.prisma.asset.update({ where: whereClause, data });
   }
 
   async delete(id: string): Promise<void> {

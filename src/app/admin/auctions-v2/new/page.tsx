@@ -86,6 +86,12 @@ export default function NewAuctionPageV2() {
         description: 'Leilão criado com sucesso.',
       });
       router.push(`/admin/auctions-v2/${result.auctionId}`);
+    } else {
+      toast({
+        title: 'Erro ao criar leilão',
+        description: result.message || 'Ocorreu um erro inesperado.',
+        variant: 'destructive',
+      });
     }
     return result;
   };

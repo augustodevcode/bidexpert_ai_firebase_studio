@@ -12,12 +12,11 @@ import type { AuctionStage, Auction, Lot } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { normalizeAuctionStages } from '@/lib/ui-helpers';
+import { getAuctionStageTimelineStatus, type StageTimelineStatus } from '@/lib/auction-timing';
 import {
-  getAuctionStageTimelineStatus,
   getAuctionStageVisualState,
   getLotStageVisualState,
   getStageVisualConfig,
-  type StageTimelineStatus,
   type StageVisualState,
 } from '@/components/auction/auction-stage-visuals';
 
