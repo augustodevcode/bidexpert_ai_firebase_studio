@@ -268,6 +268,7 @@ export default function Header({
   const allNavItemsForMobile: NavItem[] = [
     { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
     { href: '/', label: 'Início', icon: HomeIcon },
+    { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
     { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
@@ -281,6 +282,7 @@ export default function Header({
   const firstNavItem: NavItem = { label: 'Categorias de Oportunidades', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
     const centralNavItems: NavItem[] = [
     { href: '/', label: 'Início', icon: HomeIcon },
+    { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
     { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },

@@ -110,13 +110,12 @@ export const getLotEffectiveDates = (
       };
     }
 
+    // Se todas as etapas já passaram, usa a última etapa como referência
     const lastFinishedStage = orderedStages[orderedStages.length - 1];
-    if (lastFinishedStage) {
-      return {
-        effectiveLotStartDate: toValidDate(lastFinishedStage.startDate),
-        effectiveLotEndDate: toValidDate(lastFinishedStage.endDate),
-      };
-    }
+    return {
+      effectiveLotStartDate: toValidDate(lastFinishedStage?.startDate),
+      effectiveLotEndDate: toValidDate(lastFinishedStage?.endDate),
+    };
   }
 
   const auctionEffectiveDates = getAuctionEffectiveDates(auction);

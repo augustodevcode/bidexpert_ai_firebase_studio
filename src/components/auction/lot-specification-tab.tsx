@@ -10,7 +10,8 @@ interface LotSpecificationTabProps {
 }
 
 export default function LotSpecificationTab({ lot }: LotSpecificationTabProps) {
-  const propertiesText = lot.properties || lot.assets?.[0]?.properties;
+  // @ts-ignore - 'specifications' exists in DB but might be missing in Omit types
+  const propertiesText = lot.specifications || lot.assets?.[0]?.specifications;
 
   return (
     <Card className="shadow-none border-0">

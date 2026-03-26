@@ -139,7 +139,9 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     type: lot.LotCategory?.name ?? 'Geral',
     location: [lot.cityName, lot.stateUf].filter(Boolean).join(', ') || 'Brasil',
     title: lot.title,
-    specs: [lot.type, lot.condition].filter(Boolean) as string[],
+    specs: [lot.type, lot.condition].filter(
+      (value): value is string => typeof value === 'string' && value.length > 0,
+    ),
     processNumber: lot.processNumber ?? undefined,
     stats: {
       visits: lot.views ?? 0,
@@ -161,7 +163,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     isLive: lot.status === 'EM_PREGAO',
     isOpen: lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_PREGAO',
     comitente: seller
-      ? { name: seller.name, logo: seller.logoUrl ?? '/placeholder-logo.svg', url: seller.website ?? '#' }
+  ? { name: seller.name, logo: seller.logoUrl ?? '/placeholder-logo.svg', url: seller.website ?? '#' }
       : undefined,
   };
 }
