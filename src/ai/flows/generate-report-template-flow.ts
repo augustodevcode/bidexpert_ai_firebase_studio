@@ -10,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { generateWithOllama } from '@/lib/ai-providers/ollama-provider';
+
 import type { AIProvider } from '@/lib/ai-providers/types';
 
 // ============================================================================
@@ -503,6 +503,9 @@ async function generateWithOllamaProvider(
   const systemPrompt = buildSystemPrompt(input);
   const userPrompt = buildUserPrompt(input);
 
+  // Dynamically load the ollama provider to avoid build-time dependency
+  const { loadOllamaProvider } = await import('@/lib/ai-providers/ollama-provider');
+  const generateWithOllama = await loadOllamaProvider();
   const raw = await generateWithOllama(
     { systemPrompt, userPrompt, temperature: 0.3, maxTokens: 8192 },
     { model: input.ollamaModel }

@@ -14,6 +14,11 @@
  * POST /api/reports/ai-generate  — gera template
  * GET  /api/reports/ai-generate  — lista modelos Ollama disponíveis
  */
+/**
+ * @fileoverview API Route para geração de templates de relatórios via IA.
+ * Aceita uma descrição textual ou texto extraído de documento e retorna
+ * um template HTML/CSS com variáveis Handlebars para uso no GrapesJS Designer.
+ */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
@@ -99,11 +104,15 @@ export async function GET(_request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
-
-    const { listOllamaModels } = await import('@/lib/ai-providers/ollama-provider');
-    // Host is always taken from OLLAMA_HOST env var — no query param accepted to prevent SSRF
-    const models = await listOllamaModels();
-
+    let listOllamaModels: (() => Promise<string[]>) | null = null;
+    try {
+      const { loadOllamaListModels } = await import('@/lib/ai-providers/ollama-provider');
+      listOllamaModels = await loadOllamaListModels();
+    } catch (e) {
+      // ollama-provider or ollama not installed
+      listOllamaModels = null;
+    }
+    const models = listOllamaModels ? await listOllamaModels() : [];
     return NextResponse.json({
       success: true,
       models,

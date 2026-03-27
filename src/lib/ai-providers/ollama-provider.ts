@@ -2,13 +2,11 @@
 /**
  * @fileoverview Provider Ollama para geração de templates de relatórios.
  * Chama o servidor Ollama local via API REST (pacote npm 'ollama').
- * 
- * Configuração via variáveis de ambiente:
- *   OLLAMA_HOST  — URL do servidor Ollama (padrão: http://localhost:11434)
- *   OLLAMA_MODEL — Modelo a utilizar   (padrão: llama3.2)
- *
- * Para listar modelos disponíveis:  GET http://localhost:11434/api/tags
- * Para instalar um modelo:          ollama pull llama3.2
+
+ */
+/**
+ * @fileoverview Provider Ollama para geração de templates de relatórios.
+ * Chama o servidor Ollama local via API REST (pacote npm 'ollama').
  */
 
 import type { OllamaProviderConfig, TemplateGenerationParams, TemplateGenerationRawResult } from './types';
@@ -32,85 +30,19 @@ const DEFAULT_OLLAMA_MODEL = 'llama3.2';
  * @returns Texto gerado pelo modelo
  * @throws Error se o servidor Ollama não estiver acessível ou o modelo não existir
  */
-export async function generateWithOllama(
-  params: TemplateGenerationParams,
-  config?: OllamaProviderConfig
-): Promise<TemplateGenerationRawResult> {
-  const host = config?.host ?? process.env.OLLAMA_HOST ?? DEFAULT_OLLAMA_HOST;
-  const model = config?.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_OLLAMA_MODEL;
+// Only export if ollama is available (for build safety)
 
-  // Dynamic import to avoid build issues when ollama is not available
-  let OllamaClass: typeof import('ollama').Ollama;
-  try {
-    const module = await import('ollama');
-    OllamaClass = module.Ollama;
-  } catch (importErr) {
-    throw new Error(
-      `Não foi possível carregar o pacote "ollama". Certifique-se que está instalado (npm install ollama). Detalhe: ${importErr instanceof Error ? importErr.message : String(importErr)}`
-    );
+// These are only dynamic proxies to avoid static references to 'ollama'.
+export async function loadOllamaProvider() {
+  if (typeof process !== 'undefined' && process.release && process.release.name === 'node') {
+    return (await import('./node-only/ollama-dynamic.node')).generateWithOllama;
   }
-
-  const client = new OllamaClass({ host });
-
-  try {
-    const response = await client.chat({
-      model,
-      messages: [
-        { role: 'system', content: params.systemPrompt },
-        { role: 'user', content: params.userPrompt },
-      ],
-      options: {
-        temperature: params.temperature ?? 0.3,
-        num_predict: params.maxTokens ?? 8192,
-      },
-      stream: false,
-    });
-
-    const text = response.message?.content ?? '';
-    if (!text) {
-      throw new Error(`Ollama (${model}) retornou uma resposta vazia. Tente um modelo diferente.`);
-    }
-
-    return { text, provider: 'ollama', model };
-  } catch (err) {
-    // Re-throw connection errors with a descriptive message
-    const isConnectionError =
-      err instanceof Error &&
-      (
-        // Node.js system error codes for connection refused/failure
-        (err as NodeJS.ErrnoException).code === 'ECONNREFUSED' ||
-        (err as NodeJS.ErrnoException).code === 'ENOTFOUND' ||
-        (err as NodeJS.ErrnoException).code === 'ECONNRESET' ||
-        // Fallback message patterns (fetch API on some platforms)
-        err.message.includes('fetch failed') ||
-        err.message.includes('ECONNREFUSED')
-      );
-
-    if (isConnectionError) {
-      throw new Error(
-        `Servidor Ollama não acessível em ${host}. Verifique se o serviço está em execução e configure OLLAMA_HOST se necessário. Detalhe: ${err.message}`
-      );
-    }
-    throw err;
-  }
+  throw new Error('Ollama provider só pode ser carregado em ambiente Node.js');
 }
 
-/**
- * Lista modelos disponíveis no servidor Ollama local.
- * Útil para popular o seletor de modelos na UI.
- *
- * @param host - URL do servidor Ollama (padrão: OLLAMA_HOST env ou localhost:11434)
- * @returns Lista de nomes de modelos ou array vazio em caso de falha
- */
-export async function listOllamaModels(host?: string): Promise<string[]> {
-  const resolvedHost = host ?? process.env.OLLAMA_HOST ?? DEFAULT_OLLAMA_HOST;
-
-  try {
-    const module = await import('ollama');
-    const client = new module.Ollama({ host: resolvedHost });
-    const response = await client.list();
-    return (response.models ?? []).map((m: { name: string }) => m.name);
-  } catch {
-    return [];
+export async function loadOllamaListModels() {
+  if (typeof process !== 'undefined' && process.release && process.release.name === 'node') {
+    return (await import('./node-only/ollama-dynamic.node')).listOllamaModels;
   }
+  throw new Error('Ollama provider só pode ser carregado em ambiente Node.js');
 }
