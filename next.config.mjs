@@ -9,6 +9,10 @@ try {
   withSentryConfig = null;
 }
 
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 console.log(`[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: ${process.env.NODE_ENV}`);
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -152,6 +156,15 @@ const config = {
         async_hooks: false,
       };
     }
+
+    // Fix react-redux RSC resolution: the "react-server" exports condition
+    // points to dist/rsc.mjs which stubs client-only APIs (Provider, createSelectorHook etc.)
+    // causing "Attempted import error" in react-querybuilder.
+    // Force webpack to always use the full ESM entry for react-redux.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'react-redux': join(__dirname, 'node_modules', 'react-redux', 'dist', 'react-redux.mjs'),
+    };
     
     return config;
   },
