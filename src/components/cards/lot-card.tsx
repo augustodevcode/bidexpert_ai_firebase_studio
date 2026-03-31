@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
-import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock, X, Facebook, MessageSquareText, Mail, Users, ShieldCheck } from 'lucide-react';
+import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock, X, Facebook, MessageSquareText, Mail, Users, ShieldCheck, Car, Calendar, Gauge } from 'lucide-react';
 import { isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -184,6 +184,12 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             </div>
           </Link>
           <div className="wrapper-card-status-badges" data-ai-id="lot-card-status-badges">
+            {effectiveLotStatus === 'EM_PREGAO' && (
+              <Badge className="badge-ao-vivo" data-ai-id="lot-card-ao-vivo-badge">
+                <span className="dot-ao-vivo" aria-hidden="true" />
+                AO VIVO
+              </Badge>
+            )}
             <Badge className={cn("badge-lot-status", getLotStatusColor(effectiveLotStatus))} data-ai-id="lot-card-status-badge">
               {getAuctionStatusText(effectiveLotStatus)}
             </Badge>
@@ -244,6 +250,12 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
               <span className="text-card-auction-id">
                 {auction?.publicId || `AUC-${lot.auctionId}`}
               </span>
+              {auctionTypeDisplay && (
+                <Badge variant="outline" className="badge-auction-type" data-ai-id="lot-card-auction-type-badge">
+                  {AuctionTypeIcon && <AuctionTypeIcon className="icon-auction-type-badge" />}
+                  {auctionTypeDisplay.label}
+                </Badge>
+              )}
             </div>
             <h3 data-ai-id="lot-card-title" className="header-card-lot-title">
               Lote {lotNumber}
@@ -272,6 +284,30 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
               {lot.occupancyStatus && (
                 <div className={cn("badge-property-occupancy", lot.occupancyStatus === 'OCUPADO' ? "badge-occupancy-occupied" : "badge-occupancy-vacant")} data-ai-id="lot-card-property-occupancy">
                   {lot.occupancyStatus === 'OCUPADO' ? 'Ocupado' : 'Desocupado'}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Vehicle Details (Brand, Model, Year, Mileage) */}
+          {(lot.type === 'VEICULO' || lot.type === 'veiculo' || lot.type === 'Veículo') && lot.assets && lot.assets.length > 0 && (
+            <div className="wrapper-card-vehicle-details" data-ai-id="lot-card-vehicle-details">
+              {(lot.assets[0].brand || lot.assets[0].model) && (
+                <div className="item-vehicle-detail" data-ai-id="lot-card-vehicle-brand-model">
+                  <Car className="icon-vehicle-detail" />
+                  <span>{[lot.assets[0].brand, lot.assets[0].model].filter(Boolean).join(' ')}</span>
+                </div>
+              )}
+              {(lot.assets[0].year || lot.assets[0].modelYear) && (
+                <div className="item-vehicle-detail" data-ai-id="lot-card-vehicle-year">
+                  <Calendar className="icon-vehicle-detail" />
+                  <span>{lot.assets[0].year}{lot.assets[0].modelYear && lot.assets[0].modelYear !== lot.assets[0].year ? `/${lot.assets[0].modelYear}` : ''}</span>
+                </div>
+              )}
+              {lot.assets[0].mileage != null && lot.assets[0].mileage > 0 && (
+                <div className="item-vehicle-detail" data-ai-id="lot-card-vehicle-mileage">
+                  <Gauge className="icon-vehicle-detail" />
+                  <span>{Number(lot.assets[0].mileage).toLocaleString('pt-BR')} km</span>
                 </div>
               )}
             </div>
