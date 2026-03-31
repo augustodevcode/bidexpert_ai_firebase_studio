@@ -232,18 +232,12 @@ export class AssetService {
    */
   async updateAsset(id: string, data: Partial<AssetFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { 
         categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, 
         street, number, complement, neighborhood, zipCode,
         imageMediaId, occupationUpdatedBy,
-        // Exclude non-Prisma / non-updatable fields that leak from mapAssetsWithDetails or form spread:
-        id: _excludedId, publicId: _excludedPublicId, tenantId: _excludedTenantId,
-        categoryName: _excludedCategoryName, subcategoryName: _excludedSubcategoryName,
-        sellerName: _excludedSellerName, lots: _excludedLots,
-        createdAt: _excludedCreatedAt, updatedAt: _excludedUpdatedAt,
         ...assetData 
-      } = data as any;
+      } = data;
 
       // Construct address if not provided but components are
       if (!assetData.address && (street || number || neighborhood)) {
@@ -270,10 +264,10 @@ export class AssetService {
       const dataToUpdate: Prisma.AssetUpdateInput = { ...normalizedAssetData };
       
       // Conecta relacionamentos
-        if (categoryId) dataToUpdate.LotCategory = { connect: { id: BigInt(categoryId) } };
-        if (subcategoryId) dataToUpdate.Subcategory = { connect: { id: BigInt(subcategoryId) } };
-        if (judicialProcessId) dataToUpdate.JudicialProcess = { connect: { id: BigInt(judicialProcessId) } };
-        if (sellerId) dataToUpdate.Seller = { connect: { id: BigInt(sellerId) } };
+      if (categoryId) (dataToUpdate as any).LotCategory = { connect: { id: BigInt(categoryId) } };
+      if (subcategoryId) (dataToUpdate as any).Subcategory = { connect: { id: BigInt(subcategoryId) } };
+      if (judicialProcessId) (dataToUpdate as any).JudicialProcess = { connect: { id: BigInt(judicialProcessId) } };
+      if (sellerId) (dataToUpdate as any).Seller = { connect: { id: BigInt(sellerId) } };
       if (imageMediaId) (dataToUpdate as any).CoverImage = { connect: { id: BigInt(imageMediaId) } };
       if (occupationUpdatedBy) (dataToUpdate as any).User = { connect: { id: BigInt(occupationUpdatedBy) } };
       

@@ -189,12 +189,25 @@ export async function getTenantIdFromRequest(isPublicCall = false): Promise<stri
     const resolvedHeaderTenantId = await resolveTenantIdFromHeader(tenantIdFromHeader);
 
     if (session?.tenantId) {
+        const normalizedSessionTenantToken = normalizeTenantToken(session.tenantId, { lowercase: false });
+        const resolvedSessionTenantId = await resolveTenantIdFromHeader(normalizedSessionTenantToken);
+
+        if (!resolvedSessionTenantId) {
+            console.warn(
+                `[getTenantIdFromRequest] Sessão contém tenantId inválido (${session.tenantId}). ` +
+                'Tentando resolver via header ou fallback padrão.'
+            );
+        }
+
         // Admin do landlord pode navegar em qualquer tenant: usa o tenant da URL quando houver.
-        if (session.tenantId === '1' && resolvedHeaderTenantId && resolvedHeaderTenantId !== '1') {
+        if (resolvedSessionTenantId === '1' && resolvedHeaderTenantId && resolvedHeaderTenantId !== '1') {
             return resolvedHeaderTenantId;
         }
-        // Retorna o ID do tenant da sessão do usuário autenticado
-        return session.tenantId;
+
+        if (resolvedSessionTenantId) {
+            // Retorna o ID do tenant da sessão do usuário autenticado, já normalizado
+            return resolvedSessionTenantId;
+        }
     }
 
     if (resolvedHeaderTenantId) {
