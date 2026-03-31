@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ListChecks, Gavel, TrendingUp, Clock, Heart, Share2, Pencil } from 'lucide-react';
 import type { Auction } from '@/types';
-import { getAuctionStatusText, getAuctionStatusColor } from '@/lib/ui-helpers';
+import { getAuctionMinimumOffer, getAuctionStatusText, getAuctionStatusColor } from '@/lib/ui-helpers';
 import { useAuctionCountdown } from '../hooks/use-auction-countdown';
 
 interface HeroSectionProps {
@@ -30,6 +30,7 @@ export default function HeroSection({
   editHref,
 }: HeroSectionProps) {
   const { timeRemaining, isExpiringSoon, stage } = useAuctionCountdown(auction);
+  const minimumOffer = getAuctionMinimumOffer(auction) ?? 0;
 
   const quickStats = [
     { 
@@ -39,7 +40,7 @@ export default function HeroSection({
     },
     { 
       label: 'Lance Mín.', 
-      value: `R$ ${(auction.initialOffer || 0).toLocaleString('pt-BR')}`, 
+      value: `R$ ${minimumOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: Gavel 
     },
     { 

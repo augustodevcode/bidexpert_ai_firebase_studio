@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, MapPin, Tag, CalendarClock, ImageOff } from 'lucide-react';
 import { isPast, isValid } from 'date-fns';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotDisplayLocation, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
 import { Button } from '../ui/button';
 import { DetailTimeRemaining } from '@/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client';
 import { useInterval } from '@/hooks/use-interval'; // Importando o hook de intervalo
@@ -53,7 +53,7 @@ export default function CurrentLotDisplay({ lot: initialLot, auctionStatus }: Cu
   const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % gallery.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
 
-  const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
+  const displayLocation = getLotDisplayLocation(lot, lot.auction);
 
   return (
     <Card className="h-full flex flex-col shadow-lg rounded-lg overflow-hidden">
@@ -118,6 +118,7 @@ export default function CurrentLotDisplay({ lot: initialLot, auctionStatus }: Cu
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
+                  aria-label={`Ver miniatura ${index + 1}`}
                   className={`relative w-16 h-12 rounded-sm overflow-hidden border-2 flex-shrink-0 ${
                     index === currentImageIndex ? 'border-primary ring-1 ring-primary' : 'border-transparent hover:border-muted-foreground/50'
                   }`}

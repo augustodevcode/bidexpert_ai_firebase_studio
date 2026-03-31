@@ -29,3 +29,9 @@ Feature: Remediação de cadastro de leilão e alias de autenticação
     When a sessão do usuário está sendo carregada
     Then o sistema exibe um spinner com a mensagem "Carregando painel administrativo…"
     And o estado de loading possui identificador data-ai-id para testes
+
+  Scenario: Preservar retorno ao lote ao pedir login pelo painel de lances
+    Given que um visitante acessa um lote público aberto para lances
+    When ele usa o CTA "Fazer Login" dentro do painel de lances
+    Then o sistema navega para /auth/login
+    And o parâmetro redirect preserva a URL completa do lote de origem

@@ -23,8 +23,6 @@ import { LogIn, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { login, getDevUsers, getCurrentTenantContext } from '@/app/auth/actions';
-import { useAuth } from '@/contexts/auth-context';
-import type { UserProfileWithPermissions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -48,16 +46,26 @@ type TenantOption = {
 
 const normalizeSelectValue = (value?: string | null) => value ?? '';
 
+const normalizeRedirectTarget = (value?: string | null) => {
+    if (!value) {
+        return '/dashboard/overview';
+    }
+
+    if (!value.startsWith('/') || value.startsWith('//')) {
+        return '/dashboard/overview';
+    }
+
+    return value;
+};
+
 
 function LoginPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
-    const { loginUser } = useAuth();
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [userWithMultipleTenants, setUserWithMultipleTenants] = useState<UserProfileWithPermissions | null>(null);
     const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
     const [availableTenants, setAvailableTenants] = useState<TenantOption[]>([]);
     const [isFetchingTenants, setIsFetchingTenants] = useState<boolean>(true);
@@ -169,7 +177,7 @@ function LoginPageContent() {
         fetchTenants();
     }, [fetchTenants]);
 
-    const tenantOptions = userWithMultipleTenants?.tenants || availableTenants;
+    const tenantOptions = availableTenants;
 
     useEffect(() => {
         // Don't auto-select if we have a locked tenant
@@ -232,15 +240,10 @@ function LoginPageContent() {
         try {
             const result = await login(values);
 
-            if (result.success && result.user && result.user.tenants && result.user.tenants.length > 1 && !effectiveTenantId) {
-                toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
-                setUserWithMultipleTenants(result.user);
-                form.setValue('password', '[already_validated]');
-            } else if (result.success && result.user) {
-                const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
-                const finalTenantId = effectiveTenantId || (result.user.tenants && result.user.tenants.length > 0 ? result.user.tenants[0].id : '1');
-
-                loginUser(result.user, finalTenantId);
+            if (result.success) {
+                const redirectUrl = normalizeRedirectTarget(
+                    searchParams.get('redirect') || searchParams.get('callbackUrl')
+                );
 
                 toast({
                     title: "Login bem-sucedido!",
@@ -342,8 +345,6 @@ function LoginPageContent() {
                                             <p className="text-auth-locked-info">
                                                 Você está acessando: <strong>{lockedTenantName || 'Este espaço exclusivo'}</strong>
                                             </p>
-                                        ) : userWithMultipleTenants ? (
-                                            <p className="text-auth-helper">Escolha em qual espaço de trabalho deseja entrar.</p>
                                         ) : (
                                             <p className="text-auth-helper">Selecione o tenant com o qual deseja autenticar.</p>
                                         )}
@@ -353,74 +354,72 @@ function LoginPageContent() {
                                 )}
                             />
 
-                            {!userWithMultipleTenants && (
-                                <>
-                                    <FormField
-                                        control={form.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem className="wrapper-form-item">
-                                                <Label htmlFor="email" className="label-auth-field">Email</Label>
-                                                <FormControl>
+                            <>
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem className="wrapper-form-item">
+                                            <Label htmlFor="email" className="label-auth-field">Email</Label>
+                                            <FormControl>
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    placeholder="seu@email.com"
+                                                    required
+                                                    disabled={isLoading}
+                                                    {...field}
+                                                    data-ai-id="auth-login-email-input"
+                                                    className="input-auth-field"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({ field }) => (
+                                        <FormItem className="wrapper-form-item">
+                                            <Label htmlFor="password" className="label-auth-field">Senha</Label>
+                                            <FormControl>
+                                                <div className="wrapper-auth-password">
                                                     <Input
-                                                        id="email"
-                                                        type="email"
-                                                        placeholder="seu@email.com"
+                                                        id="password"
+                                                        type={showPassword ? "text" : "password"}
                                                         required
                                                         disabled={isLoading}
                                                         {...field}
-                                                        data-ai-id="auth-login-email-input"
-                                                        className="input-auth-field"
+                                                        data-ai-id="auth-login-password-input"
+                                                        className="input-auth-password"
                                                     />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="password"
-                                        render={({ field }) => (
-                                            <FormItem className="wrapper-form-item">
-                                                <Label htmlFor="password" className="label-auth-field">Senha</Label>
-                                                <FormControl>
-                                                    <div className="wrapper-auth-password">
-                                                        <Input
-                                                            id="password"
-                                                            type={showPassword ? "text" : "password"}
-                                                            required
-                                                            disabled={isLoading}
-                                                            {...field}
-                                                            data-ai-id="auth-login-password-input"
-                                                            className="input-auth-password"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowPassword(!showPassword)}
-                                                            className="btn-toggle-password"
-                                                            data-ai-id="auth-login-toggle-password"
-                                                            tabIndex={-1}
-                                                        >
-                                                            {showPassword ? (
-                                                                <EyeOff className="h-4 w-4" />
-                                                            ) : (
-                                                                <Eye className="h-4 w-4" />
-                                                            )}
-                                                        </button>
-                                                    </div>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </>
-                            )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        className="btn-toggle-password"
+                                                        data-ai-id="auth-login-toggle-password"
+                                                        tabIndex={-1}
+                                                    >
+                                                        {showPassword ? (
+                                                            <EyeOff className="h-4 w-4" />
+                                                        ) : (
+                                                            <Eye className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
 
                             {error && <p className="text-auth-error-center">{error}</p>}
                         </CardContent>
                         <CardFooter className="footer-auth">
                             <Button type="submit" className="btn-auth-submit" disabled={isLoading || isFetchingTenants} data-ai-id="auth-login-submit-button">
-                                {isLoading ? <Loader2 className="icon-btn-spinner" /> : userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login'}
+                                {isLoading ? <Loader2 className="icon-btn-spinner" /> : 'Login'}
                             </Button>
                         </CardFooter>
                     </form>

@@ -1,5 +1,5 @@
 // src/lib/ui-helpers.ts
-import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage, AuctionType } from '@/types';
+import type { Asset, Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage, AuctionType } from '@/types';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle, Gavel, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { isPast, isFuture } from 'date-fns';
 import React from 'react';
@@ -220,6 +220,131 @@ export const getUniqueLotLocations = (lots: Lot[]): string[] => {
     }
   });
   return Array.from(locations).sort();
+};
+
+type LotAssetCarrier = Partial<Asset> | { Asset?: Partial<Asset> | null; asset?: Partial<Asset> | null } | null | undefined;
+type LotWithAssetFallbacks = Partial<Lot> & {
+  AssetsOnLots?: LotAssetCarrier[] | null;
+  assets?: LotAssetCarrier[] | null;
+};
+
+const isNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+
+const toPositiveNumber = (value: unknown): number | null => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  return null;
+};
+
+const unwrapLotAssetCarrier = (carrier: LotAssetCarrier): Partial<Asset> | null => {
+  if (!carrier) {
+    return null;
+  }
+
+  if (typeof carrier === 'object' && ('Asset' in carrier || 'asset' in carrier)) {
+    return (carrier.Asset ?? carrier.asset ?? null) as Partial<Asset> | null;
+  }
+
+  return carrier as Partial<Asset>;
+};
+
+const getLotFallbackAssets = (lot?: LotWithAssetFallbacks | null): Partial<Asset>[] => {
+  if (!lot) {
+    return [];
+  }
+
+  const carriers = [
+    ...(Array.isArray(lot.assets) ? lot.assets : []),
+    ...(Array.isArray(lot.AssetsOnLots) ? lot.AssetsOnLots : []),
+  ];
+
+  return carriers
+    .map(unwrapLotAssetCarrier)
+    .filter((asset): asset is Partial<Asset> => Boolean(asset));
+};
+
+export const getLotDetailedDescription = (lot?: LotWithAssetFallbacks | null): string | null => {
+  if (!lot) {
+    return null;
+  }
+
+  if (isNonEmptyString(lot.description)) {
+    return lot.description.trim();
+  }
+
+  const assetDescription = getLotFallbackAssets(lot)
+    .map(asset => asset.description)
+    .find(isNonEmptyString);
+
+  return assetDescription?.trim() ?? null;
+};
+
+export const getLotDisplayLocation = (lot?: LotWithAssetFallbacks | null, auction?: Partial<Auction> | null): string => {
+  if (!lot) {
+    return 'Não informado';
+  }
+
+  const primaryAsset = getLotFallbackAssets(lot)[0];
+  const cityStateCandidate = [
+    [lot.cityName, lot.stateUf].filter(isNonEmptyString).join(' - '),
+    [primaryAsset?.locationCity, primaryAsset?.locationState].filter(isNonEmptyString).join(' - '),
+  ].find(isNonEmptyString);
+
+  if (cityStateCandidate) {
+    return cityStateCandidate.trim();
+  }
+
+  const addressCandidate = [lot.address, primaryAsset?.address, auction?.address].find(isNonEmptyString);
+  if (addressCandidate) {
+    return addressCandidate.trim();
+  }
+
+  const singleFieldCandidate = [
+    lot.stateUf,
+    lot.cityName,
+    primaryAsset?.locationState,
+    primaryAsset?.locationCity,
+  ].find(isNonEmptyString);
+
+  return singleFieldCandidate?.trim() ?? 'Não informado';
+};
+
+export const getAuctionMinimumOffer = (auction?: Partial<Auction> | null): number | null => {
+  const explicitInitialOffer = toPositiveNumber(auction?.initialOffer);
+  if (explicitInitialOffer !== null) {
+    return explicitInitialOffer;
+  }
+
+  const lots = Array.isArray(auction?.lots) ? auction.lots : [];
+  const priceCandidates = lots
+    .map(lot => {
+      const livePrice = toPositiveNumber(lot?.price);
+      if (livePrice !== null) {
+        return livePrice;
+      }
+
+      const initialPrice = toPositiveNumber(lot?.initialPrice);
+      if (initialPrice !== null) {
+        return initialPrice;
+      }
+
+      const primaryAsset = getLotFallbackAssets(lot as LotWithAssetFallbacks)[0];
+      return toPositiveNumber(primaryAsset?.evaluationValue);
+    })
+    .filter((price): price is number => price !== null);
+
+  if (priceCandidates.length === 0) {
+    return null;
+  }
+
+  return Math.min(...priceCandidates);
 };
 
 export const getEffectiveLotEndDate = (lot: Lot, auction?: Auction): { effectiveLotEndDate: Date | null, effectiveLotStartDate: Date | null } => {

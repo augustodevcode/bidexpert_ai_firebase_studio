@@ -21,7 +21,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     env: {
         NODE_ENV: process.env.NODE_ENV,
-        // Mask the password part of the DB URL
         DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:@]+@/, ':***@') : 'UNDEFINED'
     },
     userFound: !!user,
@@ -29,7 +28,7 @@ export async function GET(request: Request) {
         id: user.id.toString(),
         email: user.email,
         passwordHashPrefix: user.password?.substring(0, 10),
-        tenants: user.tenants.map(t => ({ tenantId: t.tenantId.toString(), assignedBy: t.assignedBy }))
+        tenants: user.UsersOnTenants.map(t => ({ tenantId: t.tenantId.toString(), assignedBy: t.assignedBy }))
     } : null,
     passwordAuthCheck_senha123: passwordCheck
   });

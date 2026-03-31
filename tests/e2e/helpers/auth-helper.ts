@@ -243,23 +243,29 @@ export async function loginAs(
     if (msg.type() === 'error') consoleErrors.push(msg.text());
   });
 
-  // 1. Navigate to login
-  await page.goto(`${baseUrl}/auth/login`, { waitUntil: 'networkidle', timeout: 120_000 });
+  // 1. Pre-warm tenant API (triggers lazy compilation in dev mode)
+  try {
+    await page.context().request.get(`${baseUrl}/api/public/tenants`);
+    console.log('[loginAs] Tenant API pre-warmed');
+  } catch { /* ignore */ }
 
-  // 2. Wait for the login form to be rendered
+  // 2. Navigate to login (domcontentloaded avoids WebSocket hang with networkidle)
+  await page.goto(`${baseUrl}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+
+  // 3. Wait for the login form to be rendered
   const emailInput = page.locator(SEL.emailInput).or(page.locator('input[type="email"]')).first();
   const passwordInput = page.locator(SEL.passwordInput).or(page.locator('input[type="password"]')).first();
   const submitButton = page.locator(SEL.submitButton).or(page.locator('button[type="submit"]')).first();
 
   await emailInput.waitFor({ state: 'visible', timeout: 60_000 });
-  await page.waitForTimeout(2_000); // Debounce for tenant list to load
+  await page.waitForTimeout(3_000); // Debounce for tenant list to load (extra time for dev lazy compile)
 
-  // 3. Resolve tenant: auto-lock via subdomain OR manual selection
+  // 4. Resolve tenant: auto-lock via subdomain OR manual selection
   if (hasSubdomain(baseUrl)) {
     // Wait for the subdomain-based tenant auto-lock (React state must be populated
     // before form submission, otherwise handleLogin rejects with "Selecione um espaço")
     try {
-      await page.locator('.text-auth-locked-info').waitFor({ state: 'visible', timeout: 15_000 });
+      await page.locator('.text-auth-locked-info').waitFor({ state: 'visible', timeout: 45_000 });
       console.log('[loginAs] Tenant auto-locked via subdomain');
     } catch {
       // Fallback: if locked-info text never appears, try setting tenantId manually

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, MapPin, Tag, Gavel } from 'lucide-react';
 import { isPast, differenceInDays } from 'date-fns';
-import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData, getLotDisplayPrice, getEffectiveLotEndDate, getEffectiveLotStatus } from '@/lib/ui-helpers';
+import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData, getLotDisplayPrice, getEffectiveLotEndDate, getEffectiveLotStatus, getLotDisplayLocation } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import EntityEditMenu from '../entity-edit-menu';
@@ -30,7 +30,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction?.auctionType || undefined);
   const effectiveLotStatus = React.useMemo(() => getEffectiveLotStatus(lot, auction) || lot.status, [lot, auction]);
   const { effectiveLotEndDate } = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
-  const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'N/A';
+  const displayLocation = getLotDisplayLocation(lot, auction);
   const sellerName = auction?.seller?.name;
   const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction?.seller?.logoUrl : undefined;
   const sellerSlug = auction?.seller?.slug || auction?.seller?.publicId || auction?.seller?.id;

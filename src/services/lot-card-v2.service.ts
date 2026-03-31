@@ -11,6 +11,7 @@ import {
   getEffectiveLotStatus,
   getLotEffectiveDates,
 } from '@/lib/auction-timing';
+import { getLotDisplayLocation } from '@/lib/ui-helpers';
 import type {
   AuctionItem,
   AuctionCategory,
@@ -132,7 +133,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     id: lot.id.toString(),
     category,
     type: lot.LotCategory?.name ?? 'Geral',
-    location: [lot.cityName, lot.stateUf].filter(Boolean).join(', ') || 'Brasil',
+    location: getLotDisplayLocation(lot, auction),
     title: lot.title,
     specs: [lot.type, lot.condition].filter(
       (value): value is string => typeof value === 'string' && value.length > 0,

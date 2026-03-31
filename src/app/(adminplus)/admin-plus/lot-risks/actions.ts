@@ -11,7 +11,7 @@ import type { LotRiskRow } from './types';
 
 const FK_INCLUDE = {
   Lot: { select: { id: true, title: true } },
-  VerifiedByUser: { select: { id: true, name: true } },
+  User: { select: { id: true, name: true } },
 } as const;
 
 function toRow(d: any): LotRiskRow {
@@ -25,7 +25,7 @@ function toRow(d: any): LotRiskRow {
     mitigationStrategy: d.mitigationStrategy ?? null,
     verified: d.verified,
     verifiedBy: d.verifiedBy?.toString() ?? null,
-    verifiedByName: d.VerifiedByUser?.name ?? null,
+    verifiedByName: d.User?.name ?? null,
     verifiedAt: d.verifiedAt?.toISOString?.() ?? d.verifiedAt ?? null,
     createdAt: d.createdAt?.toISOString?.() ?? d.createdAt,
   };
