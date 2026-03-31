@@ -145,14 +145,20 @@ export default function AuctionDetailPageV2() {
       if (!auctionId) {
         return { success: false, message: 'ID inválido' };
       }
-      const result = await updateAuctionV2(auctionId, data);
-      if (result.success) {
-        toast({ title: 'Sucesso!', description: 'Leilão atualizado.' });
-        loadData();
-      } else {
-        toast({ title: 'Erro ao atualizar', description: result.message, variant: 'destructive' });
+      try {
+        const result = await updateAuctionV2(auctionId, data);
+        if (result.success) {
+          toast({ title: 'Sucesso!', description: 'Leilão atualizado.' });
+          loadData();
+        } else {
+          toast({ title: 'Erro ao atualizar', description: result.message || 'Falha na atualização.', variant: 'destructive' });
+        }
+        return result;
+      } catch (error: any) {
+        console.error('Erro ao atualizar leilão V2:', error);
+        toast({ title: 'Erro inesperado', description: error?.message || 'Ocorreu um erro interno. Tente novamente.', variant: 'destructive' });
+        return { success: false, message: error?.message || 'Erro interno' };
       }
-      return result;
     },
     [auctionId, loadData, toast]
   );
@@ -295,7 +301,7 @@ export default function AuctionDetailPageV2() {
           <TabsContent value="lots" className="mt-0">
             <AuctionLotsGrid
               auctionId={auction.id}
-              onAddLot={() => router.push(`/admin/lots/new?auctionId=${auction.id}`)}
+              onAddLot={() => router.push(`/admin/lots-v2/new?auctionId=${auction.id}`)}
             />
           </TabsContent>
 

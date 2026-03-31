@@ -270,6 +270,7 @@ export default function Header({
     { href: '/', label: 'Início', icon: HomeIcon },
     { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
+    { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
@@ -283,6 +284,7 @@ export default function Header({
     { href: '/', label: 'Início', icon: HomeIcon },
     { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
+    { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
     {
       label: 'Modalidades',

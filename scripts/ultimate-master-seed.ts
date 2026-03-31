@@ -48,6 +48,7 @@ import { faker } from '@faker-js/faker/locale/pt_BR';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { seedWonLotsWithServices } from './seed-won-lots-lib';
+import { seedLeiloesCiaTenant } from './seed-leiloes-cia-lib';
 import { seedMin50ZeroTables } from './seed-min-50-lib';
 import { seedHabilitacoes } from './seed-habilitacoes-lib';
 
@@ -247,19 +248,27 @@ async function populateMissingData(tenantId: bigint) {
   for (const lot of lots.slice(0, 25)) {
       const hasDocument = await prisma.lotDocument.findFirst({ where: { lotId: lot.id } });
       if (!hasDocument) {
-          await prisma.lotDocument.create({
-              data: {
-                  lotId: lot.id,
-                  tenantId: tenantId,
-                  fileName: `laudo-${lot.id}.pdf`,
-                  title: 'Laudo Técnico do Lote',
-                  description: 'Laudo técnico fictício para demonstração.',
-                  updatedAt: new Date(),
-                  fileUrl: `https://storage.demo/lot/${lot.id}/laudo.pdf`,
-                  mimeType: 'application/pdf',
-                  fileSize: BigInt(450000)
-              }
-          });
+          // Criar múltiplos documentos realistas para cada lote
+          const docs = [
+            { title: 'Edital de Leilão', fileName: `edital-${lot.id}.pdf`, description: 'Edital completo com as regras do leilão.' },
+            { title: 'Matrícula Atualizada', fileName: `matricula-${lot.id}.pdf`, description: 'Cópia da matrícula do imóvel ou documento do veículo.' },
+            { title: 'Laudo de Avaliação', fileName: `laudo-${lot.id}.pdf`, description: 'Laudo técnico detalhando o estado e valor do bem.' }
+          ];
+          for (const doc of docs) {
+            await prisma.lotDocument.create({
+                data: {
+                    lotId: lot.id,
+                    tenantId: tenantId,
+                    fileName: doc.fileName,
+                    title: doc.title,
+                    description: doc.description,
+                    updatedAt: new Date(),
+                    fileUrl: `https://storage.demo/lot/${lot.id}/${doc.fileName}`,
+                    mimeType: 'application/pdf',
+                    fileSize: BigInt(Math.floor(Math.random() * 1000000) + 500000)
+                }
+            });
+          }
       }
   }
   
@@ -481,10 +490,18 @@ async function fixLotsWithoutAssets(tenantId: bigint) {
         title: lot.title || `Ativo do Lote ${lot.number}`,
         description: lot.description || faker.commerce.productDescription(),
         status: 'DISPONIVEL',
-        make: faker.company.name(),
+        make: faker.vehicle.manufacturer(),
         model: faker.vehicle.model(),
         vin: uniqueVin,
         year: faker.date.past({ years: 10 }).getFullYear(),
+        modelYear: faker.date.past({ years: 10 }).getFullYear(),
+        plate: faker.string.alphanumeric(7).toUpperCase(),
+        renavam: faker.string.numeric(11),
+        mileage: faker.number.int({ min: 1000, max: 150000 }),
+        color: faker.color.human(),
+        fuelType: faker.helpers.arrayElement(['Flex', 'Gasolina', 'Diesel', 'Elétrico']),
+        transmissionType: faker.helpers.arrayElement(['Manual', 'Automático']),
+        specifications: lot.description || faker.commerce.productDescription(),
         evaluationValue: lot.price ? Number(lot.price) : faker.number.float({ min: 10000, max: 500000, fractionDigits: 2 }),
         dataAiHint: `asset lote ${lot.number}`,
         categoryId: lot.categoryId,
@@ -1559,22 +1576,23 @@ async function seedCriticalGlobalTables(tenantId: bigint) {
     { name: 'Porto Alegre', stateUf: 'RS' },
     { name: 'Goiânia', stateUf: 'GO' },
     { name: 'Belém', stateUf: 'PA' },
-    { name: 'Guarulhos', stateUf: 'SP' },
-    { name: 'Campinas', stateUf: 'SP' },
-    { name: 'São Luís', stateUf: 'MA' }
-  ];
-
-  for (const city of mainCities) {
-    const state = await prisma.state.findUnique({ where: { uf: city.stateUf } });
-    if (state) {
-      await prisma.city.upsert({
-        where: { 
-          name_stateId: { 
-            name: city.name, 
-            stateId: state.id 
-          } 
-        },
-        update: {},
+      { name: 'São Luís', stateUf: 'MA' },
+      { name: 'Maceió', stateUf: 'AL' },
+      { name: 'Macapá', stateUf: 'AP' },
+      { name: 'Vitória', stateUf: 'ES' },
+      { name: 'Cuiabá', stateUf: 'MT' },
+      { name: 'Campo Grande', stateUf: 'MS' },
+      { name: 'João Pessoa', stateUf: 'PB' },
+      { name: 'Teresina', stateUf: 'PI' },
+      { name: 'Natal', stateUf: 'RN' },
+      { name: 'Porto Velho', stateUf: 'RO' },
+      { name: 'Boa Vista', stateUf: 'RR' },
+      { name: 'Florianópolis', stateUf: 'SC' },
+      { name: 'Aracaju', stateUf: 'SE' },
+      { name: 'Palmas', stateUf: 'TO' },
+      { name: 'Rio Branco', stateUf: 'AC' },
+      { name: 'Guarulhos', stateUf: 'SP' },
+      { name: 'Campinas', stateUf: 'SP' }
         create: {
           name: city.name,
           stateId: state.id,
@@ -2553,12 +2571,12 @@ async function main() {
     // Criar JudicialBranch (Vara)
     const judicialBranch = await prisma.judicialBranch.create({
       data: {
-        slug: `vara-civel-01-${judicialTimestamp}`,
-        name: `Vara Cível da Capital ${judicialTimestamp}`,
+        slug: `1-vara-civel-capital-${judicialTimestamp}`,
+        name: `1ª Vara Cível da Capital - Foro Central Cível`,
         districtId: district.id,
-        contactName: 'Dr. João Silva',
-        phone: '(11) 3133-1000',
-        email: 'vara.civel@tjsp.jus.br',
+        contactName: 'Dr. José Roberto (Juiz Titular)',
+        phone: '(11) 3133-2000',
+        email: 'central1civel@tjsp.jus.br',
         updatedAt: new Date(),
       },
     });
@@ -2643,7 +2661,7 @@ async function main() {
       'Palmas': '77001-000', // Praça dos Girassóis
     };
 
-    const auctions = await Promise.all([
+    const createdAuctions = await Promise.all([
       // Leilão 1: Judicial - Imóveis (com processo judicial)
       prisma.auction.create({
         data: {
@@ -2664,6 +2682,8 @@ async function main() {
           supportPhone: '(11) 3000-1000', // Contato específico do leilão (prioridade 1)
           supportEmail: 'suporte.leilao1@bidexpert.com.br', // Email específico do leilão
           supportWhatsApp: '(11) 99000-1000', // WhatsApp específico do leilão
+          latitude: -23.5617,
+          longitude: -46.6560,
           updatedAt: new Date(),
         },
       }),
@@ -2683,6 +2703,11 @@ async function main() {
           participation: 'ONLINE',
           address: 'Av. Atlântica, 500 - Copacabana',
           zipCode: capitalZipCodes['Rio de Janeiro'],
+          supportPhone: '(21) 3000-2000',
+          supportEmail: 'suporte.leilao2@bidexpert.com.br',
+          supportWhatsApp: '(21) 99000-2000',
+          latitude: -22.9711,
+          longitude: -43.1822,
           updatedAt: new Date(),
         },
       }),
@@ -2691,36 +2716,82 @@ async function main() {
         data: {
           publicId: `auction-${timestamp}-3`,
           slug: `auction-particular-maquinario-${timestamp}-3`,
-          title: 'Leilão Particular - Maquinários Industriais',
-          description: 'Leilão de maquinários e equipamentos industriais. Equipamentos de indústria pesada.',
-          status: 'EM_PREPARACAO',
+          title: 'Leilão Particular - Maquinários',
+          description: 'Leilão de máquinas e equipamentos industriais.',
+          status: 'ABERTO',
           auctionDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
           endDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
           tenantId: tenants[0].id,
           auctionType: 'PARTICULAR',
           auctionMethod: 'STANDARD',
-          participation: 'HIBRIDO',
-          address: 'Av. Afonso Pena, 1000 - Centro',
+          participation: 'PRESENCIAL_ONLINE',
+          address: 'Av. do Contorno, 100 - Savassi',
           zipCode: capitalZipCodes['Belo Horizonte'],
+          supportPhone: '(31) 3000-3000',
+          supportEmail: 'suporte.leilao3@bidexpert.com.br',
+          supportWhatsApp: '(31) 99000-3000',
+          latitude: -19.9391,
+          longitude: -43.9378,
           updatedAt: new Date(),
         },
       }),
-      // Leilão 4: Tomada de Preços - Mobiliários
+      // Leilão 4: Tomada de Preços
       prisma.auction.create({
         data: {
           publicId: `auction-${timestamp}-4`,
-          slug: `auction-tomada-preco-mobiliario-${timestamp}-4`,
-          title: 'Tomada de Preços - Móveis e Equipamentos',
-          description: 'Tomada de preços para diversos móveis e equipamentos de escritório.',
-          status: 'ABERTO_PARA_LANCES',
+          slug: `auction-tomada-precos-${timestamp}-4`,
+          title: 'Tomada de Preços - Materiais de Escritório',
+          description: 'Tomada de preços para aquisição de materiais de escritório em larga escala.',
+          status: 'ABERTO',
           auctionDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-          endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
           tenantId: tenants[0].id,
-          auctionType: 'TOMADA_DE_PRECOS',
-          auctionMethod: 'STANDARD',
-          participation: 'PRESENCIAL',
-          address: 'Esplanada dos Ministérios - Brasília',
-          zipCode: capitalZipCodes['Brasília'],
+          auctionType: 'TOMADA_DE_PRECO',
+          auctionMethod: 'SEALED_BID',
+          participation: 'ONLINE',
+          address: 'Av. Sete de Setembro, 200 - Centro',
+          zipCode: capitalZipCodes['Salvador'],
+          supportPhone: '(71) 3000-4000',
+          supportEmail: 'suporte.leilao4@bidexpert.com.br',
+          supportWhatsApp: '(71) 99000-4000',
+          updatedAt: new Date(),
+        },
+      }),
+      // Leilão 5: Venda Direta - Veículos e Sucatas
+      prisma.auction.create({
+        data: {
+          publicId: `auction-${timestamp}-5`,
+          slug: `venda-direta-veiculos-${timestamp}-5`,
+          title: 'Venda Direta - Veículos e Sucatas',
+          description: 'Venda direta de veículos em lote ou individuais.',
+          status: 'ABERTO',
+          auctionDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          tenantId: tenants[0].id,
+          auctionType: 'VENDA_DIRETA',
+          auctionMethod: 'FIXED_PRICE',
+          participation: 'ONLINE',
+          address: 'Av. Brasil, 1000 - Centro',
+          zipCode: capitalZipCodes['Curitiba'],
+          supportPhone: '(41) 3000-5000',
+          supportEmail: 'vendas@bidexpert.com.br',
+          supportWhatsApp: '(41) 99000-5000',
+          updatedAt: new Date(),
+        },
+      }),
+      // Leilão 6: Goiânia
+      prisma.auction.create({
+        data: {
+          publicId: `auction-${timestamp}-6`,
+          slug: `leilao-goiania-${timestamp}-6`,
+          title: 'Leilão em Goiânia',
+          description: 'Leilão regional em Goiânia.',
+          status: 'ABERTO',
+          auctionDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+          tenantId: tenants[0].id,
+          address: 'Av. Central - Goiânia',
+          zipCode: capitalZipCodes['Goiânia'],
           updatedAt: new Date(),
         },
       }),
@@ -2744,6 +2815,7 @@ async function main() {
         },
       }),
     ]);
+    const auctions = createdAuctions;
     console.log(`✅ ${auctions.length} auctions criados\n`);
 
     console.log('🖼️ Registrando imagens para os leilões...');
@@ -2777,25 +2849,26 @@ async function main() {
     const stage1_1 = await prisma.auctionStage.create({
       data: {
         name: '1ª Praça',
+        description: 'Primeira praça para lances pelo valor de avaliação.',
         auctionId: auctions[0].id,
         tenantId: tenants[0].id,
-        startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
-        status: 'AGUARDANDO_INICIO',
+        startDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Iniciou ontem
+        endDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),  // Termina amanhã
+        status: 'EM_ANDAMENTO',
       },
     });
     auctionStages.push(stage1_1);
-
     const stage1_2 = await prisma.auctionStage.create({
       data: {
         name: '2ª Praça',
+        description: 'Segunda praça para lances com 50% de desconto (valor mínimo).',
         auctionId: auctions[0].id,
         tenantId: tenants[0].id,
         startDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
         endDate: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000),
         status: 'AGENDADO',
       },
-    });
+    });;
     auctionStages.push(stage1_2);
 
     // Criar 2 praças para o Leilão Extrajudicial 2 (Veículos)
@@ -2893,8 +2966,8 @@ async function main() {
               tenantId: tenants[0].id,
             },
             {
-              name: 'Dr. Advogado Test',
-              documentNumber: '99988877766',
+              name: 'Dr. Ricardo Mendes de Oliveira (OAB/SP 123.456)',
+              documentNumber: '123.456.789-10',
               partyType: 'ADVOGADO_AUTOR',
               tenantId: tenants[0].id,
             },
@@ -2929,8 +3002,8 @@ async function main() {
               tenantId: tenants[0].id,
             },
             {
-              name: 'Dr. Advogado Test',
-              documentNumber: '99988877766',
+              name: 'Dr. Ricardo Mendes de Oliveira (OAB/SP 123.456)',
+              documentNumber: '123.456.789-10',
               partyType: 'ADVOGADO_AUTOR',
               tenantId: tenants[0].id,
             },
@@ -2965,8 +3038,8 @@ async function main() {
               tenantId: tenants[0].id,
             },
             {
-              name: 'Dr. Advogado Test',
-              documentNumber: '99988877766',
+              name: 'Dr. Ricardo Mendes de Oliveira (OAB/SP 123.456)',
+              documentNumber: '123.456.789-10',
               partyType: 'ADVOGADO_AUTOR',
               tenantId: tenants[0].id,
             },
@@ -3583,7 +3656,11 @@ async function main() {
         data: {
           publicId: `auctn-${auctioneerTimestamp}-${randomSuffix}`,
           slug: `leiloeiro-${email.split('@')[0].replace(/\./g, '-')}-${randomSuffix}`,
-          name: email.split('@')[0].replace(/\./g, ' ').toUpperCase(),
+          name: `Leiloeiro Oficial ${email.split('@')[0].replace(/\./g, ' ').toUpperCase()}`,
+          registrationNumber: `JUCESP ${faker.string.numeric(3)}.${faker.string.numeric(3)}`,
+          email: email,
+          phone: '(11) 4000-5000',
+          supportWhatsApp: '(11) 98000-5000',
           tenantId: tenants[0].id,
           userId: auctioneer.id,
           updatedAt: new Date(),
@@ -3648,11 +3725,14 @@ async function main() {
     const additionalSellers = await Promise.all([
       prisma.seller.create({
         data: {
-          publicId: `seller-rj-${judicialTimestamp}`,
-          slug: `leiloeiro-judicial-rj-${judicialTimestamp}`,
-          name: `Leiloeiro Judicial RJ ${judicialTimestamp}`,
-          description: 'Leiloeiro autorizado pelo Tribunal de Justiça do Rio de Janeiro',
+          publicId: `seller-bb-${judicialTimestamp}`,
+          slug: `banco-do-brasil-leiloes-${judicialTimestamp}`,
+          name: `Banco do Brasil S.A. - Comitente`,
+          description: 'Banco do Brasil S.A. - Instituição financeira pública brasileira. Realizando leilão de bens retomados.',
           logoUrl: null,
+          website: 'https://www.bb.com.br/leiloes',
+          email: 'leiloes@bb.com.br',
+          phone: '(11) 4004-0001',
           tenantId: tenants[0].id,
           judicialBranchId: additionalBranches[0].id,
           updatedAt: new Date(),
@@ -3660,11 +3740,14 @@ async function main() {
       }),
       prisma.seller.create({
         data: {
-          publicId: `seller-mg-${judicialTimestamp}`,
-          slug: `leiloeiro-judicial-mg-${judicialTimestamp}`,
-          name: `Leiloeiro Judicial MG ${judicialTimestamp}`,
-          description: 'Leiloeiro autorizado pelo Tribunal de Justiça de Minas Gerais',
+          publicId: `seller-caixa-${judicialTimestamp}`,
+          slug: `caixa-economica-leiloes-${judicialTimestamp}`,
+          name: `Caixa Econômica Federal - Comitente`,
+          description: 'Caixa Econômica Federal - Instituição financeira sob a forma de empresa pública. Realizando leilão de imóveis adjudicados.',
           logoUrl: null,
+          website: 'https://venda-imoveis.caixa.gov.br',
+          email: 'leiloes@caixa.gov.br',
+          phone: '(11) 4004-0104',
           tenantId: tenants[0].id,
           judicialBranchId: additionalBranches[1].id,
           updatedAt: new Date(),
@@ -3964,6 +4047,10 @@ async function main() {
         { title: 'Conjunto de Mesas e Cadeiras', description: 'Mobiliário de escritório em bom estado' },
         { title: 'Equipamentos de TI', description: 'Computadores, monitores e periféricos' },
       ],
+      SEMOVENTE: [
+        { title: 'Lote de Gado Nelore', description: 'Gado Nelore de alta linhagem, pronto para abate ou cria' },
+        { title: 'Cavalos Manga Larga', description: 'Cavalos de raça Manga Larga Marchador, treinados' },
+      ],
     };
 
     const statusOptions: ('DISPONIVEL' | 'CADASTRO' | 'LOTEADO')[] = ['DISPONIVEL', 'CADASTRO', 'LOTEADO'];
@@ -4000,6 +4087,33 @@ async function main() {
             locationCity: location.city,
             locationState: location.state,
             address: location.address,
+            // Enriquecimento de dados para exibição completa
+            ...(type === 'VEICULO' ? {
+              plate: faker.string.alphanumeric(7).toUpperCase(),
+              renavam: faker.string.numeric(11),
+              year: faker.number.int({ min: 2010, max: 2024 }),
+              modelYear: faker.number.int({ min: 2010, max: 2024 }),
+              make: faker.vehicle.manufacturer(),
+              model: faker.vehicle.model(),
+              vin: faker.vehicle.vin(),
+              mileage: faker.number.int({ min: 1000, max: 150000 }),
+              color: faker.color.human(),
+              fuelType: faker.helpers.arrayElement(['Flex', 'Gasolina', 'Diesel', 'Elétrico']),
+              transmissionType: faker.helpers.arrayElement(['Manual', 'Automático']),
+            } : {}),
+            ...(type === 'IMOVEL' ? {
+              totalArea: new Prisma.Decimal(faker.number.float({ min: 50, max: 1000, fractionDigits: 2 })),
+              builtArea: new Prisma.Decimal(faker.number.float({ min: 40, max: 800, fractionDigits: 2 })),
+              bedrooms: faker.number.int({ min: 1, max: 5 }),
+              bathrooms: faker.number.int({ min: 1, max: 4 }),
+              parkingSpaces: faker.number.int({ min: 0, max: 3 }),
+              isOccupied: faker.datatype.boolean(),
+              occupationStatus: faker.helpers.arrayElement(['OCCUPIED', 'UNOCCUPIED']) as any,
+            } : {}),
+            ...(type === 'SEMOVENTE' ? {
+              specifications: `Lote de animais: ${template.title}\nQuantidade: ${faker.number.int({ min: 10, max: 100 })}\nRaça: ${template.title.includes('Nelore') ? 'Nelore' : 'Manga Larga'}\nIdade: 2-4 anos`,
+            } : {}),
+            specifications: `${template.description}\n\nDETALHES TÉCNICOS:\n- Estado de conservação: Ótimo\n- Documentação: Regularizada\n- Ônus: Conforme edital\n- Visitação: Agendar com o leiloeiro`,
             updatedAt: new Date(),
           },
         });
@@ -4042,6 +4156,33 @@ async function main() {
             locationCity: location.city,
             locationState: location.state,
             address: location.address,
+            // Enriquecimento de dados para exibição completa
+            ...(type === 'VEICULO' ? {
+              plate: faker.string.alphanumeric(7).toUpperCase(),
+              renavam: faker.string.numeric(11),
+              year: faker.number.int({ min: 2010, max: 2024 }),
+              modelYear: faker.number.int({ min: 2010, max: 2024 }),
+              make: faker.vehicle.manufacturer(),
+              model: faker.vehicle.model(),
+              vin: faker.vehicle.vin(),
+              mileage: faker.number.int({ min: 1000, max: 150000 }),
+              color: faker.color.human(),
+              fuelType: faker.helpers.arrayElement(['Flex', 'Gasolina', 'Diesel', 'Elétrico']),
+              transmissionType: faker.helpers.arrayElement(['Manual', 'Automático']),
+            } : {}),
+            ...(type === 'IMOVEL' ? {
+              totalArea: new Prisma.Decimal(faker.number.float({ min: 50, max: 1000, fractionDigits: 2 })),
+              builtArea: new Prisma.Decimal(faker.number.float({ min: 40, max: 800, fractionDigits: 2 })),
+              bedrooms: faker.number.int({ min: 1, max: 5 }),
+              bathrooms: faker.number.int({ min: 1, max: 4 }),
+              parkingSpaces: faker.number.int({ min: 0, max: 3 }),
+              isOccupied: faker.datatype.boolean(),
+              occupationStatus: faker.helpers.arrayElement(['OCCUPIED', 'UNOCCUPIED']) as any,
+            } : {}),
+            ...(type === 'SEMOVENTE' ? {
+              specifications: `Lote de animais: ${template.title}\nQuantidade: ${faker.number.int({ min: 10, max: 100 })}\nRaça: ${template.title.includes('Nelore') ? 'Nelore' : 'Manga Larga'}\nIdade: 2-4 anos`,
+            } : {}),
+            specifications: `${template.description}\n\nDETALHES TÉCNICOS:\n- Estado de conservação: Ótimo\n- Documentação: Regularizada\n- Ônus: Conforme edital\n- Visitação: Agendar com o leiloeiro`,
             updatedAt: new Date(),
           },
         });
@@ -4852,6 +4993,8 @@ async function main() {
 
     // SEED DE HABILITAÇÕES - Grid de Documentos e Status
     // Cria 35 usuários com diferentes status de habilitação
+    await seedLeiloesCiaTenant(prisma);
+
     await seedHabilitacoes(prisma, mainTenantId, UsersOnTenantsModel);
 
     // EXECUTAR CORREÇÃO DE INCONSISTÊNCIAS DE AUDITORIA

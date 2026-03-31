@@ -4,7 +4,20 @@
  * Aceita uma descrição textual ou texto extraído de documento e retorna
  * um template HTML/CSS com variáveis Handlebars para uso no GrapesJS Designer.
  *
- * POST /api/reports/ai-generate
+ * Suporta dois providers via campo `aiProvider`:
+ *   - "genkit" (padrão): Google AI / gemini-2.0-flash via Genkit
+ *   - "ollama": Modelo local via servidor Ollama (configure OLLAMA_HOST e OLLAMA_MODEL)
+ *
+ * contextType é restrito aos 4 contextos implementados em /api/reports/render:
+ *   AUCTION, LOT, BIDDER, COURT_CASE
+ *
+ * POST /api/reports/ai-generate  — gera template
+ * GET  /api/reports/ai-generate  — lista modelos Ollama disponíveis
+ */
+/**
+ * @fileoverview API Route para geração de templates de relatórios via IA.
+ * Aceita uma descrição textual ou texto extraído de documento e retorna
+ * um template HTML/CSS com variáveis Handlebars para uso no GrapesJS Designer.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,7 +36,7 @@ export const dynamic = 'force-dynamic';
 
 const RequestSchema = z.object({
   contextType: z
-    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE', 'AUCTION_RESULT', 'APPRAISAL_REPORT', 'INVOICE'])
+    .enum(['AUCTION', 'LOT', 'BIDDER', 'COURT_CASE'])
     .default('AUCTION'),
   prompt: z.string().min(10, 'Descreva o template com pelo menos 10 caracteres').max(1000, 'Prompt deve ter no máximo 1.000 caracteres'),
   documentText: z.string().optional(),
@@ -31,10 +44,12 @@ const RequestSchema = z.object({
   language: z.string().default('pt-BR'),
   pageSize: z.enum(['A4', 'Letter', 'Legal']).default('A4'),
   orientation: z.enum(['portrait', 'landscape']).default('portrait'),
+  aiProvider: z.enum(['genkit', 'ollama']).optional(),
+  ollamaModel: z.string().optional(),
 });
 
 // ============================================================================
-// HANDLER
+// POST — gera template
 // ============================================================================
 
 export async function POST(request: NextRequest) {
@@ -63,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const input: GenerateReportTemplateInput = parseResult.data;
 
-    // Generate template via Genkit flow
+    // Generate template (provider selected inside the flow)
     const result = await generateReportTemplate(input);
 
     return NextResponse.json({ success: true, data: result }, { status: 200 });
@@ -76,5 +91,40 @@ export async function POST(request: NextRequest) {
         : 'Erro interno ao gerar template. Tente novamente.';
 
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+// ============================================================================
+// GET — lista modelos Ollama disponíveis
+// ============================================================================
+
+export async function GET(_request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+    let listOllamaModels: (() => Promise<string[]>) | null = null;
+    try {
+      const { loadOllamaListModels } = await import('@/lib/ai-providers/ollama-provider');
+      listOllamaModels = await loadOllamaListModels();
+    } catch (e) {
+      // ollama-provider or ollama not installed
+      listOllamaModels = null;
+    }
+    const models = listOllamaModels ? await listOllamaModels() : [];
+    return NextResponse.json({
+      success: true,
+      models,
+      ollamaAvailable: models.length > 0,
+    });
+  } catch (error) {
+    console.error('[AI Generate Route] Erro ao listar modelos Ollama:', error);
+    return NextResponse.json({
+      success: false,
+      models: [],
+      ollamaAvailable: false,
+      error: error instanceof Error ? error.message : 'Servidor Ollama não disponível',
+    });
   }
 }

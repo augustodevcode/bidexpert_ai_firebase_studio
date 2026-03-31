@@ -344,7 +344,12 @@ Todos os links/rotas geradas devem carregar `tenantId` do contexto
 Services e Server Actions validam `tenantId` de sessão vs recurso acessado  
 Proibido aceitar `tenantId` vindo do cliente sem validação
 
-### RN-019: Conclusão do Dashboard do Arrematante
+### RN-021: Navegação Global de Lotes
+- A rota `/lots` (Todos os Lotes) deve ser acessível via menu principal (Header) e rodapé (Footer).
+- No Header, o link "Todos os Lotes" deve estar visível tanto na versão desktop (centralNavItems) quanto na versão mobile (allNavItemsForMobile).
+- O link deve preceder o item "Início" para maior destaque visual em listagens.
+
+### RN-022: Conclusão do Dashboard do Arrematante
 Finalizar APIs: `GET/POST /api/bidder/*` para lotes vencidos, pagamentos, notificações, histórico, perfil  
 Repositories e services com BigInt  
 Seções do dashboard só renderizam quando dados essenciais estiverem carregados (skeletons/spinners)

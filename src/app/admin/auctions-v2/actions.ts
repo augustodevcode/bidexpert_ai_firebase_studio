@@ -88,7 +88,8 @@ export async function getAuctionV2(
     isPublicCall: boolean = false
 ): Promise<Auction | null> {
     const tenantId = await getTenantIdFromRequest(isPublicCall);
-    return auctionService.getAuctionById(tenantId, id, isPublicCall);
+    const auction = await auctionService.getAuctionById(tenantId, id, isPublicCall);
+    return sanitizeResponse(auction);
 }
 
 /**
@@ -114,7 +115,7 @@ export async function getAuctionLotsV2(auctionId: string): Promise<Lot[]> {
         orderBy: { number: 'asc' },
     });
 
-    return lots.map((lot: PrismaLotWithIncludes) => ({
+    const mappedLots = lots.map((lot: PrismaLotWithIncludes) => ({
         ...lot,
         id: lot.id.toString(),
         auctionId: lot.auctionId.toString(),
@@ -147,6 +148,7 @@ export async function getAuctionLotsV2(auctionId: string): Promise<Lot[]> {
             evaluationValue: decimalToNumber(la.Asset.evaluationValue),
         })),
     })) as Lot[];
+    return sanitizeResponse(mappedLots);
 }
 
 /**
@@ -220,7 +222,7 @@ export async function getAuctionAnalyticsV2(auctionId: string): Promise<{
         bidsByDayMap.set(dateKey, (bidsByDayMap.get(dateKey) || 0) + item._count);
     });
 
-    return {
+    return sanitizeResponse({
         totalLots: lotsCount,
         totalBids: bidsCount,
         totalHabilitatedUsers: habilitationsCount,
@@ -235,7 +237,7 @@ export async function getAuctionAnalyticsV2(auctionId: string): Promise<{
             date,
             count,
         })),
-    };
+    });
   } catch (error) {
     console.error('[getAuctionAnalyticsV2] Error:', error);
     return {
@@ -281,13 +283,14 @@ export async function getAuctionAuditHistoryV2(auctionId: string): Promise<{
         take: 100,
     });
 
-    return auditLogs.map((log: PrismaAuditLogWithUser) => ({
+    const mappedLogs = auditLogs.map((log: PrismaAuditLogWithUser) => ({
         id: log.id.toString(),
         action: log.action,
         changedBy: log.User?.fullName || log.User?.email || 'Sistema',
         changedAt: log.timestamp,
         changes: log.changes as AuditChanges,
     }));
+    return sanitizeResponse(mappedLogs);
   } catch (error) {
     console.error('[getAuctionAuditHistoryV2] Error:', error);
     return [];

@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   optimizeDeps: {
     noDiscovery: true,
-    include: []
+    include: ['aria-query']
   },
   test: {
     environment: 'jsdom',

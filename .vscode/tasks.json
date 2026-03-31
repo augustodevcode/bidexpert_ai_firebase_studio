@@ -198,6 +198,30 @@
 			],
 			"isBackground": true,
 			"group": "build"
+		},
+		{
+			"label": "Run Lots Smoke Server 9013",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd /d e:\\SmartDataCorp\\BidExpert\\BidExpertVsCode\\bidexpert_ai_firebase_studio\\worktrees\\bidexpert-feat-lots-v2 && set PORT=9013 && npm start"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Run Lots Dev Smoke Server 9014",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd /d e:\\SmartDataCorp\\BidExpert\\BidExpertVsCode\\bidexpert_ai_firebase_studio\\worktrees\\bidexpert-feat-lots-v2 && set PORT=9014 && npx next dev --hostname 127.0.0.1 --port 9014"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }

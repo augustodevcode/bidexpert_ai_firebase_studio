@@ -160,7 +160,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     isLive: lot.status === 'EM_PREGAO' && effectiveLotStatus === 'ABERTO_PARA_LANCES',
     isOpen: effectiveLotStatus === 'ABERTO_PARA_LANCES',
     comitente: seller
-      ? { name: seller.name, logo: seller.logoUrl ?? '', url: seller.website ?? '#' }
+  ? { name: seller.name, logo: seller.logoUrl ?? '/placeholder-logo.svg', url: seller.website ?? '#' }
       : undefined,
   };
 }
