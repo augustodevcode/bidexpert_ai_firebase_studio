@@ -85,10 +85,6 @@ export function getStageVisualConfig(state: StageVisualState): StageVisualConfig
 export function getAuctionStageVisualState(stageStatus: string | undefined, stepStatus: StageTimelineStatus): StageVisualState {
   const normalized = normalizeStatus(stageStatus);
 
-  if (!normalized) {
-    return fallbackVisualState(stepStatus);
-  }
-
   if (normalized === 'RASCUNHO') {
     return 'draft';
   }
@@ -101,11 +97,23 @@ export function getAuctionStageVisualState(stageStatus: string | undefined, step
     return 'closed';
   }
 
-  if (normalized === 'EM_ANDAMENTO' || normalized === 'ABERTO' || normalized === 'ABERTO_PARA_LANCES' || normalized === 'EM_PREGAO') {
+  if (stepStatus === 'completed') {
+    if (normalized === 'VENDIDO' || normalized === 'SOLD') {
+      return 'sold';
+    }
+
+    if (normalized === 'NAO_VENDIDO' || normalized === 'UNSOLD') {
+      return 'unsold';
+    }
+
+    return 'closed';
+  }
+
+  if (stepStatus === 'active') {
     return 'open';
   }
 
-  if (normalized === 'AGENDADO' || normalized === 'AGUARDANDO_INICIO' || normalized === 'EM_BREVE') {
+  if (stepStatus === 'upcoming') {
     return 'scheduled';
   }
 
@@ -132,26 +140,40 @@ export function getLotStageVisualState(
     return 'cancelled';
   }
 
-  if (isHighlighted) {
-    if (normalized === 'VENDIDO' || normalized === 'SOLD') {
+  if (stepStatus === 'completed') {
+    if (isHighlighted && (normalized === 'VENDIDO' || normalized === 'SOLD')) {
       return 'sold';
     }
 
-    if (normalized === 'NAO_VENDIDO' || normalized === 'UNSOLD') {
+    if (isHighlighted && (normalized === 'NAO_VENDIDO' || normalized === 'UNSOLD')) {
       return 'unsold';
     }
 
-    if (normalized === 'ENCERRADO') {
-      return 'closed';
-    }
+    return 'closed';
+  }
 
-    if (normalized === 'ABERTO_PARA_LANCES' || normalized === 'EM_PREGAO') {
-      return 'open';
-    }
+  if (stepStatus === 'upcoming') {
+    return 'scheduled';
+  }
 
-    if (normalized === 'EM_BREVE' || normalized === 'AGUARDANDO') {
-      return 'scheduled';
-    }
+  if (normalized === 'VENDIDO' || normalized === 'SOLD') {
+    return 'sold';
+  }
+
+  if (normalized === 'NAO_VENDIDO' || normalized === 'UNSOLD') {
+    return 'unsold';
+  }
+
+  if (normalized === 'ENCERRADO') {
+    return 'closed';
+  }
+
+  if (normalized === 'EM_BREVE' || normalized === 'AGUARDANDO') {
+    return 'scheduled';
+  }
+
+  if (normalized === 'ABERTO_PARA_LANCES' || normalized === 'EM_PREGAO') {
+    return 'open';
   }
 
   return fallbackVisualState(stepStatus);

@@ -55,19 +55,29 @@ export class AuctionService {
    * Remove campos fantasma (não-Prisma) de dados de leilão antes de persistir.
    */
   private stripPhantomFields(data: Record<string, any>): Record<string, any> {
-    const phantom = [
-      'id', 'auctionStages', 'imageUrl', 'auctionName', 'sellerName',
-      'auctioneerName', 'categoryName', 'Seller', 'Auctioneer', 'LotCategory',
-      'City', 'State', 'Tenant', 'CoverImage', 'JudicialProcess', 'Lot',
-      'lots', 'Bid', 'AuctionStage', 'AuctionHabilitation', 'Review',
-      'Notification', 'LotQuestion', 'LotStagePrice', 'Court',
-      'JudicialBranch', 'JudicialDistrict', 'Auction', 'other_Auction',
-      'seller', 'auctioneer', 'category', 'city', 'state', 'tenant',
-      'coverImage', 'judicialProcess', 'originalAuction', '_count',
-    ];
-    const cleaned = { ...data };
-    for (const key of phantom) {
-      delete cleaned[key];
+    // Whitelist: ONLY allow known Prisma Auction scalar fields (non-relation)
+    const allowedFields = new Set([
+      'title', 'description', 'status', 'auctionDate', 'endDate',
+      'totalLots', 'visits', 'totalHabilitatedUsers', 'initialOffer',
+      'auctionType', 'auctionMethod', 'participation',
+      'createdByUserId', 'submittedAt', 'validatedAt', 'validatedBy',
+      'validationNotes', 'openDate', 'actualOpenDate', 'closedAt',
+      'cancelledAt', 'cancelledBy', 'cancellationReason',
+      'onlineUrl', 'address', 'addressLink', 'zipCode',
+      'latitude', 'longitude', 'documentsUrl',
+      'isFeaturedOnMarketplace', 'softCloseEnabled', 'softCloseMinutes',
+      'achievedRevenue', 'evaluationReportUrl', 'auctionCertificateUrl',
+      'floorPrice', 'decrementAmount', 'decrementIntervalSeconds',
+      'sellingBranch', 'additionalTriggers',
+      'isRelisted', 'relistCount',
+      'complement', 'neighborhood', 'number', 'street',
+      'supportPhone', 'supportEmail', 'supportWhatsApp',
+    ]);
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (allowedFields.has(key) && value !== undefined) {
+        cleaned[key] = value;
+      }
     }
     return cleaned;
   }
@@ -594,6 +604,7 @@ export class AuctionService {
               endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
               discountPercent: stage.discountPercent ?? 100,
               auctionId: createdAuction.id,
+              tenantId: BigInt(tenantId),
             })),
           });
         }

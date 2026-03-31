@@ -12,7 +12,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -466,7 +466,7 @@ export default function AuctionFormV2({
       complement: cleanText(values.complement),
       neighborhood: cleanText(values.neighborhood),
       onlineUrl: cleanText(values.onlineUrl),
-      imageMediaId: imageMediaIdValue ? BigInt(imageMediaIdValue) : null,
+      imageMediaId: imageMediaIdValue || null,
       isFeaturedOnMarketplace: values.isFeaturedOnMarketplace,
       auctionStages: values.auctionStages.map((stage) => ({
         name: stage.name.trim(),
@@ -731,16 +731,20 @@ export default function AuctionFormV2({
                       <FormItem>
                         <FormLabel>Cidade</FormLabel>
                         <FormControl>
-                          <Select onValueChange={field.onChange} value={normalizeSelectValue(field.value)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
+                          <Select onValueChange={field.onChange} value={normalizeSelectValue(field.value)} disabled={!selectedStateId}>
+                            <SelectTrigger data-ai-id="auction-form-city-select">
+                              <SelectValue placeholder={!selectedStateId ? 'Selecione o estado primeiro' : 'Selecione'} />
                             </SelectTrigger>
                             <SelectContent>
-                              {citiesForState.map((city) => (
-                                <SelectItem key={city.id} value={city.id}>
-                                  {city.name}
-                                </SelectItem>
-                              ))}
+                              {citiesForState.length === 0 && selectedStateId ? (
+                                <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhuma cidade cadastrada para este estado</div>
+                              ) : (
+                                citiesForState.map((city) => (
+                                  <SelectItem key={city.id} value={city.id}>
+                                    {city.name}
+                                  </SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                         </FormControl>
@@ -978,8 +982,9 @@ export default function AuctionFormV2({
                       <FormItem>
                         <FormLabel>Início *</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" required {...stageField} />
+                          <Input type="datetime-local" step="60" {...stageField} />
                         </FormControl>
+                        <FormDescription className="text-xs">Data e hora de abertura</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -991,8 +996,9 @@ export default function AuctionFormV2({
                       <FormItem>
                         <FormLabel>Fim *</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" required {...stageField} />
+                          <Input type="datetime-local" step="60" {...stageField} />
                         </FormControl>
+                        <FormDescription className="text-xs">Data e hora de encerramento</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

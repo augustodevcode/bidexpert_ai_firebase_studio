@@ -30,12 +30,22 @@ export class UserService {
 
     const userRoles = user.UsersOnRoles || user.roles || [];
     const userTenants = user.UsersOnTenants || user.tenants || [];
+    const { UsersOnRoles, UsersOnTenants, roles: rawRoles, tenants: rawTenants, ...userBase } = user;
     
-    const roles: Role[] = userRoles.map((ur: any) => {
-      const role = ur.Role || ur.role;
+    const roles = userRoles.map((ur: any) => {
+      const role = ur.Role || ur.role || ur;
+      const { Role, role: nestedRole, userId, roleId, ...assignmentMeta } = ur || {};
+
       return {
-        ...role,
-        id: role.id.toString(), // Convert BigInt to string
+        ...assignmentMeta,
+        id: role.id.toString(),
+        roleId: role.id.toString(),
+        name: role.name,
+        permissions: Array.isArray(role.permissions) ? role.permissions : [],
+        role: {
+          ...role,
+          id: role.id.toString(),
+        },
       };
     });
     
@@ -46,20 +56,30 @@ export class UserService {
         return [];
     })));
 
-    const tenants: Tenant[] = userTenants.map((ut: any) => {
-      const tenant = ut.Tenant || ut.tenant;
+    const tenants = userTenants.map((ut: any) => {
+      const tenant = ut.Tenant || ut.tenant || ut;
+      const { Tenant, tenant: nestedTenant, userId, tenantId, ...assignmentMeta } = ut || {};
+
       return {
-        ...tenant,
-        id: tenant.id.toString(), // Convert BigInt to string
+        ...assignmentMeta,
+        id: tenant.id.toString(),
+        tenantId: tenant.id.toString(),
+        name: tenant.name,
+        slug: tenant.subdomain,
+        subdomain: tenant.subdomain,
+        tenant: {
+          ...tenant,
+          id: tenant.id.toString(),
+        },
       };
     });
     
     return {
-      ...user,
+      ...userBase,
       id: user.id.toString(),
       uid: user.id.toString(), 
-      roles,
-      tenants,
+      roles: roles as UserProfileWithPermissions['roles'],
+      tenants: tenants as UserProfileWithPermissions['tenants'],
       roleIds: roles.map((r: any) => r.id),
       roleNames: roles.map((r: any) => r.name),
       permissions,

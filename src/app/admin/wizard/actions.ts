@@ -85,46 +85,54 @@ export async function getWizardInitialData() {
  * @returns {Promise<{success: boolean, message: string, auctionId?: string}>} O resultado da operação.
  */
 export async function createAuctionFromWizard(wizardData: WizardData): Promise<{success: boolean; message: string; auctionId?: string;}> {
-  const user = await getCurrentUser();
-  if (!user || !hasPermission(user, 'auctions:create')) {
-    return { success: false, message: "Acesso negado. Você não tem permissão para criar leilões." };
-  }
-
-  const tenantId = await getTenantIdFromRequest();
-  
-  if (!wizardData.auctionDetails || !wizardData.auctionDetails.title || !wizardData.auctionDetails.auctioneerId) {
-    return { success: false, message: "Detalhes do leilão incompletos." };
-  }
-  
-  const auctionService = new AuctionService();
-  const lotService = new LotService();
-
-  // 1. Create the Auction
-  const auctionData = {
-    ...wizardData.auctionDetails,
-    judicialProcessId: wizardData.judicialProcess?.id // Make sure to pass this along
-  };
-
-  const auctionResult = await auctionService.createAuction(tenantId, auctionData);
-  
-  if (!auctionResult.success || !auctionResult.auctionId) {
-    return { success: false, message: `Falha ao criar o leilão: ${auctionResult.message}` };
-  }
-
-  // 2. Create the Lots for this Auction
-  if (wizardData.createdLots && wizardData.createdLots.length > 0) {
-    for (const lot of wizardData.createdLots) {
-      const lotDataForCreation = {
-        ...lot,
-        auctionId: auctionResult.auctionId, // Link to the newly created auction
-      };
-      await lotService.createLot(lotDataForCreation, tenantId); // Pass tenantId
+  try {
+    const user = await getCurrentUser();
+    if (!user || !hasPermission(user, 'auctions:create')) {
+      return { success: false, message: "Acesso negado. Você não tem permissão para criar leilões." };
     }
-  }
 
-  if (process.env.NODE_ENV !== 'test') {
-    revalidatePath('/admin/auctions');
+    const tenantId = await getTenantIdFromRequest();
+
+    if (!wizardData.auctionDetails || !wizardData.auctionDetails.title || !wizardData.auctionDetails.auctioneerId) {
+      return { success: false, message: "Detalhes do leilão incompletos." };
+    }
+
+    const auctionService = new AuctionService();
+    const lotService = new LotService();
+
+    // 1. Create the Auction
+    const auctionData = {
+      ...wizardData.auctionDetails,
+      judicialProcessId: wizardData.judicialProcess?.id // Make sure to pass this along
+    };
+
+    const auctionResult = await auctionService.createAuction(tenantId, auctionData);
+
+    if (!auctionResult.success || !auctionResult.auctionId) {
+      return { success: false, message: `Falha ao criar o leilão: ${auctionResult.message}` };
+    }
+
+    // 2. Create the Lots for this Auction
+    if (wizardData.createdLots && wizardData.createdLots.length > 0) {
+      for (const lot of wizardData.createdLots) {
+        const lotDataForCreation = {
+          ...lot,
+          auctionId: auctionResult.auctionId, // Link to the newly created auction
+        };
+        const createLotResult = await lotService.createLot(lotDataForCreation, tenantId); // Pass tenantId
+        if (!createLotResult.success) {
+           throw new Error(`Falha ao criar lote ${lot.publicId || ''}: ${createLotResult.message}`);
+        }
+      }
+    }
+
+    if (process.env.NODE_ENV !== 'test') {
+      revalidatePath('/admin/auctions');
+    }
+
+    return { success: true, message: "Leilão e lotes criados com sucesso!", auctionId: auctionResult.auctionId };
+  } catch (err: any) {
+    console.error("Erro fatal em createAuctionFromWizard:", err);
+    return { success: false, message: err.message || "Erro catastrófico ao criar leilão através do wizard." };
   }
-  
-  return { success: true, message: "Leilão e lotes criados com sucesso!", auctionId: auctionResult.auctionId };
 }

@@ -50,8 +50,26 @@ function getFunctionParams(source: string): string {
 }
 
 function shouldUseEnvelope(handler: (...args: any[]) => Promise<unknown>) {
-  const params = getFunctionParams(handler.toString());
-  return params.startsWith('{');
+  const source = handler.toString();
+  const params = getFunctionParams(source);
+
+  if (params.startsWith('{')) {
+    const firstObjectMatch = params.match(/^\{([^}]*)\}/s);
+    if (!firstObjectMatch) return false;
+
+    const firstObjectKeys = firstObjectMatch[1];
+    const rest = params.slice(firstObjectMatch[0].length).trim();
+    return rest.length === 0 && /\b(?:input|ctx)\b/.test(firstObjectKeys);
+  }
+
+  if (handler.length <= 1) {
+    const transpiledEnvelopeMatch = source.match(/\{\s*(?:const|let|var)\s*\{([^}]*)\}\s*=\s*[_$a-zA-Z][\w$]*/s);
+    if (transpiledEnvelopeMatch) {
+      return /\b(?:input|ctx)\b/.test(transpiledEnvelopeMatch[1]);
+    }
+  }
+
+  return false;
 }
 
 function isCtxFirst(handler: (...args: any[]) => Promise<unknown>) {
@@ -59,24 +77,46 @@ function isCtxFirst(handler: (...args: any[]) => Promise<unknown>) {
   return params.startsWith('ctx') || params.startsWith('_ctx');
 }
 
+function buildHybridOptionsArg(input: unknown, ctx: ActionContext) {
+  const topLevelInput = input && typeof input === 'object'
+    ? input as Record<string, unknown>
+    : { value: input };
+
+  return {
+    ...ctx,
+    ...topLevelInput,
+    input,
+    ctx,
+  };
+}
+
 async function invokeOptionsHandler<TOutput>(
   handler: (...args: any[]) => Promise<TOutput>,
   input: unknown,
   ctx: ActionContext,
 ) {
+  const normalizedInput = input ?? {};
+  const hybridArg = buildHybridOptionsArg(normalizedInput, ctx);
+
   if (handler.length === 0) {
-    return handler();
+    return input === undefined ? handler() : handler(hybridArg);
   }
 
   if (shouldUseEnvelope(handler)) {
-    return handler({ input, ctx });
+    // DataTable e alguns hooks chamam actions sem payload inicial; evita destructuring de undefined no handler.
+    return handler({ input: normalizedInput, ctx });
   }
 
   if (handler.length >= 2) {
-    return isCtxFirst(handler) ? handler(ctx, input) : handler(input, ctx);
+    return isCtxFirst(handler) ? handler(ctx, normalizedInput) : handler(normalizedInput, ctx);
   }
 
-  return isCtxFirst(handler) ? handler(ctx) : handler(input);
+  return isCtxFirst(handler) ? handler(ctx) : handler(hybridArg);
+}
+
+function summarizeHandler(handler: (...args: any[]) => Promise<unknown>) {
+  const source = handler.toString().replace(/\s+/g, ' ').trim();
+  return source.slice(0, 160);
 }
 
 export function createAdminAction<TInput = unknown, TOutput = unknown>(
@@ -107,10 +147,10 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
   twoArgHandler?: (input: unknown, ctx?: ActionContext) => Promise<TOutput>,
 ) {
   return async (...rawArgs: unknown[]): Promise<ActionResult<TOutput>> => {
-    try {
-      let legacyHandler: LegacyAdminActionHandler<unknown, TOutput> | null = null;
-      let options: CreateAdminActionOptions<TInput, TOutput> | null = null;
+    let legacyHandler: LegacyAdminActionHandler<unknown, TOutput> | null = null;
+    let options: CreateAdminActionOptions<TInput, TOutput> | null = null;
 
+    try {
       if (twoArgHandler && optionsOrHandler instanceof z.ZodType) {
         options = {
           inputSchema: optionsOrHandler as TInput,
@@ -198,13 +238,30 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
 
       // 4. Executar handler
       const [inputArg, ...restArgs] = rawArgs;
+      const normalizedInputArg = inputArg ?? {};
       const data = legacyHandler
-        ? await legacyHandler(ctx, inputArg, ...restArgs)
+        ? shouldUseEnvelope(legacyHandler as (...args: any[]) => Promise<unknown>)
+          ? await (legacyHandler as (...args: any[]) => Promise<TOutput>)({ input: normalizedInputArg, ctx }, ...restArgs)
+          : isCtxFirst(legacyHandler as (...args: any[]) => Promise<unknown>)
+            ? await legacyHandler(ctx, normalizedInputArg, ...restArgs)
+            : await (legacyHandler as (...args: any[]) => Promise<TOutput>)(normalizedInputArg, ctx, ...restArgs)
         : await invokeOptionsHandler(options!.handler, validatedInput, ctx);
 
       return { success: true, data };
     } catch (error) {
-      console.error('[AdminAction] Erro inesperado:', error);
+      console.error('[AdminAction] Erro inesperado:', {
+        error,
+        mode: typeof optionsOrHandler === 'function' ? 'legacy-handler' : 'options-handler',
+        hasSchema: Boolean((options as CreateAdminActionOptions<TInput, TOutput> | null)?.inputSchema ?? (options as CreateAdminActionOptions<TInput, TOutput> | null)?.schema),
+        requiredPermission: (options as CreateAdminActionOptions<TInput, TOutput> | null)?.requiredPermission ?? null,
+        permissions: (options as CreateAdminActionOptions<TInput, TOutput> | null)?.permissions ?? null,
+        rawArgs,
+        handlerPreview: legacyHandler
+          ? summarizeHandler(legacyHandler as (...args: any[]) => Promise<unknown>)
+          : options?.handler
+            ? summarizeHandler(options.handler as (...args: any[]) => Promise<unknown>)
+            : null,
+      });
       const message = error instanceof Error ? error.message : 'Erro interno do servidor.';
       return { success: false, error: message };
     }

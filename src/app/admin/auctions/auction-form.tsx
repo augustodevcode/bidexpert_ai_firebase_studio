@@ -108,9 +108,9 @@ const renderSectionContent = (
         <div className="space-y-4">
           <FormField control={form.control} name="title" render={({ field }) => (
             <FormItem>
-              <FormLabel>Título do Leilão<span className="text-destructive">*</span></FormLabel>
+              <FormLabel htmlFor="admin-auction-title">Título do Leilão<span className="text-destructive">*</span></FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Leilão de Veículos da Empresa X" {...field} />
+                <Input id="admin-auction-title" data-ai-id="admin-auction-title-input" placeholder="Ex: Leilão de Veículos da Empresa X" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

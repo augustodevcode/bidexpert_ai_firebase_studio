@@ -92,6 +92,7 @@ export async function login(values: { email: string, password?: string, tenantId
              tenantId = t.id.toString();
          } else {
              console.log(`[Login Action] Subdomain '${tenantId}' não encontrado no banco.`);
+           tenantId = undefined;
          }
     }
 
@@ -113,44 +114,33 @@ export async function login(values: { email: string, password?: string, tenantId
     }
 
     // Format user with MySQL schema relations
-    const roles = user.UsersOnRoles?.map(ur => ({
-      id: ur.Role.id.toString(),
-      name: ur.Role.name,
-      permissions: []
-    })) || [];
+    const userService = new UserService();
+    const userProfileWithPerms = await userService.findUserByEmail(email);
 
-    const tenants = user.UsersOnTenants?.map(ut => ({
-      id: ut.Tenant.id.toString(),
-      name: ut.Tenant.name,
-      slug: ut.Tenant.subdomain
-    })) || [{ id: '1', name: 'BidExpert', slug: 'bidexpert' }];
+    if (!userProfileWithPerms) {
+      console.log(`[Login Action] Falha: não foi possível formatar o perfil do usuário '${email}'.`);
+      return { success: false, message: 'Não foi possível carregar o perfil do usuário.' };
+    }
 
-    const roleNames = roles.map(r => r.name);
-    const primaryRole = roleNames[0] || 'USER';
-
-    const userProfileWithPerms: UserProfileWithPermissions = {
-      ...user,
-      id: user.id.toString(),
-      uid: user.id.toString(),
-      roles: roles,
-      tenants: tenants,
-      roleIds: roles.map(r => r.id),
-      roleNames: roleNames,
-      permissions: primaryRole === 'ADMIN' ? ['manage_all', 'manage_auctions', 'manage_users', 'manage_lots'] :
-                   primaryRole === 'AUCTIONEER' ? ['manage_auctions', 'manage_lots'] :
-                   ['view_auctions', 'place_bids'],
-      roleName: primaryRole,
-    };
+    const userTenantIds = userProfileWithPerms.tenants?.map((tenant) => {
+      const tenantIdValue = tenant.tenantId ?? tenant.id ?? tenant.tenant?.id;
+      return tenantIdValue?.toString();
+    }).filter(Boolean) as string[];
 
     // Set tenantId from user's tenant
-    if (!tenantId) {
-      tenantId = tenants[0]?.id || '1';
+    if (!tenantId || isNaN(Number(tenantId))) {
+      tenantId = userTenantIds[0] || '1';
+    }
+
+    if (tenantId !== '1' && userTenantIds.length > 0 && !userTenantIds.includes(tenantId)) {
+      console.log(`[Login Action] Falha: usuário '${email}' não pertence ao tenant '${tenantId}'.`);
+      return { success: false, message: 'Usuário não pertence ao espaço de trabalho selecionado.' };
     }
 
     await createSession(userProfileWithPerms, tenantId);
 
     console.log(`[Login Action] SUCESSO: Sessão criada para ${email} no tenant ${tenantId}. Retornando sucesso.`);
-    return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
+    return { success: true, message: 'Login bem-sucedido!' };
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
@@ -254,9 +244,13 @@ export async function getCurrentTenantContext() {
               console.log(`[getCurrentTenantContext] Resolved "${tenantIdOrSlug}" -> tenant ID ${resolvedTenantId} (${tenantName})`);
           } else {
               console.warn(`[getCurrentTenantContext] Tenant not found for: ${tenantIdOrSlug}`);
+              resolvedTenantId = '1';
+              tenantName = 'BidExpert';
           }
       } catch (e) {
           console.error('[getCurrentTenantContext] Error fetching tenant:', e);
+            resolvedTenantId = '1';
+            tenantName = 'BidExpert';
       }
   }
 

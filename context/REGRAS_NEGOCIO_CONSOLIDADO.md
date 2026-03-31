@@ -168,8 +168,9 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ OBRIGATÓRIO usar `BidExpertAuctionStagesTimeline`  
 ✅ Integrado em `AuctionCard` e `AuctionListItem`  
 ✅ Busca última etapa do leilão para countdown
-✅ Em superfícies de **leilão** (detalhes e modais), a timeline deve usar o **status bruto da praça** e **nunca** exibir valores monetários.
+✅ Em superfícies de **leilão** (detalhes e modais), a timeline deve usar o **estado temporal efetivo da praça** (`startDate`/`endDate`) como fonte primária; `stage.status` bruto só pode complementar casos explícitos como rascunho/cancelado, e a timeline **nunca** pode exibir uma praça futura ou passada como aberta.
 ✅ Em superfícies de **lote** (detalhes e modais), a timeline deve usar o **status derivado do lote na praça** e pode exibir valores por praça (`LotStagePrice`/fallback do lote).
+✅ Cards, listitems e página de detalhes do mesmo lote/leilão DEVEM compartilhar a mesma máquina de estado temporal para badge, timeline e cronômetro; é proibido manter pipelines paralelos que derivem status diferentes para a mesma janela de tempo.
 ✅ Ícones contextuais de praça são obrigatórios em **detalhes**, **modais** e **forms**; são proibidos em **cards** e **listitems**, que devem permanecer compactos.
 
 **Cenário BDD - Leilão sem valores na timeline**
@@ -211,6 +212,19 @@ NÃO usar mais `String @id @default(cuid())`
 TODAS as FKs relacionadas DEVEM ser `BigInt`  
 Conversão em andamento - seguir `BIGINT_CONVERSION_PLAN.md`  
 Status: Schema  | Migração  | Código 
+
+### RN-013: Sentinels de UI não podem vazar para FKs BigInt
+✅ Valores semânticos de formulário/UI como `INHERIT`, `CUSTOM`, `AUTO`, slugs ou labels textuais DEVEM ser tratados como semântica de negócio e NUNCA como IDs persistíveis  
+✅ Antes de usar `BigInt(...)`, `Number(...)` ou `connect: { id: ... }`, Services e Server Actions DEVEM normalizar o payload e descartar ou resolver sentinels explicitamente  
+✅ Quando o sentinel representar herança de mídia/imagem, o comportamento correto é remover a relação customizada ou resolver fallback em leitura; é proibido persistir o sentinel em coluna `BigInt`  
+✅ Toda correção desse tipo DEVE incluir teste unitário cobrindo `create` e `update` com sentinel textual
+
+**Cenário BDD - Sentinel textual em FK de mídia**
+- **Dado** um formulário administrativo ou wizard que oferece a opção textual `INHERIT` para a imagem de capa
+- **Quando** o payload chega à camada de service para criar ou atualizar um leilão
+- **Então** o service normaliza o valor antes do Prisma
+- **E** nenhuma conversão `BigInt('INHERIT')` é executada
+- **E** a imagem final é resolvida por fallback/herança ou a relação customizada é desconectada
 
 ---
 
@@ -299,7 +313,7 @@ Com base na análise de código e documentação, foram identificados pontos que
 Bloquear acesso a rotas protegidas quando `isSetupComplete=false`  
 Exigir verificação de `isSetupComplete` em `layout.tsx` com fallback seguro  
 Adicionar teste de regressão para impedir loops/redirects indevidos
-O `SetupRedirect` não pode permanecer desabilitado em branches de integração, homologação, preview ou produção. Bypass local só é permitido de forma temporária e documentada durante debugging isolado.
+O `SetupRedirect` está globalmente desabilitado conforme nova estratégia solicitada pelo usuário (2026-03).
 
 **BDD - Gate de setup ativo**
 - **Dado** um tenant com `isSetupComplete=false`
@@ -369,6 +383,21 @@ Validar transitions no service com erros descritivos
 - **Dado** um usuário acessando `/login?redirect=/admin`
 - **Quando** a rota é resolvida no App Router
 - **Então** o usuário é redirecionado para `/auth/login?redirect=/admin`
+
+### RN-020B: Isolamento de Sessão no Wizard de Leilão
+✅ O passo de loteamento do wizard DEVE operar apenas sobre os ativos explicitamente escolhidos ou criados na sessão corrente quando houver `assetId`s recém-criados em memória.
+✅ Refetches do wizard após criar processo ou ativo NÃO podem reintroduzir ativos antigos do mesmo comitente/processo na lista elegível de loteamento.
+✅ Cenários E2E do wizard DEVEM selecionar processo judicial por identidade determinística (`processNumber`) e ativos por identidade determinística (`title` ou `data-ai-id`), nunca pelo "primeiro disponível".
+
+**Cenário BDD - Refetch não contamina loteamento com ativos antigos**
+- **Dado** um wizard em andamento com ativos históricos já existentes para o mesmo comitente ou processo
+- **Quando** o usuário cria um novo ativo inline e o wizard refaz a carga de dados
+- **Então** a etapa de loteamento exibe somente os ativos da sessão corrente para loteamento individual
+
+**Cenário BDD - Seleção judicial determinística no wizard**
+- **Dado** que existem vários processos judiciais disponíveis no tenant
+- **Quando** o fluxo do wizard precisa vincular um processo específico de referência
+- **Então** a seleção deve ocorrer pelo número do processo e não pela primeira linha disponível na tabela
 
 ### RN-021: Padrão de IDs BigInt em Front/Back
 Endpoints e services devem aceitar/retornar IDs numéricos  

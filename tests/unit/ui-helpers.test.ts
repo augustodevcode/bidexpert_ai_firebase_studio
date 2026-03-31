@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getLotDisplayPrice, isAuctionInPregaoWindow } from '../../src/lib/ui-helpers';
+import { getAuctionMinimumOffer, getLotDetailedDescription, getLotDisplayLocation, getLotDisplayPrice, isAuctionInPregaoWindow } from '../../src/lib/ui-helpers';
 import { addDays, subDays } from 'date-fns';
 
 // Mock types locally to avoid complex Prisma imports in unit test if possible,
@@ -144,5 +144,82 @@ describe('isAuctionInPregaoWindow', () => {
         );
 
         expect(result).toBe(false);
+    });
+});
+
+describe('getLotDetailedDescription', () => {
+    it('returns the explicit lot description when present', () => {
+        const result = getLotDetailedDescription({ description: 'Descrição do lote' } as any);
+
+        expect(result).toBe('Descrição do lote');
+    });
+
+    it('falls back to the linked asset description when the lot description is empty', () => {
+        const result = getLotDetailedDescription({
+            description: '',
+            AssetsOnLots: [
+                {
+                    Asset: {
+                        description: 'Descrição herdada do ativo judicial',
+                    },
+                },
+            ],
+        } as any);
+
+        expect(result).toBe('Descrição herdada do ativo judicial');
+    });
+});
+
+describe('getLotDisplayLocation', () => {
+    it('prioritizes city/state informed directly on the lot', () => {
+        const result = getLotDisplayLocation({ cityName: 'Jaboticabal', stateUf: 'SP' } as any);
+
+        expect(result).toBe('Jaboticabal - SP');
+    });
+
+    it('falls back to the asset address when the lot has no city/state', () => {
+        const result = getLotDisplayLocation({
+            assets: [
+                {
+                    address: 'Rua Luiz Fernando Campos, 68 - Jardim Elite',
+                },
+            ],
+        } as any);
+
+        expect(result).toBe('Rua Luiz Fernando Campos, 68 - Jardim Elite');
+    });
+
+    it('supports the nested AssetsOnLots shape returned by the public auction query', () => {
+        const result = getLotDisplayLocation({
+            AssetsOnLots: [
+                {
+                    Asset: {
+                        locationCity: 'Santa Rosa de Viterbo',
+                        locationState: 'SP',
+                    },
+                },
+            ],
+        } as any);
+
+        expect(result).toBe('Santa Rosa de Viterbo - SP');
+    });
+});
+
+describe('getAuctionMinimumOffer', () => {
+    it('returns the explicit auction initial offer when available', () => {
+        const result = getAuctionMinimumOffer({ initialOffer: 9000 } as any);
+
+        expect(result).toBe(9000);
+    });
+
+    it('derives the minimum offer from lots when the auction field is empty', () => {
+        const result = getAuctionMinimumOffer({
+            lots: [
+                { price: 12232.2 },
+                { price: 75000 },
+            ],
+        } as any);
+
+        expect(result).toBe(12232.2);
     });
 });

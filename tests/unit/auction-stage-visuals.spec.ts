@@ -10,12 +10,16 @@ describe('auction-stage-visuals', () => {
     vi.useRealTimers();
   });
 
-  it('mapeia status bruto da praça do leilão para aberto', () => {
-    expect(getAuctionStageVisualState('EM_ANDAMENTO', 'upcoming')).toBe('open');
+  it('prioriza a cronologia e não deixa praça futura herdar aberto bruto', () => {
+    expect(getAuctionStageVisualState('EM_ANDAMENTO', 'upcoming')).toBe('scheduled');
   });
 
-  it('mapeia status bruto da praça do leilão para encerrado', () => {
+  it('preserva encerrado explícito quando o backend já fechou a praça', () => {
     expect(getAuctionStageVisualState('ENCERRADO', 'active')).toBe('closed');
+  });
+
+  it('fecha praça concluída mesmo quando o status bruto ainda diz aberto', () => {
+    expect(getAuctionStageVisualState('ABERTO', 'completed')).toBe('closed');
   });
 
   it('mapeia lote destacado vendido para estado com venda', () => {

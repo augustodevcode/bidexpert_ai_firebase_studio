@@ -91,6 +91,18 @@ async function globalSetup(config: FullConfig) {
     throw new Error('Servidor não ficou disponível após 3 minutos');
   }
   
+  // ─── PRE-WARM: trigger lazy compilation of critical routes ───
+  console.log('🔥 Pre-warming critical routes (login page + tenants API)...');
+  try {
+    await Promise.all([
+      fetch(`${baseURL}/auth/login`).catch(() => {}),
+      fetch(`${baseURL}/api/public/tenants`).catch(() => {}),
+    ]);
+    console.log('✅ Routes pre-warmed');
+  } catch { /* ignore */ }
+  // Give dev server time to finish compiling
+  await new Promise(r => setTimeout(r, 3000));
+
   const browser = await chromium.launch();
   let adminPage: Page | undefined;
   const vercelShareUrl = process.env.VERCEL_SHARE_URL;

@@ -87,7 +87,10 @@ function validateDatabaseUrlProtocol(url?: string) {
 function createPrismaClient(databaseUrl?: string) {
   // POSTGRES_PRISMA_URL is injected by Neon Vercel Integration (pooled connection).
   // DATABASE_URL is the legacy/generic fallback.
-  const effectiveUrl = databaseUrl || process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL;
+  // NOTE: @next/env on Windows double-encodes % signs (e.g., %21 → %%21) and may add
+  // trailing whitespace. We normalize here to ensure correct Prisma auth.
+  const rawUrl = databaseUrl || process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL;
+  const effectiveUrl = rawUrl ? rawUrl.replace(/%%/g, '%').trim() : rawUrl;
   validateDatabaseUrlProtocol(effectiveUrl);
   const useAccelerate = isPrismaAccelerateUrl(effectiveUrl);
   
@@ -95,12 +98,11 @@ function createPrismaClient(databaseUrl?: string) {
     log: process.env.PRISMA_QUERY_LOG === 'true' ? ['query', 'error', 'warn'] : ['error', 'warn'],
   };
 
-  // Para Accelerate, a URL é passada automaticamente via env
-  // Para conexão direta, podemos sobrescrever
-  if (databaseUrl && !useAccelerate) {
+  // Always set datasources explicitly with the normalized URL to avoid env double-encoding issues
+  if (!useAccelerate && effectiveUrl) {
     options.datasources = {
       db: {
-        url: databaseUrl,
+        url: effectiveUrl,
       },
     };
   }

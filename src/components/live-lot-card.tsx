@@ -15,7 +15,7 @@ import { format, differenceInMinutes, differenceInHours, differenceInDays, isPas
 import { ptBR } from 'date-fns/locale';
 import { useCurrency } from '@/contexts/currency-context';
 import { useEffect, useState } from 'react';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotDisplayLocation, getLotStatusColor } from '@/lib/ui-helpers';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 
 interface LiveLotCardProps {
@@ -76,7 +76,7 @@ function TimeRemaining({ endDate, status }: { endDate: Date | string | null; sta
 
 
 export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardProps) {
-  const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
+  const displayLocation = getLotDisplayLocation(lot, lot.auction);
   const auctionStartDate = lot.auction?.auctionDate ? new Date(lot.auction.auctionDate as unknown as string) : undefined;
   const { formatCurrency } = useCurrency();
 

@@ -6,11 +6,16 @@
 import { prisma } from '@/lib/prisma';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  getAuctionStageTimelineStatus,
+  getEffectiveLotStatus,
+  getLotEffectiveDates,
+} from '@/lib/auction-timing';
+import { getLotDisplayLocation } from '@/lib/ui-helpers';
 import type {
   AuctionItem,
   AuctionCategory,
   StageInfo,
-  StageStatus,
 } from '@/components/cards/auction-lot-card-v2.types';
 
 /* ------------------------------------------------------------------ */
@@ -23,18 +28,6 @@ const AUCTION_TYPE_TO_CATEGORY: Record<string, AuctionCategory> = {
   VENDA_DIRETA: 'Venda Direta',
   TOMADA_DE_PRECOS: 'Tomada de Preços',
   PARTICULAR: 'Extrajudicial', // fallback
-};
-
-const STAGE_STATUS_MAP: Record<string, StageStatus> = {
-  ABERTO: 'Em Andamento',
-  EM_ANDAMENTO: 'Em Andamento',
-  AGUARDANDO_INICIO: 'Aguardando',
-  FECHADO: 'Encerrada',
-  CONCLUIDO: 'Encerrada',
-  CANCELADO: 'Encerrada',
-  SUSPENSO: 'Aguardando',
-  DESERTO: 'Encerrada',
-  FRUSTRADO: 'Encerrada',
 };
 
 /** Visible lot statuses for the public page. */
@@ -118,18 +111,21 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     name: string;
     status?: string;
     startDate: Date;
+    endDate?: Date | null;
   }): StageInfo => ({
     name: s.name,
-    status: STAGE_STATUS_MAP[s.status ?? ''] ?? 'Aguardando',
+    status:
+      getAuctionStageTimelineStatus(s) === 'active'
+        ? 'Em Andamento'
+        : getAuctionStageTimelineStatus(s) === 'completed'
+          ? 'Encerrada'
+          : 'Aguardando',
     date: new Date(s.startDate).toLocaleDateString('pt-BR'),
   });
 
-  const lastStage = stages[stages.length - 1];
-  const relevantEndDate = lastStage?.endDate
-    ? new Date(lastStage.endDate)
-    : lot.endDate
-      ? new Date(lot.endDate)
-      : null;
+  const effectiveLotStatus = getEffectiveLotStatus(lot, auction) ?? lot.status;
+  const { effectiveLotEndDate } = getLotEffectiveDates(lot, auction);
+  const relevantEndDate = effectiveLotEndDate;
 
   const seller = lot.Seller ?? auction.Seller;
 
@@ -137,7 +133,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     id: lot.id.toString(),
     category,
     type: lot.LotCategory?.name ?? 'Geral',
-    location: [lot.cityName, lot.stateUf].filter(Boolean).join(', ') || 'Brasil',
+    location: getLotDisplayLocation(lot, auction),
     title: lot.title,
     specs: [lot.type, lot.condition].filter(
       (value): value is string => typeof value === 'string' && value.length > 0,
@@ -146,7 +142,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
     stats: {
       visits: lot.views ?? 0,
       qualified: auction.totalHabilitatedUsers ?? 0,
-      clicks: lot.bidsCount ?? 0,
+      clicks: lot.bidsCount ?? 0, // bidsCount = lances realizados (displayed as "Lances" in card)
     },
     pricing: {
       minimumBid: Number(lot.price),
@@ -158,10 +154,11 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
       stage1: stages[0] ? mapStage(stages[0]) : { name: '1ª Praça', status: 'Aguardando', date: '-' },
       stage2: stages[1] ? mapStage(stages[1]) : undefined,
       timeRemaining: computeTimeRemaining(relevantEndDate),
+      endDate: relevantEndDate ? relevantEndDate.toISOString() : undefined,
     },
     images: buildImageList(lot),
-    isLive: lot.status === 'EM_PREGAO',
-    isOpen: lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_PREGAO',
+    isLive: lot.status === 'EM_PREGAO' && effectiveLotStatus === 'ABERTO_PARA_LANCES',
+    isOpen: effectiveLotStatus === 'ABERTO_PARA_LANCES',
     comitente: seller
   ? { name: seller.name, logo: seller.logoUrl ?? '/placeholder-logo.svg', url: seller.website ?? '#' }
       : undefined,
@@ -192,6 +189,9 @@ export async function getLotsForV2Page(
   const lots = await prisma.lot.findMany({
     where: {
       status: { in: [...VISIBLE_STATUSES] },
+      Auction: {
+        status: { notIn: ['RASCUNHO', 'EM_PREPARACAO'] },
+      },
       ...(tenantId ? { tenantId } : {}),
     },
     include: {

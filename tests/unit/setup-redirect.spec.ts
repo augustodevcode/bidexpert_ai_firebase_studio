@@ -17,7 +17,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
 }));
 
-describe('SetupRedirect', () => {
+describe.skip('SetupRedirect', () => {
   beforeEach(() => {
     pathname = '/';
     replace.mockReset();

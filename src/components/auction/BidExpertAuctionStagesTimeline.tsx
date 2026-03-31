@@ -6,17 +6,17 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { format, isPast, isValid } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { AuctionStage, Auction, Lot } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { normalizeAuctionStages } from '@/lib/ui-helpers';
+import { getAuctionStageTimelineStatus, type StageTimelineStatus } from '@/lib/auction-timing';
 import {
   getAuctionStageVisualState,
   getLotStageVisualState,
   getStageVisualConfig,
-  type StageTimelineStatus,
   type StageVisualState,
 } from '@/components/auction/auction-stage-visuals';
 
@@ -100,15 +100,7 @@ export default function BidExpertAuctionStagesTimeline({
   const baseSteps = stages.map((stage, index) => {
     const startDate = stage.startDate ? new Date(stage.startDate) : null;
     const endDate = stage.endDate ? new Date(stage.endDate) : null;
-    let status: StepStatus = 'upcoming';
-
-    if (startDate && endDate && isValid(startDate) && isValid(endDate)) {
-      if (isPast(endDate)) {
-        status = 'completed';
-      } else if (isPast(startDate) && !isPast(endDate)) {
-        status = 'active';
-      }
-    }
+    const status: StepStatus = getAuctionStageTimelineStatus(stage);
 
     let price: number | null = null;
 

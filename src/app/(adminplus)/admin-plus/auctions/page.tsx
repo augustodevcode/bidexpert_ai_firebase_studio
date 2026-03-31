@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina de listagem de Auctions â€” Admin Plus.
+ * @fileoverview Página de listagem de leilões no Admin Plus.
  */
 'use client';
 
@@ -31,7 +31,7 @@ export default function AuctionsPage() {
   const handleSubmit = async (values: AuctionSchema) => {
     const res = editing ? await updateAuction(editing.id, values) : await createAuction(values);
     if (res?.success) {
-      toast.success(editing ? 'LeilÃ£o atualizado.' : 'LeilÃ£o criado.');
+      toast.success(editing ? 'Leilão atualizado.' : 'Leilão criado.');
       setFormOpen(false); setEditing(null); table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao salvar.');
@@ -41,15 +41,15 @@ export default function AuctionsPage() {
   const handleConfirmDelete = async () => {
     if (!deleting) return;
     const res = await deleteAuction(deleting.id);
-    if (res?.success) { toast.success('LeilÃ£o excluÃ­do.'); setDeleting(null); table.refresh(); }
+    if (res?.success) { toast.success('Leilão excluído.'); setDeleting(null); table.refresh(); }
     else toast.error(res?.error ?? 'Erro ao excluir.');
   };
 
   return (
     <div className="space-y-6" data-ai-id="auctions-page">
       <PageHeader
-        title="LeilÃµes"
-        description="Gerencie os leilÃµes da plataforma."
+        title="Leilões"
+        description="Gerencie os leilões da plataforma."
         icon={Gavel}
         onAdd={() => { setEditing(null); setFormOpen(true); }}
       />
@@ -78,7 +78,7 @@ export default function AuctionsPage() {
         open={!!deleting}
         onOpenChange={(o) => { if (!o) setDeleting(null); }}
         onConfirm={handleConfirmDelete}
-        title="Excluir LeilÃ£o"
+        title="Excluir Leilão"
         description={`Deseja realmente excluir "${deleting?.title}"?`}
       />
     </div>

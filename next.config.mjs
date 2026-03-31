@@ -9,6 +9,10 @@ try {
   withSentryConfig = null;
 }
 
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 console.log(`[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: ${process.env.NODE_ENV}`);
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -25,7 +29,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://maps.googleapis.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com",
+      "img-src 'self' data: blob: https://placehold.co https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://ms.sbwebservices.net https://firebasestorage.googleapis.com https://*.s3.amazonaws.com https://res.cloudinary.com https://*.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com https://*.tile.openstreetmap.org https://unpkg.com https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com",
       "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.vercel-analytics.com https://cdn.vercel-insights.com https://va.vercel-scripts.com https://maps.googleapis.com https://nominatim.openstreetmap.org",
       "font-src 'self' https://fonts.gstatic.com",
       "frame-src 'self' https://*.firebaseapp.com https://www.google.com https://maps.google.com https://vercel.live",
@@ -78,6 +82,18 @@ const config = {
       },
       {
         protocol: 'https',
+        hostname: 'fastly.picsum.photos',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ms.sbwebservices.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
         port: '',
         pathname: '/**',
@@ -107,8 +123,9 @@ const config = {
   compress: true,
   productionBrowserSourceMaps: false,
   // Node.js runtime para WebSocket (realtime bids)
+  serverExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core', '@genkit-ai/googleai', '@genkit-ai/ai', '@genkit-ai/google-cloud', '@genkit-ai/firebase', 'genkit', 'async_hooks'],
   experimental: {
-    serverComponentsExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core', 'async_hooks'],
+    serverComponentsExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core', '@genkit-ai/googleai', '@genkit-ai/ai', 'genkit', 'async_hooks'],
   },
   // Webpack configuration to suppress handlebars and require-in-the-middle warnings
   webpack: (config, { isServer }) => {
@@ -128,8 +145,8 @@ const config = {
     }
     
     if (isServer) {
-      // Mark require-in-the-middle as external on server
-      config.externals = [...config.externals, 'require-in-the-middle', 'async_hooks'];
+      // Mark require-in-the-middle and genkit packages as external on server
+      config.externals = [...config.externals, 'require-in-the-middle', 'async_hooks', '@genkit-ai/googleai', '@genkit-ai/core', '@genkit-ai/ai', 'genkit'];
     }
     
     // Fallback for client-side (async_hooks is Node.js only)
@@ -139,6 +156,15 @@ const config = {
         async_hooks: false,
       };
     }
+
+    // Fix react-redux RSC resolution: the "react-server" exports condition
+    // points to dist/rsc.mjs which stubs client-only APIs (Provider, createSelectorHook etc.)
+    // causing "Attempted import error" in react-querybuilder.
+    // Force webpack to always use the full ESM entry for react-redux.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'react-redux': join(__dirname, 'node_modules', 'react-redux', 'dist', 'react-redux.mjs'),
+    };
     
     return config;
   },

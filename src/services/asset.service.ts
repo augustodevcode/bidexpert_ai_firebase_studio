@@ -264,10 +264,10 @@ export class AssetService {
       const dataToUpdate: Prisma.AssetUpdateInput = { ...normalizedAssetData };
       
       // Conecta relacionamentos
-      if (categoryId) dataToUpdate.category = { connect: { id: BigInt(categoryId) } };
-      if (subcategoryId) dataToUpdate.subcategory = { connect: { id: BigInt(subcategoryId) } };
-      if (judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
-      if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } };
+      if (categoryId) (dataToUpdate as any).LotCategory = { connect: { id: BigInt(categoryId) } };
+      if (subcategoryId) (dataToUpdate as any).Subcategory = { connect: { id: BigInt(subcategoryId) } };
+      if (judicialProcessId) (dataToUpdate as any).JudicialProcess = { connect: { id: BigInt(judicialProcessId) } };
+      if (sellerId) (dataToUpdate as any).Seller = { connect: { id: BigInt(sellerId) } };
       if (imageMediaId) (dataToUpdate as any).CoverImage = { connect: { id: BigInt(imageMediaId) } };
       if (occupationUpdatedBy) (dataToUpdate as any).User = { connect: { id: BigInt(occupationUpdatedBy) } };
       

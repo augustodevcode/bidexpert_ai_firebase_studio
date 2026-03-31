@@ -11,8 +11,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCities, deleteCity } from './actions';
-import type { CityInfo } from '@/types';
+import { getCities, deleteCity, createCity, updateCity } from './actions';
+import { getStates } from '../states/actions';
+import type { CityInfo, StateInfo } from '@/types';
 import { PlusCircle, Building2, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
@@ -30,6 +31,7 @@ export default function AdminCitiesPage() {
   // State for Modal
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCity, setEditingCity] = useState<CityInfo | null>(null);
+  const [states, setStates] = useState<StateInfo[]>([]);
 
   const fetchPageData = useCallback(async () => {
       setIsLoading(true);
@@ -83,13 +85,25 @@ export default function AdminCitiesPage() {
     fetchPageData();
   }, [toast, fetchPageData]);
 
-  const handleEdit = useCallback((city: CityInfo) => {
+  const handleEdit = useCallback(async (city: CityInfo) => {
     setEditingCity(city);
+    try {
+      const fetchedStates = await getStates();
+      setStates(fetchedStates);
+    } catch (e) {
+      console.error("Error fetching states for city edit:", e);
+    }
     setIsFormOpen(true);
   }, []);
 
-  const handleCreateNew = () => {
+  const handleCreateNew = async () => {
     setEditingCity(null);
+    try {
+      const fetchedStates = await getStates();
+      setStates(fetchedStates);
+    } catch (e) {
+      console.error("Error fetching states for city form:", e);
+    }
     setIsFormOpen(true);
   };
 
@@ -164,7 +178,15 @@ export default function AdminCitiesPage() {
         mode="modal"
       >
         <CityForm 
-          cityInfo={editingCity || undefined} 
+          initialData={editingCity || undefined} 
+          states={states}
+          onSubmitAction={editingCity 
+            ? (data) => updateCity(editingCity.id, data) 
+            : createCity
+          }
+          formTitle={editingCity ? "Editar Cidade" : "Nova Cidade"}
+          formDescription={editingCity ? "Faça alterações na cidade selecionada." : "Preencha os dados para cadastrar uma nova cidade."}
+          submitButtonText={editingCity ? "Salvar Alterações" : "Criar Cidade"}
           onSuccess={handleFormSuccess}
           onCancel={handleFormCancel}
         />

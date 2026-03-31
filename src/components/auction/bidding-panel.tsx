@@ -5,6 +5,8 @@
  */
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Lot, UserLotMaxBid, BidInfo, Auction, AuctionStage } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -46,6 +48,7 @@ const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuccess, isHabilitadoForThisAuction, onHabilitacaoSuccess, activeStage, activeLotPrices, sharedBidHistory, isLoadingSharedHistory, onRefreshBidHistory }: BiddingPanelProps) {
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
+  const pathname = usePathname();
   
   const [currentLot, setCurrentLot] = useState<Lot>(initialLot);
   const [bidAmountInput, setBidAmountInput] = useState<string>('');
@@ -229,6 +232,7 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
 
   const displayBidAmount = parseFloat(bidAmountInput) >= nextMinimumBid ? parseFloat(bidAmountInput) : nextMinimumBid;
   const bidButtonLabel = `Dar Lance (R$ ${displayBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
+  const loginRedirectUrl = pathname ? `/auth/login?redirect=${encodeURIComponent(pathname)}` : '/auth/login';
   
   const renderBiddingInterface = () => {
     if (!userProfileWithPermissions) {
@@ -238,9 +242,7 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
             <p className="font-medium mb-1">Você precisa estar logado para dar lances</p>
             <p className="text-xs text-muted-foreground mb-3">Faça login ou crie uma conta para participar deste leilão.</p>
             <Button asChild variant="outline" size="sm" className="w-full">
-              <a href={`/auth/login?callbackUrl=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '')}`}>
-                Fazer Login
-              </a>
+              <Link href={loginRedirectUrl} data-ai-id="bidding-panel-login-link">Fazer Login</Link>
             </Button>
           </div>
         );
