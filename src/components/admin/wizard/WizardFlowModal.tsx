@@ -20,7 +20,7 @@ export default function WizardFlowModal({ isOpen, onClose }: WizardFlowModalProp
         <DialogHeader className="p-4 border-b">
           <DialogTitle>Fluxo de Criação de Leilão</DialogTitle>
           <DialogDescription>
-            Use o mouse para navegar e dar zoom.
+            Role para acompanhar todas as etapas e abrir cadastros vinculados quando disponiveis.
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow w-full h-full">

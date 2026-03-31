@@ -4,12 +4,15 @@
 import type { Lot } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Info } from 'lucide-react';
+import { getLotDetailedDescription } from '@/lib/ui-helpers';
 
 interface LotDescriptionTabProps {
   lot: Lot;
 }
 
 export default function LotDescriptionTab({ lot }: LotDescriptionTabProps) {
+  const detailedDescription = getLotDetailedDescription(lot);
+
   return (
     <Card className="shadow-none border-0">
       <CardHeader className="px-1 pt-0">
@@ -18,8 +21,8 @@ export default function LotDescriptionTab({ lot }: LotDescriptionTabProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="px-1">
-        {lot.description ? (
-          <p className="text-sm text-muted-foreground whitespace-pre-line">{lot.description}</p>
+        {detailedDescription ? (
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{detailedDescription}</p>
         ) : (
           <p className="text-sm text-muted-foreground">Nenhuma descrição detalhada fornecida para este lote.</p>
         )}

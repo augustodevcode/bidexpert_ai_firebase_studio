@@ -46,6 +46,18 @@ type TenantOption = {
 
 const normalizeSelectValue = (value?: string | null) => value ?? '';
 
+const normalizeRedirectTarget = (value?: string | null) => {
+    if (!value) {
+        return '/dashboard/overview';
+    }
+
+    if (!value.startsWith('/') || value.startsWith('//')) {
+        return '/dashboard/overview';
+    }
+
+    return value;
+};
+
 
 function LoginPageContent() {
     const router = useRouter();
@@ -229,7 +241,9 @@ function LoginPageContent() {
             const result = await login(values);
 
             if (result.success) {
-                const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
+                const redirectUrl = normalizeRedirectTarget(
+                    searchParams.get('redirect') || searchParams.get('callbackUrl')
+                );
 
                 toast({
                     title: "Login bem-sucedido!",

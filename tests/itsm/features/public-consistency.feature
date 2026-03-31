@@ -29,3 +29,10 @@ Funcionalidade: Consistencia publica de status, cronologia e setup
     Quando ela tenta dar um lance manual ou configurar lance automatico
     Entao a interface deve exibir o motivo correto do bloqueio
     E o backend deve recusar a operacao com a mesma regra de elegibilidade
+
+  Cenario: Projetar corretamente a publicacao judicial criada pelo wizard
+    Dado que um leilao judicial publicado nao possui lance minimo preenchido no nivel do leilao
+    E que o lote publicado herda descricao e localizacao do ativo vinculado
+    Quando a vitrine publica renderiza o hero do leilao, a aba de lotes e o detalhe do lote
+    Entao o hero deve exibir a proxima praca correta e o lance minimo derivado do lote
+    E a aba de lotes e o detalhe do lote devem exibir localizacao e descricao herdadas do ativo

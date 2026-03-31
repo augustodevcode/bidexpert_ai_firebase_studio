@@ -215,3 +215,42 @@ test.describe('BDD-AUTH-06: Alias Público /login', () => {
     await expect(emailInput).toBeVisible({ timeout: 60_000 });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BDD-AUTH-07: GIVEN visitante acessa um lote público
+//              WHEN usa o CTA de login do painel de lances
+//              THEN a URL de redirect preserva o lote atual sem hydration mismatch
+// ─────────────────────────────────────────────────────────────────────────────
+test.describe('BDD-AUTH-07: CTA de login no lote público', () => {
+  test('painel de lances envia o visitante para /auth/login preservando o lote de origem', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    await page.goto(`${BASE_URL}/auctions/235/lots/LOTE-0159`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 120_000,
+    });
+
+    const loginLink = page.locator('[data-ai-id="bidding-panel-login-link"]:visible').first();
+    await expect(loginLink).toBeVisible({ timeout: 60_000 });
+    await expect(loginLink).toHaveAttribute(
+      'href',
+      /\/auth\/login\?redirect=%2Fauctions%2F235%2Flots%2FLOTE-0159/
+    );
+
+    expect(consoleErrors.some((message) => /hydration|did not match/i.test(message))).toBe(false);
+
+    await Promise.all([
+      page.waitForURL(/\/auth\/login/i, { timeout: 60_000 }),
+      loginLink.click(),
+    ]);
+
+    const currentUrl = new URL(page.url());
+    expect(currentUrl.pathname).toBe('/auth/login');
+    expect(currentUrl.searchParams.get('redirect')).toBe('/auctions/235/lots/LOTE-0159');
+  });
+});

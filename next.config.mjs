@@ -119,8 +119,9 @@ const config = {
   compress: true,
   productionBrowserSourceMaps: false,
   // Node.js runtime para WebSocket (realtime bids)
+  serverExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core', '@genkit-ai/googleai', '@genkit-ai/ai', '@genkit-ai/google-cloud', '@genkit-ai/firebase', 'genkit', 'async_hooks'],
   experimental: {
-    serverComponentsExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core', 'async_hooks'],
+    serverComponentsExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core', '@genkit-ai/googleai', '@genkit-ai/ai', 'genkit', 'async_hooks'],
   },
   // Webpack configuration to suppress handlebars and require-in-the-middle warnings
   webpack: (config, { isServer }) => {
@@ -140,8 +141,8 @@ const config = {
     }
     
     if (isServer) {
-      // Mark require-in-the-middle as external on server
-      config.externals = [...config.externals, 'require-in-the-middle', 'async_hooks'];
+      // Mark require-in-the-middle and genkit packages as external on server
+      config.externals = [...config.externals, 'require-in-the-middle', 'async_hooks', '@genkit-ai/googleai', '@genkit-ai/core', '@genkit-ai/ai', 'genkit'];
     }
     
     // Fallback for client-side (async_hooks is Node.js only)

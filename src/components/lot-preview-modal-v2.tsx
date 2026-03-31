@@ -38,7 +38,7 @@ import {
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { differenceInHours, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getEffectiveLotEndDate } from '@/lib/ui-helpers';
+import { getEffectiveLotEndDate, getLotDisplayLocation } from '@/lib/ui-helpers';
 import BidExpertAuctionStagesTimeline from './auction/BidExpertAuctionStagesTimeline';
 import LotCountdown from './lot-countdown';
 import { useToast } from '@/hooks/use-toast';
@@ -230,6 +230,7 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
     { icon: Award, text: 'Leiloeiro Credenciado' },
     { icon: Users, text: `${stats[2].value}+ Participantes` }
   ];
+  const resolvedLotLocation = lot ? getLotDisplayLocation(lot, auction) : 'Não informado';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -484,10 +485,10 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
               <Separator />
 
               {/* Localização */}
-              {(lot.cityName || lot.stateUf) && (
+              {resolvedLotLocation !== 'Não informado' && (
                 <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                  <span>{lot.cityName}{lot.cityName && lot.stateUf ? ', ' : ''}{lot.stateUf}</span>
+                  <span>{resolvedLotLocation}</span>
                 </div>
               )}
 

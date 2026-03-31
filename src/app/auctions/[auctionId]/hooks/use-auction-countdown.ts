@@ -6,7 +6,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { differenceInSeconds, isPast, formatDistance } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Auction } from '@/types';
+import type { Auction, AuctionStage } from '@/types';
+import { getAuctionStageTimelineStatus, normalizeAuctionStages } from '@/lib/auction-timing';
 
 interface AuctionCountdownData {
   timeRemaining: string;           // Ex: "2h 45m 30s"
@@ -22,33 +23,58 @@ interface AuctionCountdownData {
   progress: number;                 // 0-100% do leilão
 }
 
+export interface ResolvedAuctionCountdownStage {
+  stage: AuctionStage;
+  stageNumber: number;
+}
+
+export function resolveAuctionCountdownStage(
+  auctionStages?: Auction['auctionStages'],
+  referenceDate = new Date(),
+): ResolvedAuctionCountdownStage | null {
+  const orderedStages = normalizeAuctionStages(auctionStages);
+
+  if (orderedStages.length === 0) {
+    return null;
+  }
+
+  const candidateIndex = orderedStages.findIndex(stage => {
+    const status = getAuctionStageTimelineStatus(stage, referenceDate);
+    return status === 'active' || status === 'upcoming';
+  });
+
+  const resolvedIndex = candidateIndex >= 0 ? candidateIndex : orderedStages.length - 1;
+
+  return {
+    stage: orderedStages[resolvedIndex],
+    stageNumber: resolvedIndex + 1,
+  };
+}
+
 export function useAuctionCountdown(auction: Auction): AuctionCountdownData {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number>(0);
 
   const activeStage = useMemo(() => {
-    if (!auction.auctionStages?.length) return null;
-    
-    const now = new Date();
-    return auction.auctionStages.find(stage => 
-      new Date(stage.startDate) <= now && new Date(stage.endDate) >= now
-    ) || auction.auctionStages[auction.auctionStages.length - 1];
+    return resolveAuctionCountdownStage(auction.auctionStages);
   }, [auction.auctionStages]);
 
   const { isExpired, isExpiringSoon, progress } = useMemo(() => {
     if (!activeStage) return { isExpired: true, isExpiringSoon: false, progress: 100 };
 
-    const endDate = new Date(activeStage.endDate);
+    const endDate = new Date(activeStage.stage.endDate);
     const expired = isPast(endDate);
     
     const secondsRemaining = differenceInSeconds(endDate, new Date());
     const expiringSoon = secondsRemaining < 3600; // 1 hora
     
     // Progress baseado no estágio
-    const startDate = new Date(activeStage.startDate);
+    const startDate = new Date(activeStage.stage.startDate);
     const totalSeconds = differenceInSeconds(endDate, startDate);
     const elapsedSeconds = differenceInSeconds(new Date(), startDate);
-    const progress = Math.min(100, Math.round((elapsedSeconds / totalSeconds) * 100));
+    const progress = totalSeconds > 0
+      ? Math.max(0, Math.min(100, Math.round((elapsedSeconds / totalSeconds) * 100)))
+      : 100;
 
     return { isExpired: expired, isExpiringSoon: expiringSoon, progress };
   }, [activeStage]);
@@ -63,7 +89,7 @@ export function useAuctionCountdown(auction: Auction): AuctionCountdownData {
     const interval = setInterval(() => {
       if (!activeStage) return;
 
-      const endDate = new Date(activeStage.endDate);
+      const endDate = new Date(activeStage.stage.endDate);
       const now = new Date();
       
       if (isPast(endDate)) {
@@ -98,10 +124,10 @@ export function useAuctionCountdown(auction: Auction): AuctionCountdownData {
     isExpired,
     isExpiringSoon,
     stage: activeStage ? {
-      name: activeStage.name,
-      startDate: new Date(activeStage.startDate),
-      endDate: new Date(activeStage.endDate),
-      stageNumber: 1,
+      name: activeStage.stage.name,
+      startDate: new Date(activeStage.stage.startDate),
+      endDate: new Date(activeStage.stage.endDate),
+      stageNumber: activeStage.stageNumber,
     } : undefined,
     progress,
   };
