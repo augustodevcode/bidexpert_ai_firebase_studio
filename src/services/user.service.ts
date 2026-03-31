@@ -74,7 +74,6 @@ export class UserService {
         },
       };
     });
-
     const {
       password: _password,
       UsersOnRoles: _usersOnRoles,
