@@ -425,6 +425,17 @@ Validar transitions no service com erros descritivos
 - **Quando** o fluxo do wizard precisa vincular um processo específico de referência
 - **Então** a seleção deve ocorrer pelo número do processo e não pela primeira linha disponível na tabela
 
+### RN-020C: Review do Wizard com Paridade Antes da Publicação
+✅ A etapa final de revisão do wizard DEVE refletir, antes da publicação, os dados de contato público, URLs de documentos e as principais regras de lance/configuração avançada preenchidas no formulário do leilão.
+✅ O resumo final do wizard DEVE suportar explicitamente as modalidades `VENDA_DIRETA`, `PARTICULAR`, `EXTRAJUDICIAL`, `JUDICIAL` e `TOMADA_DE_PRECOS` sem esconder campos que já foram preenchidos nas etapas anteriores.
+✅ A revisão final DEVE expor identificadores `data-ai-id` estáveis para contatos, documentos e opções de lance, permitindo validação E2E determinística antes do clique em "Publicar Leilão".
+
+**Cenário BDD - Review final preserva paridade do formulário**
+- **Dado** que um administrador preenche o wizard de leilão com contatos públicos, documentos e opções de lance
+- **Quando** ele avança para a etapa de revisão final
+- **Então** o resumo mostra esses dados antes da publicação
+- **E** a modalidade selecionada continua visível no resumo final
+
 ### RN-021: Padrão de IDs BigInt em Front/Back
 Endpoints e services devem aceitar/retornar IDs numéricos  
 No frontend, converter string->number com validação e tratar `bigint` quando necessário  
