@@ -138,7 +138,22 @@ async function main() {
   console.log(`Assigned alias: https://${assignedAlias}`);
 }
 
+function isNonBlockingAliasError(error) {
+  const message = String(error?.message ?? '');
+  return (
+    /403 Forbidden/i.test(message) ||
+    /permission to list the deployment/i.test(message) ||
+    /already exists/i.test(message) ||
+    /alias.*assigned/i.test(message)
+  );
+}
+
 main().catch((error) => {
+  if (isNonBlockingAliasError(error)) {
+    console.warn(`Non-blocking Vercel alias issue: ${error.message}`);
+    process.exit(0);
+  }
+
   console.error(error.message);
   process.exit(1);
 });

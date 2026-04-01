@@ -14,13 +14,13 @@ export async function generateWithOllama(
 ): Promise<TemplateGenerationRawResult> {
   const host = config?.host ?? process.env.OLLAMA_HOST ?? DEFAULT_OLLAMA_HOST;
   const model = config?.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_OLLAMA_MODEL;
-  let module: any;
+  let ollamaModule: any;
   try {
-    module = await import('ollama');
+    ollamaModule = await import('ollama');
   } catch (e) {
     throw new Error('Ollama provider is not installed. Please install the "ollama" package to use this feature.');
   }
-  const OllamaClass = module.Ollama;
+  const OllamaClass = ollamaModule.Ollama;
   const client = new OllamaClass({ host });
   const response = await client.chat({
     model,
@@ -44,8 +44,8 @@ export async function generateWithOllama(
 export async function listOllamaModels(host?: string): Promise<string[]> {
   const resolvedHost = host ?? process.env.OLLAMA_HOST ?? DEFAULT_OLLAMA_HOST;
   try {
-    const module = await import('ollama');
-    const client = new module.Ollama({ host: resolvedHost });
+    const ollamaModule = await import('ollama');
+    const client = new ollamaModule.Ollama({ host: resolvedHost });
     const response = await client.list();
     return (response.models ?? []).map((m: { name: string }) => m.name);
   } catch (e) {

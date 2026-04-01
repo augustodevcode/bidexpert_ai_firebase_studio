@@ -94,23 +94,56 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const body = pr.body || '';
-            
-            // Verificar se o PR body contém evidência Playwright
-            const hasEvidence = body.includes('"status": "passed"') || 
-                                body.includes('"exitCode": 0') ||
-                                body.includes('Smoke tests: **PASS**');
-            
-            const hasSection = body.includes('Evidência Obrigatória de Testes Playwright');
-            
-            if (!hasSection) {
+
+            const isPromotionPr = ['demo-stable', 'hml'].includes(pr.head.ref);
+            const evidencePatterns = [
+              /"status"\s*:\s*"passed"/i,
+              /"exitCode"\s*:\s*0/i,
+              /Smoke tests:\s*\*\*PASS\*\*/i,
+              /Playwright headed/i,
+              /Playwright .*✅/i,
+              /Vitest focado ✅/i,
+              /Artifact \(playwright-report\/test-results\):/i,
+            ];
+
+            const hasBodyEvidence = evidencePatterns.some((pattern) => pattern.test(body));
+            const hasNamedSection = /Evid[eê]ncia Obrigat[oó]ria de Testes Playwright/i.test(body);
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              per_page: 100,
+            });
+
+            const hasBotEvidence = comments.some((comment) =>
+              comment.user?.type === 'Bot' && (
+                comment.body?.includes('<!-- playwright-evidence -->') ||
+                /##\s*🎭\s*Evid[eê]ncias Playwright/i.test(comment.body || '') ||
+                /Artifact \(playwright-report\/test-results\):/i.test(comment.body || '')
+              )
+            );
+
+            if (isPromotionPr) {
+              if (!hasBodyEvidence && !hasBotEvidence) {
+                core.setFailed('PR de promoção para main precisa referenciar evidência Playwright no body ou em comentário automático.');
+                return;
+              }
+
+              console.log('Evidência Playwright verificada para PR de promoção.');
+              return;
+            }
+
+            if (!hasNamedSection) {
               core.setFailed('PR deve conter seção "Evidência Obrigatória de Testes Playwright". Use o template de PR.');
               return;
             }
-            
-            if (!hasEvidence) {
-              core.warning('Evidência de testes Playwright não encontrada ou testes falharam. Verifique o JSON de evidência no PR body.');
+
+            if (!hasBodyEvidence && !hasBotEvidence) {
+              core.setFailed('Evidência de testes Playwright não encontrada no body nem em comentários automáticos da PR.');
+              return;
             }
-            
+
             console.log('Evidência Playwright verificada.');
 
   # ============================================

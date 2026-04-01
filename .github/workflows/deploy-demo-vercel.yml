@@ -203,7 +203,7 @@ jobs:
           VERCEL_BRANCH_NAME: demo-stable
           VERCEL_TARGET: preview
           VERCEL_COMMIT_SHA: ${{ github.sha }}
-          VERCEL_ALIAS_DOMAIN: bidexpert-demo-demo-stable.vercel.app
+          VERCEL_ALIAS_DOMAIN: demo.bidexpert.com.br
           VERCEL_ALIAS_MAX_ATTEMPTS: '40'
           VERCEL_ALIAS_POLL_MS: '15000'
 
@@ -230,7 +230,7 @@ jobs:
           if [ "${{ needs.build.result }}" = "success" ]; then
             echo "✅ Build passou! Deploy automático pelo Vercel Git Integration."
             echo "🌐 URL: ${{ secrets.DEMO_APP_URL }}"
-            echo "🌐 Stable Alias: https://bidexpert-demo-demo-stable.vercel.app"
+            echo "🌐 Stable Alias: https://demo.bidexpert.com.br"
           else
             echo "❌ Build falhou! Verifique os logs."
           fi
