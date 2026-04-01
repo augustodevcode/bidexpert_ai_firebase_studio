@@ -87,4 +87,48 @@ describe('sanitizeResponse', () => {
       { id: '2', amount: 200 },
     ]);
   });
+
+  it('serializa payload de lotes do dashboard com decimais e relacoes aninhadas', () => {
+    const input = {
+      recommendedLots: [
+        {
+          id: BigInt(390),
+          auctionId: BigInt(184),
+          publicId: 'LOTE-0142',
+          title: 'Terreno com 150 m²',
+          price: new Decimal('50000'),
+          initialPrice: new Decimal('45000'),
+          secondInitialPrice: new Decimal('40000'),
+          bidIncrementStep: new Decimal('500'),
+          latitude: new Decimal('-10.1234'),
+          longitude: new Decimal('-37.9876'),
+          Auction: {
+            title: 'Leilao Judicial',
+          },
+        },
+      ],
+    };
+
+    const result = sanitizeResponse(input);
+
+    expect(result).toEqual({
+      recommendedLots: [
+        {
+          id: '390',
+          auctionId: '184',
+          publicId: 'LOTE-0142',
+          title: 'Terreno com 150 m²',
+          price: 50000,
+          initialPrice: 45000,
+          secondInitialPrice: 40000,
+          bidIncrementStep: 500,
+          latitude: -10.1234,
+          longitude: -37.9876,
+          Auction: {
+            title: 'Leilao Judicial',
+          },
+        },
+      ],
+    });
+  });
 });

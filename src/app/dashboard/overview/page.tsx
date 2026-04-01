@@ -21,6 +21,7 @@ import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth-context';
 import { getDashboardOverviewDataAction, type DashboardOverviewData } from './actions';
+import { formatCurrency } from '@/lib/format';
 import { useToast } from '@/hooks/use-toast';
 import LiveLotCard from '@/components/live-lot-card';
 
@@ -136,14 +137,18 @@ export default function DashboardOverviewPage() {
             <CardDescription>Lotes selecionados que podem te interessar.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-             {dashboardData.recommendedLots.map(lot => (
-              <Card key={lot.id} className="overflow-hidden">
-                <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
-                  <div className="relative aspect-video bg-muted"><Image src={lot.imageUrl || 'https://placehold.co/600x400.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "lote recomendado"} /></div>
-                  <div className="p-3"><h4 className="text-sm font-semibold truncate mb-1">{lot.title}</h4><p className="text-xs text-muted-foreground">Local: {lot.cityName} - {lot.stateUf}</p><p className="text-lg font-bold text-primary mt-1">R$ {lot.price.toLocaleString('pt-BR')}</p></div>
-                </Link>
-              </Card>
-            ))}
+             {dashboardData.recommendedLots.map((lot) => {
+              const locationLabel = [lot.cityName, lot.stateUf].filter(Boolean).join(' - ') || 'Localização sob consulta';
+
+              return (
+                <Card key={lot.id} className="overflow-hidden">
+                  <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
+                    <div className="relative aspect-video bg-muted"><Image src={lot.imageUrl || 'https://placehold.co/600x400.png'} alt={lot.title} fill sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" className="object-cover" data-ai-hint={lot.dataAiHint || "lote recomendado"} /></div>
+                    <div className="p-3"><h4 className="text-sm font-semibold truncate mb-1">{lot.title}</h4><p className="text-xs text-muted-foreground">Local: {locationLabel}</p><p className="text-lg font-bold text-primary mt-1">{formatCurrency(lot.price)}</p></div>
+                  </Link>
+                </Card>
+              );
+            })}
           </CardContent>
         </Card>
       )}

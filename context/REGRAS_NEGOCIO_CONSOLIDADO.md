@@ -348,12 +348,45 @@ Proibido aceitar `tenantId` vindo do cliente sem validação
 - A rota `/lots` (Todos os Lotes) deve ser acessível via menu principal (Header) e rodapé (Footer).
 - No Header, o link "Todos os Lotes" deve estar visível tanto na versão desktop (centralNavItems) quanto na versão mobile (allNavItemsForMobile).
 - O link deve preceder o item "Início" para maior destaque visual em listagens.
+- A composição final da navegação pública não pode renderizar entradas duplicadas para o mesmo `href`; qualquer lista de itens do header deve ser normalizada antes do render para garantir keys únicas e evitar warnings de React.
+
+**BDD - Header público não duplica links principais**
+- **Dado** uma configuração do header com entradas repetidas para `/lots`
+- **Quando** os itens da navegação são normalizados para desktop e mobile
+- **Então** apenas a primeira ocorrência de `Lotes` deve permanecer visível
+- **E** o item deve continuar precedendo `Início`
 
 ### RN-022: Conclusão do Dashboard do Arrematante
 Finalizar APIs: `GET/POST /api/bidder/*` para lotes vencidos, pagamentos, notificações, histórico, perfil  
 Repositories e services com BigInt  
 Seções do dashboard só renderizam quando dados essenciais estiverem carregados (skeletons/spinners)
 É proibido manter `TODO` funcional em seções visíveis do dashboard do arrematante em branches de integração. Se um bloco não tiver backend pronto, deve renderizar estado vazio explícito e testável, nunca placeholder ambíguo.
+- Toda Server Action ou carregamento de dashboard que entregue entidades Prisma a Client Components DEVE serializar `Decimal`, `BigInt` e `Date` antes de atualizar estado React.
+- Cards com `next/image` usando `fill` DEVEM informar `sizes` para não degradar performance do dashboard.
+
+**BDD - Dashboard do arrematante não vaza tipos Prisma ao cliente**
+- **Dado** um carregamento de dashboard com lotes recomendados ou prestes a encerrar contendo campos `Decimal`, `BigInt` ou `Date`
+- **Quando** a ação retorna os dados para a página cliente
+- **Então** o payload deve chegar serializado para tipos plain JSON
+- **E** o browser não deve emitir warnings de `Decimal objects are not supported` nem `Only plain objects can be passed`
+
+### RN-022A: Vitrine Pública `/lots` com Taxonomia e Confiança Explícitas
+- A rota pública `/lots` DEVE expor uma camada de overview acima das seções, com taxonomia explícita das modalidades `Judicial`, `Extrajudicial`, `Venda Direta` e `Tomada de Preços`.
+- Cada modalidade visível no overview DEVE mostrar a contagem correspondente de lotes e permitir navegação rápida para a seção da modalidade quando houver itens.
+- A mesma superfície DEVE exibir uma trilha de confiança pública com sinais objetivos da vitrine, incluindo pelo menos: quantidade de oportunidades abertas, lotes com referência processual quando aplicável, comitentes ativos e atalho para busca ou orientações de segurança.
+- Cards V2 da vitrine pública DEVEM expor `data-ai-id` estáveis para metadados críticos usados em automação e auditoria visual, incluindo pelo menos a localização do lote.
+
+**BDD - Overview de modalidades na vitrine pública**
+- **Dado** que a rota `/lots` possui lotes distribuídos por modalidades
+- **Quando** a página pública é renderizada
+- **Então** a taxonomia de modalidades deve ficar visível antes da grade principal
+- **E** cada modalidade deve informar a sua contagem de oportunidades
+
+**BDD - Trilha de confiança da vitrine pública**
+- **Dado** que a rota `/lots` possui dados públicos suficientes para decisão inicial
+- **Quando** a pessoa visita a página
+- **Então** a interface deve exibir sinais de confiança e descoberta sem exigir login
+- **E** esses sinais devem incluir contexto operacional da vitrine e atalhos para aprofundamento seguro
 
 ### RN-020: Fluxo de Publicação de Leilão
 `Auction` só pode ir para "Publicado" quando: etapas e datas válidas, lotes associados, regras de mídia atendidas, comitente/leiloeiro vinculados e ativos  

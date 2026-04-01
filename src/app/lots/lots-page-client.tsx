@@ -7,6 +7,7 @@
 import AuctionLotCardV2 from '@/components/cards/auction-lot-card-v2';
 import type { AuctionItem } from '@/components/cards/auction-lot-card-v2.types';
 import type { GroupedLots } from '@/services/lot-card-v2.service';
+import { LotsMarketplaceOverview } from './lots-marketplace-overview';
 
 /* ------------------------------------------------------------------ */
 /*  Section component                                                  */
@@ -14,25 +15,32 @@ import type { GroupedLots } from '@/services/lot-card-v2.service';
 
 interface SectionProps {
   title: string;
+  description: string;
   items: AuctionItem[];
   dataAiId: string;
+  anchorId: string;
 }
 
-function Section({ title, items, dataAiId }: SectionProps) {
+function Section({ title, description, items, dataAiId, anchorId }: SectionProps) {
   if (items.length === 0) return null;
 
   return (
-    <section data-ai-id={dataAiId} className="space-y-6">
+    <section id={anchorId} data-ai-id={dataAiId} className="space-y-6 scroll-mt-24">
       <div className="flex items-center gap-3">
-        <h2 className="text-xl font-semibold text-foreground md:text-2xl">
-          {title}
-        </h2>
-        <span
-          aria-label={`${items.length} lotes`}
-          className="inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-primary/10 px-2 text-xs font-bold text-primary"
-        >
-          {items.length}
-        </span>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-foreground md:text-2xl">
+              {title}
+            </h2>
+            <span
+              aria-label={`${items.length} lotes`}
+              className="inline-flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-primary/10 px-2 text-xs font-bold text-primary"
+            >
+              {items.length}
+            </span>
+          </div>
+          <p className="max-w-3xl text-sm text-muted-foreground">{description}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -88,26 +96,36 @@ export function LotsPageClient({ grouped }: LotsPageClientProps) {
         </p>
       </div>
 
+      <LotsMarketplaceOverview grouped={grouped} />
+
       {/* Category sections */}
       <Section
         title="Leilões Judiciais"
+        description="Lotes com praça, cronograma e leitura jurídica mais explícita para decisões ancoradas em contexto processual."
         items={grouped.judicial}
         dataAiId="lots-section-judicial"
+        anchorId="lots-judicial"
       />
       <Section
         title="Leilões Extrajudiciais"
+        description="Operações privadas ou corporativas com cronograma visível, disputa organizada e leitura rápida de valor."
         items={grouped.extrajudicial}
         dataAiId="lots-section-extrajudicial"
+        anchorId="lots-extrajudicial"
       />
       <Section
         title="Venda Direta"
+        description="Compra imediata com preço objetivo, sem depender de dinâmica competitiva de praça."
         items={grouped.vendaDireta}
         dataAiId="lots-section-venda-direta"
+        anchorId="lots-venda-direta"
       />
       <Section
         title="Tomada de Preços"
+        description="Janela de propostas vinculantes para negociações comparativas e aquisição orientada por referência."
         items={grouped.tomadaDePrecos}
         dataAiId="lots-section-tomada-de-precos"
+        anchorId="lots-tomada-de-precos"
       />
 
       {/* Empty state */}
