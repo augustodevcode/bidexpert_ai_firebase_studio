@@ -16,20 +16,14 @@ import {
   ChevronLeft, ChevronRight, AlertCircle, Download, MessageCircle, Gem, Percent, Banknote, CreditCard, Home, 
   ListOrdered, Laptop, Calculator, Repeat, LogIn, Presentation, Loader2, Home as HomeIcon
 } from 'lucide-react';
-import type { Lot, Auction, SellerProfileInfo, AuctioneerProfileInfo, BidInfo, LotQuestion, Review } from '@/types';
+import type { Lot, Auction, SellerProfileInfo, AuctioneerProfileInfo, BidInfo, LotQuestion, Review, PlatformSettings } from '@/types';
 import { getLotDetailsForV2 } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/format';
+import { buildLotBidPlanningSummary } from '@/lib/lot-bid-planning';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from 'next/link';
-
-const formatCurrency = (value: number | null | undefined) => {
-    if (value === null || value === undefined) return 'N/A';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-};
 
 const TimeRemainingDisplay = ({ endDate }: { endDate: Date }) => {
     const [timeRemaining, setTimeRemaining] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -93,6 +87,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
         bids: BidInfo[];
         questions: LotQuestion[];
         reviews: Review[];
+        platformSettings: PlatformSettings | null;
     } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -167,10 +162,11 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
         return <div className="text-center py-20"><AlertCircle className="mx-auto h-12 w-12 text-destructive" /><p className="mt-4">{error || "Não foi possível carregar os dados do lote."}</p></div>;
     }
 
-    const { lot, auction, seller, auctioneer, bids, questions, reviews } = lotData;
+    const { lot, auction, seller, auctioneer, bids, questions, reviews, platformSettings } = lotData;
     const images = [lot.imageUrl, ...(Array.isArray(lot.galleryImageUrls) ? lot.galleryImageUrls : [])].filter(Boolean) as string[];
     const valorAvaliacao = lot.evaluationValue || 0;
     const incremento = lot.bidIncrementStep || 5000.00;
+    const bidPlanning = buildLotBidPlanningSummary({ lot, auction, bids, platformSettings });
     // Fallback de encerramento: usa última praça quando lot.endDate não existir
     const computedEndDate: Date | null = lot.endDate
         ? new Date(lot.endDate)
@@ -218,13 +214,13 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                         <Badge className="bg-blue-600 text-white tag-tipo-processo">{auction.auctionType || 'Leilão'}</Badge>
                                         <Badge className="bg-green-600 text-white tag-valor-avaliacao">Avaliação: {formatCurrency(valorAvaliacao)}</Badge>
                                     </div>
-                                    <button onClick={() => setIsFavorite(!isFavorite)} className="absolute top-4 right-4 p-2 bg-white/90 rounded-full hover:bg-white transition botao-favoritar-galeria">
+                                    <button onClick={() => setIsFavorite(!isFavorite)} className="absolute top-4 right-4 p-2 bg-white/90 rounded-full hover:bg-white transition botao-favoritar-galeria" aria-label="Favoritar lote" title="Favoritar lote">
                                         <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
                                     </button>
-                                    <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 rounded-full hover:bg-white transition botao-imagem-anterior"><ChevronLeft className="w-5 h-5" /></button>
-                                    <button onClick={nextImage} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 rounded-full hover:bg-white transition botao-imagem-proxima"><ChevronRight className="w-5 h-5" /></button>
+                                    <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 rounded-full hover:bg-white transition botao-imagem-anterior" aria-label="Imagem anterior" title="Imagem anterior"><ChevronLeft className="w-5 h-5" /></button>
+                                    <button onClick={nextImage} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 rounded-full hover:bg-white transition botao-imagem-proxima" aria-label="Próxima imagem" title="Próxima imagem"><ChevronRight className="w-5 h-5" /></button>
                                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bullets-galeria">
-                                        {images.map((_, index) => (<button key={index} onClick={() => setCurrentImageIndex(index)} className={`w-2 h-2 rounded-full transition bullet-galeria-item ${index === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'}`} />))}
+                                        {images.map((_, index) => (<button key={index} onClick={() => setCurrentImageIndex(index)} className={`w-2 h-2 rounded-full transition bullet-galeria-item ${index === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'}`} aria-label={`Abrir imagem ${index + 1}`} title={`Abrir imagem ${index + 1}`} />))}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 thumbnails-galeria">
@@ -377,10 +373,11 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                         </Card>
 
                         {/* Abas de Conteúdo */}
-                        <Tabs defaultValue="description" className="w-full secao-tabs">
-                            <TabsList className="grid w-full grid-cols-5 tabs-lista">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full secao-tabs" data-ai-id="lot-v2-content-tabs">
+                            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 tabs-lista">
                                 <TabsTrigger value="description" className="tab-trigger-descricao">Descrição</TabsTrigger>
                                 <TabsTrigger value="characteristics" className="tab-trigger-caracteristicas">Características</TabsTrigger>
+                                <TabsTrigger value="planning" className="tab-trigger-planejamento">Planejamento</TabsTrigger>
                                 <TabsTrigger value="documents" className="tab-trigger-documentos">Documentos</TabsTrigger>
                                 <TabsTrigger value="history" className="tab-trigger-historico">Histórico</TabsTrigger>
                                 <TabsTrigger value="condicao" className="tab-trigger-condicoes">Condições</TabsTrigger>
@@ -421,6 +418,65 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                                 <p className="text-sm text-slate-600 mb-1">Cidade</p>
                                                 <p className="font-semibold">{lot.cityName || (Array.isArray((lot as any).assets) && (lot as any).assets[0]?.locationCity) || 'Não informado'}</p>
                                             </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            <TabsContent value="planning" className="mt-4 tab-conteudo-planejamento">
+                                <Card data-ai-id="lot-v2-planning-tab-panel">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Calculator className="w-5 h-5 text-purple-600" />
+                                            Planejamento financeiro do lance
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Transparência imediata para decidir sua entrada com segurança.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="grid gap-4 md:grid-cols-3">
+                                            <div className="rounded-lg border bg-slate-50 p-4" data-ai-id="lot-v2-planning-minimum-bid">
+                                                <p className="text-sm text-slate-600 mb-1">{bidPlanning.nextBidLabel}</p>
+                                                <p className="text-2xl font-bold text-green-700">{formatCurrency(bidPlanning.minimumBid)}</p>
+                                                {bidPlanning.activeStage?.name && (
+                                                    <p className="text-xs text-slate-500 mt-2">Praça ativa: {bidPlanning.activeStage.name}</p>
+                                                )}
+                                            </div>
+                                            <div className="rounded-lg border bg-slate-50 p-4" data-ai-id="lot-v2-planning-commission">
+                                                <p className="text-sm text-slate-600 mb-1">Comissão do leiloeiro</p>
+                                                <p className="text-2xl font-bold text-slate-900">{formatCurrency(bidPlanning.commissionAmount)}</p>
+                                                <p className="text-xs text-slate-500 mt-2">{bidPlanning.commissionRatePercent.toFixed(2)}% configurado para o tenant</p>
+                                            </div>
+                                            <div className="rounded-lg border bg-purple-50 p-4" data-ai-id="lot-v2-planning-total-due">
+                                                <p className="text-sm text-slate-600 mb-1">Total estimado para arrematar agora</p>
+                                                <p className="text-2xl font-bold text-purple-700">{formatCurrency(bidPlanning.totalDue)}</p>
+                                                <p className="text-xs text-slate-500 mt-2">Sem considerar tributos e retirada do edital</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-slate-600">Valor para entrar agora</span>
+                                                <span className="font-semibold">{formatCurrency(bidPlanning.minimumBid)}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-slate-600">Comissão estimada</span>
+                                                <span className="font-semibold">{formatCurrency(bidPlanning.commissionAmount)}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-slate-600">Incremento mínimo</span>
+                                                <span className="font-semibold">{formatCurrency(bidPlanning.bidIncrement || incremento)}</span>
+                                            </div>
+                                            <Separator />
+                                            <div className="flex items-center justify-between text-base font-semibold">
+                                                <span>Total estimado imediato</span>
+                                                <span>{formatCurrency(bidPlanning.totalDue)}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                                            Leia o edital para confirmar custos adicionais de transferência, cartório, tributos, retirada e vistoria. A plataforma deve expor o valor de entrada, mas a decisão final continua vinculada ao edital.
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -522,7 +578,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                             <Percent className="w-5 h-5 text-purple-600 flex-shrink-0" />
                                             <div>
                                                 <p className="font-semibold">Comissão</p>
-                                                <p className="text-sm text-slate-600">5% sobre o valor do lance vencedor</p>
+                                                <p className="text-sm text-slate-600">{bidPlanning.commissionRatePercent.toFixed(2)}% sobre o valor do lance vencedor</p>
                                             </div>
                                         </div>
 
@@ -781,7 +837,7 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                         </div>
 
                         {/* Countdown Card */}
-                        <Card className="border-2 border-purple-200 shadow-lg countdown-card">
+                        <Card className="border-2 border-purple-200 shadow-lg countdown-card" data-ai-id="lot-v2-bid-summary-card">
                             <CardHeader className="bg-gradient-to-br from-purple-600 to-purple-700 text-white">
                                 <CardTitle className="flex items-center gap-2"><Clock className="w-5 h-5" /> Encerra em:</CardTitle>
                             </CardHeader>
@@ -794,13 +850,17 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                         <p className="font-semibold">{computedEndDate ? format(computedEndDate, 'dd/MM HH:mm', { locale: ptBR }) : 'N/A'}</p>
                                     </div>
                                     <Separator />
-                                    <div>
-                                        <p className="text-sm text-slate-600 mb-1">Lance Mínimo:</p>
-                                        <p className="text-2xl font-bold text-green-700">{formatCurrency(pracas[0]?.lanceInicial || 0)}</p>
+                                    <div data-ai-id="lot-v2-sidebar-minimum-bid">
+                                        <p className="text-sm text-slate-600 mb-1">{bidPlanning.nextBidLabel}:</p>
+                                        <p className="text-2xl font-bold text-green-700">{formatCurrency(bidPlanning.minimumBid)}</p>
                                     </div>
-                                    <div>
+                                    <div data-ai-id="lot-v2-sidebar-bid-increment">
                                         <p className="text-sm text-slate-600 mb-1">Incremento Mínimo:</p>
-                                        <p className="font-semibold">{formatCurrency(incremento)}</p>
+                                        <p className="font-semibold">{formatCurrency(bidPlanning.bidIncrement || incremento)}</p>
+                                    </div>
+                                    <div data-ai-id="lot-v2-sidebar-total-estimate">
+                                        <p className="text-sm text-slate-600 mb-1">Total estimado com comissão:</p>
+                                        <p className="font-semibold text-purple-700">{formatCurrency(bidPlanning.totalDue)}</p>
                                     </div>
                                 </div>
 
@@ -848,10 +908,10 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                         <Repeat className="w-4 h-4 mr-2" />
                                         Lance Automático
                                     </a>
-                                    <a href="#" className="flex items-center text-sm text-purple-600 hover:underline font-medium">
+                                    <button type="button" onClick={() => setActiveTab('planning')} className="flex items-center text-sm text-purple-600 hover:underline font-medium" data-ai-id="lot-v2-open-planning-tab">
                                         <Calculator className="w-4 h-4 mr-2" />
-                                        Calcular valores
-                                    </a>
+                                        Ver planejamento financeiro
+                                    </button>
                                 </div>
 
                                 {isLoggedIn && isAuctionOpen && (
@@ -872,6 +932,40 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                         </label>
                                     </>
                                 )}
+                            </CardContent>
+                        </Card>
+
+                        <Card data-ai-id="lot-v2-planning-card">
+                            <CardHeader>
+                                <CardTitle className="text-base flex items-center gap-2">
+                                    <Calculator className="w-4 h-4 text-purple-600" />
+                                    Planejamento do lance
+                                </CardTitle>
+                                <CardDescription>
+                                    Decida a entrada com o mesmo valor mínimo aceito pela regra do leilão.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="rounded-lg bg-slate-50 p-3" data-ai-id="lot-v2-planning-card-minimum-bid">
+                                    <p className="text-sm text-slate-600 mb-1">{bidPlanning.nextBidLabel}</p>
+                                    <p className="font-bold text-lg text-green-700">{formatCurrency(bidPlanning.minimumBid)}</p>
+                                </div>
+                                <div className="rounded-lg bg-slate-50 p-3">
+                                    <p className="text-sm text-slate-600 mb-1">Comissão do leiloeiro</p>
+                                    <p className="font-semibold">{formatCurrency(bidPlanning.commissionAmount)} · {bidPlanning.commissionRatePercent.toFixed(2)}%</p>
+                                </div>
+                                <div className="rounded-lg bg-purple-50 p-3" data-ai-id="lot-v2-planning-card-total-due">
+                                    <p className="text-sm text-slate-600 mb-1">Total estimado para arrematar agora</p>
+                                    <p className="font-bold text-lg text-purple-700">{formatCurrency(bidPlanning.totalDue)}</p>
+                                </div>
+                                {bidPlanning.savingsVsEvaluationPercent !== null && (
+                                    <div className="rounded-lg bg-green-50 p-3 text-sm text-green-800">
+                                        Entrada atual {bidPlanning.savingsVsEvaluationPercent}% abaixo da avaliação informada.
+                                    </div>
+                                )}
+                                <Button variant="outline" className="w-full" onClick={() => setActiveTab('planning')}>
+                                    Abrir composição detalhada
+                                </Button>
                             </CardContent>
                         </Card>
 
@@ -947,12 +1041,16 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                     <button 
                                         onClick={prevImage} 
                                         className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 hover:bg-white/30 rounded-full transition"
+                                        aria-label="Imagem anterior"
+                                        title="Imagem anterior"
                                     >
                                         <ChevronLeft className="w-6 h-6 text-white" />
                                     </button>
                                     <button 
                                         onClick={nextImage} 
                                         className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 hover:bg-white/30 rounded-full transition"
+                                        aria-label="Próxima imagem"
+                                        title="Próxima imagem"
                                     >
                                         <ChevronRight className="w-6 h-6 text-white" />
                                     </button>
@@ -962,6 +1060,8 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
                                                 key={index} 
                                                 onClick={() => setCurrentImageIndex(index)} 
                                                 className={`w-2 h-2 rounded-full transition ${index === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'}`} 
+                                                aria-label={`Abrir imagem ${index + 1}`}
+                                                title={`Abrir imagem ${index + 1}`}
                                             />
                                         ))}
                                     </div>

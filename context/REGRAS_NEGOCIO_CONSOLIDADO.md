@@ -375,6 +375,23 @@ Validar transitions no service com erros descritivos
 - **Quando** o usuário altera o estado para outro sem compatibilidade com a cidade atual
 - **Então** o campo de cidade volta ao placeholder no frontend e o backend rejeita combinações inconsistentes
 
+### RN-020C: Transparência de Lance e Custo Imediato no Detalhe do Lote
+✅ O detalhe público do lote DEVE exibir o valor mínimo aceito naquele momento usando a mesma regra do motor de lance: sem lances = preço inicial ajustado pela praça ativa; com lances = último lance + incremento.
+✅ A superfície DEVE exibir o incremento mínimo, a comissão do leiloeiro configurada para o tenant e o total estimado para arrematar no próximo lance válido.
+✅ A comissão DEVE priorizar `paymentGatewaySettings.platformCommissionPercentage`; quando ausente, o fallback oficial é `5%`.
+✅ A composição financeira detalhada DEVE ficar disponível na própria página do lote, sem exigir navegação externa.
+✅ O detalhe financeiro não pode assumir custos específicos de cartório, tributos ou transferência sem amparo explícito do edital ou da categoria; quando esses valores não forem calculados, a interface DEVE sinalizar que são custos variáveis do edital.
+
+**BDD - Detalhe público mostra o próximo lance válido**
+- **Dado** um lote público aberto para lances
+- **Quando** a pessoa acessa o detalhe do lote
+- **Então** a lateral deve exibir o próximo lance aceito, o incremento mínimo e o total estimado com comissão
+
+**BDD - Comissão configurada do tenant prevalece**
+- **Dado** um tenant com `platformCommissionPercentage` configurado
+- **Quando** a composição do lance é renderizada no detalhe do lote
+- **Então** a comissão exibida deve usar a configuração do tenant em vez de percentual hardcoded
+
 ### RN-020A: Alias Canônico de Login
 ✅ A rota pública `/login` DEVE redirecionar para `/auth/login` preservando query string relevante, incluindo `redirect`.
 ✅ Fluxos administrativos que redirecionam usuários não autenticados DEVEM continuar apontando para a rota canônica `/auth/login`.
