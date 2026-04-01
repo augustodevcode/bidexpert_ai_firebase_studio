@@ -746,13 +746,42 @@ export class LotService {
       const lotId = lot.id;
 
       if (Array.isArray(assetIds) && assetIds.length > 0) {
-         await this.prisma.assetsOnLots.createMany({
-            data: assetIds.map((assetId: string) => ({
-              lotId,
-              assetId: BigInt(assetId),
-              tenantId: BigInt(tenantId),
-              assignedBy: 'SYSTEM'
-            }))
+         // Validação: Garantir que os ativos não estejam já loteados em lotes não cancelados/retirados
+         const existingLinks = await this.prisma.assetsOnLots.findMany({
+           where: {
+             assetId: { in: assetIds.map((id: string) => BigInt(id)) },
+             tenantId: BigInt(tenantId)
+           },
+           include: {
+             Lot: {
+               select: { status: true, title: true }
+             }
+           }
+         });
+
+         const conflictLinks = existingLinks.filter(link => 
+           !NON_PUBLIC_LOT_STATUSES.includes(link.Lot.status as LotStatus)
+         );
+
+         if (conflictLinks.length > 0) {
+           throw new Error(`Existem ativos selecionados que já estão vinculados a outros lotes ativos (Ex: ${conflictLinks[0].Lot.title}). Selecionar ativos diferentes.`);
+         }
+
+         await this.prisma.$transaction(async (tx) => {
+            await tx.assetsOnLots.createMany({
+               data: assetIds.map((assetId: string) => ({
+                 lotId,
+                 assetId: BigInt(assetId),
+                 tenantId: BigInt(tenantId),
+                 assignedBy: 'SYSTEM'
+               }))
+            });
+
+            // Atualizar status dos Ativos para LOTEADO
+            await tx.asset.updateMany({
+              where: { id: { in: assetIds.map((id: string) => BigInt(id)) } },
+              data: { status: 'LOTEADO', updatedAt: new Date() }
+            });
          });
       }
 
