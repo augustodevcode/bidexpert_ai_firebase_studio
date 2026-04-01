@@ -271,7 +271,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </div>
           </div>
         </div>
-
         {images.length > 1 && (
           <>
             <button

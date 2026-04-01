@@ -201,6 +201,32 @@ Services não cruzam responsabilidades
 Sempre usar `getTenantIdFromRequest` em Server Actions  
 Schemas Zod + `react-hook-form` em todos formulários
 
+### RN-010A: Isolamento de Sessão no Wizard de Leilões
+✅ O wizard administrativo DEVE distinguir ativos criados ou selecionados na sessão corrente de ativos históricos do tenant após qualquer `refetch`.
+✅ O estado do wizard DEVE manter uma lista explícita de identificadores dos ativos da sessão (`sessionAssetIds` ou equivalente) e o passo de loteamento DEVE priorizar essa lista ao montar os ativos elegíveis.
+✅ O comportamento legado de listar todos os ativos só é permitido enquanto nenhum ativo tiver sido rastreado na sessão atual.
+✅ Testes E2E do wizard DEVEM selecionar ativos e processos por identidade determinística (título/número exato), nunca pela primeira linha disponível na listagem.
+
+**RCA / prevenção:** A regressão de lotes duplicados no fluxo de cadastro ocorreu porque o Step 4 listava todos os ativos disponíveis do tenant/comitente após cada recarga de dados, e o Playwright marcava todos os checkboxes visíveis. Isso contaminava a sessão com ativos antigos e fazia o total preparado crescer a cada execução.
+
+**Cenário BDD - Refetch não mistura ativos históricos**
+- **Dado** que o tenant possui ativos históricos do mesmo comitente
+- **E** que o usuário cria novos ativos inline no wizard
+- **Quando** o wizard recarrega os dados antes do loteamento
+- **Então** apenas os ativos rastreados na sessão corrente ficam elegíveis para loteamento individual
+
+**Cenário BDD - Seleção determinística de processo judicial**
+- **Dado** que existem múltiplos processos judiciais no tenant
+- **Quando** o fluxo do wizard precisa vincular o processo de referência
+- **Então** o processo é selecionado pelo número exato
+- **E** nunca pela primeira linha disponível da listagem
+
+### RN-010B: Publicação de Leilão deve ser idempotente para slug
+✅ A criação de leilão DEVE tolerar colisão de `slug` em reexecuções de testes e cadastros repetidos, gerando um sufixo incremental quando houver conflito de unicidade.
+✅ O valor de `status` recebido do wizard nunca pode chegar vazio ao Prisma; payloads vazios DEVEM ser normalizados para um enum válido (`RASCUNHO` ou equivalente de negócio).
+
+**RCA / prevenção:** O fluxo de publicação falhava silenciosamente com `Unique constraint failed on Auction_slug_key` em reexecuções e também com `Invalid value for argument 'status'` quando o wizard enviava string vazia. A proteção precisa existir no service, não no teste.
+
 ### RN-011: Campo Propriedades em Formulários
 Campo "Propriedades" é um **campo de texto simples**  
 Usado para dados específicos de categoria de forma livre  
@@ -448,6 +474,17 @@ Validar transitions no service com erros descritivos
 - **Dado** que existem vários processos judiciais disponíveis no tenant
 - **Quando** o fluxo do wizard precisa vincular um processo específico de referência
 - **Então** a seleção deve ocorrer pelo número do processo e não pela primeira linha disponível na tabela
+
+### RN-020C: Review do Wizard com Paridade Antes da Publicação
+✅ A etapa final de revisão do wizard DEVE refletir, antes da publicação, os dados de contato público, URLs de documentos e as principais regras de lance/configuração avançada preenchidas no formulário do leilão.
+✅ O resumo final do wizard DEVE suportar explicitamente as modalidades `VENDA_DIRETA`, `PARTICULAR`, `EXTRAJUDICIAL`, `JUDICIAL` e `TOMADA_DE_PRECOS` sem esconder campos que já foram preenchidos nas etapas anteriores.
+✅ A revisão final DEVE expor identificadores `data-ai-id` estáveis para contatos, documentos e opções de lance, permitindo validação E2E determinística antes do clique em "Publicar Leilão".
+
+**Cenário BDD - Review final preserva paridade do formulário**
+- **Dado** que um administrador preenche o wizard de leilão com contatos públicos, documentos e opções de lance
+- **Quando** ele avança para a etapa de revisão final
+- **Então** o resumo mostra esses dados antes da publicação
+- **E** a modalidade selecionada continua visível no resumo final
 
 ### RN-021: Padrão de IDs BigInt em Front/Back
 Endpoints e services devem aceitar/retornar IDs numéricos  

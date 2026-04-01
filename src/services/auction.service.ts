@@ -574,43 +574,63 @@ export class AuctionService {
       
       // Gera o publicId FORA da transação para evitar timeout por nested transactions
       const publicId = await generatePublicId(tenantId, 'auction');
-      
-      const newAuction = await this.prisma.$transaction(async (tx: any) => {
-        const createdAuction = await tx.auction.create({
-          data: {
-            ...(this.stripPhantomFields(restOfData) as any),
-            publicId,
-            slug: slugify(data.title!),
-            auctionDate: derivedAuctionDate,
-            softCloseMinutes: Number(data.softCloseMinutes) || undefined,
-            addressLink: derivedAddressLink,
-            Auctioneer: { connect: { id: BigInt(auctioneerId) } },
-            Seller: { connect: { id: BigInt(sellerId) } },
-            LotCategory: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
-            Tenant: { connect: { id: BigInt(tenantId) } },
-            City: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
-            State: stateId ? { connect: { id: BigInt(stateId) } } : undefined,
-            JudicialProcess: judicialProcessId ? { connect: { id: BigInt(judicialProcessId) } } : undefined,
-            CoverImage: imageMediaId ? { connect: { id: BigInt(imageMediaId as unknown as string) } } : undefined,
-            updatedAt: new Date(),
-          }
-        });
 
-        if (normalizedStages.length > 0) {
-          await tx.auctionStage.createMany({
-            data: normalizedStages.map((stage: any) => ({
-              name: stage.name,
-              startDate: new Date(stage.startDate as Date),
-              endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
-              discountPercent: stage.discountPercent ?? 100,
-              auctionId: createdAuction.id,
-              tenantId: BigInt(tenantId),
-            })),
-          });
-        }
+      // Gera slug único — retry com sufixo incremental em caso de colisão
+      const baseSlug = slugify(data.title!);
+      let uniqueSlug = baseSlug;
+      const MAX_SLUG_RETRIES = 10;
 
-        return createdAuction;
+      const buildAuctionData = (slug: string) => ({
+        ...(this.stripPhantomFields(restOfData) as any),
+        status: (restOfData.status && restOfData.status !== '') ? restOfData.status : 'RASCUNHO',
+        publicId,
+        slug,
+        auctionDate: derivedAuctionDate,
+        softCloseMinutes: Number(data.softCloseMinutes) || undefined,
+        addressLink: derivedAddressLink,
+        Auctioneer: { connect: { id: BigInt(auctioneerId) } },
+        Seller: { connect: { id: BigInt(sellerId) } },
+        LotCategory: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
+        Tenant: { connect: { id: BigInt(tenantId) } },
+        City: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
+        State: stateId ? { connect: { id: BigInt(stateId) } } : undefined,
+        JudicialProcess: judicialProcessId ? { connect: { id: BigInt(judicialProcessId) } } : undefined,
+        CoverImage: imageMediaId ? { connect: { id: BigInt(imageMediaId as unknown as string) } } : undefined,
+        updatedAt: new Date(),
       });
+
+      let newAuction: any = null;
+      for (let attempt = 0; attempt < MAX_SLUG_RETRIES; attempt++) {
+        try {
+          newAuction = await this.prisma.$transaction(async (tx: any) => {
+            const createdAuction = await tx.auction.create({
+              data: buildAuctionData(uniqueSlug),
+            });
+
+            if (normalizedStages.length > 0) {
+              await tx.auctionStage.createMany({
+                data: normalizedStages.map((stage: any) => ({
+                  name: stage.name,
+                  startDate: new Date(stage.startDate as Date),
+                  endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
+                  discountPercent: stage.discountPercent ?? 100,
+                  auctionId: createdAuction.id,
+                  tenantId: BigInt(tenantId),
+                })),
+              });
+            }
+
+            return createdAuction;
+          });
+          break; // Success — exit retry loop
+        } catch (slugErr: any) {
+          const isSlugCollision =
+            slugErr?.code === 'P2002' &&
+            slugErr?.meta?.target?.includes?.('slug');
+          if (!isSlugCollision || attempt >= MAX_SLUG_RETRIES - 1) throw slugErr;
+          uniqueSlug = `${baseSlug}-${attempt + 1}`;
+        }
+      }
 
       return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id.toString() };
 

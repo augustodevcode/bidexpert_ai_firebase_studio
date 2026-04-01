@@ -9,6 +9,8 @@
  *   BDD-AUTH-03: Credenciais inválidas mostram erro
  *   BDD-AUTH-04: Login page exibe campos obrigatórios
  *   BDD-AUTH-05: DevUserSelector visível em dev mode
+ *   BDD-AUTH-06: Alias /login preserva redirect
+ *   BDD-AUTH-07: CTA de login no lote público preserva retorno
  */
 import { test, expect } from '@playwright/test';
 import {
@@ -235,7 +237,7 @@ test.describe('BDD-AUTH-07: CTA de login no lote público', () => {
       timeout: 120_000,
     });
 
-    const loginLink = page.locator('[data-ai-id="bidding-panel-login-link"]:visible').first();
+    const loginLink = page.locator('[data-ai-id="bidding-panel-login-link"]').first();
     await expect(loginLink).toBeVisible({ timeout: 60_000 });
     await expect(loginLink).toHaveAttribute(
       'href',

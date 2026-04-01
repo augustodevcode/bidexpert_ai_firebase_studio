@@ -82,7 +82,10 @@ test.describe('Projecao publica do leilao judicial cadastrado via wizard', () =>
     await expect(page.locator('[data-ai-id="lot-v2-planning-card-minimum-bid"]')).toContainText('R$ 12.232,20');
     await expect(page.locator('[data-ai-id="lot-v2-planning-card-total-due"]')).toContainText('R$');
 
-    await page.locator('[data-ai-id="lot-v2-open-planning-tab"]').click();
+  const planningTab = page
+    .locator('[data-ai-id="lot-v2-open-planning-tab"]')
+    .or(page.getByRole('tab', { name: 'Planejamento' }));
+  await planningTab.first().click();
 
     const planningPanel = page.locator('[data-ai-id="lot-v2-planning-tab-panel"]');
     await expect(planningPanel).toBeVisible();
