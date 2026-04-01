@@ -98,9 +98,13 @@ const SEL = {
 export async function ensureSeedExecuted(baseUrl: string): Promise<void> {
   const urlObj = new URL(baseUrl);
   const checkUrl = resolvePublicCheckUrl(baseUrl, '/api/public/tenants');
+  const requestInit = arguments[1] as RequestInit | undefined;
 
   try {
-    const response = await fetch(checkUrl, { signal: AbortSignal.timeout(30_000) });
+    const response = await fetch(checkUrl, {
+      ...requestInit,
+      signal: AbortSignal.timeout(30_000),
+    });
 
     if (!response.ok) {
       throw new Error(
