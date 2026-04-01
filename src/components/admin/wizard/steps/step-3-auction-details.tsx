@@ -66,7 +66,7 @@ export default function Step3AuctionDetails({
     }
   }, [propStates, propCities, propProcesses, propCategories]);
 
-  const handleWizardDataChange = (data: Partial<any>) => {
+  const handleWizardDataChange = useCallback((data: Partial<any>) => {
     setWizardData(prev => ({
         ...prev,
         auctionDetails: {
@@ -76,7 +76,7 @@ export default function Step3AuctionDetails({
             seller: sellers.find(s => s.id === data.sellerId)?.name,
         }
     }));
-  };
+  }, [setWizardData, auctioneers, sellers]);
 
   const initialSellerId = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {

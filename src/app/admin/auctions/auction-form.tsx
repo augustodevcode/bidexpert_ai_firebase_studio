@@ -535,7 +535,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       });
       return () => subscription.unsubscribe();
     }
-  }, [form, isWizardMode, onWizardDataChange, watchedValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, isWizardMode, onWizardDataChange]);
 
   useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmitAction),
