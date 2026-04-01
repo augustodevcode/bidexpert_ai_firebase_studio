@@ -4,7 +4,7 @@
 import { chromium, FullConfig, Page } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
-import { ensureSeedExecuted, loginAsAdmin, loginAsLawyer } from './helpers/auth-helper';
+import { ensureSeedExecuted, loginAs, loginAsLawyer } from './helpers/auth-helper';
 
 const DEBUG_DIR = path.resolve(process.cwd(), 'tests/e2e/.debug');
 
@@ -23,10 +23,53 @@ async function captureDebugArtifacts(page: Page, name: string) {
   }
 }
 
+function buildBypassHeaders() {
+  const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim();
+
+  if (!bypassSecret) {
+    return undefined;
+  }
+
+  return {
+    'x-vercel-protection-bypass': bypassSecret,
+    'x-vercel-set-bypass-cookie': 'true',
+  };
+}
+
+function resolveTenantPattern(baseUrl: URL) {
+  const explicitTenantName = process.env.PLAYWRIGHT_TENANT_NAME?.trim();
+  if (explicitTenantName) {
+    return new RegExp(explicitTenantName, 'i');
+  }
+
+  const defaultTenant = process.env.NEXT_PUBLIC_DEFAULT_TENANT?.trim().toLowerCase();
+  if (defaultTenant === 'hml') {
+    return /BidExpert HML|HML|Homolog/i;
+  }
+  if (defaultTenant === 'demo') {
+    return /BidExpert Demo|Demo/i;
+  }
+  if (defaultTenant === 'crm' || defaultTenant === 'prod' || defaultTenant === 'production') {
+    return /BidExpert CRM|CRM|BidExpert/i;
+  }
+
+  const hostname = baseUrl.hostname.toLowerCase();
+  if (hostname.includes('hml')) {
+    return /BidExpert HML|HML|Homolog/i;
+  }
+  if (hostname.includes('demo')) {
+    return /BidExpert Demo|Demo/i;
+  }
+
+  return /BidExpert Demo|BidExpert/i;
+}
+
 async function globalSetup(config: FullConfig) {
   const baseURL = process.env.BASE_URL || config.projects[0].use.baseURL || 'http://localhost:9005';
   const baseUrlObject = new URL(baseURL);
   const isDemoTenant = baseUrlObject.hostname.startsWith('demo.') || baseUrlObject.hostname.includes('demo');
+  const bypassHeaders = buildBypassHeaders();
+  const remoteTenantPattern = resolveTenantPattern(baseUrlObject);
   
   // SEED CREDENTIALS (canonical source: scripts/ultimate-master-seed.ts)
   // - Demo tenant (demo.localhost): admin@bidexpert.com.br / Admin@123
@@ -39,7 +82,7 @@ async function globalSetup(config: FullConfig) {
   
   // ─── SEED GATE: Abort early if seed not executed ───
   try {
-    await ensureSeedExecuted(baseURL);
+    await ensureSeedExecuted(baseURL, bypassHeaders ? { headers: bypassHeaders } : undefined);
   } catch (seedError: unknown) {
     const errMsg = seedError instanceof Error ? seedError.message : String(seedError);
     if (errMsg.includes('SEED') || errMsg.includes('fetch')) {
@@ -54,12 +97,13 @@ async function globalSetup(config: FullConfig) {
 
   // Extract port and protocol to check connectivity on localhost/IP directly
   // This bypasses issues where Node cannot resolve *.localhost
-  const isVercelDeployment = baseUrlObject.hostname.includes('vercel.app');
-  const checkUrl = isVercelDeployment
+  const isRemoteDeployment = !['localhost', '127.0.0.1'].includes(baseUrlObject.hostname)
+    && !baseUrlObject.hostname.endsWith('.localhost');
+  const checkUrl = isRemoteDeployment
     ? `${baseURL}/auth/login`
     : `${baseUrlObject.protocol}//localhost:${baseUrlObject.port}/auth/login`;
 
-  console.log(`🔍 Checking connectivity at ${checkUrl}${isVercelDeployment ? ' (Vercel deployment)' : ' (bypassing DNS for check)'}...`);
+  console.log(`🔍 Checking connectivity at ${checkUrl}${isRemoteDeployment ? ' (remote deployment)' : ' (bypassing DNS for check)'}...`);
   
   // Aguarda o servidor estar realmente acessível antes de prosseguir
   const maxWaitTime = 180000; // 3 minutos
@@ -68,7 +112,7 @@ async function globalSetup(config: FullConfig) {
   
   while (!serverReady && (Date.now() - startTime) < maxWaitTime) {
     try {
-      const response = await fetch(checkUrl);
+      const response = await fetch(checkUrl, bypassHeaders ? { headers: bypassHeaders } : undefined);
       if (response.status < 500) {
         serverReady = true;
         console.log('✅ Servidor acessível');
@@ -76,7 +120,7 @@ async function globalSetup(config: FullConfig) {
     } catch (e) {
       // Fallback: try original URL just in case
       try {
-          const response = await fetch(`${baseURL}/auth/login`);
+          const response = await fetch(`${baseURL}/auth/login`, bypassHeaders ? { headers: bypassHeaders } : undefined);
           if (response.status < 500) {
             serverReady = true;
             console.log('✅ Servidor acessível (via URL original)');
@@ -95,21 +139,24 @@ async function globalSetup(config: FullConfig) {
   console.log('🔥 Pre-warming critical routes (login page + tenants API)...');
   try {
     await Promise.all([
-      fetch(`${baseURL}/auth/login`).catch(() => {}),
-      fetch(`${baseURL}/api/public/tenants`).catch(() => {}),
+      fetch(`${baseURL}/auth/login`, bypassHeaders ? { headers: bypassHeaders } : undefined).catch(() => {}),
+      fetch(`${baseURL}/api/public/tenants`, bypassHeaders ? { headers: bypassHeaders } : undefined).catch(() => {}),
     ]);
     console.log('✅ Routes pre-warmed');
   } catch { /* ignore */ }
   // Give dev server time to finish compiling
   await new Promise(r => setTimeout(r, 3000));
 
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ headless: config.projects[0]?.use?.headless !== false });
   let adminPage: Page | undefined;
   const vercelShareUrl = process.env.VERCEL_SHARE_URL;
   
   try {
     // 1. Autenticar como ADMIN
-    adminPage = await browser.newPage();
+    const adminContext = await browser.newContext(
+      bypassHeaders ? { extraHTTPHeaders: bypassHeaders } : undefined,
+    );
+    adminPage = await adminContext.newPage();
 
     // Vercel deployment protection bypass: visit share URL in same context
     if (vercelShareUrl) {
@@ -119,7 +166,10 @@ async function globalSetup(config: FullConfig) {
       console.log('✅ Cookie Vercel configurado para contexto admin');
     }
     try {
-      await loginAsAdmin(adminPage, baseURL);
+      await loginAs(adminPage, 'admin', baseURL, {
+        customTenant: remoteTenantPattern,
+        waitPattern: /\/(admin|dashboard)/i,
+      });
     } catch (e) {
       console.error('❌ Timeout waiting for redirect. Current URL:', adminPage.url());
       await captureDebugArtifacts(adminPage, 'admin-login-failure');
@@ -135,17 +185,24 @@ async function globalSetup(config: FullConfig) {
     if (!adminSessionCookie) {
       console.warn('⚠️  Session cookie não encontrado, tentando senha alternativa...');
       process.env.ADMIN_PASSWORD = fallbackAdminPassword;
-      await loginAsAdmin(adminPage, baseURL);
+      await loginAs(adminPage, 'admin', baseURL, {
+        customTenant: remoteTenantPattern,
+        waitPattern: /\/(admin|dashboard)/i,
+      });
       await adminPage.waitForTimeout(2000);
     }
 
-    await adminPage.context().storageState({ path: './tests/e2e/.auth/admin.json' });
+    await adminContext.storageState({ path: './tests/e2e/.auth/admin.json' });
     console.log('✅ Autenticação ADMIN concluída');
     await adminPage.close();
+    await adminContext.close();
 
     if (shouldAuthLawyer) {
       // 2. Autenticar como ADVOGADO
-      const lawyerPage = await browser.newPage();
+      const lawyerContext = await browser.newContext(
+        bypassHeaders ? { extraHTTPHeaders: bypassHeaders } : undefined,
+      );
+      const lawyerPage = await lawyerContext.newPage();
 
       // Vercel deployment protection bypass for lawyer context
       if (vercelShareUrl) {
@@ -182,9 +239,10 @@ async function globalSetup(config: FullConfig) {
       console.log('✅ Painel do advogado acessado em', lawyerPage.url());
       await lawyerPage.waitForTimeout(1000);
 
-      await lawyerPage.context().storageState({ path: './tests/e2e/.auth/lawyer.json' });
+      await lawyerContext.storageState({ path: './tests/e2e/.auth/lawyer.json' });
       console.log('✅ Autenticação ADVOGADO concluída');
       await lawyerPage.close();
+      await lawyerContext.close();
     } else {
       console.log('ℹ️  Login do advogado pulado para tenant demo.');
     }

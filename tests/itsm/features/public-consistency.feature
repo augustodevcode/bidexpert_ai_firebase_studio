@@ -36,3 +36,9 @@ Funcionalidade: Consistencia publica de status, cronologia e setup
     Quando a vitrine publica renderiza o hero do leilao, a aba de lotes e o detalhe do lote
     Entao o hero deve exibir a proxima praca correta e o lance minimo derivado do lote
     E a aba de lotes e o detalhe do lote devem exibir localizacao e descricao herdadas do ativo
+
+  Cenario: Exibir planejamento financeiro coerente no detalhe do lote
+    Dado que um lote publico esta aberto para lances
+    Quando a pessoa acessa o detalhe desse lote
+    Entao a lateral deve mostrar o proximo lance valido, o incremento minimo e o total estimado com comissao
+    E a aba de planejamento deve explicar que custos adicionais dependem do edital

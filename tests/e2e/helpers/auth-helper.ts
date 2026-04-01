@@ -98,9 +98,13 @@ const SEL = {
 export async function ensureSeedExecuted(baseUrl: string): Promise<void> {
   const urlObj = new URL(baseUrl);
   const checkUrl = resolvePublicCheckUrl(baseUrl, '/api/public/tenants');
+  const requestInit = arguments[1] as RequestInit | undefined;
 
   try {
-    const response = await fetch(checkUrl, { signal: AbortSignal.timeout(30_000) });
+    const response = await fetch(checkUrl, {
+      ...requestInit,
+      signal: AbortSignal.timeout(30_000),
+    });
 
     if (!response.ok) {
       throw new Error(
@@ -354,7 +358,39 @@ export async function loginAs(
     console.log('[loginAs] Page state after submit:', JSON.stringify(pageError));
   }
 
-  await page.waitForURL(waitPattern, { timeout });
+  // Try normal redirect detection with shorter timeout first
+  try {
+    await page.waitForURL(waitPattern, { timeout: Math.min(timeout, 15_000) });
+  } catch {
+    // Client-side redirect (window.location.href) might not fire in Playwright
+    // The server action already created the session cookie — try manual navigation
+    console.log(`[loginAs] Redirect not detected after 15s. Current URL: ${page.url()}`);
+
+    // Check for login errors on the page
+    const pageState = await page.evaluate(() => {
+      const err = document.querySelector('.text-auth-error-center')?.textContent;
+      const toasts = Array.from(document.querySelectorAll('[data-state="open"]')).map(el => el.textContent);
+      return { error: err, toasts };
+    });
+    console.log(`[loginAs] Page state: ${JSON.stringify(pageState)}`);
+
+    if (pageState.error) {
+      throw new Error(`Login failed with page error: ${pageState.error}`);
+    }
+
+    // Session should be valid — navigate directly to dashboard
+    console.log('[loginAs] Navigating manually to /dashboard/overview ...');
+    await page.goto(`${baseUrl}/dashboard/overview`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+
+    const afterUrl = page.url();
+    if (afterUrl.includes('/auth/login') || afterUrl.includes('/auth/')) {
+      throw new Error(`Login failed — redirected back to auth. URL: ${afterUrl}`);
+    }
+
+    if (!waitPattern.test(afterUrl)) {
+      console.log(`[loginAs] Warning: URL ${afterUrl} doesn't match ${waitPattern}, but not at login page.`);
+    }
+  }
 
   console.log(`[loginAs:${role}] ✅ Login OK → ${page.url()}`);
   return consoleErrors;

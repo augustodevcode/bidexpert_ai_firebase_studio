@@ -10,6 +10,7 @@ import { test, expect, Page } from '@playwright/test';
 import { loginAsAdmin } from './helpers/auth-helper';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://bidexpertaifirebasestudio.vercel.app';
+const VERCEL_SHARE_TOKEN = process.env.VERCEL_SHARE_TOKEN || '';
 
 // Admin pages that were returning 500 errors
 const ADMIN_PAGES = [
@@ -46,6 +47,13 @@ let consoleErrors: string[] = [];
 test.describe('Admin Pages - No 500 Errors (Vercel PostgreSQL)', () => {
   test.beforeEach(async ({ page }) => {
     consoleErrors = [];
+    // Bypass Vercel SSO by visiting share URL to set auth cookie
+    if (VERCEL_SHARE_TOKEN) {
+      await page.goto(`${BASE_URL}/?_vercel_share=${VERCEL_SHARE_TOKEN}`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      });
+    }
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         consoleErrors.push(msg.text());
@@ -81,7 +89,8 @@ test.describe('Admin Pages - No 500 Errors (Vercel PostgreSQL)', () => {
       // Check no "Internal Server Error" text on page
       const bodyText = await page.textContent('body') || '';
       expect(bodyText).not.toContain('Internal Server Error');
-      expect(bodyText).not.toContain('500');
+      // Note: removed `not.toContain('500')` — false positive: "500" appears
+      // in CSS chunk names, config values, pagination data, etc.
       
       // Filter real 500 errors from console
       const server500Errors = consoleErrors.filter(e => 
@@ -112,6 +121,16 @@ test.describe('Admin Pages - No 500 Errors (Vercel PostgreSQL)', () => {
 });
 
 test.describe('API Routes - No 500 Errors', () => {
+  test.beforeEach(async ({ page }) => {
+    // Bypass Vercel SSO for API requests via share URL cookie
+    if (VERCEL_SHARE_TOKEN) {
+      await page.goto(`${BASE_URL}/?_vercel_share=${VERCEL_SHARE_TOKEN}`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      });
+    }
+  });
+
   test('audit API returns valid response', async ({ request }) => {
     // Public API health check - should return 401 (not 500)
     const response = await request.get(`${BASE_URL}/api/audit`);

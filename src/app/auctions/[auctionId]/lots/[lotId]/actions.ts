@@ -12,7 +12,7 @@
 import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
 import { SellerService } from '@/services/seller.service';
-import type { Lot, BidInfo, Review, LotQuestion, SellerProfileInfo, UserLotMaxBid } from '@/types';
+import type { Auction, AuctioneerProfileInfo, BidInfo, Lot, LotQuestion, PlatformSettings, Review, SellerProfileInfo, UserLotMaxBid } from '@/types';
 import { generateDocument } from '@/ai/flows/generate-document-flow';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; 
 
@@ -134,6 +134,7 @@ export async function getLotDetailsForV2(lotIdOrPublicId: string): Promise<{
   bids: BidInfo[];
   questions: LotQuestion[];
   reviews: Review[];
+  platformSettings: PlatformSettings | null;
 } | null> {
   return lotService.getLotDetailsForV2(lotIdOrPublicId);
 }

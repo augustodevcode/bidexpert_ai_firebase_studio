@@ -4,13 +4,14 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import type { Auction, Asset, JudicialProcess, Lot } from '@/types';
 
-type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
+type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'VENDA_DIRETA';
 
 export interface WizardData {
   auctionType?: AuctionType;
   judicialProcess?: JudicialProcess;
   auctionDetails?: Partial<Auction>;
   selectedAssets?: Asset[];
+  sessionAssetIds?: string[];
   createdLots?: Lot[];
 }
 
@@ -28,14 +29,14 @@ const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [wizardData, setWizardData] = useState<WizardData>({ createdLots: [] });
+  const [wizardData, setWizardData] = useState<WizardData>({ createdLots: [], sessionAssetIds: [] });
 
   const nextStep = () => setCurrentStep(prev => prev + 1);
   const prevStep = () => setCurrentStep(prev => (prev > 0 ? prev - 1 : 0));
   const goToStep = (step: number) => setCurrentStep(step);
   const resetWizard = () => {
     setCurrentStep(0);
-    setWizardData({ createdLots: [] });
+    setWizardData({ createdLots: [], sessionAssetIds: [] });
   };
 
   return (

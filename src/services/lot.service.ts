@@ -24,12 +24,14 @@ import type {
   SellerProfileInfo, 
   AuctioneerProfileInfo, 
   BidInfo, 
-  UserLotMaxBid 
+  UserLotMaxBid,
+  PlatformSettings 
 } from '@/types';
 import { LotQuestionService } from '@/services/lot-question.service';
 import { ReviewService } from '@/services/review.service';
 import { SellerService } from '@/services/seller.service';
 import { AuctioneerService } from '@/services/auctioneer.service';
+import { PlatformSettingsService } from '@/services/platform-settings.service';
 
 const NON_PUBLIC_LOT_STATUSES: LotStatus[] = ['RASCUNHO', 'CANCELADO', 'RETIRADO'];
 const NON_PUBLIC_AUCTION_STATUSES = ['RASCUNHO', 'EM_PREPARACAO', 'SUSPENSO', 'CANCELADO'];
@@ -58,6 +60,7 @@ export class LotService {
   private reviewService: ReviewService;
   private sellerService: SellerService;
   private auctioneerService: AuctioneerService;
+  private platformSettingsService: PlatformSettingsService;
 
   constructor() {
     this.prisma = prisma;
@@ -67,6 +70,7 @@ export class LotService {
     this.reviewService = new ReviewService();
     this.sellerService = new SellerService();
     this.auctioneerService = new AuctioneerService();
+    this.platformSettingsService = new PlatformSettingsService();
   }
 
   /**
@@ -742,13 +746,42 @@ export class LotService {
       const lotId = lot.id;
 
       if (Array.isArray(assetIds) && assetIds.length > 0) {
-         await this.prisma.assetsOnLots.createMany({
-            data: assetIds.map((assetId: string) => ({
-              lotId,
-              assetId: BigInt(assetId),
-              tenantId: BigInt(tenantId),
-              assignedBy: 'SYSTEM'
-            }))
+         // Validação: Garantir que os ativos não estejam já loteados em lotes não cancelados/retirados
+         const existingLinks = await this.prisma.assetsOnLots.findMany({
+           where: {
+             assetId: { in: assetIds.map((id: string) => BigInt(id)) },
+             tenantId: BigInt(tenantId)
+           },
+           include: {
+             Lot: {
+               select: { status: true, title: true }
+             }
+           }
+         });
+
+         const conflictLinks = existingLinks.filter(link => 
+           !NON_PUBLIC_LOT_STATUSES.includes(link.Lot.status as LotStatus)
+         );
+
+         if (conflictLinks.length > 0) {
+           throw new Error(`Existem ativos selecionados que já estão vinculados a outros lotes ativos (Ex: ${conflictLinks[0].Lot.title}). Selecionar ativos diferentes.`);
+         }
+
+         await this.prisma.$transaction(async (tx) => {
+            await tx.assetsOnLots.createMany({
+               data: assetIds.map((assetId: string) => ({
+                 lotId,
+                 assetId: BigInt(assetId),
+                 tenantId: BigInt(tenantId),
+                 assignedBy: 'SYSTEM'
+               }))
+            });
+
+            // Atualizar status dos Ativos para LOTEADO
+            await tx.asset.updateMany({
+              where: { id: { in: assetIds.map((id: string) => BigInt(id)) } },
+              data: { status: 'LOTEADO', updatedAt: new Date() }
+            });
          });
       }
 
@@ -1226,6 +1259,7 @@ export class LotService {
     bids: BidInfo[];
     questions: LotQuestion[];
     reviews: Review[];
+    platformSettings: PlatformSettings | null;
   } | null> {
     try {
       const lot = await this.getLotById(lotIdOrPublicId, undefined, true);
@@ -1247,6 +1281,15 @@ export class LotService {
         auctioneer = await this.auctioneerService.getAuctioneerById('1', lot.auction.auctioneerId);
       }
 
+      let platformSettings: PlatformSettings | null = null;
+      if (lot.tenantId) {
+        try {
+          platformSettings = await this.platformSettingsService.getSettings(lot.tenantId);
+        } catch (error) {
+          console.warn('Falha ao carregar configuracoes do tenant para o lote V2:', error);
+        }
+      }
+
       return {
         lot,
         auction: lot.auction,
@@ -1254,7 +1297,8 @@ export class LotService {
         auctioneer,
         bids,
         questions,
-        reviews
+        reviews,
+        platformSettings
       };
     } catch (error) {
       console.error('Erro ao buscar detalhes do lote:', error);

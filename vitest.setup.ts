@@ -10,7 +10,6 @@ if (!process.env.DATABASE_URL) {
 if (!process.env.SESSION_SECRET) {
   process.env.SESSION_SECRET = 'vitest-session-secret-placeholder-at-least-32-chars!!';
 }
-import '@testing-library/jest-dom';
 
 // Polyfills for jsdom
 if (typeof ResizeObserver === 'undefined') {
@@ -83,9 +82,15 @@ try {
   // Not available in pure node tests
 }
 
-const matchers = await import('@testing-library/jest-dom/matchers').catch(() => null);
-if (matchers) {
-  expect.extend(matchers.default ?? matchers);
+const hasDomEnvironment = typeof window !== 'undefined' && typeof document !== 'undefined';
+
+if (hasDomEnvironment) {
+  await import('@testing-library/jest-dom').catch(() => null);
+
+  const matchers = await import('@testing-library/jest-dom/matchers').catch(() => null);
+  if (matchers) {
+    expect.extend(matchers.default ?? matchers);
+  }
 }
 
 // Runs a cleanup after each test case (e.g. clearing jsdom)

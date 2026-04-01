@@ -271,7 +271,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </div>
           </div>
         </div>
-
         {images.length > 1 && (
           <>
             <button
@@ -321,7 +320,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-md border border-primary/20 uppercase">
             {item.type}
           </span>
-          <span className="text-gray-400 text-[10px] font-semibold uppercase tracking-tight truncate">
+          <span data-ai-id="card-v2-location" className="text-gray-400 text-[10px] font-semibold uppercase tracking-tight truncate">
             {item.location}
           </span>
         </div>
@@ -346,7 +345,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
             </svg>
-            <a className="underline hover:text-primary transition-colors truncate" href={`/lots/${item.id}`}>
+            <a data-ai-id="card-v2-process-link" className="underline hover:text-primary transition-colors truncate" href={`/lots/${item.id}`}>
               Proc: {item.processNumber}
             </a>
           </div>

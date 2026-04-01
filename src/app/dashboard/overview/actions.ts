@@ -8,6 +8,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { sanitizeResponse } from '@/lib/serialization-helper';
 import type { Lot, UserHabilitationStatus } from '@/types';
 import { isPast } from 'date-fns';
 import { nowInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
@@ -80,12 +81,24 @@ export async function getDashboardOverviewDataAction(userId: string): Promise<Da
       }
   });
 
-  const upcomingLots = lotsEndingSoon.map(l => ({ ...l, auctionName: (l as any).Auction?.title })) as Lot[];
+  const upcomingLots = sanitizeResponse(
+    lotsEndingSoon.map((lot) => ({
+      ...lot,
+      auctionName: lot.Auction?.title ?? null,
+    })),
+  ) as Lot[];
+
+  const serializedRecommendedLots = sanitizeResponse(
+    recommendedLots.map((lot) => ({
+      ...lot,
+      auctionName: lot.Auction?.title ?? null,
+    })),
+  ) as Lot[];
 
   return {
     upcomingLots,
     pendingWinsCount,
-    recommendedLots: recommendedLots as Lot[],
+    recommendedLots: serializedRecommendedLots,
     activeBidsCount: activeBids.length,
     habilitationStatus: user?.habilitationStatus || null,
     auctionsWonCount,

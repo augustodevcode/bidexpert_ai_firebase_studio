@@ -107,10 +107,15 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
                         </div>
                       </div>
 
-                      {/* Category Name */}
-                      <p className="text-center text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      {/* Category Name + Item Count */}
+                      <p className="text-center text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2" data-ai-id="top-category-name">
                         {category.name}
                       </p>
+                      {(category.itemCount != null && category.itemCount > 0) && (
+                        <p className="text-center text-xs text-muted-foreground mt-1" data-ai-id="top-category-item-count">
+                          {category.itemCount} {category.itemCount === 1 ? 'lote' : 'lotes'}
+                        </p>
+                      )}
                     </div>
                   </Link>
                 );

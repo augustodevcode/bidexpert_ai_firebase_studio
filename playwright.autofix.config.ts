@@ -24,7 +24,7 @@ const hasAuth = fs.existsSync(authFile);
 const globalSetup = (skipSetup || !hasAuth) ? undefined : './tests/e2e/global-setup.ts';
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: './tests/e2e',
   timeout: 90_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

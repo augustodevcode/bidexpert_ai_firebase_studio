@@ -21,6 +21,41 @@ import bcryptjs from 'bcryptjs';
 import { prisma as basePrisma } from '@/lib/prisma';
 import { UserService } from '@/services/user.service';
 import { normalizeTenantToken } from '@/lib/tenant-token';
+import { sanitizeResponse } from '@/lib/serialization-helper';
+
+function buildSerializableUserProfile(user: any): UserProfileWithPermissions {
+  const roles = user.UsersOnRoles?.map((ur: any) => ({
+    id: ur.Role.id.toString(),
+    name: ur.Role.name,
+    permissions: []
+  })) || [];
+
+  const tenants = user.UsersOnTenants?.map((ut: any) => ({
+    id: ut.Tenant.id.toString(),
+    name: ut.Tenant.name,
+    slug: ut.Tenant.subdomain
+  })) || [{ id: '1', name: 'BidExpert', slug: 'bidexpert' }];
+
+  const roleNames = roles.map((role: { name: string }) => role.name);
+  const primaryRole = roleNames[0] || 'USER';
+  const { password: _password, UsersOnRoles: _usersOnRoles, UsersOnTenants: _usersOnTenants, ...safeUser } = user;
+
+  return sanitizeResponse({
+    ...safeUser,
+    id: user.id.toString(),
+    uid: user.id.toString(),
+    roles,
+    tenants,
+    roleIds: roles.map((role: { id: string }) => role.id),
+    roleNames,
+    permissions: primaryRole === 'ADMIN' ? ['manage_all', 'manage_auctions', 'manage_users', 'manage_lots'] :
+                 primaryRole === 'AUCTIONEER' ? ['manage_auctions', 'manage_lots'] :
+                 ['view_auctions', 'place_bids'],
+    roleName: primaryRole,
+    sellerId: user.sellerId?.toString() ?? null,
+    auctioneerId: user.auctioneerId?.toString() ?? null,
+  }) as UserProfileWithPermissions;
+}
 
 /**
  * Realiza o processo de login de um usuário.
@@ -29,7 +64,6 @@ import { normalizeTenantToken } from '@/lib/tenant-token';
  */
 export async function login(values: { email: string, password?: string, tenantId?: string }): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
   console.log(`[Login Action START] Invocado com values:`, values);
-  
   const { email, password, tenantId: initialTenantId } = values;
   let tenantId = initialTenantId;
 
@@ -113,16 +147,15 @@ export async function login(values: { email: string, password?: string, tenantId
       }
     }
 
-    // Format user with MySQL schema relations
     const userService = new UserService();
-    const userProfileWithPerms = await userService.findUserByEmail(email);
+    const userProfileWithPerms = (await userService.findUserByEmail(email)) ?? buildSerializableUserProfile(user);
 
     if (!userProfileWithPerms) {
       console.log(`[Login Action] Falha: não foi possível formatar o perfil do usuário '${email}'.`);
       return { success: false, message: 'Não foi possível carregar o perfil do usuário.' };
     }
 
-    const userTenantIds = userProfileWithPerms.tenants?.map((tenant) => {
+    const userTenantIds = (userProfileWithPerms.tenants || []).map((tenant) => {
       const tenantIdValue = tenant.tenantId ?? tenant.id ?? tenant.tenant?.id;
       return tenantIdValue?.toString();
     }).filter(Boolean) as string[];
@@ -140,7 +173,7 @@ export async function login(values: { email: string, password?: string, tenantId
     await createSession(userProfileWithPerms, tenantId);
 
     console.log(`[Login Action] SUCESSO: Sessão criada para ${email} no tenant ${tenantId}. Retornando sucesso.`);
-    return { success: true, message: 'Login bem-sucedido!' };
+    return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido';

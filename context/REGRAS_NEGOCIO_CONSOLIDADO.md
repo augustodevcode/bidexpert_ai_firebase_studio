@@ -201,6 +201,32 @@ Services não cruzam responsabilidades
 Sempre usar `getTenantIdFromRequest` em Server Actions  
 Schemas Zod + `react-hook-form` em todos formulários
 
+### RN-010A: Isolamento de Sessão no Wizard de Leilões
+✅ O wizard administrativo DEVE distinguir ativos criados ou selecionados na sessão corrente de ativos históricos do tenant após qualquer `refetch`.
+✅ O estado do wizard DEVE manter uma lista explícita de identificadores dos ativos da sessão (`sessionAssetIds` ou equivalente) e o passo de loteamento DEVE priorizar essa lista ao montar os ativos elegíveis.
+✅ O comportamento legado de listar todos os ativos só é permitido enquanto nenhum ativo tiver sido rastreado na sessão atual.
+✅ Testes E2E do wizard DEVEM selecionar ativos e processos por identidade determinística (título/número exato), nunca pela primeira linha disponível na listagem.
+
+**RCA / prevenção:** A regressão de lotes duplicados no fluxo de cadastro ocorreu porque o Step 4 listava todos os ativos disponíveis do tenant/comitente após cada recarga de dados, e o Playwright marcava todos os checkboxes visíveis. Isso contaminava a sessão com ativos antigos e fazia o total preparado crescer a cada execução.
+
+**Cenário BDD - Refetch não mistura ativos históricos**
+- **Dado** que o tenant possui ativos históricos do mesmo comitente
+- **E** que o usuário cria novos ativos inline no wizard
+- **Quando** o wizard recarrega os dados antes do loteamento
+- **Então** apenas os ativos rastreados na sessão corrente ficam elegíveis para loteamento individual
+
+**Cenário BDD - Seleção determinística de processo judicial**
+- **Dado** que existem múltiplos processos judiciais no tenant
+- **Quando** o fluxo do wizard precisa vincular o processo de referência
+- **Então** o processo é selecionado pelo número exato
+- **E** nunca pela primeira linha disponível da listagem
+
+### RN-010B: Publicação de Leilão deve ser idempotente para slug
+✅ A criação de leilão DEVE tolerar colisão de `slug` em reexecuções de testes e cadastros repetidos, gerando um sufixo incremental quando houver conflito de unicidade.
+✅ O valor de `status` recebido do wizard nunca pode chegar vazio ao Prisma; payloads vazios DEVEM ser normalizados para um enum válido (`RASCUNHO` ou equivalente de negócio).
+
+**RCA / prevenção:** O fluxo de publicação falhava silenciosamente com `Unique constraint failed on Auction_slug_key` em reexecuções e também com `Invalid value for argument 'status'` quando o wizard enviava string vazia. A proteção precisa existir no service, não no teste.
+
 ### RN-011: Campo Propriedades em Formulários
 Campo "Propriedades" é um **campo de texto simples**  
 Usado para dados específicos de categoria de forma livre  
@@ -348,12 +374,45 @@ Proibido aceitar `tenantId` vindo do cliente sem validação
 - A rota `/lots` (Todos os Lotes) deve ser acessível via menu principal (Header) e rodapé (Footer).
 - No Header, o link "Todos os Lotes" deve estar visível tanto na versão desktop (centralNavItems) quanto na versão mobile (allNavItemsForMobile).
 - O link deve preceder o item "Início" para maior destaque visual em listagens.
+- A composição final da navegação pública não pode renderizar entradas duplicadas para o mesmo `href`; qualquer lista de itens do header deve ser normalizada antes do render para garantir keys únicas e evitar warnings de React.
+
+**BDD - Header público não duplica links principais**
+- **Dado** uma configuração do header com entradas repetidas para `/lots`
+- **Quando** os itens da navegação são normalizados para desktop e mobile
+- **Então** apenas a primeira ocorrência de `Lotes` deve permanecer visível
+- **E** o item deve continuar precedendo `Início`
 
 ### RN-022: Conclusão do Dashboard do Arrematante
 Finalizar APIs: `GET/POST /api/bidder/*` para lotes vencidos, pagamentos, notificações, histórico, perfil  
 Repositories e services com BigInt  
 Seções do dashboard só renderizam quando dados essenciais estiverem carregados (skeletons/spinners)
 É proibido manter `TODO` funcional em seções visíveis do dashboard do arrematante em branches de integração. Se um bloco não tiver backend pronto, deve renderizar estado vazio explícito e testável, nunca placeholder ambíguo.
+- Toda Server Action ou carregamento de dashboard que entregue entidades Prisma a Client Components DEVE serializar `Decimal`, `BigInt` e `Date` antes de atualizar estado React.
+- Cards com `next/image` usando `fill` DEVEM informar `sizes` para não degradar performance do dashboard.
+
+**BDD - Dashboard do arrematante não vaza tipos Prisma ao cliente**
+- **Dado** um carregamento de dashboard com lotes recomendados ou prestes a encerrar contendo campos `Decimal`, `BigInt` ou `Date`
+- **Quando** a ação retorna os dados para a página cliente
+- **Então** o payload deve chegar serializado para tipos plain JSON
+- **E** o browser não deve emitir warnings de `Decimal objects are not supported` nem `Only plain objects can be passed`
+
+### RN-022A: Vitrine Pública `/lots` com Taxonomia e Confiança Explícitas
+- A rota pública `/lots` DEVE expor uma camada de overview acima das seções, com taxonomia explícita das modalidades `Judicial`, `Extrajudicial`, `Venda Direta` e `Tomada de Preços`.
+- Cada modalidade visível no overview DEVE mostrar a contagem correspondente de lotes e permitir navegação rápida para a seção da modalidade quando houver itens.
+- A mesma superfície DEVE exibir uma trilha de confiança pública com sinais objetivos da vitrine, incluindo pelo menos: quantidade de oportunidades abertas, lotes com referência processual quando aplicável, comitentes ativos e atalho para busca ou orientações de segurança.
+- Cards V2 da vitrine pública DEVEM expor `data-ai-id` estáveis para metadados críticos usados em automação e auditoria visual, incluindo pelo menos a localização do lote.
+
+**BDD - Overview de modalidades na vitrine pública**
+- **Dado** que a rota `/lots` possui lotes distribuídos por modalidades
+- **Quando** a página pública é renderizada
+- **Então** a taxonomia de modalidades deve ficar visível antes da grade principal
+- **E** cada modalidade deve informar a sua contagem de oportunidades
+
+**BDD - Trilha de confiança da vitrine pública**
+- **Dado** que a rota `/lots` possui dados públicos suficientes para decisão inicial
+- **Quando** a pessoa visita a página
+- **Então** a interface deve exibir sinais de confiança e descoberta sem exigir login
+- **E** esses sinais devem incluir contexto operacional da vitrine e atalhos para aprofundamento seguro
 
 ### RN-020: Fluxo de Publicação de Leilão
 `Auction` só pode ir para "Publicado" quando: etapas e datas válidas, lotes associados, regras de mídia atendidas, comitente/leiloeiro vinculados e ativos  
@@ -374,6 +433,23 @@ Validar transitions no service com erros descritivos
 - **Dado** um formulário de leilão com uma cidade já escolhida para determinado estado
 - **Quando** o usuário altera o estado para outro sem compatibilidade com a cidade atual
 - **Então** o campo de cidade volta ao placeholder no frontend e o backend rejeita combinações inconsistentes
+
+### RN-020C: Transparência de Lance e Custo Imediato no Detalhe do Lote
+✅ O detalhe público do lote DEVE exibir o valor mínimo aceito naquele momento usando a mesma regra do motor de lance: sem lances = preço inicial ajustado pela praça ativa; com lances = último lance + incremento.
+✅ A superfície DEVE exibir o incremento mínimo, a comissão do leiloeiro configurada para o tenant e o total estimado para arrematar no próximo lance válido.
+✅ A comissão DEVE priorizar `paymentGatewaySettings.platformCommissionPercentage`; quando ausente, o fallback oficial é `5%`.
+✅ A composição financeira detalhada DEVE ficar disponível na própria página do lote, sem exigir navegação externa.
+✅ O detalhe financeiro não pode assumir custos específicos de cartório, tributos ou transferência sem amparo explícito do edital ou da categoria; quando esses valores não forem calculados, a interface DEVE sinalizar que são custos variáveis do edital.
+
+**BDD - Detalhe público mostra o próximo lance válido**
+- **Dado** um lote público aberto para lances
+- **Quando** a pessoa acessa o detalhe do lote
+- **Então** a lateral deve exibir o próximo lance aceito, o incremento mínimo e o total estimado com comissão
+
+**BDD - Comissão configurada do tenant prevalece**
+- **Dado** um tenant com `platformCommissionPercentage` configurado
+- **Quando** a composição do lance é renderizada no detalhe do lote
+- **Então** a comissão exibida deve usar a configuração do tenant em vez de percentual hardcoded
 
 ### RN-020A: Alias Canônico de Login
 ✅ A rota pública `/login` DEVE redirecionar para `/auth/login` preservando query string relevante, incluindo `redirect`.
@@ -398,6 +474,17 @@ Validar transitions no service com erros descritivos
 - **Dado** que existem vários processos judiciais disponíveis no tenant
 - **Quando** o fluxo do wizard precisa vincular um processo específico de referência
 - **Então** a seleção deve ocorrer pelo número do processo e não pela primeira linha disponível na tabela
+
+### RN-020C: Review do Wizard com Paridade Antes da Publicação
+✅ A etapa final de revisão do wizard DEVE refletir, antes da publicação, os dados de contato público, URLs de documentos e as principais regras de lance/configuração avançada preenchidas no formulário do leilão.
+✅ O resumo final do wizard DEVE suportar explicitamente as modalidades `VENDA_DIRETA`, `PARTICULAR`, `EXTRAJUDICIAL`, `JUDICIAL` e `TOMADA_DE_PRECOS` sem esconder campos que já foram preenchidos nas etapas anteriores.
+✅ A revisão final DEVE expor identificadores `data-ai-id` estáveis para contatos, documentos e opções de lance, permitindo validação E2E determinística antes do clique em "Publicar Leilão".
+
+**Cenário BDD - Review final preserva paridade do formulário**
+- **Dado** que um administrador preenche o wizard de leilão com contatos públicos, documentos e opções de lance
+- **Quando** ele avança para a etapa de revisão final
+- **Então** o resumo mostra esses dados antes da publicação
+- **E** a modalidade selecionada continua visível no resumo final
 
 ### RN-021: Padrão de IDs BigInt em Front/Back
 Endpoints e services devem aceitar/retornar IDs numéricos  

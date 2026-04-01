@@ -24,6 +24,7 @@ import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import DynamicBreadcrumbs from './dynamic-breadcrumbs';
+import { dedupeNavItems } from './nav-item-utils';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -265,10 +266,10 @@ export default function Header({
     }
   };
 
-  const allNavItemsForMobile: NavItem[] = [
+  const allNavItemsForMobile: NavItem[] = dedupeNavItems([
     { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
-    { href: '/', label: 'Início', icon: HomeIcon },
     { href: '/lots', label: 'Lotes', icon: ListChecks },
+    { href: '/', label: 'Início', icon: HomeIcon },
     { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
     { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
@@ -277,14 +278,13 @@ export default function Header({
     { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
     { label: 'Histórico', isMegaMenu: true, contentKey: 'history', href: '/dashboard/history', icon: History },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
-  ];
+  ]);
 
   const firstNavItem: NavItem = { label: 'Categorias de Oportunidades', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
-    const centralNavItems: NavItem[] = [
+  const centralNavItems: NavItem[] = dedupeNavItems([
+    { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/', label: 'Início', icon: HomeIcon },
-    { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/home-v2', label: 'Nova Home', icon: HomeIcon },
-    { href: '/lots', label: 'Lotes', icon: ListChecks },
     { href: '/?homeVariant=beta', label: 'Radar de Leilões', icon: Radar },
     {
       label: 'Modalidades',
@@ -355,7 +355,7 @@ export default function Header({
       megaMenuAlign: 'end'
     },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
-    ];
+  ]);
 
   return (
     <>

@@ -4,19 +4,20 @@
 import { useWizard } from '../wizard-context';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Scale, Users, Building, FileText as TomadaPrecosIcon } from 'lucide-react';
+import { Scale, Users, Building, FileText as TomadaPrecosIcon, ShoppingCart } from 'lucide-react';
 
 const auctionTypes = [
   { value: 'JUDICIAL', label: 'Leilão Judicial', description: 'Bens de processos judiciais.', icon: Scale },
   { value: 'EXTRAJUDICIAL', label: 'Leilão Extrajudicial', description: 'Venda de ativos de empresas e bancos.', icon: Building },
   { value: 'PARTICULAR', label: 'Leilão Particular', description: 'Venda de bens de pessoas físicas ou jurídicas.', icon: Users },
   { value: 'TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processos de compra governamentais.', icon: TomadaPrecosIcon },
+  { value: 'VENDA_DIRETA', label: 'Venda Direta', description: 'Venda direta de bens sem disputa de lances.', icon: ShoppingCart },
 ];
 
 export default function Step1TypeSelection() {
   const { wizardData, setWizardData } = useWizard();
 
-  const handleTypeChange = (value: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS') => {
+  const handleTypeChange = (value: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'VENDA_DIRETA') => {
     setWizardData(prev => ({ ...prev, auctionType: value }));
   };
 
