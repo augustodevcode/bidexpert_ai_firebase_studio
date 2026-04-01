@@ -192,7 +192,18 @@ export async function getLotsForV2Page(
       Auction: {
         status: { notIn: ['RASCUNHO', 'EM_PREPARACAO'] },
       },
-      ...(tenantId ? { tenantId } : {}),
+      ...(tenantId != null
+        ? {
+            tenantId,
+            Auction: {
+              status: { notIn: ['RASCUNHO', 'EM_PREPARACAO'] },
+            },
+          }
+        : {
+            Auction: {
+              status: { notIn: ['RASCUNHO', 'EM_PREPARACAO'] },
+            },
+          }),
     },
     include: {
       Auction: {

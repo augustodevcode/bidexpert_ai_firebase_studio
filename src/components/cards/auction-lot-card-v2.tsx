@@ -271,7 +271,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </div>
           </div>
         </div>
-
         {images.length > 1 && (
           <>
             <button
@@ -502,18 +501,30 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         )}
       </div>
 
+<<<<<<< HEAD
       <div className="p-4 pt-2 flex gap-3" data-ai-id="card-v2-actions">
         <a
+=======
+      {/* ─── CTA + actions ─── */}
+      <div className="p-4 pt-0 mt-auto flex flex-col gap-2" data-ai-id="card-v2-actions">
+        <Link
+>>>>>>> origin/copilot/sub-pr-566-again
           href={`/lots/${item.id}`}
           className="flex-[2] bg-primary hover:bg-orange-600 transition-all text-black font-[family-name:var(--font-card-display)] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(154,52,18,1)] active:translate-y-[2px] active:shadow-[0_2px_0_0_rgba(154,52,18,1)] text-xs sm:text-sm tracking-wide leading-tight text-center"
           data-ai-id="card-v2-cta"
         >
           {ctaLabel}
+<<<<<<< HEAD
           <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
             <path clipRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" fillRule="evenodd" />
           </svg>
         </a>
         <div className="relative flex-1" ref={shareMenuRef}>
+=======
+          <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+        </Link>
+        <div className="flex justify-center gap-4">
+>>>>>>> origin/copilot/sub-pr-566-again
           <button
             type="button"
             onClick={handleShareToggle}

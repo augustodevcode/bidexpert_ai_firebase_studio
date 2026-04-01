@@ -10,7 +10,7 @@ Funcionalidade: Página de Lotes V2 - Exibição por Categoria de Leilão
 
   Cenário: Renderizar página com seções por categoria
     Quando eu acesso a página "/lots"
-    Então devo ver o título principal "Lotes Disponíveis"
+    Então devo ver o título principal "Lotes em Leilão"
     E devo ver a seção "Judicial" com pelo menos 1 card
     E devo ver a seção "Extrajudicial" com pelo menos 1 card
     E devo ver a seção "Venda Direta" com pelo menos 1 card
