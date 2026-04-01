@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown, Layers, UserCircle, Scale, Bot, Pencil, Download, Phone, Smartphone
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown, Layers, UserCircle, Scale, Bot, Pencil, Download, Phone, Smartphone, Calculator
 } from 'lucide-react';
 import {
   Carousel,
@@ -43,6 +43,8 @@ import { Badge } from '@/components/ui/badge';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage, getEffectiveLotStatus, getEffectiveAuctionStatus, getLotDisplayLocation } from '@/lib/ui-helpers';
+import { formatCurrency } from '@/lib/format';
+import { buildLotBidPlanningSummary } from '@/lib/lot-bid-planning';
 
 import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction, getLotDocuments, getBidsForLot } from './actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
@@ -326,6 +328,7 @@ export default function LotDetailClientContent({
   const [lotQuestions, setLotQuestions] = useState<LotQuestion[]>([]);
   const [lotDocuments, setLotDocuments] = useState<LotDocument[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [activeDetailsTab, setActiveDetailsTab] = useState('description');
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
@@ -441,6 +444,12 @@ export default function LotDetailClientContent({
 
   const activeStage = useMemo(() => getActiveStage(auction?.auctionStages), [auction?.auctionStages]);
   const activeLotPrices = useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
+  const bidPlanning = useMemo(() => buildLotBidPlanningSummary({
+    lot,
+    auction,
+    bids: sharedBidHistory,
+    platformSettings,
+  }), [lot, auction, sharedBidHistory, platformSettings]);
   const effectiveLotStatus = useMemo(() => getEffectiveLotStatus(lot, auction) || lot.status, [lot, auction]);
   const effectiveAuctionStatus = useMemo(() => getEffectiveAuctionStatus(auction) || auction.status, [auction]);
   const effectiveAuctionDates = useMemo(() => getAuctionEffectiveDates(auction), [auction]);
@@ -769,10 +778,11 @@ export default function LotDetailClientContent({
                 <Card className="shadow-lg">
                   <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" />Detalhes do Lote</CardTitle></CardHeader>
                   <CardContent className="p-4 md:p-6 pt-0">
-                    <Tabs defaultValue="description" className="w-full">
+                    <Tabs value={activeDetailsTab} onValueChange={setActiveDetailsTab} className="w-full">
                       <TabsList className="flex w-full flex-wrap gap-1 mb-4">
                         <TabsTrigger value="description">Descrição</TabsTrigger>
                         <TabsTrigger value="specification">Especificações</TabsTrigger>
+                        <TabsTrigger value="planning" data-ai-id="lot-v2-planning-tab-trigger">Planejamento</TabsTrigger>
                         <TabsTrigger value="legal">{legalTabTitle}</TabsTrigger>
                         <TabsTrigger value="seller">Comitente</TabsTrigger>
                         <TabsTrigger value="reviews">Avaliações</TabsTrigger>
@@ -780,6 +790,41 @@ export default function LotDetailClientContent({
                       </TabsList>
                       <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
                       <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
+                      <TabsContent value="planning">
+                        <Card className="shadow-none border-0" data-ai-id="lot-v2-planning-tab-panel">
+                          <CardHeader className="px-1 pt-0">
+                            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                              <Calculator className="h-5 w-5 text-muted-foreground" />
+                              Planejamento financeiro do lance
+                            </CardTitle>
+                            <CardDescription>
+                              Veja o próximo lance aceito, a comissão estimada da plataforma e o desembolso imediato previsto.
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="px-1 space-y-4">
+                            <div className="grid gap-3 md:grid-cols-3">
+                              <div className="rounded-lg border bg-card p-4" data-ai-id="lot-v2-planning-minimum-bid">
+                                <p className="text-sm text-muted-foreground">{bidPlanning.nextBidLabel}</p>
+                                <p className="text-2xl font-semibold text-foreground">{formatCurrency(bidPlanning.minimumBid)}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">Incremento mínimo: {formatCurrency(bidPlanning.bidIncrement)}</p>
+                              </div>
+                              <div className="rounded-lg border bg-card p-4" data-ai-id="lot-v2-planning-commission">
+                                <p className="text-sm text-muted-foreground">Comissão da plataforma</p>
+                                <p className="text-2xl font-semibold text-foreground">{formatCurrency(bidPlanning.commissionAmount)}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">{bidPlanning.commissionRatePercent}% sobre o lance atual.</p>
+                              </div>
+                              <div className="rounded-lg border bg-card p-4" data-ai-id="lot-v2-planning-total-due">
+                                <p className="text-sm text-muted-foreground">Desembolso imediato estimado</p>
+                                <p className="text-2xl font-semibold text-foreground">{formatCurrency(bidPlanning.totalDue)}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">Sem incluir custos adicionais definidos em edital.</p>
+                              </div>
+                            </div>
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                              Custos adicionais de transferência, cartório, tributos, retirada e vistoria dependem do edital e das condições específicas deste lote.
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
                       <TabsContent value="legal">
                         <Card className="shadow-none border-0">
                           <CardHeader className="px-1 pt-0"><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}</CardTitle></CardHeader>
@@ -888,6 +933,38 @@ export default function LotDetailClientContent({
                     variant="default"
                     dataAiId="lot-detail-go-live-btn"
                   />
+                  <Card className="shadow-md" data-ai-id="lot-v2-planning-card">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                        <Calculator className="h-5 w-5 text-muted-foreground" />
+                        Planejamento do Lance
+                      </CardTitle>
+                      <CardDescription>
+                        Resumo rápido do valor necessário para entrar na disputa agora.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between gap-3" data-ai-id="lot-v2-planning-card-minimum-bid">
+                        <span className="text-sm text-muted-foreground">{bidPlanning.nextBidLabel}</span>
+                        <span className="text-base font-semibold text-foreground">{formatCurrency(bidPlanning.minimumBid)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm text-muted-foreground">Comissão estimada</span>
+                        <span className="text-sm font-medium text-foreground">{formatCurrency(bidPlanning.commissionAmount)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3" data-ai-id="lot-v2-planning-card-total-due">
+                        <span className="text-sm text-muted-foreground">Desembolso imediato</span>
+                        <span className="text-base font-semibold text-foreground">{formatCurrency(bidPlanning.totalDue)}</span>
+                      </div>
+                      <Button variant="outline" className="w-full" data-ai-id="lot-v2-open-planning-tab" onClick={() => {
+                        setActiveDetailsTab('planning');
+                        const detailsCard = document.getElementById('auction-details-section');
+                        detailsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}>
+                        Abrir planejamento financeiro
+                      </Button>
+                    </CardContent>
+                  </Card>
                   <BiddingPanel 
                     currentLot={lot} 
                     auction={auction} 

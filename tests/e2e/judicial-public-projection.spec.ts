@@ -67,4 +67,28 @@ test.describe('Projecao publica do leilao judicial cadastrado via wizard', () =>
     await expect(body).not.toContainText('Nenhuma descrição detalhada fornecida para este lote.');
     await expect(body).toContainText(LOT_DESCRIPTION_SNIPPET);
   });
+
+  test('detalhe do lote exibe planejamento financeiro com proximo lance valido', async ({ page, baseURL }) => {
+    const baseUrl = baseURL || 'http://demo.localhost:9006';
+
+    await page.goto(`${baseUrl}${PUBLISHED_LOT_PATH}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 120_000,
+    });
+
+    await expect(page.getByRole('heading', { name: new RegExp(LOT_TITLE, 'i') })).toBeVisible({ timeout: 60_000 });
+
+    await expect(page.locator('[data-ai-id="lot-v2-planning-card"]')).toBeVisible();
+    await expect(page.locator('[data-ai-id="lot-v2-planning-card-minimum-bid"]')).toContainText('R$ 12.232,20');
+    await expect(page.locator('[data-ai-id="lot-v2-planning-card-total-due"]')).toContainText('R$');
+
+    await page.locator('[data-ai-id="lot-v2-open-planning-tab"]').click();
+
+    const planningPanel = page.locator('[data-ai-id="lot-v2-planning-tab-panel"]');
+    await expect(planningPanel).toBeVisible();
+    await expect(planningPanel).toContainText('Planejamento financeiro do lance');
+    await expect(page.locator('[data-ai-id="lot-v2-planning-minimum-bid"]')).toContainText('R$ 12.232,20');
+    await expect(page.locator('[data-ai-id="lot-v2-planning-total-due"]')).toContainText('R$');
+    await expect(planningPanel).toContainText(/custos adicionais de transferência, cartório, tributos, retirada e vistoria/i);
+  });
 });
