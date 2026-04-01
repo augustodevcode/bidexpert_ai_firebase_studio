@@ -33,9 +33,9 @@ on:
         default: 'true'
         type: string
       create_pr:
-        description: 'Criar PR demo-stable → main automaticamente se houver divergência? (true/false)'
+        description: 'Tentar criar PR demo-stable → main automaticamente se houver divergência? (requer permissão explícita do token)'
         required: false
-        default: 'true'
+        default: 'false'
         type: string
 
 jobs:
@@ -112,6 +112,25 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
+      - name: 🔎 Verificar PR aberto demo-stable → main
+        id: promotion_pr
+        if: steps.divergence.outputs.ahead != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:demo-stable`,
+              base: 'main',
+            });
+
+            const pr = prs[0];
+            core.setOutput('exists', pr ? 'true' : 'false');
+            core.setOutput('number', pr ? String(pr.number) : '');
+            core.setOutput('url', pr?.html_url ?? '');
+
       - name: 📊 Gerar Step Summary
         run: |
           AHEAD=${{ steps.divergence.outputs.ahead }}
@@ -143,7 +162,12 @@ jobs:
             git log --oneline origin/main..origin/demo-stable >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Ação recomendada:** Crie um Pull Request de \`demo-stable\` → \`main\` (ou dispare este workflow com \`create_pr=true\`)." >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.promotion_pr.outputs.exists }}" = "true" ]; then
+              echo "**Status:** já existe um PR aberto de promoção para \`main\`: #${{ steps.promotion_pr.outputs.number }}" >> $GITHUB_STEP_SUMMARY
+              echo "**Ação recomendada:** acompanhe o PR aberto e não bloqueie a branch apenas por divergência já encaminhada." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "**Ação recomendada:** Crie um Pull Request de \`demo-stable\` → \`main\` (ou dispare este workflow manualmente com \`create_pr=true\` se o token tiver permissão)." >> $GITHUB_STEP_SUMMARY
+            fi
           fi
 
       - name: 🐛 Abrir/Atualizar issue de rastreamento
@@ -270,11 +294,9 @@ jobs:
       - name: 🔀 Criar/Atualizar PR demo-stable → main
         if: >
           steps.divergence.outputs.ahead != '0' &&
-          (
-            github.event_name == 'push' ||
-            github.event_name == 'schedule' ||
-            github.event.inputs.create_pr == 'true'
-          )
+          steps.promotion_pr.outputs.exists != 'true' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.create_pr == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -304,27 +326,7 @@ jobs:
               `> Gerado automaticamente em: ${new Date().toISOString()}`,
             ].join('\n');
 
-            // Verificar se já existe PR aberto de demo-stable → main
-            const { data: existingPRs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: `${context.repo.owner}:demo-stable`,
-              base: 'main',
-            });
-
-            if (existingPRs.length > 0) {
-              const pr = existingPRs[0];
-              await github.rest.pulls.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: pr.number,
-                title: prTitle,
-                body: prBody,
-              });
-              console.log(`PR #${pr.number} atualizado: ${pr.html_url}`);
-              core.summary.addRaw(`\n### 🔀 PR Atualizado\n\nPR existente atualizado: [#${pr.number} — ${prTitle}](${pr.html_url})\n`);
-            } else {
+            try {
               const { data: newPR } = await github.rest.pulls.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -335,10 +337,19 @@ jobs:
               });
               console.log(`PR #${newPR.number} criado: ${newPR.html_url}`);
               core.summary.addRaw(`\n### 🔀 PR Criado\n\nNovo PR criado: [#${newPR.number} — ${prTitle}](${newPR.html_url})\n`);
+            } catch (error) {
+              if (error.status === 403) {
+                core.warning(`Token atual não pode criar PR automaticamente: ${error.message}`);
+                return;
+              }
+
+              throw error;
             }
 
       - name: ❌ Falhar se houver commits pendentes
-        if: steps.divergence.outputs.ahead != '0'
+        if: >
+          steps.divergence.outputs.ahead != '0' &&
+          steps.promotion_pr.outputs.exists != 'true'
         run: |
           echo "::error::demo-stable tem ${{ steps.divergence.outputs.ahead }} commit(s) que não estão em main."
           echo "::error::Crie um Pull Request de demo-stable → main para sincronizar."
