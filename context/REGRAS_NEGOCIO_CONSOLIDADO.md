@@ -754,6 +754,11 @@ Proibir mix de `cuid()` em novos docs/código
 - [ ] Implementar sessão com expiração automática (timeout configurável)  
 - [ ] Adicionar notificação ao usuário impersonado (opcional/configurável)
 
+### RN-030: Campos Financeiros e Específicos SuperBid
+✅ **Ativos (Veículos)**: Devem conter campos obrigatórios para leilões de frotas/veículos: `plateFinal`, `plateState`, `chassis`, `ipvaPaid`.
+✅ **Lotes (Financeiro)**: Devem permitir configuração granular de taxas: `commissionRate`, `platformFeeRate`, `adminFee`, `logisticsFee` e `reservePrice`.
+✅ **UI**: Campos financeiros devem ser agrupados em seção "Financeiro" e campos de veículos em "Detalhes Específicos (Veículos)" condicionalmente.
+
 ---
 
 ## DESIGN SYSTEM
