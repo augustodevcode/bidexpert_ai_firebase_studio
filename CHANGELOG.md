@@ -6,6 +6,16 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-alpha.3](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-alpha.2...v1.0.0-alpha.3) (2026-04-02)
+
+### Funcionalidades
+
+* improve investor journey favorites persistence ([d6a520c](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d6a520cfbbf52bc192e121385183a8ad1ddfa0db))
+
+### Correções
+
+* restore legacy vercel prisma schema path ([548ae9d](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/548ae9d0a793df9b1248a4aa502bb71c73f9ba0e))
+
 ## [1.0.0-alpha.2](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2026-04-02)
 
 ### Funcionalidades
