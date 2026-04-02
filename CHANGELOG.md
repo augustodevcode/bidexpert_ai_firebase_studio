@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-alpha.2](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2026-04-02)
+
+### Funcionalidades
+
+* Add SuperBid financial fields and vehicle specifics ([6f28446](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/6f284467211b7d74834990980b40d46170cfd195))
+
 ## 1.0.0-alpha.1 (2026-04-01)
 
 ### ⚠ BREAKING CHANGES
