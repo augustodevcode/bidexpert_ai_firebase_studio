@@ -3516,6 +3516,22 @@ Há cenários em que o preview da PR falha antes mesmo do build real da aplicaç
 - **Quando** o inspector exibe `Builds . [0ms]` ou não retorna eventos de build úteis
 - **Então** a validação deve registrar o bloqueio como falha de deploy da plataforma antes de culpar a aplicação
 
+### RN-VERCEL-E2E-001B: `Provisioning integrations failed` é falha de camada de integrations/storage
+
+**Contexto:**
+Há previews que falham com `readyStateReason = Provisioning integrations failed` mesmo quando `DATABASE_URL`, `POSTGRES_PRISMA_URL` e `POSTGRES_URL_NON_POOLING` já estão corretas. Nesses casos, o bloqueio pode estar em resources de integrations/storage da própria Vercel, e não no código da aplicação.
+
+**Regra:**
+- ✅ Ao encontrar `Provisioning integrations failed`, inspecionar `vercel integration list --all --format=json` antes de alterar código ou envs.
+- ✅ Se existirem stores `suspended` órfãos, removê-los com `vercel integration-resource remove <resource> --yes`.
+- ✅ Se um resource ativo estiver com `deployments.required=true` para `preview`, mas a aplicação já operar com envs genéricos (`DATABASE_URL`, `POSTGRES_*`) sem depender do prefixo do provider, desconectar o resource do projeto antes de retriggerar o preview.
+- ✅ Só culpar o código da aplicação depois que o preview sair do erro instantâneo e entrar em build real.
+
+**BDD - Provisioning quebrado por integration resource**
+- **Dado** um preview Vercel que falha com `Provisioning integrations failed`
+- **Quando** existirem stores órfãos suspensos ou um resource `required` para `preview` sem uso efetivo pela aplicação
+- **Então** a correção deve primeiro limpar/desconectar o resource problemático e retriggerar o deployment antes de abrir RCA de código
+
 ---
 
 ### RN-VERCEL-E2E-002: Solução — Share URL + Cookie Bypass
