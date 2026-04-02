@@ -1,0 +1,20 @@
+(node:15868) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///E:/SmartDataCorp/BidExpert/BidExpertVsCode/bidexpert_ai_firebase_studio/worktrees/bidexpert-e2e-review/scripts/seed-superbid.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+­ƒî▒ Starting Superbid metadata seed...
+Creating assets with Superbid metadata...
+PrismaClientKnownRequestError: 
+Invalid `prisma.asset.create()` invocation:
+
+
+Unique constraint failed on the constraint: `Asset_chassis_key`
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async main (file:///E:/SmartDataCorp/BidExpert/BidExpertVsCode/bidexpert_ai_firebase_studio/worktrees/bidexpert-e2e-review/scripts/seed-superbid.ts:36:7) {
+  code: 'P2002',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'Asset', target: 'Asset_chassis_key' }
+}

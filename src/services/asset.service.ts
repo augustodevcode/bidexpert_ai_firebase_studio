@@ -90,8 +90,19 @@ export class AssetService {
                     stateId: l.Lot.stateId?.toString(),
                     tenantId: l.Lot.tenantId?.toString(),
                     original_lot_id: l.Lot.original_lot_id?.toString(),
+                    commissionRate: l.Lot.commissionRate ? Number(l.Lot.commissionRate) : 5.0,
+                    platformFeeRate: l.Lot.platformFeeRate ? Number(l.Lot.platformFeeRate) : 2.5,
+                    adminFee: l.Lot.adminFee ? Number(l.Lot.adminFee) : null,
+                    logisticsFee: l.Lot.logisticsFee ? Number(l.Lot.logisticsFee) : null,
                 } : null
             })) : [],
+            plateFinal: asset.plateFinal,
+            plateState: asset.plateState,
+            engineStatus: asset.engineStatus,
+            mileageStatus: asset.mileageStatus,
+            ipvaPaid: asset.ipvaPaid,
+            documentStatus: asset.documentStatus,
+            chassis: asset.chassis,
         }
     });
   }

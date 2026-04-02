@@ -77,6 +77,13 @@ model Asset {
   bodyCondition              String?
   tiresCondition             String?
   hasKey                     Boolean?
+  plateFinal                 String?
+  plateState                 String?
+  engineStatus               String?
+  mileageStatus              String?
+  ipvaPaid                   Boolean?                @default(false)
+  documentStatus             String?
+  chassis                    String?                 @unique
   propertyRegistrationNumber String?
   iptuNumber                 String?
   isOccupied                 Boolean?
@@ -737,6 +744,10 @@ model Lot {
   requiresDepositGuarantee Boolean?             @default(false)
   // V2 Monitor Pregão
   reservePrice             Decimal?             @db.Decimal(15, 2)
+  commissionRate           Decimal?             @default(5.00) @db.Decimal(5, 2)
+  platformFeeRate           Decimal?             @default(2.50) @db.Decimal(5, 2)
+  adminFee                 Decimal?             @db.Decimal(15, 2)
+  logisticsFee             Decimal?             @db.Decimal(15, 2)
   saleMode                 LotSaleMode          @default(LEILAO)
   AssetsOnLots             AssetsOnLots[]
   Bid                      Bid[]
