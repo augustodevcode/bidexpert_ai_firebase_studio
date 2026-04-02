@@ -10,6 +10,7 @@
 
 // Legal Info
 export { LotLegalInfoCard } from './legal-info/lot-legal-info-card';
+export { LotDueDiligencePanel } from './legal-info/lot-due-diligence-panel';
 
 // Cost Simulator
 export { CostSimulator } from './cost-simulator';

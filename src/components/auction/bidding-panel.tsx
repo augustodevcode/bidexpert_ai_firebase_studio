@@ -28,6 +28,7 @@ import { getAuctionStatusText, calculateMinimumBid } from '@/lib/ui-helpers';
 import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
 import { getBidEligibilityState } from '@/lib/bidding-eligibility';
 import { getEffectiveAuctionStatus, getEffectiveLotStatus } from '@/lib/auction-timing';
+import { HabilitationGuidancePanel } from './habilitation-guidance-panel';
 
 interface BiddingPanelProps {
   currentLot: Lot;
@@ -233,6 +234,11 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
   const displayBidAmount = parseFloat(bidAmountInput) >= nextMinimumBid ? parseFloat(bidAmountInput) : nextMinimumBid;
   const bidButtonLabel = `Dar Lance (R$ ${displayBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
   const loginRedirectUrl = pathname ? `/auth/login?redirect=${encodeURIComponent(pathname)}` : '/auth/login';
+  const documentsCtaLabel = userProfileWithPermissions?.habilitationStatus === 'REJECTED_DOCUMENTS'
+    ? 'Corrigir documentos enviados'
+    : userProfileWithPermissions?.habilitationStatus === 'PENDING_ANALYSIS'
+      ? 'Acompanhar análise dos documentos'
+      : 'Enviar documentos para análise';
   
   const renderBiddingInterface = () => {
     if (!userProfileWithPermissions) {
@@ -269,20 +275,29 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
 
     if (bidEligibility.reason === 'DOCUMENTATION_PENDING') {
         return (
-          <div className="text-sm text-center p-4 bg-destructive/10 border border-destructive/30 text-destructive rounded-md">
-            <Info className="h-5 w-5 mx-auto mb-2" />
-            <p className="font-medium mb-1">{bidEligibility.title}</p>
-            <p className="text-xs">{bidEligibility.description}</p>
+          <div className="space-y-3" data-ai-id="bidding-panel-documentation-pending">
+            <HabilitationGuidancePanel
+              reason="DOCUMENTATION_PENDING"
+              title={bidEligibility.title}
+              description={bidEligibility.description}
+              userHabilitationStatus={userProfileWithPermissions?.habilitationStatus}
+              documentsCtaLabel={documentsCtaLabel}
+            />
           </div>
         );
     }
 
     if (bidEligibility.reason === 'AUCTION_HABILITATION_REQUIRED') {
         return (
-            <div className="p-4 border-2 border-dashed border-primary/50 rounded-lg text-center space-y-3">
-                <h4 className="font-semibold text-foreground">{bidEligibility.title}</h4>
-                <p className="text-xs text-muted-foreground">{bidEligibility.description}</p>
-                <Button onClick={handleHabilitarClick} disabled={isHabilitando} className="w-full">
+            <div className="space-y-3" data-ai-id="bidding-panel-auction-habilitation-required">
+                <HabilitationGuidancePanel
+                  reason="AUCTION_HABILITATION_REQUIRED"
+                  title={bidEligibility.title}
+                  description={bidEligibility.description}
+                  userHabilitationStatus={userProfileWithPermissions?.habilitationStatus}
+                  documentsCtaLabel="Revisar meus documentos"
+                />
+                <Button onClick={handleHabilitarClick} disabled={isHabilitando} className="w-full" data-ai-id="bidding-panel-habilitate-action">
                    {isHabilitando ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Gavel className="mr-2 h-4 w-4"/>} Habilitar-se para este Leilão
                 </Button>
                 
