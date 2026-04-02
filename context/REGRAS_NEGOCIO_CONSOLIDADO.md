@@ -451,6 +451,52 @@ Validar transitions no service com erros descritivos
 - **Quando** a composição do lance é renderizada no detalhe do lote
 - **Então** a comissão exibida deve usar a configuração do tenant em vez de percentual hardcoded
 
+### RN-020D: Painel de Due Diligence e Simulador CET/TCO no Detalhe do Lote
+✅ O detalhe público do lote DEVE consolidar a análise jurídica/documental em um único painel de due diligence reutilizável, sem duplicar trechos textuais soltos pela página.
+✅ O painel de due diligence DEVE priorizar os sinais de decisão mais relevantes: matrícula/registro, ocupação, ação judicial, processo, gravames, dívidas conhecidas, riscos identificados e links oficiais de documentos/editais quando existirem.
+✅ O mesmo painel jurídico expandido DEVE poder ser reutilizado na área de análise do investidor, preservando o `LotLegalInfoCard` como bloco base de detalhe e um wrapper de due diligence como composição principal.
+✅ A aba `Planejamento` do detalhe do lote DEVE incorporar um simulador de custo total (`CET/TCO`) usando o próximo lance válido como valor inicial padrão, com breakdown explícito dos componentes de custo aplicáveis à categoria do lote.
+✅ O simulador de custo total DEVE usar a mesma taxa de comissão já aplicada em `buildLotBidPlanningSummary`, priorizando `paymentGatewaySettings.platformCommissionPercentage` e fallback oficial de `5%`.
+✅ O componente visual e a rota `POST/GET /api/lots/[lotId]/cost-simulation` DEVEM compartilhar o mesmo motor de cálculo para evitar divergência entre client e server.
+✅ Novas superfícies da fase competitiva DEVEM expor `data-ai-id` estáveis para automação, incluindo pelo menos o painel de due diligence, o checklist documental, o simulador de custos e o total estimado.
+✅ `BidExpertCard` e `BidExpertListItem` DEVEM permanecer compactos; a experiência expandida de due diligence e CET/TCO pertence ao detalhe do lote e à seção de análise do investidor.
+
+**BDD - Detalhe do lote exibe due diligence consolidada**
+- **Dado** um lote com contexto jurídico ou documental relevante
+- **Quando** a pessoa acessa a aba jurídica/documental do detalhe do lote
+- **Então** a interface deve exibir um painel único de due diligence com checklist, alertas e links oficiais
+- **E** os riscos devem aparecer ordenados por severidade, sem esconder matrícula, ocupação ou edital
+
+**BDD - Simulador CET/TCO nasce do próximo lance válido**
+- **Dado** um lote público aberto para lances
+- **Quando** a pessoa acessa a aba de planejamento
+- **Então** o simulador deve iniciar com o próximo lance válido calculado pela regra oficial do motor de lance
+- **E** deve exibir comissão, tributos e custos estimados no mesmo fluxo de análise
+
+**BDD - Mesmo cálculo financeiro no client e na API**
+- **Dado** o mesmo lote, o mesmo valor simulado e a mesma configuração de comissão
+- **Quando** o cálculo é executado na interface e na API de simulação
+- **Então** o total estimado e o percentual efetivo de custos devem coincidir
+
+### RN-020E: Orientação Inline de Habilitação e KYC no Painel de Lances
+✅ Quando o usuário autenticado ainda não puder ofertar lance, o `BiddingPanel` DEVE explicar o próximo passo no próprio contexto do lote, sem forçar tentativa cega ou navegação investigativa.
+✅ Para `DOCUMENTATION_PENDING`, a interface DEVE mostrar status cadastral, checklist resumido e CTA direto para `/dashboard/documents`, com copy específica para pendência, análise, rejeição ou bloqueio.
+✅ Para `AUCTION_HABILITATION_REQUIRED`, a interface DEVE deixar explícito que a documentação geral já foi aprovada e que falta apenas a habilitação específica do leilão atual.
+✅ O CTA de auto-habilitação por leilão DEVE reaproveitar `habilitateForAuctionAction` e as regras de `getBidEligibilityState`, sem duplicar lógica condicional no componente visual.
+✅ As superfícies de bloqueio inline DEVEM expor `data-ai-id` estáveis para automação, incluindo pelo menos o bloco de orientação, o link para documentos e a ação de habilitação do leilão.
+
+**BDD - Documentação pendente orienta upload no próprio painel de lances**
+- **Dado** um usuário autenticado com documentação pendente ou em análise
+- **Quando** ele acessa o detalhe público de um lote aberto para lances
+- **Então** o painel de lances deve explicar o status cadastral atual
+- **E** deve oferecer atalho direto para `Meus Documentos` sem esconder o motivo do bloqueio
+
+**BDD - Habilitação por leilão explicada inline após aprovação documental**
+- **Dado** um usuário com documentação aprovada, mas ainda não habilitado no leilão atual
+- **Quando** ele acessa o detalhe público de um lote aberto para lances
+- **Então** o painel de lances deve informar que a documentação já está pronta
+- **E** deve destacar que falta apenas a habilitação específica deste leilão antes do primeiro lance
+
 ### RN-020A: Alias Canônico de Login
 ✅ A rota pública `/login` DEVE redirecionar para `/auth/login` preservando query string relevante, incluindo `redirect`.
 ✅ Fluxos administrativos que redirecionam usuários não autenticados DEVEM continuar apontando para a rota canônica `/auth/login`.
@@ -1529,7 +1575,7 @@ Para o público geral, certos dados são omitidos para não expor informações 
 
 ### RN-AD-011: Funcionalidades de Armazenamento Local (Client-Side)
 O frontend utiliza `localStorage` para persistir certas preferências e históricos do usuário.
-- **Favoritos (`favorite-store.ts`):** Usuários podem marcar lotes como favoritos, e a lista de IDs é salva localmente.
+- **Favoritos (`favorite-store.ts`):** Visitantes podem marcar lotes como favoritos localmente. Para usuários autenticados, a lista local é usada como cache/ponte de sessão e deve ser sincronizada com a persistência backend (`/api/favorite-lots`) por tenant.
 - **Vistos Recentemente (`recently-viewed-store.ts`):** O sistema armazena os IDs dos últimos 10 lotes visitados por um período de 3 dias.
 
 ### RN-AD-012: Integridade de Dados (Leilões, Lotes e Ativos)
@@ -1983,11 +2029,14 @@ Feature: Integração com Tabela FIPE
 
 **Componente:** `InvestorDashboard` (`src/components/dashboard/investor-dashboard/index.tsx`)
 
-**API:** `GET/POST /api/investor/dashboard`
+**API:** `GET/POST /api/investor/dashboard` e `GET/POST/DELETE /api/favorite-lots`
+
+**Persistência:** lotes salvos devem usar persistência real por `tenantId` para usuários autenticados, mantendo sincronização com o cache local do navegador apenas como fallback e bootstrap da sessão.
 
 **Modelos de Dados:**
 - `InvestorDashboard`: Configurações e preferências
-- `SavedLot`: Lotes salvos pelo investidor
+- `SavedLot`: DTO de resposta para lotes salvos do investidor
+- `FavoriteLot`: vínculo persistente entre usuário, lote e tenant
 - `InvestorAlert`: Alertas configurados
 - `InvestorStatistics`: Métricas calculadas
 

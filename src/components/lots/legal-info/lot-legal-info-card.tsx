@@ -40,6 +40,12 @@ interface LotLegalInfoCardProps {
   actionDescription?: string | null;
   /** Código CNJ da ação */
   actionCnjCode?: string | null;
+  /** Ônus ou gravames resumidos */
+  propertyLiens?: string | null;
+  /** Dívidas conhecidas resumidas */
+  knownDebts?: string | null;
+  /** Observações documentais adicionais */
+  additionalDocumentsInfo?: string | null;
   /** Riscos identificados */
   risks?: LotRisk[];
   /** Classes adicionais */
@@ -213,18 +219,28 @@ export function LotLegalInfoCard({
   actionType,
   actionDescription,
   actionCnjCode,
+  propertyLiens,
+  knownDebts,
+  additionalDocumentsInfo,
   risks = [],
   className
 }: LotLegalInfoCardProps) {
+  const sortedRisks = React.useMemo(() => {
+    const severityOrder = ['CRITICO', 'ALTO', 'MEDIO', 'BAIXO'];
+    return [...risks].sort((left, right) => {
+      return severityOrder.indexOf(left.riskLevel) - severityOrder.indexOf(right.riskLevel);
+    });
+  }, [risks]);
+
   const hasAnyInfo = propertyMatricula || propertyRegistrationNumber || 
-                     occupationStatus || actionType || risks.length > 0;
+                     occupationStatus || actionType || sortedRisks.length > 0 || propertyLiens || knownDebts || additionalDocumentsInfo;
 
   if (!hasAnyInfo) {
     return null;
   }
 
   return (
-    <Card className={cn('w-full', className)}>
+    <Card className={cn('w-full', className)} data-ai-id="lot-legal-info-card">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <FileText className="h-5 w-5 text-primary" />
@@ -295,15 +311,38 @@ export function LotLegalInfoCard({
           </div>
         )}
 
+        {(propertyLiens || knownDebts || additionalDocumentsInfo) && (
+          <div className="border-t pt-4 space-y-3" data-ai-id="lot-legal-info-obligations">
+            {propertyLiens && (
+              <div>
+                <p className="text-sm font-medium mb-1">Ônus e gravames</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line">{propertyLiens}</p>
+              </div>
+            )}
+            {knownDebts && (
+              <div>
+                <p className="text-sm font-medium mb-1">Dívidas conhecidas</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line">{knownDebts}</p>
+              </div>
+            )}
+            {additionalDocumentsInfo && (
+              <div>
+                <p className="text-sm font-medium mb-1">Observações documentais</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line">{additionalDocumentsInfo}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Riscos */}
-        {risks.length > 0 && (
-          <div className="border-t pt-4">
+        {sortedRisks.length > 0 && (
+          <div className="border-t pt-4" data-ai-id="lot-legal-info-risks">
             <p className="text-sm font-medium mb-2 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-destructive" />
-              Riscos Identificados ({risks.length})
+              Riscos Identificados ({sortedRisks.length})
             </p>
             <div className="space-y-2">
-              {risks.map((risk) => (
+              {sortedRisks.map((risk) => (
                 <RiskAlert key={risk.id} risk={risk} />
               ))}
             </div>

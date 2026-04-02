@@ -18,11 +18,12 @@ import { getLotStatusColor, getAuctionStatusText } from '@/lib/ui-helpers';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getFavoriteLotIdsFromStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; 
+import { getFavoriteLotIdsFromStorage, removeFavoriteLot, syncFavoriteLotIdsWithServer } from '@/lib/favorite-store'; 
 import { getLotsByIds } from '@/app/admin/lots/actions';
 import { getAuctionsByIds } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import BidExpertCard from '@/components/BidExpertCard';
+import { useAuth } from '@/contexts/auth-context';
 
 
 export default function FavoriteLotsPage() {
@@ -31,43 +32,60 @@ export default function FavoriteLotsPage() {
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { userProfileWithPermissions } = useAuth();
 
   const loadFavorites = useCallback(async () => {
     setIsLoading(true);
     const settings = await getPlatformSettings();
     if(settings) setPlatformSettings(settings as PlatformSettings);
 
-    const favoriteIds = getFavoriteLotIdsFromStorage();
-    if (favoriteIds.length > 0) {
-      const favoritedLotsData = await getLotsByIds(favoriteIds);
-      setFavoriteLots(favoritedLotsData);
-      
-      const auctionIds = Array.from(new Set(favoritedLotsData.map(lot => lot.auctionId)));
-      if (auctionIds.length > 0) {
-        const auctionsData = await getAuctionsByIds(auctionIds);
-        setAuctionsMap(new Map(auctionsData.map(a => [a.id, a])));
-      }
+    const favoriteIds = userProfileWithPermissions?.id
+      ? await syncFavoriteLotIdsWithServer()
+      : getFavoriteLotIdsFromStorage();
 
-    } else {
+    if (favoriteIds.length === 0) {
       setFavoriteLots([]);
       setAuctionsMap(new Map());
+      setIsLoading(false);
+      return;
     }
+
+    const favoritedLotsData = await getLotsByIds(favoriteIds);
+    setFavoriteLots(favoritedLotsData);
+
+    const auctionIds = Array.from(new Set(favoritedLotsData.map(lot => lot.auctionId)));
+    if (auctionIds.length > 0) {
+      const auctionsData = await getAuctionsByIds(auctionIds);
+      setAuctionsMap(new Map(auctionsData.map(a => [a.id, a])));
+    } else {
+      setAuctionsMap(new Map());
+    }
+
     setIsLoading(false);
-  }, []);
+  }, [userProfileWithPermissions?.id]);
 
   useEffect(() => {
-    loadFavorites();
+    void loadFavorites();
+
+    const handleFavoritesUpdated = () => {
+      void loadFavorites();
+    };
+
+    window.addEventListener('favorites-updated', handleFavoritesUpdated);
+    return () => window.removeEventListener('favorites-updated', handleFavoritesUpdated);
   }, [loadFavorites]);
 
-  const handleRemoveFavorite = (lotId: string) => {
+  const handleRemoveFavorite = async (lotId: string) => {
     const lotToRemove = favoriteLots.find(lot => lot.id === lotId);
-    
-    removeFavoriteLotIdFromStorage(lotId); // Remove do localStorage
-    setFavoriteLots(prev => prev.filter(lot => lot.id !== lotId)); // Atualiza UI
+    const persistenceStatus = await removeFavoriteLot(lotId);
+
+    setFavoriteLots(prev => prev.filter(lot => lot.id !== lotId));
     
     toast({
       title: "Removido dos Favoritos",
-      description: `O lote "${lotToRemove?.title || 'Selecionado'}" foi removido da sua lista.`,
+      description: userProfileWithPermissions?.id && persistenceStatus === 'local-only'
+        ? `O lote "${lotToRemove?.title || 'Selecionado'}" foi removido localmente, mas a sincronização com sua conta falhou nesta tentativa.`
+        : `O lote "${lotToRemove?.title || 'Selecionado'}" foi removido da sua lista.`,
     });
   };
 

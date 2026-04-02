@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { formatCurrency, formatCompact } from '@/lib/format';
 import type { AuctionItem, AuctionCategory } from './auction-lot-card-v2.types';
 import { useToast } from '@/hooks/use-toast';
-import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import { isLotFavoriteInStorage, addFavoriteLot, removeFavoriteLot } from '@/lib/favorite-store';
 
 /* ─── Helpers ─── */
 
@@ -139,13 +139,13 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
     return () => document.removeEventListener('mousedown', close);
   }, [showShareMenu]);
 
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const next = !isFavorited;
     setIsFavorited(next);
-    if (next) addFavoriteLotIdToStorage(item.id);
-    else removeFavoriteLotIdFromStorage(item.id);
+    if (next) await addFavoriteLot(item.id);
+    else await removeFavoriteLot(item.id);
     toast({
       title: next ? 'Adicionado aos Favoritos' : 'Removido dos Favoritos',
       description: `"${item.title}" foi ${next ? 'adicionado à' : 'removido da'} sua lista.`,
