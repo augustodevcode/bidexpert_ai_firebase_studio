@@ -19,7 +19,7 @@ import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'luci
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo, Auction } from '@/types';
 import { getLotsByIds, getLots } from '@/app/admin/lots/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
+import { FAVORITE_LOTS_STORAGE_KEY, getFavoriteLotIdsFromStorage, syncFavoriteLotIdsWithServer } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -174,24 +174,34 @@ export default function Header({
     }
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
-  const updateCounts = useCallback(() => {
+  const updateCounts = useCallback(async () => {
+    if (userProfileWithPermissions?.id) {
+      const syncedIds = await syncFavoriteLotIdsWithServer();
+      setFavoriteCount(syncedIds.length);
+      return;
+    }
+
     setFavoriteCount(getFavoriteLotIdsFromStorage().length);
-  }, []);
+  }, [userProfileWithPermissions?.id]);
 
   useEffect(() => {
     if (!isClient) return;
-    updateCounts();
+    void updateCounts();
 
-    const handleStorageChange = () => updateCounts();
-    window.addEventListener('favorites-updated', handleStorageChange);
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'bidExpertFavoriteLotIds') {
-            updateCounts();
-        }
-    });
+    const handleFavoritesUpdated = () => {
+      void updateCounts();
+    };
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === FAVORITE_LOTS_STORAGE_KEY || event.key === null) {
+        void updateCounts();
+      }
+    };
+
+    window.addEventListener('favorites-updated', handleFavoritesUpdated);
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
-        window.removeEventListener('favorites-updated', handleStorageChange);
+        window.removeEventListener('favorites-updated', handleFavoritesUpdated);
         window.removeEventListener('storage', handleStorageChange);
     };
   }, [isClient, updateCounts]);

@@ -12,7 +12,7 @@ import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag
 import { isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import { isLotFavoriteInStorage, addFavoriteLot, removeFavoriteLot } from '@/lib/favorite-store';
 import LotPreviewModalV2 from '@/components/lot-preview-modal-v2';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl, getActiveStage, getLotPriceForStage, getAuctionTypeDisplayData, getLotDisplayPrice, getEffectiveLotStatus, getLotDisplayLocation } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
@@ -101,19 +101,20 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     }
   }, [lot.id, lot.auctionId, lot.publicId]);
 
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
-    if (newFavoriteState) {
-      addFavoriteLotIdToStorage(lot.id.toString());
-    } else {
-      removeFavoriteLotIdFromStorage(lot.id.toString());
-    }
+    const persistenceStatus = newFavoriteState
+      ? await addFavoriteLot(lot.id.toString())
+      : await removeFavoriteLot(lot.id.toString());
+
     toast({
       title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
-      description: `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
+      description: userProfileWithPermissions && persistenceStatus === 'local-only'
+        ? `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista local, mas a sincronização com sua conta falhou nesta tentativa.`
+        : `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
     });
   };
 

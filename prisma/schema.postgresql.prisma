@@ -1,14 +1,11 @@
 // =============================================================================
-// PRISMA SCHEMA - MySQL (Desenvolvimento Local / DEV)
+// PRISMA SCHEMA - POSTGRESQL VERSION (Vercel / Demo Environment)
 // =============================================================================
-// Este é o schema principal do projeto, usando MySQL para desenvolvimento local.
+// Este schema é uma cópia do schema.prisma principal, com provider alterado
+// para PostgreSQL. Deve ser mantido sincronizado com o schema MySQL.
 // 
-// USO: Este schema é o arquivo de referência no repositório Git.
-//      Para deploy no Vercel (PostgreSQL), o CI/CD copia automaticamente
-//      o arquivo prisma/schema.postgresql.prisma sobre este arquivo antes do build.
-//
-// IMPORTANTE: Não commitar alterações de provider neste arquivo.
-//             Manter sempre com provider = "mysql" para o ambiente de desenvolvimento.
+// USO: Este schema é usado automaticamente pelo workflow de deploy para Vercel
+//      através do script prepare-vercel-demo.ps1 ou GitHub Action
 //
 // NOTA: BigInt @default(autoincrement()), @db.Text, @db.Decimal, @db.VarChar
 //       são todos compatíveis entre MySQL e PostgreSQL no Prisma.
@@ -19,8 +16,15 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // NEON: POSTGRES_PRISMA_URL is the pgbouncer-pooled URL for Prisma runtime.
+  // This schema is ONLY used in Vercel/Neon deployments, not in local MySQL development.
+  // The Neon Vercel integration injects this variable automatically.
+  // For CI validation, set this env var to a dummy postgresql:// URL.
+  url       = env("POSTGRES_PRISMA_URL")
+  // NEON: POSTGRES_URL_NON_POOLING is the direct connection URL for Prisma CLI
+  // (prisma db push, prisma migrate). Also injected by the Neon Vercel integration.
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Asset {
@@ -36,7 +40,6 @@ model Asset {
   evaluationValue            Decimal?                @db.Decimal(15, 2)
   imageUrl                   String?
   imageMediaId               BigInt?
-  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   galleryImageUrls           Json?
   mediaItemIds               Json?
   dataAiHint                 String?
@@ -50,7 +53,7 @@ model Asset {
   lotInfo                    String?
   judicialProcessNumber      String?
   createdAt                  DateTime                @default(now())
-  updatedAt                  DateTime                @updatedAt
+  updatedAt DateTime @updatedAt
   tenantId                   BigInt
   plate                      String?
   make                       String?
@@ -74,13 +77,6 @@ model Asset {
   bodyCondition              String?
   tiresCondition             String?
   hasKey                     Boolean?
-  plateFinal                 String?                 @db.VarChar(1)
-  plateState                 String?                 @db.VarChar(2)
-  engineStatus               String?                 @db.VarChar(100)
-  mileageStatus              String?                 @db.VarChar(100)
-  ipvaPaid                   Boolean?                @default(false)
-  documentStatus             String?                 @db.VarChar(255)
-  chassis                    String?                 @unique
   propertyRegistrationNumber String?
   iptuNumber                 String?
   isOccupied                 Boolean?
@@ -175,6 +171,7 @@ model Asset {
   Seller                     Seller?                 @relation(fields: [sellerId], references: [id])
   Subcategory                Subcategory?            @relation(fields: [subcategoryId], references: [id])
   Tenant                     Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  CoverImage                 MediaItem?              @relation("AssetCoverImage", fields: [imageMediaId], references: [id])
   AssetMedia                 AssetMedia[]
   AssetsOnLots               AssetsOnLots[]
 
@@ -271,7 +268,6 @@ model Auction {
   auctioneerId             BigInt?
   sellerId                 BigInt?
   imageMediaId             BigInt?
-  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   isRelisted               Boolean                @default(false)
   relistCount              Int                    @default(0)
   originalAuctionId        BigInt?                @unique
@@ -295,6 +291,7 @@ model Auction {
   Seller                   Seller?                @relation(fields: [sellerId], references: [id])
   State                    State?                 @relation(fields: [stateId], references: [id])
   Tenant                   Tenant                 @relation(fields: [tenantId], references: [id])
+  CoverImage               MediaItem?             @relation("AuctionCoverImage", fields: [imageMediaId], references: [id])
   AuctionHabilitation      AuctionHabilitation[]
   AuctionStage             AuctionStage[]
   Bid                      Bid[]
@@ -704,7 +701,6 @@ model Lot {
   discountPercentage       Int?
   additionalTriggers       Json?
   imageUrl                 String?              @db.Text
-  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   imageMediaId             BigInt?
   galleryImageUrls         Json?
   mediaItemIds             Json?
@@ -741,10 +737,6 @@ model Lot {
   requiresDepositGuarantee Boolean?             @default(false)
   // V2 Monitor Pregão
   reservePrice             Decimal?             @db.Decimal(15, 2)
-  commissionRate           Decimal?             @default(5.00) @db.Decimal(5, 2)
-  platformFeeRate           Decimal?             @default(2.50) @db.Decimal(5, 2)
-  adminFee                 Decimal?             @db.Decimal(15, 2)
-  logisticsFee             Decimal?             @db.Decimal(15, 2)
   saleMode                 LotSaleMode          @default(LEILAO)
   AssetsOnLots             AssetsOnLots[]
   Bid                      Bid[]
@@ -759,8 +751,9 @@ model Lot {
   Subcategory              Subcategory?         @relation(fields: [subcategoryId], references: [id])
   Tenant                   Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   User                     User?                @relation(fields: [winnerId], references: [id])
-  LotDocument              LotDocument[]
+  CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
   FavoriteLot              FavoriteLot[]
+  LotDocument              LotDocument[]
   LotQuestion              LotQuestion[]
   LotRisk                  LotRisk[]
   LotStagePrice            LotStagePrice[]
@@ -1956,7 +1949,7 @@ model WonLot {
 }
 
 // =============================================================================
-// ENUMS - IdÃªnticos ao schema MySQL (compatÃ­veis entre ambos os bancos)
+// ENUMS - Idênticos ao schema MySQL (compatíveis entre ambos os bancos)
 // =============================================================================
 
 enum UserDocument_status {
@@ -2398,4 +2391,3 @@ model EmailLog {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 }
-

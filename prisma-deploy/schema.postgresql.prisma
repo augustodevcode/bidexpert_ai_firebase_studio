@@ -763,6 +763,7 @@ model Lot {
   Tenant                   Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   User                     User?                @relation(fields: [winnerId], references: [id])
   CoverImage               MediaItem?           @relation("LotCoverImage", fields: [imageMediaId], references: [id])
+  FavoriteLot              FavoriteLot[]
   LotDocument              LotDocument[]
   LotQuestion              LotQuestion[]
   LotRisk                  LotRisk[]
@@ -783,6 +784,22 @@ model Lot {
   @@index([subcategoryId])
   @@index([tenantId])
   @@index([winnerId])
+}
+
+model FavoriteLot {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt
+  lotId     BigInt
+  tenantId  BigInt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  Tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, lotId])
+  @@index([lotId])
+  @@index([tenantId, userId])
 }
 
 model LotCategory {
@@ -1291,6 +1308,7 @@ model Tenant {
   Auctioneer              Auctioneer[]
   Bid                     Bid[]
   DirectSaleOffer         DirectSaleOffer[]
+  FavoriteLot             FavoriteLot[]
   InstallmentPayment      InstallmentPayment[]
   JudicialParty           JudicialParty[]
   JudicialProcess         JudicialProcess[]
@@ -1417,6 +1435,7 @@ model User {
   AuctionHabilitation                              AuctionHabilitation[]
   Auctioneer                                       Auctioneer?
   Bid                                              Bid[]
+  FavoriteLot                                      FavoriteLot[]
   Lot                                              Lot[]
   LotQuestion                                      LotQuestion[]
   LotRisk                                          LotRisk[]
