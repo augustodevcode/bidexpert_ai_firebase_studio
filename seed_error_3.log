@@ -1,0 +1,101 @@
+(node:23972) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///E:/SmartDataCorp/BidExpert/BidExpertVsCode/bidexpert_ai_firebase_studio/worktrees/bidexpert-e2e-review/scripts/seed-superbid.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+­ƒî▒ Starting Superbid metadata seed...
+Creating assets with Superbid metadata...
+PrismaClientValidationError: 
+Invalid `prisma.auction.create()` invocation:
+
+{
+  data: {
+    publicId: "SB-AUCTION-1775056789516",
+    title: "Leil├úo Superbid Especial Ve├¡culos",
+    description: "Oportunidades ├║nicas de ve├¡culos premium.",
+    status: "ABERTO_PARA_LANCES",
+    auctionType: "EXTRAJUDICIAL",
+    tenantId: 1n,
+    startDate: new Date("2026-04-01T15:19:49.552Z"),
+    ~~~~~~~~~
+    endDate: new Date("2026-04-08T15:19:49.552Z"),
+?   id?: BigInt,
+?   slug?: String | Null,
+?   auctionDate?: DateTime | Null,
+?   totalLots?: Int,
+?   visits?: Int,
+?   totalHabilitatedUsers?: Int,
+?   initialOffer?: Decimal | Null,
+?   auctionMethod?: Auction_auctionMethod | Null,
+?   participation?: Auction_participation | Null,
+?   createdByUserId?: BigInt | Null,
+?   submittedAt?: DateTime | Null,
+?   validatedAt?: DateTime | Null,
+?   validatedBy?: BigInt | Null,
+?   validationNotes?: String | Null,
+?   openDate?: DateTime | Null,
+?   actualOpenDate?: DateTime | Null,
+?   closedAt?: DateTime | Null,
+?   cancelledAt?: DateTime | Null,
+?   cancelledBy?: BigInt | Null,
+?   cancellationReason?: String | Null,
+?   onlineUrl?: String | Null,
+?   address?: String | Null,
+?   addressLink?: String | Null,
+?   zipCode?: String | Null,
+?   latitude?: Decimal | Null,
+?   longitude?: Decimal | Null,
+?   documentsUrl?: String | Null,
+?   isFeaturedOnMarketplace?: Boolean,
+?   softCloseEnabled?: Boolean | Null,
+?   softCloseMinutes?: Int | Null,
+?   achievedRevenue?: Decimal | Null,
+?   evaluationReportUrl?: String | Null,
+?   auctionCertificateUrl?: String | Null,
+?   floorPrice?: Decimal | Null,
+?   decrementAmount?: Decimal | Null,
+?   decrementIntervalSeconds?: Int | Null,
+?   sellingBranch?: String | Null,
+?   additionalTriggers?: NullableJsonNullValueInput | Json,
+?   createdAt?: DateTime,
+?   updatedAt?: DateTime,
+?   auctioneerId?: BigInt | Null,
+?   sellerId?: BigInt | Null,
+?   imageMediaId?: BigInt | Null,
+?   isRelisted?: Boolean,
+?   relistCount?: Int,
+?   originalAuctionId?: BigInt | Null,
+?   cityId?: BigInt | Null,
+?   stateId?: BigInt | Null,
+?   judicialProcessId?: BigInt | Null,
+?   categoryId?: BigInt | Null,
+?   complement?: String | Null,
+?   neighborhood?: String | Null,
+?   number?: String | Null,
+?   street?: String | Null,
+?   supportPhone?: String | Null,
+?   supportEmail?: String | Null,
+?   supportWhatsApp?: String | Null,
+?   other_Auction?: AuctionUncheckedCreateNestedOneWithoutAuctionInput,
+?   AuctionHabilitation?: AuctionHabilitationUncheckedCreateNestedManyWithoutAuctionInput,
+?   AuctionStage?: AuctionStageUncheckedCreateNestedManyWithoutAuctionInput,
+?   Bid?: BidUncheckedCreateNestedManyWithoutAuctionInput,
+?   Lot?: LotUncheckedCreateNestedManyWithoutAuctionInput,
+?   LotQuestion?: LotQuestionUncheckedCreateNestedManyWithoutAuctionInput,
+?   LotStagePrice?: LotStagePriceUncheckedCreateNestedManyWithoutAuctionInput,
+?   Notification?: NotificationUncheckedCreateNestedManyWithoutAuctionInput,
+?   Review?: ReviewUncheckedCreateNestedManyWithoutAuctionInput,
+?   Court?: CourtUncheckedCreateNestedManyWithoutAuctionInput,
+?   JudicialBranch?: JudicialBranchUncheckedCreateNestedManyWithoutAuctionInput,
+?   JudicialDistrict?: JudicialDistrictUncheckedCreateNestedManyWithoutAuctionInput
+  }
+}
+
+Unknown argument `startDate`. Available options are marked with ?.
+    at wn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async main (file:///E:/SmartDataCorp/BidExpert/BidExpertVsCode/bidexpert_ai_firebase_studio/worktrees/bidexpert-e2e-review/scripts/seed-superbid.ts:88:7) {
+  clientVersion: '5.22.0'
+}

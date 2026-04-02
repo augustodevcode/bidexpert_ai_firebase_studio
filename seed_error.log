@@ -1,0 +1,61 @@
+(node:3872) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///E:/SmartDataCorp/BidExpert/BidExpertVsCode/bidexpert_ai_firebase_studio/worktrees/bidexpert-e2e-review/scripts/seed-superbid.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+­ƒî▒ Starting Superbid metadata seed...
+PrismaClientValidationError: 
+Invalid `prisma.lotCategory.upsert()` invocation:
+
+{
+  where: {
+    name_tenantId: {
+    ~~~~~~~~~~~~~
+      name: "Superbid Ve├¡culos",
+      tenantId: 1n
+    },
+?   id?: BigInt,
+?   slug?: String,
+?   name?: String,
+?   AND?: LotCategoryWhereInput | LotCategoryWhereInput[],
+?   OR?: LotCategoryWhereInput[],
+?   NOT?: LotCategoryWhereInput | LotCategoryWhereInput[],
+?   description?: StringNullableFilter | String | Null,
+?   logoUrl?: StringNullableFilter | String | Null,
+?   logoMediaId?: BigIntNullableFilter | BigInt | Null,
+?   dataAiHintLogo?: StringNullableFilter | String | Null,
+?   coverImageUrl?: StringNullableFilter | String | Null,
+?   coverImageMediaId?: BigIntNullableFilter | BigInt | Null,
+?   dataAiHintCover?: StringNullableFilter | String | Null,
+?   megaMenuImageUrl?: StringNullableFilter | String | Null,
+?   megaMenuImageMediaId?: BigIntNullableFilter | BigInt | Null,
+?   dataAiHintMegaMenu?: StringNullableFilter | String | Null,
+?   hasSubcategories?: BoolNullableFilter | Boolean | Null,
+?   isGlobal?: BoolFilter | Boolean,
+?   tenantId?: BigIntNullableFilter | BigInt | Null,
+?   createdAt?: DateTimeNullableFilter | DateTime | Null,
+?   updatedAt?: DateTimeNullableFilter | DateTime | Null,
+?   Asset?: AssetListRelationFilter,
+?   Auction?: AuctionListRelationFilter,
+?   DirectSaleOffer?: DirectSaleOfferListRelationFilter,
+?   Lot?: LotListRelationFilter,
+?   Tenant?: TenantNullableRelationFilter | TenantWhereInput | Null,
+?   Subcategory?: SubcategoryListRelationFilter
+  },
+  update: {},
+  create: {
+    name: "Superbid Ve├¡culos",
+    slug: "superbid-veiculos",
+    tenantId: 1n,
+    description: "Ve├¡culos provenientes da integra├º├úo Superbid"
+  }
+}
+
+Unknown argument `name_tenantId`. Available options are marked with ?.
+    at wn (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async l (E:\SmartDataCorp\BidExpert\BidExpertVsCode\bidexpert_ai_firebase_studio\worktrees\bidexpert-e2e-review\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async main (file:///E:/SmartDataCorp/BidExpert/BidExpertVsCode/bidexpert_ai_firebase_studio/worktrees/bidexpert-e2e-review/scripts/seed-superbid.ts:22:13) {
+  clientVersion: '5.22.0'
+}

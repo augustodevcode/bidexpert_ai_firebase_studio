@@ -102,6 +102,13 @@ export type Asset = Omit<PmAsset, 'id' | 'categoryId' | 'subcategoryId' | 'judic
   occupationUpdatedBy?: string | null;
   lotInfo?: string | null;
   lots?: any[];
+  plateFinal?: string | null;
+  plateState?: string | null;
+  engineStatus?: string | null;
+  mileageStatus?: string | null;
+  ipvaPaid?: boolean | null;
+  documentStatus?: string | null;
+  chassis?: string | null;
 };
 
 export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'cityId' | 'stateId' | 'judicialProcessId' | 'tenantId' | 'categoryId' | 'originalAuctionId' | 'latitude' | 'longitude' | 'initialOffer' | 'estimatedRevenue' | 'achievedRevenue' | 'decrementAmount' | 'floorPrice'> & {
@@ -136,7 +143,7 @@ export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'city
   dataAiHint?: string;
 };
 
-export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId' | 'sellerId' | 'auctioneerId' | 'cityId' | 'stateId' | 'winnerId' | 'originalLotId' | 'inheritedMediaFromAssetId' | 'tenantId' | 'price' | 'initialPrice' | 'secondInitialPrice' | 'bidIncrementStep' | 'evaluationValue' | 'latitude' | 'longitude'> & {
+export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId' | 'sellerId' | 'auctioneerId' | 'cityId' | 'stateId' | 'winnerId' | 'originalLotId' | 'inheritedMediaFromAssetId' | 'tenantId' | 'price' | 'initialPrice' | 'secondInitialPrice' | 'bidIncrementStep' | 'evaluationValue' | 'latitude' | 'longitude' | 'commissionRate' | 'platformFeeRate' | 'adminFee' | 'logisticsFee' | 'reservePrice'> & {
   id: string;
   auctionId: string;
   categoryId?: string | null;
@@ -179,6 +186,11 @@ export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId
   requiresDepositGuarantee?: boolean | null;
   depositGuaranteeAmount?: Decimal | null;
   depositGuaranteeInfo?: string | null;
+  commissionRate?: number;
+  platformFeeRate?: number;
+  adminFee?: number | null;
+  logisticsFee?: number | null;
+  reservePrice?: number | null;
 };
 
 export type Review = Omit<PmReview, 'id' | 'lotId' | 'auctionId' | 'userId'> & { 

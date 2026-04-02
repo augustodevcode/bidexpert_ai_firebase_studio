@@ -15,12 +15,18 @@ import { useToast } from '@/hooks/use-toast';
 import type { Asset, Lot } from '@/types';
 import { Loader2, Save, PackagePlus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { createLot } from '@/app/admin/lots/actions';
 
 export const lotModalFormSchema = z.object({
   number: z.string().min(1, 'O número do lote é obrigatório.'),
   title: z.string().min(5, 'O título é obrigatório e deve ter no mínimo 5 caracteres.'),
   initialPrice: z.coerce.number().positive('O lance inicial deve ser um valor positivo.'),
   bidIncrementStep: z.coerce.number().positive('O incremento deve ser um valor positivo.').optional().nullable(),
+  reservePrice: z.coerce.number().optional().nullable(),
+  commissionRate: z.coerce.number().min(0).max(100).default(5),
+  platformFeeRate: z.coerce.number().min(0).max(100).default(2.5),
+  adminFee: z.coerce.number().min(0).optional().nullable(),
+  logisticsFee: z.coerce.number().min(0).optional().nullable(),
 });
 
 export type LotFromModalValues = z.infer<typeof lotModalFormSchema>;
@@ -29,11 +35,13 @@ interface CreateLotFromAssetsModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedAssets: Asset[];
-  onLotCreated: (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>) => void;
+  auctionId: string;
+  sellerId?: string;
+  onLotCreated: () => void;
 }
 
 export default function CreateLotFromAssetsModal({
-  isOpen, onClose, selectedAssets, onLotCreated
+  isOpen, onClose, selectedAssets, auctionId, sellerId, onLotCreated
 }: CreateLotFromAssetsModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -51,16 +59,26 @@ export default function CreateLotFromAssetsModal({
       title: defaultTitle,
       initialPrice: totalEvaluationValue > 0 ? totalEvaluationValue : undefined,
       bidIncrementStep: undefined,
+      reservePrice: undefined,
+      commissionRate: 5,
+      platformFeeRate: 2.5,
+      adminFee: undefined,
+      logisticsFee: undefined,
     },
   });
 
   React.useEffect(() => {
     if (isOpen) {
         form.reset({
-        number: '',
-        title: defaultTitle,
-        initialPrice: totalEvaluationValue > 0 ? totalEvaluationValue : undefined,
-        bidIncrementStep: undefined,
+          number: '',
+          title: defaultTitle,
+          initialPrice: totalEvaluationValue > 0 ? totalEvaluationValue : undefined,
+          bidIncrementStep: undefined,
+          reservePrice: undefined,
+          commissionRate: 5,
+          platformFeeRate: 2.5,
+          adminFee: undefined,
+          logisticsFee: undefined,
         });
     }
   }, [isOpen, selectedAssets, defaultTitle, totalEvaluationValue, form]);
@@ -70,8 +88,10 @@ export default function CreateLotFromAssetsModal({
     setIsSubmitting(true);
     const firstAsset = selectedAssets[0];
     
-    onLotCreated({
+    const result = await createLot({
         ...values,
+        auctionId,
+        sellerId,
         assetIds: selectedAssets.map(b => b.id),
         status: 'EM_BREVE',
         price: values.initialPrice,
@@ -80,9 +100,15 @@ export default function CreateLotFromAssetsModal({
         subcategoryId: firstAsset?.subcategoryId,
         imageUrl: firstAsset?.imageUrl,
         dataAiHint: firstAsset?.dataAiHint,
-    });
+    } as any);
 
-    toast({ title: 'Sucesso!', description: 'Lote agrupado foi preparado.' });
+    if (result.success) {
+      toast({ title: 'Sucesso!', description: 'Lote criado com sucesso.' });
+      onLotCreated();
+      onClose();
+    } else {
+      toast({ title: 'Erro ao criar lote', description: result.message, variant: 'destructive' });
+    }
     setIsSubmitting(false);
     onClose();
   }
@@ -117,6 +143,31 @@ export default function CreateLotFromAssetsModal({
               </div>
               <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (
                 <FormItem><FormLabel>Incremento Mínimo (R$ - Opcional)</FormLabel><FormControl><Input type="number" placeholder="Ex: 100.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+              )} />
+              
+              <Separator />
+              <h4 className="text-sm font-semibold">Configurações Financeiras</h4>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="commissionRate" render={({ field }) => (
+                  <FormItem><FormLabel>Comissão (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="platformFeeRate" render={({ field }) => (
+                  <FormItem><FormLabel>Taxa Plataforma (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="adminFee" render={({ field }) => (
+                  <FormItem><FormLabel>Taxa Administrativa (R$)</FormLabel><FormControl><Input type="number" placeholder="Ex: 1500.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="logisticsFee" render={({ field }) => (
+                  <FormItem><FormLabel>Taxa Logística (R$)</FormLabel><FormControl><Input type="number" placeholder="Ex: 1000.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+
+              <FormField control={form.control} name="reservePrice" render={({ field }) => (
+                <FormItem><FormLabel>Preço de Reserva (R$ - Opcional)</FormLabel><FormControl><Input type="number" placeholder="Valor mínimo de venda" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
             <DialogFooter>
