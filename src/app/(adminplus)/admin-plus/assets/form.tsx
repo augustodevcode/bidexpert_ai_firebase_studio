@@ -39,10 +39,10 @@ export default function AssetForm({ open, onOpenChange, row, onSuccess }: Props)
   useEffect(() => {
     if (!open) return;
     Promise.all([
-      listLotCategories({ page: 1, pageSize: 500 }).then((r) => r.success && r.data ? (r.data as { data: { id: string; name: string }[] }).data.map((i) => ({ id: i.id, label: i.name })) : []),
-      listSubcategories({ page: 1, pageSize: 500 }).then((r) => r.success && r.data ? (r.data as { data: { id: string; name: string }[] }).data.map((i) => ({ id: i.id, label: i.name })) : []),
-      listSellers({ page: 1, pageSize: 500 }).then((r) => r.success && r.data ? (r.data as { data: { id: string; name: string }[] }).data.map((i) => ({ id: i.id, label: i.name })) : []),
-      listJudicialProcesses({ page: 1, pageSize: 500 }).then((r) => r.success && r.data ? (r.data as { data: { id: string; processNumber: string }[] }).data.map((i) => ({ id: i.id, label: i.processNumber })) : []),
+      listLotCategories({ page: 1, pageSize: 200 }).then((r) => r.success && r.data ? (r.data as { data: { id: string; name: string }[] }).data.map((i) => ({ id: i.id, label: i.name })) : []),
+      listSubcategories({ page: 1, pageSize: 200 }).then((r) => r.success && r.data ? (r.data as { data: { id: string; name: string }[] }).data.map((i) => ({ id: i.id, label: i.name })) : []),
+      listSellers({ page: 1, pageSize: 200 }).then((r) => r.success && r.data ? (r.data as { data: { id: string; name: string }[] }).data.map((i) => ({ id: i.id, label: i.name })) : []),
+      listJudicialProcesses({ page: 1, pageSize: 200 }).then((r) => r.success && r.data ? (r.data as { data: { id: string; processNumber: string }[] }).data.map((i) => ({ id: i.id, label: i.processNumber })) : []),
     ]).then(([c, s, se, jp]) => { setCategories(c); setSubcategories(s); setSellers(se); setProcesses(jp); });
     if (row) {
       form.reset({
