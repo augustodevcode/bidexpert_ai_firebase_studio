@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina de listagem de Varas Judiciais â€” Admin Plus.
+ * @fileoverview Página de listagem de Varas Judiciais — Admin Plus.
  */
 'use client';
 
@@ -58,7 +58,7 @@ export default function JudicialBranchesPage() {
     if (!deleting) return;
     const res = await deleteJudicialBranch({ id: deleting.id });
     if (res?.success) {
-      toast.success('Vara excluÃ­da');
+      toast.success('Vara excluída');
       setDeleting(null);
       refresh();
     } else {

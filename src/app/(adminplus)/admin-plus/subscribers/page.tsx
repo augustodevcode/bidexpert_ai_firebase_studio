@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina CRUD de Subscriber no Admin Plus.
+ * Página CRUD de Subscriber no Admin Plus.
  */
 'use client';
 
@@ -45,7 +45,7 @@ export default function SubscribersPage() {
     if (!deleteTarget) return;
     const res = await deleteSubscriber({ id: deleteTarget.id });
     if (!res.success) { toast.error(res.error ?? 'Erro ao excluir'); return; }
-    toast.success('ExcluÃ­do!');
+    toast.success('Excluído!');
     setDeleteTarget(null); refresh();
   };
 
@@ -61,7 +61,7 @@ export default function SubscribersPage() {
       />
       <SubscriberForm open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) setEditing(null); }} onSubmit={handleSubmit} initialData={editing} />
       <ConfirmationDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }} onConfirm={confirmDelete}
-        title="Confirmar exclusÃ£o" description={`Deseja excluir o assinante ${deleteTarget?.email}?`} />
+        title="Confirmar exclusão" description={`Deseja excluir o assinante ${deleteTarget?.email}?`} />
     </div>
   );
 }

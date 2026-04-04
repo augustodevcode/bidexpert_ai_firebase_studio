@@ -1,6 +1,6 @@
 /**
- * @fileoverview PÃ¡gina de configuraÃ§Ãµes de gateway de pagamento (PaymentGatewaySettings) â€” Admin Plus.
- * FormulÃ¡rio singleton com gateway, comissÃ£o e chaves de API.
+ * @fileoverview Página de configurações de gateway de pagamento (PaymentGatewaySettings) — Admin Plus.
+ * Formulário singleton com gateway, comissão e chaves de API.
  */
 'use client';
 
@@ -23,7 +23,7 @@ import { paymentGatewaySettingsSchema, type PaymentGatewaySettingsFormValues } f
 import { getPaymentGatewaySettingsAction, updatePaymentGatewaySettingsAction } from './actions';
 
 const GATEWAYS = [
-  { value: 'Manual', label: 'Manual (sem integraÃ§Ã£o)' },
+  { value: 'Manual', label: 'Manual (sem integração)' },
   { value: 'Stripe', label: 'Stripe' },
   { value: 'PagSeguro', label: 'PagSeguro' },
   { value: 'MercadoPago', label: 'Mercado Pago' },
@@ -57,7 +57,7 @@ export default function PaymentGatewaySettingsPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar configuraÃ§Ãµes de pagamento.');
+        toast.error('Erro ao carregar configurações de pagamento.');
       } finally {
         setLoading(false);
       }
@@ -69,7 +69,7 @@ export default function PaymentGatewaySettingsPage() {
     try {
       const res = await updatePaymentGatewaySettingsAction(values);
       if (res?.success) {
-        toast.success('ConfiguraÃ§Ãµes de pagamento salvas com sucesso.');
+        toast.success('Configurações de pagamento salvas com sucesso.');
       } else {
         toast.error(res?.error ?? 'Erro ao salvar.');
       }
@@ -96,8 +96,8 @@ export default function PaymentGatewaySettingsPage() {
       <PageHeader title="Gateway de Pagamento" icon={CreditCard} />
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
-        {/* SeÃ§Ã£o 1: Gateway */}
-        <h3 className="text-base font-semibold">Gateway PadrÃ£o</h3>
+        {/* Seção 1: Gateway */}
+        <h3 className="text-base font-semibold">Gateway Padrão</h3>
         <Separator className="mb-4" />
 
         <div className="grid gap-4 sm:grid-cols-2 mb-6">
@@ -117,7 +117,7 @@ export default function PaymentGatewaySettingsPage() {
             </Select>
           </Field>
 
-          <Field label="ComissÃ£o da Plataforma (%)" description="Percentual de comissÃ£o cobrado em cada transaÃ§Ã£o.">
+          <Field label="Comissão da Plataforma (%)" description="Percentual de comissão cobrado em cada transação.">
             <Input
               type="number"
               min={0}
@@ -129,7 +129,7 @@ export default function PaymentGatewaySettingsPage() {
           </Field>
         </div>
 
-        {/* SeÃ§Ã£o 2: Chaves de API */}
+        {/* Seção 2: Chaves de API */}
         <h3 className="text-base font-semibold">Chaves de API</h3>
         <Separator className="mb-4" />
 
@@ -143,7 +143,7 @@ export default function PaymentGatewaySettingsPage() {
             />
           </Field>
 
-          <Field label="Encryption Key" description="Chave de criptografia do gateway (quando aplicÃ¡vel).">
+          <Field label="Encryption Key" description="Chave de criptografia do gateway (quando aplicável).">
             <Input
               type="password"
               placeholder="ek_..."
@@ -156,7 +156,7 @@ export default function PaymentGatewaySettingsPage() {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={saving} data-ai-id="payment-gateway-settings-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar ConfiguraÃ§Ãµes
+            Salvar Configurações
           </Button>
         </div>
       </CrudFormShell>

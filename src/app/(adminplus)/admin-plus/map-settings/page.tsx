@@ -1,6 +1,6 @@
 /**
- * @fileoverview PÃ¡gina de configuraÃ§Ãµes de mapa (MapSettings) â€” Admin Plus.
- * FormulÃ¡rio singleton para provider de mapas e chave de API.
+ * @fileoverview Página de configurações de mapa (MapSettings) — Admin Plus.
+ * Formulário singleton para provider de mapas e chave de API.
  */
 'use client';
 
@@ -50,7 +50,7 @@ export default function MapSettingsPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar configuraÃ§Ãµes de mapa.');
+        toast.error('Erro ao carregar configurações de mapa.');
       } finally {
         setLoading(false);
       }
@@ -62,12 +62,12 @@ export default function MapSettingsPage() {
     try {
       const res = await updateMapSettingsAction(values);
       if (res?.success) {
-        toast.success('ConfiguraÃ§Ãµes de mapa salvas com sucesso.');
+        toast.success('Configurações de mapa salvas com sucesso.');
       } else {
         toast.error(res?.error ?? 'Erro ao salvar.');
       }
     } catch {
-      toast.error('Erro inesperado ao salvar configuraÃ§Ãµes.');
+      toast.error('Erro inesperado ao salvar configurações.');
     } finally {
       setSaving(false);
     }
@@ -87,11 +87,11 @@ export default function MapSettingsPage() {
 
   return (
     <div data-ai-id="map-settings-page">
-      <PageHeader title="ConfiguraÃ§Ãµes de Mapa" icon={MapPin} />
+      <PageHeader title="Configurações de Mapa" icon={MapPin} />
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Provider de Mapa" description="ServiÃ§o utilizado para renderizaÃ§Ã£o de mapas.">
+          <Field label="Provider de Mapa" description="Serviço utilizado para renderização de mapas.">
             <Select
               value={form.watch('defaultProvider') ?? 'openstreetmap'}
               onValueChange={(v) => form.setValue('defaultProvider', v, { shouldDirty: true })}
@@ -107,7 +107,7 @@ export default function MapSettingsPage() {
             </Select>
           </Field>
 
-          <Field label="Google Maps API Key" description="Chave de API do Google Maps (necessÃ¡ria se provider for Google).">
+          <Field label="Google Maps API Key" description="Chave de API do Google Maps (necessária se provider for Google).">
             <Input
               type="password"
               placeholder="AIza..."
@@ -120,7 +120,7 @@ export default function MapSettingsPage() {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={saving} data-ai-id="map-settings-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar ConfiguraÃ§Ãµes
+            Salvar Configurações
           </Button>
         </div>
       </CrudFormShell>

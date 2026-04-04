@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de Sellers (Vendedores) â€” Admin Plus.
+ * @fileoverview Página CRUD de Sellers (Vendedores) — Admin Plus.
  */
 'use client';
 
@@ -35,7 +35,7 @@ export default function SellersPage() {
     if (!deleteTarget) return;
     const res = await deleteSeller({ id: deleteTarget.id });
     if (res?.success) {
-      toast.success('Vendedor excluÃ­do');
+      toast.success('Vendedor excluído');
       table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao excluir');
@@ -82,7 +82,7 @@ export default function SellersPage() {
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Excluir vendedor"
-        description={`Deseja excluir o vendedor "${deleteTarget?.name ?? ''}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
+        description={`Deseja excluir o vendedor "${deleteTarget?.name ?? ''}"? Esta ação não pode ser desfeita.`}
         onConfirm={handleDelete}
       />
     </div>

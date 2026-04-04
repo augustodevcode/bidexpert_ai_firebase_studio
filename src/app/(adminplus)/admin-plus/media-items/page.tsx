@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de MediaItem â€” Admin Plus.
+ * @fileoverview Página CRUD de MediaItem — Admin Plus.
  */
 'use client';
 
@@ -51,7 +51,7 @@ export default function MediaItemsPage() {
         ? await updateMediaItem({ id: editRow.id, data: values as Parameters<typeof updateMediaItem>[0]['data'] })
         : await createMediaItem(values as Parameters<typeof createMediaItem>[0]);
       if (res?.success) {
-        toast.success(editRow ? 'MÃ­dia atualizada' : 'MÃ­dia criada');
+        toast.success(editRow ? 'Mídia atualizada' : 'Mídia criada');
         setFormOpen(false);
         setEditRow(null);
         table.refresh();
@@ -66,7 +66,7 @@ export default function MediaItemsPage() {
     if (!deleteRow) return;
     const res = await deleteMediaItem({ id: deleteRow.id });
     if (res?.success) {
-      toast.success('MÃ­dia excluÃ­da');
+      toast.success('Mídia excluída');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -77,11 +77,11 @@ export default function MediaItemsPage() {
   return (
     <div className="space-y-6" data-ai-id="media-items-page">
       <PageHeader
-        title="MÃ­dias"
-        description="Gerenciar itens de mÃ­dia (imagens, documentos)"
+        title="Mídias"
+        description="Gerenciar itens de mídia (imagens, documentos)"
         icon={Image}
         onAdd={() => { setEditRow(null); setFormOpen(true); }}
-        addLabel="Nova MÃ­dia"
+        addLabel="Nova Mídia"
       />
 
       <DataTablePlus
@@ -105,8 +105,8 @@ export default function MediaItemsPage() {
         open={!!deleteRow}
         onOpenChange={(v) => !v && setDeleteRow(null)}
         onConfirm={handleConfirmDelete}
-        title="Excluir MÃ­dia"
-        description={`Excluir "${deleteRow?.fileName}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
+        title="Excluir Mídia"
+        description={`Excluir "${deleteRow?.fileName}"? Esta ação não pode ser desfeita.`}
         data-ai-id="media-items-delete-dialog"
       />
     </div>

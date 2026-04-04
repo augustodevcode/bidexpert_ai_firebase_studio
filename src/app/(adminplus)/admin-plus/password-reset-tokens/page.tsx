@@ -1,6 +1,6 @@
 /**
- * @fileoverview PÃ¡gina CRUD de PasswordResetToken â€” Admin Plus.
- * Tokens efÃªmeros: criaÃ§Ã£o + exclusÃ£o, sem ediÃ§Ã£o.
+ * @fileoverview Página CRUD de PasswordResetToken — Admin Plus.
+ * Tokens efêmeros: criação + exclusão, sem edição.
  */
 'use client';
 
@@ -42,7 +42,7 @@ export default function PasswordResetTokensPage() {
     if (!deleteRow) return;
     const res = await deletePasswordResetToken({ id: deleteRow.id });
     if (res?.success) {
-      toast.success('Token excluÃ­do');
+      toast.success('Token excluído');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -54,7 +54,7 @@ export default function PasswordResetTokensPage() {
     <div className="space-y-6" data-ai-id="password-reset-tokens-page">
       <PageHeader
         title="Tokens de Reset de Senha"
-        description="Tokens gerados para recuperaÃ§Ã£o de senha"
+        description="Tokens gerados para recuperação de senha"
         icon={KeyRound}
         onAdd={() => setFormOpen(true)}
         data-ai-id="prt-page-header"

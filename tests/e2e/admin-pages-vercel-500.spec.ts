@@ -1,8 +1,8 @@
 /**
- * @fileoverview Testes E2E para validar que as pÃ¡ginas admin nÃ£o retornam 500 errors.
- * BDD: ApÃ³s fix de relaÃ§Ãµes PascalCase Prisma para PostgreSQL, todas as pÃ¡ginas
+ * @fileoverview Testes E2E para validar que as páginas admin não retornam 500 errors.
+ * BDD: Após fix de relações PascalCase Prisma para PostgreSQL, todas as páginas
  *      admin devem carregar sem erros 500.
- * TDD: Validar HTTP 200 e ausÃªncia de erros de console em cada pÃ¡gina admin.
+ * TDD: Validar HTTP 200 e ausência de erros de console em cada página admin.
  * 
  * Credenciais: admin@bidexpert.com.br / Admin@123 (conforme ultimate-master-seed.ts)
  */

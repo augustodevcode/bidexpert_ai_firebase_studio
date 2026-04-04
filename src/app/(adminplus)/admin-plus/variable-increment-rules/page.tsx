@@ -1,6 +1,6 @@
 /**
- * @fileoverview PÃ¡gina de listagem CRUD para VariableIncrementRule â€” Admin Plus.
- * Regras de incremento variÃ¡vel vinculadas ao PlatformSettings do tenant.
+ * @fileoverview Página de listagem CRUD para VariableIncrementRule — Admin Plus.
+ * Regras de incremento variável vinculadas ao PlatformSettings do tenant.
  */
 'use client';
 
@@ -87,7 +87,7 @@ export default function VariableIncrementRulesPage() {
         toast.error(res.error ?? 'Erro ao excluir regra.');
         return;
       }
-      toast.success('Regra excluÃ­da.');
+      toast.success('Regra excluída.');
       setDeleteRow(null);
       table.refresh();
     } finally {
@@ -98,8 +98,8 @@ export default function VariableIncrementRulesPage() {
   return (
     <div className="space-y-6" data-ai-id="variable-increment-rules-page">
       <PageHeader
-        title="Regras de Incremento VariÃ¡vel"
-        description="Defina faixas de valor e incrementos para lances automÃ¡ticos."
+        title="Regras de Incremento Variável"
+        description="Defina faixas de valor e incrementos para lances automáticos."
         icon={TrendingUp}
         onAdd={handleCreate}
       />
@@ -129,7 +129,7 @@ export default function VariableIncrementRulesPage() {
         open={!!deleteRow}
         onOpenChange={(open) => !open && setDeleteRow(null)}
         title="Excluir Regra de Incremento"
-        description={`Deseja excluir a regra de R$ ${deleteRow?.from?.toLocaleString('pt-BR')} atÃ© ${deleteRow?.to != null ? 'R$ ' + deleteRow.to.toLocaleString('pt-BR') : 'âˆž'}?`}
+        description={`Deseja excluir a regra de R$ ${deleteRow?.from?.toLocaleString('pt-BR')} até ${deleteRow?.to != null ? 'R$ ' + deleteRow.to.toLocaleString('pt-BR') : '∞'}?`}
         onConfirm={handleDelete}
       />
     </div>

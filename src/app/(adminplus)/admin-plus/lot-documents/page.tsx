@@ -27,7 +27,7 @@ export default function LotDocumentsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleting) return;
     const res = await deleteLotDocument({ id: deleting.id });
-    if (res.success) { toast.success('Documento excluÃ­do'); refresh(); } else toast.error(res.error ?? 'Erro ao excluir');
+    if (res.success) { toast.success('Documento excluído'); refresh(); } else toast.error(res.error ?? 'Erro ao excluir');
     setDeleting(null);
   }, [deleting, refresh]);
 

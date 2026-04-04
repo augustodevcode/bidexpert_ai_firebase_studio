@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina de listagem CRUD de TenantInvoice no Admin Plus.
+ * Página de listagem CRUD de TenantInvoice no Admin Plus.
  */
 'use client';
 
@@ -47,7 +47,7 @@ export default function TenantInvoicesPage() {
   const confirmDelete = async () => {
     if (!deleting) return;
     const res: any = await deleteTenantInvoice({ id: deleting.id });
-    if (res?.success) { toast.success('Fatura excluÃ­da.'); table.refresh(); } else { toast.error(res?.error || 'Erro ao excluir.'); }
+    if (res?.success) { toast.success('Fatura excluída.'); table.refresh(); } else { toast.error(res?.error || 'Erro ao excluir.'); }
     setDeleting(null);
   };
 

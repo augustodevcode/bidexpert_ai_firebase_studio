@@ -40,7 +40,7 @@ export default function BidsPage() {
     if (!deleteItem) return;
     const res = await deleteBid({ id: deleteItem.id });
     if (res.success) {
-      toast.success('Lance excluÃ­do!');
+      toast.success('Lance excluído!');
       refresh();
     } else {
       toast.error(res.error ?? 'Erro ao excluir.');
@@ -54,7 +54,7 @@ export default function BidsPage() {
     <div className="space-y-4" data-ai-id="bids-page">
       <PageHeader
         title="Lances"
-        description="Gerenciamento de lances das praÃ§as"
+        description="Gerenciamento de lances das praças"
         icon={DollarSign}
         onAdd={() => { setEditItem(null); setFormOpen(true); }}
       />

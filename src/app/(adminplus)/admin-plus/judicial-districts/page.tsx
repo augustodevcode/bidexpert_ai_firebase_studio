@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina de listagem de Comarcas â€” Admin Plus.
+ * @fileoverview Página de listagem de Comarcas — Admin Plus.
  */
 'use client';
 
@@ -58,7 +58,7 @@ export default function JudicialDistrictsPage() {
     if (!deleting) return;
     const res = await deleteJudicialDistrict({ id: deleting.id });
     if (res?.success) {
-      toast.success('Comarca excluÃ­da');
+      toast.success('Comarca excluída');
       setDeleting(null);
       refresh();
     } else {

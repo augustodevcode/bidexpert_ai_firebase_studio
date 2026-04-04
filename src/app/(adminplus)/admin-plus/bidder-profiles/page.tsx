@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de BidderProfile (Perfil do Arrematante) â€” Admin Plus.
+ * @fileoverview Página CRUD de BidderProfile (Perfil do Arrematante) — Admin Plus.
  */
 'use client';
 
@@ -35,7 +35,7 @@ export default function BidderProfilesPage() {
     if (!deleteTarget) return;
     const res = await deleteBidderProfile({ id: deleteTarget.id });
     if (res?.success) {
-      toast.success('Perfil excluÃ­do');
+      toast.success('Perfil excluído');
       table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao excluir');
@@ -82,7 +82,7 @@ export default function BidderProfilesPage() {
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Excluir perfil"
-        description={`Deseja excluir o perfil de "${deleteTarget?.fullName ?? deleteTarget?.userName ?? ''}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
+        description={`Deseja excluir o perfil de "${deleteTarget?.fullName ?? deleteTarget?.userName ?? ''}"? Esta ação não pode ser desfeita.`}
         onConfirm={handleDelete}
       />
     </div>

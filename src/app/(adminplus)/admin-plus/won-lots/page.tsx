@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina principal de listagem de WonLot (Lotes Arrematados) no Admin Plus.
+ * Página principal de listagem de WonLot (Lotes Arrematados) no Admin Plus.
  */
 'use client';
 
@@ -36,7 +36,7 @@ export default function WonLotsPage() {
     setDeleting(true);
     try {
       const res = await deleteWonLot({ id: deleteTarget.id });
-      if (res?.success) { toast.success('ExcluÃ­do!'); table.refresh(); } else toast.error(res?.error ?? 'Erro');
+      if (res?.success) { toast.success('Excluído!'); table.refresh(); } else toast.error(res?.error ?? 'Erro');
     } catch { toast.error('Erro ao excluir'); } finally { setDeleting(false); setDeleteTarget(null); }
   };
 
