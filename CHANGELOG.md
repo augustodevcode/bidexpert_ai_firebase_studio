@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.5](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.4...v1.0.0-demo.5) (2026-04-04)
+
+### Correções
+
+* **admin-plus:** User.name→fullName in lot-risks and bids actions ([3f86387](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/3f863873d711d128a101ad77c855433ec03d3537))
+
 ## [1.0.0-demo.4](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.3...v1.0.0-demo.4) (2026-04-04)
 
 ### Correções
