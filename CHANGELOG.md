@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.7](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.6...v1.0.0-demo.7) (2026-04-04)
+
+### Correções
+
+* **cities:** remove double-mapping that overwrote stateUf with undefined ([4209c67](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/4209c67d7a4d029b271f0fb53e4b387c16d34d0d))
+
 ## [1.0.0-demo.6](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.5...v1.0.0-demo.6) (2026-04-04)
 
 ### Correções
