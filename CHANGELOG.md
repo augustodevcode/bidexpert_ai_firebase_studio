@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.6](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.5...v1.0.0-demo.6) (2026-04-04)
+
+### Correções
+
+* resolve UTF-8 double-encoding across 56 admin-plus pages and test files ([55cc02b](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/55cc02bc063b24889874398ae955d45dafa202e8))
+
 ## [1.0.0-demo.5](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.4...v1.0.0-demo.5) (2026-04-04)
 
 ### Correções
