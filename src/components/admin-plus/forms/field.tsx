@@ -6,7 +6,7 @@
 'use client';
 
 import { type ReactNode, useId } from 'react';
-import { Controller, useFormContext, type Control, type FieldError, type FieldErrors, type UseFormRegister } from 'react-hook-form';
+import { Controller, useFormContext, type Control, type FieldError, type FieldErrors, type UseFormRegister, type UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,11 +36,7 @@ interface FieldProps {
   multiline?: boolean;
   dataAiId?: string;
   'data-ai-id'?: string;
-  form?: {
-    control?: Control<any>;
-    register?: UseFormRegister<any>;
-    formState?: { errors?: FieldErrors<any> };
-  };
+  form?: UseFormReturn<any>;
   control?: Control<any>;
   register?: UseFormRegister<any>;
   error?: string | FieldError | { message?: string };

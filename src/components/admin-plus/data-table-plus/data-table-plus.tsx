@@ -62,7 +62,10 @@ export interface DataTablePlusProps<TData> {
   onSortChange?: unknown;
   search?: string;
   searchQuery?: string;
+  searchValue?: string;
   onSearchChange?: unknown;
+  pageSizeOptions?: unknown[];
+  pageIndex?: number;
   rowActions?: unknown;
   getRowId?: ((row: TData) => string) | unknown;
   totalPages?: number;

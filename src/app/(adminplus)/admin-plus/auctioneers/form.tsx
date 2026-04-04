@@ -117,7 +117,7 @@ export function AuctioneerForm({ open, onOpenChange, editItem, onSuccess }: Prop
               {(field) => (
                 <Textarea
                   {...field}
-                  value={field.value ?? ''}
+                  value={(field.value as string) ?? ''}
                   placeholder="Descrição do leiloeiro"
                   rows={3}
                   data-ai-id="auctioneer-description-textarea"

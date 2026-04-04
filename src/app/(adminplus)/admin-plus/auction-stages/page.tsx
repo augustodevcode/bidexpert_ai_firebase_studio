@@ -62,7 +62,7 @@ export default function AuctionStagesPage() {
         sorting={table.sorting}
         onPaginationChange={table.onPaginationChange}
         onSortingChange={table.onSortingChange}
-        searchValue={table.searchValue}
+        search={table.searchValue}
         onSearchChange={table.onSearchChange}
         onRowDoubleClick={handleEdit}
       />

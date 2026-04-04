@@ -63,10 +63,10 @@ export default function BidForm({ open, onOpenChange, editItem, onSuccess }: Bid
       listUsersAction({ page: 1, pageSize: 200 }),
     ]).then(([lotsRes, auctionsRes, usersRes]) => {
       if (lotsRes.success && lotsRes.data) {
-        setLots(lotsRes.data.data.map((l: Record<string, unknown>) => ({ id: String(l.id), title: String((l as Record<string, unknown>).title ?? l.id) })));
+        setLots(lotsRes.data.data.map((l) => ({ id: l.id, title: l.title ?? l.id })));
       }
       if (auctionsRes.success && auctionsRes.data) {
-        setAuctions(auctionsRes.data.data.map((a: Record<string, unknown>) => ({ id: String(a.id), title: String((a as Record<string, unknown>).title ?? a.id) })));
+        setAuctions(auctionsRes.data.data.map((a) => ({ id: a.id, title: a.title ?? a.id })));
       }
       if (usersRes.success && usersRes.data) {
         setUsers(usersRes.data.data.map((u: Record<string, unknown>) => ({ id: String(u.id), name: String((u as Record<string, unknown>).name ?? u.id) })));

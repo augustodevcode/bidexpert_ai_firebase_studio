@@ -47,8 +47,8 @@ export default function AssetsOnLotsForm({ open, onOpenChange, editItem, onSucce
       listLots({ page: 1, pageSize: 200 }),
       listAssets({ page: 1, pageSize: 200 }),
     ]).then(([lotsRes, assetsRes]) => {
-      if (lotsRes.success && lotsRes.data) setLots(lotsRes.data.data.map((l: Record<string, unknown>) => ({ id: String(l.id), title: String((l as Record<string, unknown>).title ?? l.id) })));
-      if (assetsRes.success && assetsRes.data) setAssets(assetsRes.data.data.map((a: Record<string, unknown>) => ({ id: String(a.id), title: String((a as Record<string, unknown>).title ?? a.id) })));
+      if (lotsRes.success && lotsRes.data) setLots(lotsRes.data.data.map((l) => ({ id: l.id, title: l.title })));
+      if (assetsRes.success && assetsRes.data) setAssets(assetsRes.data.data.map((a) => ({ id: a.id, title: a.title })));
     });
   }, [open]);
 

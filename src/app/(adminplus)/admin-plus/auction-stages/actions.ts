@@ -3,6 +3,7 @@
  */
 'use server';
 
+import { type AuctionStage_status } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { createAdminAction } from '@/lib/admin-plus/safe-action';
 import { sanitizeResponse } from '@/lib/serialization-helper';
@@ -50,7 +51,7 @@ export const createAuctionStage = createAdminAction(async (ctx, values: Record<s
       name: String(values.name),
       startDate: new Date(String(values.startDate)),
       endDate: new Date(String(values.endDate)),
-      status: (values.status as string) || 'AGUARDANDO_INICIO',
+      status: ((values.status as string) || 'AGUARDANDO_INICIO') as AuctionStage_status,
       discountPercent: values.discountPercent ? Number(values.discountPercent) : 100,
       auctionId: values.auctionId ? BigInt(values.auctionId as string) : BigInt(0),
       tenantId: ctx.tenantIdBigInt,
@@ -59,7 +60,9 @@ export const createAuctionStage = createAdminAction(async (ctx, values: Record<s
   return sanitizeResponse(rec);
 });
 
-export const updateAuctionStage = createAdminAction(async (ctx, id: string, values: Record<string, unknown>) => {
+export const updateAuctionStage = createAdminAction(async (ctx, ...args: unknown[]) => {
+  const id = args[0] as string;
+  const values = args[1] as Record<string, unknown>;
   const data: Record<string, unknown> = {
     name: String(values.name),
     startDate: new Date(String(values.startDate)),
