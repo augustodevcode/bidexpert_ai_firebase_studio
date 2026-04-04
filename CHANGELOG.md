@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.9](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.8...v1.0.0-demo.9) (2026-04-04)
+
+### Correções
+
+* **wizard:** add VENDA_DIRETA to PathType and pathStyles to prevent crash ([8ec2594](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/8ec2594e4b94453edff8c227491a3e6397fec013))
+
 ## [1.0.0-demo.8](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.7...v1.0.0-demo.8) (2026-04-04)
 
 ### Correções
