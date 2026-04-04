@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.12](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.11...v1.0.0-demo.12) (2026-04-04)
+
+### Correções
+
+* **admin-plus:** Exp6 - reduce TS errors batch 2 (895->846) ([69e1c80](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/69e1c803b4bf5f65c85c02921cb81f29ce423407))
+
 ## [1.0.0-demo.11](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.10...v1.0.0-demo.11) (2026-04-04)
 
 ### Correções
