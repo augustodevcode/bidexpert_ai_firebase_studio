@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.10](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.9...v1.0.0-demo.10) (2026-04-04)
+
+### Correções
+
+* **admin-plus): Exp4 — reduce TS errors 1423→1350 (-73:** enum casts, handler sigs, typed maps, DataTablePlus props, Field form type ([d22a907](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d22a907b55e5b2e9ee30176d8b7546d8992c96bf))
+
 ## [1.0.0-demo.9](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.8...v1.0.0-demo.9) (2026-04-04)
 
 ### Correções
