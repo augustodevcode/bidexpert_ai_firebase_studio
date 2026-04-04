@@ -18,6 +18,7 @@ import type {
     AuctionPreparationHabilitation,
     AuctionPreparationWin,
 } from '@/types';
+export type { AuctionFormData };
 import { AuctionService } from '@/services/auction.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { prisma } from '@/lib/prisma';

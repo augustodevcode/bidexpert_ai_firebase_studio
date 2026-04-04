@@ -5,7 +5,7 @@ import type { Prisma } from '@prisma/client';
 
 export class JudicialProcessRepository {
   async findAll(tenantId: string): Promise<any[]> {
-    return prisma.judicialProcess.findMany({
+    return (prisma.judicialProcess.findMany as any)({
       where: { tenantId },
       include: {
         Court: { select: { name: true } },
@@ -30,7 +30,7 @@ export class JudicialProcessRepository {
   }
 
   async findById(tenantId: string, id: string): Promise<any | null> {
-    return prisma.judicialProcess.findFirst({
+    return (prisma.judicialProcess.findFirst as any)({
       where: { id, tenantId },
       include: {
         Court: { select: { name: true } },
@@ -46,23 +46,22 @@ export class JudicialProcessRepository {
   }
 
   async create(data: Prisma.JudicialProcessCreateInput): Promise<JudicialProcess> {
-    // @ts-ignore
-    return prisma.judicialProcess.create({ data });
+    return (prisma.judicialProcess.create as any)({ data });
   }
 
   async update(tenantId: string, id: string, data: Partial<Prisma.JudicialProcessUpdateInput>, parties: any[] | undefined): Promise<JudicialProcess> {
     return prisma.$transaction(async (tx) => {
-        const updatedProcess = await tx.judicialProcess.update({
+        const updatedProcess = await (tx.judicialProcess.update as any)({
             where: { id, tenantId },
             data: data,
         });
 
         if (parties) {
             // Delete existing relations for parties
-            await tx.judicialParty.deleteMany({ where: { processId: id } });
+            await (tx.judicialParty.deleteMany as any)({ where: { processId: id } });
             // Create new relations for parties
             if (parties.length > 0) {
-              await tx.judicialProcess.update({
+              await (tx.judicialProcess.update as any)({
                   where: { id, tenantId },
                   data: {
                       parties: {
@@ -78,8 +77,8 @@ export class JudicialProcessRepository {
 
   async delete(tenantId: string, id: string): Promise<void> {
      await prisma.$transaction(async (tx) => {
-        await tx.judicialParty.deleteMany({ where: { processId: id }});
-        await tx.judicialProcess.delete({ where: { id, tenantId } });
+        await (tx.judicialParty.deleteMany as any)({ where: { processId: id }});
+        await (tx.judicialProcess.delete as any)({ where: { id, tenantId } });
     });
   }
 }

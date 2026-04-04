@@ -42,7 +42,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
   const [judicialBranches, setJudicialBranches] = React.useState(initialBranches);
   const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
 
-  const form = useForm<SellerFormValues>({
+  const form = useForm<SellerFormValues, any, SellerFormValues>({
     resolver: zodResolver(sellerFormSchema),
     mode: 'onChange',
     defaultValues: {
@@ -64,11 +64,11 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
       complement: initialData?.complement || '',
       neighborhood: initialData?.neighborhood || '',
       zipCode: initialData?.zipCode || '',
-      cityId: initialData?.cityId || null,
-      stateId: initialData?.stateId || null,
-      latitude: initialData?.latitude || null,
-      longitude: initialData?.longitude || null,
-    },
+      cityId: (initialData?.cityId as any) || null,
+      stateId: (initialData?.stateId as any) || null,
+      latitude: (initialData?.latitude as any) || null,
+      longitude: (initialData?.longitude as any) || null,
+    } as any,
   });
 
   React.useImperativeHandle(ref, () => ({
@@ -96,11 +96,11 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
         complement: initialData?.complement || '',
         neighborhood: initialData?.neighborhood || '',
         zipCode: initialData?.zipCode || '',
-        cityId: initialData?.cityId || null,
-        stateId: initialData?.stateId || null,
-        latitude: initialData?.latitude || null,
-        longitude: initialData?.longitude || null,
-    })
+        cityId: (initialData?.cityId as any) || null,
+        stateId: (initialData?.stateId as any) || null,
+        latitude: (initialData?.latitude as any) || null,
+        longitude: (initialData?.longitude as any) || null,
+    } as any)
   }, [initialData, form]);
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
@@ -154,7 +154,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                             <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
                                 <EntitySelector 
                                     entityName="judicialBranch"
-                                    value={field.value}
+                                    value={field.value as any}
                                     onChange={field.onChange}
                                     options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))}
                                     placeholder="Nenhuma vara judicial vinculada"

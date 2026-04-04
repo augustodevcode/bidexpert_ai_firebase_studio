@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { judicialProcessFormSchema, type JudicialProcessFormValues } from './judicial-process-form-schema';
 import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, MediaItem, DocumentType, JudicialActionType } from '@/types';
-import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot, Eye } from 'lucide-react';
+import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot, Eye, Pencil } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { createSeller, getSeller } from '@/app/admin/sellers/actions';
@@ -129,7 +129,7 @@ export default function JudicialProcessForm({
   const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
 
-  const form = useForm<JudicialProcessFormValues>({
+  const form = useForm<JudicialProcessFormValues, any, JudicialProcessFormValues>({
     resolver: zodResolver(judicialProcessFormSchema),
     mode: 'onChange',
     defaultValues: {
@@ -139,10 +139,10 @@ export default function JudicialProcessForm({
       districtId: initialData?.districtId || '',
       branchId: initialData?.branchId || '',
       sellerId: initialData?.sellerId || null,
-      parties: initialData?.parties?.map(p => ({...p, id: p.id || `temp-${Math.random()}`})) || [{ name: '', partyType: 'AUTOR' }],
+      parties: (initialData?.parties?.map(p => ({...p, id: p.id || `temp-${Math.random()}`})) || [{ name: '', partyType: 'AUTOR' }]) as any,
       propertyMatricula: initialData?.propertyMatricula || '',
       propertyRegistrationNumber: initialData?.propertyRegistrationNumber || '',
-      actionType: initialData?.actionType || '',
+      actionType: (initialData?.actionType || undefined) as any,
       actionDescription: initialData?.actionDescription || '',
       actionCnjCode: initialData?.actionCnjCode || '',
     },

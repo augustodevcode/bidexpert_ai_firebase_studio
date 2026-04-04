@@ -63,7 +63,7 @@ export default function DirectSaleForm({
   const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
 
-  const form = useForm<DirectSaleOfferFormData>({
+  const form = useForm<DirectSaleOfferFormData, any, DirectSaleOfferFormData>({
     resolver: zodResolver(directSaleOfferFormSchema),
     defaultValues: {
       title: initialData?.title || '',
@@ -77,11 +77,11 @@ export default function DirectSaleForm({
       locationCity: initialData?.locationCity || '',
       locationState: initialData?.locationState || '',
       imageUrl: initialData?.imageUrl || '',
-      imageMediaId: initialData?.imageMediaId || null,
+      imageMediaId: (initialData?.imageMediaId as any) || null,
       dataAiHint: initialData?.dataAiHint || '',
-      expiresAt: initialData?.expiresAt ? new Date(initialData.expiresAt as string) : undefined,
-      galleryImageUrls: initialData?.galleryImageUrls || [],
-      mediaItemIds: initialData?.mediaItemIds || [],
+      expiresAt: initialData?.expiresAt ? new Date(initialData.expiresAt as unknown as string) : undefined,
+      galleryImageUrls: (initialData?.galleryImageUrls as string[] | undefined) || [],
+      mediaItemIds: (initialData?.mediaItemIds as any) || [],
     },
   });
   

@@ -179,9 +179,9 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
             case 'lotNumber_desc':
               return (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0);
             case 'endDate_asc':
-                return new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime();
+                return new Date(a.endDate as unknown as string).getTime() - new Date(b.endDate as unknown as string).getTime();
             case 'endDate_desc':
-                return new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime();
+                return new Date(b.endDate as unknown as string).getTime() - new Date(a.endDate as unknown as string).getTime();
             case 'price_asc':
                 return a.price - b.price;
             case 'price_desc':
@@ -192,7 +192,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
             default:
                 if (a.status === 'ABERTO_PARA_LANCES' && b.status !== 'ABERTO_PARA_LANCES') return -1;
                 if (a.status !== 'ABERTO_PARA_LANCES' && b.status === 'ABERTO_PARA_LANCES') return 1;
-                return new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime();
+                return new Date(a.endDate as unknown as string).getTime() - new Date(b.endDate as unknown as string).getTime();
         }
     });
   }, [auction.lots, sortBy, lotSearchTerm, activeFilters, allCategories]);
@@ -233,7 +233,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
     />
   );
   
-  const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
+  const displayLocation = (auction as any).city && (auction as any).state ? `${(auction as any).city} - ${(auction as any).state}` : (auction as any).state || (auction as any).city || 'Nacional';
 
   const auctioneerName = auction.auctioneer?.name || auction.auctioneerName;
   const getAuctioneerInitial = () => {
@@ -253,7 +253,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-0">
                 <div className="relative aspect-square md:aspect-[3/4] bg-muted">
                   <Image
-                      src={auction.imageUrl || 'https://images.unsplash.com/photo-1589307904488-7d60ff29c975?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsZWlsJUMzJUEzbyUyMGp1ZGljaWFsfGVufDB8fHx8MTc1MTg0NDg4Mnww&ixlib=rb-4.1.0&q=80&w=1080'}
+                      src={(auction as any).imageUrl || 'https://images.unsplash.com/photo-1589307904488-7d60ff29c975?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsZWlsJUMzJUEzbyUyMGp1ZGljaWFsfGVufDB8fHx8MTc1MTg0NDg4Mnww&ixlib=rb-4.1.0&q=80&w=1080'}
                       alt={auction.title}
                       fill
                       className="object-cover"
@@ -261,7 +261,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                       data-ai-hint={auction.dataAiHint || 'imagem leilao'}
                   />
                   <div className="absolute top-2 left-2 flex flex-col items-start gap-1.5 z-10">
-                      <Badge variant="outline" className={`bg-background/80 font-semibold ${getAuctionStatusColor(auction.status)}`}>{getAuctionStatusText(auction.status)}</Badge>
+                      <Badge variant="outline" className={`bg-background/80 font-semibold ${getAuctionStatusColor(auction.status as any)}`}>{getAuctionStatusText(auction.status as any)}</Badge>
                       {auction.isFeaturedOnMarketplace && <Badge className="bg-amber-400 text-amber-900">DESTAQUE</Badge>}
                   </div>
                 </div>
@@ -289,7 +289,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                   </div>
 
                   <div className="mt-auto pt-6 flex flex-wrap gap-2">
-                      <GoToLiveAuctionButton auction={auction} dataAiId="auction-details-go-live-btn" />
+                      <GoToLiveAuctionButton auction={auction as any} dataAiId="auction-details-go-live-btn" />
                       <Button variant="outline">
                           <Heart className="h-4 w-4 mr-2" /> Favoritar Leilão
                       </Button>
@@ -324,7 +324,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
               <CardContent className="p-4 md:p-6">
                 {/* Timeline Component - Updated to use BidExpertAuctionStagesTimeline */}
                 <BidExpertAuctionStagesTimeline
-                    auctionOverallStartDate={new Date(auction.auctionDate as string)}
+                    auctionOverallStartDate={new Date(auction.auctionDate as unknown as string)}
                     stages={auction.auctionStages || []}
                     variant="extended"
                     auction={auction}

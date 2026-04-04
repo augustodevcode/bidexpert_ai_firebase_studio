@@ -1,0 +1,2 @@
+src/app/admin/lots-v2/components/lot-form-v2.tsx(133,6): error TS1127: Invalid character.
+src/app/admin/lots-v2/components/lot-form-v2.tsx(135,42): error TS1127: Invalid character.

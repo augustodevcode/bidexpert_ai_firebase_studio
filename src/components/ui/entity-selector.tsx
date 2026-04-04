@@ -42,6 +42,7 @@ interface EntitySelectorProps {
   onChange: (value: string | null) => void;
   options: { value: string | bigint; label: string; [key: string]: any }[];
   entityName?: string; 
+  createNewUrl?: string;
   placeholder: string;
   searchPlaceholder: string;
   emptyStateMessage: string;

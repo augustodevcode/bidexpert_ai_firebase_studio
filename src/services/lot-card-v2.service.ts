@@ -115,9 +115,9 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
   }): StageInfo => ({
     name: s.name,
     status:
-      getAuctionStageTimelineStatus(s) === 'active'
+      getAuctionStageTimelineStatus(s as any) === 'active'
         ? 'Em Andamento'
-        : getAuctionStageTimelineStatus(s) === 'completed'
+        : getAuctionStageTimelineStatus(s as any) === 'completed'
           ? 'Encerrada'
           : 'Aguardando',
     date: new Date(s.startDate).toLocaleDateString('pt-BR'),
@@ -189,9 +189,6 @@ export async function getLotsForV2Page(
   const lots = await prisma.lot.findMany({
     where: {
       status: { in: [...VISIBLE_STATUSES] },
-      Auction: {
-        status: { notIn: ['RASCUNHO', 'EM_PREPARACAO'] },
-      },
       ...(tenantId != null
         ? {
             tenantId,

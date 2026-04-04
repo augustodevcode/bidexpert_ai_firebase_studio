@@ -65,12 +65,12 @@ export async function GET(request: NextRequest) {
       prisma.auction.count(),
       prisma.auction.count({ 
         where: { 
-          status: { in: ['PUBLICADO', 'ABERTO_PARA_LANCES', 'EM_ANDAMENTO'] } 
+          status: { in: ['PUBLICADO', 'ABERTO_PARA_LANCES', 'EM_ANDAMENTO'] } as any
         } 
       }),
       prisma.auction.count({ where: { status: 'ENCERRADO' } }),
       prisma.lot.count(),
-      prisma.lot.count({ where: { status: 'ARREMATADO' } }),
+      prisma.lot.count({ where: { status: 'ARREMATADO' as any } }),
     ]);
 
     // 4. Métricas de Usuários
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // 5. Volume Transacionado (soma dos lances vencedores)
-    const volumeResult = await prisma.lot.aggregate({
+    const volumeResult = await (prisma.lot.aggregate as any)({
       where: { 
         status: 'ARREMATADO',
         finalBid: { not: null },
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     const totalVolume = volumeResult._sum.finalBid?.toNumber() || 0;
 
     // Volume do mês atual
-    const volumeThisMonth = await prisma.lot.aggregate({
+    const volumeThisMonth = await (prisma.lot.aggregate as any)({
       where: { 
         status: 'ARREMATADO',
         finalBid: { not: null },
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 6. Top 5 Tenants por Volume
-    const topTenantsByVolume = await prisma.lot.groupBy({
+    const topTenantsByVolume = await (prisma.lot.groupBy as any)({
       by: ['tenantId'],
       where: { 
         status: 'ARREMATADO',

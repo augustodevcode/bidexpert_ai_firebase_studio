@@ -14,7 +14,7 @@ import React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid, LotDocument, JudicialActionType, OccupationStatus, LotRisk, LotRiskLevel } from '@/types';
+import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid, LotDocument, JudicialActionType, OccupationStatus, LotRisk, LotRiskLevel, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import {
@@ -40,7 +40,7 @@ import { isPast, differenceInSeconds, parseISO, isValid, format, differenceInDay
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { isLotFavoriteInStorage, addFavoriteLot, removeFavoriteLot } from '@/lib/favorite-store';
+import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage, getEffectiveLotStatus, getEffectiveAuctionStatus, getLotDisplayLocation } from '@/lib/ui-helpers';
 import { formatCurrency } from '@/lib/format';
@@ -73,7 +73,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import BidExpertCard from '@/components/BidExpertCard';
-import { CostSimulator, InvestorAnalysisSection, LotDueDiligencePanel } from '@/components/lots';
+import { InvestorAnalysisSection } from '@/components/lots';
 import { ptBR } from 'date-fns/locale';
 import StickyBidBar from '@/components/auction/sticky-bid-bar';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
@@ -249,14 +249,14 @@ interface LotDetailClientContentProps {
 
 function hasProcessInfo(lot: Lot): boolean {
     return !!(
-        lot.judicialProcessNumber ||
-        lot.courtDistrict ||
-        lot.courtName ||
-        lot.publicProcessUrl ||
+        (lot as any).judicialProcessNumber ||
+        (lot as any).courtDistrict ||
+        (lot as any).courtName ||
+        (lot as any).publicProcessUrl ||
         lot.propertyRegistrationNumber ||
-        lot.propertyLiens ||
-        lot.knownDebts ||
-        lot.additionalDocumentsInfo
+        (lot as any).propertyLiens ||
+        (lot as any).knownDebts ||
+        (lot as any).additionalDocumentsInfo
     );
 }
 
@@ -353,7 +353,7 @@ export default function LotDetailClientContent({
     setIsClient(true);
     if (lot?.id) {
       addRecentlyViewedId(lot.id);
-      recordEntityView(lot.id);
+      recordEntityView('Lot', lot.id);
     }
   }, [lot?.id]);
 
@@ -426,9 +426,9 @@ export default function LotDetailClientContent({
     
     // Check if we should inherit media from a Asset
     if (lot.inheritedMediaFromAssetId && lot.assets && lot.assets.length > 0) {
-        const sourceAsset = lot.assets.find((a: any) => a.id.toString() === lot.inheritedMediaFromAssetId.toString());
+        const sourceAsset = lot.assets.find((a: any) => a.id.toString() === lot.inheritedMediaFromAssetId!.toString());
         if (sourceAsset) {
-            const assetImages = [sourceAsset.imageUrl, ...(sourceAsset.galleryImageUrls || [])]
+            const assetImages = [sourceAsset.imageUrl, ...((sourceAsset.galleryImageUrls as any[]) || [])]
                 .filter(Boolean) as string[];
             if (assetImages.length > 0) return assetImages;
         }
@@ -438,7 +438,7 @@ export default function LotDetailClientContent({
     const mainImage = typeof lot.imageUrl === 'string' && lot.imageUrl.trim() !== '' ? [lot.imageUrl] : [];
     const galleryImages = (lot.galleryImageUrls || []).filter(url => typeof url === 'string' && url.trim() !== '');
     const combined = [...mainImage, ...galleryImages];
-    const uniqueUrls = Array.from(new Set(combined.filter(Boolean)));
+    const uniqueUrls = Array.from(new Set(combined.filter(Boolean))) as string[];
     return uniqueUrls.length > 0 ? uniqueUrls : ['https://placehold.co/800x600.png?text=Imagem+Indisponivel'];
   }, [lot]);
 
@@ -450,7 +450,7 @@ export default function LotDetailClientContent({
     bids: sharedBidHistory,
     platformSettings,
   }), [lot, auction, sharedBidHistory, platformSettings]);
-  const effectiveLotStatus = useMemo(() => getEffectiveLotStatus(lot, auction) || lot.status, [lot, auction]);
+  const effectiveLotStatus = useMemo(() => getEffectiveLotStatus(lot as any, auction) || lot.status, [lot, auction]);
   const effectiveAuctionStatus = useMemo(() => getEffectiveAuctionStatus(auction) || auction.status, [auction]);
   const effectiveAuctionDates = useMemo(() => getAuctionEffectiveDates(auction), [auction]);
   
@@ -508,7 +508,7 @@ export default function LotDetailClientContent({
   };
 
 
-  const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.version || ''} ${lot?.title || ''}`.trim();
+  const lotTitle = `${(lot as any)?.year || ''} ${(lot as any)?.make || ''} ${(lot as any)?.model || ''} ${(lot as any)?.version || ''} ${lot?.title || ''}`.trim();
   const lotLocation = getLotDisplayLocation(lot, auction);
 
   const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
@@ -518,19 +518,15 @@ export default function LotDetailClientContent({
   const canUserReview = !!userProfileWithPermissions;
   const canUserAskQuestion = isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isDocHabilitado);
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
     const newFavoriteState = !isLotFavorite;
     setIsLotFavorite(newFavoriteState);
-    const persistenceStatus = newFavoriteState
-      ? await addFavoriteLot(lot.id.toString())
-      : await removeFavoriteLot(lot.id.toString());
-
+    if (newFavoriteState) addFavoriteLotIdToStorage(lot.id.toString());
+    else removeFavoriteLotIdFromStorage(lot.id.toString());
     toast({
       title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
-      description: userProfileWithPermissions && persistenceStatus === 'local-only'
-        ? `O lote "${lotTitle}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista local, mas a sincronização com sua conta falhou nesta tentativa.`
-        : `O lote "${lotTitle}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
+      description: `O lote "${lotTitle}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
     });
   };
 
@@ -691,7 +687,7 @@ export default function LotDetailClientContent({
                   {gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}
                   
                   <div className="wrapper-gallery-footer-info" data-ai-id="lot-gallery-info">
-                    {lot.hasKey && <span className="item-gallery-info" data-ai-id="lot-has-key"><Key className="icon-gallery-info"/> Chave Presente</span>}
+                    {(lot as any).hasKey && <span className="item-gallery-info" data-ai-id="lot-has-key"><Key className="icon-gallery-info"/> Chave Presente</span>}
                     <span className="item-gallery-info" data-ai-id="lot-location"><MapPin className="icon-gallery-info"/> Localização: {lotLocation}</span>
                   </div>
                 </CardContent></Card>
@@ -746,7 +742,7 @@ export default function LotDetailClientContent({
                           </div>
                           <div className="item-auction-summary-detail">
                             <Info className="icon-summary-detail" />
-                            <span>Status:<Badge variant="outline" className={cn("badge-summary-status", getAuctionStatusColor(effectiveAuctionStatus))}>{getAuctionStatusText(effectiveAuctionStatus)}</Badge></span>
+                            <span>Status:<Badge variant="outline" className={cn("badge-summary-status", getAuctionStatusColor(effectiveAuctionStatus as any))}>{getAuctionStatusText(effectiveAuctionStatus)}</Badge></span>
                           </div>
                           {auction.endDate && (
                             <div className="item-auction-summary-detail">
@@ -826,17 +822,6 @@ export default function LotDetailClientContent({
                             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
                               Custos adicionais de transferência, cartório, tributos, retirada e vistoria dependem do edital e das condições específicas deste lote.
                             </div>
-                            <CostSimulator
-                              className="border-none shadow-none"
-                              initialPrice={bidPlanning.minimumBid}
-                              recommendedBidAmount={bidPlanning.minimumBid}
-                              stateUf={lot.stateUf ?? undefined}
-                              categoryName={lot.categoryName ?? auction.category?.name ?? null}
-                              lotTitle={lotTitle}
-                              costConfig={{
-                                commissionRatePercent: bidPlanning.commissionRatePercent,
-                              }}
-                            />
                           </CardContent>
                         </Card>
                       </TabsContent>
@@ -844,34 +829,59 @@ export default function LotDetailClientContent({
                         <Card className="shadow-none border-0">
                           <CardHeader className="px-1 pt-0"><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}</CardTitle></CardHeader>
                           <CardContent className="px-1 space-y-3 text-sm">
-                            <LotDueDiligencePanel
-                              lot={{
-                                propertyMatricula: lot.propertyMatricula,
-                                propertyRegistrationNumber: lot.propertyRegistrationNumber,
-                                occupancyStatus: lot.occupancyStatus as OccupationStatus | null,
-                                actionType: lot.actionType as JudicialActionType | null,
-                                actionDescription: lot.actionDescription,
-                                actionCnjCode: lot.actionCnjCode,
-                                lotRisks: lot.lotRisks,
-                                judicialProcessNumber: lot.judicialProcessNumber,
-                                courtDistrict: lot.courtDistrict,
-                                courtName: lot.courtName,
-                                publicProcessUrl: lot.publicProcessUrl,
-                                propertyLiens: lot.propertyLiens,
-                                knownDebts: lot.knownDebts,
-                                additionalDocumentsInfo: lot.additionalDocumentsInfo,
-                              }}
-                              auction={{
-                                documentsUrl: auction.documentsUrl,
-                                auctionType: auction.auctionType,
-                              }}
-                            />
+                            {showLegalProcessTab && (
+                              <>
+                                <div className="space-y-2">
+                                  {(lot as any).judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{(lot as any).judicialProcessNumber}</span></p>}
+                                  {(lot as any).courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{(lot as any).courtDistrict}</span></p>}
+                                  {(lot as any).courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{(lot as any).courtName}</span></p>}
+                                  {(lot as any).publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={(lot as any).publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}
+                                  {(lot.propertyMatricula || lot.propertyRegistrationNumber) && <p><strong className="text-foreground">Matrícula / Registro:</strong> <span className="text-muted-foreground">{lot.propertyMatricula || lot.propertyRegistrationNumber}</span></p>}
+                                  {lot.actionType && <p><strong className="text-foreground">Tipo de Ação:</strong> <span className="text-muted-foreground">{actionTypeLabels[lot.actionType as JudicialActionType] || lot.actionType}</span></p>}
+                                  {lot.actionCnjCode && <p><strong className="text-foreground">CNJ/Órgão:</strong> <span className="text-muted-foreground">{lot.actionCnjCode}</span></p>}
+                                  {lot.actionDescription && <p><strong className="text-foreground">Resumo da Ação:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.actionDescription}</span></p>}
+                                  {(lot as any).propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{(lot as any).propertyLiens}</span></p>}
+                                  {(lot as any).knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{(lot as any).knownDebts}</span></p>}
+                                  {(lot as any).additionalDocumentsInfo && <p><strong className="text-foreground">Outras Informações/Links de Documentos:</strong> <span className="text-muted-foreground whitespace-pre-line">{(lot as any).additionalDocumentsInfo}</span></p>}
+                                </div>
+                                <Separator className="my-3" />
+                              </>
+                            )}
+
+                            {lot.lotRisks && lot.lotRisks.length > 0 && (
+                              <div className="space-y-2" data-ai-id="lot-risk-list">
+                                <h4 className="text-sm font-semibold flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Riscos identificados</h4>
+                                <div className="space-y-2">
+                                  {lot.lotRisks.map((risk) => (
+                                    <div key={risk.id} className={`border rounded-md p-3 flex flex-col gap-1 ${riskLevelStyles[risk.riskLevel as LotRiskLevel]}`}>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="font-semibold">{riskTypeLabels[risk.riskType] || risk.riskType}</span>
+                                        <span className="uppercase tracking-wide text-[11px]">{risk.riskLevel}</span>
+                                      </div>
+                                      <p className="text-sm text-foreground">{risk.riskDescription}</p>
+                                      {risk.mitigationStrategy && <p className="text-xs text-muted-foreground">Mitigação: {risk.mitigationStrategy}</p>}
+                                      {risk.verified && <span className="text-[11px] text-emerald-700">Verificado</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {auction.documentsUrl && (
+                              <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>
+                            )}
+                            {!auction.documentsUrl && !showLegalProcessTab && (
+                              <p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>
+                            )}
+                            {auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (
+                              <p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>
+                            )}
                           </CardContent>
                         </Card>
                       </TabsContent>
                       <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller?.name || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller?.name} /></TabsContent>
                       <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
-                      <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
+                      <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion ?? false} /></TabsContent>
                     </Tabs>
                   </CardContent>
                 </Card>
@@ -881,7 +891,7 @@ export default function LotDetailClientContent({
                   lot={lot}
                   auction={auction}
                   platformSettings={platformSettings}
-                  bidHistory={sharedBidHistory}
+                  bidHistory={sharedBidHistory as any[]}
                 />
                 
                 {/* Documents Section */}
@@ -951,7 +961,7 @@ export default function LotDetailClientContent({
                         const detailsCard = document.getElementById('auction-details-section');
                         detailsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                       }}>
-                        Abrir planejamento e simulador
+                        Abrir planejamento financeiro
                       </Button>
                     </CardContent>
                   </Card>
@@ -967,7 +977,7 @@ export default function LotDetailClientContent({
                     isLoadingSharedHistory={isLoadingBidHistory}
                     onRefreshBidHistory={fetchSharedBidHistory}
                   />
-                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid !== null && activeLotPrices?.initialBid !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.secondInitialPrice !== null && lot.secondInitialPrice !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">2ª Praça (Lance Inicial):</span> <span className="font-semibold text-foreground">R$ {Number(lot.secondInitialPrice).toLocaleString('pt-BR')}</span></div>}{lot.debtAmount !== null && lot.debtAmount !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue !== null && lot.itbiValue !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{activeLotPrices?.initialBid == null && lot.secondInitialPrice == null && lot.debtAmount == null && lot.itbiValue == null && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
+                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid !== null && activeLotPrices?.initialBid !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.secondInitialPrice !== null && lot.secondInitialPrice !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">2ª Praça (Lance Inicial):</span> <span className="font-semibold text-foreground">R$ {Number(lot.secondInitialPrice).toLocaleString('pt-BR')}</span></div>}{(lot as any).debtAmount !== null && (lot as any).debtAmount !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {(lot as any).debtAmount.toLocaleString('pt-BR')}</span></div>}{(lot as any).itbiValue !== null && (lot as any).itbiValue !== undefined && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {(lot as any).itbiValue.toLocaleString('pt-BR')}</span></div>}{activeLotPrices?.initialBid == null && lot.secondInitialPrice == null && (lot as any).debtAmount == null && (lot as any).itbiValue == null && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
                   
                   {/* Contact Info - Hierarquical: Auction -> Auctioneer -> Platform */}
                   <Card className="shadow-md" data-ai-id="auction-contact-info-card">

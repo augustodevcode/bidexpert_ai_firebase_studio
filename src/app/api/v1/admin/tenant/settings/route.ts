@@ -241,7 +241,7 @@ export async function PATCH(request: NextRequest) {
     // 5. Executar atualizações em transação
     const result = await prisma.$transaction(async (tx: TransactionClient) => {
       // Atualizar Tenant
-      let updatedTenant = existingTenant;
+      let updatedTenant: any = existingTenant;
       if (Object.keys(tenantUpdates).length > 0) {
         updatedTenant = await tx.tenant.update({
           where: { id: tenantIdBigInt },
@@ -343,13 +343,13 @@ export async function GET(request: NextRequest) {
         settings: true,
         _count: {
           select: {
-            users: true,
+            users: true as any,
             auctions: true,
             lots: true,
           },
         },
       },
-    });
+    }) as any;
 
     if (!tenant) {
       return NextResponse.json({

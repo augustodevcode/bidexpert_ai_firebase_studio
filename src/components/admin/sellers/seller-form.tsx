@@ -49,19 +49,19 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
   const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const form = useForm<SellerFormValues>({
+  const form = useForm<SellerFormValues, any, SellerFormValues>({
     resolver: zodResolver(sellerFormSchema),
     mode: 'onChange',
-    defaultValues: initialData || {},
+    defaultValues: (initialData || {}) as any,
   });
   
   React.useEffect(() => {
-    form.reset(initialData || {});
+    form.reset((initialData || {}) as any);
   }, [initialData, form]);
 
   const { formState } = form;
 
-  useImperativeHandle(ref, () => ({
+  React.useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmit),
     formState: formState,
   }));

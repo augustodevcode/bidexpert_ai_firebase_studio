@@ -19,12 +19,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { judicialProcessFormSchema, type JudicialProcessFormValues } from './judicial-process-form-schema';
+import { judicialProcessFormSchema, type JudicialProcessFormValues } from '@/app/admin/judicial-processes/judicial-process-form-schema';
 import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, MediaItem, DocumentType } from '@/types';
 import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { createSeller, getSeller } from '@/app/admin/sellers/actions';
+import { createSeller, getSeller, getSellers } from '@/app/admin/sellers/actions';
 import { useDropzone } from 'react-dropzone';
 import { getMediaItems } from '@/app/admin/media/actions';
 import { useAuth } from '@/contexts/auth-context';
@@ -34,10 +34,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import DataValidationModal from '@/components/ai/data-validation-modal';
 import EntitySelector from '@/components/ui/entity-selector';
-import { getCourts } from '../courts/actions';
-import { getJudicialDistricts } from '../judicial-districts/actions';
-import { getJudicialBranches } from '../judicial-branches/actions';
-import { getSellers } from '../sellers/actions';
+import { getCourts } from '@/app/admin/courts/actions';
+import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
+import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 
 
 interface JudicialProcessFormProps {
@@ -115,7 +114,7 @@ export default function JudicialProcessForm({
   const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
 
-  const form = useForm<JudicialProcessFormValues>({
+  const form = useForm<JudicialProcessFormValues, any, JudicialProcessFormValues>({
     resolver: zodResolver(judicialProcessFormSchema),
     mode: 'onChange',
     defaultValues: {
@@ -126,7 +125,7 @@ export default function JudicialProcessForm({
       branchId: initialData?.branchId || '',
       sellerId: initialData?.sellerId || null,
       parties: initialData?.parties?.map(p => ({...p, id: p.id || `temp-${Math.random()}`})) || [{ name: '', partyType: 'AUTOR' }],
-    },
+    } as any,
   });
 
   const fetchProcessDocuments = React.useCallback(async () => {
