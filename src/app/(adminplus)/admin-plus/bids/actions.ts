@@ -1,6 +1,6 @@
 /**
  * Server actions for the Bid entity (Admin Plus CRUD).
- * FK includes: Lot (title), Auction (title), User (name).
+ * FK includes: Lot (title), Auction (title), User (fullName).
  */
 'use server';
 
@@ -21,7 +21,7 @@ function toRow(r: Record<string, unknown>): BidRow {
     auctionId: String(r.auctionId),
     auctionTitle: auction.title ? String(auction.title) : '',
     bidderId: String(r.bidderId),
-    bidderName: user.name ? String(user.name) : '',
+    bidderName: user.fullName ? String(user.fullName) : '',
     amount: Number(r.amount ?? 0),
     status: String(r.status ?? 'ATIVO'),
     bidOrigin: String(r.bidOrigin ?? 'MANUAL'),
@@ -37,7 +37,7 @@ function toRow(r: Record<string, unknown>): BidRow {
 const FK_INCLUDE = {
   Lot: { select: { id: true, title: true } },
   Auction: { select: { id: true, title: true } },
-  User: { select: { id: true, name: true } },
+  User: { select: { id: true, fullName: true } },
 };
 
 export const listBids = createAdminAction<
