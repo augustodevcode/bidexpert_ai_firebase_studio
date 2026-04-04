@@ -1,5 +1,5 @@
 // src/lib/ui-helpers.ts
-import type { Asset, Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage, AuctionType } from '@/types';
+import type { Asset, Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage, AuctionType, LotStageDetails } from '@/types';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle, Gavel, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { isPast, isFuture } from 'date-fns';
 import React from 'react';
@@ -390,12 +390,16 @@ export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initial
   if (!lot) return null;
 
   // If there's a specific price for the active stage, use it
-  if (activeStageId && lot.stageDetails) {
-    const stagePrice = lot.stageDetails.find(p => p.stageId === activeStageId);
+  const stageDetails = Array.isArray(lot.stageDetails)
+    ? (lot.stageDetails as LotStageDetails[])
+    : [];
+
+  if (activeStageId && stageDetails.length > 0) {
+    const stagePrice = stageDetails.find(p => p.stageId === activeStageId);
     if (stagePrice) {
       return {
-        initialBid: stagePrice.initialBid,
-        bidIncrement: stagePrice.bidIncrement,
+        initialBid: stagePrice.initialBid ?? null,
+        bidIncrement: stagePrice.bidIncrement ?? null,
       };
     }
   }
