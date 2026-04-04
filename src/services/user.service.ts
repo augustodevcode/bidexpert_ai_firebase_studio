@@ -191,14 +191,14 @@ export class UserService {
         return { success: false, message: 'Usuário não encontrado.'};
       }
 
-      const userRoles = user.roles || [];
+      const userRoles = (user as any).UsersOnRoles || [];
       console.log('[UserService.updateUserRoles] Usuário encontrado:', {
         id: user.id.toString(),
         email: user.email,
-        currentRoles: userRoles.map((r: any) => ({ id: r.id.toString(), name: r.name }))
+        currentRoles: userRoles.map((r: any) => ({ id: r.id?.toString?.() ?? r.roleId?.toString?.(), name: r.Role?.name ?? r.name }))
       });
 
-      const tenantIds = user.tenants?.map((t: any) => t.tenantId) || [];
+      const tenantIds = (user as any).UsersOnTenants?.map((t: any) => t.tenantId) || [];
       console.log('[UserService.updateUserRoles] tenantIds do usuário:', tenantIds.map((id: bigint) => id.toString()));
 
       const roleIdsAsBigInt = roleIds.map(id => BigInt(id));
@@ -211,7 +211,7 @@ export class UserService {
       // Verificar se realmente atualizou
       const updatedUser = await this.userRepository.findById(BigInt(userId));
       console.log('[UserService.updateUserRoles] Perfis após atualização:', 
-        updatedUser?.roles?.map((r: any) => ({ id: r.roleId.toString(), name: r.role.name }))
+        (updatedUser as any)?.UsersOnRoles?.map((r: any) => ({ id: r.roleId.toString(), name: r.Role?.name }))
       );
       
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
@@ -243,7 +243,7 @@ export class UserService {
     try {
         await basePrisma.$transaction([
             basePrisma.usersOnRoles.deleteMany({ where: { userId: BigInt(id) } }),
-            basePrisma.usersOnTenants.deleteMany({ where: { userId: BigInt(id) } }),
+            basePrisma.userOnTenant.deleteMany({ where: { userId: BigInt(id) } }),
             basePrisma.userDocument.deleteMany({ where: { userId: BigInt(id) } }),
             basePrisma.bid.deleteMany({ where: { bidderId: BigInt(id) } }),
             basePrisma.userWin.deleteMany({ where: { userId: BigInt(id) } }),
@@ -274,7 +274,7 @@ export class UserService {
   async checkAndHabilitateUser(userId: string): Promise<void> {
     const user = await basePrisma.user.findUnique({
       where: { id: BigInt(userId) },
-      include: { documents: true, UsersOnTenants: true }
+      include: { UserDocument: true, UsersOnTenants: true }
     }) as any;
 
     if (!user || user.habilitationStatus === 'HABILITADO') {
@@ -293,7 +293,7 @@ export class UserService {
     });
 
     const submittedApprovedDocTypeIds = new Set(
-      user.documents?.filter((d: any) => d.status === 'APPROVED').map((d: any) => d.documentTypeId.toString()) || []
+      user.UserDocument?.filter((d: any) => d.status === 'APPROVED').map((d: any) => d.documentTypeId.toString()) || []
     );
 
     const allRequiredDocsApproved = requiredDocTypes.every(
@@ -306,12 +306,12 @@ export class UserService {
         data: { habilitationStatus: 'HABILITADO' }
       });
       const bidderRole = await this.roleRepository.findByNormalizedName('BIDDER');
-      if (bidderRole && user.tenants) {
-        for (const userTenant of user.tenants) {
+      if (bidderRole && user.UsersOnTenants) {
+        for (const userTenant of user.UsersOnTenants) {
             await basePrisma.usersOnRoles.createMany({
                 data: [{ 
                     userId: BigInt(userId), 
-                    roleId: bidderRole.id, 
+                    roleId: BigInt(bidderRole.id), 
                     assignedBy: 'system-habilitation' 
                 }],
                 skipDuplicates: true,

@@ -9,6 +9,7 @@ import { createAdminAction } from '@/lib/admin-plus/safe-action';
 import { prisma } from '@/lib/prisma';
 import { sanitizeResponse } from '@/lib/serialization-helper';
 import type { PaginatedResponse } from '@/lib/admin-plus/types';
+import { type LotStatus, type LotSaleMode } from '@prisma/client';
 import type { LotRow } from './types';
 
 function generatePublicId(): string {
@@ -129,15 +130,15 @@ export const createLot = createAdminAction<Record<string, unknown>, LotRow>(
       data: {
         publicId: generatePublicId(),
         title: String(input.title),
-        number: input.number != null ? Number(input.number) : undefined,
+        number: input.number != null ? String(input.number) : undefined,
         description: input.description ? String(input.description) : undefined,
         slug: input.slug ? String(input.slug) : undefined,
         price: Number(input.price),
         initialPrice: input.initialPrice != null && input.initialPrice !== '' ? Number(input.initialPrice) : undefined,
         secondInitialPrice: input.secondInitialPrice != null && input.secondInitialPrice !== '' ? Number(input.secondInitialPrice) : undefined,
         bidIncrementStep: input.bidIncrementStep != null && input.bidIncrementStep !== '' ? Number(input.bidIncrementStep) : undefined,
-        status: (input.status as string) || 'EM_BREVE',
-        saleMode: input.saleMode ? (input.saleMode as string) : undefined,
+        status: ((input.status as string) || 'EM_BREVE') as LotStatus,
+        saleMode: input.saleMode ? ((input.saleMode as string) as LotSaleMode) : undefined,
         type: String(input.type),
         condition: input.condition ? String(input.condition) : undefined,
         imageUrl: input.imageUrl ? String(input.imageUrl) : undefined,
@@ -173,15 +174,15 @@ export const updateLot = createAdminAction<Record<string, unknown>, LotRow>(
     const data: Record<string, unknown> = {};
 
     if (input.title !== undefined) data.title = String(input.title);
-    if (input.number !== undefined) data.number = input.number != null ? Number(input.number) : null;
+    if (input.number !== undefined) data.number = input.number != null ? String(input.number) : null;
     if (input.description !== undefined) data.description = input.description ? String(input.description) : null;
     if (input.slug !== undefined) data.slug = input.slug ? String(input.slug) : null;
     if (input.price !== undefined) data.price = Number(input.price);
     if (input.initialPrice !== undefined) data.initialPrice = input.initialPrice != null && input.initialPrice !== '' ? Number(input.initialPrice) : null;
     if (input.secondInitialPrice !== undefined) data.secondInitialPrice = input.secondInitialPrice != null && input.secondInitialPrice !== '' ? Number(input.secondInitialPrice) : null;
     if (input.bidIncrementStep !== undefined) data.bidIncrementStep = input.bidIncrementStep != null && input.bidIncrementStep !== '' ? Number(input.bidIncrementStep) : null;
-    if (input.status !== undefined) data.status = input.status as string;
-    if (input.saleMode !== undefined) data.saleMode = input.saleMode ? (input.saleMode as string) : null;
+    if (input.status !== undefined) data.status = (input.status as string) as LotStatus;
+    if (input.saleMode !== undefined) data.saleMode = input.saleMode ? ((input.saleMode as string) as LotSaleMode) : null;
     if (input.type !== undefined) data.type = String(input.type);
     if (input.condition !== undefined) data.condition = input.condition ? String(input.condition) : null;
     if (input.imageUrl !== undefined) data.imageUrl = input.imageUrl ? String(input.imageUrl) : null;

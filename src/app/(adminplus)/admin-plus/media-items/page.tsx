@@ -48,7 +48,7 @@ export default function MediaItemsPage() {
   const handleSubmit = useCallback(
     async (values: Record<string, unknown>) => {
       const res = editRow
-        ? await updateMediaItem({ id: editRow.id, data: values as Parameters<typeof updateMediaItem>[0]['data'] })
+        ? await updateMediaItem({ id: editRow.id, data: values as any })
         : await createMediaItem(values as Parameters<typeof createMediaItem>[0]);
       if (res?.success) {
         toast.success(editRow ? 'Mídia atualizada' : 'Mídia criada');

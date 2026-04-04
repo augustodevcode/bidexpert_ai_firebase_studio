@@ -83,7 +83,7 @@ export default function JudicialBranchesPage() {
         }}
       />
 
-      <DataTablePlus<JudicialBranchRow, unknown>
+      <DataTablePlus<JudicialBranchRow>
         data={data}
         isLoading={isLoading}
         columns={columns}

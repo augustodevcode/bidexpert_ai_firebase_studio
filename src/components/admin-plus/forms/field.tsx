@@ -37,7 +37,8 @@ interface FieldProps {
   dataAiId?: string;
   'data-ai-id'?: string;
   form?: UseFormReturn<any>;
-  control?: Control<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control?: any;
   register?: UseFormRegister<any>;
   error?: string | FieldError | { message?: string };
   children?: ((props: CompatChildProps) => ReactNode) | ReactNode;

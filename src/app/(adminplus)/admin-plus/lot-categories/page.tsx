@@ -48,7 +48,7 @@ export default function LotCategoriesPage() {
   const handleSubmit = useCallback(
     async (values: Record<string, unknown>) => {
       const res = editRow
-        ? await updateLotCategory({ id: editRow.id, data: values as Parameters<typeof updateLotCategory>[0]['data'] })
+        ? await updateLotCategory({ id: editRow.id, data: values as any })
         : await createLotCategory(values as Parameters<typeof createLotCategory>[0]);
       if (res?.success) {
         toast.success(editRow ? 'Categoria atualizada' : 'Categoria criada');

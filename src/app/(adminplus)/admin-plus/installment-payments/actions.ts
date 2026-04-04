@@ -27,7 +27,7 @@ function toRow(r: any): InstallmentPaymentRow {
 
 const include = { UserWin: { select: { id: true, Lot: { select: { title: true } } } } };
 
-export const listInstallmentPayments = createAdminAction(async (_input, ctx) => {
+export const listInstallmentPayments = createAdminAction(async (ctx, _input) => {
   const { page = 1, pageSize = 25, search = '', sortField = 'dueDate', sortOrder = 'asc' } = _input as any;
   const where: any = { tenantId: ctx.tenantIdBigInt };
   if (search) {
@@ -43,7 +43,7 @@ export const listInstallmentPayments = createAdminAction(async (_input, ctx) => 
   return sanitizeResponse({ data: data.map(toRow), total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
 });
 
-export const createInstallmentPayment = createAdminAction(async (_input, ctx) => {
+export const createInstallmentPayment = createAdminAction(async (ctx, _input) => {
   const d = installmentPaymentSchema.parse(_input);
   const r = await prisma.installmentPayment.create({
     data: {
@@ -51,19 +51,18 @@ export const createInstallmentPayment = createAdminAction(async (_input, ctx) =>
       installmentNumber: parseInt(d.installmentNumber, 10),
       amount: parseFloat(d.amount),
       dueDate: new Date(d.dueDate),
-      paidAt: d.paidAt ? new Date(d.paidAt) : null,
+      paymentDate: d.paidAt ? new Date(d.paidAt) : null,
       status: d.status as any,
       paymentMethod: d.paymentMethod || null,
       transactionId: d.transactionId || null,
       tenantId: ctx.tenantIdBigInt,
-      updatedAt: new Date(),
-    },
+    } as any,
     include,
   });
   return sanitizeResponse(toRow(r));
 });
 
-export const updateInstallmentPayment = createAdminAction(async (_input, ctx) => {
+export const updateInstallmentPayment = createAdminAction(async (ctx, _input) => {
   const { id, ...rest } = _input as any;
   const d = installmentPaymentSchema.parse(rest);
   const r = await prisma.installmentPayment.update({
@@ -73,7 +72,7 @@ export const updateInstallmentPayment = createAdminAction(async (_input, ctx) =>
       installmentNumber: parseInt(d.installmentNumber, 10),
       amount: parseFloat(d.amount),
       dueDate: new Date(d.dueDate),
-      paidAt: d.paidAt ? new Date(d.paidAt) : null,
+      paymentDate: d.paidAt ? new Date(d.paidAt) : null,
       status: d.status as any,
       paymentMethod: d.paymentMethod || null,
       transactionId: d.transactionId || null,
@@ -83,7 +82,7 @@ export const updateInstallmentPayment = createAdminAction(async (_input, ctx) =>
   return sanitizeResponse(toRow(r));
 });
 
-export const deleteInstallmentPayment = createAdminAction(async (_input, ctx) => {
+export const deleteInstallmentPayment = createAdminAction(async (ctx, _input) => {
   const { id } = _input as any;
   await prisma.installmentPayment.delete({ where: { id: BigInt(id) } });
   return { success: true };

@@ -36,9 +36,9 @@ export function NotificationForm({ open, onOpenChange, editData, onSuccess }: Pr
 
   useEffect(() => {
     if (!open) return;
-    listUsersAction({ page: 1, pageSize: 500 }).then(r => { if (r.success) setUsers(r.data.data.map((u: any) => ({ id: u.id, label: u.fullName || u.email }))); });
-    listLots({ page: 1, pageSize: 500 }).then(r => { if (r.success) setLots(r.data.data.map((l: any) => ({ id: l.id, label: l.title || `#${l.id}` }))); });
-    listAuctions({ page: 1, pageSize: 500 }).then(r => { if (r.success) setAuctions(r.data.data.map((a: any) => ({ id: a.id, label: a.title || `#${a.id}` }))); });
+    listUsersAction({ page: 1, pageSize: 500 }).then(r => { if (r.success && r.data?.data) setUsers(r.data.data.map((u: any) => ({ id: u.id, label: u.fullName || u.email }))); });
+    listLots({ page: 1, pageSize: 500 }).then(r => { if (r.success && r.data?.data) setLots(r.data.data.map((l: any) => ({ id: l.id, label: l.title || `#${l.id}` }))); });
+    listAuctions({ page: 1, pageSize: 500 }).then(r => { if (r.success && r.data?.data) setAuctions(r.data.data.map((a: any) => ({ id: a.id, label: a.title || `#${a.id}` }))); });
   }, [open]);
 
   useEffect(() => {

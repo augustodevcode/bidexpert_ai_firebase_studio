@@ -99,13 +99,13 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
       listStatesAction({ page: 1, pageSize: 100 }),
       listSellers({ page: 1, pageSize: 500 }),
     ]).then(([aRes, auRes, cRes, scRes, ciRes, stRes, seRes]) => {
-      if (aRes.success && aRes.data) setAuctions(aRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).title ?? (r as Record<string, unknown>).name ?? r.id) })));
-      if (auRes.success && auRes.data) setAuctioneers(auRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
-      if (cRes.success && cRes.data) setCategories(cRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
-      if (scRes.success && scRes.data) setSubcategories(scRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
-      if (ciRes.success && ciRes.data) setCities(ciRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
-      if (stRes.success && stRes.data) setStates(stRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: `${(r as Record<string, unknown>).name} (${(r as Record<string, unknown>).uf})` })));
-      if (seRes.success && seRes.data) setSellers(seRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
+      if (aRes.success && aRes.data) setAuctions(aRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).title ?? (r as any).name ?? r.id) })));
+      if (auRes.success && auRes.data) setAuctioneers(auRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
+      if (cRes.success && cRes.data) setCategories(cRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
+      if (scRes.success && scRes.data) setSubcategories(scRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
+      if (ciRes.success && ciRes.data) setCities(ciRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
+      if (stRes.success && stRes.data) setStates(stRes.data.data.map((r) => ({ id: String(r.id), label: `${(r as any).name} (${(r as any).uf})` })));
+      if (seRes.success && seRes.data) setSellers(seRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
     });
   }, [open]);
 

@@ -122,7 +122,7 @@ export function BidderProfileForm({ open, onOpenChange, editItem, onSuccess }: P
         {/* Usuário */}
         <Field label="Usuário" name="userId" form={form}>
           {(field) => (
-            <Select value={field.value ?? ''} onValueChange={field.onChange}>
+            <Select value={(field.value as string) ?? ''} onValueChange={field.onChange}>
               <SelectTrigger data-ai-id="bidder-profile-user-select">
                 <SelectValue placeholder="Selecione um usuário" />
               </SelectTrigger>
@@ -160,7 +160,7 @@ export function BidderProfileForm({ open, onOpenChange, editItem, onSuccess }: P
 
         <Field label="Status dos Documentos" name="documentStatus" form={form}>
           {(field) => (
-            <Select value={field.value ?? 'PENDING'} onValueChange={field.onChange}>
+            <Select value={(field.value as string) ?? 'PENDING'} onValueChange={field.onChange}>
               <SelectTrigger data-ai-id="bidder-profile-status-select">
                 <SelectValue />
               </SelectTrigger>

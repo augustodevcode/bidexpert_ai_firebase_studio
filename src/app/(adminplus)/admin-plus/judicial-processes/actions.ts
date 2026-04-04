@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { createAdminAction } from '@/lib/admin-plus/safe-action';
 import { sanitizeResponse } from '@/lib/serialization-helper';
+import { type JudicialProcess_actionType } from '@prisma/client';
 import { judicialProcessSchema } from './schema';
 import type { JudicialProcessRow } from './types';
 
@@ -106,7 +107,7 @@ export const createJudicialProcess = createAdminAction({
         sellerId: input.sellerId ? BigInt(input.sellerId) : null,
         propertyMatricula: input.propertyMatricula || null,
         propertyRegistrationNumber: input.propertyRegistrationNumber || null,
-        actionType: (input.actionType as string) || null,
+        actionType: ((input.actionType as string) || null) as JudicialProcess_actionType | null,
         actionDescription: input.actionDescription || null,
         actionCnjCode: input.actionCnjCode || null,
         updatedAt: new Date(),
@@ -133,7 +134,7 @@ export const updateJudicialProcess = createAdminAction({
         sellerId: data.sellerId ? BigInt(data.sellerId) : null,
         propertyMatricula: data.propertyMatricula || null,
         propertyRegistrationNumber: data.propertyRegistrationNumber || null,
-        actionType: (data.actionType as string) || null,
+        actionType: ((data.actionType as string) || null) as JudicialProcess_actionType | null,
         actionDescription: data.actionDescription || null,
         actionCnjCode: data.actionCnjCode || null,
       },

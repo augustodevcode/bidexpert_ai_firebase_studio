@@ -32,7 +32,7 @@ export default function UserDocumentsPage() {
   const handleSubmit = useCallback(
     async (values: Record<string, unknown>) => {
       const action = editRow
-        ? updateUserDocument({ ...values, id: editRow.id } as Parameters<typeof updateUserDocument>[0])
+        ? updateUserDocument({ ...values, id: editRow.id } as any)
         : createUserDocument(values as Parameters<typeof createUserDocument>[0]);
       const res = await action;
       if (res?.success) {

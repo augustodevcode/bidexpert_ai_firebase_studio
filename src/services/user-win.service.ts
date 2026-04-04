@@ -24,12 +24,12 @@ export class UserWinService {
     // Remove explicitamente o tenantId se estiver presente
     const { tenantId, ...winData } = data as any;
     const win = await this.repository.create(winData);
-    return { ...win, winningBidAmount: Number(win.winningBidAmount) } as UserWin;
+    return { ...win, winningBidAmount: Number(win.winningBidAmount) } as unknown as UserWin;
   }
 
   async findFirst(args: Prisma.UserWinFindFirstArgs): Promise<UserWin | null> {
     const win = await this.repository.findFirst(args);
-    return win ? { ...win, winningBidAmount: Number(win.winningBidAmount) } as UserWin : null;
+    return win ? { ...win, winningBidAmount: Number(win.winningBidAmount) } as unknown as UserWin : null;
   }
 
   async getWinDetailsById(winId: string): Promise<UserWin | null> {

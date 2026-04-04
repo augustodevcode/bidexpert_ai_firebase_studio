@@ -7,6 +7,7 @@ import { createAdminAction } from '@/lib/admin-plus/safe-action';
 import { prisma } from '@/lib/prisma';
 import { sanitizeResponse } from '@/lib/serialization-helper';
 import { lotRiskSchema } from './schema';
+import { type LotRisk_riskLevel, type LotRisk_riskType } from '@prisma/client';
 import type { LotRiskRow } from './types';
 
 const FK_INCLUDE = {
@@ -53,8 +54,8 @@ export const createLotRisk = createAdminAction(async (ctx, input: unknown) => {
   const created = await prisma.lotRisk.create({
     data: {
       lotId: BigInt(parsed.lotId),
-      riskType: parsed.riskType,
-      riskLevel: parsed.riskLevel,
+      riskType: parsed.riskType as LotRisk_riskType,
+      riskLevel: parsed.riskLevel as LotRisk_riskLevel,
       riskDescription: parsed.riskDescription,
       mitigationStrategy: parsed.mitigationStrategy || null,
       verified: parsed.verified ?? false,

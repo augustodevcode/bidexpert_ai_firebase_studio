@@ -65,10 +65,10 @@ export function JudicialProcessForm({ open, onOpenChange, onSubmit, defaultValue
         listJudicialBranches({ page: 1, pageSize: 500 }),
         listSellers({ page: 1, pageSize: 500 }),
       ]);
-      if (cRes?.success && cRes.data?.data) setCourts(cRes.data.data.map((c: Record<string, unknown>) => ({ id: String(c.id), name: String(c.name) })));
-      if (dRes?.success && dRes.data?.data) setDistricts(dRes.data.data.map((d: Record<string, unknown>) => ({ id: String(d.id), name: String(d.name) })));
-      if (bRes?.success && bRes.data?.data) setBranches(bRes.data.data.map((b: Record<string, unknown>) => ({ id: String(b.id), name: String(b.name) })));
-      if (sRes?.success && sRes.data?.data) setSellers(sRes.data.data.map((s: Record<string, unknown>) => ({ id: String(s.id), name: String(s.name) })));
+      if (cRes?.success && cRes.data?.data) setCourts(cRes.data.data.map(c => ({ id: String(c.id), name: String((c as any).name) })));
+      if (dRes?.success && dRes.data?.data) setDistricts(dRes.data.data.map(d => ({ id: String(d.id), name: String((d as any).name) })));
+      if (bRes?.success && bRes.data?.data) setBranches(bRes.data.data.map(b => ({ id: String(b.id), name: String((b as any).name) })));
+      if (sRes?.success && sRes.data?.data) setSellers(sRes.data.data.map(s => ({ id: String(s.id), name: String((s as any).name) })));
     };
     fetchAll();
   }, [open]);

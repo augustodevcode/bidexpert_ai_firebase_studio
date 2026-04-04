@@ -46,7 +46,7 @@ export const listBidderProfiles = createAdminAction({
       userEmail: d.User?.email ?? '—',
     }));
     return sanitizeResponse({
-      data: rows,
+      data: rows as any[],
       total,
       page,
       pageSize,

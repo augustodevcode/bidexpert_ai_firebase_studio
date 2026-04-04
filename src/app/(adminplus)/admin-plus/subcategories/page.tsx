@@ -48,7 +48,7 @@ export default function SubcategoriesPage() {
   const handleSubmit = useCallback(
     async (values: Record<string, unknown>) => {
       const res = editRow
-        ? await updateSubcategory({ id: editRow.id, data: values as Parameters<typeof updateSubcategory>[0]['data'] })
+        ? await updateSubcategory({ id: editRow.id, data: values as any })
         : await createSubcategory(values as Parameters<typeof createSubcategory>[0]);
       if (res?.success) {
         toast.success(editRow ? 'Subcategoria atualizada' : 'Subcategoria criada');

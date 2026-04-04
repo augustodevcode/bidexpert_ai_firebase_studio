@@ -67,7 +67,7 @@ export type User = Omit<PmUser, 'id'> & {
 export type LotCategory = Omit<PmLotCategory, 'id'> & { id: string; itemCount?: number; _count?: { lots: number, subcategories: number } };
 export type Subcategory = Omit<PmSubcategory, 'id' | 'parentCategoryId'> & { id: string; parentCategoryId: string; parentCategoryName?: string; itemCount?: number };
 export type AuctioneerProfileInfo = Omit<PmAuctioneer, 'id' | 'userId' | 'tenantId'> & { id: string; userId?: string | null; tenantId: string; auctionsConductedCount?: number; memberSince?: Date; rating?: number };
-export type SellerProfileInfo = Omit<PmSeller, 'id' | 'userId' | 'judicialBranchId' | 'tenantId'> & { id: string; userId?: string | null; judicialBranchId?: string | null; tenantId: string; activeLotsCount?: number; memberSince?: Date; auctionsFacilitatedCount?: number; rating?: number };
+export type SellerProfileInfo = Omit<PmSeller, 'id' | 'userId' | 'judicialBranchId' | 'logoMediaId' | 'tenantId'> & { id: string; userId?: string | null; judicialBranchId?: string | null; logoMediaId?: string | null; tenantId: string; activeLotsCount?: number; memberSince?: Date; auctionsFacilitatedCount?: number; rating?: number };
 
 export type Asset = Omit<PmAsset, 'id' | 'categoryId' | 'subcategoryId' | 'judicialProcessId' | 'sellerId' | 'tenantId' | 'evaluationValue' | 'latitude' | 'longitude' | 'totalArea' | 'builtArea' | 'year' | 'modelYear' | 'mileage' | 'numberOfDoors' | 'pieceCount' | 'bedrooms' | 'suites' | 'bathrooms' | 'parkingSpaces' | 'hoursUsed' | 'imageMediaId'> & { 
   id: string;
