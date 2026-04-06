@@ -97,7 +97,7 @@ export class BiddingEligibilityService {
           id: true,
           status: true,
           endDate: true,
-          auctionDate: true,
+          lotSpecificAuctionDate: true,
           auctionId: true,
         },
       }),
@@ -153,7 +153,6 @@ export class BiddingEligibilityService {
             endDate: true,
             status: true,
             discountPercent: true,
-            initialPrice: true,
           },
         },
       },
@@ -190,7 +189,7 @@ export class BiddingEligibilityService {
       {
         status: lot.status as LotStatus,
         endDate: lot.endDate,
-        auctionDate: lot.auctionDate,
+        lotSpecificAuctionDate: lot.lotSpecificAuctionDate,
       },
       auctionWithStages,
     );

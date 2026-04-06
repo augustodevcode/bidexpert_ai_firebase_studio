@@ -9,6 +9,7 @@ Feature: Sincronização cadastral orientada a fonte no BidExpert
     When o sistema cadastra as fontes judiciais, extrajudiciais, tomada de preços e venda direta
     And o sistema cria vínculos relacionais entre cidades, seller, leiloeiro, processo, ativos, leilões, praças e lotes
     And o sistema publica documentos, riscos e preços por praça compatíveis com as fontes
+    And o painel público de lances deve herdar o valor e o incremento da praça ativa sem cair em fallback genérico
     Then as listagens e detalhes administrativos devem refletir os títulos, localizações, modalidades e vínculos
     And as páginas públicas de leilão, lote, busca, home, home-v2 e lots devem exibir os dados sem divergência material
     And não deve existir erro de runtime, hidratação, FK quebrada ou praça sem nome na UI

@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,7 +44,7 @@ export default function LotStagePriceForm({ open, onOpenChange, editingRow, onSu
     Promise.all([listLots({ page: 1, pageSize: 500 }), listAuctions({ page: 1, pageSize: 500 }), listAuctionStages({ page: 1, pageSize: 500 })]).then(([lr, ar, sr]) => {
       if (lr.success && lr.data) setLots((lr.data as any).data?.map((d: any) => ({ id: d.id, label: d.title || d.id })) ?? []);
       if (ar.success && ar.data) setAuctions((ar.data as any).data?.map((d: any) => ({ id: d.id, label: d.title || d.id })) ?? []);
-      if (sr.success && sr.data) setStages((sr.data as any).data?.map((d: any) => ({ id: d.id, label: d.title || d.id })) ?? []);
+      if (sr.success && sr.data) setStages((sr.data as any).data?.map((d: any) => ({ id: d.id, label: d.name || d.title || d.id })) ?? []);
     });
   }, [open]);
 
@@ -67,7 +67,12 @@ export default function LotStagePriceForm({ open, onOpenChange, editingRow, onSu
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-y-auto" data-ai-id="lot-stage-price-form-sheet">
-        <SheetHeader><SheetTitle>{isEdit ? 'Editar Preço' : 'Novo Preço por Praça'}</SheetTitle></SheetHeader>
+        <SheetHeader>
+          <SheetTitle>{isEdit ? 'Editar Preço' : 'Novo Preço por Praça'}</SheetTitle>
+          <SheetDescription>
+            {isEdit ? 'Atualize os valores vinculados à praça.' : 'Selecione lote, leilão e praça para cadastrar o preço inicial.'}
+          </SheetDescription>
+        </SheetHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4" data-ai-id="lot-stage-price-form">
           <div className="space-y-2">
             <Label htmlFor="lotId">Lote *</Label>
