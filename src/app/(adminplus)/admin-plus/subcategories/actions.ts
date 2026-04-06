@@ -33,12 +33,20 @@ export const listSubcategories = createAdminAction({
   requiredPermission: 'subcategories:read',
   handler: async ({ input, ctx }: { input: any; ctx: any }) => {
     const { page, pageSize, search } = input;
-    const where: Record<string, unknown> = { tenantId: ctx.tenantIdBigInt };
+    const where: Record<string, unknown> = {
+      OR: [
+        { tenantId: ctx.tenantIdBigInt },
+        { tenantId: null },
+        { isGlobal: true },
+      ],
+    };
     if (search) {
-      where.OR = [
-        { name: { contains: search } },
-        { slug: { contains: search } },
-      ];
+      where.AND = [{
+        OR: [
+          { name: { contains: search } },
+          { slug: { contains: search } },
+        ],
+      }];
     }
     const [data, total] = await Promise.all([
       prisma.subcategory.findMany({

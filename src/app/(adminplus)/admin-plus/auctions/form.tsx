@@ -64,7 +64,7 @@ export function AuctionForm({ open, onOpenChange, onSubmit, defaultValues }: Pro
       const [aR, sR, cR, ciR, stR, pR] = await Promise.all([
         listAuctioneers({ page: 1, pageSize: 500 }),
         listSellers({ page: 1, pageSize: 500 }),
-        listLotCategories({ page: 1, pageSize: 500 }),
+        listLotCategories({ page: 1, pageSize: 200 }),
         listCitiesAction({ page: 1, pageSize: 500 }),
         listStatesAction({ page: 1, pageSize: 500 }),
         listJudicialProcesses({ page: 1, pageSize: 500 }),

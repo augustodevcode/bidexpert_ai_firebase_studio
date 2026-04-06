@@ -109,7 +109,7 @@ export default function CurrentLotDisplay({ lot: initialLot, auctionStatus }: Cu
               </>
             )}
             
-            <DetailTimeRemaining effectiveEndDate={lot.endDate} effectiveStartDate={lot.auctionDate} lotStatus={lot.status} />
+            <DetailTimeRemaining effectiveEndDate={lot.endDate} effectiveStartDate={lot.lotSpecificAuctionDate} lotStatus={lot.status} />
 
           </div>
           {gallery.length > 1 && (

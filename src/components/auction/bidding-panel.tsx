@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LotAllBidsModal from './lot-all-bids-modal';
-import { getAuctionStatusText, calculateMinimumBid } from '@/lib/ui-helpers';
+import { getAuctionStatusText, calculateMinimumBid, getLotPriceForStage } from '@/lib/ui-helpers';
 import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
 import { getBidEligibilityState } from '@/lib/bidding-eligibility';
 import { getEffectiveAuctionStatus, getEffectiveLotStatus } from '@/lib/auction-timing';
@@ -76,14 +76,18 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
     setCurrentLot(initialLot);
   }, [initialLot]);
 
-  const bidIncrement = activeLotPrices?.bidIncrement || currentLot?.bidIncrementStep || 100;
+  const stagePrice = getLotPriceForStage(currentLot, activeStage?.id);
+  const effectiveInitialBid = activeLotPrices?.initialBid ?? stagePrice?.initialBid ?? currentLot?.initialPrice ?? currentLot?.price ?? 0;
+  const bidIncrement = activeLotPrices?.bidIncrement ?? stagePrice?.bidIncrement ?? currentLot?.bidIncrementStep ?? 100;
   
   // Nova lógica de lance mínimo usando percentual da praça (RN-PRACA-001)
   // Se não houver lances, aplica o percentual da praça ao valor inicial
   // Se houver lances, o lance mínimo é o último lance + incremento
   const currentBidCount = bidHistory.length;
   const lastBidValue = currentLot?.price ?? null;
-  const nextMinimumBid = calculateMinimumBid(currentLot, activeStage ?? null, currentBidCount, lastBidValue);
+  const nextMinimumBid = currentBidCount > 0 && lastBidValue !== null
+    ? lastBidValue + bidIncrement
+    : effectiveInitialBid || calculateMinimumBid(currentLot, activeStage ?? null, currentBidCount, lastBidValue);
 
   const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
   const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
