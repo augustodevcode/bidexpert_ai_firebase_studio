@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de Asset (Ativo) â€” Admin Plus.
+ * @fileoverview Página CRUD de Asset (Ativo) — Admin Plus.
  */
 'use client';
 
@@ -26,7 +26,7 @@ export default function AssetsPage() {
   const handleConfirmDelete = async () => {
     if (!deleting) return;
     const res = await deleteAsset(deleting.id);
-    if (res.success) { toast.success('Ativo excluÃ­do!'); table.refresh(); } else toast.error(res.error ?? 'Erro');
+    if (res.success) { toast.success('Ativo excluído!'); table.refresh(); } else toast.error(res.error ?? 'Erro');
     setDeleting(null);
   };
 

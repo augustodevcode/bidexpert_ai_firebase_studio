@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina principal de listagem de PaymentMethod no Admin Plus.
+ * Página principal de listagem de PaymentMethod no Admin Plus.
  */
 'use client';
 
@@ -36,7 +36,7 @@ export default function PaymentMethodsPage() {
     setDeleting(true);
     try {
       const res = await deletePaymentMethod({ id: deleteTarget.id });
-      if (res?.success) { toast.success('ExcluÃ­do!'); table.refresh(); } else toast.error(res?.error ?? 'Erro');
+      if (res?.success) { toast.success('Excluído!'); table.refresh(); } else toast.error(res?.error ?? 'Erro');
     } catch { toast.error('Erro ao excluir'); } finally { setDeleting(false); setDeleteTarget(null); }
   };
 
@@ -44,10 +44,10 @@ export default function PaymentMethodsPage() {
 
   return (
     <div className="space-y-4" data-ai-id="payment-methods-page">
-      <PageHeader title="MÃ©todos de Pagamento" icon={CreditCard} onAdd={() => { setEditItem(null); setFormOpen(true); }} />
+      <PageHeader title="Métodos de Pagamento" icon={CreditCard} onAdd={() => { setEditItem(null); setFormOpen(true); }} />
       <DataTablePlus columns={columns} data={table.data} totalItems={table.total} page={table.page} pageSize={table.pageSize} onPageChange={table.setPage} onPageSizeChange={table.setPageSize} onSortChange={table.setSorting} onSearchChange={table.setSearch} sorting={table.sorting} isLoading={table.isLoading} />
       <PaymentMethodForm open={formOpen} onOpenChange={setFormOpen} editItem={editItem} onSuccess={table.refresh} />
-      <ConfirmationDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }} onConfirm={confirmDelete} loading={deleting} title="Excluir mÃ©todo de pagamento?" description={`Deseja excluir o mÃ©todo "${deleteTarget?.type ?? ''}"?`} />
+      <ConfirmationDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }} onConfirm={confirmDelete} loading={deleting} title="Excluir método de pagamento?" description={`Deseja excluir o método "${deleteTarget?.type ?? ''}"?`} />
     </div>
   );
 }

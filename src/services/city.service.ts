@@ -27,13 +27,7 @@ export class CityService {
    * @returns {Promise<CityInfo[]>} Uma lista de cidades.
    */
   async getCities(stateIdFilter?: string): Promise<CityInfo[]> {
-    const cities = await this.cityRepository.findAll(stateIdFilter);
-    return cities.map(city => ({
-      ...city,
-      id: city.id.toString(),
-      stateId: city.stateId.toString(),
-      stateUf: city.State?.uf ?? city.state?.uf,
-    }));
+    return this.cityRepository.findAll(stateIdFilter);
   }
 
   /**
@@ -42,14 +36,7 @@ export class CityService {
    * @returns {Promise<CityInfo | null>} A cidade encontrada ou null.
    */
   async getCityById(id: string): Promise<CityInfo | null> {
-    const city = await this.cityRepository.findById(id);
-    if (!city) return null;
-    return {
-      ...city,
-      id: city.id.toString(),
-      stateId: city.stateId.toString(),
-      stateUf: city.state.uf,
-    };
+    return this.cityRepository.findById(id);
   }
 
   /**
@@ -98,7 +85,7 @@ export class CityService {
       if (data.stateId) {
         const parentState = await this.stateRepository.findById(data.stateId);
         if (parentState) {
-          dataToUpdate.state = { connect: { id: BigInt(data.stateId) } };
+          dataToUpdate.State = { connect: { id: BigInt(data.stateId) } };
         }
       }
       

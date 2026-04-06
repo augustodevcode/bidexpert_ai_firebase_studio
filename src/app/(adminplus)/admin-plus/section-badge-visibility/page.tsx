@@ -1,6 +1,6 @@
 /**
- * @fileoverview PÃ¡gina de visibilidade de badges por seÃ§Ã£o â€” Admin Plus.
- * Permite configurar quais badges aparecem no grid de busca e na pÃ¡gina de detalhe do lote via JSON.
+ * @fileoverview Página de visibilidade de badges por seção — Admin Plus.
+ * Permite configurar quais badges aparecem no grid de busca e na página de detalhe do lote via JSON.
  */
 'use client';
 
@@ -55,7 +55,7 @@ export default function SectionBadgeVisibilityPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar configuraÃ§Ãµes de badges.');
+        toast.error('Erro ao carregar configurações de badges.');
       } finally {
         setLoading(false);
       }
@@ -67,11 +67,11 @@ export default function SectionBadgeVisibilityPage() {
     const ld = safeParse(lotDetailText);
 
     if (searchGridText.trim() && sg === undefined) {
-      toast.error('JSON invÃ¡lido em "Grid de Busca".');
+      toast.error('JSON inválido em "Grid de Busca".');
       return;
     }
     if (lotDetailText.trim() && ld === undefined) {
-      toast.error('JSON invÃ¡lido em "Detalhe do Lote".');
+      toast.error('JSON inválido em "Detalhe do Lote".');
       return;
     }
 
@@ -105,12 +105,12 @@ export default function SectionBadgeVisibilityPage() {
 
   return (
     <div data-ai-id="section-badge-visibility-page">
-      <PageHeader title="Visibilidade de Badges por SeÃ§Ã£o" icon={Eye} />
+      <PageHeader title="Visibilidade de Badges por Seção" icon={Eye} />
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
         <p className="text-sm text-muted-foreground mb-4">
-          Configure quais badges aparecem no grid de busca e na pÃ¡gina de detalhe do lote.
-          Use JSON vÃ¡lido (array de chaves de badge ou objeto de configuraÃ§Ã£o).
+          Configure quais badges aparecem no grid de busca e na página de detalhe do lote.
+          Use JSON válido (array de chaves de badge ou objeto de configuração).
         </p>
 
         <Field label="Grid de Busca (JSON)">
@@ -138,7 +138,7 @@ export default function SectionBadgeVisibilityPage() {
         <div className="flex justify-end pt-6">
           <Button type="submit" disabled={saving} data-ai-id="section-badge-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar ConfiguraÃ§Ãµes
+            Salvar Configurações
           </Button>
         </div>
       </CrudFormShell>

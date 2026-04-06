@@ -71,7 +71,7 @@ export async function exportLotsToCSV(
       ? { id: { in: lotIds.map(id => BigInt(id)) } }
       : {};
 
-    const lots = await prisma.lot.findMany({
+    const lots = await (prisma.lot.findMany as any)({
       where,
       include: {
         LotCategory: { select: { name: true } },
@@ -89,7 +89,7 @@ export async function exportLotsToCSV(
     const headers = columns.map(col => `"${col.label}"`).join(',');
     
     // Gerar linhas de dados
-    const rows = lots.map(lot => {
+    const rows = lots.map((lot: any) => {
       return columns.map(col => {
         const value = getNestedValue(lot, col.key);
         const formatted = col.formatter ? col.formatter(value) : String(value ?? '');
@@ -130,7 +130,7 @@ export async function exportLotsToJSON(
       ? { id: { in: lotIds.map(id => BigInt(id)) } }
       : {};
 
-    const lots = await prisma.lot.findMany({
+    const lots = await (prisma.lot.findMany as any)({
       where,
       include: {
         LotCategory: { select: { name: true } },
@@ -147,7 +147,7 @@ export async function exportLotsToJSON(
     }
 
     // Transformar para formato plano para Excel
-    const flatData = lots.map(lot => ({
+    const flatData = lots.map((lot: any) => ({
       id: lot.id.toString(),
       publicId: lot.publicId,
       title: lot.title,
@@ -225,7 +225,7 @@ export async function getLotsExportSummary(
       ? { id: { in: lotIds.map(id => BigInt(id)) } }
       : {};
 
-    const lots = await prisma.lot.findMany({
+    const lots = await (prisma.lot.findMany as any)({
       where,
       select: {
         startingPrice: true,
@@ -239,7 +239,7 @@ export async function getLotsExportSummary(
       return { success: false, message: 'Nenhum lote encontrado' };
     }
 
-    const totalValue = lots.reduce((sum, lot) => {
+    const totalValue = lots.reduce((sum: any, lot: any) => {
       const price = lot.currentPrice || lot.startingPrice;
       return sum + (price ? Number(price) : 0);
     }, 0);
@@ -247,7 +247,7 @@ export async function getLotsExportSummary(
     const statusBreakdown: Record<string, number> = {};
     const categoryBreakdown: Record<string, number> = {};
 
-    lots.forEach(lot => {
+    lots.forEach((lot: any) => {
       // Status breakdown
       const status = lot.status || 'SEM_STATUS';
       statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;

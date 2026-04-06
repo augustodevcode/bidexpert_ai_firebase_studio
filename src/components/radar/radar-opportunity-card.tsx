@@ -16,7 +16,7 @@ import type { Lot, Auction, PlatformSettings } from '@/types';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Heart, Eye, Clock, TrendingUp, AlertCircle } from 'lucide-react';
-import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import { isLotFavoriteInStorage, addFavoriteLot, removeFavoriteLot } from '@/lib/favorite-store';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -36,16 +36,16 @@ export default function RadarOpportunityCard({ lot, auction, className }: RadarO
     setIsFavorite(isLotFavoriteInStorage(lot.id.toString()));
   }, [lot.id]);
 
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const lotIdStr = lot.id.toString();
     if (isFavorite) {
-      removeFavoriteLotIdFromStorage(lotIdStr);
+      await removeFavoriteLot(lotIdStr);
       setIsFavorite(false);
       toast({ title: 'Removido dos favoritos' });
     } else {
-      addFavoriteLotIdToStorage(lotIdStr);
+      await addFavoriteLot(lotIdStr);
       setIsFavorite(true);
       toast({ title: 'Adicionado aos favoritos', description: 'Você receberá alertas sobre este lote.' });
     }

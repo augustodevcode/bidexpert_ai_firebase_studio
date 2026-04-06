@@ -81,7 +81,7 @@ export class TenantService {
               
               // So for existing user:
               // 1. Add to UsersOnTenants
-              await prisma.usersOnTenants.create({
+              await prisma.userOnTenant.create({
                   data: {
                       userId: BigInt(existingUser.id),
                       tenantId: tenant.id,
@@ -96,7 +96,7 @@ export class TenantService {
                   await prisma.usersOnRoles.create({
                       data: {
                           userId: BigInt(existingUser.id),
-                          roleId: adminRole.id,
+                          roleId: BigInt(adminRole.id),
                           assignedBy: 'system-create-tenant'
                       }
                   });

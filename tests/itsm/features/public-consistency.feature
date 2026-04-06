@@ -42,3 +42,16 @@ Funcionalidade: Consistencia publica de status, cronologia e setup
     Quando a pessoa acessa o detalhe desse lote
     Entao a lateral deve mostrar o proximo lance valido, o incremento minimo e o total estimado com comissao
     E a aba de planejamento deve explicar que custos adicionais dependem do edital
+
+  Cenario: Exibir due diligence e custo total no detalhe do lote
+    Dado que um lote publico possui contexto juridico ou documental
+    Quando a pessoa abre as abas de planejamento e juridico no detalhe desse lote
+    Entao a aba de planejamento deve exibir um simulador CET com composicao do custo total estimado
+    E a aba juridica deve exibir checklist de due diligence, alerta resumido e os principais riscos ordenados por severidade
+
+  Cenario: Explicar habilitacao inline antes do primeiro lance
+    Dado que um usuario autenticado possui documentacao aprovada, mas ainda nao esta habilitado no leilao atual
+    Quando ele acessa o detalhe publico de um lote aberto para lances
+    Entao o painel de lances deve informar que a documentacao ja esta pronta
+    E deve destacar que falta apenas a habilitacao especifica do leilao
+    E deve oferecer atalho para revisar documentos e concluir a etapa seguinte

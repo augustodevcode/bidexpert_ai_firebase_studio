@@ -27,7 +27,7 @@ function toRow(r: any): UserWinRow {
 
 const include = { Lot: { select: { id: true, title: true } }, User: { select: { id: true, fullName: true, email: true } } };
 
-export const listUserWins = createAdminAction(async (_input, ctx) => {
+export const listUserWins = createAdminAction(async (ctx, _input) => {
   const { page = 1, pageSize = 25, search = '', sortField = 'id', sortOrder = 'desc' } = _input as any;
   const where: any = { tenantId: ctx.tenantIdBigInt };
   if (search) {
@@ -43,13 +43,13 @@ export const listUserWins = createAdminAction(async (_input, ctx) => {
   return sanitizeResponse({ data: data.map(toRow), total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
 });
 
-export const getUserWin = createAdminAction(async (_input, ctx) => {
+export const getUserWin = createAdminAction(async (ctx, _input) => {
   const { id } = _input as any;
   const r = await prisma.userWin.findFirstOrThrow({ where: { id: BigInt(id), tenantId: ctx.tenantIdBigInt }, include });
   return sanitizeResponse(toRow(r));
 });
 
-export const createUserWin = createAdminAction(async (_input, ctx) => {
+export const createUserWin = createAdminAction(async (ctx, _input) => {
   const d = userWinSchema.parse(_input);
   const r = await prisma.userWin.create({
     data: {
@@ -61,14 +61,13 @@ export const createUserWin = createAdminAction(async (_input, ctx) => {
       retrievalStatus: d.retrievalStatus,
       invoiceUrl: d.invoiceUrl || null,
       tenantId: ctx.tenantIdBigInt,
-      updatedAt: new Date(),
     },
     include,
   });
   return sanitizeResponse(toRow(r));
 });
 
-export const updateUserWin = createAdminAction(async (_input, ctx) => {
+export const updateUserWin = createAdminAction(async (ctx, _input) => {
   const { id, ...rest } = _input as any;
   const d = userWinSchema.parse(rest);
   const r = await prisma.userWin.update({
@@ -87,7 +86,7 @@ export const updateUserWin = createAdminAction(async (_input, ctx) => {
   return sanitizeResponse(toRow(r));
 });
 
-export const deleteUserWin = createAdminAction(async (_input, ctx) => {
+export const deleteUserWin = createAdminAction(async (ctx, _input) => {
   const { id } = _input as any;
   await prisma.userWin.delete({ where: { id: BigInt(id) } });
   return { success: true };

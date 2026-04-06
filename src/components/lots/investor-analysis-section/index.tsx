@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import type { Lot, Auction, PlatformSettings, OccupationStatus } from '@/types';
 import { cn } from '@/lib/utils';
+import { buildLotBidPlanningSummary } from '@/lib/lot-bid-planning';
 
 // Import dos componentes de análise
 import { CostSimulator } from '../cost-simulator';
@@ -43,7 +44,7 @@ import { BidHistory } from '../bid-history';
 import { MarketComparison } from '../market-comparison';
 import { FipeComparison } from '../fipe-comparison';
 import { DynamicSpecs } from '../dynamic-specs';
-import { LotLegalInfoCard } from '../legal-info/lot-legal-info-card';
+import { LotDueDiligencePanel } from '../legal-info/lot-due-diligence-panel';
 import { MachineryInspection } from '../machinery-inspection';
 import { MachineryCertifications } from '../machinery-certifications';
 import { LivestockHealth } from '../livestock-health';
@@ -273,8 +274,8 @@ const tabConfig: Record<string, { icon: React.ElementType; label: string; descri
 
 export function InvestorAnalysisSection({
   lot,
-  auction: _auction,
-  platformSettings: _platformSettings,
+  auction,
+  platformSettings,
   className,
   bidHistory = []
 }: InvestorAnalysisSectionProps) {
@@ -284,6 +285,14 @@ export function InvestorAnalysisSection({
   const lotCategory = useMemo(() => detectLotCategory(lot), [lot]);
   const availableTabs = useMemo(() => getAvailableTabs(lotCategory, lot), [lotCategory, lot]);
   const extendedData = useMemo(() => getExtendedLotData(lot), [lot]);
+  const planningSummary = useMemo(() => {
+    return buildLotBidPlanningSummary({
+      lot,
+      auction,
+      bids: bidHistory as any,
+      platformSettings,
+    });
+  }, [auction, bidHistory, lot, platformSettings]);
   
   useEffect(() => {
     // Simula carregamento inicial
@@ -395,9 +404,14 @@ export function InvestorAnalysisSection({
           {/* Tab: Simulador de Custos */}
           <TabsContent value="custos">
             <CostSimulator 
-              initialPrice={lot.price || lot.initialPrice || 0}
+              initialPrice={planningSummary.minimumBid || lot.price || lot.initialPrice || 0}
+              recommendedBidAmount={planningSummary.minimumBid}
               stateUf={lot.stateUf ?? undefined}
+              categoryName={lot.categoryName ?? auction?.category?.name ?? null}
               lotTitle={lot.title ?? undefined}
+              costConfig={{
+                commissionRatePercent: planningSummary.commissionRatePercent,
+              }}
             />
           </TabsContent>
           
@@ -426,14 +440,27 @@ export function InvestorAnalysisSection({
           {/* Tab: Informações Jurídicas (Imóveis) */}
           {lotCategory === 'imovel' && (
             <TabsContent value="juridico">
-              <LotLegalInfoCard 
-                propertyMatricula={lot.propertyMatricula}
-                propertyRegistrationNumber={lot.propertyRegistrationNumber}
-                occupationStatus={lot.occupancyStatus as OccupationStatus | null}
-                actionType={lot.actionType}
-                actionDescription={lot.actionDescription}
-                actionCnjCode={lot.actionCnjCode}
-                risks={lot.lotRisks}
+              <LotDueDiligencePanel
+                lot={{
+                  propertyMatricula: lot.propertyMatricula,
+                  propertyRegistrationNumber: lot.propertyRegistrationNumber,
+                  occupancyStatus: lot.occupancyStatus as OccupationStatus | null,
+                  actionType: lot.actionType,
+                  actionDescription: lot.actionDescription,
+                  actionCnjCode: lot.actionCnjCode,
+                  lotRisks: lot.lotRisks,
+                  judicialProcessNumber: lot.judicialProcessNumber,
+                  courtDistrict: lot.courtDistrict,
+                  courtName: lot.courtName,
+                  publicProcessUrl: lot.publicProcessUrl,
+                  propertyLiens: lot.propertyLiens,
+                  knownDebts: lot.knownDebts,
+                  additionalDocumentsInfo: lot.additionalDocumentsInfo,
+                }}
+                auction={{
+                  documentsUrl: auction?.documentsUrl,
+                  auctionType: auction?.auctionType,
+                }}
               />
             </TabsContent>
           )}

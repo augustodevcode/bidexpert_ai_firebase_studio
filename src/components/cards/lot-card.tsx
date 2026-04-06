@@ -12,7 +12,7 @@ import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag
 import { isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import { isLotFavoriteInStorage, addFavoriteLot, removeFavoriteLot } from '@/lib/favorite-store';
 import LotPreviewModalV2 from '@/components/lot-preview-modal-v2';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl, getActiveStage, getLotPriceForStage, getAuctionTypeDisplayData, getLotDisplayPrice, getEffectiveLotStatus, getLotDisplayLocation } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
@@ -50,24 +50,24 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   const hasEditPermission = hasPermission(userProfileWithPermissions, 'manage_all');
 
-  const mentalTriggersGlobalSettings = platformSettings?.mentalTriggerSettings || {};
-  const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchGrid || {
+  const mentalTriggersGlobalSettings = (platformSettings?.mentalTriggerSettings || {}) as any;
+  const sectionBadges = (badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchGrid || {
     showStatusBadge: true,
     showDiscountBadge: true,
     showUrgencyTimer: true,
     showPopularityBadge: true,
     showHotBidBadge: true,
     showExclusiveBadge: true,
-  };
+  }) as any;
 
   const showCountdownOnThisCard = showCountdown && platformSettings.showCountdownOnCards !== false;
 
   const { effectiveLotEndDate } = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
-  const effectiveLotStatus = React.useMemo(() => getEffectiveLotStatus(lot, auction) || lot.status, [lot, auction]);
+  const effectiveLotStatus = React.useMemo(() => getEffectiveLotStatus(lot as any, auction) || lot.status, [lot, auction]);
   const activeStage = React.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
   const activeLotPrices = React.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
 
-  const auctionTypeDisplay = getAuctionTypeDisplayData(auction?.auctionType);
+  const auctionTypeDisplay = getAuctionTypeDisplayData(auction?.auctionType as any);
   const AuctionTypeIcon = auctionTypeDisplay?.icon;
   const timelineReferenceDate = React.useMemo(() => {
     if (!auction) {
@@ -75,7 +75,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     }
     if (auction.auctionDate) {
       try {
-        return new Date(auction.auctionDate as string);
+        return new Date(auction.auctionDate as unknown as string);
       } catch {
         return null;
       }
@@ -84,7 +84,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     const firstStageWithDate = auction.auctionStages?.find(stage => stage.startDate);
     if (firstStageWithDate?.startDate) {
       try {
-        return new Date(firstStageWithDate.startDate as string);
+        return new Date(firstStageWithDate.startDate as unknown as string);
       } catch {
         return null;
       }
@@ -101,19 +101,20 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     }
   }, [lot.id, lot.auctionId, lot.publicId]);
 
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
-    if (newFavoriteState) {
-      addFavoriteLotIdToStorage(lot.id.toString());
-    } else {
-      removeFavoriteLotIdFromStorage(lot.id.toString());
-    }
+    const persistenceStatus = newFavoriteState
+      ? await addFavoriteLot(lot.id.toString())
+      : await removeFavoriteLot(lot.id.toString());
+
     toast({
       title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
-      description: `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
+      description: userProfileWithPermissions && persistenceStatus === 'local-only'
+        ? `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista local, mas a sincronização com sua conta falhou nesta tentativa.`
+        : `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
     });
   };
 
@@ -138,7 +139,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
   const sellerName = auction?.seller?.name;
   const sellerSlug = auction?.seller?.slug || auction?.seller?.publicId || auction?.seller?.id;
-  const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction?.seller?.logoUrl : undefined;
+  const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? (auction?.seller?.logoUrl ?? undefined) : undefined;
   const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';
 
   const discountPercentage = React.useMemo(() => {
@@ -204,7 +205,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 <Zap className="icon-trigger-small" /> Oportunidade
               </Badge>
             )}
-            {mentalTriggers.map(trigger => (
+            {(mentalTriggers as string[]).map(trigger => (
               <Badge key={trigger} variant="secondary" className="badge-trigger-mental" data-ai-id={`lot-card-trigger-${trigger.toLowerCase().replace(/\s+/g, '-')}`}>
                 {trigger === 'MAIS VISITADO' && <TrendingUp className="icon-trigger-small" />}
                 {trigger === 'LANCE QUENTE' && <Zap className="icon-trigger-small-red" />}
@@ -329,9 +330,9 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
               {formatCurrency(getLotDisplayPrice(lot, auction).value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             {/* GAP 2.4: Badge de dívidas conhecidas */}
-            {lot.debtAmount && Number(lot.debtAmount) > 0 && (
+            {(lot as any).debtAmount && Number((lot as any).debtAmount) > 0 && (
               <p className="text-card-debt-badge" data-ai-id="lot-card-debt-badge">
-                ⚠️ Débitos: {formatCurrency(Number(lot.debtAmount), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ⚠️ Débitos: {formatCurrency(Number((lot as any).debtAmount), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             )}
             {/* GAP-FIX: Next Bid Calculator - mostra próximo lance mínimo */}

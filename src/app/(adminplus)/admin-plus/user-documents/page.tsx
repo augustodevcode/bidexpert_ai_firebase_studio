@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de UserDocument â€” Admin Plus.
+ * @fileoverview Página CRUD de UserDocument — Admin Plus.
  */
 'use client';
 
@@ -32,7 +32,7 @@ export default function UserDocumentsPage() {
   const handleSubmit = useCallback(
     async (values: Record<string, unknown>) => {
       const action = editRow
-        ? updateUserDocument({ ...values, id: editRow.id } as Parameters<typeof updateUserDocument>[0])
+        ? updateUserDocument({ ...values, id: editRow.id } as any)
         : createUserDocument(values as Parameters<typeof createUserDocument>[0]);
       const res = await action;
       if (res?.success) {
@@ -51,7 +51,7 @@ export default function UserDocumentsPage() {
     if (!deleteRow) return;
     const res = await deleteUserDocument({ id: deleteRow.id });
     if (res?.success) {
-      toast.success('Documento excluÃ­do');
+      toast.success('Documento excluído');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -62,8 +62,8 @@ export default function UserDocumentsPage() {
   return (
     <div className="space-y-6" data-ai-id="user-documents-page">
       <PageHeader
-        title="Documentos de UsuÃ¡rios"
-        description="Gerenciar documentos enviados pelos usuÃ¡rios"
+        title="Documentos de Usuários"
+        description="Gerenciar documentos enviados pelos usuários"
         icon={FileText}
         onAdd={() => { setEditRow(null); setFormOpen(true); }}
         data-ai-id="ud-page-header"
@@ -99,7 +99,7 @@ export default function UserDocumentsPage() {
         onOpenChange={(v) => !v && setDeleteRow(null)}
         onConfirm={handleDelete}
         title="Excluir Documento"
-        description={`Excluir documento "${deleteRow?.fileName || deleteRow?.id}" do usuÃ¡rio "${deleteRow?.userName}"?`}
+        description={`Excluir documento "${deleteRow?.fileName || deleteRow?.id}" do usuário "${deleteRow?.userName}"?`}
         data-ai-id="ud-delete-dialog"
       />
     </div>

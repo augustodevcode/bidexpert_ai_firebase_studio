@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina de listagem de Ofertas de Venda Direta (DirectSaleOffer).
+ * Página de listagem de Ofertas de Venda Direta (DirectSaleOffer).
  */
 'use client';
 
@@ -39,7 +39,7 @@ export default function DirectSaleOffersPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     const res = await deleteDirectSaleOffer({ id: deleteTarget.id });
-    if (res.success) { toast.success('Oferta excluÃ­da'); table.refresh(); }
+    if (res.success) { toast.success('Oferta excluída'); table.refresh(); }
     else toast.error(res.error || 'Erro ao excluir');
     setDeleteTarget(null);
   }, [deleteTarget, table]);

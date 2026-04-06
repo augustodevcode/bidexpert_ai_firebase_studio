@@ -125,13 +125,14 @@ export default function LotFormV2({
       sellerId: initialData?.sellerId ?? '',
       auctioneerId: initialData?.auctioneerId ?? '',
       imageUrl: initialData?.imageUrl ?? '',
-      imageMediaId: initialData?.imageMediaId ?? '',
+      imageMediaId: initialData?.imageMediaId ? String(initialData.imageMediaId) : '',
       isFeatured: initialData?.isFeatured ?? false,
       isExclusive: initialData?.isExclusive ?? false,
       dataAiHint: initialData?.dataAiHint ?? '',
     },
   });
 
+  const controlAny = form.control as any;
   const handleSubmit = useCallback(
     (values: LotFormValuesV2) => {
       startTransition(async () => {
@@ -158,7 +159,7 @@ export default function LotFormV2({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit as any)} className="space-y-6">
         {/* Status badge */}
         <div className="flex items-center gap-2">
           <Badge
@@ -210,7 +211,7 @@ export default function LotFormV2({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="number"
                     render={({ field }) => (
                       <FormItem>
@@ -224,7 +225,7 @@ export default function LotFormV2({
                   />
                   <div className="col-span-3">
                     <FormField
-                      control={form.control}
+                      control={controlAny}
                       name="title"
                       render={({ field }) => (
                         <FormItem>
@@ -240,7 +241,7 @@ export default function LotFormV2({
                 </div>
 
                 <FormField
-                  control={form.control}
+                  control={controlAny}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
@@ -268,7 +269,7 @@ export default function LotFormV2({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="auctionId"
                     render={({ field }) => (
                       <FormItem>
@@ -293,7 +294,7 @@ export default function LotFormV2({
                   />
 
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="status"
                     render={({ field }) => (
                       <FormItem>
@@ -320,7 +321,7 @@ export default function LotFormV2({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="type"
                     render={({ field }) => (
                       <FormItem>
@@ -334,7 +335,7 @@ export default function LotFormV2({
                   />
 
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="categoryId"
                     render={({ field }) => (
                       <FormItem>
@@ -375,7 +376,7 @@ export default function LotFormV2({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="price"
                     render={({ field }) => (
                       <FormItem>
@@ -396,7 +397,7 @@ export default function LotFormV2({
                   />
 
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="initialPrice"
                     render={({ field }) => (
                       <FormItem>
@@ -423,7 +424,7 @@ export default function LotFormV2({
                   />
 
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="bidIncrementStep"
                     render={({ field }) => (
                       <FormItem>
@@ -497,7 +498,7 @@ export default function LotFormV2({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="stateId"
                     render={({ field }) => (
                       <FormItem>
@@ -519,7 +520,7 @@ export default function LotFormV2({
                             <SelectItem value="">Todos os estados</SelectItem>
                             {states.map((s) => (
                               <SelectItem key={s.id} value={s.id}>
-                                {s.name} ({s.abbreviation})
+                                {s.name} ({(s as any).abbreviation})
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -530,7 +531,7 @@ export default function LotFormV2({
                   />
 
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="cityId"
                     render={({ field }) => (
                       <FormItem>
@@ -567,7 +568,7 @@ export default function LotFormV2({
                 </div>
 
                 <FormField
-                  control={form.control}
+                  control={controlAny}
                   name="mapAddress"
                   render={({ field }) => (
                     <FormItem>
@@ -586,7 +587,7 @@ export default function LotFormV2({
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="latitude"
                     render={({ field }) => (
                       <FormItem>
@@ -610,7 +611,7 @@ export default function LotFormV2({
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="longitude"
                     render={({ field }) => (
                       <FormItem>
@@ -647,7 +648,7 @@ export default function LotFormV2({
               <CardContent className="space-y-6">
                 <div className="flex flex-col gap-4">
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="isFeatured"
                     render={({ field }) => (
                       <FormItem className="flex items-center justify-between rounded-lg border p-3">
@@ -668,7 +669,7 @@ export default function LotFormV2({
                   />
 
                   <FormField
-                    control={form.control}
+                    control={controlAny}
                     name="isExclusive"
                     render={({ field }) => (
                       <FormItem className="flex items-center justify-between rounded-lg border p-3">
@@ -689,7 +690,7 @@ export default function LotFormV2({
                 <Separator />
 
                 <FormField
-                  control={form.control}
+                  control={controlAny}
                   name="dataAiHint"
                   render={({ field }) => (
                     <FormItem>

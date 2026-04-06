@@ -389,7 +389,8 @@ export class LotService {
         id: lp.id.toString(),
         lotId: lp.lotId.toString(),
         auctionStageId: lp.auctionStageId.toString(),
-        initialBid: Number(lp.initialBid)
+        initialBid: Number(lp.initialBid),
+        bidIncrement: lp.bidIncrement != null ? Number(lp.bidIncrement) : null,
       })),
       auction: lotAuction ? {
         ...lotAuction,

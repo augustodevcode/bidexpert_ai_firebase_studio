@@ -106,7 +106,7 @@ export default function BidExpertAuctionStagesTimeline({
 
     if (lot) {
       const stagePrice = lot.lotPrices?.find(lp => lp.auctionStageId === stage.id);
-    price = stagePrice?.initialBid ?? (index === 0 ? lot.initialPrice : lot.secondInitialPrice) ?? stage.initialPrice ?? null;
+    price = stagePrice?.initialBid ?? (index === 0 ? lot.initialPrice : lot.secondInitialPrice) ?? null;
     }
 
     return {

@@ -64,29 +64,29 @@ export function AuctionForm({ open, onOpenChange, onSubmit, defaultValues }: Pro
       const [aR, sR, cR, ciR, stR, pR] = await Promise.all([
         listAuctioneers({ page: 1, pageSize: 500 }),
         listSellers({ page: 1, pageSize: 500 }),
-        listLotCategories({ page: 1, pageSize: 500 }),
+        listLotCategories({ page: 1, pageSize: 200 }),
         listCitiesAction({ page: 1, pageSize: 500 }),
         listStatesAction({ page: 1, pageSize: 500 }),
         listJudicialProcesses({ page: 1, pageSize: 500 }),
       ]);
-      const m = (r: Record<string, unknown> | null | undefined, nameField = 'name') =>
-        r?.success && (r as Record<string, unknown>).data
-          ? ((r as Record<string, unknown>).data as Record<string, unknown>).data
-            ? (((r as Record<string, unknown>).data as Record<string, unknown>).data as Record<string, unknown>[]).map(
-                (x: Record<string, unknown>) => ({ id: String(x.id), name: String(x[nameField] ?? x.name ?? '') })
+      const m = (r: any, nameField = 'name') =>
+        r?.success && r.data
+          ? r.data.data
+            ? r.data.data.map(
+                (x: any) => ({ id: String(x.id), name: String(x[nameField] ?? x.name ?? '') })
               )
             : []
           : [];
-      setAuctioneers(m(aR as Record<string, unknown>));
-      setSellers(m(sR as Record<string, unknown>));
-      setCategories(m(cR as Record<string, unknown>));
-      setCities(m(ciR as Record<string, unknown>));
-      setStates(m(stR as Record<string, unknown>));
+      setAuctioneers(m(aR));
+      setSellers(m(sR));
+      setCategories(m(cR));
+      setCities(m(ciR));
+      setStates(m(stR));
       setProcesses(
         pR?.success && pR.data?.data
-          ? pR.data.data.map((x: Record<string, unknown>) => ({
+          ? pR.data.data.map((x) => ({
               id: String(x.id),
-              name: String(x.processNumber ?? ''),
+              name: String((x as any).processNumber ?? ''),
             }))
           : [],
       );

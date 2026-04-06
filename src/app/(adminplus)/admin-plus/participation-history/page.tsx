@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina CRUD de ParticipationHistory no Admin Plus.
+ * Página CRUD de ParticipationHistory no Admin Plus.
  */
 'use client';
 
@@ -45,13 +45,13 @@ export default function ParticipationHistoryPage() {
     if (!deleteTarget) return;
     const res = await deleteParticipationHistory({ id: deleteTarget.id });
     if (!res.success) { toast.error(res.error ?? 'Erro ao excluir'); return; }
-    toast.success('ExcluÃ­do!');
+    toast.success('Excluído!');
     setDeleteTarget(null); refresh();
   };
 
   return (
     <div className="space-y-4" data-ai-id="participation-history-page">
-      <PageHeader title="HistÃ³rico de ParticipaÃ§Ãµes" icon={History} onAdd={() => { setEditing(null); setFormOpen(true); }} />
+      <PageHeader title="Histórico de Participações" icon={History} onAdd={() => { setEditing(null); setFormOpen(true); }} />
       <DataTablePlus
         columns={columns} data={tableData} totalRows={totalRows}
         page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize}
@@ -61,7 +61,7 @@ export default function ParticipationHistoryPage() {
       />
       <ParticipationHistoryForm open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) setEditing(null); }} onSubmit={handleSubmit} initialData={editing} />
       <ConfirmationDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }} onConfirm={confirmDelete}
-        title="Confirmar exclusÃ£o" description={`Deseja excluir a participaÃ§Ã£o "${deleteTarget?.title}"?`} />
+        title="Confirmar exclusão" description={`Deseja excluir a participação "${deleteTarget?.title}"?`} />
     </div>
   );
 }

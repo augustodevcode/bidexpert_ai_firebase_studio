@@ -19,8 +19,8 @@ export class UserContactAssociationService {
       const unassociatedMessages = await prisma.contactMessage.findMany({
         where: {
           email: userEmail,
-          userId: null, // Apenas mensagens não associadas
-        },
+          userId: null,
+        } as any,
       });
 
       if (unassociatedMessages.length === 0) {
@@ -32,11 +32,11 @@ export class UserContactAssociationService {
         where: {
           email: userEmail,
           userId: null,
-        },
+        } as any,
         data: {
           userId,
           updatedAt: new Date(),
-        },
+        } as any,
       });
 
       console.log(`Associadas ${result.count} mensagens de contato ao usuário ${userId} (${userEmail})`);
@@ -54,7 +54,7 @@ export class UserContactAssociationService {
    * @returns Lista de mensagens de contato do usuário
    */
   async getUserContactMessages(userId: bigint) {
-    return await prisma.contactMessage.findMany({
+    return await (prisma.contactMessage.findMany as any)({
       where: {
         userId,
       },
@@ -86,7 +86,7 @@ export class UserContactAssociationService {
     return await prisma.contactMessage.count({
       where: {
         userId,
-      },
+      } as any,
     });
   }
 }

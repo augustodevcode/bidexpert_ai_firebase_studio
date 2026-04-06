@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina de listagem de AuctionStage â€” Admin Plus.
+ * @fileoverview Página de listagem de AuctionStage — Admin Plus.
  */
 'use client';
 
@@ -31,7 +31,7 @@ export default function AuctionStagesPage() {
   const handleSubmit = async (values: AuctionStageSchema) => {
     const res = editing ? await updateAuctionStage(editing.id, values) : await createAuctionStage(values);
     if (res?.success) {
-      toast.success(editing ? 'PraÃ§a atualizada.' : 'PraÃ§a criada.');
+      toast.success(editing ? 'Praça atualizada.' : 'Praça criada.');
       setFormOpen(false); setEditing(null); table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao salvar.');
@@ -41,15 +41,15 @@ export default function AuctionStagesPage() {
   const handleConfirmDelete = async () => {
     if (!deleting) return;
     const res = await deleteAuctionStage(deleting.id);
-    if (res?.success) { toast.success('PraÃ§a excluÃ­da.'); setDeleting(null); table.refresh(); }
+    if (res?.success) { toast.success('Praça excluída.'); setDeleting(null); table.refresh(); }
     else toast.error(res?.error ?? 'Erro ao excluir.');
   };
 
   return (
     <div className="space-y-6" data-ai-id="auction-stages-page">
       <PageHeader
-        title="PraÃ§as"
-        description="Gerencie as praÃ§as dos leilÃµes."
+        title="Praças"
+        description="Gerencie as praças dos leilões."
         icon={Layers}
         onAdd={() => { setEditing(null); setFormOpen(true); }}
       />
@@ -62,7 +62,7 @@ export default function AuctionStagesPage() {
         sorting={table.sorting}
         onPaginationChange={table.onPaginationChange}
         onSortingChange={table.onSortingChange}
-        searchValue={table.searchValue}
+        search={table.searchValue}
         onSearchChange={table.onSearchChange}
         onRowDoubleClick={handleEdit}
       />
@@ -78,7 +78,7 @@ export default function AuctionStagesPage() {
         open={!!deleting}
         onOpenChange={(o) => { if (!o) setDeleting(null); }}
         onConfirm={handleConfirmDelete}
-        title="Excluir PraÃ§a"
+        title="Excluir Praça"
         description={`Deseja realmente excluir "${deleting?.name}"?`}
       />
     </div>

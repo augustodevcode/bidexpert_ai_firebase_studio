@@ -24,12 +24,13 @@ import {
   Pencil,
   Rocket,
   Scale,
+  ShoppingCart,
   Tv,
   Users,
   type LucideIcon,
 } from 'lucide-react';
 
-type PathType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'COMMON';
+type PathType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'VENDA_DIRETA' | 'COMMON';
 type StepStatus = 'todo' | 'in_progress' | 'done';
 
 type FlowCard = {
@@ -72,6 +73,11 @@ const pathStyles: Record<PathType, { border: string; badge: string; tone: string
     badge: 'bg-violet-500 text-white',
     tone: 'text-violet-700',
   },
+  VENDA_DIRETA: {
+    border: 'border-rose-500/70',
+    badge: 'bg-rose-500 text-white',
+    tone: 'text-rose-700',
+  },
   COMMON: {
     border: 'border-slate-400/70',
     badge: 'bg-slate-500 text-white',
@@ -102,6 +108,7 @@ const typeLabels: Record<Exclude<PathType, 'COMMON'>, string> = {
   EXTRAJUDICIAL: 'Extrajudicial',
   PARTICULAR: 'Particular',
   TOMADA_DE_PRECOS: 'Tomada de Precos',
+  VENDA_DIRETA: 'Venda Direta',
 };
 
 const typeIcons: Record<Exclude<PathType, 'COMMON'>, LucideIcon> = {
@@ -109,6 +116,7 @@ const typeIcons: Record<Exclude<PathType, 'COMMON'>, LucideIcon> = {
   EXTRAJUDICIAL: Gavel,
   PARTICULAR: Users,
   TOMADA_DE_PRECOS: Building,
+  VENDA_DIRETA: ShoppingCart,
 };
 
 function FlowCardItem({ step }: { step: FlowCard }) {
@@ -203,7 +211,7 @@ export default function WizardFlow() {
         id: 'types',
         title: 'Modalidades',
         description: 'Escolha a familia correta do fluxo antes de preencher os dados.',
-        steps: (['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'] as const).map((type) => ({
+        steps: (['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'VENDA_DIRETA'] as const).map((type) => ({
           id: `type-${type.toLowerCase()}`,
           label: 'Passo 1',
           title: typeLabels[type],

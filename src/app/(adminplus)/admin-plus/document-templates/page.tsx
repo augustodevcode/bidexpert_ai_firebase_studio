@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina de listagem de Templates de Documentos (DocumentTemplate).
+ * Página de listagem de Templates de Documentos (DocumentTemplate).
  */
 'use client';
 
@@ -26,7 +26,7 @@ export default function DocumentTemplatesPage() {
 
   const handleEdit = useCallback((row: DocumentTemplateRow) => { setEditing(row); setFormOpen(true); }, []);
   const handleDelete = useCallback((row: DocumentTemplateRow) => { setDeleteTarget(row); }, []);
-  const handleConfirmDelete = useCallback(async () => { if (!deleteTarget) return; const res = await deleteDocumentTemplate({ id: deleteTarget.id }); if (res.success) { toast.success('Template excluÃ­do'); table.refresh(); } else toast.error(res.error || 'Erro'); setDeleteTarget(null); }, [deleteTarget, table]);
+  const handleConfirmDelete = useCallback(async () => { if (!deleteTarget) return; const res = await deleteDocumentTemplate({ id: deleteTarget.id }); if (res.success) { toast.success('Template excluído'); table.refresh(); } else toast.error(res.error || 'Erro'); setDeleteTarget(null); }, [deleteTarget, table]);
   const handleSubmit = useCallback(async (data: any) => { const res = editing ? await updateDocumentTemplate({ ...data, id: editing.id }) : await createDocumentTemplate(data); if (res.success) { toast.success(editing ? 'Atualizado' : 'Criado'); setFormOpen(false); setEditing(null); table.refresh(); } else toast.error(res.error || 'Erro'); }, [editing, table]);
 
   const columns = useMemo(() => getDocumentTemplateColumns({ onEdit: handleEdit, onDelete: handleDelete }), [handleEdit, handleDelete]);

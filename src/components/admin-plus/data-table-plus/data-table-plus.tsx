@@ -62,9 +62,15 @@ export interface DataTablePlusProps<TData> {
   onSortChange?: unknown;
   search?: string;
   searchQuery?: string;
+  searchValue?: string;
   onSearchChange?: unknown;
-  rowActions?: unknown;
-  getRowId?: ((row: TData) => string) | unknown;
+  pageSizeOptions?: unknown[];
+  pageIndex?: number;
+  totalRows?: number;
+  totalItems?: number;
+  searchColumn?: string;
+  rowActions?: Array<{ label?: string; variant?: string; onClick?: (row: TData) => void }> | ((row: TData) => Array<{ label?: string; variant?: string; onClick?: (row: TData) => void }>);
+  getRowId?: (row: TData) => string;
   totalPages?: number;
 
   /** data-ai-id for root container. */

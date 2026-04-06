@@ -12,21 +12,21 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { CrudFormShell } from '@/components/admin-plus/forms/crud-form-shell';
 import { Field } from '@/components/admin-plus/forms/field';
-import { variableIncrementRuleSchema, type VariableIncrementRuleFormData } from './schema';
+import { variableIncrementRuleSchema, type VariableIncrementRuleFormValues } from './schema';
 import type { VariableIncrementRuleRow } from './types';
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   row?: VariableIncrementRuleRow | null;
-  onSubmit: (data: VariableIncrementRuleFormData) => Promise<void>;
+  onSubmit: (data: VariableIncrementRuleFormValues) => Promise<void>;
   loading?: boolean;
 }
 
 export function VariableIncrementRuleForm({ open, onOpenChange, row, onSubmit, loading }: Props) {
   const isEditing = !!row;
 
-  const form = useForm<VariableIncrementRuleFormData>({
+  const form = useForm<VariableIncrementRuleFormValues>({
     resolver: zodResolver(variableIncrementRuleSchema),
     defaultValues: { from: 0, to: undefined, increment: 0 },
   });

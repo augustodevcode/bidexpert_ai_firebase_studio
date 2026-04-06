@@ -70,7 +70,7 @@ export default function LotsPage() {
     if (!deleteTarget) return;
     const res = await deleteLot({ id: deleteTarget.id });
     if (res.success) {
-      toast.success('Lote excluÃ­do');
+      toast.success('Lote excluído');
       setDeleteTarget(undefined);
       table.refresh();
     } else {
@@ -83,7 +83,7 @@ export default function LotsPage() {
       <PageHeader
         title="Lotes"
         icon={Gavel}
-        subtitle="Gerenciar lotes de leilÃ£o"
+        subtitle="Gerenciar lotes de leilão"
         onAdd={() => { setEditing(undefined); setFormOpen(true); }}
       />
 

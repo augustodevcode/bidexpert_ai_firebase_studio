@@ -5,7 +5,8 @@ import type { Lot, Auction, AuctionStage } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark, Calendar } from 'lucide-react';
+import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
 import Link from 'next/link';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { useMemo, useState } from 'react';
@@ -22,10 +23,10 @@ interface AuctionPreviewModalProps {
 export default function AuctionPreviewModal({ auction, isOpen, onClose }: AuctionPreviewModalProps) {
   const auctionDates = useMemo(() => {
     const dates: Date[] = [];
-    if (auction.auctionDate) dates.push(new Date(auction.auctionDate as string));
-    if (auction.endDate) dates.push(new Date(auction.endDate as string));
+    if (auction.auctionDate) dates.push(new Date(auction.auctionDate as unknown as string));
+    if (auction.endDate) dates.push(new Date(auction.endDate as unknown as string));
     (auction.auctionStages || []).forEach(stage => {
-        if (stage.endDate) dates.push(new Date(stage.endDate as string));
+        if (stage.endDate) dates.push(new Date(stage.endDate as unknown as string));
     });
     const uniqueDates = Array.from(new Set(dates.map(d => d.toISOString()))).map(iso => new Date(iso));
     return uniqueDates;
@@ -42,9 +43,9 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
   };
   
   const auctioneerInitial = getAuctioneerInitial();
-  const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
+  const displayLocation = (auction as any).city && (auction as any).state ? `${(auction as any).city} - ${(auction as any).state}` : (auction as any).state || (auction as any).city || 'Nacional';
   
-  const validImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
+  const validImageUrl = isValidImageUrl((auction as any).imageUrl) ? (auction as any).imageUrl : 'https://placehold.co/600x400.png';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -108,7 +109,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
                         </div>
                     </CardContent>
                 </Card>
-                 <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages || []} />
+                 <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as unknown as string)} stages={auction.auctionStages || []} />
                  <Card>
                     <CardHeader className="p-3">
                         <CardTitle className="text-md font-semibold flex items-center"><CalendarDays className="mr-2 h-4 w-4" /> Calendário</CardTitle>
@@ -117,7 +118,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
                         <Calendar
                             mode="multiple"
                             selected={auctionDates}
-                            defaultMonth={auction.auctionDate ? new Date(auction.auctionDate as string) : new Date()}
+                            defaultMonth={auction.auctionDate ? new Date(auction.auctionDate as unknown as string) : new Date()}
                             className="p-2"
                             classNames={{
                                 cell: "h-8 w-8 text-center text-xs p-0 relative",

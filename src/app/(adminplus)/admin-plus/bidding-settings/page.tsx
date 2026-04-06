@@ -1,6 +1,6 @@
 /**
- * @fileoverview PÃ¡gina de configuraÃ§Ãµes de lances (BiddingSettings) â€” Admin Plus.
- * FormulÃ¡rio singleton que carrega as configuraÃ§Ãµes do tenant e salva via upsert.
+ * @fileoverview Página de configurações de lances (BiddingSettings) — Admin Plus.
+ * Formulário singleton que carrega as configurações do tenant e salva via upsert.
  */
 'use client';
 
@@ -55,7 +55,7 @@ export default function BiddingSettingsPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar configuraÃ§Ãµes de lances.');
+        toast.error('Erro ao carregar configurações de lances.');
       } finally {
         setLoading(false);
       }
@@ -67,12 +67,12 @@ export default function BiddingSettingsPage() {
     try {
       const res = await updateBiddingSettingsAction(values);
       if (res?.success) {
-        toast.success('ConfiguraÃ§Ãµes de lances salvas com sucesso.');
+        toast.success('Configurações de lances salvas com sucesso.');
       } else {
         toast.error(res?.error ?? 'Erro ao salvar.');
       }
     } catch {
-      toast.error('Erro inesperado ao salvar configuraÃ§Ãµes.');
+      toast.error('Erro inesperado ao salvar configurações.');
     } finally {
       setSaving(false);
     }
@@ -93,7 +93,7 @@ export default function BiddingSettingsPage() {
 
   return (
     <div data-ai-id="bidding-settings-page">
-      <PageHeader title="ConfiguraÃ§Ãµes de Lances" icon={Gavel} />
+      <PageHeader title="Configurações de Lances" icon={Gavel} />
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
         {/* Comportamento Geral */}
@@ -101,7 +101,7 @@ export default function BiddingSettingsPage() {
         <Separator />
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Lance InstantÃ¢neo" description="Habilita lances em tempo real sem delay.">
+          <Field label="Lance Instantâneo" description="Habilita lances em tempo real sem delay.">
             <div className="flex items-center space-x-2">
               <Switch
                 checked={form.watch('instantBiddingEnabled')}
@@ -114,7 +114,7 @@ export default function BiddingSettingsPage() {
             </div>
           </Field>
 
-          <Field label="Info InstantÃ¢nea de Lance" description="Exibe informaÃ§Ãµes de lances em tempo real para todos.">
+          <Field label="Info Instantânea de Lance" description="Exibe informações de lances em tempo real para todos.">
             <div className="flex items-center space-x-2">
               <Switch
                 checked={form.watch('getBidInfoInstantly')}
@@ -127,7 +127,7 @@ export default function BiddingSettingsPage() {
             </div>
           </Field>
 
-          <Field label="Lance por ProcuraÃ§Ã£o" description="Permite lances automÃ¡ticos com valor mÃ¡ximo definido.">
+          <Field label="Lance por Procuração" description="Permite lances automáticos com valor máximo definido.">
             <div className="flex items-center space-x-2">
               <Switch
                 checked={form.watch('proxyBiddingEnabled')}
@@ -141,12 +141,12 @@ export default function BiddingSettingsPage() {
           </Field>
         </div>
 
-        {/* Intervalos e DuraÃ§Ã£o */}
-        <h3 className="text-lg font-semibold mt-6" data-ai-id="bidding-settings-section-timings">Intervalos e DuraÃ§Ã£o</h3>
+        {/* Intervalos e Duração */}
+        <h3 className="text-lg font-semibold mt-6" data-ai-id="bidding-settings-section-timings">Intervalos e Duração</h3>
         <Separator />
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Intervalo de VerificaÃ§Ã£o (s)" description="Segundos entre verificaÃ§Ãµes de status de lance.">
+          <Field label="Intervalo de Verificação (s)" description="Segundos entre verificações de status de lance.">
             <Input
               type="number"
               min={1}
@@ -155,7 +155,7 @@ export default function BiddingSettingsPage() {
             />
           </Field>
 
-          <Field label="DuraÃ§Ã£o PadrÃ£o da PraÃ§a (dias)" description="Dias padrÃ£o para duraÃ§Ã£o de cada praÃ§a.">
+          <Field label="Duração Padrão da Praça (dias)" description="Dias padrão para duração de cada praça.">
             <Input
               type="number"
               min={1}
@@ -164,7 +164,7 @@ export default function BiddingSettingsPage() {
             />
           </Field>
 
-          <Field label="Dias entre PraÃ§as" description="Intervalo padrÃ£o entre praÃ§as consecutivas.">
+          <Field label="Dias entre Praças" description="Intervalo padrão entre praças consecutivas.">
             <Input
               type="number"
               min={0}
@@ -173,7 +173,7 @@ export default function BiddingSettingsPage() {
             />
           </Field>
 
-          <Field label="Soft Close (min)" description="Minutos para extensÃ£o automÃ¡tica quando lance Ã© dado perto do encerramento.">
+          <Field label="Soft Close (min)" description="Minutos para extensão automática quando lance é dado perto do encerramento.">
             <Input
               type="number"
               min={1}
@@ -187,7 +187,7 @@ export default function BiddingSettingsPage() {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={saving} data-ai-id="bidding-settings-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar ConfiguraÃ§Ãµes
+            Salvar Configurações
           </Button>
         </div>
       </CrudFormShell>

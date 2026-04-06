@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de Subcategory â€” Admin Plus.
+ * @fileoverview Página CRUD de Subcategory — Admin Plus.
  */
 'use client';
 
@@ -48,7 +48,7 @@ export default function SubcategoriesPage() {
   const handleSubmit = useCallback(
     async (values: Record<string, unknown>) => {
       const res = editRow
-        ? await updateSubcategory({ id: editRow.id, data: values as Parameters<typeof updateSubcategory>[0]['data'] })
+        ? await updateSubcategory({ id: editRow.id, data: values as any })
         : await createSubcategory(values as Parameters<typeof createSubcategory>[0]);
       if (res?.success) {
         toast.success(editRow ? 'Subcategoria atualizada' : 'Subcategoria criada');
@@ -66,7 +66,7 @@ export default function SubcategoriesPage() {
     if (!deleteRow) return;
     const res = await deleteSubcategory({ id: deleteRow.id });
     if (res?.success) {
-      toast.success('Subcategoria excluÃ­da');
+      toast.success('Subcategoria excluída');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -106,7 +106,7 @@ export default function SubcategoriesPage() {
         onOpenChange={(v) => !v && setDeleteRow(null)}
         onConfirm={handleConfirmDelete}
         title="Excluir Subcategoria"
-        description={`Excluir a subcategoria "${deleteRow?.name}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
+        description={`Excluir a subcategoria "${deleteRow?.name}"? Esta ação não pode ser desfeita.`}
         data-ai-id="subcategories-delete-dialog"
       />
     </div>

@@ -3,6 +3,7 @@
  */
 'use server';
 
+import { type AssetStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { createAdminAction } from '@/lib/admin-plus/safe-action';
 import { sanitizeResponse } from '@/lib/serialization-helper';
@@ -84,7 +85,7 @@ export const createAsset = createAdminAction(async (ctx, values: Record<string, 
       publicId: generatePublicId(),
       title: String(values.title),
       description: values.description ? String(values.description) : null,
-      status: (values.status as string) || 'DISPONIVEL',
+      status: ((values.status as string) || 'DISPONIVEL') as AssetStatus,
       categoryId: values.categoryId ? BigInt(values.categoryId as string) : null,
       subcategoryId: values.subcategoryId ? BigInt(values.subcategoryId as string) : null,
       sellerId: values.sellerId ? BigInt(values.sellerId as string) : null,
@@ -112,7 +113,9 @@ export const createAsset = createAdminAction(async (ctx, values: Record<string, 
   return sanitizeResponse(rec);
 });
 
-export const updateAsset = createAdminAction(async (ctx, id: string, values: Record<string, unknown>) => {
+export const updateAsset = createAdminAction(async (ctx, ...args: unknown[]) => {
+  const id = args[0] as string;
+  const values = args[1] as Record<string, unknown>;
   const data: Record<string, unknown> = {
     title: String(values.title),
     updatedAt: new Date(),

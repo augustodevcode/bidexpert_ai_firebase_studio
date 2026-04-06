@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina de listagem de Lances MÃ¡ximos por Lote/UsuÃ¡rio (UserLotMaxBid).
+ * Página de listagem de Lances Máximos por Lote/Usuário (UserLotMaxBid).
  */
 'use client';
 
@@ -71,7 +71,7 @@ export default function UserLotMaxBidsPage() {
 
   return (
     <div className="space-y-4" data-ai-id="user-lot-max-bids-page">
-      <PageHeader title="Lances MÃ¡ximos" icon={TrendingUp} onAdd={() => { setEditingRow(null); setFormOpen(true); }} />
+      <PageHeader title="Lances Máximos" icon={TrendingUp} onAdd={() => { setEditingRow(null); setFormOpen(true); }} />
       <DataTablePlus
         columns={columns}
         data={dt.data}

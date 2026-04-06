@@ -47,7 +47,7 @@ export function JudicialBranchForm({ open, onOpenChange, onSubmit, defaultValues
     if (!open) return;
     listJudicialDistricts({ page: 1, pageSize: 500 }).then((res) => {
       if (res?.success && res.data?.data) {
-        setDistricts(res.data.data.map((d: Record<string, unknown>) => ({ id: String(d.id), name: String(d.name) })));
+        setDistricts(res.data.data.map(d => ({ id: String(d.id), name: String((d as any).name) })));
       }
     });
   }, [open]);

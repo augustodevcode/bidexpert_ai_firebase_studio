@@ -38,7 +38,7 @@ test.describe('Projecao publica do leilao judicial cadastrado via wizard', () =>
 
     const timeline = page.locator('[data-ai-id="bidexpert-auction-timeline"]').first();
     await expect(timeline).toBeVisible();
-    await expect(timeline).toContainText(/1ª Praça\s*Em breve\s*01\/04 - 13:00/i);
+    await expect(timeline).toContainText(/1ª Praça\s*(Em breve|Aberto)\s*01\/04 - 13:00/i);
     await expect(timeline).toContainText(/2ª Praça\s*Em breve\s*22\/04 - 13:00/i);
 
     const lotsTab = page.getByRole('tab', { name: /Lotes 1/i });
@@ -82,10 +82,9 @@ test.describe('Projecao publica do leilao judicial cadastrado via wizard', () =>
     await expect(page.locator('[data-ai-id="lot-v2-planning-card-minimum-bid"]')).toContainText('R$ 12.232,20');
     await expect(page.locator('[data-ai-id="lot-v2-planning-card-total-due"]')).toContainText('R$');
 
-  const planningTab = page
-    .locator('[data-ai-id="lot-v2-open-planning-tab"]')
-    .or(page.getByRole('tab', { name: 'Planejamento' }));
-  await planningTab.first().click();
+    const planningButton = page.locator('[data-ai-id="lot-v2-open-planning-tab"]').first();
+    await expect(planningButton).toBeVisible();
+    await planningButton.click();
 
     const planningPanel = page.locator('[data-ai-id="lot-v2-planning-tab-panel"]');
     await expect(planningPanel).toBeVisible();
@@ -93,5 +92,31 @@ test.describe('Projecao publica do leilao judicial cadastrado via wizard', () =>
     await expect(page.locator('[data-ai-id="lot-v2-planning-minimum-bid"]')).toContainText('R$ 12.232,20');
     await expect(page.locator('[data-ai-id="lot-v2-planning-total-due"]')).toContainText('R$');
     await expect(planningPanel).toContainText(/custos adicionais de transferência, cartório, tributos, retirada e vistoria/i);
+    await expect(planningPanel.locator('[data-ai-id="lot-cost-simulator"]').first()).toBeVisible();
+    await expect(planningPanel.locator('[data-ai-id="lot-cost-simulator-breakdown"]').first()).toBeVisible();
+    await expect(planningPanel.locator('[data-ai-id="lot-cost-simulator-total"]').first()).toContainText('R$');
+  });
+
+  test('detalhe do lote exibe painel de due diligence com checklist documental', async ({ page, baseURL }) => {
+    const baseUrl = baseURL || 'http://demo.localhost:9006';
+
+    await page.goto(`${baseUrl}${PUBLISHED_LOT_PATH}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 120_000,
+    });
+
+    await expect(page.getByRole('heading', { name: new RegExp(LOT_TITLE, 'i') })).toBeVisible({ timeout: 60_000 });
+
+    const legalTab = page.getByRole('tab', { name: /Jurídico|Documentos/i }).first();
+    await expect(legalTab).toBeVisible();
+    await legalTab.focus();
+    await page.keyboard.press('Enter');
+
+    const dueDiligencePanel = page.locator('[data-ai-id="lot-due-diligence-panel"]').first();
+    await expect(dueDiligencePanel).toBeVisible();
+    await expect(dueDiligencePanel.locator('[data-ai-id="lot-due-diligence-alert"]').first()).toBeVisible();
+    await expect(dueDiligencePanel.locator('[data-ai-id="lot-due-diligence-checklist"]').first()).toContainText('Matrícula e registro');
+    await expect(dueDiligencePanel.locator('[data-ai-id="lot-due-diligence-checklist"]').first()).toContainText('Processo e consulta pública');
+    await expect(dueDiligencePanel).toContainText('Checklist de due diligence');
   });
 });

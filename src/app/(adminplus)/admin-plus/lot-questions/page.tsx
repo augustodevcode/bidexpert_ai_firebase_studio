@@ -27,7 +27,7 @@ export default function LotQuestionsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleting) return;
     const res = await deleteLotQuestion({ id: deleting.id });
-    if (res.success) { toast.success('Pergunta excluÃ­da'); refresh(); } else toast.error(res.error ?? 'Erro ao excluir');
+    if (res.success) { toast.success('Pergunta excluída'); refresh(); } else toast.error(res.error ?? 'Erro ao excluir');
     setDeleting(null);
   }, [deleting, refresh]);
 

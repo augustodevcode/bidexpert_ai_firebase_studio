@@ -40,7 +40,7 @@ export const listAuctioneers = createAdminAction({
       prisma.auctioneer.count({ where }),
     ]);
     return sanitizeResponse({
-      data,
+      data: data as any[],
       total,
       page,
       pageSize,

@@ -272,7 +272,7 @@ export async function listShadowBannedUsers(): Promise<{ id: string; fullName: s
     const users = await prisma.user.findMany({
       where: {
         badges: {
-          path: ['shadowBanned'],
+          path: '$.shadowBanned',
           equals: true
         },
         UsersOnTenants: tenant?.tenantId ? {

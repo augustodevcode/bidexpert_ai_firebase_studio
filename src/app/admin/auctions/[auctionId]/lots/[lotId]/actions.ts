@@ -49,13 +49,13 @@ export async function placeBidOnLot(
         
         if (!lot) return { success: false, message: 'Lote não encontrado.'};
         
-        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const user = await prisma.user.findUnique({ where: { id: userId } as any });
         if (!user || user.habilitationStatus !== 'HABILITADO') {
             return { success: false, message: "Apenas usuários com status 'HABILITADO' podem dar lances."};
         }
         
         const isHabilitadoForAuction = await prisma.auctionHabilitation.findUnique({
-            where: { userId_auctionId: { userId, auctionId: lot.auctionId } }
+            where: { userId_auctionId: { userId, auctionId: lot.auctionId } } as any
         });
         if (!isHabilitadoForAuction) {
             return { success: false, message: "Você não está habilitado para dar lances neste leilão. Por favor, habilite-se na página do leilão." };
@@ -74,7 +74,7 @@ export async function placeBidOnLot(
                 bidderId: userId,
                 bidderDisplay: userDisplayName,
                 amount: bidAmount,
-            }
+            } as any
         });
 
         if (previousHighBid && previousHighBid.bidderId !== userId) {
@@ -83,7 +83,7 @@ export async function placeBidOnLot(
                     userId: previousHighBid.bidderId,
                     message: `Seu lance no lote "${lot.title}" foi superado.`,
                     link: `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`,
-                }
+                } as any
             });
         }
 
@@ -107,7 +107,7 @@ export async function placeBidOnLot(
                 price: updatedLot?.price,
                 bidsCount: updatedLot?.bidsCount,
             },
-            newBid: newBid as BidInfo,
+            newBid: newBid as unknown as BidInfo,
         };
     } catch (error: any) {
         console.error("Error placing bid:", error);
@@ -127,7 +127,7 @@ export async function placeMaxBid(lotId: string, userId: string, maxAmount: numb
     const lot = await lotService.getLotById(lotId);
     if (!lot) return { success: false, message: 'Lote não encontrado.' };
     
-    await prisma.userLotMaxBid.upsert({
+    await (prisma.userLotMaxBid.upsert as any)({
         where: { userId_lotId: { userId, lotId }},
         update: { maxAmount, isActive: true },
         create: { userId, lotId, maxAmount, isActive: true }
@@ -156,8 +156,8 @@ export async function getActiveUserLotMaxBid(lotIdOrPublicId: string, userId: st
 
   try {
     return prisma.userLotMaxBid.findFirst({
-        where: { userId: userId, lotId: lot.id, isActive: true }
-    });
+        where: { userId: userId, lotId: lot.id, isActive: true } as any
+    }) as unknown as Promise<UserLotMaxBid | null>;
   } catch (error) {
     console.error("Error fetching active max bid:", error);
     return null;
@@ -221,12 +221,12 @@ export async function createReview(
   try {
     // @ts-ignore
     const newReview = await prisma.review.create({
-        data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, rating, comment }
+        data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, rating, comment } as any
     });
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
     }
-    return { success: true, message: 'Avaliação enviada com sucesso.', reviewId: newReview.id };
+    return { success: true, message: 'Avaliação enviada com sucesso.', reviewId: String(newReview.id) };
   } catch(error) {
     console.error("Error creating review:", error);
     return { success: false, message: "Falha ao enviar avaliação." };
@@ -270,12 +270,12 @@ export async function askQuestionOnLot(
   try {
     // @ts-ignore
     const newQuestion = await prisma.lotQuestion.create({
-        data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, questionText, isPublic: true }
+        data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, questionText, isPublic: true } as any
     });
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
     }
-    return { success: true, message: 'Pergunta enviada com sucesso.', questionId: newQuestion.id };
+    return { success: true, message: 'Pergunta enviada com sucesso.', questionId: String(newQuestion.id) };
   } catch(error) {
     console.error("Error creating question:", error);
     return { success: false, message: "Falha ao enviar pergunta." };
@@ -304,8 +304,8 @@ export async function answerQuestionOnLot(
   try {
     // @ts-ignore
     await prisma.lotQuestion.update({
-        where: { id: questionId },
-        data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date() }
+        where: { id: questionId } as any,
+        data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date() } as any
     });
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath(`/auctions/${auctionId}/lots/${lotId}`);
@@ -325,7 +325,7 @@ export async function answerQuestionOnLot(
 export async function getSellerDetailsForLotPage(sellerIdOrPublicIdOrSlug?: string): Promise<SellerProfileInfo | null> {
     if (!sellerIdOrPublicIdOrSlug) return null;
     try {
-        return sellerService.getSellerBySlug(sellerIdOrPublicIdOrSlug);
+        return (sellerService.getSellerBySlug as any)(sellerIdOrPublicIdOrSlug);
     } catch(error) {
         console.error("Error fetching seller details:", error);
         return null;

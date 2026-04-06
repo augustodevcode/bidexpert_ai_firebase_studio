@@ -97,11 +97,11 @@ export function buildAuditData(source: AuditSourceData): AuditData {
 
   const closedAuctionsWithOpenLots = auctions
     .filter(a => (a.status === 'ENCERRADO' || a.status === 'FINALIZADO') && a.Lot.length > 0)
-    .map(a => ({ auction: { id: a.id, title: a.title, status: a.status, publicId: a.publicId }, lots: a.Lot }));
+    .map(a => ({ auction: { id: a.id, title: a.title, status: a.status, publicId: a.publicId }, lots: a.Lot as any }));
 
   const canceledAuctionsWithOpenLots = auctions
     .filter(a => a.status === 'CANCELADO' && a.Lot.length > 0)
-    .map(a => ({ auction: { id: a.id, title: a.title, status: a.status, publicId: a.publicId }, lots: a.Lot }));
+    .map(a => ({ auction: { id: a.id, title: a.title, status: a.status, publicId: a.publicId }, lots: a.Lot as any }));
 
   const auctionsWithoutLocation = auctions
     .filter(a => !a.cityId && !a.stateId && !a.zipCode && !a.street)

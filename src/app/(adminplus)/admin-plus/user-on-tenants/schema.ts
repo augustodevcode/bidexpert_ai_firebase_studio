@@ -10,3 +10,4 @@ export const userOnTenantSchema = z.object({
 });
 
 export type UserOnTenantFormData = z.infer<typeof userOnTenantSchema>;
+export type UserOnTenantInput = UserOnTenantFormData;

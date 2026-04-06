@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina de listagem CRUD de ITSM_Ticket no Admin Plus.
+ * Página de listagem CRUD de ITSM_Ticket no Admin Plus.
  */
 'use client';
 
@@ -47,7 +47,7 @@ export default function ItsmTicketsPage() {
   const confirmDelete = async () => {
     if (!deleting) return;
     const res: any = await deleteItsmTicket({ id: deleting.id });
-    if (res?.success) { toast.success('Ticket excluÃ­do.'); table.refresh(); } else { toast.error(res?.error || 'Erro ao excluir.'); }
+    if (res?.success) { toast.success('Ticket excluído.'); table.refresh(); } else { toast.error(res?.error || 'Erro ao excluir.'); }
     setDeleting(null);
   };
 

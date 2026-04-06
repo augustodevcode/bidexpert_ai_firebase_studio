@@ -24,24 +24,29 @@ function toRow(record: Record<string, unknown>): SubcategoryRow {
 }
 
 /* ─── LIST ─── */
-export const listSubcategories = createAdminAction<
-  z.ZodObject<{ page: z.ZodNumber; pageSize: z.ZodNumber; search: z.ZodOptional<z.ZodString> }>,
-  PaginatedResponse<SubcategoryRow>
->({
+export const listSubcategories = createAdminAction({
   inputSchema: z.object({
     page: z.number().min(1).default(1),
     pageSize: z.number().min(1).max(200).default(50),
     search: z.string().optional(),
   }),
   requiredPermission: 'subcategories:read',
-  handler: async ({ input, ctx }) => {
+  handler: async ({ input, ctx }: { input: any; ctx: any }) => {
     const { page, pageSize, search } = input;
-    const where: Record<string, unknown> = { tenantId: ctx.tenantIdBigInt };
+    const where: Record<string, unknown> = {
+      OR: [
+        { tenantId: ctx.tenantIdBigInt },
+        { tenantId: null },
+        { isGlobal: true },
+      ],
+    };
     if (search) {
-      where.OR = [
-        { name: { contains: search } },
-        { slug: { contains: search } },
-      ];
+      where.AND = [{
+        OR: [
+          { name: { contains: search } },
+          { slug: { contains: search } },
+        ],
+      }];
     }
     const [data, total] = await Promise.all([
       prisma.subcategory.findMany({

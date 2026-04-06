@@ -1,6 +1,6 @@
 /**
- * @fileoverview PÃ¡gina de listagem de ThemeSettings â€” Admin Plus.
- * CRUD completo com DataTablePlus, dialog form, confirmaÃ§Ã£o de exclusÃ£o.
+ * @fileoverview Página de listagem de ThemeSettings — Admin Plus.
+ * CRUD completo com DataTablePlus, dialog form, confirmação de exclusão.
  */
 'use client';
 
@@ -38,7 +38,7 @@ export default function ThemeSettingsPage() {
     if (!deleteRow) return;
     try {
       const res = await deleteThemeSettingsAction({ id: deleteRow.id });
-      if (res?.success) { toast.success('Tema excluÃ­do.'); table.refresh(); }
+      if (res?.success) { toast.success('Tema excluído.'); table.refresh(); }
       else toast.error(res?.error ?? 'Erro ao excluir.');
     } catch { toast.error('Erro inesperado.'); }
     setDeleteRow(null);
