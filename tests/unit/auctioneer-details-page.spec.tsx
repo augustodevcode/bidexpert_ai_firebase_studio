@@ -82,9 +82,14 @@ vi.mock('embla-carousel-autoplay', () => ({
 }));
 
 // Mock do isValidImageUrl
-vi.mock('@/lib/ui-helpers', () => ({
-  isValidImageUrl: () => true,
-}));
+vi.mock('@/lib/ui-helpers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/ui-helpers')>();
+  return {
+    __esModule: true,
+    ...actual,
+    isValidImageUrl: () => true,
+  };
+});
 
 const mockAuction: Auction = {
   id: 'auction-1',
