@@ -21,6 +21,12 @@ Funcionalidade: Página de Lotes V2 - Exibição por Categoria de Leilão
     Então cada card de lote deve conter título, preço e localização
     E cada card deve possuir atributo data-ai-id para testabilidade
 
+  Cenário: Card universal preserva regras essenciais ao adotar o visual de /lots
+    Quando a plataforma renderiza um lote em qualquer grid usando o componente universal
+    Então o card deve manter o pricing correto por praça ou por lance atual
+    E o card deve preservar badges mentais, favoritos, share e CTA de pregão online quando aplicáveis
+    E o card deve permitir preview e edição inline apenas nos contextos autorizados
+
   Cenário: Estado vazio quando categoria não possui lotes
     Dado que a categoria PARTICULAR não possui lotes com status visível
     Quando eu acesso a página "/lots"

@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import BidExpertCard from '@/components/BidExpertCard';
+import { Card } from '@/components/ui/card';
 
 interface ChangeHistoryEntry {
   id: string;
@@ -213,7 +213,7 @@ export function ChangeHistoryTab({
       </div>
 
       {/* Table */}
-      <BidExpertCard className="overflow-hidden">
+      <Card className="overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-muted-foreground">
             Loading change history...
@@ -365,7 +365,7 @@ export function ChangeHistoryTab({
             </div>
           </>
         )}
-      </BidExpertCard>
+      </Card>
 
       {/* Pagination */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-background border rounded-lg">

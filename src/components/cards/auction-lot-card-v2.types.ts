@@ -4,6 +4,8 @@
  * into a display-ready shape consumed by AuctionLotCardV2.
  */
 
+import type { Auction, BadgeVisibilitySettings, Lot, PlatformSettings } from '@/types';
+
 export type AuctionCategory =
   | 'Judicial'
   | 'Extrajudicial'
@@ -60,4 +62,18 @@ export interface AuctionItem {
   isLive: boolean;
   isOpen: boolean;
   comitente?: Comitente;
+  detailUrl?: string;
+  lotStatus?: string;
+  statusLabel?: string;
+  statusTone?: 'open' | 'soon' | 'closed';
+  displayPriceLabel?: string;
+  mentalTriggers?: string[];
+  showOpportunityBadge?: boolean;
+  nextBidAmount?: number;
+  sourceLot?: Lot;
+  sourceAuction?: Auction;
+  platformSettings?: PlatformSettings | null;
+  badgeVisibilityConfig?: BadgeVisibilitySettings | null;
+  showCountdown?: boolean;
+  onUpdate?: () => void;
 }
