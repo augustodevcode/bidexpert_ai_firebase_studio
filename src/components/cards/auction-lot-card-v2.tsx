@@ -285,12 +285,13 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         />
 
         {/* Hover Actions Overlay */}
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 z-20">
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 z-20" data-ai-id="lot-card-actions-overlay">
           <button
             type="button"
             onClick={handleFavoriteToggle}
             className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
             aria-label="Adicionar aos favoritos"
+            data-ai-id="lot-card-favorite-btn"
           >
             <Heart className={cn('w-5 h-5', isFavorited && 'fill-red-500 text-red-500')} />
           </button>
@@ -299,6 +300,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             onClick={handlePreviewOrNavigate}
             className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
             aria-label={hasPreview ? 'Pré-visualizar lote' : 'Ver detalhes'}
+            data-ai-id="lot-card-preview-btn"
           >
             <Eye className="w-5 h-5" />
           </button>
