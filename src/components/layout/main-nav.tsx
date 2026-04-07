@@ -203,8 +203,8 @@ export default function MainNav({
 
 
   return (
-    <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
-      <NavigationMenuList className={cn("group flex flex-wrap flex-grow list-none items-center justify-start md:justify-center space-x-1")}>
+    <NavigationMenu className={cn("relative z-10 flex w-full items-center justify-start", className)} {...props} delayDuration={0}>
+      <NavigationMenuList className={cn("group flex w-full flex-wrap flex-grow list-none items-center justify-start gap-1 2xl:justify-center")}>
         {items.map((item) => {
           let megaMenuPropsForTwoColumn: any = null;
           const currentParamsType = searchParams.get('type');

@@ -69,9 +69,9 @@
   .link-top-nav { @apply hover:text-primary transition-colors flex items-center gap-1; }
   .icon-top-nav { @apply h-3.5 w-3.5; }
   .wrapper-logo-search-bar { @apply bg-surface/80 text-foreground border-b border-border/20; }
-  .container-logo-search { @apply container mx-auto px-4 flex h-20 items-center justify-between; }
-  .wrapper-header-brand-mobile { @apply flex items-center; }
-  .wrapper-mobile-menu-trigger { @apply md:hidden mr-2; }
+  .container-logo-search { @apply container mx-auto px-4 flex h-20 items-center justify-between gap-3; }
+  .wrapper-header-brand-mobile { @apply flex items-center min-w-0; }
+  .wrapper-mobile-menu-trigger { @apply xl:hidden mr-2; }
   .btn-mobile-menu { @apply hover:bg-accent focus-visible:ring-accent-foreground; }
   .icon-mobile-menu { @apply h-6 w-6; }
   .sheet-mobile-menu { @apply w-[300px] sm:w-[400px] p-0 bg-card text-card-foreground flex flex-col; }
@@ -91,7 +91,7 @@
   .skeleton-header-title { @apply h-8 w-32; }
   .text-header-tagline { @apply text-xs sm:text-sm text-muted-foreground mt-0 sm:mt-1 hidden md:block; }
   .skeleton-header-tagline { @apply h-4 w-48; }
-  .wrapper-header-search-desktop { @apply hidden md:flex flex-1 justify-center items-center px-4; }
+  .wrapper-header-search-desktop { @apply hidden xl:flex flex-1 justify-center items-center px-4; }
   .form-header-search { @apply w-full max-w-xl; }
   .container-header-search-input { @apply relative flex w-full bg-background rounded-md shadow-sm border border-input; }
   .select-header-search-category { @apply w-[150px] h-10 text-sm text-muted-foreground border-r border-input rounded-l-md rounded-r-none focus:ring-0 focus:ring-offset-0 bg-secondary/20 truncate; }
@@ -115,19 +115,19 @@
   .text-search-result-price { @apply text-xs text-primary font-semibold; }
   .item-search-view-all { @apply p-2 border-t border-border list-none; }
   .btn-search-view-all { @apply w-full text-sm text-primary; }
-  .wrapper-header-actions { @apply flex items-center space-x-0.5 sm:space-x-1; }
+  .wrapper-header-actions { @apply flex shrink-0 items-center space-x-0.5 sm:space-x-1; }
   .btn-header-action { @apply h-9 w-9 sm:h-10 sm:w-10; }
   .icon-header-action { @apply h-4 w-4 sm:h-5 sm:w-5; }
-  .btn-header-action-mobile { @apply md:!hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10; }
-  .wrapper-main-navigation { @apply border-b bg-background text-foreground hidden md:block; }
-  .container-main-navigation { @apply container mx-auto px-4 flex h-12 items-center justify-between; }
-  .menu-navigation-categories { @apply relative z-10 flex items-center justify-start; }
+  .btn-header-action-mobile { @apply xl:!hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10; }
+  .wrapper-main-navigation { @apply border-b bg-background text-foreground hidden xl:block; }
+  .container-main-navigation { @apply container mx-auto flex min-h-12 flex-col items-stretch gap-2 px-4 py-2 2xl:h-12 2xl:flex-row 2xl:items-center 2xl:justify-between 2xl:py-0; }
+  .menu-navigation-categories { @apply relative z-10 flex w-full items-center justify-start 2xl:w-auto; }
   .trigger-nav-categories { @apply font-semibold; }
   .trigger-nav-active { @apply bg-accent text-primary font-semibold; }
   .icon-nav-categories { @apply mr-1.5 h-4 w-4; }
   .content-nav-categories { @apply bg-card border border-border; }
-  .wrapper-main-nav-items { @apply flex-grow flex justify-start pl-4; }
-  .nav-main-desktop { @apply hidden md:flex; }
+  .wrapper-main-nav-items { @apply flex w-full flex-grow justify-start pl-0 2xl:pl-4; }
+  .nav-main-desktop { @apply hidden w-full xl:flex; }
   .btn-user-profile-trigger { @apply relative h-10 w-10 rounded-full; }
   .avatar-user-nav { @apply h-10 w-10; }
   .badge-notification-count { @apply absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]; }
