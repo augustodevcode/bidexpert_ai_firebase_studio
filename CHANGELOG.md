@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.14](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.13...v1.0.0-demo.14) (2026-04-07)
+
+### Funcionalidades
+
+* **cards:** universal lot card - presenter, dispatcher, V2 parity ([#663](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/663)) ([26480a7](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/26480a7eb3f730da2ad32543927ba9e39e4c4110))
+
 ## [1.0.0-demo.13](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.12...v1.0.0-demo.13) (2026-04-06)
 
 ### Correções
