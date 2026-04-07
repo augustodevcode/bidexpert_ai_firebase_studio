@@ -6,3 +6,10 @@ Funcionalidade: Paridade do review do wizard de leilão
     Então a etapa de revisão final exibe esses contatos antes da publicação
     E a etapa de revisão final exibe as URLs de documentos cadastradas
     E a etapa de revisão final exibe o resumo das opções de lance configuradas
+
+  Cenário: Fluxo visual mantém o React Flow ativo
+    Dado que um administrador acessa o assistente de criação de leilão
+    Quando a seção "Visualização do Fluxo" é renderizada
+    Então o canvas do React Flow deve estar visível
+    E a mensagem "Visualização do Fluxo Indisponível" não deve aparecer
+    E a modalidade "Venda Direta" deve continuar mapeada no grafo

@@ -16,19 +16,20 @@ export interface FlowNodeData {
   title: string;
   status: 'todo' | 'in_progress' | 'done';
   icon?: LucideIcon;
-  pathType: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'COMMON';
+  pathType: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'VENDA_DIRETA' | 'COMMON';
   isActivePath: boolean;
   isEntity?: boolean;
   entityId?: string | number;
   entityType?: 'process' | 'auctioneer' | 'seller';
 }
 
-const pathStyles: Record<string, { node: string, label: string }> = {
-    JUDICIAL: { node: "border-blue-500/80", label: "bg-blue-500/80 text-white" },
-    EXTRAJUDICIAL: { node: "border-emerald-500/80", label: "bg-emerald-500/80 text-white" },
-    PARTICULAR: { node: "border-orange-500/80", label: "bg-orange-500/80 text-white" },
-    TOMADA_DE_PRECOS: { node: "border-violet-500/80", label: "bg-violet-500/80 text-white" },
-    COMMON: { node: "border-slate-400/80", label: "bg-slate-400/80 text-white" }
+const pathStyles: Record<FlowNodeData['pathType'], { node: string; label: string }> = {
+  JUDICIAL: { node: 'border-blue-500/80', label: 'bg-blue-500/80 text-white' },
+  EXTRAJUDICIAL: { node: 'border-emerald-500/80', label: 'bg-emerald-500/80 text-white' },
+  PARTICULAR: { node: 'border-orange-500/80', label: 'bg-orange-500/80 text-white' },
+  TOMADA_DE_PRECOS: { node: 'border-violet-500/80', label: 'bg-violet-500/80 text-white' },
+  VENDA_DIRETA: { node: 'border-rose-500/80', label: 'bg-rose-500/80 text-white' },
+  COMMON: { node: 'border-slate-400/80', label: 'bg-slate-400/80 text-white' },
 };
 
 const statusIcons = {
