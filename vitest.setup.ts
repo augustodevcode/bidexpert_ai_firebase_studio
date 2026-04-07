@@ -1,14 +1,18 @@
 // Configuração global para testes
-import { expect, afterEach, vi } from 'vitest';
+import { expect, vi } from 'vitest';
+
+const envTarget = (globalThis as typeof globalThis & {
+  process?: { env?: Record<string, string | undefined> };
+}).process?.env;
 
 // Set required environment variables before any module imports
 // These are dummy values used ONLY for unit testing — they do not connect to a real DB.
 // They exist solely to prevent Prisma from throwing during module initialization.
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'mysql://vitest-placeholder:placeholder@localhost:3306/test_db_no_connection';
+if (envTarget && !envTarget.DATABASE_URL) {
+  envTarget.DATABASE_URL = 'mysql://vitest-placeholder:placeholder@localhost:3306/test_db_no_connection';
 }
-if (!process.env.SESSION_SECRET) {
-  process.env.SESSION_SECRET = 'vitest-session-secret-placeholder-at-least-32-chars!!';
+if (envTarget && !envTarget.SESSION_SECRET) {
+  envTarget.SESSION_SECRET = 'vitest-session-secret-placeholder-at-least-32-chars!!';
 }
 
 // Polyfills for jsdom
@@ -94,6 +98,10 @@ if (hasDomEnvironment) {
 }
 
 // Runs a cleanup after each test case (e.g. clearing jsdom)
-afterEach(() => {
+const registerAfterEach = (globalThis as typeof globalThis & {
+  afterEach?: (callback: () => void) => void;
+}).afterEach;
+
+registerAfterEach?.(() => {
   cleanupFn?.();
 });

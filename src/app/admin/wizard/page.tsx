@@ -15,16 +15,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
 import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
 import { createAsset as createAssetAction } from '@/app/admin/assets/actions';
 import { Separator } from '@/components/ui/separator';
-import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
 import { AssetFormV2 } from '@/app/admin/assets/asset-form-v2';
 import { appendSessionAssetId, getSessionScopedAssets } from '@/components/admin/wizard/wizard-session-utils';
 
+
+const WizardFlow = dynamic(() => import('@/components/admin/wizard/WizardFlow'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="flex h-full min-h-[16rem] items-center justify-center rounded-md bg-muted/30 px-4 text-center text-sm text-muted-foreground"
+      data-ai-id="wizard-flow-loading"
+    >
+      Preparando o mapa visual do fluxo...
+    </div>
+  ),
+});
 
 const allSteps = [
   { id: 'type', title: 'Tipo de Leilão', description: 'Selecione a modalidade.' },

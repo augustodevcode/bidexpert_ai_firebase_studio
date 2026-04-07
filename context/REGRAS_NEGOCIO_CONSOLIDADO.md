@@ -488,6 +488,17 @@ Validar transitions no service com erros descritivos
 ✅ O CTA de auto-habilitação por leilão DEVE reaproveitar `habilitateForAuctionAction` e as regras de `getBidEligibilityState`, sem duplicar lógica condicional no componente visual.
 ✅ As superfícies de bloqueio inline DEVEM expor `data-ai-id` estáveis para automação, incluindo pelo menos o bloco de orientação, o link para documentos e a ação de habilitação do leilão.
 
+### RN-020F: React Flow é obrigatório no fluxo visual do Wizard
+✅ A seção `Visualização do Fluxo` do `/admin/wizard` DEVE continuar renderizando um grafo em `ReactFlow` como representação visual oficial do processo de criação do leilão.
+✅ Refactors de performance ou simplificações temporárias NÃO podem substituir o grafo por placeholder estático, texto de indisponibilidade ou lista desconectada da malha visual sem autorização humana explícita.
+✅ O fluxo visual DEVE suportar explicitamente as modalidades `JUDICIAL`, `EXTRAJUDICIAL`, `PARTICULAR`, `TOMADA_DE_PRECOS` e `VENDA_DIRETA`, mantendo destaque do caminho ativo e `data-ai-id` estável para automação.
+
+**Cenário BDD - Wizard mantém o grafo visual ativo**
+- **Dado** um administrador acessando `/admin/wizard`
+- **Quando** a página termina de carregar
+- **Então** a área `Visualização do Fluxo` deve renderizar o canvas do `ReactFlow`
+- **E** não deve exibir mensagem de indisponibilidade do fluxo
+
 **BDD - Documentação pendente orienta upload no próprio painel de lances**
 - **Dado** um usuário autenticado com documentação pendente ou em análise
 - **Quando** ele acessa o detalhe público de um lote aberto para lances
