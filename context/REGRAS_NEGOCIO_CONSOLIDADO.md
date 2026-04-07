@@ -78,6 +78,9 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ OBRIGATÓRIO usar `BidExpertCard` e `BidExpertListItem`  
 ❌ NÃO importar diretamente `AuctionCard` ou `LotCard`  
 ✅ Garante consistência visual
+✅ O padrão visual oficial de cards de lote passa a ser o baseline da rota `/lots`, mas a adoção só é válida com paridade obrigatória das regras já existentes em `LotCard` e `LotListItem`
+✅ A paridade obrigatória do card universal de lote inclui, no mínimo: pricing display (`Lance Inicial`, `Lance Mínimo`, `Lance Atual`), desconto dinâmico, status temporal efetivo, praça ativa, triggers mentais, `ConsignorLogoBadge`, countdown sincronizado com `/api/server-time`, favoritos/share, preview modal, CTA `Ir para pregão online`, `EntityEditMenu` com `manage_all` e `data-ai-id` para automação
+✅ A rota `/lots` também deve consumir o dispatcher universal; é proibido manter uma implementação visual de lote paralela e divergente do `BidExpertCard`
 
 ### RN-003: Validação de Formulários
 ✅ Campos obrigatórios com asterisco vermelho (`*`)  

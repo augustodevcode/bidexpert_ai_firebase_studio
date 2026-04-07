@@ -156,7 +156,7 @@ export default function FavoriteLotsPage() {
                       <BidExpertCard 
                           item={lot} 
                           type="lot"
-                          auction={parentAuction}
+                          parentAuction={parentAuction}
                           platformSettings={platformSettings!} 
                       />
                        <Button 

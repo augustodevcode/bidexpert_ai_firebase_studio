@@ -366,12 +366,29 @@ export async function loginAs(
     // The server action already created the session cookie — try manual navigation
     console.log(`[loginAs] Redirect not detected after 15s. Current URL: ${page.url()}`);
 
-    // Check for login errors on the page
-    const pageState = await page.evaluate(() => {
-      const err = document.querySelector('.text-auth-error-center')?.textContent;
-      const toasts = Array.from(document.querySelectorAll('[data-state="open"]')).map(el => el.textContent);
-      return { error: err, toasts };
-    });
+    let pageState: { error?: string | null; toasts: Array<string | null> } = { error: null, toasts: [] };
+
+    try {
+      pageState = await page.evaluate(() => {
+        const err = document.querySelector('.text-auth-error-center')?.textContent;
+        const toasts = Array.from(document.querySelectorAll('[data-state="open"]')).map(el => el.textContent);
+        return { error: err, toasts };
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('Execution context was destroyed')) {
+        console.log('[loginAs] Navigation started while inspecting page state; aguardando settle...');
+        await page.waitForLoadState('domcontentloaded', { timeout: 30_000 }).catch(() => undefined);
+        if (waitPattern.test(page.url())) {
+          console.log(`[loginAs] Redirect concluído durante fallback → ${page.url()}`);
+          console.log(`[loginAs:${role}] ✅ Login OK → ${page.url()}`);
+          return consoleErrors;
+        }
+      } else {
+        throw error;
+      }
+    }
+
     console.log(`[loginAs] Page state: ${JSON.stringify(pageState)}`);
 
     if (pageState.error) {

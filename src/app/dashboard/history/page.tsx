@@ -145,7 +145,7 @@ export default function BrowsingHistoryPage() {
                     <BidExpertCard 
                       item={lot} 
                       type="lot"
-                      auction={parentAuction}
+                      parentAuction={parentAuction}
                       platformSettings={platformSettings} 
                       onUpdate={loadHistory}
                     />
