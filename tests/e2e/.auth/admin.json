@@ -2,18 +2,28 @@
   "cookies": [
     {
       "name": "session",
-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiLCJtYW5hZ2VfYXVjdGlvbnMiLCJtYW5hZ2VfdXNlcnMiLCJtYW5hZ2VfbG90cyJdLCJzZWxsZXJJZCI6bnVsbCwiYXVjdGlvbmVlcklkIjpudWxsLCJpYXQiOjE3NzM5Nzg5MTEsImV4cCI6MTc3NDU4MzcxMX0.SOzdXt_F69omgfgqbwHYGHQxbWS52YbUDz4dLoxysvU",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxIiwiZW1haWwiOiJhZG1pbkBiaWRleHBlcnQuY29tLmJyIiwidGVuYW50SWQiOiIxIiwicm9sZU5hbWVzIjpbIkFETUlOIl0sInBlcm1pc3Npb25zIjpbIm1hbmFnZV9hbGwiXSwic2VsbGVySWQiOm51bGwsImF1Y3Rpb25lZXJJZCI6bnVsbCwiaWF0IjoxNzc1NjEzNzM3LCJleHAiOjE3NzYyMTg1Mzd9.wtGeIvKevU5fLcPcnkIXQC00-q06E4zzLgyKoFHcKhQ",
       "domain": "demo.localhost",
       "path": "/",
-      "expires": 1774583711.361113,
+      "expires": 1776218537.392437,
       "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "magic_cookie_test",
+      "value": "test_from_action",
+      "domain": "demo.localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
     }
   ],
   "origins": [
     {
-      "origin": "http://demo.localhost:9014",
+      "origin": "http://demo.localhost:9009",
       "localStorage": [
         {
           "name": "bidexpert-widget-preferences",
@@ -21,11 +31,11 @@
         },
         {
           "name": "bidexpert:currency-rates-updated-at",
-          "value": "2026-03-20T03:55:14.034Z"
+          "value": "2026-04-08T02:02:20.122Z"
         },
         {
           "name": "bidexpert:currency-rates",
-          "value": "{\"BRL\":1,\"USD\":0.18872,\"EUR\":0.16427}"
+          "value": "{\"BRL\":1,\"USD\":0.19422,\"EUR\":0.16805}"
         }
       ]
     }
