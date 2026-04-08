@@ -6,6 +6,16 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.16](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.15...v1.0.0-demo.16) (2026-04-08)
+
+### Funcionalidades
+
+* **wizard): restore React Flow and isolate graph logic; fix(wizard-flow:** remove ssr for reactflow compatibility ([79fda5f](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/79fda5f153d8f6ee1440e2b6ed244d163e146036))
+
+### Correções
+
+* **wizard:** restore react flow graph ([d20d5fd](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d20d5fd79d1c25adec8afbceb942b2915d9d0dd3))
+
 ## [1.0.0-demo.15](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.14...v1.0.0-demo.15) (2026-04-07)
 
 ### Correções
