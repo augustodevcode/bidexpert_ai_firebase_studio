@@ -18,9 +18,13 @@
  *   When the visitor clicks "DAR LANCE" on a card
  *   Then the browser navigates to the lot detail page
  */
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 const BASE = process.env.BASE_URL || 'http://demo.localhost:9014';
+
+function withinTolerance(values: number[], tolerance = 2) {
+  return Math.max(...values) - Math.min(...values) <= tolerance;
+}
 
 test.describe('Public /lots Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -163,6 +167,36 @@ test.describe('Public /lots Page', () => {
     expect(firstCardBox).not.toBeNull();
     expect(firstCardBox!.width).toBeGreaterThan(200);
     expect(firstCardBox!.height).toBeGreaterThan(200);
+  });
+
+  test('search lot grid should keep title shell and action footer aligned', async ({ page }) => {
+    await page.goto(`${BASE}/search?type=lots`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+
+    const grid = page.locator('[data-ai-id="search-results-grid"]');
+    await expect(grid).toBeVisible({ timeout: 30_000 });
+
+    const cards = grid.locator('[data-ai-id="auction-lot-card-v2"]');
+    await expect(cards.first()).toBeVisible({ timeout: 30_000 });
+
+    const metrics = await cards.evaluateAll((nodes) =>
+      nodes.slice(0, 4).map((node) => {
+        const cardRect = node.getBoundingClientRect();
+        const titleShell = node.querySelector('[data-ai-id="card-v2-title-shell"]')?.getBoundingClientRect();
+        const processSlot = node.querySelector('[data-ai-id="card-v2-process-slot"]')?.getBoundingClientRect();
+        const actions = node.querySelector('[data-ai-id="card-v2-actions"]')?.getBoundingClientRect();
+
+        return {
+          titleShellHeight: titleShell ? Math.round(titleShell.height) : 0,
+          processSlotHeight: processSlot ? Math.round(processSlot.height) : 0,
+          footerBottomGap: actions ? Math.round(cardRect.bottom - actions.bottom) : 999,
+        };
+      }),
+    );
+
+    expect(metrics.length).toBeGreaterThanOrEqual(2);
+    expect(withinTolerance(metrics.map((metric) => metric.titleShellHeight))).toBe(true);
+    expect(withinTolerance(metrics.map((metric) => metric.processSlotHeight))).toBe(true);
+    expect(withinTolerance(metrics.map((metric) => metric.footerBottomGap))).toBe(true);
   });
 
   // ── Accessibility basics ────────────────────────────────────────────
