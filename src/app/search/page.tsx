@@ -288,6 +288,88 @@ function SearchPageContent() {
     setIsFilterSheetOpen(false);
   };
 
+  const filteredWithoutPrice = useMemo(() => {
+    let itemsToFilter: any[] = [];
+    let itemTypeContext: 'auction' | 'lot' | 'direct_sale' = 'auction';
+
+    if (currentSearchType === 'auctions') {
+      itemsToFilter = allAuctions.filter(auc => auc.auctionType !== 'TOMADA_DE_PRECOS');
+      itemTypeContext = 'auction';
+    } else if (currentSearchType === 'lots') {
+      itemsToFilter = allLots;
+      itemTypeContext = 'lot';
+    } else if (currentSearchType === 'direct_sale') {
+      itemsToFilter = allDirectSales;
+      itemTypeContext = 'direct_sale';
+    } else if (currentSearchType === 'tomada_de_precos') {
+      itemsToFilter = allAuctions.filter(auc => auc.auctionType === 'TOMADA_DE_PRECOS');
+      itemTypeContext = 'auction';
+    }
+
+    let searchedItems = itemsToFilter;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      searchedItems = itemsToFilter.filter(item => {
+        let searchableText = item.title.toLowerCase();
+        if (item.description) searchableText += ` ${item.description.toLowerCase()}`;
+        if ('auctionName' in item && item.auctionName) searchableText += ` ${item.auctionName.toLowerCase()}`;
+        if ('sellerName' in item && item.sellerName) searchableText += ` ${item.sellerName.toLowerCase()}`;
+        else if ('seller' in item && (item as Auction).seller) searchableText += ` ${(item as Auction).seller!.name.toLowerCase()}`;
+        if ('id' in item && item.id) searchableText += ` ${String(item.id).toLowerCase()}`;
+        return searchableText.includes(term);
+      });
+    }
+
+    return searchedItems.filter(item => {
+      const itemEffectiveStatus = itemTypeContext === 'auction'
+        ? getEffectiveAuctionStatus(item as Auction) || item.status
+        : itemTypeContext === 'lot'
+          ? getEffectiveLotStatus(item as Lot, allAuctions.find(a => a.id === item.auctionId)) || item.status
+          : item.status;
+
+      if (activeFilters.category !== 'TODAS') {
+        const itemCategoryName = 'type' in item && item.type
+          ? item.type
+          : ('category' in item ? (item.category?.name || undefined) : undefined);
+        const category = allCategoriesForFilter.find(c => c.slug === activeFilters.category);
+        if (!itemCategoryName || !category || (item.categoryId !== category.id && slugify(itemCategoryName) !== category.slug)) return false;
+      }
+      // Note: priceRange filter intentionally OMITTED here — used for histogram bounds
+      if (activeFilters.locations.length > 0) {
+        const itemLocationString = ('locationCity' in item && 'locationState' in item && item.locationCity && item.locationState) ? `${item.locationCity} - ${item.locationState}` : ('city' in item && 'state' in item && item.city && item.state) ? `${item.city} - ${item.state}` : ('cityName' in item && 'stateUf' in item && item.cityName && item.stateUf) ? `${item.cityName} - ${item.stateUf}` : undefined;
+        if (!itemLocationString || !activeFilters.locations.includes(itemLocationString)) return false;
+      }
+      if (activeFilters.sellers.length > 0) {
+        let sellerName: string | undefined = undefined;
+        if ('sellerName' in item && item.sellerName) sellerName = item.sellerName;
+        else if ('seller' in item && (item as Auction).seller) sellerName = (item as Auction).seller!.name;
+        if (!sellerName || !activeFilters.sellers.includes(sellerName)) return false;
+      }
+      if (activeFilters.status && activeFilters.status.length > 0) {
+        if (!itemEffectiveStatus || !activeFilters.status.includes(itemEffectiveStatus as string)) return false;
+      }
+      if (itemTypeContext === 'auction' && activeFilters.modality !== 'TODAS' && (item as Auction).auctionType?.toUpperCase() !== activeFilters.modality) return false;
+      if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
+      if (itemTypeContext === 'auction' && activeFilters.praça && activeFilters.praça !== 'todas') {
+        const stagesCount = (item as Auction).auctionStages?.length || 0;
+        if (activeFilters.praça === 'unica' && stagesCount !== 1) return false;
+        if (activeFilters.praça === 'multiplas' && stagesCount <= 1) return false;
+      }
+      return true;
+    });
+  }, [searchTerm, activeFilters, currentSearchType, allAuctions, allLots, allDirectSales, allCategoriesForFilter]);
+
+  const pricePoints = useMemo(() => {
+    return filteredWithoutPrice
+      .map(item => {
+        const p = 'price' in item && typeof item.price === 'number' ? item.price
+                 : 'initialOffer' in item && typeof item.initialOffer === 'number' ? item.initialOffer
+                 : undefined;
+        return p;
+      })
+      .filter((p): p is number => p !== undefined && p > 0);
+  }, [filteredWithoutPrice]);
+
   const filteredAndSortedItems = useMemo(() => {
     let itemsToFilter: any[] = [];
     let itemTypeContext: 'auction' | 'lot' | 'direct_sale' = 'auction';
@@ -357,7 +439,7 @@ function SearchPageContent() {
       if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
 
       // Filtro de praças para leilões
-      if ((itemTypeContext === 'auction' || itemTypeContext === 'tomada_de_precos') && activeFilters.praça && activeFilters.praça !== 'todas') {
+      if (itemTypeContext === 'auction' && activeFilters.praça && activeFilters.praça !== 'todas') {
         const stagesCount = (item as Auction).auctionStages?.length || 0;
         if (activeFilters.praça === 'unica' && stagesCount !== 1) return false;
         if (activeFilters.praça === 'multiplas' && stagesCount <= 1) return false;
@@ -546,6 +628,8 @@ function SearchPageContent() {
             onFilterReset={handleFilterReset}
             initialFilters={activeFilters as ActiveFilters}
             filterContext={currentSearchType as 'auctions' | 'directSales' | 'lots' | 'tomada_de_precos'}
+            pricePoints={pricePoints}
+            autoApply={true}
           />
         </aside>
 
