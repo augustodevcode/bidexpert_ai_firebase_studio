@@ -14,5 +14,5 @@ if (!process.env.POSTGRES_URL_NON_POOLING && process.env.POSTGRES_PRISMA_URL) {
 }
 
 cpSync('prisma-deploy/schema.postgresql.prisma', 'prisma/schema.prisma');
-execSync('npx prisma generate', { stdio: 'inherit' });
+execSync('npx prisma@5.22.0 generate', { stdio: 'inherit' });
 execSync('npm run build', { stdio: 'inherit' });
