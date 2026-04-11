@@ -47,6 +47,7 @@ interface BidExpertFilterProps {
   initialFilters?: ActiveFilters;
   filterContext?: 'auctions' | 'directSales' | 'lots' | 'tomada_de_precos';
   disableCategoryFilter?: boolean; // New prop to disable category selection
+  hideMapCTA?: boolean; // Hides the "Mostrar no mapa" banner (use when already on the map page)
 }
 
 const defaultModalities = [
@@ -98,6 +99,7 @@ export default function BidExpertFilter({
   initialFilters,
   filterContext = 'auctions',
   disableCategoryFilter = false, // Default to enabled
+  hideMapCTA = false,
 }: BidExpertFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -231,6 +233,7 @@ export default function BidExpertFilter({
         </Button>
       </div>
 
+      {!hideMapCTA && (
       <div className="mb-4 mt-2 px-1" data-ai-id="bidexpert-minimap-trigger">
         <div
           role="button"
@@ -256,6 +259,7 @@ export default function BidExpertFilter({
           </Button>
         </div>
       </div>
+      )}
 
       <Accordion type="multiple" defaultValue={['categories', 'price', 'status', 'makes', 'praça']} className="accordion-filters" data-ai-id="bidexpert-filter-accordion">
 
