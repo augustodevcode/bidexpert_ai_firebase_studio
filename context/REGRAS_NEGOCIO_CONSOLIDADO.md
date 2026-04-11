@@ -368,6 +368,22 @@ Toda decisão de elegibilidade deve ser centralizada em um service compartilhado
 - Cadastro essencial completo
 - Método de pagamento e endereço válidos para arremate/checkout
 
+**Contrato canônico de pós-arremate**
+- Fluxos de checkout, dashboard de arremates e geração de documentos DEVEM consumir um contrato canônico serializável para `UserWin`, `Lot` e `Auction`, sem depender de nomes crus de relação do Prisma como `Lot`/`Auction`.
+- Ausência de relacionamentos opcionais de seller/leiloeiro embutidos no payload não pode quebrar geração de termo; o backend deve reidratar esses dados via service ou degradar com segurança.
+- O valor monetário do termo de arrematação deve refletir `winningBidAmount` do `UserWin` quando existir, e não apenas o preço corrente do lote.
+
+**BDD - Pós-arremate resiliente**
+- **Dado** um arremate com `UserWin`, lote e leilão válidos
+- **Quando** o usuário acessa `/checkout/[winId]`
+- **Então** o backend deve normalizar o payload antes da renderização
+- **E** a página deve renderizar ou redirecionar sem erro 500
+
+- **Dado** um lote vendido com `winningBidAmount` registrado no `UserWin`
+- **Quando** o usuário solicita o termo de arrematação
+- **Então** o documento deve usar o valor do arremate registrado
+- **E** a ausência de seller ou leiloeiro embutidos no objeto do lote não deve quebrar a geração
+
 ### RN-018: Consistência Multi-Tenant em Navegação
 Todos os links/rotas geradas devem carregar `tenantId` do contexto  
 Services e Server Actions validam `tenantId` de sessão vs recurso acessado  
