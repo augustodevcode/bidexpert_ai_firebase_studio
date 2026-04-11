@@ -30,6 +30,7 @@ import {
 } from '@/lib/admin-plus/constants';
 import type { EntityConfig, EntityGroup } from '@/lib/admin-plus/types';
 import { useSidebar } from './admin-shell';
+import EnvInfoButton from '@/components/layout/env-info-button';
 
 /** Resolve o nome de ícone (string) para o componente Lucide correspondente. */
 function getIcon(name: string): LucideIcon {
@@ -193,6 +194,10 @@ function SidebarContent({ collapsed, onLinkClick }: { collapsed: boolean; onLink
           )}
         </nav>
       </ScrollArea>
+
+      <div className={cn('border-t border-sidebar-border', collapsed ? 'p-1' : 'p-2')} data-ai-id="admin-plus-dev-info-section">
+        <EnvInfoButton collapsed={collapsed} />
+      </div>
 
       {/* Back to Admin V1 link */}
       <div className={cn('border-t border-sidebar-border', collapsed ? 'p-1' : 'p-2')}>

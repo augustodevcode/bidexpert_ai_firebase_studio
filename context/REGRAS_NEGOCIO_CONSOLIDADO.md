@@ -3258,6 +3258,46 @@ Feature: CRUD Admin Plus - [NomeEntidade]
 - [ ] Filtros avançados por entidade
 - [ ] Auditoria de alterações (integração com AuditLog)
 
+### RN-AP-017: Dev Info Sob Demanda nos Painéis Autenticados
+
+**Data de Implementação:** Abril 2026
+
+**Objetivo:** As informações de ambiente e diagnóstico (`Dev Info`) devem permanecer ocultas por padrão e só podem ser exibidas após ação explícita do usuário em um link/botão da sidebar.
+
+**Escopo Obrigatório:**
+- `/admin/*`
+- `/admin-plus/*`
+- `/dashboard/*`
+- `/consignor-dashboard/*`
+
+**Regras de Comportamento:**
+- O conteúdo de `Dev Info` NÃO pode ser renderizado inline automaticamente no `main`, rodapé ou shell ao carregar a tela.
+- O acesso deve ocorrer EXCLUSIVAMENTE por um gatilho visível na sidebar do shell autenticado.
+- O conteúdo deve abrir em modal/painel flutuante reutilizável, preservando os dados de tenant, usuário, banco, provider, branch, servidor e projeto.
+- Em mobile, o mesmo gatilho deve continuar disponível dentro do menu lateral sem depender de navegação para outra rota.
+- O modal deve respeitar acessibilidade mínima: nome acessível, foco visível, fechamento por `Esc` e conteúdo oculto não focável enquanto fechado.
+
+**Atributos de Testabilidade Obrigatórios:**
+- Botão/link da sidebar: `data-ai-id="env-info-sidebar-button"`
+- Modal: `data-ai-id="env-info-modal"`
+- Título do modal: `data-ai-id="env-info-modal-title"`
+- Conteúdo do painel: `data-testid="dev-info-indicator"`
+
+**BDD / Gherkin:**
+```gherkin
+Scenario: Dev Info oculto por padrão no painel autenticado
+  Given que estou autenticado em um shell com sidebar
+  When a página termina de carregar
+  Then o conteúdo de Dev Info não aparece inline no layout
+  And o gatilho de Dev Info está disponível na sidebar
+
+Scenario: Dev Info exibido sob demanda
+  Given que estou autenticado em um shell com sidebar
+  When clico no botão "Dev Info" da sidebar
+  Then o modal de Dev Info é exibido
+  And o painel mostra tenant, usuário, banco, provider, branch, servidor e projeto
+```
+
 ---
 
 ## Linhagem do Leilão — Visualização de Cadeia de Valor

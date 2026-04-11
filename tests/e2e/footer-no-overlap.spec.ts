@@ -1,52 +1,30 @@
 /**
- * @fileoverview Teste E2E para validar que o rodapé Dev Info não é fixed/sticky,
- * que o sidebar não contém "Voltar ao Site", e que cada seção do footer possui ícone.
- * BDD: O footer deve ser inline (não sobrepor sidebar) e exibir ícones (favicons).
+ * @fileoverview Teste E2E para validar que o Dev Info fica oculto por padrão
+ * e só aparece após clique no botão da sidebar.
+ * BDD: O modal de Dev Info não deve existir inline no layout antes da ação do usuário.
  */
 import { test, expect } from '@playwright/test';
+import { loginAsAdmin } from './helpers/auth-helper';
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://demo.localhost:9016';
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || process.env.BASE_URL || 'http://demo.localhost:9016';
 
-async function loginAndGoToDashboard(page: import('@playwright/test').Page) {
-  await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-
-  const autoLoginLabel = page.getByText('Dev: Auto-login (Ambiente de Teste)').first();
-  const hasDevSelector = await autoLoginLabel.isVisible({ timeout: 15000 }).catch(() => false);
-
-  if (hasDevSelector) {
-    const trigger = page.locator('button[role="combobox"]').filter({ hasText: /Selecione para auto-login/i }).first();
-    await trigger.click();
-    await page.getByRole('option').filter({ hasText: /ADMIN: admin@bidexpert.com.br/i }).first().click();
-  } else {
-    const emailInput = page.locator('[data-ai-id="auth-login-email-input"]').first();
-    const passwordInput = page.locator('[data-ai-id="auth-login-password-input"]').first();
-    const submitButton = page.locator('[data-ai-id="auth-login-submit-button"]').first();
-
-    await emailInput.fill('admin@bidexpert.com.br');
-    await passwordInput.fill('Admin@123');
-    await submitButton.click();
-  }
-
-  await page.waitForURL(/\/(dashboard|admin|home|$)/i, { timeout: 120000 });
-  await page.goto(`${BASE_URL}/dashboard/overview`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await page.waitForTimeout(3000);
-}
-
-test.describe('Footer DevInfo - Não-sticky e sem sobreposição', () => {
+test.describe('DevInfo - Abertura sob demanda pela sidebar', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAndGoToDashboard(page);
+    await loginAsAdmin(page, BASE_URL);
+    await page.goto(`${BASE_URL}/dashboard/overview`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+    await expect(page.locator('[data-ai-id="env-info-sidebar-button"]').first()).toBeVisible({ timeout: 30000 });
   });
 
-  test('Footer existe, é inline (não fixed/sticky) e possui ícones em cada seção', async ({ page }) => {
-    const footer = page.locator('[data-ai-id="dashboard-footer"]');
-    await expect(footer).toBeVisible({ timeout: 30000 });
+  test('Dev Info fica oculto por padrão e abre por clique na sidebar', async ({ page }) => {
+    await expect(page.locator('[data-ai-id="dashboard-footer"]')).toHaveCount(0);
 
-    // Validar que NÃO é fixed nem sticky
-    const computedPosition = await footer.evaluate((el) => window.getComputedStyle(el).position);
-    expect(computedPosition).not.toBe('fixed');
-    expect(computedPosition).not.toBe('sticky');
+    const trigger = page.locator('[data-ai-id="env-info-sidebar-button"]').first();
+    await expect(trigger).toBeVisible({ timeout: 30000 });
+    await trigger.click();
 
-    // Validar que cada célula do grid tem um ícone SVG (lucide icons renderizam como <svg>)
+    const modal = page.locator('[data-ai-id="env-info-modal"]');
+    await expect(modal).toBeVisible({ timeout: 10000 });
+
     const cells = [
       'dev-info-tenant',
       'dev-info-user',
@@ -73,7 +51,9 @@ test.describe('Footer DevInfo - Não-sticky e sem sobreposição', () => {
     await expect(voltarButton).toHaveCount(0);
   });
 
-  test('Footer com todas as 7 seções preenchidas', async ({ page }) => {
+  test('Modal exibe todas as 7 seções preenchidas', async ({ page }) => {
+    await page.locator('[data-ai-id="env-info-sidebar-button"]').first().click();
+
     const grid = page.locator('[data-ai-id="dev-info-grid"]');
     await expect(grid).toBeVisible({ timeout: 30000 });
 

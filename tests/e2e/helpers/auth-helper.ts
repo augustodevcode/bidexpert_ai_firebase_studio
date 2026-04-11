@@ -170,13 +170,11 @@ function hasSubdomain(baseUrl: string): boolean {
 export async function selectTenant(page: Page, tenantName: string | RegExp = /BidExpert Demo|BidExpert/i): Promise<void> {
   const tenantSelect = page.locator(SEL.tenantSelect);
 
-  // Se o tenant selector não está visível ou está desabilitado (auto-locked), skip
   if (!(await tenantSelect.isVisible({ timeout: 5_000 }).catch(() => false))) {
     console.log('[selectTenant] Tenant selector não visível — provavelmente auto-locked via subdomínio');
     return;
   }
 
-  // Check if already locked (disabled)
   const isDisabled = await tenantSelect.isDisabled().catch(() => false);
   if (isDisabled) {
     console.log('[selectTenant] Tenant selector está desabilitado (auto-locked)');
@@ -194,7 +192,6 @@ export async function selectTenant(page: Page, tenantName: string | RegExp = /Bi
       await tenantOption.click();
       console.log(`[selectTenant] Tenant selecionado: ${tenantName}`);
     } else {
-      // Fallback: seleciona a primeira opção disponível
       const firstOption = page.locator('[role="option"]').first();
       if (await firstOption.isVisible({ timeout: 3_000 })) {
         await firstOption.click();
@@ -205,6 +202,42 @@ export async function selectTenant(page: Page, tenantName: string | RegExp = /Bi
   } catch (err) {
     console.warn('[selectTenant] Falha na interação com tenant selector:', err);
   }
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function tryDevAutoLogin(page: Page, email: string): Promise<boolean> {
+  const devAutoLoginLabel = page.getByText('Dev: Auto-login (Ambiente de Teste)').first();
+  const hasDevAutoLogin = await devAutoLoginLabel.isVisible({ timeout: 5_000 }).catch(() => false);
+
+  if (!hasDevAutoLogin) {
+    return false;
+  }
+
+  const trigger = page.locator('button[role="combobox"], [role="combobox"]').filter({
+    hasText: /Selecione para auto-login/i,
+  }).first();
+
+  if (!(await trigger.isVisible({ timeout: 5_000 }).catch(() => false))) {
+    return false;
+  }
+
+  await trigger.click();
+  const option = page.locator('[role="option"]').filter({
+    hasText: new RegExp(escapeRegExp(email), 'i'),
+  }).first();
+
+  if (!(await option.isVisible({ timeout: 5_000 }).catch(() => false))) {
+    console.warn(`[loginAs] Dev auto-login não encontrou opção para ${email}`);
+    return false;
+  }
+
+  await option.click();
+  await page.waitForTimeout(1_000);
+  console.log(`[loginAs] Dev auto-login acionado para ${email}`);
+  return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -264,23 +297,31 @@ export async function loginAs(
   await emailInput.waitFor({ state: 'visible', timeout: 60_000 });
   await page.waitForTimeout(3_000); // Debounce for tenant list to load (extra time for dev lazy compile)
 
+  const usedDevAutoLogin = await tryDevAutoLogin(page, cred.email);
+  if (usedDevAutoLogin) {
+    try {
+      await page.waitForURL(waitPattern, { timeout: Math.min(timeout, 20_000) });
+      console.log(`[loginAs:${role}] ✅ Login OK via dev auto-login → ${page.url()}`);
+      return consoleErrors;
+    } catch {
+      console.warn('[loginAs] Dev auto-login não redirecionou a tempo — seguindo com fallback manual');
+    }
+  }
+
   // 4. Resolve tenant: auto-lock via subdomain OR manual selection
   if (hasSubdomain(baseUrl)) {
-    // Wait for the subdomain-based tenant auto-lock (React state must be populated
-    // before form submission, otherwise handleLogin rejects with "Selecione um espaço")
     try {
-      await page.locator('.text-auth-locked-info').waitFor({ state: 'visible', timeout: 45_000 });
+      await page.waitForFunction(() => {
+        const tenantTrigger = document.querySelector('[data-ai-id="auth-login-tenant-select"]');
+        const tenantLockedText = document.body.textContent?.includes('Você está acessando:');
+        return Boolean(tenantTrigger && tenantLockedText);
+      }, { timeout: 45_000 });
       console.log('[loginAs] Tenant auto-locked via subdomain');
     } catch {
-      // Fallback: if locked-info text never appears, try setting tenantId manually
-      console.warn('[loginAs] Tenant lock indicator not found — setting tenantId via evaluate');
+      console.warn('[loginAs] Tenant lock indicator not found — trying to preserve current tenant value via evaluate');
       await page.evaluate(() => {
-        const select = document.querySelector<HTMLSelectElement>('[data-ai-id="auth-login-tenant-select"] + select, select[name="tenantId"], select');
-        if (select?.value) {
-          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')?.set;
-          nativeInputValueSetter?.call(select, select.value);
-          select.dispatchEvent(new Event('change', { bubbles: true }));
-        }
+        const select = document.querySelector<HTMLElement>('[data-ai-id="auth-login-tenant-select"]');
+        select?.dispatchEvent(new Event('change', { bubbles: true }));
       });
       await page.waitForTimeout(500);
     }
@@ -288,9 +329,13 @@ export async function loginAs(
     await selectTenant(page, options.customTenant ?? /BidExpert Demo|BidExpert/i);
   }
 
-  // 4. Fill credentials
+  // 5. Fill credentials
   await emailInput.fill(cred.email);
   await passwordInput.fill(cred.password);
+  await page.waitForFunction(() => {
+    const submit = document.querySelector('[data-ai-id="auth-login-submit-button"]') as HTMLButtonElement | null;
+    return submit ? !submit.disabled : true;
+  }, { timeout: 10_000 }).catch(() => undefined);
   await page.waitForTimeout(500); // Let form state settle after fill
 
   // Debug: log form state before submit

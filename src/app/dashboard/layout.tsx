@@ -6,7 +6,6 @@ import { useRouter, usePathname, redirect } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2 } from 'lucide-react';
 import DashboardSidebar from '@/components/layout/dashboard-sidebar';
-import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header'; // Reutilizando o header
 import CommandPalette from '@/components/layout/command-palette';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
@@ -43,12 +42,6 @@ export default function DashboardLayout({
     return null; // Don't render anything while redirecting
   }
 
-  const resolvedTenantId =
-    activeTenantId ||
-    userProfileWithPermissions.tenants?.[0]?.tenant?.id?.toString() ||
-    '1';
-  const resolvedUserEmail = userProfileWithPermissions.email || 'admin@bidexpert.ai';
-
   return (
     <ThemeProvider
       attribute="class"
@@ -67,10 +60,6 @@ export default function DashboardLayout({
               <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 overflow-y-auto">
                   <div className="mx-auto max-w-7xl">
                       {children}
-                      <DevInfoIndicator
-                        tenantId={resolvedTenantId}
-                        userEmail={resolvedUserEmail}
-                      />
                   </div>
               </main>
             </div>
