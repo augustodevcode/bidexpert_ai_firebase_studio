@@ -563,6 +563,24 @@ Proibir mix de `cuid()` em novos docs/código
   
 🎚️ **Funcionalidades**:  
 
+### RN-022B: Uniformidade Visual dos Cards de Lote nas Grades Públicas
+✅ Cards de lote renderizados em grids públicos como `/search?type=lots` e `/lots` DEVEM manter altura visual uniforme por linha, independentemente do tamanho do nome principal do lote.
+✅ O nome principal variável do lote DEVE ocupar sempre uma área contratual de duas linhas, com truncamento por elipsis quando exceder esse limite.
+✅ Metadados opcionais do cabeçalho, como número de processo judicial, DEVEM reservar espaço estrutural mesmo quando ausentes, evitando que alguns cards “subam” em relação aos demais.
+✅ O bloco de ações/CTA do card DEVE permanecer ancorado na mesma base visual da grade.
+✅ A solução de layout DEVE ser centralizada no componente base reutilizado do card e nos wrappers de grade, sem duplicar hacks por página.
+
+**Cenário BDD - Nome do lote mantém altura contratual**
+- **Dado** uma grade pública de lotes com títulos curtos e longos
+- **Quando** a interface renderiza os cards na mesma linha
+- **Então** o nome principal de cada lote ocupa no máximo duas linhas
+- **E** títulos curtos preservam a mesma altura visual reservada dos títulos longos
+
+**Cenário BDD - CTA permanece alinhado mesmo sem metadados opcionais**
+- **Dado** uma grade pública com lotes judiciais e não judiciais
+- **Quando** alguns cards não possuem número de processo ou outros metadados opcionais
+- **Então** o rodapé de ações continua alinhado na mesma base visual dos demais cards
+
 ### RN-023: Marketing > Publicidade do Site (Super Oportunidades)
 ✅ A seção Super Oportunidades DEVE ser habilitada/desabilitada via módulo Marketing > Publicidade do Site  
 ✅ A frequência de rolagem do carousel DEVE ser configurável no mesmo submódulo  

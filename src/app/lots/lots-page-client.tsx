@@ -45,7 +45,9 @@ function Section({ title, description, items, dataAiId, anchorId }: SectionProps
 
       <div className="grid grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => (
-          <BidExpertCard key={item.id} item={item} type="lot" />
+          <div key={item.id} className="flex h-full w-full justify-center">
+            <BidExpertCard item={item} type="lot" />
+          </div>
         ))}
       </div>
     </section>
