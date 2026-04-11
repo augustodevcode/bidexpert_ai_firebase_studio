@@ -546,6 +546,7 @@ function SearchPageContent() {
             totalItemsCount={filteredAndSortedItems.length}
             renderGridItem={renderGridItem}
             renderListItem={renderListItem}
+            defaultViewMode="list"
             sortOptions={currentSortOptions}
             initialSortBy={sortBy}
             onSortChange={setSortByState}

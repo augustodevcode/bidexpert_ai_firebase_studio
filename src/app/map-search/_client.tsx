@@ -573,6 +573,7 @@ function MapSearchPageContent() {
               onFilterReset={handleFilterReset}
               initialFilters={activeFilters}
               filterContext={searchType === 'tomada_de_precos' ? 'tomada_de_precos' : searchType === 'direct_sale' ? 'directSales' : 'lots'}
+              hideMapCTA
             />
           </aside>
 

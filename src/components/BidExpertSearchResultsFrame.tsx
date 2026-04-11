@@ -80,6 +80,7 @@ interface BidExpertSearchResultsFrameProps<TItem> {
   dataTableColumns?: ColumnDef<TItem, any>[];
   sortOptions: { value: string; label: string }[];
   initialSortBy?: string;
+  defaultViewMode?: 'grid' | 'list' | 'table';
   onSortChange: (sortBy: string) => void;
   platformSettings: PlatformSettings;
   isLoading?: boolean;
@@ -116,6 +117,7 @@ export default function BidExpertSearchResultsFrame<TItem extends { id: string }
   dataTableColumns,
   sortOptions,
   initialSortBy = 'relevance',
+  defaultViewMode,
   onSortChange,
   platformSettings,
   isLoading = false,
@@ -144,15 +146,16 @@ export default function BidExpertSearchResultsFrame<TItem extends { id: string }
   const onPageChange = isPaginated ? onControlledPageChange : setInternalCurrentPage;
 
   useEffect(() => {
-    // Se a view de tabela for a única opção, defina-a como padrão
-    if (dataTableColumns) {
+    if (defaultViewMode) {
+      setViewMode(defaultViewMode);
+    } else if (dataTableColumns) {
       setViewMode('table');
     } else if (renderGridItem) {
       setViewMode('grid');
     } else if (renderListItem) {
       setViewMode('list');
     }
-  }, [dataTableColumns, renderGridItem, renderListItem]);
+  }, [dataTableColumns, renderGridItem, renderListItem, defaultViewMode]);
 
   const handleSortChangeInternal = (value: string) => {
     setCurrentSortBy(value);
