@@ -65,8 +65,8 @@ test.describe('Admin - Complete Entity Coverage', () => {
 
       // Verify page did not fall back to a 404 template and still rendered core content
       const mainVisible = await page.locator('main').first().isVisible({ timeout: 4000 }).catch(() => false);
-      const devInfoVisible = await page.getByText(/Dev Info/i).first().isVisible({ timeout: 2000 }).catch(() => false);
-      if (!mainVisible && !devInfoVisible) {
+      const devInfoTriggerVisible = await page.locator('[data-ai-id="env-info-sidebar-button"]').first().isVisible({ timeout: 2000 }).catch(() => false);
+      if (!mainVisible && !devInfoTriggerVisible) {
         const aiSectionVisible = await page.locator('[data-ai-id]').first().isVisible({ timeout: 2000 }).catch(() => false);
         if (!aiSectionVisible) {
           console.warn(`⚠️ ${entity.name} renderizou sem seção principal visível`);
@@ -241,7 +241,7 @@ test.describe('Admin - Complete Entity Coverage', () => {
     await waitForPageLoad(page);
   const bodyText = await page.locator('body').innerText();
   expect(bodyText).not.toMatch(/404/i);
-  await expect(page.getByText(/Dev Info/i)).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('[data-ai-id="env-info-sidebar-button"]').first()).toBeVisible({ timeout: 10000 });
     console.log('✅ Auction Wizard accessible');
   });
 

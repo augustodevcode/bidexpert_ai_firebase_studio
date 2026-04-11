@@ -26,6 +26,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { hasPermission, hasAnyPermission } from '@/lib/permissions';
+import EnvInfoButton from '@/components/layout/env-info-button';
 
 const mainNavItems = [
   { href: '/dashboard/overview', title: 'Visão Geral', icon: LayoutDashboard },
@@ -92,6 +93,9 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 )}
                 </nav>
             </ScrollArea>
+              <div className="border-t p-2" data-ai-id="dashboard-dev-info-section">
+                <EnvInfoButton />
+              </div>
 
         </>
     );

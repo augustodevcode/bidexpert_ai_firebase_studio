@@ -1,10 +1,11 @@
 /**
- * @fileoverview Rodape inline (nao-sticky) do dashboard com informacoes de ambiente para debug.
- * Cada secao exibe um icone (favicon) ao lado do label para facilitar identificacao visual.
+ * @fileoverview Painel reutilizavel de Dev Info para exibicao sob demanda.
+ * Cada secao exibe um icone ao lado do label para facilitar identificacao visual.
  */
 'use client';
 
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 import {
   Building2,
   User,
@@ -18,6 +19,8 @@ import {
 interface DevInfoIndicatorProps {
   tenantId?: string;
   userEmail?: string;
+  className?: string;
+  showTitle?: boolean;
 }
 
 interface RuntimeEnvironmentInfo {
@@ -48,17 +51,29 @@ function inferBranchByHost(): string {
   return host.includes('demo') ? 'demo-stable' : 'main';
 }
 
+function getPublicEnvValue(key: string): string {
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key] || '';
+  }
+
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return (import.meta.env[key] as string | undefined) || '';
+  }
+
+  return '';
+}
+
 function getInitialRuntimeEnvironment(): RuntimeEnvironmentInfo {
   const branchFromEnv =
-    process.env.NEXT_PUBLIC_SYSTEM_BRANCH ||
-    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF ||
-    process.env.NEXT_PUBLIC_GIT_BRANCH ||
+    getPublicEnvValue('NEXT_PUBLIC_SYSTEM_BRANCH') ||
+    getPublicEnvValue('NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF') ||
+    getPublicEnvValue('NEXT_PUBLIC_GIT_BRANCH') ||
     '';
 
   const branch = branchFromEnv || inferBranchByHost();
   const remoteServerUrlFromEnv =
-    process.env.NEXT_PUBLIC_REMOTE_SERVER_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
+    getPublicEnvValue('NEXT_PUBLIC_REMOTE_SERVER_URL') ||
+    getPublicEnvValue('NEXT_PUBLIC_APP_URL') ||
     '';
   const remoteServerUrl = remoteServerUrlFromEnv
     ? normalizeUrl(remoteServerUrlFromEnv)
@@ -68,7 +83,7 @@ function getInitialRuntimeEnvironment(): RuntimeEnvironmentInfo {
 
   return {
     ...DEFAULT_RUNTIME_ENVIRONMENT,
-    project: process.env.NEXT_PUBLIC_PROJECT_NAME || DEFAULT_RUNTIME_ENVIRONMENT.project,
+    project: getPublicEnvValue('NEXT_PUBLIC_PROJECT_NAME') || DEFAULT_RUNTIME_ENVIRONMENT.project,
     branch,
     remoteServerUrl,
   };
@@ -123,6 +138,8 @@ function InfoCell({
 export default function DevInfoIndicator({
   tenantId = '1',
   userEmail = 'admin@bidexpert.ai',
+  className,
+  showTitle = true,
 }: DevInfoIndicatorProps) {
   const [env, setEnv] = useState<RuntimeEnvironmentInfo>(getInitialRuntimeEnvironment);
 
@@ -148,23 +165,22 @@ export default function DevInfoIndicator({
   const serverLabel = env.remoteServerUrl.replace(/^https?:\/\//, '');
 
   return (
-    <footer
-      className="mt-6 w-full"
+    <section
+      className={cn('w-full rounded-lg border bg-muted/60 p-3', className)}
       data-ai-id="dashboard-footer"
       data-testid="dev-info-indicator"
     >
-      <div
-        className="p-3 bg-muted/60 rounded-lg border w-full"
-        data-ai-id="dev-info-indicator-inner"
-      >
-        <p
-          className="font-semibold text-center text-foreground mb-2 text-xs tracking-wide uppercase"
-          data-ai-id="dev-info-title"
-        >
-          Dev Info
-        </p>
+      <div data-ai-id="dev-info-indicator-inner">
+        {showTitle ? (
+          <p
+            className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-foreground"
+            data-ai-id="dev-info-title"
+          >
+            Dev Info
+          </p>
+        ) : null}
         <div
-          className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-x-4 gap-y-2"
+          className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4 lg:grid-cols-7"
           data-ai-id="dev-info-grid"
         >
           <InfoCell icon={Building2} label="Tenant ID" value={tenantId} aiId="dev-info-tenant" />
@@ -176,6 +192,6 @@ export default function DevInfoIndicator({
           <InfoCell icon={FolderKanban} label="Project" value={env.project} aiId="dev-info-project" />
         </div>
       </div>
-    </footer>
+    </section>
   );
 }
