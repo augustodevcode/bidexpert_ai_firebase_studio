@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useState, useCallback, Fragment, useEffect, useRef } from 'react';
+import React, { useState, useCallback, Fragment, useEffect, useRef } from 'react';
 import { Heart, Eye, Share2, ChevronLeft, ChevronRight, X, Facebook, MessageSquareText, Mail, Copy, Check, TrendingUp, Zap, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatCompact } from '@/lib/format';
