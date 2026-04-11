@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.17](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.16...v1.0.0-demo.17) (2026-04-11)
+
+### Correções
+
+* search/map UI — defaultViewMode list, BidExpertCard popup, hideMapCTA ([#673](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/673)) ([538b41b](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/538b41bbbeb92387cb9f493fda874ec501fc5759))
+
 ## [1.0.0-demo.16](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.15...v1.0.0-demo.16) (2026-04-08)
 
 ### Funcionalidades
