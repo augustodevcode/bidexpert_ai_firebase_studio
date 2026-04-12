@@ -1,11 +1,11 @@
 /**
  * @file smoke-price-filter.spec.ts
- * @description Smoke tests for Booking.com-style price range filter with
- * histogram bars and auto-apply behavior on the /search page.
+ * @description Smoke tests for price range filter (slider-based) and
+ * "Aplicar Filtros" button on the /search page.
  */
 import { test, expect } from '@playwright/test';
 
-test.describe('Smoke: Price Range Filter (Booking.com style)', () => {
+test.describe('Smoke: Price Range Filter', () => {
   test('should load /search page without errors', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (msg) => {
@@ -18,7 +18,7 @@ test.describe('Smoke: Price Range Filter (Booking.com style)', () => {
 
     // Page should not have JS errors from our filter components
     const criticalErrors = errors.filter(
-      (e) => e.includes('PriceRangeBooking') || e.includes('pricePoints') || e.includes('filteredWithoutPrice')
+      (e) => e.includes('BidExpertFilter') || e.includes('pricePoints') || e.includes('filteredWithoutPrice')
     );
     expect(criticalErrors).toHaveLength(0);
   });
@@ -27,35 +27,37 @@ test.describe('Smoke: Price Range Filter (Booking.com style)', () => {
     await page.goto('/search', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // BidExpertFilter is loaded via dynamic() with ssr:false — wait for hydration
-    // The container uses data-ai-id="bidexpert-filter-container"
     const filterPanel = page.locator('[data-ai-id="bidexpert-filter-container"]');
     await expect(filterPanel).toBeVisible({ timeout: 25000 });
   });
 
-  test('should not show "Aplicar Filtros" button when autoApply is active', async ({ page }) => {
+  test('should show "Aplicar Filtros" button', async ({ page }) => {
     await page.goto('/search', { waitUntil: 'domcontentloaded', timeout: 45000 });
 
-    // Wait for any lazy-loaded content
-    await page.waitForTimeout(3000);
+    // Wait for BidExpertFilter dynamic() hydration
+    const filterPanel = page.locator('[data-ai-id="bidexpert-filter-container"]');
+    await expect(filterPanel).toBeVisible({ timeout: 25000 });
 
-    // The "Aplicar Filtros" button should NOT be visible (autoApply=true removes it)
-    const applyButton = page.getByRole('button', { name: /aplicar filtros/i });
-    await expect(applyButton).toHaveCount(0);
+    // The "Aplicar Filtros" button is always visible in the current implementation
+    const applyButton = page.locator('[data-ai-id="bidexpert-filter-apply-btn"]');
+    await expect(applyButton).toBeVisible({ timeout: 5000 });
   });
 
-  test('should show price range filter accordion or inputs', async ({ page }) => {
+  test('should show price range slider section', async ({ page }) => {
     await page.goto('/search', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    // Wait for BidExpertFilter dynamic() hydration — price accordion is open by default
-    // (defaultValue includes 'price' in the Accordion component)
-    // PriceRangeBooking renders with data-ai-id="filter-price-booking"
-    // and always shows min/max inputs (data-ai-id="filter-price-min-input")
+    // Wait for BidExpertFilter hydration — price section uses a slider with
+    // data-ai-id="filter-price-section" and min/max display labels
     await expect(
-      page.locator('[data-ai-id="filter-price-booking"]')
+      page.locator('[data-ai-id="filter-price-section"]')
     ).toBeVisible({ timeout: 25000 });
 
-    // Min price input must be present and editable
-    const minInput = page.locator('[data-ai-id="filter-price-min-input"]');
-    await expect(minInput).toBeVisible({ timeout: 5000 });
+    // Price slider must be present
+    const priceSlider = page.locator('[data-ai-id="filter-price-slider"]');
+    await expect(priceSlider).toBeVisible({ timeout: 5000 });
+
+    // Min price display label must exist
+    const minDisplay = page.locator('[data-ai-id="filter-price-min-display"]');
+    await expect(minDisplay).toBeVisible({ timeout: 5000 });
   });
 });
