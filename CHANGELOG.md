@@ -6,6 +6,13 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.20](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.19...v1.0.0-demo.20) (2026-04-12)
+
+### Funcionalidades
+
+* **search:** Booking.com-style price range with histogram and auto-apply filters ([c960398](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/c960398e701bfcb67e614bc27cdaa72557c3c3c8))
+* **wizard:** add full page export to PPTX preserving react-flow SVG layout ([0333465](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/0333465ae6807539d54f318340588568ef57ab2d))
+
 ## [1.0.0-demo.19](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.18...v1.0.0-demo.19) (2026-04-12)
 
 ### Correções
