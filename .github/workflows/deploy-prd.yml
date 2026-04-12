@@ -45,15 +45,15 @@ jobs:
         run: npm install --ignore-scripts --no-package-lock
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: Run DB Migrations (PRD)
-        run: npx prisma migrate deploy
+        run: npx prisma@5.22.0 migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PRD }}
 
       - name: Run DB Seeds (PRD)
-        run: npx prisma db seed
+        run: npx prisma@5.22.0 db seed
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PRD }}
 

@@ -64,7 +64,7 @@ jobs:
         run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: ðŸ—„ï¸ Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: ðŸ” Verificar EqualizaÃ§Ã£o com demo-stable
         run: |
@@ -130,7 +130,7 @@ jobs:
         run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: ðŸ—„ï¸ Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL_DIRECT }}
 
@@ -138,7 +138,7 @@ jobs:
         if: >
           (github.event_name == 'workflow_dispatch' && github.event.inputs.run_migrate == 'true') ||
           contains(github.event.head_commit.message, '[migrate]')
-        run: npx prisma db push --accept-data-loss
+        run: npx prisma@5.22.0 db push --accept-data-loss
         env:
           DATABASE_URL: ${{ secrets.HML_DATABASE_URL_DIRECT }}
 
@@ -222,7 +222,7 @@ jobs:
         run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: ðŸ—„ï¸ Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: ðŸ—ï¸ Build
         run: npm run build
