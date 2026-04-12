@@ -34,12 +34,12 @@ jobs:
       - run: npm ci
 
       - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: Validate Prisma Schemas (MySQL + PostgreSQL)
         run: |
-          DATABASE_URL='mysql://root:root@localhost:3306/bidexpert_test' npx prisma validate --schema=prisma/schema.prisma
-          DATABASE_URL='postgresql://dummy:dummy@localhost:5432/dummy' POSTGRES_PRISMA_URL='postgresql://dummy:dummy@localhost:5432/dummy' POSTGRES_URL_NON_POOLING='postgresql://dummy:dummy@localhost:5432/dummy' npx prisma validate --schema=prisma-deploy/schema.postgresql.prisma
+          DATABASE_URL='mysql://root:root@localhost:3306/bidexpert_test' npx prisma@5.22.0 validate --schema=prisma/schema.prisma
+          DATABASE_URL='postgresql://dummy:dummy@localhost:5432/dummy' POSTGRES_PRISMA_URL='postgresql://dummy:dummy@localhost:5432/dummy' POSTGRES_URL_NON_POOLING='postgresql://dummy:dummy@localhost:5432/dummy' npx prisma@5.22.0 validate --schema=prisma-deploy/schema.postgresql.prisma
 
       - name: Typecheck
         run: npm run typecheck
