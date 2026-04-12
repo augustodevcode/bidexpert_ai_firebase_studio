@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
 import { AssetFormV2 } from '@/app/admin/assets/asset-form-v2';
 import { appendSessionAssetId, getSessionScopedAssets } from '@/components/admin/wizard/wizard-session-utils';
+import { ExportPPTXButton } from '@/components/admin/wizard/ExportPPTXButton';
 
 
 const WizardFlow = dynamic(() => import('@/components/admin/wizard/WizardFlow'), {
@@ -195,15 +196,20 @@ function WizardContent({
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6" id="wizard-export-container">
         <Card className="shadow-lg">
-          <CardHeader>
+          <CardHeader className="flex flex-row justify-between items-start">
+            <div className="space-y-1.5">
               <CardTitle className="text-2xl font-bold font-headline flex items-center">
                 <Rocket className="h-7 w-7 mr-3 text-primary" />
                 Assistente de Criação de Leilão
               </CardTitle>
               <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
-            </CardHeader>
+            </div>
+            <div className="flex gap-2">
+              <ExportPPTXButton targetId="wizard-export-container" filename="Apresentacao-Assistente-Leilao" />
+            </div>
+          </CardHeader>
           {wizardMode === 'main' ? (
             <>
               <CardContent className="p-6">
