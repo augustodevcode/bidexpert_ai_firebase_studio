@@ -128,6 +128,7 @@ function SearchPageContent() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
+  const safePlatformSettings = useMemo(() => (platformSettings ?? ({} as PlatformSettings)), [platformSettings]);
 
   // Fetch data on mount with limits to avoid infinite loading (FIX 5.29 CRÍTICO)
   useEffect(() => {
@@ -141,23 +142,32 @@ function SearchPageContent() {
           getSellers(true),
           getPlatformSettings(),
         ]);
-        const categories = phase1[0].status === 'fulfilled' ? phase1[0].value : [];
-        const sellers = phase1[1].status === 'fulfilled' ? phase1[1].value : [];
-        const settings = phase1[2].status === 'fulfilled' ? phase1[2].value : null;
+        const categories = phase1[0].status === 'fulfilled' && Array.isArray(phase1[0].value) ? phase1[0].value : [];
+        const sellers = phase1[1].status === 'fulfilled' && Array.isArray(phase1[1].value) ? phase1[1].value : [];
+        const settings = phase1[2].status === 'fulfilled' && phase1[2].value ? phase1[2].value : ({} as PlatformSettings);
         phase1.forEach((r, i) => {
           if (r.status === 'rejected') console.warn(`[Search] phase1 promise[${i}] rejected:`, r.reason);
         });
         setAllCategoriesForFilter(categories);
         setPlatformSettings(settings as PlatformSettings);
-        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
+        setUniqueSellersForFilter(
+          sellers
+            .map((seller) => seller?.name)
+            .filter((name): name is string => Boolean(name))
+            .sort(),
+        );
         setIsFilterDataLoading(false);
 
         // Phase 2: Fetch actual data with limits to prevent timeout
-        const [offers, auctions, lots] = await Promise.all([
+        const [offersResult, auctionsResult, lotsResult] = await Promise.all([
           getDirectSaleOffers().catch(() => []),
           getAuctions(true, 200).catch(() => []),
           getLots(undefined, true, 200).catch(() => []),
         ]);
+
+        const offers = Array.isArray(offersResult) ? offersResult : [];
+        const auctions = Array.isArray(auctionsResult) ? auctionsResult : [];
+        const lots = Array.isArray(lotsResult) ? lotsResult : [];
 
         // Set data states
         setAllDirectSales(offers);
@@ -182,6 +192,7 @@ function SearchPageContent() {
       } catch (error) {
         console.error("Error fetching search data:", error);
       } finally {
+        setIsFilterDataLoading(false);
         setIsLoading(false);
       }
     }
@@ -438,7 +449,6 @@ function SearchPageContent() {
   };
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
-    if (!platformSettings) return null;
     const itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
     return (
@@ -446,14 +456,13 @@ function SearchPageContent() {
         key={`${itemType}-${item.id}-${index}`}
         item={item}
         type={itemType}
-        platformSettings={platformSettings}
+        platformSettings={safePlatformSettings}
         parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
       />
     );
   };
 
   const renderListItem = (item: any, index: number): React.ReactNode => {
-    if (!platformSettings) return null;
     const itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
     return (
@@ -461,7 +470,7 @@ function SearchPageContent() {
         key={`${itemType}-list-${item.id}-${index}`}
         item={item}
         type={itemType as 'auction' | 'lot' | 'direct_sale'}
-        platformSettings={platformSettings}
+        platformSettings={safePlatformSettings}
         parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
       />
     );
@@ -483,7 +492,7 @@ function SearchPageContent() {
         sortOptionsDirectSales;
 
 
-  if (isFilterDataLoading || !platformSettings) {
+  if (isFilterDataLoading) {
     return (
       <div className="wrapper-search-loading-full" data-ai-id="search-page-loading">
         <Loader2 className="icon-search-loading-spinner-large" />
@@ -550,7 +559,7 @@ function SearchPageContent() {
             sortOptions={currentSortOptions}
             initialSortBy={sortBy}
             onSortChange={setSortByState}
-            platformSettings={platformSettings}
+            platformSettings={safePlatformSettings}
             isLoading={isLoading}
             searchTypeLabel={getSearchTypeLabel()}
             emptyStateMessage="Nenhum item encontrado com os filtros aplicados."

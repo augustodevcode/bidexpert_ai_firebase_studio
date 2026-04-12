@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   optimizeDeps: {
     noDiscovery: true,
-    include: ['aria-query']
+    include: ['aria-query', 'lz-string']
   },
   test: {
     environment: 'jsdom',
@@ -87,6 +87,11 @@ export default defineConfig({
       enabled: true,
       headless: false,
       provider: playwright(),
+      include: [
+        'tests/visual/**',
+        'tests/ui-e2e/**',
+        'tests/unit/components/**',
+      ],
       instances: [
         {
           browser: 'chromium',

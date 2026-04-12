@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useState, useCallback, Fragment, useEffect, useRef } from 'react';
+import React, { useState, useCallback, Fragment, useEffect, useRef } from 'react';
 import { Heart, Eye, Share2, ChevronLeft, ChevronRight, X, Facebook, MessageSquareText, Mail, Copy, Check, TrendingUp, Zap, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatCompact } from '@/lib/format';
@@ -265,9 +265,10 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
     <>
       <article
       data-ai-id="auction-lot-card-v2"
+      data-testid="auction-lot-card-v2-root"
       data-lot-id={item.id}
       className={cn(
-        'w-full max-w-[380px] card-v2-surface brutalist-border rounded-2xl overflow-hidden shadow-2xl flex flex-col',
+        'w-full max-w-[380px] h-full card-v2-surface brutalist-border rounded-2xl overflow-hidden shadow-2xl flex flex-col',
         'font-[family-name:var(--font-card-sans)]',
         className,
       )}
@@ -420,7 +421,8 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         </div>
       </div>
 
-      <div className="p-4 pb-3" data-ai-id="card-v2-header">
+      <div className="flex flex-1 flex-col">
+      <div className="flex min-h-[11rem] flex-col p-4 pb-3" data-ai-id="card-v2-header">
         <div className="flex items-center justify-between gap-3 mb-2">
           <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-md border border-primary/20 uppercase">
             {item.type}
@@ -429,32 +431,38 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             {item.location}
           </span>
         </div>
-        <h3
-          className="font-[family-name:var(--font-card-display)] font-bold text-lg leading-tight mb-2 text-white line-clamp-2"
-          data-ai-id="card-v2-title"
-        >
-          {item.title}
-        </h3>
-        <div className="flex items-center gap-2 mb-3 text-gray-400 font-bold text-xs flex-wrap">
-          {(item.specs ?? []).map((spec, idx) => (
-            <Fragment key={idx}>
-              <span>{spec}</span>
-              {idx < (item.specs?.length ?? 0) - 1 && (
-                <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
-              )}
-            </Fragment>
-          ))}
+        <div className="mb-2 min-h-[3.5rem]" data-ai-id="card-v2-title-shell" data-testid="auction-lot-card-v2-title-shell">
+          <h3
+            className="font-[family-name:var(--font-card-display)] font-bold text-lg leading-tight text-white line-clamp-2"
+            data-ai-id="card-v2-title"
+          >
+            {item.title}
+          </h3>
         </div>
-        {item.processNumber && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-            </svg>
-            <a data-ai-id="card-v2-process-link" className="underline hover:text-primary transition-colors truncate" href={detailUrl}>
-              Proc: {item.processNumber}
-            </a>
+        <div className="mb-3 min-h-[2.5rem]" data-ai-id="card-v2-specs-slot">
+          <div className="flex min-h-[2.5rem] items-start gap-2 text-gray-400 font-bold text-xs flex-wrap content-start" data-ai-id="card-v2-specs">
+            {(item.specs ?? []).map((spec, idx) => (
+              <Fragment key={idx}>
+                <span>{spec}</span>
+                {idx < (item.specs?.length ?? 0) - 1 && (
+                  <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
+                )}
+              </Fragment>
+            ))}
           </div>
-        )}
+        </div>
+        <div className="min-h-[1.25rem]" data-ai-id="card-v2-process-slot" data-testid="auction-lot-card-v2-process-slot">
+          {item.processNumber && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+              <a data-ai-id="card-v2-process-link" data-testid="auction-lot-card-v2-process-link" className="underline hover:text-primary transition-colors truncate" href={detailUrl}>
+                Proc: {item.processNumber}
+              </a>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 border-y border-neutral-800 bg-neutral-900/50" data-ai-id="card-v2-kpi">
@@ -478,7 +486,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         </div>
       </div>
 
-      <div className="p-4 bg-gradient-to-b from-[rgb(var(--color-card-surface))] to-black" data-ai-id="card-v2-pricing">
+      <div className="min-h-[7.25rem] p-4 bg-gradient-to-b from-[rgb(var(--color-card-surface))] to-black" data-ai-id="card-v2-pricing">
         <div className="flex items-end justify-between">
           <div>
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">
@@ -504,6 +512,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {hasTimeline(item.category) && (
@@ -579,36 +588,40 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         </div>
       )}
 
-      {(shouldShowCountdown || item.stats.visits > 0) && (
-        <div
-          className="px-4 py-3 flex items-center justify-between border-t border-neutral-800 bg-black/20 mt-auto"
-          data-ai-id="card-v2-urgency"
-        >
-          <div className="flex items-center gap-3">
-            <div className="animate-pulse-fast text-primary">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
+      <div
+        className="mt-auto min-h-[4.75rem] px-4 py-3 flex items-center justify-between border-t border-neutral-800 bg-black/20"
+        data-ai-id="card-v2-urgency"
+      >
+        {(shouldShowCountdown || item.stats.visits > 0) ? (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="animate-pulse-fast text-primary">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                </svg>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-none mb-1">
+                  {shouldShowCountdown ? 'Termina em' : 'Status'}
+                </span>
+                <span className="font-[family-name:var(--font-card-display)] font-bold text-sm text-primary" data-ai-id="card-v2-countdown">
+                  {shouldShowCountdown ? countdown : statusLabel}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-none mb-1">
-                {shouldShowCountdown ? 'Termina em' : 'Status'}
+            {item.stats.visits > 0 && (
+              <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1.5">
+                <span className="inline-flex w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
+                {item.stats.visits} olhando
               </span>
-              <span className="font-[family-name:var(--font-card-display)] font-bold text-sm text-primary" data-ai-id="card-v2-countdown">
-                {shouldShowCountdown ? countdown : statusLabel}
-              </span>
-            </div>
-          </div>
-          {item.stats.visits > 0 && (
-            <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1.5">
-              <span className="inline-flex w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
-              {item.stats.visits} olhando
-            </span>
-          )}
-        </div>
-      )}
+            )}
+          </>
+        ) : (
+          <div aria-hidden="true" className="h-full w-full" />
+        )}
+      </div>
 
-      <div className="p-4 pt-2 flex gap-3" data-ai-id="card-v2-actions">
+      <div className="mt-auto p-4 pt-2 flex gap-3" data-ai-id="card-v2-actions" data-testid="auction-lot-card-v2-actions">
         <a
           href={detailUrl}
           className="flex-[2] bg-primary hover:bg-orange-600 transition-all text-black font-[family-name:var(--font-card-display)] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(154,52,18,1)] active:translate-y-[2px] active:shadow-[0_2px_0_0_rgba(154,52,18,1)] text-xs sm:text-sm tracking-wide leading-tight text-center"

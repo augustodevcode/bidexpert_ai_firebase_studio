@@ -209,7 +209,7 @@ export default function BidExpertSearchResultsFrame<TItem extends { id: string }
         </div>
       ) : (items.length > 0 || (viewMode === 'table' && dataTableColumns)) ? ( // A tabela deve sempre ser renderizada para que seus próprios estados internos funcionem
         <>
-          {viewMode === 'grid' && renderGridItem && <div className="grid-lots-grid-mode" data-ai-id="search-results-grid">{paginatedItems.map((item, index) => <div key={item.id}>{renderGridItem(item, index)}</div>)}</div>}
+          {viewMode === 'grid' && renderGridItem && <div className="grid-lots-grid-mode" data-ai-id="search-results-grid">{paginatedItems.map((item, index) => <div key={item.id} className="flex h-full justify-center">{renderGridItem(item, index)}</div>)}</div>}
           {viewMode === 'list' && renderListItem && <div className="list-search-results-items" data-ai-id="search-results-list">{paginatedItems.map((item, index) => <div key={item.id}>{renderListItem(item, index)}</div>)}</div>}
           {dataTableColumns && (
             <div className="wrapper-data-table-results" data-ai-id="search-results-table">
