@@ -33,7 +33,7 @@ interface Props {
 export default function LotStagePriceForm({ open, onOpenChange, editingRow, onSuccess }: Props) {
   const [lots, setLots] = useState<{ id: string; label: string }[]>([]);
   const [auctions, setAuctions] = useState<{ id: string; label: string }[]>([]);
-  const [stages, setStages] = useState<{ id: string; label: string }[]>([]);
+  const [stages, setStages] = useState<{ id: string; label: string; auctionId: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   const form = useForm<FormData>({ resolver: zodResolver(lotStagePriceSchema), defaultValues: { lotId: '', auctionId: '', auctionStageId: '', initialBid: '', bidIncrement: '' } });
@@ -44,7 +44,7 @@ export default function LotStagePriceForm({ open, onOpenChange, editingRow, onSu
     Promise.all([listLots({ page: 1, pageSize: 500 }), listAuctions({ page: 1, pageSize: 500 }), listAuctionStages({ page: 1, pageSize: 500 })]).then(([lr, ar, sr]) => {
       if (lr.success && lr.data) setLots((lr.data as any).data?.map((d: any) => ({ id: d.id, label: d.title || d.id })) ?? []);
       if (ar.success && ar.data) setAuctions((ar.data as any).data?.map((d: any) => ({ id: d.id, label: d.title || d.id })) ?? []);
-      if (sr.success && sr.data) setStages((sr.data as any).data?.map((d: any) => ({ id: d.id, label: d.name || d.title || d.id })) ?? []);
+      if (sr.success && sr.data) setStages((sr.data as any).data?.map((d: any) => ({ id: d.id, label: d.name || d.title || d.id, auctionId: d.auctionId ?? '' })) ?? []);
     });
   }, [open]);
 
@@ -84,7 +84,7 @@ export default function LotStagePriceForm({ open, onOpenChange, editingRow, onSu
           </div>
           <div className="space-y-2">
             <Label htmlFor="auctionId">Leilão *</Label>
-            <Select value={form.watch('auctionId')} onValueChange={v => form.setValue('auctionId', v)}>
+            <Select value={form.watch('auctionId')} onValueChange={v => { form.setValue('auctionId', v); form.setValue('auctionStageId', ''); }}>
               <SelectTrigger id="auctionId" data-ai-id="lot-stage-price-auctionId-select"><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>{auctions.map(a => <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>)}</SelectContent>
             </Select>
@@ -94,7 +94,7 @@ export default function LotStagePriceForm({ open, onOpenChange, editingRow, onSu
             <Label htmlFor="auctionStageId">Praça *</Label>
             <Select value={form.watch('auctionStageId')} onValueChange={v => form.setValue('auctionStageId', v)}>
               <SelectTrigger id="auctionStageId" data-ai-id="lot-stage-price-stageId-select"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-              <SelectContent>{stages.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
+              <SelectContent>{stages.filter(s => !s.auctionId || s.auctionId === form.watch('auctionId')).map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent>
             </Select>
             {form.formState.errors.auctionStageId && <p className="text-sm text-destructive">{form.formState.errors.auctionStageId.message}</p>}
           </div>
