@@ -12,12 +12,14 @@
 import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
 import { SellerService } from '@/services/seller.service';
+import { AuctioneerService } from '@/services/auctioneer.service';
 import type { Auction, AuctioneerProfileInfo, BidInfo, Lot, LotQuestion, PlatformSettings, Review, SellerProfileInfo, UserLotMaxBid } from '@/types';
 import { generateDocument } from '@/ai/flows/generate-document-flow';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; 
 
 const lotService = new LotService();
 const sellerService = new SellerService();
+const auctioneerService = new AuctioneerService();
 
 interface PlaceBidResult {
   success: boolean;
@@ -146,20 +148,38 @@ export async function generateWinningBidTermAction(lotId: string): Promise<{ suc
     }
     
     const { prisma } = await import('@/lib/prisma');
-    const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
+    const userWin = await prisma.userWin.findFirst({
+      where: { lotId: BigInt(lot.id) },
+      select: {
+        winningBidAmount: true,
+        userId: true,
+      },
+    });
+
+    const winnerId = userWin?.userId ? String(userWin.userId) : lot.winnerId;
+    const winner = await prisma.user.findUnique({ where: { id: BigInt(winnerId) } });
     if (!winner) {
         return { success: false, message: 'Arrematante não encontrado.'};
     }
 
     const { auction } = lot;
-    const auctioneer = auction.auctioneer;
-    const seller = auction.seller;
+    const tenantId = String(lot.tenantId ?? auction.tenantId ?? '1');
+
+    const seller = auction.sellerId
+      ? await sellerService.getSellerById(tenantId, String(auction.sellerId)).catch(() => auction.seller ?? null)
+      : auction.seller ?? null;
+    const auctioneer = auction.auctioneerId
+      ? await auctioneerService.getAuctioneerById(tenantId, String(auction.auctioneerId)).catch(() => auction.auctioneer ?? null)
+      : auction.auctioneer ?? null;
 
     try {
         const result = await generateDocument({
         documentType: 'WINNING_BID_TERM',
         data: {
-            lot: lot,
+            lot: {
+              ...lot,
+              price: Number(userWin?.winningBidAmount ?? lot.price ?? 0),
+            },
             auction: auction,
             winner: winner,
             auctioneer: auctioneer,

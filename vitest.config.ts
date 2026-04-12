@@ -36,6 +36,8 @@ export default defineConfig({
       ['tests/unit/lot-service-images-mapping.spec.ts', 'node'],
       ['tests/unit/map-search-logic.spec.ts', 'node'],
       ['tests/unit/map-utils.spec.ts', 'node'],
+      ['tests/unit/user-win.repository.spec.ts', 'node'],
+      ['tests/unit/generate-winning-bid-term-action.spec.ts', 'node'],
       ['tests/unit/tenant-id-from-request.spec.ts', 'node'],
       ['tests/unit/ui-helpers.test.ts', 'node'],
       ['tests/unit/audit/**', 'node'],
