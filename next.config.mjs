@@ -123,13 +123,12 @@ const config = {
   compress: true,
   productionBrowserSourceMaps: false,
   // Node.js runtime para WebSocket (realtime bids)
-  serverExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core', '@genkit-ai/googleai', '@genkit-ai/ai', '@genkit-ai/google-cloud', '@genkit-ai/firebase', 'genkit', 'async_hooks'],
   experimental: {
     serverComponentsExternalPackages: ['ws', 'require-in-the-middle', '@opentelemetry/instrumentation', '@genkit-ai/core', '@genkit-ai/googleai', '@genkit-ai/ai', 'genkit', 'async_hooks'],
   },
   // Webpack configuration to suppress handlebars and require-in-the-middle warnings
-  webpack: (config, { isServer }) => {
-    // Suppress specific warnings for dependencies that use require.extensions
+webpack: (config, { isServer, webpack }) => {
+    // Suppress specific warnings for dependencies that use require.extensions   
     if (config.ignoreWarnings === undefined) {
       config.ignoreWarnings = [];
     }
@@ -138,15 +137,15 @@ const config = {
       /Critical dependency: require function is used/,
       /require-in-the-middle/
     );
-    
+
     // Exclude problematic modules from being parsed
     if (!config.externals) {
       config.externals = [];
     }
-    
+
     if (isServer) {
-      // Mark require-in-the-middle and genkit packages as external on server
-      config.externals = [...config.externals, 'require-in-the-middle', 'async_hooks', '@genkit-ai/googleai', '@genkit-ai/core', '@genkit-ai/ai', 'genkit'];
+      // Mark require-in-the-middle and genkit packages as external on server    
+      config.externals = [...config.externals, 'require-in-the-middle', 'async_hooks', '@genkit-ai/googleai', '@genkit-ai/core', '@genkit-ai/ai', 'genkit'];      
     }
     
     // Fallback for client-side (async_hooks is Node.js only)
@@ -154,7 +153,26 @@ const config = {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         async_hooks: false,
+        fs: false,
+        https: false,
+        http: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        path: false,
+        stream: false,
+        zlib: false,
       };
+
+      // Workaround to remove node: prefix before webpack resolves fallbacks
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+            /^node:/,
+            (resource) => {
+                resource.request = resource.request.replace(/^node:/, "");
+            }
+        )
+      );
     }
 
     // Fix react-redux RSC resolution: the "react-server" exports condition
@@ -164,6 +182,7 @@ const config = {
     config.resolve.alias = {
       ...config.resolve.alias,
       'react-redux': join(__dirname, 'node_modules', 'react-redux', 'dist', 'react-redux.mjs'),
+      'pptxgenjs': join(__dirname, 'node_modules', 'pptxgenjs', 'dist', 'pptxgen.bundle.js'),
     };
     
     return config;
