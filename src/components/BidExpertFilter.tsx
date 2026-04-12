@@ -12,7 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Filter, CalendarIcon, RefreshCw, ShoppingCart, MapPin } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { LotCategory, DirectSaleOfferType, VehicleMake, VehicleModel } from '@/types';
@@ -46,8 +46,10 @@ interface BidExpertFilterProps {
   onFilterReset: () => void;
   initialFilters?: ActiveFilters;
   filterContext?: 'auctions' | 'directSales' | 'lots' | 'tomada_de_precos';
-  disableCategoryFilter?: boolean; // New prop to disable category selection
-  hideMapCTA?: boolean; // Hides the "Mostrar no mapa" banner (use when already on the map page)
+  disableCategoryFilter?: boolean;
+  hideMapCTA?: boolean;
+  pricePoints?: number[];
+  autoApply?: boolean;
 }
 
 const defaultModalities = [
@@ -85,6 +87,128 @@ const praçaOptions = [
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
+// ---- PriceRangeBooking: Booking.com-style dual-handle slider with histogram ----
+interface PriceRangeBookingProps {
+  value: [number, number];
+  pricePoints: number[];
+  onChange: (value: [number, number]) => void;
+  onCommit: (value: [number, number]) => void;
+}
+
+function PriceRangeBooking({ value, pricePoints, onChange, onCommit }: PriceRangeBookingProps) {
+  const sliderMin = pricePoints.length > 0 ? Math.floor(Math.min(...pricePoints) / 1000) * 1000 : 0;
+  const sliderMax = pricePoints.length > 0 ? Math.ceil(Math.max(...pricePoints) / 1000) * 1000 : 1000000;
+
+  const [minInput, setMinInput] = useState(String(value[0]));
+  const [maxInput, setMaxInput] = useState(String(value[1]));
+  useEffect(() => { setMinInput(String(value[0])); }, [value[0]]);
+  useEffect(() => { setMaxInput(String(value[1])); }, [value[1]]);
+
+  const BARS = 20;
+  const histogramBars = useMemo(() => {
+    if (pricePoints.length === 0 || sliderMax === sliderMin) return Array(BARS).fill(1);
+    const binSize = (sliderMax - sliderMin) / BARS;
+    const bins = Array(BARS).fill(0);
+    pricePoints.forEach(p => {
+      const idx = Math.min(Math.floor((p - sliderMin) / binSize), BARS - 1);
+      if (idx >= 0) bins[idx]++;
+    });
+    return bins;
+  }, [pricePoints, sliderMin, sliderMax]);
+
+  const maxBinCount = Math.max(...histogramBars, 1);
+
+  const isBarActive = (i: number) => {
+    if (sliderMax === sliderMin) return true;
+    const binSize = (sliderMax - sliderMin) / BARS;
+    const barMin = sliderMin + i * binSize;
+    const barMax = sliderMin + (i + 1) * binSize;
+    return barMax >= value[0] && barMin <= value[1];
+  };
+
+  const commitMin = () => {
+    const parsed = parseInt(minInput.replace(/\D/g, ''), 10);
+    const newMin = isNaN(parsed) ? sliderMin : Math.max(sliderMin, Math.min(parsed, value[1] - 1000));
+    onChange([newMin, value[1]]);
+    onCommit([newMin, value[1]]);
+    setMinInput(String(newMin));
+  };
+
+  const commitMax = () => {
+    const parsed = parseInt(maxInput.replace(/\D/g, ''), 10);
+    const newMax = isNaN(parsed) ? sliderMax : Math.min(sliderMax, Math.max(parsed, value[0] + 1000));
+    onChange([value[0], newMax]);
+    onCommit([value[0], newMax]);
+    setMaxInput(String(newMax));
+  };
+
+  return (
+    <div className="wrapper-filter-price-booking" data-ai-id="filter-price-booking">
+      <div className="wrapper-filter-price-inputs">
+        <div className="wrapper-filter-price-input-group">
+          <label className="label-filter-price-input" htmlFor="filter-price-min-input">Mínimo</label>
+          <div className="wrapper-filter-price-input-field">
+            <span className="prefix-filter-price-input" aria-hidden="true">R$</span>
+            <Input
+              id="filter-price-min-input"
+              className="input-filter-price-value"
+              value={minInput}
+              onChange={e => setMinInput(e.target.value)}
+              onBlur={commitMin}
+              onKeyDown={e => e.key === 'Enter' && commitMin()}
+              inputMode="numeric"
+              aria-label="Preço mínimo"
+              data-ai-id="filter-price-min-input"
+            />
+          </div>
+        </div>
+        <div className="wrapper-filter-price-input-group">
+          <label className="label-filter-price-input" htmlFor="filter-price-max-input">Máximo</label>
+          <div className="wrapper-filter-price-input-field">
+            <span className="prefix-filter-price-input" aria-hidden="true">R$</span>
+            <Input
+              id="filter-price-max-input"
+              className="input-filter-price-value"
+              value={maxInput}
+              onChange={e => setMaxInput(e.target.value)}
+              onBlur={commitMax}
+              onKeyDown={e => e.key === 'Enter' && commitMax()}
+              inputMode="numeric"
+              aria-label="Preço máximo"
+              data-ai-id="filter-price-max-input"
+            />
+          </div>
+        </div>
+      </div>
+      {pricePoints.length > 0 && (
+        <div
+          className="wrapper-filter-price-histogram"
+          aria-hidden="true"
+          role="presentation"
+          data-ai-id="filter-price-histogram"
+        >
+          {histogramBars.map((count, i) => (
+            <div
+              key={i}
+              className={`bar-filter-price-histogram${isBarActive(i) ? ' bar-filter-price-histogram--active' : ''}`}
+              style={{ height: `${Math.max(8, Math.round((count / maxBinCount) * 100))}%` }}
+            />
+          ))}
+        </div>
+      )}
+      <Slider
+        min={sliderMin}
+        max={sliderMax || 1000000}
+        step={1000}
+        value={[Math.max(sliderMin, value[0]), Math.min(sliderMax || 1000000, value[1])]}
+        onValueChange={(v) => onChange(v as [number, number])}
+        onValueCommit={(v) => onCommit(v as [number, number])}
+        data-ai-id="filter-price-range-slider"
+      />
+    </div>
+  );
+}
+
 export default function BidExpertFilter({
   categories = [],
   locations = [],
@@ -98,8 +222,10 @@ export default function BidExpertFilter({
   onFilterReset,
   initialFilters,
   filterContext = 'auctions',
-  disableCategoryFilter = false, // Default to enabled
+  disableCategoryFilter = false,
   hideMapCTA = false,
+  pricePoints = [] as number[],
+  autoApply = false,
 }: BidExpertFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -142,42 +268,7 @@ export default function BidExpertFilter({
   }, [initialFilters, filterContext]);
 
 
-  const handleCategoryChange = (categorySlug: string) => {
-    setSelectedCategorySlug(categorySlug);
-  };
-
-  const handleLocationChange = (location: string) => {
-    setSelectedLocations(prev =>
-      prev.includes(location) ? prev.filter(l => l !== location) : [...prev, location]
-    );
-  };
-
-  const handleSellerChange = (seller: string) => {
-    setSelectedSellers(prev =>
-      prev.includes(seller) ? prev.filter(s => s !== seller) : [...prev, seller]
-    );
-  };
-
-  const handleMakeChange = (makeName: string) => {
-    setSelectedMakes(prev =>
-      prev.includes(makeName) ? prev.filter(m => m !== makeName) : [...prev, makeName]
-    );
-  };
-
-  const handleModelChange = (modelName: string) => {
-    setSelectedModels(prev =>
-      prev.includes(modelName) ? prev.filter(m => m !== modelName) : [...prev, modelName]
-    );
-  };
-
-
-  const handleStatusChange = (statusValue: string) => {
-    setSelectedStatus(prev =>
-      prev.includes(statusValue) ? prev.filter(s => s !== statusValue) : [...prev, statusValue]
-    );
-  };
-
-  const applyFilters = () => {
+  const applyFilters = (overrides?: Partial<ActiveFilters>) => {
     const currentFilters: ActiveFilters = {
       modality: selectedModality,
       category: selectedCategorySlug,
@@ -191,8 +282,69 @@ export default function BidExpertFilter({
       status: selectedStatus,
       offerType: filterContext === 'directSales' ? selectedOfferType : undefined,
       praça: selectedPraça,
+      ...overrides,
     };
     onFilterSubmit(currentFilters);
+  };
+
+  const handleCategoryChange = (categorySlug: string) => {
+    setSelectedCategorySlug(categorySlug);
+    if (autoApply) applyFilters({ category: categorySlug });
+  };
+
+  const handleModalityChange = (modality: string) => {
+    setSelectedModality(modality);
+    if (autoApply) applyFilters({ modality });
+  };
+
+  const handlePraçaChange = (praça: string) => {
+    setSelectedPraça(praça as 'todas' | 'unica' | 'multiplas');
+    if (autoApply) applyFilters({ praça: praça as 'todas' | 'unica' | 'multiplas' });
+  };
+
+  const handleOfferTypeChange = (offerType: string) => {
+    setSelectedOfferType(offerType as DirectSaleOfferType | 'ALL');
+    if (autoApply) applyFilters({ offerType: offerType as DirectSaleOfferType | 'ALL' });
+  };
+
+  const handleLocationChange = (location: string) => {
+    const newLocations = selectedLocations.includes(location)
+      ? selectedLocations.filter(l => l !== location)
+      : [...selectedLocations, location];
+    setSelectedLocations(newLocations);
+    if (autoApply) applyFilters({ locations: newLocations });
+  };
+
+  const handleSellerChange = (seller: string) => {
+    const newSellers = selectedSellers.includes(seller)
+      ? selectedSellers.filter(s => s !== seller)
+      : [...selectedSellers, seller];
+    setSelectedSellers(newSellers);
+    if (autoApply) applyFilters({ sellers: newSellers });
+  };
+
+  const handleMakeChange = (makeName: string) => {
+    const newMakes = selectedMakes.includes(makeName)
+      ? selectedMakes.filter(m => m !== makeName)
+      : [...selectedMakes, makeName];
+    setSelectedMakes(newMakes);
+    if (autoApply) applyFilters({ makes: newMakes });
+  };
+
+  const handleModelChange = (modelName: string) => {
+    const newModels = selectedModels.includes(modelName)
+      ? selectedModels.filter(m => m !== modelName)
+      : [...selectedModels, modelName];
+    setSelectedModels(newModels);
+    if (autoApply) applyFilters({ models: newModels });
+  };
+
+  const handleStatusChange = (statusValue: string) => {
+    const newStatus = selectedStatus.includes(statusValue)
+      ? selectedStatus.filter(s => s !== statusValue)
+      : [...selectedStatus, statusValue];
+    setSelectedStatus(newStatus);
+    if (autoApply) applyFilters({ status: newStatus });
   };
 
   const resetInternalFilters = () => {
@@ -210,7 +362,7 @@ export default function BidExpertFilter({
     setSelectedStatus(filterContext === 'directSales' ? ['ACTIVE'] : []);
     setSelectedOfferType('ALL');
     setSelectedPraça('todas');
-  }
+  };
 
   const handleResetFilters = () => {
     resetInternalFilters();
@@ -267,7 +419,7 @@ export default function BidExpertFilter({
           <AccordionItem value="modality" className="item-filter-accordion" data-ai-id="filter-modality-section">
             <AccordionTrigger className="trigger-filter-accordion">Modalidade do Leilão</AccordionTrigger>
             <AccordionContent className="content-filter-accordion">
-              <RadioGroup value={selectedModality} onValueChange={setSelectedModality} className="group-filter-radio" data-ai-id="filter-modality-group">
+              <RadioGroup value={selectedModality} onValueChange={handleModalityChange} className="group-filter-radio" data-ai-id="filter-modality-group">
                 {modalities.map(modal => (
                   <div key={modal.value} className="wrapper-filter-option" data-ai-id={`filter-modality-${modal.value}`}>
                     <RadioGroupItem value={modal.value} id={`mod-${modal.value}`} data-ai-id={`filter-modality-${modal.value}-radio`} />
@@ -283,7 +435,7 @@ export default function BidExpertFilter({
           <AccordionItem value="offerType" className="item-filter-accordion" data-ai-id="filter-offertype-section">
             <AccordionTrigger className="trigger-filter-accordion">Tipo de Oferta</AccordionTrigger>
             <AccordionContent className="content-filter-accordion">
-              <RadioGroup value={selectedOfferType} onValueChange={(value) => setSelectedOfferType(value as DirectSaleOfferType | 'ALL')} className="group-filter-radio" data-ai-id="filter-offertype-group">
+              <RadioGroup value={selectedOfferType} onValueChange={handleOfferTypeChange} className="group-filter-radio" data-ai-id="filter-offertype-group">
                 {offerTypes.map(type => (
                   <div key={type.value} className="wrapper-filter-option" data-ai-id={`filter-offertype-${type.value}`}>
                     <RadioGroupItem value={type.value} id={`offerType-${type.value}`} data-ai-id={`filter-offertype-${type.value}-radio`} />
@@ -321,7 +473,7 @@ export default function BidExpertFilter({
           <AccordionItem value="praça" className="item-filter-accordion" data-ai-id="filter-praca-section">
             <AccordionTrigger className="trigger-filter-accordion">Praças</AccordionTrigger>
             <AccordionContent className="content-filter-accordion">
-              <RadioGroup value={selectedPraça} onValueChange={(value) => setSelectedPraça(value as 'todas' | 'unica' | 'multiplas')} className="group-filter-radio" data-ai-id="filter-praca-group">
+              <RadioGroup value={selectedPraça} onValueChange={handlePraçaChange} className="group-filter-radio" data-ai-id="filter-praca-group">
                 {praçaOptions.map(option => (
                   <div key={option.value} className="wrapper-filter-option" data-ai-id={`filter-praca-${option.value}`}>
                     <RadioGroupItem value={option.value} id={`praça-${option.value}`} data-ai-id={`filter-praca-${option.value}-radio`} />
@@ -336,18 +488,12 @@ export default function BidExpertFilter({
         <AccordionItem value="price" className="item-filter-accordion" data-ai-id="filter-price-section">
           <AccordionTrigger className="trigger-filter-accordion">Faixa de Preço</AccordionTrigger>
           <AccordionContent className="content-filter-accordion-price">
-            <Slider
-              min={0}
-              max={1000000}
-              step={1000}
+            <PriceRangeBooking
               value={priceRange}
-              onValueChange={(value) => setPriceRange(value as [number, number])}
-              data-ai-id="filter-price-slider"
+              pricePoints={pricePoints}
+              onChange={(v) => setPriceRange(v)}
+              onCommit={(v) => { setPriceRange(v); applyFilters({ priceRange: v }); }}
             />
-            <div className="wrapper-filter-price-display" data-ai-id="filter-price-display">
-              <span className="text-filter-price-min" data-ai-id="filter-price-min-display">R$ {priceRange[0].toLocaleString('pt-BR')}</span>
-              <span className="text-filter-price-max" data-ai-id="filter-price-max-display">R$ {priceRange[1].toLocaleString('pt-BR')}</span>
-            </div>
           </AccordionContent>
         </AccordionItem>
 
@@ -475,7 +621,7 @@ export default function BidExpertFilter({
 
       </Accordion>
 
-      <Button className="btn-filter-apply" onClick={applyFilters} data-ai-id="bidexpert-filter-apply-btn">Aplicar Filtros</Button>
+      {!autoApply && <Button className="btn-filter-apply" onClick={() => applyFilters()} data-ai-id="bidexpert-filter-apply-btn">Aplicar Filtros</Button>}
     </aside>
   );
 }
