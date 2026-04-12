@@ -6,6 +6,21 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.18](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.17...v1.0.0-demo.18) (2026-04-12)
+
+### Funcionalidades
+
+* tornar Dev Info sob demanda via sidebar ([#676](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/676)) ([e75c8aa](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/e75c8aa2b2186376114cfbf8993c4b477827231b))
+
+### Correções
+
+* **cards:** uniform lot card heights ([d5c4547](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d5c454738edd10645605bf7a8ae282c5b0ec3410))
+* **cards:** uniform public lot card heights ([#691](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/691)) ([bb4aa17](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/bb4aa17be3fde98c8f2afdc039a3e320b090860d))
+* **cards:** uniform public lot card layout ([eebdba3](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/eebdba32f1708385cc92de3438291fdbc5d5c736))
+* **ci:** pin prisma generate to v5.22.0 scripts ([#682](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/682)) ([1f8e1e9](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/1f8e1e92b9e1f7dd1e6f742b377c632f3089c8ad))
+* downgrade prisma to 5.22.0 to fix PR CI ([89ff750](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/89ff75021e5a978a4b2271e7ecb68b9dcb34321a))
+* **vercel:** pin prisma generate in build script ([#686](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/686)) ([a940f53](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/a940f535e147185d62c3f8420eb1293c9697aaa8))
+
 ## [1.0.0-demo.17](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.16...v1.0.0-demo.17) (2026-04-11)
 
 ### Correções
