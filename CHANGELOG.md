@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.22](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.21...v1.0.0-demo.22) (2026-04-13)
+
+### Correções
+
+* vercel smoke tests SSO bypass with auth setup project and storageState ([784b154](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/784b154e85e261c36197f4feb3c76e4e3a2e14ff))
+
 ## [1.0.0-demo.21](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.20...v1.0.0-demo.21) (2026-04-13)
 
 ### Correções
