@@ -6,6 +6,13 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.21](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.20...v1.0.0-demo.21) (2026-04-13)
+
+### Correções
+
+* **courts+tests:** fix setModalState bug, update E2E selectors and z-index assertions ([5fb9a82](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/5fb9a82b004eed4856bb538805109f62f1c47ba9))
+* **e2e:** align smoke-price-filter selectors to actual BidExpertFilter data-ai-ids ([421cd21](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/421cd21ba1b94babd5dbe1a54412e159aca75ed1))
+
 ## [1.0.0-demo.20](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.19...v1.0.0-demo.20) (2026-04-12)
 
 ### Funcionalidades
