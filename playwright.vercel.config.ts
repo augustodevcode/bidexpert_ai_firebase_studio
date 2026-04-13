@@ -4,11 +4,13 @@
  */
 import { defineConfig, devices } from '@playwright/test';
 
-const VERCEL_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://bidexpertaifirebasestudio.vercel.app';
+const VERCEL_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://demo.bidexpert.com.br';
+const VERCEL_SHARE_TOKEN = process.env.VERCEL_SHARE_TOKEN || '';
+const STORAGE_STATE_PATH = './playwright/.vercel-auth.json';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: ['**/*-vercel.spec.ts', '**/vercel-smoke.spec.ts'],
+  testMatch: ['**/vercel-smoke.spec.ts'],
   timeout: 120_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
@@ -25,12 +27,20 @@ export default defineConfig({
     video: 'retain-on-failure',
     actionTimeout: 15000,
     navigationTimeout: 60000,
-    headless: true,
+    headless: false,
   },
   projects: [
+    ...(VERCEL_SHARE_TOKEN ? [{
+      name: 'vercel-auth-setup',
+      testMatch: /vercel-auth\.setup\.ts/,
+    }] : []),
     {
       name: 'chromium-vercel',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(VERCEL_SHARE_TOKEN ? { storageState: STORAGE_STATE_PATH } : {}),
+      },
+      ...(VERCEL_SHARE_TOKEN ? { dependencies: ['vercel-auth-setup'] } : {}),
     },
   ],
 });
