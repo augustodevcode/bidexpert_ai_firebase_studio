@@ -63,7 +63,7 @@ export default function AdminCourtsPage() {
   const onUpdate = useCallback(() => setRefetchTrigger(c => c + 1), []);
   const handleNewClick = () => setModalState({ mode: 'create' });
   const handleEditClick = (court: Court) => setModalState({ mode: 'edit', data: court });
-  const handleFormSuccess = () => { setIsModalState({ mode: 'closed' }); onUpdate(); };
+  const handleFormSuccess = () => { setModalState({ mode: 'closed' }); onUpdate(); };
 
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteCourt(id);
@@ -113,12 +113,12 @@ export default function AdminCourtsPage() {
         <Card className="shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-2xl font-bold font-headline flex items-center">
+              <h1 className="text-2xl font-bold font-headline flex items-center mb-2">
                 <Scale className="h-6 w-6 mr-2 text-primary" />
-                Gerenciar Tribunais de Justiça
-              </CardTitle>
+                Tribunais
+              </h1>
               <CardDescription>
-                Adicione, edite ou remova os tribunais de justiça.
+                Gerenciar tribunais de justiça. Adicione, edite ou remova os tribunais de justiça.
               </CardDescription>
             </div>
             <Button onClick={handleNewClick}>
