@@ -18,6 +18,8 @@ export interface StageInfo {
   name: string;
   status: StageStatus;
   date: string;
+  /** Formatted start time (HH:mm) */
+  startTime?: string;
 }
 
 export interface AuctionItemStats {

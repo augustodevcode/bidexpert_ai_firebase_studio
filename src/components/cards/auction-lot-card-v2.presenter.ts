@@ -59,10 +59,12 @@ function buildStageInfo(stage?: AuctionStage): StageInfo | undefined {
     return undefined;
   }
 
+  const stageDate = new Date(stage.startDate);
   return {
     name: stage.name,
     status: mapStageStatus(stage),
-    date: new Date(stage.startDate).toLocaleDateString('pt-BR'),
+    date: stageDate.toLocaleDateString('pt-BR'),
+    startTime: stageDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
   };
 }
 

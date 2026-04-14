@@ -315,6 +315,37 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           </button>
         </div>
 
+        {/* Share Menu Popup */}
+        {showShareMenu && (
+          <div
+            ref={shareMenuRef}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl overflow-hidden z-50"
+            role="menu"
+          >
+            <a href={getSocialLink('x')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
+              <X className="h-4 w-4" /> Compartilhar no X
+            </a>
+            <a href={getSocialLink('facebook')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
+              <Facebook className="h-4 w-4" /> Facebook
+            </a>
+            <a href={getSocialLink('whatsapp')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
+              <MessageSquareText className="h-4 w-4" /> WhatsApp
+            </a>
+            <a href={getSocialLink('email')} className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
+              <Mail className="h-4 w-4" /> Email
+            </a>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors border-t border-neutral-700"
+              role="menuitem"
+            >
+              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Link copiado!' : 'Copiar link'}
+            </button>
+          </div>
+        )}
+
         {/* Consignor Logo — bottom-left with rich tooltip */}
         <div className="absolute bottom-3 left-3 z-30 group/comitente">
           <div className="w-14 h-14 rounded-full border-2 border-neutral-800 overflow-hidden bg-white shadow-lg">
@@ -422,7 +453,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
       </div>
 
       <div className="flex flex-1 flex-col">
-      <div className="flex min-h-[11rem] flex-col p-4 pb-3" data-ai-id="card-v2-header">
+      <div className="flex min-h-[9rem] flex-col p-4 pb-3" data-ai-id="card-v2-header">
         <div className="flex items-center justify-between gap-3 mb-2">
           <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-md border border-primary/20 uppercase">
             {item.type}
@@ -451,18 +482,7 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             ))}
           </div>
         </div>
-        <div className="min-h-[1.25rem]" data-ai-id="card-v2-process-slot" data-testid="auction-lot-card-v2-process-slot">
-          {item.processNumber && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-400">
-              <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <a data-ai-id="card-v2-process-link" data-testid="auction-lot-card-v2-process-link" className="underline hover:text-primary transition-colors truncate" href={detailUrl}>
-                Proc: {item.processNumber}
-              </a>
-            </div>
-          )}
-        </div>
+
       </div>
 
       <div className="grid grid-cols-3 border-y border-neutral-800 bg-neutral-900/50" data-ai-id="card-v2-kpi">
@@ -549,6 +569,9 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
               </div>
               <div className={cn('text-[10px] font-medium', stage1Styles.date)}>
                 {item.timeline.stage1.date}
+                {item.timeline.stage1.startTime && (
+                  <span className="ml-1 text-gray-500">às {item.timeline.stage1.startTime}</span>
+                )}
               </div>
             </div>
 
@@ -581,6 +604,9 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
                 </div>
                 <div className={cn('text-[11px] font-semibold leading-tight', stage2Styles.date)}>
                   {item.timeline.stage2.date}
+                  {item.timeline.stage2.startTime && (
+                    <span className="ml-1 text-gray-500">às {item.timeline.stage2.startTime}</span>
+                  )}
                 </div>
               </div>
             )}
@@ -621,10 +647,10 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         )}
       </div>
 
-      <div className="mt-auto p-4 pt-2 flex gap-3" data-ai-id="card-v2-actions" data-testid="auction-lot-card-v2-actions">
+      <div className="mt-auto p-4 pt-2 flex" data-ai-id="card-v2-actions" data-testid="auction-lot-card-v2-actions">
         <a
           href={detailUrl}
-          className="flex-[2] bg-primary hover:bg-orange-600 transition-all text-black font-[family-name:var(--font-card-display)] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(154,52,18,1)] active:translate-y-[2px] active:shadow-[0_2px_0_0_rgba(154,52,18,1)] text-xs sm:text-sm tracking-wide leading-tight text-center"
+          className="w-full bg-primary hover:bg-orange-600 transition-all text-black font-[family-name:var(--font-card-display)] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(154,52,18,1)] active:translate-y-[2px] active:shadow-[0_2px_0_0_rgba(154,52,18,1)] text-xs sm:text-sm tracking-wide leading-tight text-center"
           data-ai-id="card-v2-cta"
         >
           {ctaLabel}
@@ -632,54 +658,6 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             <path clipRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" fillRule="evenodd" />
           </svg>
         </a>
-        <div className="relative flex-1" ref={shareMenuRef}>
-          <button
-            type="button"
-            onClick={handleShareToggle}
-            className="w-full h-full brutalist-border rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-colors py-3.5"
-            aria-label="Compartilhar este lote"
-          >
-            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-            </svg>
-          </button>
-          {showShareMenu && (
-            <div
-              className="absolute bottom-full right-0 mb-2 w-48 bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl overflow-hidden z-50"
-              role="menu"
-            >
-              <a href={getSocialLink('x')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
-                <X className="h-4 w-4" /> Compartilhar no X
-              </a>
-              <a href={getSocialLink('facebook')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
-                <Facebook className="h-4 w-4" /> Facebook
-              </a>
-              <a href={getSocialLink('whatsapp')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
-                <MessageSquareText className="h-4 w-4" /> WhatsApp
-              </a>
-              <a href={getSocialLink('email')} className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors" role="menuitem">
-                <Mail className="h-4 w-4" /> Email
-              </a>
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-gray-300 hover:bg-neutral-800 hover:text-white transition-colors border-t border-neutral-700"
-                role="menuitem"
-              >
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                {copied ? 'Link copiado!' : 'Copiar link'}
-              </button>
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={handleFavoriteToggle}
-          className="flex-1 brutalist-border rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-colors"
-          aria-label="Adicionar aos favoritos"
-        >
-          <Heart className={cn('h-5 w-5', isFavorited ? 'fill-red-500 text-red-500' : 'text-red-500')} />
-        </button>
       </div>
       {liveAuction && (
         <div className="px-4 pb-4" data-ai-id="card-v2-live-action-row">
