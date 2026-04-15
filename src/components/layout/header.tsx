@@ -19,6 +19,8 @@ import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'luci
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo, Auction } from '@/types';
 import { getLotsByIds, getLots } from '@/app/admin/lots/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
 import { FAVORITE_LOTS_STORAGE_KEY, getFavoriteLotIdsFromStorage, syncFavoriteLotIdsWithServer } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -122,10 +124,14 @@ export default function Header({
       try {
         const [
             fetchedLots,
-            fetchedCategories
+            fetchedCategories,
+            fetchedAuctioneers,
+            fetchedSellers
         ] = await Promise.allSettled([
           getLots(undefined, true), 
-          getLotCategories(true)
+          getLotCategories(),
+          getAuctioneers(true, 20),
+          getSellers(true, 20)
         ]);
 
         if (fetchedLots.status === 'rejected') {
@@ -134,9 +140,17 @@ export default function Header({
         if (fetchedCategories.status === 'rejected') {
           console.warn('Header failed to load public categories:', fetchedCategories.reason);
         }
+        if (fetchedAuctioneers.status === 'rejected') {
+          console.warn('Header failed to load public auctioneers:', fetchedAuctioneers.reason);
+        }
+        if (fetchedSellers.status === 'rejected') {
+          console.warn('Header failed to load public sellers:', fetchedSellers.reason);
+        }
 
         setAllLots(fetchedLots.status === 'fulfilled' ? fetchedLots.value : []);
         setCategories(fetchedCategories.status === 'fulfilled' ? fetchedCategories.value : []);
+        setAuctioneers(fetchedAuctioneers.status === 'fulfilled' ? fetchedAuctioneers.value : []);
+        setSellers(fetchedSellers.status === 'fulfilled' ? fetchedSellers.value : []);
 
         const viewedIds = getRecentlyViewedIds();
         if (viewedIds.length > 0) {
