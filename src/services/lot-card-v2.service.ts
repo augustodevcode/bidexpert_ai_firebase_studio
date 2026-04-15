@@ -121,6 +121,7 @@ function mapLotToAuctionItem(lot: any): AuctionItem | null {
           ? 'Encerrada'
           : 'Aguardando',
     date: new Date(s.startDate).toLocaleDateString('pt-BR'),
+    startTime: new Date(s.startDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
   });
 
   const effectiveLotStatus = getEffectiveLotStatus(lot, auction) ?? lot.status;
