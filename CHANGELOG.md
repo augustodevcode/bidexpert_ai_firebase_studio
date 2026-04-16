@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.23](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.22...v1.0.0-demo.23) (2026-04-16)
+
+### Correções
+
+* **header:** populate Leiloeiros and Comitentes dropdown menus ([2d00029](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/2d000294ade883f7dc042571b1c9838026d355ee))
+
 ## [1.0.0-demo.22](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.21...v1.0.0-demo.22) (2026-04-13)
 
 ### Correções
