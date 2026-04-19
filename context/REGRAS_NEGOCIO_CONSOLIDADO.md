@@ -848,6 +848,49 @@ Proibir mix de `cuid()` em novos docs/código
 - [ ] Implementar sessão com expiração automática (timeout configurável)  
 - [ ] Adicionar notificação ao usuário impersonado (opcional/configurável)
 
+### RN-030: Congruência de Processo Judicial na Cadeia Ativo → Lote → Leilão
+🔐 **Objetivo**: Garantir integridade referencial e congruência do Processo Judicial ao longo de toda a cadeia de vinculação `Processo Judicial → Ativos → Lotes → Leilão`.
+
+**Invariante Principal**:
+✅ Se um `Auction` possui `judicialProcessId` definido, **todo** `Asset` vinculado a qualquer `Lot` desse `Auction` (via `AssetsOnLots`) **DEVE** ter `Asset.judicialProcessId` igual ao `Auction.judicialProcessId`.
+✅ Ativos com `judicialProcessId = null` **NÃO** podem ser vinculados a lotes de leilões judiciais.
+✅ Leilões **sem** `judicialProcessId` (leilões extrajudiciais) não estão sujeitos a esta regra.
+
+**Reutilização de Ativos (Multi-Leilão)**:
+✅ Um mesmo `Asset` pode participar de múltiplos `Lot`s ao longo do tempo (historicamente), porém **NUNCA** em dois `Lot`s com status ativo/publicado simultaneamente.
+✅ A tabela `AssetsOnLots` registra o histórico de vinculações (N:N com timestamps).
+✅ Quando um ativo não é vendido em um leilão, pode ser vinculado a novo lote em outro leilão, desde que o lote anterior esteja com status finalizado (ENCERRADO, CANCELADO, DESERTO).
+
+**Pontos de Bloqueio**:
+✅ **Write-time (hard-fail)**: A vinculação de ativo ao lote (`linkAssetsToLot`) DEVE validar congruência de JP antes de persistir.
+✅ **Auditoria (redundante)**: `validateAuctionIntegrity()` DEVE verificar congruência de JP de todos os ativos de todos os lotes antes de autorizar abertura.
+✅ **Duplicação ativa bloqueada**: Antes de vincular, verificar se o ativo já está em algum lote ativo/publicado de outro leilão.
+
+**Mensagens de Erro Padronizadas**:
+- `CONGRUENCE_JP_MISMATCH`: "O ativo '{assetTitle}' pertence ao processo judicial '{assetJP}', diferente do leilão ('{auctionJP}'). Vinculação bloqueada."
+- `CONGRUENCE_JP_NULL_ASSET`: "O ativo '{assetTitle}' não possui processo judicial vinculado. Não pode ser associado a leilão judicial."
+- `ASSET_ALREADY_IN_ACTIVE_LOT`: "O ativo '{assetTitle}' já está vinculado ao lote '{lotTitle}' (status: {lotStatus}). Desvincule antes de reutilizar."
+
+**Ambiguidade `Asset.lotId` vs `AssetsOnLots`**:
+⚠️ O campo `Asset.lotId` (FK direta) é considerado **legado/auxiliar**. O caminho canônico para vinculação N:N é via `AssetsOnLots`. Toda nova lógica DEVE usar `AssetsOnLots` como fonte de verdade.
+
+**BDD - Congruência de Processo Judicial**
+- **Dado** um leilão judicial com `judicialProcessId = 42`
+- **Quando** o admin tenta vincular um ativo com `judicialProcessId = 99` a um lote desse leilão
+- **Então** o sistema DEVE bloquear com erro `CONGRUENCE_JP_MISMATCH`
+
+- **Dado** um leilão judicial com `judicialProcessId = 42`
+- **Quando** o admin tenta vincular um ativo com `judicialProcessId = null`
+- **Então** o sistema DEVE bloquear com erro `CONGRUENCE_JP_NULL_ASSET`
+
+- **Dado** um ativo vinculado a um lote com status `ABERTO_PARA_LANCES`
+- **Quando** o admin tenta vincular esse mesmo ativo a outro lote
+- **Então** o sistema DEVE bloquear com erro `ASSET_ALREADY_IN_ACTIVE_LOT`
+
+- **Dado** um ativo vinculado a um lote com status `DESERTO`
+- **Quando** o admin tenta vincular esse ativo a um novo lote em outro leilão judicial do mesmo processo
+- **Então** a vinculação DEVE ser permitida
+
 ---
 
 ## DESIGN SYSTEM

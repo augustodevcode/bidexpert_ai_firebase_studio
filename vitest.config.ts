@@ -44,6 +44,7 @@ export default defineConfig({
       ['tests/unit/seed-min-50.spec.ts', 'node'],
       ['tests/unit/generate-report-template-flow.spec.ts', 'node'],
       ['tests/unit/auction-lot-card-v2.presenter.spec.ts', 'node'],
+      ['tests/unit/jp-congruence.spec.ts', 'node'],
     ],
     globals: true,
     include: [
