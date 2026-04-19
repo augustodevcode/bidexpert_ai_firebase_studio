@@ -15,8 +15,8 @@ import type { PaginatedResponse } from '@/lib/admin-plus/types';
 /* ─── LIST ─── */
 export const listLotCategories = createAdminAction({
   inputSchema: z.object({
-    page: z.number().min(1).default(1),
-    pageSize: z.number().min(1).max(200).default(50),
+    page: z.coerce.number().min(1).default(1),
+    pageSize: z.coerce.number().min(1).max(200).default(50),
     search: z.string().optional(),
   }),
   requiredPermission: 'categories:read',
