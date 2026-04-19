@@ -6,6 +6,17 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.24](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.23...v1.0.0-demo.24) (2026-04-19)
+
+### Funcionalidades
+
+* **RN-030:** JP congruence validation for asset-lot-auction chain ([656ddd0](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/656ddd07a216768a9192e8c2e47d9c97aa124951))
+
+### Correções
+
+* **admin-plus:** coerce page/pageSize in category+subcategory actions; filter stages by auctionId in lot-stage-prices form ([9cd3842](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/9cd3842f450555e281675a35a42f9c1a6ae7a45c))
+* **e2e:** align smoke-price-filter selectors to actual BidExpertFilter data-ai-ids ([9640677](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/9640677288fcac20e3c0b1adb25fc1cab37e3587))
+
 ## [1.0.0-demo.23](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.22...v1.0.0-demo.23) (2026-04-16)
 
 ### Correções
