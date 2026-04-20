@@ -81,6 +81,13 @@ export const vehicleFieldsSchema = z.object({
   bodyCondition: optionalString,
   tiresCondition: optionalString,
   hasKey: optionalBoolean,
+  plateFinal: optionalString,
+  plateState: optionalString,
+  chassis: optionalString,
+  engineStatus: optionalString,
+  mileageStatus: optionalString,
+  ipvaPaid: optionalBoolean,
+  documentStatus: optionalString,
 });
 
 // Campos específicos para IMÓVEIS

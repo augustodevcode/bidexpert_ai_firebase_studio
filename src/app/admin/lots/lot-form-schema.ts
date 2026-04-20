@@ -82,6 +82,12 @@ export const lotFormSchema = z.object({
   
   stageDetails: z.array(lotStageDetailsSchema).optional(),
   
+  // Superbid / Fees Metadata
+  commissionRate: z.coerce.number().min(0).max(100).optional().nullable(),
+  platformFeeRate: z.coerce.number().min(0).max(100).optional().nullable(),
+  adminFee: z.coerce.number().min(0).optional().nullable(),
+  logisticsFee: z.coerce.number().min(0).optional().nullable(),
+  
   // For relisting logic
   originalLotId: z.string().optional(),
   isRelisted: z.boolean().optional(),

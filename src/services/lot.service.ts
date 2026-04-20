@@ -499,7 +499,11 @@ export class LotService {
       // UI Fields mapping
       totalArea: assetsOnLots?.reduce((acc: number, curr: any) => acc + (Number((curr.Asset ?? curr.asset)?.totalArea) || 0), 0) || null,
       type: lot.type || ((assetsOnLots?.[0] as any)?.Asset?.categoryId ?? (assetsOnLots?.[0] as any)?.asset?.categoryId ? 'IMOVEL' : 'OUTRO'),
-      occupancyStatus: lot.occupancyStatus || (assetsOnLots?.[0] as any)?.Asset?.occupationStatus || (assetsOnLots?.[0] as any)?.asset?.occupationStatus || null
+      occupancyStatus: lot.occupancyStatus || (assetsOnLots?.[0] as any)?.Asset?.occupationStatus || (assetsOnLots?.[0] as any)?.asset?.occupationStatus || null,
+      commissionRate: lot.commissionRate ? Number(lot.commissionRate) : 5.0,
+      platformFeeRate: lot.platformFeeRate ? Number(lot.platformFeeRate) : 2.5,
+      adminFee: lot.adminFee ? Number(lot.adminFee) : null,
+      logisticsFee: lot.logisticsFee ? Number(lot.logisticsFee) : null,
     } as Lot;
   }
 
@@ -795,6 +799,11 @@ export class LotService {
         createData.stateId = BigInt(cleanData.stateId);
       }
 
+      if (cleanData.commissionRate !== undefined) createData.commissionRate = new Prisma.Decimal(cleanData.commissionRate);
+      if (cleanData.platformFeeRate !== undefined) createData.platformFeeRate = new Prisma.Decimal(cleanData.platformFeeRate);
+      if (cleanData.adminFee !== undefined) createData.adminFee = new Prisma.Decimal(cleanData.adminFee);
+      if (cleanData.logisticsFee !== undefined) createData.logisticsFee = new Prisma.Decimal(cleanData.logisticsFee);
+
 
 
       const lot = await this.prisma.lot.create({
@@ -968,6 +977,11 @@ export class LotService {
         updateRelations.State = { connect: { id: BigInt(cleanData.stateId) } };
         delete cleanData.stateId;
       }
+
+      if (cleanData.commissionRate !== undefined) cleanData.commissionRate = new Prisma.Decimal(cleanData.commissionRate);
+      if (cleanData.platformFeeRate !== undefined) cleanData.platformFeeRate = new Prisma.Decimal(cleanData.platformFeeRate);
+      if (cleanData.adminFee !== undefined) cleanData.adminFee = new Prisma.Decimal(cleanData.adminFee);
+      if (cleanData.logisticsFee !== undefined) cleanData.logisticsFee = new Prisma.Decimal(cleanData.logisticsFee);
       
       await this.prisma.$transaction(async (tx) => {
         await tx.lot.update({
