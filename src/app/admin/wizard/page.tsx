@@ -15,16 +15,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
 import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
 import { createAsset as createAssetAction } from '@/app/admin/assets/actions';
 import { Separator } from '@/components/ui/separator';
-import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
 import { AssetFormV2 } from '@/app/admin/assets/asset-form-v2';
 import { appendSessionAssetId, getSessionScopedAssets } from '@/components/admin/wizard/wizard-session-utils';
+import { ExportPPTXButton } from '@/components/admin/wizard/ExportPPTXButton';
 
+
+const WizardFlow = dynamic(() => import('@/components/admin/wizard/WizardFlow'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="flex h-full min-h-[16rem] items-center justify-center rounded-md bg-muted/30 px-4 text-center text-sm text-muted-foreground"
+      data-ai-id="wizard-flow-loading"
+    >
+      Preparando o mapa visual do fluxo...
+    </div>
+  ),
+});
 
 const allSteps = [
   { id: 'type', title: 'Tipo de Leilão', description: 'Selecione a modalidade.' },
@@ -183,15 +196,20 @@ function WizardContent({
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6" id="wizard-export-container">
         <Card className="shadow-lg">
-          <CardHeader>
+          <CardHeader className="flex flex-row justify-between items-start">
+            <div className="space-y-1.5">
               <CardTitle className="text-2xl font-bold font-headline flex items-center">
                 <Rocket className="h-7 w-7 mr-3 text-primary" />
                 Assistente de Criação de Leilão
               </CardTitle>
               <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
-            </CardHeader>
+            </div>
+            <div className="flex gap-2">
+              <ExportPPTXButton targetId="wizard-export-container" filename="Apresentacao-Assistente-Leilao" />
+            </div>
+          </CardHeader>
           {wizardMode === 'main' ? (
             <>
               <CardContent className="p-6">

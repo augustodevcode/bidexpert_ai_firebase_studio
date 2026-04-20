@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
+import EnvInfoButton from '@/components/layout/env-info-button';
 
 const sidebarNavItems = [
   {
@@ -84,6 +85,9 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 ))}
                 </nav>
             </ScrollArea>
+              <div className="border-t p-2" data-ai-id="consignor-dev-info-section">
+                <EnvInfoButton />
+              </div>
 
         </>
     );

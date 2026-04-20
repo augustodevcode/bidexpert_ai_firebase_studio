@@ -128,6 +128,7 @@ function SearchPageContent() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
+  const safePlatformSettings = useMemo(() => (platformSettings ?? ({} as PlatformSettings)), [platformSettings]);
 
   // Fetch data on mount with limits to avoid infinite loading (FIX 5.29 CRÍTICO)
   useEffect(() => {
@@ -141,23 +142,32 @@ function SearchPageContent() {
           getSellers(true),
           getPlatformSettings(),
         ]);
-        const categories = phase1[0].status === 'fulfilled' ? phase1[0].value : [];
-        const sellers = phase1[1].status === 'fulfilled' ? phase1[1].value : [];
-        const settings = phase1[2].status === 'fulfilled' ? phase1[2].value : null;
+        const categories = phase1[0].status === 'fulfilled' && Array.isArray(phase1[0].value) ? phase1[0].value : [];
+        const sellers = phase1[1].status === 'fulfilled' && Array.isArray(phase1[1].value) ? phase1[1].value : [];
+        const settings = phase1[2].status === 'fulfilled' && phase1[2].value ? phase1[2].value : ({} as PlatformSettings);
         phase1.forEach((r, i) => {
           if (r.status === 'rejected') console.warn(`[Search] phase1 promise[${i}] rejected:`, r.reason);
         });
         setAllCategoriesForFilter(categories);
         setPlatformSettings(settings as PlatformSettings);
-        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
+        setUniqueSellersForFilter(
+          sellers
+            .map((seller) => seller?.name)
+            .filter((name): name is string => Boolean(name))
+            .sort(),
+        );
         setIsFilterDataLoading(false);
 
         // Phase 2: Fetch actual data with limits to prevent timeout
-        const [offers, auctions, lots] = await Promise.all([
+        const [offersResult, auctionsResult, lotsResult] = await Promise.all([
           getDirectSaleOffers().catch(() => []),
           getAuctions(true, 200).catch(() => []),
           getLots(undefined, true, 200).catch(() => []),
         ]);
+
+        const offers = Array.isArray(offersResult) ? offersResult : [];
+        const auctions = Array.isArray(auctionsResult) ? auctionsResult : [];
+        const lots = Array.isArray(lotsResult) ? lotsResult : [];
 
         // Set data states
         setAllDirectSales(offers);
@@ -182,6 +192,7 @@ function SearchPageContent() {
       } catch (error) {
         console.error("Error fetching search data:", error);
       } finally {
+        setIsFilterDataLoading(false);
         setIsLoading(false);
       }
     }
@@ -277,6 +288,88 @@ function SearchPageContent() {
     setIsFilterSheetOpen(false);
   };
 
+  const filteredWithoutPrice = useMemo(() => {
+    let itemsToFilter: any[] = [];
+    let itemTypeContext: 'auction' | 'lot' | 'direct_sale' = 'auction';
+
+    if (currentSearchType === 'auctions') {
+      itemsToFilter = allAuctions.filter(auc => auc.auctionType !== 'TOMADA_DE_PRECOS');
+      itemTypeContext = 'auction';
+    } else if (currentSearchType === 'lots') {
+      itemsToFilter = allLots;
+      itemTypeContext = 'lot';
+    } else if (currentSearchType === 'direct_sale') {
+      itemsToFilter = allDirectSales;
+      itemTypeContext = 'direct_sale';
+    } else if (currentSearchType === 'tomada_de_precos') {
+      itemsToFilter = allAuctions.filter(auc => auc.auctionType === 'TOMADA_DE_PRECOS');
+      itemTypeContext = 'auction';
+    }
+
+    let searchedItems = itemsToFilter;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      searchedItems = itemsToFilter.filter(item => {
+        let searchableText = item.title.toLowerCase();
+        if (item.description) searchableText += ` ${item.description.toLowerCase()}`;
+        if ('auctionName' in item && item.auctionName) searchableText += ` ${item.auctionName.toLowerCase()}`;
+        if ('sellerName' in item && item.sellerName) searchableText += ` ${item.sellerName.toLowerCase()}`;
+        else if ('seller' in item && (item as Auction).seller) searchableText += ` ${(item as Auction).seller!.name.toLowerCase()}`;
+        if ('id' in item && item.id) searchableText += ` ${String(item.id).toLowerCase()}`;
+        return searchableText.includes(term);
+      });
+    }
+
+    return searchedItems.filter(item => {
+      const itemEffectiveStatus = itemTypeContext === 'auction'
+        ? getEffectiveAuctionStatus(item as Auction) || item.status
+        : itemTypeContext === 'lot'
+          ? getEffectiveLotStatus(item as Lot, allAuctions.find(a => a.id === item.auctionId)) || item.status
+          : item.status;
+
+      if (activeFilters.category !== 'TODAS') {
+        const itemCategoryName = 'type' in item && item.type
+          ? item.type
+          : ('category' in item ? (item.category?.name || undefined) : undefined);
+        const category = allCategoriesForFilter.find(c => c.slug === activeFilters.category);
+        if (!itemCategoryName || !category || (item.categoryId !== category.id && slugify(itemCategoryName) !== category.slug)) return false;
+      }
+      // Note: priceRange filter intentionally OMITTED here — used for histogram bounds
+      if (activeFilters.locations.length > 0) {
+        const itemLocationString = ('locationCity' in item && 'locationState' in item && item.locationCity && item.locationState) ? `${item.locationCity} - ${item.locationState}` : ('city' in item && 'state' in item && item.city && item.state) ? `${item.city} - ${item.state}` : ('cityName' in item && 'stateUf' in item && item.cityName && item.stateUf) ? `${item.cityName} - ${item.stateUf}` : undefined;
+        if (!itemLocationString || !activeFilters.locations.includes(itemLocationString)) return false;
+      }
+      if (activeFilters.sellers.length > 0) {
+        let sellerName: string | undefined = undefined;
+        if ('sellerName' in item && item.sellerName) sellerName = item.sellerName;
+        else if ('seller' in item && (item as Auction).seller) sellerName = (item as Auction).seller!.name;
+        if (!sellerName || !activeFilters.sellers.includes(sellerName)) return false;
+      }
+      if (activeFilters.status && activeFilters.status.length > 0) {
+        if (!itemEffectiveStatus || !activeFilters.status.includes(itemEffectiveStatus as string)) return false;
+      }
+      if (itemTypeContext === 'auction' && activeFilters.modality !== 'TODAS' && (item as Auction).auctionType?.toUpperCase() !== activeFilters.modality) return false;
+      if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
+      if (itemTypeContext === 'auction' && activeFilters.praça && activeFilters.praça !== 'todas') {
+        const stagesCount = (item as Auction).auctionStages?.length || 0;
+        if (activeFilters.praça === 'unica' && stagesCount !== 1) return false;
+        if (activeFilters.praça === 'multiplas' && stagesCount <= 1) return false;
+      }
+      return true;
+    });
+  }, [searchTerm, activeFilters, currentSearchType, allAuctions, allLots, allDirectSales, allCategoriesForFilter]);
+
+  const pricePoints = useMemo(() => {
+    return filteredWithoutPrice
+      .map(item => {
+        const p = 'price' in item && typeof item.price === 'number' ? item.price
+                 : 'initialOffer' in item && typeof item.initialOffer === 'number' ? item.initialOffer
+                 : undefined;
+        return p;
+      })
+      .filter((p): p is number => p !== undefined && p > 0);
+  }, [filteredWithoutPrice]);
+
   const filteredAndSortedItems = useMemo(() => {
     let itemsToFilter: any[] = [];
     let itemTypeContext: 'auction' | 'lot' | 'direct_sale' = 'auction';
@@ -346,7 +439,7 @@ function SearchPageContent() {
       if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
 
       // Filtro de praças para leilões
-      if ((itemTypeContext === 'auction' || itemTypeContext === 'tomada_de_precos') && activeFilters.praça && activeFilters.praça !== 'todas') {
+      if (itemTypeContext === 'auction' && activeFilters.praça && activeFilters.praça !== 'todas') {
         const stagesCount = (item as Auction).auctionStages?.length || 0;
         if (activeFilters.praça === 'unica' && stagesCount !== 1) return false;
         if (activeFilters.praça === 'multiplas' && stagesCount <= 1) return false;
@@ -438,7 +531,6 @@ function SearchPageContent() {
   };
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
-    if (!platformSettings) return null;
     const itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
     return (
@@ -446,14 +538,13 @@ function SearchPageContent() {
         key={`${itemType}-${item.id}-${index}`}
         item={item}
         type={itemType}
-        platformSettings={platformSettings}
+        platformSettings={safePlatformSettings}
         parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
       />
     );
   };
 
   const renderListItem = (item: any, index: number): React.ReactNode => {
-    if (!platformSettings) return null;
     const itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType === 'lots' ? 'lot' : currentSearchType;
 
     return (
@@ -461,7 +552,7 @@ function SearchPageContent() {
         key={`${itemType}-list-${item.id}-${index}`}
         item={item}
         type={itemType as 'auction' | 'lot' | 'direct_sale'}
-        platformSettings={platformSettings}
+        platformSettings={safePlatformSettings}
         parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
       />
     );
@@ -483,7 +574,7 @@ function SearchPageContent() {
         sortOptionsDirectSales;
 
 
-  if (isFilterDataLoading || !platformSettings) {
+  if (isFilterDataLoading) {
     return (
       <div className="wrapper-search-loading-full" data-ai-id="search-page-loading">
         <Loader2 className="icon-search-loading-spinner-large" />
@@ -537,6 +628,8 @@ function SearchPageContent() {
             onFilterReset={handleFilterReset}
             initialFilters={activeFilters as ActiveFilters}
             filterContext={currentSearchType as 'auctions' | 'directSales' | 'lots' | 'tomada_de_precos'}
+            pricePoints={pricePoints}
+            autoApply={true}
           />
         </aside>
 
@@ -546,10 +639,11 @@ function SearchPageContent() {
             totalItemsCount={filteredAndSortedItems.length}
             renderGridItem={renderGridItem}
             renderListItem={renderListItem}
+            defaultViewMode="list"
             sortOptions={currentSortOptions}
             initialSortBy={sortBy}
             onSortChange={setSortByState}
-            platformSettings={platformSettings}
+            platformSettings={safePlatformSettings}
             isLoading={isLoading}
             searchTypeLabel={getSearchTypeLabel()}
             emptyStateMessage="Nenhum item encontrado com os filtros aplicados."

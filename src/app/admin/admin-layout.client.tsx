@@ -19,7 +19,6 @@ const AdminQueryMonitor = dynamic(() => import('@/components/support/admin-query
 const QUERY_MONITOR_LS_KEY = 'admin_query_monitor_enabled';
 // Can be force-enabled via env var, otherwise reads from localStorage toggle in General Settings
 const ENV_QUERY_MONITOR = process.env.NEXT_PUBLIC_QUERY_MONITOR_ENABLED === 'true';
-import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
@@ -98,12 +97,6 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   }
 
   const canAccessAdmin = hasAnyPermission(userProfileWithPermissions, ADMIN_ACCESS_PERMISSIONS);
-  const resolvedTenantId =
-    activeTenantId ||
-    userProfileWithPermissions.tenants?.[0]?.tenant?.id?.toString() ||
-    '1';
-  const resolvedUserEmail = userProfileWithPermissions.email || 'admin@bidexpert.ai';
-
   if (!canAccessAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
@@ -148,10 +141,6 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
             >
               <div className={isFullWidth ? 'flex min-h-0 w-full flex-1 flex-col' : 'w-full'}>
                 {children}
-                <DevInfoIndicator
-                  tenantId={resolvedTenantId}
-                  userEmail={resolvedUserEmail}
-                />
               </div>
             </main>
             {queryMonitorEnabled && <AdminQueryMonitor />}

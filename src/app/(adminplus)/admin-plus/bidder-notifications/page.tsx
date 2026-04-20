@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina de listagem de NotificaÃ§Ãµes de Arrematante (BidderNotification) no Admin Plus.
+ * Página de listagem de Notificações de Arrematante (BidderNotification) no Admin Plus.
  */
 'use client';
 
@@ -41,32 +41,32 @@ export default function BidderNotificationsPage() {
 
   const handleSubmit = async (formData: BidderNotificationFormData) => {
     const r = editing ? await updateBidderNotification({ id: editing.id, data: formData }) : await createBidderNotification(formData);
-    if (r.success) { toast.success(editing ? 'NotificaÃ§Ã£o atualizada' : 'NotificaÃ§Ã£o criada'); setFormOpen(false); setEditing(null); refresh(); } else { toast.error(r.error || 'Erro'); }
+    if (r.success) { toast.success(editing ? 'Notificação atualizada' : 'Notificação criada'); setFormOpen(false); setEditing(null); refresh(); } else { toast.error(r.error || 'Erro'); }
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     const r = await deleteBidderNotification({ id: deleteTarget.id });
-    if (r.success) { toast.success('NotificaÃ§Ã£o excluÃ­da'); setDeleteTarget(null); refresh(); } else { toast.error(r.error || 'Erro'); }
+    if (r.success) { toast.success('Notificação excluída'); setDeleteTarget(null); refresh(); } else { toast.error(r.error || 'Erro'); }
   };
 
   const columns = getBidderNotificationColumns({ onEdit: handleEdit, onDelete: handleDelete });
 
   const bulkActions: BulkAction<BidderNotificationRow>[] = [
-    { label: 'Excluir selecionados', icon: Trash2, variant: 'destructive' as const, onExecute: async (rows) => { for (const row of rows) await deleteBidderNotification({ id: row.id }); toast.success(`${rows.length} notificaÃ§Ã£o(Ãµes) excluÃ­da(s)`); refresh(); } },
+    { label: 'Excluir selecionados', icon: Trash2, variant: 'destructive' as const, onExecute: async (rows) => { for (const row of rows) await deleteBidderNotification({ id: row.id }); toast.success(`${rows.length} notificação(ões) excluída(s)`); refresh(); } },
   ];
 
   return (
     <div className="space-y-6" data-ai-id="bidder-notifications-page">
-      <PageHeader icon={Bell} title="NotificaÃ§Ãµes de Arrematantes" description="Gerencie notificaÃ§Ãµes enviadas a arrematantes.">
-        <Button onClick={() => { setEditing(null); setFormOpen(true); }} data-ai-id="bidder-notification-new-btn"><Plus className="mr-2 h-4 w-4" /> Nova NotificaÃ§Ã£o</Button>
+      <PageHeader icon={Bell} title="Notificações de Arrematantes" description="Gerencie notificações enviadas a arrematantes.">
+        <Button onClick={() => { setEditing(null); setFormOpen(true); }} data-ai-id="bidder-notification-new-btn"><Plus className="mr-2 h-4 w-4" /> Nova Notificação</Button>
       </PageHeader>
 
       <DataTablePlus columns={columns} data={data} total={total} page={page} pageSize={pageSize} totalPages={totalPages} onPageChange={setPage} onPageSizeChange={setPageSize} pageSizeOptions={[...(PAGE_SIZE_OPTIONS as readonly number[])]} sorting={sorting} onSortingChange={setSorting} search={search} onSearchChange={setSearch} isLoading={isLoading} bulkActions={bulkActions} />
 
       <BidderNotificationForm open={formOpen} onOpenChange={(o) => { setFormOpen(o); if (!o) setEditing(null); }} onSubmit={handleSubmit} defaultValues={editing} />
 
-      <ConfirmationDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }} title="Excluir NotificaÃ§Ã£o" description={`Excluir "${deleteTarget?.title}"?`} onConfirm={confirmDelete} />
+      <ConfirmationDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }} title="Excluir Notificação" description={`Excluir "${deleteTarget?.title}"?`} onConfirm={confirmDelete} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de Auctioneers (Leiloeiros) â€” Admin Plus.
+ * @fileoverview Página CRUD de Auctioneers (Leiloeiros) — Admin Plus.
  */
 'use client';
 
@@ -35,7 +35,7 @@ export default function AuctioneersPage() {
     if (!deleteTarget) return;
     const res = await deleteAuctioneer({ id: deleteTarget.id });
     if (res?.success) {
-      toast.success('Leiloeiro excluÃ­do');
+      toast.success('Leiloeiro excluído');
       table.refresh();
     } else {
       toast.error(res?.error ?? 'Erro ao excluir');
@@ -82,7 +82,7 @@ export default function AuctioneersPage() {
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Excluir leiloeiro"
-        description={`Deseja excluir o leiloeiro "${deleteTarget?.name ?? ''}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
+        description={`Deseja excluir o leiloeiro "${deleteTarget?.name ?? ''}"? Esta ação não pode ser desfeita.`}
         onConfirm={handleDelete}
       />
     </div>

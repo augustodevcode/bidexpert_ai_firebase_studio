@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina CRUD de Riscos de Lotes (LotRisk).
+ * Página CRUD de Riscos de Lotes (LotRisk).
  */
 'use client';
 

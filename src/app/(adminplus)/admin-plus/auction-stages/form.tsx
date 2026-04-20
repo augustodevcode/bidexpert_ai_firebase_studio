@@ -39,7 +39,7 @@ export function AuctionStageForm({ open, onOpenChange, onSubmit, defaultValues }
     if (!open) return;
     listAuctions({ page: 1, pageSize: 500 }).then((r) => {
       if (r?.success && r.data?.data) {
-        setAuctions(r.data.data.map((x: Record<string, unknown>) => ({ id: String(x.id), name: String(x.title ?? '') })));
+        setAuctions(r.data.data.map((x) => ({ id: x.id, name: x.title ?? '' })));
       }
     });
   }, [open]);

@@ -47,7 +47,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
   const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const form = useForm<SellerFormValues>({
+  const form = useForm<SellerFormValues, any, SellerFormValues>({
     resolver: zodResolver(sellerFormSchema),
     mode: 'onChange',
     defaultValues: initialData ? {
@@ -70,8 +70,8 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
       cityId: initialData.cityId?.toString() || '',
       stateId: initialData.stateId?.toString() || '',
       zipCode: initialData.zipCode || '',
-      latitude: initialData.latitude || null,
-      longitude: initialData.longitude || null,
+      latitude: (initialData.latitude as any) || null,
+      longitude: (initialData.longitude as any) || null,
     } : { isJudicial: false },
   });
 
@@ -150,7 +150,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                             <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
                                 <EntitySelector 
                                     entityName="judicialBranch"
-                                    value={field.value}
+                                    value={field.value as any}
                                     onChange={field.onChange}
                                     options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))}
                                     placeholder="Nenhuma vara judicial vinculada"

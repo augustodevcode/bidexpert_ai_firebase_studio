@@ -6,6 +6,167 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.24](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.23...v1.0.0-demo.24) (2026-04-19)
+
+### Funcionalidades
+
+* **RN-030:** JP congruence validation for asset-lot-auction chain ([656ddd0](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/656ddd07a216768a9192e8c2e47d9c97aa124951))
+
+### Correções
+
+* **admin-plus:** coerce page/pageSize in category+subcategory actions; filter stages by auctionId in lot-stage-prices form ([9cd3842](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/9cd3842f450555e281675a35a42f9c1a6ae7a45c))
+* **e2e:** align smoke-price-filter selectors to actual BidExpertFilter data-ai-ids ([9640677](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/9640677288fcac20e3c0b1adb25fc1cab37e3587))
+
+## [1.0.0-demo.23](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.22...v1.0.0-demo.23) (2026-04-16)
+
+### Correções
+
+* **header:** populate Leiloeiros and Comitentes dropdown menus ([2d00029](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/2d000294ade883f7dc042571b1c9838026d355ee))
+
+## [1.0.0-demo.22](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.21...v1.0.0-demo.22) (2026-04-13)
+
+### Correções
+
+* vercel smoke tests SSO bypass with auth setup project and storageState ([784b154](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/784b154e85e261c36197f4feb3c76e4e3a2e14ff))
+
+## [1.0.0-demo.21](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.20...v1.0.0-demo.21) (2026-04-13)
+
+### Correções
+
+* **courts+tests:** fix setModalState bug, update E2E selectors and z-index assertions ([5fb9a82](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/5fb9a82b004eed4856bb538805109f62f1c47ba9))
+* **e2e:** align smoke-price-filter selectors to actual BidExpertFilter data-ai-ids ([421cd21](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/421cd21ba1b94babd5dbe1a54412e159aca75ed1))
+
+## [1.0.0-demo.20](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.19...v1.0.0-demo.20) (2026-04-12)
+
+### Funcionalidades
+
+* **search:** Booking.com-style price range with histogram and auto-apply filters ([c960398](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/c960398e701bfcb67e614bc27cdaa72557c3c3c8))
+* **wizard:** add full page export to PPTX preserving react-flow SVG layout ([0333465](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/0333465ae6807539d54f318340588568ef57ab2d))
+
+## [1.0.0-demo.19](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.18...v1.0.0-demo.19) (2026-04-12)
+
+### Correções
+
+* **checkout:** normalize user win payload and harden arremate term action ([#705](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/705)) ([876bf6b](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/876bf6b3c2951b037f8473c47dd80526be76762e))
+
+## [1.0.0-demo.18](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.17...v1.0.0-demo.18) (2026-04-12)
+
+### Funcionalidades
+
+* tornar Dev Info sob demanda via sidebar ([#676](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/676)) ([e75c8aa](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/e75c8aa2b2186376114cfbf8993c4b477827231b))
+
+### Correções
+
+* **cards:** uniform lot card heights ([d5c4547](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d5c454738edd10645605bf7a8ae282c5b0ec3410))
+* **cards:** uniform public lot card heights ([#691](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/691)) ([bb4aa17](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/bb4aa17be3fde98c8f2afdc039a3e320b090860d))
+* **cards:** uniform public lot card layout ([eebdba3](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/eebdba32f1708385cc92de3438291fdbc5d5c736))
+* **ci:** pin prisma generate to v5.22.0 scripts ([#682](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/682)) ([1f8e1e9](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/1f8e1e92b9e1f7dd1e6f742b377c632f3089c8ad))
+* downgrade prisma to 5.22.0 to fix PR CI ([89ff750](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/89ff75021e5a978a4b2271e7ecb68b9dcb34321a))
+* **vercel:** pin prisma generate in build script ([#686](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/686)) ([a940f53](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/a940f535e147185d62c3f8420eb1293c9697aaa8))
+
+## [1.0.0-demo.17](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.16...v1.0.0-demo.17) (2026-04-11)
+
+### Correções
+
+* search/map UI — defaultViewMode list, BidExpertCard popup, hideMapCTA ([#673](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/673)) ([538b41b](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/538b41bbbeb92387cb9f493fda874ec501fc5759))
+
+## [1.0.0-demo.16](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.15...v1.0.0-demo.16) (2026-04-08)
+
+### Funcionalidades
+
+* **wizard): restore React Flow and isolate graph logic; fix(wizard-flow:** remove ssr for reactflow compatibility ([79fda5f](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/79fda5f153d8f6ee1440e2b6ed244d163e146036))
+
+### Correções
+
+* **wizard:** restore react flow graph ([d20d5fd](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d20d5fd79d1c25adec8afbceb942b2915d9d0dd3))
+
+## [1.0.0-demo.15](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.14...v1.0.0-demo.15) (2026-04-07)
+
+### Correções
+
+* restore wizard React Flow graph ([756fd30](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/756fd3018e3897a385f8e77adb6f4b5b891980d5))
+
+## [1.0.0-demo.14](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.13...v1.0.0-demo.14) (2026-04-07)
+
+### Funcionalidades
+
+* **cards:** universal lot card - presenter, dispatcher, V2 parity ([#663](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/663)) ([26480a7](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/26480a7eb3f730da2ad32543927ba9e39e4c4110))
+
+## [1.0.0-demo.13](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.12...v1.0.0-demo.13) (2026-04-06)
+
+### Correções
+
+* **bidding:** corrige campo auctionDate→lotSpecificAuctionDate no Prisma select ([1a43999](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/1a439997e189713aeaff4398959a5bf0e68e4cf5))
+
+## [1.0.0-demo.12](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.11...v1.0.0-demo.12) (2026-04-04)
+
+### Correções
+
+* **admin-plus:** Exp6 - reduce TS errors batch 2 (895->846) ([69e1c80](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/69e1c803b4bf5f65c85c02921cb81f29ce423407))
+
+## [1.0.0-demo.11](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.10...v1.0.0-demo.11) (2026-04-04)
+
+### Correções
+
+* **admin-plus:** Exp5 — reduce TS errors 1350->1276 (-74) ([8f6cd96](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/8f6cd96a8150e11319929a523993bd4fc3be52c1))
+
+## [1.0.0-demo.10](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.9...v1.0.0-demo.10) (2026-04-04)
+
+### Correções
+
+* **admin-plus): Exp4 — reduce TS errors 1423→1350 (-73:** enum casts, handler sigs, typed maps, DataTablePlus props, Field form type ([d22a907](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d22a907b55e5b2e9ee30176d8b7546d8992c96bf))
+
+## [1.0.0-demo.9](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.8...v1.0.0-demo.9) (2026-04-04)
+
+### Correções
+
+* **wizard:** add VENDA_DIRETA to PathType and pathStyles to prevent crash ([8ec2594](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/8ec2594e4b94453edff8c227491a3e6397fec013))
+
+## [1.0.0-demo.8](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.7...v1.0.0-demo.8) (2026-04-04)
+
+### Correções
+
+* **home:** guard stageDetails.find with Array.isArray to prevent client crash ([67e9e68](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/67e9e68666e1d9fac799de9db87560bbecc05d85))
+
+## [1.0.0-demo.7](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.6...v1.0.0-demo.7) (2026-04-04)
+
+### Correções
+
+* **cities:** remove double-mapping that overwrote stateUf with undefined ([4209c67](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/4209c67d7a4d029b271f0fb53e4b387c16d34d0d))
+
+## [1.0.0-demo.6](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.5...v1.0.0-demo.6) (2026-04-04)
+
+### Correções
+
+* resolve UTF-8 double-encoding across 56 admin-plus pages and test files ([55cc02b](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/55cc02bc063b24889874398ae955d45dafa202e8))
+
+## [1.0.0-demo.5](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.4...v1.0.0-demo.5) (2026-04-04)
+
+### Correções
+
+* **admin-plus:** User.name→fullName in lot-risks and bids actions ([3f86387](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/3f863873d711d128a101ad77c855433ec03d3537))
+
+## [1.0.0-demo.4](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.3...v1.0.0-demo.4) (2026-04-04)
+
+### Correções
+
+* replace source-code-parsing with Function.length dispatch in safe-action.ts ([#648](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/648)) ([ed07539](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/ed075391e67f8b95cef573c5327ae137fab13a22))
+
+## [1.0.0-demo.3](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.2...v1.0.0-demo.3) (2026-04-04)
+
+### Correções
+
+* **admin-plus:** fix Mídias and Ativos/Bens CRUDs ([#645](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/645)) ([5750f81](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/5750f81555c81cd88804f64f8233960dd24455c9))
+
+## [1.0.0-demo.2](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.1...v1.0.0-demo.2) (2026-04-02)
+
+### Funcionalidades
+
+* improve investor journey favorites persistence ([d6a520c](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d6a520cfbbf52bc192e121385183a8ad1ddfa0db))
+
+### Correções
+
+* restore legacy vercel prisma schema path ([548ae9d](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/548ae9d0a793df9b1248a4aa502bb71c73f9ba0e))
 ## [1.1.0](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0...v1.1.0) (2026-04-02)
 
 ### Funcionalidades

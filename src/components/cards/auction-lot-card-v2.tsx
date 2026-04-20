@@ -5,13 +5,18 @@
  */
 'use client';
 
-import { useState, useCallback, Fragment, useEffect, useRef } from 'react';
-import { Heart, Eye, Share2, ChevronLeft, ChevronRight, X, Facebook, MessageSquareText, Mail, Copy, Check } from 'lucide-react';
+import React, { useState, useCallback, Fragment, useEffect, useRef } from 'react';
+import { Heart, Eye, Share2, ChevronLeft, ChevronRight, X, Facebook, MessageSquareText, Mail, Copy, Check, TrendingUp, Zap, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatCompact } from '@/lib/format';
 import type { AuctionItem, AuctionCategory } from './auction-lot-card-v2.types';
 import { useToast } from '@/hooks/use-toast';
-import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import { isLotFavoriteInStorage, addFavoriteLot, removeFavoriteLot } from '@/lib/favorite-store';
+import { useAuth } from '@/contexts/auth-context';
+import { hasPermission } from '@/lib/permissions';
+import EntityEditMenu from '../entity-edit-menu';
+import LotPreviewModalV2 from '@/components/lot-preview-modal-v2';
+import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
 /* ─── Helpers ─── */
 
@@ -78,6 +83,18 @@ function getDisplayDiscountPercentage(
   return derivedPercentage > 0 ? Math.round(derivedPercentage) : undefined;
 }
 
+function getStatusBadgeStyles(statusTone?: 'open' | 'soon' | 'closed') {
+  switch (statusTone) {
+    case 'open':
+      return 'bg-[#10A34F] text-white';
+    case 'soon':
+      return 'bg-[#EAB308] text-black';
+    case 'closed':
+    default:
+      return 'bg-neutral-800 text-gray-200';
+  }
+}
+
 /* ─── Component ─── */
 
 interface AuctionLotCardV2Props {
@@ -99,20 +116,54 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
   const [lotFullUrl, setLotFullUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState(item.timeline.timeRemaining);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);
+  const serverTimeOffsetRef = useRef(0);
   const { toast } = useToast();
+  const { userProfileWithPermissions } = useAuth();
+  const detailUrl = item.detailUrl ?? `/lots/${item.id}`;
+  const statusLabel = item.statusLabel ?? (item.isLive ? 'Ao Vivo' : item.isOpen ? 'Aberto para Lances' : 'Encerrado');
+  const statusBadgeStyles = getStatusBadgeStyles(item.statusTone);
+  const resolvedPriceLabel = item.displayPriceLabel ?? getCategoryLabels(item.category).priceLabel;
+  const hasPreview = Boolean(item.sourceLot && item.platformSettings);
+  const canEdit = Boolean(item.sourceLot && hasPermission(userProfileWithPermissions, 'manage_all'));
+  const shouldShowCountdown = item.showCountdown !== false && item.platformSettings?.showCountdownOnCards !== false && Boolean(item.timeline.endDate);
+  const liveAuction = item.sourceAuction
+    ? {
+        id: item.sourceAuction.id,
+        publicId: item.sourceAuction.publicId,
+        status: item.sourceAuction.status,
+        openDate: item.sourceAuction.openDate,
+        actualOpenDate: item.sourceAuction.actualOpenDate,
+        endDate: item.sourceAuction.endDate,
+        auctionDate: item.sourceAuction.auctionDate,
+      }
+    : null;
 
   useEffect(() => {
     setIsFavorited(isLotFavoriteInStorage(item.id));
     if (typeof window !== 'undefined') {
-      setLotFullUrl(`${window.location.origin}/lots/${item.id}`);
+      setLotFullUrl(`${window.location.origin}${detailUrl}`);
     }
-  }, [item.id]);
+  }, [detailUrl, item.id]);
+
+  useEffect(() => {
+    fetch('/api/server-time', { method: 'GET', cache: 'no-store' })
+      .then((response) => response.json())
+      .then((payload) => {
+        if (payload?.serverTime) {
+          serverTimeOffsetRef.current = new Date(payload.serverTime).getTime() - Date.now();
+        }
+      })
+      .catch(() => {
+        serverTimeOffsetRef.current = 0;
+      });
+  }, []);
 
   useEffect(() => {
     if (!item.timeline.endDate) return;
     const calculate = () => {
-      const diff = new Date(item.timeline.endDate!).getTime() - Date.now();
+      const diff = new Date(item.timeline.endDate!).getTime() - (Date.now() + serverTimeOffsetRef.current);
       if (diff <= 0) { setCountdown('Encerrado'); return; }
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
@@ -139,13 +190,13 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
     return () => document.removeEventListener('mousedown', close);
   }, [showShareMenu]);
 
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const next = !isFavorited;
     setIsFavorited(next);
-    if (next) addFavoriteLotIdToStorage(item.id);
-    else removeFavoriteLotIdFromStorage(item.id);
+    if (next) await addFavoriteLot(item.id);
+    else await removeFavoriteLot(item.id);
     toast({
       title: next ? 'Adicionado aos Favoritos' : 'Removido dos Favoritos',
       description: `"${item.title}" foi ${next ? 'adicionado à' : 'removido da'} sua lista.`,
@@ -156,6 +207,18 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
     e.preventDefault();
     e.stopPropagation();
     setShowShareMenu((p) => !p);
+  };
+
+  const handlePreviewOrNavigate = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (hasPreview) {
+      setIsPreviewOpen(true);
+      return;
+    }
+
+    window.location.href = detailUrl;
   };
 
   const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email') => {
@@ -193,17 +256,19 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
     [images.length],
   );
 
-  const { priceLabel, ctaLabel, showIncrement } = getCategoryLabels(item.category);
+  const { ctaLabel, showIncrement } = getCategoryLabels(item.category);
 
   const stage1Styles = getStatusStyles(item.timeline.stage1.status);
   const stage2Styles = item.timeline.stage2 ? getStatusStyles(item.timeline.stage2.status) : null;
 
   return (
-    <article
+    <>
+      <article
       data-ai-id="auction-lot-card-v2"
+      data-testid="auction-lot-card-v2-root"
       data-lot-id={item.id}
       className={cn(
-        'w-full max-w-[380px] card-v2-surface brutalist-border rounded-2xl overflow-hidden shadow-2xl flex flex-col',
+        'w-full max-w-[380px] h-full card-v2-surface brutalist-border rounded-2xl overflow-hidden shadow-2xl flex flex-col',
         'font-[family-name:var(--font-card-sans)]',
         className,
       )}
@@ -221,20 +286,22 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         />
 
         {/* Hover Actions Overlay */}
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 z-20">
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 z-20" data-ai-id="lot-card-actions-overlay">
           <button
             type="button"
             onClick={handleFavoriteToggle}
             className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
             aria-label="Adicionar aos favoritos"
+            data-ai-id="lot-card-favorite-btn"
           >
             <Heart className={cn('w-5 h-5', isFavorited && 'fill-red-500 text-red-500')} />
           </button>
           <button
             type="button"
-            onClick={() => { window.location.href = `/lots/${item.id}`; }}
+            onClick={handlePreviewOrNavigate}
             className="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-xl flex items-center justify-center backdrop-blur-md transition-colors border border-white/10"
-            aria-label="Ver detalhes"
+            aria-label={hasPreview ? 'Pré-visualizar lote' : 'Ver detalhes'}
+            data-ai-id="lot-card-preview-btn"
           >
             <Eye className="w-5 h-5" />
           </button>
@@ -292,21 +359,60 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           </>
         )}
 
-        {item.isOpen && (
-          <div className="absolute top-3 left-3 flex items-center bg-[#10A34F] px-4 py-1.5 rounded-full shadow-lg z-30">
-            <span className="text-white text-[11px] font-bold uppercase tracking-wider">
-              Aberto para Lances
-            </span>
+        <div className="absolute top-3 left-3 flex max-w-[75%] flex-wrap items-center gap-2 z-30" data-ai-id="card-v2-status-group">
+          <div className={cn('flex items-center px-4 py-1.5 rounded-full shadow-lg', statusBadgeStyles)} data-ai-id="card-v2-status-badge">
+            <span className="text-[11px] font-bold uppercase tracking-wider">{statusLabel}</span>
           </div>
-        )}
-
-        {item.isLive && (
-          <div className="absolute top-3 right-3 flex items-center gap-2 bg-[#10A34F] px-4 py-1.5 rounded-full shadow-lg z-30">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+          {displayDiscountPercentage != null && displayDiscountPercentage > 0 && (
+            <span className="bg-green-500/90 text-black text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg" data-ai-id="card-v2-discount-badge">
+              {displayDiscountPercentage}% OFF
             </span>
-            <span className="text-white text-[11px] font-bold uppercase tracking-wider">AO VIVO</span>
+          )}
+          {item.showOpportunityBadge && (
+            <span className="bg-amber-400 text-black text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg" data-ai-id="card-v2-opportunity-badge">
+              OPORTUNIDADE
+            </span>
+          )}
+        </div>
+
+        <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
+          {item.isLive && (
+            <div className="flex items-center gap-2 bg-[#10A34F] px-4 py-1.5 rounded-full shadow-lg" data-ai-id="card-v2-live-badge">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+              </span>
+              <span className="text-white text-[11px] font-bold uppercase tracking-wider">AO VIVO</span>
+            </div>
+          )}
+          {canEdit && item.sourceLot && (
+            <div className="rounded-xl border border-white/10 bg-black/80 p-1 backdrop-blur-md" data-ai-id="card-v2-edit-menu">
+              <EntityEditMenu
+                entityType="lot"
+                entityId={String(item.sourceLot.id)}
+                publicId={item.sourceLot.publicId ?? ''}
+                currentTitle={item.sourceLot.title}
+                isFeatured={item.sourceLot.isFeatured || false}
+                onUpdate={item.onUpdate}
+              />
+            </div>
+          )}
+        </div>
+
+        {item.mentalTriggers && item.mentalTriggers.length > 0 && (
+          <div className="absolute left-3 right-3 top-14 z-30 flex flex-wrap gap-2" data-ai-id="card-v2-mental-triggers">
+            {item.mentalTriggers.map((trigger) => (
+              <span
+                key={trigger}
+                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/75 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-md"
+                data-ai-id={`card-v2-trigger-${trigger.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3" />}
+                {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 text-red-400" />}
+                {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 text-amber-300" />}
+                {trigger}
+              </span>
+            ))}
           </div>
         )}
 
@@ -315,7 +421,8 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         </div>
       </div>
 
-      <div className="p-4 pb-3" data-ai-id="card-v2-header">
+      <div className="flex flex-1 flex-col">
+      <div className="flex min-h-[11rem] flex-col p-4 pb-3" data-ai-id="card-v2-header">
         <div className="flex items-center justify-between gap-3 mb-2">
           <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-md border border-primary/20 uppercase">
             {item.type}
@@ -324,32 +431,38 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
             {item.location}
           </span>
         </div>
-        <h3
-          className="font-[family-name:var(--font-card-display)] font-bold text-lg leading-tight mb-2 text-white line-clamp-2"
-          data-ai-id="card-v2-title"
-        >
-          {item.title}
-        </h3>
-        <div className="flex items-center gap-2 mb-3 text-gray-400 font-bold text-xs flex-wrap">
-          {(item.specs ?? []).map((spec, idx) => (
-            <Fragment key={idx}>
-              <span>{spec}</span>
-              {idx < (item.specs?.length ?? 0) - 1 && (
-                <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
-              )}
-            </Fragment>
-          ))}
+        <div className="mb-2 min-h-[3.5rem]" data-ai-id="card-v2-title-shell" data-testid="auction-lot-card-v2-title-shell">
+          <h3
+            className="font-[family-name:var(--font-card-display)] font-bold text-lg leading-tight text-white line-clamp-2"
+            data-ai-id="card-v2-title"
+          >
+            {item.title}
+          </h3>
         </div>
-        {item.processNumber && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-            </svg>
-            <a data-ai-id="card-v2-process-link" className="underline hover:text-primary transition-colors truncate" href={`/lots/${item.id}`}>
-              Proc: {item.processNumber}
-            </a>
+        <div className="mb-3 min-h-[2.5rem]" data-ai-id="card-v2-specs-slot">
+          <div className="flex min-h-[2.5rem] items-start gap-2 text-gray-400 font-bold text-xs flex-wrap content-start" data-ai-id="card-v2-specs">
+            {(item.specs ?? []).map((spec, idx) => (
+              <Fragment key={idx}>
+                <span>{spec}</span>
+                {idx < (item.specs?.length ?? 0) - 1 && (
+                  <span className="w-1 h-1 rounded-full bg-gray-600" aria-hidden="true" />
+                )}
+              </Fragment>
+            ))}
           </div>
-        )}
+        </div>
+        <div className="min-h-[1.25rem]" data-ai-id="card-v2-process-slot" data-testid="auction-lot-card-v2-process-slot">
+          {item.processNumber && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+              <a data-ai-id="card-v2-process-link" data-testid="auction-lot-card-v2-process-link" className="underline hover:text-primary transition-colors truncate" href={detailUrl}>
+                Proc: {item.processNumber}
+              </a>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 border-y border-neutral-800 bg-neutral-900/50" data-ai-id="card-v2-kpi">
@@ -373,11 +486,11 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
         </div>
       </div>
 
-      <div className="p-4 bg-gradient-to-b from-[rgb(var(--color-card-surface))] to-black" data-ai-id="card-v2-pricing">
+      <div className="min-h-[7.25rem] p-4 bg-gradient-to-b from-[rgb(var(--color-card-surface))] to-black" data-ai-id="card-v2-pricing">
         <div className="flex items-end justify-between">
           <div>
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">
-              {priceLabel}
+              {resolvedPriceLabel}
             </span>
             <span className="text-primary font-[family-name:var(--font-card-display)] text-2xl font-bold leading-none">
               {formatCurrency(item.pricing.minimumBid)}
@@ -387,18 +500,19 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
                 Incremento: {formatCurrency(item.pricing.increment)}
               </span>
             )}
-          </div>
-          <div className="text-right flex flex-col items-end gap-1">
-            {displayDiscountPercentage != null && displayDiscountPercentage > 0 && (
-              <span className="bg-green-500/10 text-green-500 text-[10px] font-black px-2 py-1 rounded-md border border-green-500/20">
-                {displayDiscountPercentage}% OFF
+            {item.nextBidAmount != null && (
+              <span className="block text-[10px] text-gray-400 mt-1" data-ai-id="card-v2-next-bid">
+                Próximo lance: {formatCurrency(item.nextBidAmount)}
               </span>
             )}
+          </div>
+          <div className="text-right flex flex-col items-end gap-1">
             <div className="text-[10px] text-gray-500 font-medium">
               Avaliação: {formatCompact(item.pricing.evaluation)}
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {hasTimeline(item.category) && (
@@ -475,35 +589,41 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
       )}
 
       <div
-        className="px-4 py-3 flex items-center justify-between border-t border-neutral-800 bg-black/20 mt-auto"
+        className="mt-auto min-h-[4.75rem] px-4 py-3 flex items-center justify-between border-t border-neutral-800 bg-black/20"
         data-ai-id="card-v2-urgency"
       >
-        <div className="flex items-center gap-3">
-          <div className="animate-pulse-fast text-primary">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-none mb-1">
-              Termina em
-            </span>
-            <span className="font-[family-name:var(--font-card-display)] font-bold text-sm text-primary">
-              {countdown}
-            </span>
-          </div>
-        </div>
-        {item.stats.visits > 0 && (
-          <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1.5">
-            <span className="inline-flex w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
-            {item.stats.visits} olhando
-          </span>
+        {(shouldShowCountdown || item.stats.visits > 0) ? (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="animate-pulse-fast text-primary">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                </svg>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-none mb-1">
+                  {shouldShowCountdown ? 'Termina em' : 'Status'}
+                </span>
+                <span className="font-[family-name:var(--font-card-display)] font-bold text-sm text-primary" data-ai-id="card-v2-countdown">
+                  {shouldShowCountdown ? countdown : statusLabel}
+                </span>
+              </div>
+            </div>
+            {item.stats.visits > 0 && (
+              <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1.5">
+                <span className="inline-flex w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
+                {item.stats.visits} olhando
+              </span>
+            )}
+          </>
+        ) : (
+          <div aria-hidden="true" className="h-full w-full" />
         )}
       </div>
 
-      <div className="p-4 pt-2 flex gap-3" data-ai-id="card-v2-actions">
+      <div className="mt-auto p-4 pt-2 flex gap-3" data-ai-id="card-v2-actions" data-testid="auction-lot-card-v2-actions">
         <a
-          href={`/lots/${item.id}`}
+          href={detailUrl}
           className="flex-[2] bg-primary hover:bg-orange-600 transition-all text-black font-[family-name:var(--font-card-display)] font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-[0_4px_0_0_rgba(154,52,18,1)] active:translate-y-[2px] active:shadow-[0_2px_0_0_rgba(154,52,18,1)] text-xs sm:text-sm tracking-wide leading-tight text-center"
           data-ai-id="card-v2-cta"
         >
@@ -561,6 +681,26 @@ export default function AuctionLotCardV2({ item, className }: AuctionLotCardV2Pr
           <Heart className={cn('h-5 w-5', isFavorited ? 'fill-red-500 text-red-500' : 'text-red-500')} />
         </button>
       </div>
-    </article>
+      {liveAuction && (
+        <div className="px-4 pb-4" data-ai-id="card-v2-live-action-row">
+          <GoToLiveAuctionButton
+            auction={liveAuction}
+            className="w-full border-neutral-700 bg-neutral-950 text-white hover:bg-neutral-900"
+            label="Ir para pregão online"
+            dataAiId="card-v2-go-live-btn"
+          />
+        </div>
+      )}
+      </article>
+      {hasPreview && item.sourceLot && item.platformSettings && (
+        <LotPreviewModalV2
+          lot={item.sourceLot}
+          auction={item.sourceAuction}
+          platformSettings={item.platformSettings}
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+        />
+      )}
+    </>
   );
 }

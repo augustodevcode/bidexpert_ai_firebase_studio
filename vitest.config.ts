@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   optimizeDeps: {
     noDiscovery: true,
-    include: ['aria-query']
+    include: ['aria-query', 'lz-string']
   },
   test: {
     environment: 'jsdom',
@@ -36,11 +36,15 @@ export default defineConfig({
       ['tests/unit/lot-service-images-mapping.spec.ts', 'node'],
       ['tests/unit/map-search-logic.spec.ts', 'node'],
       ['tests/unit/map-utils.spec.ts', 'node'],
+      ['tests/unit/user-win.repository.spec.ts', 'node'],
+      ['tests/unit/generate-winning-bid-term-action.spec.ts', 'node'],
       ['tests/unit/tenant-id-from-request.spec.ts', 'node'],
       ['tests/unit/ui-helpers.test.ts', 'node'],
       ['tests/unit/audit/**', 'node'],
       ['tests/unit/seed-min-50.spec.ts', 'node'],
       ['tests/unit/generate-report-template-flow.spec.ts', 'node'],
+      ['tests/unit/auction-lot-card-v2.presenter.spec.ts', 'node'],
+      ['tests/unit/jp-congruence.spec.ts', 'node'],
     ],
     globals: true,
     include: [
@@ -86,6 +90,11 @@ export default defineConfig({
       enabled: true,
       headless: false,
       provider: playwright(),
+      include: [
+        'tests/visual/**',
+        'tests/ui-e2e/**',
+        'tests/unit/components/**',
+      ],
       instances: [
         {
           browser: 'chromium',

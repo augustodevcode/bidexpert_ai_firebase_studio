@@ -51,7 +51,7 @@ jobs:
         run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: 🧹 Lint
         run: npm run lint
@@ -230,10 +230,10 @@ jobs:
         run: cp prisma-deploy/schema.postgresql.prisma prisma/schema.prisma
 
       - name: 🗄️ Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: 🗃️ Run Prisma Migrate Deploy
-        run: npx prisma migrate deploy
+        run: npx prisma@5.22.0 migrate deploy
         env:
           POSTGRES_PRISMA_URL: ${{ github.ref_name == 'main' && (secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL || secrets.HML_DATABASE_URL_DIRECT) || (secrets.DEMO_DATABASE_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL) }}
           POSTGRES_URL_NON_POOLING: ${{ github.ref_name == 'main' && (secrets.PROD_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL) || (secrets.DEMO_DATABASE_URL_DIRECT || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL) }}
@@ -242,7 +242,7 @@ jobs:
       - name: ✅ Verify Migration
         run: |
           echo "🔍 Verificando estado do banco de dados..."
-          npx prisma migrate status
+          npx prisma@5.22.0 migrate status
         env:
           POSTGRES_PRISMA_URL: ${{ github.ref_name == 'main' && (secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL || secrets.HML_DATABASE_URL_DIRECT) || (secrets.DEMO_DATABASE_URL || secrets.POSTGRES_PRISMA_URL || secrets.POSTGRES_URL || secrets.DATABASE_URL) }}
           POSTGRES_URL_NON_POOLING: ${{ github.ref_name == 'main' && (secrets.PROD_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL) || github.ref_name == 'hml' && (secrets.HML_DATABASE_URL_DIRECT || secrets.HML_DATABASE_URL) || (secrets.DEMO_DATABASE_URL_DIRECT || secrets.POSTGRES_URL_NON_POOLING || secrets.DEMO_DATABASE_URL || secrets.DATABASE_URL) }}

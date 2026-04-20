@@ -1,6 +1,6 @@
 /**
- * @fileoverview PÃ¡gina de gatilhos mentais (MentalTriggerSettings) â€” Admin Plus.
- * Controle de badges e thresholds para conversÃ£o nos cards.
+ * @fileoverview Página de gatilhos mentais (MentalTriggerSettings) — Admin Plus.
+ * Controle de badges e thresholds para conversão nos cards.
  */
 'use client';
 
@@ -53,7 +53,7 @@ export default function MentalTriggerSettingsPage() {
           });
         }
       } catch {
-        toast.error('Erro ao carregar configuraÃ§Ãµes de gatilhos mentais.');
+        toast.error('Erro ao carregar configurações de gatilhos mentais.');
       } finally {
         setLoading(false);
       }
@@ -93,14 +93,14 @@ export default function MentalTriggerSettingsPage() {
 
       <CrudFormShell form={form} onSubmit={onSubmit}>
         <p className="text-sm text-muted-foreground mb-4">
-          Configure os badges e limites que estimulam urgÃªncia e conversÃ£o nos cards de lotes.
+          Configure os badges e limites que estimulam urgência e conversão nos cards de lotes.
         </p>
         <Separator className="mb-6" />
 
         {/* Badge: Desconto */}
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4">
-            <Field label="Badge de Desconto" description="Exibe etiqueta de desÃ¡gio/desconto nos lotes." className="flex-1">
+            <Field label="Badge de Desconto" description="Exibe etiqueta de deságio/desconto nos lotes." className="flex-1">
               <span />
             </Field>
             <Switch
@@ -112,7 +112,7 @@ export default function MentalTriggerSettingsPage() {
 
           {/* Badge: Popularidade */}
           <div className="flex items-center justify-between gap-4">
-            <Field label="Badge de Popularidade" description="Exibe badge quando o lote atinge o threshold de visualizaÃ§Ãµes." className="flex-1">
+            <Field label="Badge de Popularidade" description="Exibe badge quando o lote atinge o threshold de visualizações." className="flex-1">
               <span />
             </Field>
             <Switch
@@ -122,7 +122,7 @@ export default function MentalTriggerSettingsPage() {
             />
           </div>
 
-          <Field label="Threshold de Popularidade (views)" description="NÃºmero de visualizaÃ§Ãµes para exibir badge de popularidade.">
+          <Field label="Threshold de Popularidade (views)" description="Número de visualizações para exibir badge de popularidade.">
             <Input
               type="number"
               min={1}
@@ -143,7 +143,7 @@ export default function MentalTriggerSettingsPage() {
             />
           </div>
 
-          <Field label="Threshold de Lances Quentes" description="NÃºmero mÃ­nimo de lances para ativar o badge de lance quente.">
+          <Field label="Threshold de Lances Quentes" description="Número mínimo de lances para ativar o badge de lance quente.">
             <Input
               type="number"
               min={1}
@@ -168,7 +168,7 @@ export default function MentalTriggerSettingsPage() {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={saving} data-ai-id="mental-trigger-settings-save">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar ConfiguraÃ§Ãµes
+            Salvar Configurações
           </Button>
         </div>
       </CrudFormShell>

@@ -1,28 +1,41 @@
 /**
- * @fileoverview Teste UI E2E do rodape Dev Info no dashboard.
- * BDD: Garantir que o rodape exibe dados padrao em tela.
- * TDD: Verificar visibilidade dos campos principais.
+ * @fileoverview Teste UI E2E do gatilho Dev Info sob demanda.
+ * BDD: Garantir que o modal so aparece apos clique no botao da sidebar.
+ * TDD: Verificar abertura do dialog e exibicao dos campos principais.
  */
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';
-import DevInfoIndicator from '../../src/components/layout/dev-info-indicator';
+import EnvInfoButton from '../../src/components/layout/env-info-button';
 
-describe('Dev Info Footer - UI E2E', () => {
+vi.mock('@/contexts/auth-context', () => ({
+  useAuth: () => ({
+    userProfileWithPermissions: {
+      email: 'admin@bidexpert.ai',
+      tenants: [{ tenant: { id: '1' } }],
+    },
+    activeTenantId: '1',
+  }),
+}));
+
+describe('Dev Info Button - UI E2E', () => {
   beforeEach(async () => {
     await page.viewport(1280, 720);
   });
 
-  it('exibe os campos principais do rodape', async () => {
+  it('abre o modal e exibe os campos principais', async () => {
     await render(
       <div className="p-6 bg-background" data-ai-id="dev-info-e2e-wrapper">
-        <DevInfoIndicator />
+        <EnvInfoButton />
       </div>
     );
 
-    const footer = page.getByTestId('dev-info-indicator');
-    await expect.element(footer).toBeVisible();
+    await expect.element(page.getByRole('button', { name: 'Dev Info' })).toBeVisible();
+    await page.getByRole('button', { name: 'Dev Info' }).click();
+
+    const modal = page.getByTestId('dev-info-indicator');
+    await expect.element(modal).toBeVisible();
 
     await expect.element(page.getByText('1', { exact: true })).toBeVisible();
     await expect.element(page.getByText('admin@bidexpert.ai', { exact: true })).toBeVisible();

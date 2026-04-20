@@ -9,7 +9,7 @@
  */
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://demo.localhost:9006';
+const BASE_URL = process.env.BASE_URL || 'http://demo.localhost:9005';
 
 test.describe('Login Flow Smoke Test', () => {
   test.setTimeout(120_000);
@@ -22,7 +22,7 @@ test.describe('Login Flow Smoke Test', () => {
     page.on('pageerror', err => jsErrors.push(`PAGE: ${err.message}`));
 
     // 1. Navigate to login page  
-    await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'networkidle', timeout: 90_000 });
+    await page.goto(`${BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
     
     // 2. Verify React hydrated — wait for the login card
     await expect(page.locator('[data-ai-id="auth-login-card"]')).toBeVisible({ timeout: 15_000 });

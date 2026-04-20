@@ -2,12 +2,21 @@
  * @fileoverview Helpers puros para normalização temporal de leilões, lotes e praças.
  */
 
-import type { Auction, AuctionStage, AuctionStatus, Lot, LotStatus } from '@/types';
+import type { AuctionStage, AuctionStatus, Lot, LotStatus } from '@/types';
 
 type DateLike = Date | string | null | undefined;
 
+type AuctionForTiming = {
+  status?: string | null;
+  actualOpenDate?: Date | string | null;
+  openDate?: Date | string | null;
+  auctionDate?: Date | string | null;
+  endDate?: Date | string | null;
+  auctionStages?: readonly StageLike[] | null;
+};
+
 type StageLike = Partial<
-  Pick<AuctionStage, 'id' | 'name' | 'startDate' | 'endDate' | 'status' | 'discountPercent' | 'initialPrice'>
+  Pick<AuctionStage, 'id' | 'name' | 'startDate' | 'endDate' | 'status'>
 >;
 
 const TERMINAL_AUCTION_STATUSES = new Set<string>(['ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO']);
@@ -16,6 +25,7 @@ const TERMINAL_LOT_STATUSES = new Set<string>(['ENCERRADO', 'VENDIDO', 'NAO_VEND
 const OPENISH_LOT_STATUSES = new Set<string>(['ABERTO_PARA_LANCES', 'EM_BREVE', 'EM_PREGAO']);
 
 export type TemporalStageStatus = 'completed' | 'active' | 'upcoming';
+export type StageTimelineStatus = TemporalStageStatus;
 
 export const toValidDate = (value: DateLike): Date | null => {
   if (!value) {
@@ -76,7 +86,7 @@ export const getAuctionStageChronologyError = (stages?: readonly StageLike[] | n
 };
 
 export const getAuctionEffectiveDates = (
-  auction?: Pick<Auction, 'actualOpenDate' | 'openDate' | 'auctionDate' | 'endDate' | 'auctionStages'> | null,
+  auction?: AuctionForTiming | null,
 ): { startDate: Date | null; endDate: Date | null } => {
   const orderedStages = normalizeAuctionStages(auction?.auctionStages);
 
@@ -115,8 +125,8 @@ export const getAuctionStageTimelineStatus = (
 };
 
 export const getLotEffectiveDates = (
-  lot: Pick<Lot, 'endDate' | 'auctionDate'>,
-  auction?: Pick<Auction, 'actualOpenDate' | 'openDate' | 'auctionDate' | 'endDate' | 'auctionStages'> | null,
+  lot: Pick<Lot, 'endDate' | 'lotSpecificAuctionDate'>,
+  auction?: AuctionForTiming | null,
   referenceDate = new Date(),
 ): { effectiveLotStartDate: Date | null; effectiveLotEndDate: Date | null } => {
   const orderedStages = normalizeAuctionStages(auction?.auctionStages);
@@ -144,13 +154,13 @@ export const getLotEffectiveDates = (
 
   const auctionEffectiveDates = getAuctionEffectiveDates(auction);
   return {
-    effectiveLotStartDate: toValidDate(lot.auctionDate) || auctionEffectiveDates.startDate,
+    effectiveLotStartDate: toValidDate(lot.lotSpecificAuctionDate) || auctionEffectiveDates.startDate,
     effectiveLotEndDate: toValidDate(lot.endDate) || auctionEffectiveDates.endDate,
   };
 };
 
 const deriveTemporalStatus = (
-  rawStatus: string | undefined,
+  rawStatus: string | null | undefined,
   startDate: Date | null,
   endDate: Date | null,
   terminalStatuses: Set<string>,
@@ -158,7 +168,7 @@ const deriveTemporalStatus = (
   openStatus: string,
   upcomingStatus: string,
   referenceDate: Date,
-): string | undefined => {
+): string | null | undefined => {
   if (!rawStatus) {
     return rawStatus;
   }
@@ -183,7 +193,7 @@ const deriveTemporalStatus = (
 };
 
 export const getEffectiveAuctionStatus = (
-  auction?: Pick<Auction, 'status' | 'actualOpenDate' | 'openDate' | 'auctionDate' | 'endDate' | 'auctionStages'> | null,
+  auction?: AuctionForTiming | null,
   referenceDate = new Date(),
 ): AuctionStatus | undefined => {
   const { startDate, endDate } = getAuctionEffectiveDates(auction);
@@ -200,12 +210,12 @@ export const getEffectiveAuctionStatus = (
 };
 
 export const getEffectiveLotStatus = (
-  lot?: Pick<Lot, 'status' | 'endDate' | 'auctionDate'> | null,
-  auction?: Pick<Auction, 'actualOpenDate' | 'openDate' | 'auctionDate' | 'endDate' | 'auctionStages'> | null,
+  lot?: Pick<Lot, 'status' | 'endDate' | 'lotSpecificAuctionDate'> | null,
+  auction?: AuctionForTiming | null,
   referenceDate = new Date(),
 ): LotStatus | undefined => {
   const { effectiveLotStartDate, effectiveLotEndDate } = getLotEffectiveDates(
-    lot || { endDate: null, auctionDate: null },
+    lot || { endDate: null, lotSpecificAuctionDate: null },
     auction,
     referenceDate,
   );

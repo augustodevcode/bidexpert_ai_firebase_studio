@@ -7,11 +7,12 @@ import { createAdminAction } from '@/lib/admin-plus/safe-action';
 import { prisma } from '@/lib/prisma';
 import { sanitizeResponse } from '@/lib/serialization-helper';
 import { lotRiskSchema } from './schema';
+import { type LotRisk_riskLevel, type LotRisk_riskType } from '@prisma/client';
 import type { LotRiskRow } from './types';
 
 const FK_INCLUDE = {
   Lot: { select: { id: true, title: true } },
-  User: { select: { id: true, name: true } },
+  User: { select: { id: true, fullName: true } },
 } as const;
 
 function toRow(d: any): LotRiskRow {
@@ -25,7 +26,7 @@ function toRow(d: any): LotRiskRow {
     mitigationStrategy: d.mitigationStrategy ?? null,
     verified: d.verified,
     verifiedBy: d.verifiedBy?.toString() ?? null,
-    verifiedByName: d.User?.name ?? null,
+    verifiedByName: d.User?.fullName ?? null,
     verifiedAt: d.verifiedAt?.toISOString?.() ?? d.verifiedAt ?? null,
     createdAt: d.createdAt?.toISOString?.() ?? d.createdAt,
   };
@@ -53,8 +54,8 @@ export const createLotRisk = createAdminAction(async (ctx, input: unknown) => {
   const created = await prisma.lotRisk.create({
     data: {
       lotId: BigInt(parsed.lotId),
-      riskType: parsed.riskType,
-      riskLevel: parsed.riskLevel,
+      riskType: parsed.riskType as LotRisk_riskType,
+      riskLevel: parsed.riskLevel as LotRisk_riskLevel,
       riskDescription: parsed.riskDescription,
       mitigationStrategy: parsed.mitigationStrategy || null,
       verified: parsed.verified ?? false,

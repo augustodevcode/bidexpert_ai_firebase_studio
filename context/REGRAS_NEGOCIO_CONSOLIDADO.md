@@ -78,6 +78,9 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ OBRIGATÓRIO usar `BidExpertCard` e `BidExpertListItem`  
 ❌ NÃO importar diretamente `AuctionCard` ou `LotCard`  
 ✅ Garante consistência visual
+✅ O padrão visual oficial de cards de lote passa a ser o baseline da rota `/lots`, mas a adoção só é válida com paridade obrigatória das regras já existentes em `LotCard` e `LotListItem`
+✅ A paridade obrigatória do card universal de lote inclui, no mínimo: pricing display (`Lance Inicial`, `Lance Mínimo`, `Lance Atual`), desconto dinâmico, status temporal efetivo, praça ativa, triggers mentais, `ConsignorLogoBadge`, countdown sincronizado com `/api/server-time`, favoritos/share, preview modal, CTA `Ir para pregão online`, `EntityEditMenu` com `manage_all` e `data-ai-id` para automação
+✅ A rota `/lots` também deve consumir o dispatcher universal; é proibido manter uma implementação visual de lote paralela e divergente do `BidExpertCard`
 
 ### RN-003: Validação de Formulários
 ✅ Campos obrigatórios com asterisco vermelho (`*`)  
@@ -365,6 +368,22 @@ Toda decisão de elegibilidade deve ser centralizada em um service compartilhado
 - Cadastro essencial completo
 - Método de pagamento e endereço válidos para arremate/checkout
 
+**Contrato canônico de pós-arremate**
+- Fluxos de checkout, dashboard de arremates e geração de documentos DEVEM consumir um contrato canônico serializável para `UserWin`, `Lot` e `Auction`, sem depender de nomes crus de relação do Prisma como `Lot`/`Auction`.
+- Ausência de relacionamentos opcionais de seller/leiloeiro embutidos no payload não pode quebrar geração de termo; o backend deve reidratar esses dados via service ou degradar com segurança.
+- O valor monetário do termo de arrematação deve refletir `winningBidAmount` do `UserWin` quando existir, e não apenas o preço corrente do lote.
+
+**BDD - Pós-arremate resiliente**
+- **Dado** um arremate com `UserWin`, lote e leilão válidos
+- **Quando** o usuário acessa `/checkout/[winId]`
+- **Então** o backend deve normalizar o payload antes da renderização
+- **E** a página deve renderizar ou redirecionar sem erro 500
+
+- **Dado** um lote vendido com `winningBidAmount` registrado no `UserWin`
+- **Quando** o usuário solicita o termo de arrematação
+- **Então** o documento deve usar o valor do arremate registrado
+- **E** a ausência de seller ou leiloeiro embutidos no objeto do lote não deve quebrar a geração
+
 ### RN-018: Consistência Multi-Tenant em Navegação
 Todos os links/rotas geradas devem carregar `tenantId` do contexto  
 Services e Server Actions validam `tenantId` de sessão vs recurso acessado  
@@ -451,6 +470,63 @@ Validar transitions no service com erros descritivos
 - **Quando** a composição do lance é renderizada no detalhe do lote
 - **Então** a comissão exibida deve usar a configuração do tenant em vez de percentual hardcoded
 
+### RN-020D: Painel de Due Diligence e Simulador CET/TCO no Detalhe do Lote
+✅ O detalhe público do lote DEVE consolidar a análise jurídica/documental em um único painel de due diligence reutilizável, sem duplicar trechos textuais soltos pela página.
+✅ O painel de due diligence DEVE priorizar os sinais de decisão mais relevantes: matrícula/registro, ocupação, ação judicial, processo, gravames, dívidas conhecidas, riscos identificados e links oficiais de documentos/editais quando existirem.
+✅ O mesmo painel jurídico expandido DEVE poder ser reutilizado na área de análise do investidor, preservando o `LotLegalInfoCard` como bloco base de detalhe e um wrapper de due diligence como composição principal.
+✅ A aba `Planejamento` do detalhe do lote DEVE incorporar um simulador de custo total (`CET/TCO`) usando o próximo lance válido como valor inicial padrão, com breakdown explícito dos componentes de custo aplicáveis à categoria do lote.
+✅ O simulador de custo total DEVE usar a mesma taxa de comissão já aplicada em `buildLotBidPlanningSummary`, priorizando `paymentGatewaySettings.platformCommissionPercentage` e fallback oficial de `5%`.
+✅ O componente visual e a rota `POST/GET /api/lots/[lotId]/cost-simulation` DEVEM compartilhar o mesmo motor de cálculo para evitar divergência entre client e server.
+✅ Novas superfícies da fase competitiva DEVEM expor `data-ai-id` estáveis para automação, incluindo pelo menos o painel de due diligence, o checklist documental, o simulador de custos e o total estimado.
+✅ `BidExpertCard` e `BidExpertListItem` DEVEM permanecer compactos; a experiência expandida de due diligence e CET/TCO pertence ao detalhe do lote e à seção de análise do investidor.
+
+**BDD - Detalhe do lote exibe due diligence consolidada**
+- **Dado** um lote com contexto jurídico ou documental relevante
+- **Quando** a pessoa acessa a aba jurídica/documental do detalhe do lote
+- **Então** a interface deve exibir um painel único de due diligence com checklist, alertas e links oficiais
+- **E** os riscos devem aparecer ordenados por severidade, sem esconder matrícula, ocupação ou edital
+
+**BDD - Simulador CET/TCO nasce do próximo lance válido**
+- **Dado** um lote público aberto para lances
+- **Quando** a pessoa acessa a aba de planejamento
+- **Então** o simulador deve iniciar com o próximo lance válido calculado pela regra oficial do motor de lance
+- **E** deve exibir comissão, tributos e custos estimados no mesmo fluxo de análise
+
+**BDD - Mesmo cálculo financeiro no client e na API**
+- **Dado** o mesmo lote, o mesmo valor simulado e a mesma configuração de comissão
+- **Quando** o cálculo é executado na interface e na API de simulação
+- **Então** o total estimado e o percentual efetivo de custos devem coincidir
+
+### RN-020E: Orientação Inline de Habilitação e KYC no Painel de Lances
+✅ Quando o usuário autenticado ainda não puder ofertar lance, o `BiddingPanel` DEVE explicar o próximo passo no próprio contexto do lote, sem forçar tentativa cega ou navegação investigativa.
+✅ Para `DOCUMENTATION_PENDING`, a interface DEVE mostrar status cadastral, checklist resumido e CTA direto para `/dashboard/documents`, com copy específica para pendência, análise, rejeição ou bloqueio.
+✅ Para `AUCTION_HABILITATION_REQUIRED`, a interface DEVE deixar explícito que a documentação geral já foi aprovada e que falta apenas a habilitação específica do leilão atual.
+✅ O CTA de auto-habilitação por leilão DEVE reaproveitar `habilitateForAuctionAction` e as regras de `getBidEligibilityState`, sem duplicar lógica condicional no componente visual.
+✅ As superfícies de bloqueio inline DEVEM expor `data-ai-id` estáveis para automação, incluindo pelo menos o bloco de orientação, o link para documentos e a ação de habilitação do leilão.
+
+### RN-020F: React Flow é obrigatório no fluxo visual do Wizard
+✅ A seção `Visualização do Fluxo` do `/admin/wizard` DEVE continuar renderizando um grafo em `ReactFlow` como representação visual oficial do processo de criação do leilão.
+✅ Refactors de performance ou simplificações temporárias NÃO podem substituir o grafo por placeholder estático, texto de indisponibilidade ou lista desconectada da malha visual sem autorização humana explícita.
+✅ O fluxo visual DEVE suportar explicitamente as modalidades `JUDICIAL`, `EXTRAJUDICIAL`, `PARTICULAR`, `TOMADA_DE_PRECOS` e `VENDA_DIRETA`, mantendo destaque do caminho ativo e `data-ai-id` estável para automação.
+
+**Cenário BDD - Wizard mantém o grafo visual ativo**
+- **Dado** um administrador acessando `/admin/wizard`
+- **Quando** a página termina de carregar
+- **Então** a área `Visualização do Fluxo` deve renderizar o canvas do `ReactFlow`
+- **E** não deve exibir mensagem de indisponibilidade do fluxo
+
+**BDD - Documentação pendente orienta upload no próprio painel de lances**
+- **Dado** um usuário autenticado com documentação pendente ou em análise
+- **Quando** ele acessa o detalhe público de um lote aberto para lances
+- **Então** o painel de lances deve explicar o status cadastral atual
+- **E** deve oferecer atalho direto para `Meus Documentos` sem esconder o motivo do bloqueio
+
+**BDD - Habilitação por leilão explicada inline após aprovação documental**
+- **Dado** um usuário com documentação aprovada, mas ainda não habilitado no leilão atual
+- **Quando** ele acessa o detalhe público de um lote aberto para lances
+- **Então** o painel de lances deve informar que a documentação já está pronta
+- **E** deve destacar que falta apenas a habilitação específica deste leilão antes do primeiro lance
+
 ### RN-020A: Alias Canônico de Login
 ✅ A rota pública `/login` DEVE redirecionar para `/auth/login` preservando query string relevante, incluindo `redirect`.
 ✅ Fluxos administrativos que redirecionam usuários não autenticados DEVEM continuar apontando para a rota canônica `/auth/login`.
@@ -502,6 +578,24 @@ Proibir mix de `cuid()` em novos docs/código
 - `Pagination` com contagem total e seleção de itens por página  
   
 🎚️ **Funcionalidades**:  
+
+### RN-022B: Uniformidade Visual dos Cards de Lote nas Grades Públicas
+✅ Cards de lote renderizados em grids públicos como `/search?type=lots` e `/lots` DEVEM manter altura visual uniforme por linha, independentemente do tamanho do nome principal do lote.
+✅ O nome principal variável do lote DEVE ocupar sempre uma área contratual de duas linhas, com truncamento por elipsis quando exceder esse limite.
+✅ Metadados opcionais do cabeçalho, como número de processo judicial, DEVEM reservar espaço estrutural mesmo quando ausentes, evitando que alguns cards “subam” em relação aos demais.
+✅ O bloco de ações/CTA do card DEVE permanecer ancorado na mesma base visual da grade.
+✅ A solução de layout DEVE ser centralizada no componente base reutilizado do card e nos wrappers de grade, sem duplicar hacks por página.
+
+**Cenário BDD - Nome do lote mantém altura contratual**
+- **Dado** uma grade pública de lotes com títulos curtos e longos
+- **Quando** a interface renderiza os cards na mesma linha
+- **Então** o nome principal de cada lote ocupa no máximo duas linhas
+- **E** títulos curtos preservam a mesma altura visual reservada dos títulos longos
+
+**Cenário BDD - CTA permanece alinhado mesmo sem metadados opcionais**
+- **Dado** uma grade pública com lotes judiciais e não judiciais
+- **Quando** alguns cards não possuem número de processo ou outros metadados opcionais
+- **Então** o rodapé de ações continua alinhado na mesma base visual dos demais cards
 
 ### RN-023: Marketing > Publicidade do Site (Super Oportunidades)
 ✅ A seção Super Oportunidades DEVE ser habilitada/desabilitada via módulo Marketing > Publicidade do Site  
@@ -753,6 +847,49 @@ Proibir mix de `cuid()` em novos docs/código
 - [ ] Wire audit trail para registrar histórico de impersonações  
 - [ ] Implementar sessão com expiração automática (timeout configurável)  
 - [ ] Adicionar notificação ao usuário impersonado (opcional/configurável)
+
+### RN-030: Congruência de Processo Judicial na Cadeia Ativo → Lote → Leilão
+🔐 **Objetivo**: Garantir integridade referencial e congruência do Processo Judicial ao longo de toda a cadeia de vinculação `Processo Judicial → Ativos → Lotes → Leilão`.
+
+**Invariante Principal**:
+✅ Se um `Auction` possui `judicialProcessId` definido, **todo** `Asset` vinculado a qualquer `Lot` desse `Auction` (via `AssetsOnLots`) **DEVE** ter `Asset.judicialProcessId` igual ao `Auction.judicialProcessId`.
+✅ Ativos com `judicialProcessId = null` **NÃO** podem ser vinculados a lotes de leilões judiciais.
+✅ Leilões **sem** `judicialProcessId` (leilões extrajudiciais) não estão sujeitos a esta regra.
+
+**Reutilização de Ativos (Multi-Leilão)**:
+✅ Um mesmo `Asset` pode participar de múltiplos `Lot`s ao longo do tempo (historicamente), porém **NUNCA** em dois `Lot`s com status ativo/publicado simultaneamente.
+✅ A tabela `AssetsOnLots` registra o histórico de vinculações (N:N com timestamps).
+✅ Quando um ativo não é vendido em um leilão, pode ser vinculado a novo lote em outro leilão, desde que o lote anterior esteja com status finalizado (ENCERRADO, CANCELADO, DESERTO).
+
+**Pontos de Bloqueio**:
+✅ **Write-time (hard-fail)**: A vinculação de ativo ao lote (`linkAssetsToLot`) DEVE validar congruência de JP antes de persistir.
+✅ **Auditoria (redundante)**: `validateAuctionIntegrity()` DEVE verificar congruência de JP de todos os ativos de todos os lotes antes de autorizar abertura.
+✅ **Duplicação ativa bloqueada**: Antes de vincular, verificar se o ativo já está em algum lote ativo/publicado de outro leilão.
+
+**Mensagens de Erro Padronizadas**:
+- `CONGRUENCE_JP_MISMATCH`: "O ativo '{assetTitle}' pertence ao processo judicial '{assetJP}', diferente do leilão ('{auctionJP}'). Vinculação bloqueada."
+- `CONGRUENCE_JP_NULL_ASSET`: "O ativo '{assetTitle}' não possui processo judicial vinculado. Não pode ser associado a leilão judicial."
+- `ASSET_ALREADY_IN_ACTIVE_LOT`: "O ativo '{assetTitle}' já está vinculado ao lote '{lotTitle}' (status: {lotStatus}). Desvincule antes de reutilizar."
+
+**Ambiguidade `Asset.lotId` vs `AssetsOnLots`**:
+⚠️ O campo `Asset.lotId` (FK direta) é considerado **legado/auxiliar**. O caminho canônico para vinculação N:N é via `AssetsOnLots`. Toda nova lógica DEVE usar `AssetsOnLots` como fonte de verdade.
+
+**BDD - Congruência de Processo Judicial**
+- **Dado** um leilão judicial com `judicialProcessId = 42`
+- **Quando** o admin tenta vincular um ativo com `judicialProcessId = 99` a um lote desse leilão
+- **Então** o sistema DEVE bloquear com erro `CONGRUENCE_JP_MISMATCH`
+
+- **Dado** um leilão judicial com `judicialProcessId = 42`
+- **Quando** o admin tenta vincular um ativo com `judicialProcessId = null`
+- **Então** o sistema DEVE bloquear com erro `CONGRUENCE_JP_NULL_ASSET`
+
+- **Dado** um ativo vinculado a um lote com status `ABERTO_PARA_LANCES`
+- **Quando** o admin tenta vincular esse mesmo ativo a outro lote
+- **Então** o sistema DEVE bloquear com erro `ASSET_ALREADY_IN_ACTIVE_LOT`
+
+- **Dado** um ativo vinculado a um lote com status `DESERTO`
+- **Quando** o admin tenta vincular esse ativo a um novo lote em outro leilão judicial do mesmo processo
+- **Então** a vinculação DEVE ser permitida
 
 ---
 
@@ -1529,7 +1666,7 @@ Para o público geral, certos dados são omitidos para não expor informações 
 
 ### RN-AD-011: Funcionalidades de Armazenamento Local (Client-Side)
 O frontend utiliza `localStorage` para persistir certas preferências e históricos do usuário.
-- **Favoritos (`favorite-store.ts`):** Usuários podem marcar lotes como favoritos, e a lista de IDs é salva localmente.
+- **Favoritos (`favorite-store.ts`):** Visitantes podem marcar lotes como favoritos localmente. Para usuários autenticados, a lista local é usada como cache/ponte de sessão e deve ser sincronizada com a persistência backend (`/api/favorite-lots`) por tenant.
 - **Vistos Recentemente (`recently-viewed-store.ts`):** O sistema armazena os IDs dos últimos 10 lotes visitados por um período de 3 dias.
 
 ### RN-AD-012: Integridade de Dados (Leilões, Lotes e Ativos)
@@ -1983,11 +2120,14 @@ Feature: Integração com Tabela FIPE
 
 **Componente:** `InvestorDashboard` (`src/components/dashboard/investor-dashboard/index.tsx`)
 
-**API:** `GET/POST /api/investor/dashboard`
+**API:** `GET/POST /api/investor/dashboard` e `GET/POST/DELETE /api/favorite-lots`
+
+**Persistência:** lotes salvos devem usar persistência real por `tenantId` para usuários autenticados, mantendo sincronização com o cache local do navegador apenas como fallback e bootstrap da sessão.
 
 **Modelos de Dados:**
 - `InvestorDashboard`: Configurações e preferências
-- `SavedLot`: Lotes salvos pelo investidor
+- `SavedLot`: DTO de resposta para lotes salvos do investidor
+- `FavoriteLot`: vínculo persistente entre usuário, lote e tenant
 - `InvestorAlert`: Alertas configurados
 - `InvestorStatistics`: Métricas calculadas
 
@@ -3195,6 +3335,46 @@ Feature: CRUD Admin Plus - [NomeEntidade]
 - [ ] Filtros avançados por entidade
 - [ ] Auditoria de alterações (integração com AuditLog)
 
+### RN-AP-017: Dev Info Sob Demanda nos Painéis Autenticados
+
+**Data de Implementação:** Abril 2026
+
+**Objetivo:** As informações de ambiente e diagnóstico (`Dev Info`) devem permanecer ocultas por padrão e só podem ser exibidas após ação explícita do usuário em um link/botão da sidebar.
+
+**Escopo Obrigatório:**
+- `/admin/*`
+- `/admin-plus/*`
+- `/dashboard/*`
+- `/consignor-dashboard/*`
+
+**Regras de Comportamento:**
+- O conteúdo de `Dev Info` NÃO pode ser renderizado inline automaticamente no `main`, rodapé ou shell ao carregar a tela.
+- O acesso deve ocorrer EXCLUSIVAMENTE por um gatilho visível na sidebar do shell autenticado.
+- O conteúdo deve abrir em modal/painel flutuante reutilizável, preservando os dados de tenant, usuário, banco, provider, branch, servidor e projeto.
+- Em mobile, o mesmo gatilho deve continuar disponível dentro do menu lateral sem depender de navegação para outra rota.
+- O modal deve respeitar acessibilidade mínima: nome acessível, foco visível, fechamento por `Esc` e conteúdo oculto não focável enquanto fechado.
+
+**Atributos de Testabilidade Obrigatórios:**
+- Botão/link da sidebar: `data-ai-id="env-info-sidebar-button"`
+- Modal: `data-ai-id="env-info-modal"`
+- Título do modal: `data-ai-id="env-info-modal-title"`
+- Conteúdo do painel: `data-testid="dev-info-indicator"`
+
+**BDD / Gherkin:**
+```gherkin
+Scenario: Dev Info oculto por padrão no painel autenticado
+  Given que estou autenticado em um shell com sidebar
+  When a página termina de carregar
+  Then o conteúdo de Dev Info não aparece inline no layout
+  And o gatilho de Dev Info está disponível na sidebar
+
+Scenario: Dev Info exibido sob demanda
+  Given que estou autenticado em um shell com sidebar
+  When clico no botão "Dev Info" da sidebar
+  Then o modal de Dev Info é exibido
+  And o painel mostra tenant, usuário, banco, provider, branch, servidor e projeto
+```
+
 ---
 
 ## Linhagem do Leilão — Visualização de Cadeia de Valor
@@ -3466,6 +3646,22 @@ Há cenários em que o preview da PR falha antes mesmo do build real da aplicaç
 - **Dado** um preview Vercel em estado `ERROR`
 - **Quando** o inspector exibe `Builds . [0ms]` ou não retorna eventos de build úteis
 - **Então** a validação deve registrar o bloqueio como falha de deploy da plataforma antes de culpar a aplicação
+
+### RN-VERCEL-E2E-001B: `Provisioning integrations failed` é falha de camada de integrations/storage
+
+**Contexto:**
+Há previews que falham com `readyStateReason = Provisioning integrations failed` mesmo quando `DATABASE_URL`, `POSTGRES_PRISMA_URL` e `POSTGRES_URL_NON_POOLING` já estão corretas. Nesses casos, o bloqueio pode estar em resources de integrations/storage da própria Vercel, e não no código da aplicação.
+
+**Regra:**
+- ✅ Ao encontrar `Provisioning integrations failed`, inspecionar `vercel integration list --all --format=json` antes de alterar código ou envs.
+- ✅ Se existirem stores `suspended` órfãos, removê-los com `vercel integration-resource remove <resource> --yes`.
+- ✅ Se um resource ativo estiver com `deployments.required=true` para `preview`, mas a aplicação já operar com envs genéricos (`DATABASE_URL`, `POSTGRES_*`) sem depender do prefixo do provider, desconectar o resource do projeto antes de retriggerar o preview.
+- ✅ Só culpar o código da aplicação depois que o preview sair do erro instantâneo e entrar em build real.
+
+**BDD - Provisioning quebrado por integration resource**
+- **Dado** um preview Vercel que falha com `Provisioning integrations failed`
+- **Quando** existirem stores órfãos suspensos ou um resource `required` para `preview` sem uso efetivo pela aplicação
+- **Então** a correção deve primeiro limpar/desconectar o resource problemático e retriggerar o deployment antes de abrir RCA de código
 
 ---
 

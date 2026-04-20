@@ -225,6 +225,63 @@ export class LotService {
         return { success: false, message: canModify.reason || 'Não é possível modificar este Lote' };
       }
 
+      // RN-030: Validação de congruência JP → Ativos → Lote → Leilão
+      const lotWithAuction = await this.prisma.lot.findUnique({
+        where: { id: internalLotId },
+        select: {
+          auctionId: true,
+          Auction: {
+            select: { judicialProcessId: true }
+          }
+        }
+      });
+
+      if (lotWithAuction?.Auction?.judicialProcessId) {
+        const auctionJpId = lotWithAuction.Auction.judicialProcessId;
+
+        // Buscar JP de cada ativo sendo vinculado
+        const assets = await this.prisma.asset.findMany({
+          where: { id: { in: assetIds.map(id => BigInt(id)) } },
+          select: { id: true, publicId: true, judicialProcessId: true, title: true }
+        });
+
+        for (const asset of assets) {
+          if (!asset.judicialProcessId) {
+            return {
+              success: false,
+              message: `CONGRUENCE_JP_NULL_ASSET: Ativo "${asset.title || asset.publicId}" não possui Processo Judicial vinculado, mas o Leilão exige.`
+            };
+          }
+          if (asset.judicialProcessId !== auctionJpId) {
+            return {
+              success: false,
+              message: `CONGRUENCE_JP_MISMATCH: Ativo "${asset.title || asset.publicId}" pertence a um Processo Judicial diferente do Leilão.`
+            };
+          }
+        }
+      }
+
+      // RN-030: Verificar se algum ativo já está em outro lote ativo
+      const existingLinks = await this.prisma.assetsOnLots.findMany({
+        where: {
+          assetId: { in: assetIds.map(id => BigInt(id)) },
+          lotId: { not: internalLotId },
+          Lot: { status: { notIn: ['CANCELADO', 'ENCERRADO'] as any } }
+        },
+        include: {
+          Asset: { select: { publicId: true, title: true } },
+          Lot: { select: { publicId: true } }
+        }
+      });
+
+      if (existingLinks.length > 0) {
+        const first = existingLinks[0];
+        return {
+          success: false,
+          message: `ASSET_ALREADY_IN_ACTIVE_LOT: Ativo "${first.Asset?.title || first.Asset?.publicId}" já está vinculado ao Lote ativo "${first.Lot?.publicId}".`
+        };
+      }
+
       await this.prisma.$transaction(async (tx) => {
         // Vincular Ativos ao Lote
         await tx.assetsOnLots.createMany({
@@ -389,7 +446,8 @@ export class LotService {
         id: lp.id.toString(),
         lotId: lp.lotId.toString(),
         auctionStageId: lp.auctionStageId.toString(),
-        initialBid: Number(lp.initialBid)
+        initialBid: Number(lp.initialBid),
+        bidIncrement: lp.bidIncrement != null ? Number(lp.bidIncrement) : null,
       })),
       auction: lotAuction ? {
         ...lotAuction,

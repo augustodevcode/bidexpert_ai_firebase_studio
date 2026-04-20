@@ -1,6 +1,6 @@
 /**
  * Server actions for the Bid entity (Admin Plus CRUD).
- * FK includes: Lot (title), Auction (title), User (name).
+ * FK includes: Lot (title), Auction (title), User (fullName).
  */
 'use server';
 
@@ -8,6 +8,7 @@ import { createAdminAction } from '@/lib/admin-plus/safe-action';
 import { prisma } from '@/lib/prisma';
 import { sanitizeResponse } from '@/lib/serialization-helper';
 import type { PaginatedResponse } from '@/lib/admin-plus/types';
+import { type BidStatus, type BidOrigin } from '@prisma/client';
 import type { BidRow } from './types';
 
 function toRow(r: Record<string, unknown>): BidRow {
@@ -21,7 +22,7 @@ function toRow(r: Record<string, unknown>): BidRow {
     auctionId: String(r.auctionId),
     auctionTitle: auction.title ? String(auction.title) : '',
     bidderId: String(r.bidderId),
-    bidderName: user.name ? String(user.name) : '',
+    bidderName: user.fullName ? String(user.fullName) : '',
     amount: Number(r.amount ?? 0),
     status: String(r.status ?? 'ATIVO'),
     bidOrigin: String(r.bidOrigin ?? 'MANUAL'),
@@ -37,7 +38,7 @@ function toRow(r: Record<string, unknown>): BidRow {
 const FK_INCLUDE = {
   Lot: { select: { id: true, title: true } },
   Auction: { select: { id: true, title: true } },
-  User: { select: { id: true, name: true } },
+  User: { select: { id: true, fullName: true } },
 };
 
 export const listBids = createAdminAction<
@@ -81,8 +82,8 @@ export const createBid = createAdminAction<Record<string, unknown>, BidRow>(
         auctionId: BigInt(input.auctionId as string),
         bidderId: BigInt(input.bidderId as string),
         amount: Number(input.amount),
-        status: (input.status as string) || 'ATIVO',
-        bidOrigin: (input.bidOrigin as string) || 'MANUAL',
+        status: ((input.status as string) || 'ATIVO') as BidStatus,
+        bidOrigin: ((input.bidOrigin as string) || 'MANUAL') as BidOrigin,
         isAutoBid: Boolean(input.isAutoBid),
         bidderDisplay: input.bidderDisplay ? String(input.bidderDisplay) : undefined,
         bidderAlias: input.bidderAlias ? String(input.bidderAlias) : undefined,

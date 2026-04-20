@@ -9,6 +9,7 @@
 
 import { prisma } from '@/lib/prisma';
 import type { AuctionPerformanceData, AuctionDashboardData, Auction } from '@/types';
+export type { AuctionPerformanceData };
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
@@ -57,7 +58,7 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
         auctionDate: auction.auctionDate, 
         auctionStages: (auction as any).AuctionStage,
       };
-    });
+    }) as unknown as AuctionPerformanceData[];
   } catch (error: any) {
     console.error("[Action - getAuctionsPerformanceAction] Error fetching auction performance:", error);
     throw new Error("Falha ao buscar dados de performance dos leilões.");

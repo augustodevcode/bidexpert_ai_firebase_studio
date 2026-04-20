@@ -1,10 +1,22 @@
 // src/components/admin/wizard/WizardFlowModal.tsx
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import WizardFlow from './WizardFlow';
+
+const WizardFlow = dynamic(() => import('./WizardFlow'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="flex h-full min-h-[20rem] items-center justify-center rounded-md bg-muted/30 px-4 text-center text-sm text-muted-foreground"
+      data-ai-id="wizard-flow-loading"
+    >
+      Preparando o mapa visual do fluxo...
+    </div>
+  ),
+});
 
 interface WizardFlowModalProps {
   isOpen: boolean;

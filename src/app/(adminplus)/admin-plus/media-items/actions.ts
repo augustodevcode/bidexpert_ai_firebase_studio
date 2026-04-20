@@ -10,10 +10,10 @@ import { sanitizeResponse } from '@/lib/serialization-helper';
 import { mediaItemSchema } from './schema';
 import type { MediaItemRow } from './types';
 
-const includeUploader = { uploadedBy: { select: { name: true } } } as const;
+const includeUploader = { uploadedBy: { select: { fullName: true } } } as const;
 
 function toRow(item: Record<string, unknown>): MediaItemRow {
-  const i = item as Record<string, unknown> & { uploadedBy?: { name: string } | null };
+  const i = item as Record<string, unknown> & { uploadedBy?: { fullName: string | null } | null };
   return {
     id: String(i.id),
     fileName: String(i.fileName ?? ''),
@@ -29,7 +29,7 @@ function toRow(item: Record<string, unknown>): MediaItemRow {
     description: i.description ? String(i.description) : null,
     title: i.title ? String(i.title) : null,
     dataAiHint: i.dataAiHint ? String(i.dataAiHint) : null,
-    uploadedByUserName: i.uploadedBy?.name ?? null,
+    uploadedByUserName: i.uploadedBy?.fullName ?? null,
     tenantId: i.tenantId ? String(i.tenantId) : null,
     uploadedAt: i.uploadedAt instanceof Date ? i.uploadedAt.toISOString() : i.uploadedAt ? String(i.uploadedAt) : null,
   };

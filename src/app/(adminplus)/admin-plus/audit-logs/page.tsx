@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina de listagem de Logs de Auditoria (AuditLog) no Admin Plus.
+ * Página de listagem de Logs de Auditoria (AuditLog) no Admin Plus.
  */
 'use client';
 
@@ -24,12 +24,12 @@ import type { BulkAction } from '@/components/admin-plus/data-table-plus';
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
 export default function AuditLogsPage() {
-  /* â”€â”€ state â”€â”€ */
+  /* ── state ── */
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AuditLogRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AuditLogRow | null>(null);
 
-  /* â”€â”€ data fetching â”€â”€ */
+  /* ── data fetching ── */
   const fetchFn = useCallback(async (params: { page: number; pageSize: number; sort?: { field: string; direction: string }; search?: string }) => {
     const r = await listAuditLogs({ page: params.page, pageSize: params.pageSize, sortField: params.sort?.field, sortDirection: params.sort?.direction as any, search: params.search });
     if (r.success && r.data) return r.data as PaginatedResponse<AuditLogRow>;
@@ -38,7 +38,7 @@ export default function AuditLogsPage() {
 
   const { data, total, page, pageSize, totalPages, sorting, setSorting, search, setSearch, setPage, setPageSize, isLoading, refresh } = useDataTable<AuditLogRow>({ fetchFn, defaultSort: { field: 'timestamp', direction: 'desc' } });
 
-  /* â”€â”€ handlers â”€â”€ */
+  /* ── handlers ── */
   const handleEdit = (row: AuditLogRow) => { setEditing(row); setFormOpen(true); };
   const handleDelete = (row: AuditLogRow) => setDeleteTarget(row);
 
@@ -50,18 +50,18 @@ export default function AuditLogsPage() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     const r = await deleteAuditLog({ id: deleteTarget.id });
-    if (r.success) { toast.success('Log excluÃ­do'); setDeleteTarget(null); refresh(); } else { toast.error(r.error || 'Erro'); }
+    if (r.success) { toast.success('Log excluído'); setDeleteTarget(null); refresh(); } else { toast.error(r.error || 'Erro'); }
   };
 
   const columns = getAuditLogColumns({ onEdit: handleEdit, onDelete: handleDelete });
 
   const bulkActions: BulkAction<AuditLogRow>[] = [
-    { label: 'Excluir selecionados', icon: Trash2, variant: 'destructive' as const, onExecute: async (rows) => { for (const row of rows) await deleteAuditLog({ id: row.id }); toast.success(`${rows.length} log(s) excluÃ­do(s)`); refresh(); } },
+    { label: 'Excluir selecionados', icon: Trash2, variant: 'destructive' as const, onExecute: async (rows) => { for (const row of rows) await deleteAuditLog({ id: row.id }); toast.success(`${rows.length} log(s) excluído(s)`); refresh(); } },
   ];
 
   return (
     <div className="space-y-6" data-ai-id="audit-logs-page">
-      <PageHeader icon={ClipboardList} title="Logs de Auditoria" description="HistÃ³rico completo de aÃ§Ãµes realizadas no sistema.">
+      <PageHeader icon={ClipboardList} title="Logs de Auditoria" description="Histórico completo de ações realizadas no sistema.">
         <Button onClick={() => { setEditing(null); setFormOpen(true); }} data-ai-id="audit-log-new-btn"><Plus className="mr-2 h-4 w-4" /> Novo Log</Button>
       </PageHeader>
 

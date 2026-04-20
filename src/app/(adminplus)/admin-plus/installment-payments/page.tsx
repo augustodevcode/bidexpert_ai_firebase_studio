@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina de listagem de InstallmentPayment (Parcelas de Pagamento).
+ * Página de listagem de InstallmentPayment (Parcelas de Pagamento).
  */
 'use client';
 
@@ -28,7 +28,7 @@ export default function InstallmentPaymentsPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleting) return;
     const res = await deleteInstallmentPayment({ id: deleting.id });
-    if (res?.success) { toast.success('ExcluÃ­do!'); refresh(); } else toast.error(res?.error ?? 'Erro');
+    if (res?.success) { toast.success('Excluído!'); refresh(); } else toast.error(res?.error ?? 'Erro');
     setDeleting(null);
   }, [deleting, refresh]);
 

@@ -24,27 +24,27 @@ export class UserWinService {
     // Remove explicitamente o tenantId se estiver presente
     const { tenantId, ...winData } = data as any;
     const win = await this.repository.create(winData);
-    return { ...win, winningBidAmount: Number(win.winningBidAmount) } as UserWin;
+    return { ...win, winningBidAmount: Number(win.winningBidAmount) } as unknown as UserWin;
   }
 
   async findFirst(args: Prisma.UserWinFindFirstArgs): Promise<UserWin | null> {
     const win = await this.repository.findFirst(args);
-    return win ? { ...win, winningBidAmount: Number(win.winningBidAmount) } as UserWin : null;
+    return win ? { ...win, winningBidAmount: Number(win.winningBidAmount) } as unknown as UserWin : null;
   }
 
   async getWinDetailsById(winId: string): Promise<UserWin | null> {
     const win = await this.repository.findByIdWithDetails(winId);
-    if (!win) {
+    if (!win?.lot) {
       return null;
     }
 
     const lotWithAuctionName = {
       ...win.lot,
-      price: Number(win.lot.price),
+      price: Number(win.lot.price ?? 0),
       initialPrice: win.lot.initialPrice ? Number(win.lot.initialPrice) : null,
       secondInitialPrice: win.lot.secondInitialPrice ? Number(win.lot.secondInitialPrice) : null,
       bidIncrementStep: win.lot.bidIncrementStep ? Number(win.lot.bidIncrementStep) : null,
-      auctionName: win.lot.auction.title,
+      auctionName: win.lot.auctionName ?? win.lot.auction?.title ?? null,
     };
 
     return {

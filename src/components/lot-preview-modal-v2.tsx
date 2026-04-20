@@ -42,7 +42,7 @@ import { getEffectiveLotEndDate, getLotDisplayLocation } from '@/lib/ui-helpers'
 import BidExpertAuctionStagesTimeline from './auction/BidExpertAuctionStagesTimeline';
 import LotCountdown from './lot-countdown';
 import { useToast } from '@/hooks/use-toast';
-import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import { isLotFavoriteInStorage, addFavoriteLot, removeFavoriteLot } from '@/lib/favorite-store';
 import { useCurrency } from '@/contexts/currency-context';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 
@@ -105,7 +105,7 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
     }
   }, [lot?.id, lot?.publicId, lot?.auctionId, auction?.id, auction?.publicId]);
 
-  const handleFavoriteToggle = useCallback((e: React.MouseEvent) => {
+  const handleFavoriteToggle = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!lot) return;
@@ -114,9 +114,9 @@ export default function LotPreviewModalV2({ lot, auction, platformSettings, isOp
     setIsFavorite(newFavoriteState);
     
     if (newFavoriteState) {
-      addFavoriteLotIdToStorage(lot.id.toString());
+      await addFavoriteLot(lot.id.toString());
     } else {
-      removeFavoriteLotIdFromStorage(lot.id.toString());
+      await removeFavoriteLot(lot.id.toString());
     }
     
     toast({

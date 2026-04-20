@@ -21,7 +21,30 @@
 #   pr_number: número do PR (quando criado)
 #   notes: observações livres
 
-queue: []
+queue:
+  - id: "20260402-1548-copilot-favorite-lots"
+    dev_id: copilot
+    branch: feat/investor-journey-20260402-1548
+    status: merged
+    title: "Persistência real de lotes favoritos no dashboard do investidor"
+    areas_impacted:
+      - prisma
+      - src/lib/favorite-store.ts
+      - src/app/dashboard/favorites
+      - src/app/api
+      - tests/e2e
+      - tests/unit
+    files_touched:
+      - prisma/schema.prisma
+      - prisma-deploy/schema.postgresql.prisma
+      - src/lib/favorite-store.ts
+      - src/app/dashboard/favorites/page.tsx
+    risk_level: medium
+    playwright_evidence: pending
+    started_at: "2026-04-02T15:48:00Z"
+    updated_at: "2026-04-20T21:05:00Z"
+    pr_number: null
+    notes: "Implementar sincronização backend para favoritos autenticados, mantendo fallback local para visitantes."
 
 # Exemplo de entrada preenchida:
 # queue:

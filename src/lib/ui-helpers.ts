@@ -1,5 +1,5 @@
 // src/lib/ui-helpers.ts
-import type { Asset, Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage, AuctionType } from '@/types';
+import type { Asset, Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage, AuctionType, LotStageDetails } from '@/types';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle, Gavel, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { isPast, isFuture } from 'date-fns';
 import React from 'react';
@@ -386,18 +386,45 @@ export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => 
  * @param activeStageId The ID of the currently active auction stage.
  * @returns An object with initialBid and increment or null.
  */
+const getLotStagePriceOverride = (lot: Lot, activeStageId?: string): LotStageDetails | null => {
+  if (!lot || !activeStageId) return null;
+
+  const stageDetails = Array.isArray(lot.stageDetails)
+    ? (lot.stageDetails as LotStageDetails[])
+    : [];
+
+  const normalizedActiveStageId = String(activeStageId);
+  const stageDetailMatch = stageDetails.find((stageDetail) => String(stageDetail.stageId) === normalizedActiveStageId);
+  if (stageDetailMatch) {
+    return stageDetailMatch;
+  }
+
+  const lotPrices = Array.isArray((lot as any).lotPrices)
+    ? ((lot as any).lotPrices as Array<{ auctionStageId?: string | number | null; initialBid?: number | null; bidIncrement?: number | null }>)
+    : [];
+  const lotPriceMatch = lotPrices.find((lotPrice) => String(lotPrice.auctionStageId) === normalizedActiveStageId);
+
+  if (!lotPriceMatch) {
+    return null;
+  }
+
+  return {
+    stageId: normalizedActiveStageId,
+    stageName: '',
+    initialBid: lotPriceMatch.initialBid ?? null,
+    bidIncrement: lotPriceMatch.bidIncrement ?? null,
+  };
+};
+
 export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initialBid: number | null, bidIncrement: number | null } | null => {
   if (!lot) return null;
 
-  // If there's a specific price for the active stage, use it
-  if (activeStageId && lot.stageDetails) {
-    const stagePrice = lot.stageDetails.find(p => p.stageId === activeStageId);
-    if (stagePrice) {
-      return {
-        initialBid: stagePrice.initialBid,
-        bidIncrement: stagePrice.bidIncrement,
-      };
-    }
+  const stagePrice = getLotStagePriceOverride(lot, activeStageId);
+  if (stagePrice) {
+    return {
+      initialBid: stagePrice.initialBid ?? null,
+      bidIncrement: stagePrice.bidIncrement ?? null,
+    };
   }
 
   // Fallback to the lot's main price details
@@ -428,15 +455,20 @@ export const calculateMinimumBid = (
 ): number => {
   if (!lot) return 0;
 
-  const bidIncrement = lot.bidIncrementStep ?? 100;
+  const stagePriceOverride = getLotStagePriceOverride(lot, activeStage?.id);
+  const bidIncrement = stagePriceOverride?.bidIncrement ?? lot.bidIncrementStep ?? 100;
 
   // Se houver lances, o lance mínimo é o último lance + incremento
   if (currentBidCount > 0 && lastBidValue !== null) {
     return lastBidValue + bidIncrement;
   }
 
+  if (stagePriceOverride?.initialBid !== null && stagePriceOverride?.initialBid !== undefined) {
+    return stagePriceOverride.initialBid;
+  }
+
   // Se não houver lances, aplica o percentual da praça ao valor inicial do lote
-  const initialPrice = lot.initialPrice ?? 0;
+  const initialPrice = lot.initialPrice ?? lot.price ?? 0;
   const discountPercent = activeStage?.discountPercent ?? 100;
 
   return initialPrice * (discountPercent / 100);
@@ -455,7 +487,12 @@ export const getLotInitialPriceForStage = (
 ): number => {
   if (!lot) return 0;
 
-  const initialPrice = lot.initialPrice ?? 0;
+  const stagePriceOverride = getLotStagePriceOverride(lot, activeStage?.id);
+  if (stagePriceOverride?.initialBid !== null && stagePriceOverride?.initialBid !== undefined) {
+    return stagePriceOverride.initialBid;
+  }
+
+  const initialPrice = lot.initialPrice ?? lot.price ?? 0;
   const discountPercent = activeStage?.discountPercent ?? 100;
 
   return initialPrice * (discountPercent / 100);
@@ -512,7 +549,7 @@ export const getLotDisplayPrice = (lot: Lot, auction?: Auction): { value: number
 
     // Fallback for 1st stage active
     return {
-      value: lot.initialPrice || 0,
+      value: discountedInitialFn || lot.initialPrice || lot.price || 0,
       label: 'Lance Inicial'
     };
   }

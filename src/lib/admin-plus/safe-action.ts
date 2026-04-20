@@ -38,80 +38,46 @@ type LegacyAdminActionHandler<TInput = unknown, TOutput = unknown> = (
   ...args: unknown[]
 ) => Promise<TOutput>;
 
-function getFunctionParams(source: string): string {
-  const trimmed = source.trim();
-  const arrowWithParens = trimmed.match(/^(?:async\s*)?\(([^)]*)\)\s*=>/s);
-  if (arrowWithParens) return arrowWithParens[1].trim();
-  const arrowSingle = trimmed.match(/^(?:async\s*)?([^=()\s]+)\s*=>/s);
-  if (arrowSingle) return arrowSingle[1].trim();
-  const fnMatch = trimmed.match(/^(?:async\s*)?function[^(]*\(([^)]*)\)/s);
-  if (fnMatch) return fnMatch[1].trim();
-  return '';
-}
-
-function shouldUseEnvelope(handler: (...args: any[]) => Promise<unknown>) {
-  const source = handler.toString();
-  const params = getFunctionParams(source);
-
-  if (params.startsWith('{')) {
-    const firstObjectMatch = params.match(/^\{([^}]*)\}/s);
-    if (!firstObjectMatch) return false;
-
-    const firstObjectKeys = firstObjectMatch[1];
-    const rest = params.slice(firstObjectMatch[0].length).trim();
-    return rest.length === 0 && /\b(?:input|ctx)\b/.test(firstObjectKeys);
-  }
-
-  if (handler.length <= 1) {
-    const transpiledEnvelopeMatch = source.match(/\{\s*(?:const|let|var)\s*\{([^}]*)\}\s*=\s*[_$a-zA-Z][\w$]*/s);
-    if (transpiledEnvelopeMatch) {
-      return /\b(?:input|ctx)\b/.test(transpiledEnvelopeMatch[1]);
-    }
-  }
-
-  return false;
-}
-
-function isCtxFirst(handler: (...args: any[]) => Promise<unknown>) {
-  const params = getFunctionParams(handler.toString());
-  return params.startsWith('ctx') || params.startsWith('_ctx');
-}
-
-function buildHybridOptionsArg(input: unknown, ctx: ActionContext) {
-  const topLevelInput = input && typeof input === 'object'
-    ? input as Record<string, unknown>
-    : { value: input };
-
-  return {
-    ...ctx,
-    ...topLevelInput,
-    input,
-    ctx,
-  };
-}
-
+/**
+ * Invoca o handler de uma ação options-style baseando-se SOMENTE em
+ * Function.length (quantidade de parâmetros declarados), que é preservado
+ * após minificação — ao contrário de handler.toString() + regex que quebra
+ * em produção quando o Next.js renomeia parâmetros.
+ *
+ * Convenções suportadas:
+ *  - length 0  → handler()
+ *  - length 1  → handler({ ...inputSpread, input, ctx })  (envelope universal)
+ *  - length 2+ → handler(input, ctx)                       (positional)
+ */
 async function invokeOptionsHandler<TOutput>(
   handler: (...args: any[]) => Promise<TOutput>,
   input: unknown,
   ctx: ActionContext,
 ) {
   const normalizedInput = input ?? {};
-  const hybridArg = buildHybridOptionsArg(normalizedInput, ctx);
 
+  // 0-arg: handler não precisa de input nem ctx
   if (handler.length === 0) {
-    return input === undefined ? handler() : handler(hybridArg);
+    return handler();
   }
 
-  if (shouldUseEnvelope(handler)) {
-    // DataTable e alguns hooks chamam actions sem payload inicial; evita destructuring de undefined no handler.
-    return handler({ input: normalizedInput, ctx });
-  }
-
+  // 2+ args: positional — handler(input, ctx)
   if (handler.length >= 2) {
-    return isCtxFirst(handler) ? handler(ctx, normalizedInput) : handler(normalizedInput, ctx);
+    return handler(normalizedInput, ctx);
   }
 
-  return isCtxFirst(handler) ? handler(ctx) : handler(hybridArg);
+  // 1-arg: envelope universal que satisfaz todos os padrões de 1 argumento:
+  //   ({ input, ctx }) → destructura ambos
+  //   ({ input })      → destructura apenas input
+  //   ({ ctx })        → destructura apenas ctx
+  //   ({ page, ... })  → destructura campos do input (spread no top-level)
+  //   ({ id })         → destructura campo específico do input
+  //   (arg)            → recebe objeto completo com campos do input no top-level
+  const inputSpread = normalizedInput && typeof normalizedInput === 'object'
+    ? normalizedInput as Record<string, unknown>
+    : {};
+
+  return handler({ ...inputSpread, input: normalizedInput, ctx });
 }
 
 function summarizeHandler(handler: (...args: any[]) => Promise<unknown>) {
@@ -239,12 +205,10 @@ export function createAdminAction<TInput extends z.ZodTypeAny | undefined = z.Zo
       // 4. Executar handler
       const [inputArg, ...restArgs] = rawArgs;
       const normalizedInputArg = inputArg ?? {};
+      // Legacy handlers: SEMPRE (ctx, input, ...rest) — convenção padronizada.
+      // Options handlers: dispatch via invokeOptionsHandler baseado em Function.length.
       const data = legacyHandler
-        ? shouldUseEnvelope(legacyHandler as (...args: any[]) => Promise<unknown>)
-          ? await (legacyHandler as (...args: any[]) => Promise<TOutput>)({ input: normalizedInputArg, ctx }, ...restArgs)
-          : isCtxFirst(legacyHandler as (...args: any[]) => Promise<unknown>)
-            ? await legacyHandler(ctx, normalizedInputArg, ...restArgs)
-            : await (legacyHandler as (...args: any[]) => Promise<TOutput>)(normalizedInputArg, ctx, ...restArgs)
+        ? await legacyHandler(ctx, normalizedInputArg, ...restArgs)
         : await invokeOptionsHandler(options!.handler, validatedInput, ctx);
 
       return { success: true, data };

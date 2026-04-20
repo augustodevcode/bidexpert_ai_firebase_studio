@@ -3,12 +3,12 @@
  *
  * Cobre TODAS as funcionalidades:
  * - ML-01: RenderizaÃƒÂ§ÃƒÂ£o da galeria sem erros
- * - ML-02: Upload de imagem Ã¢â€ â€™ verifica apariÃƒÂ§ÃƒÂ£o na galeria (core bug fix)
+ * - ML-02: Upload de imagem ââ€ ’ verifica apariÃƒÂ§ÃƒÂ£o na galeria (core bug fix)
  * - ML-03: Busca/filtro por nome de arquivo
- * - ML-04: Card Ã¢â€ â€™ abre sidebar com metadados
+ * - ML-04: Card ââ€ ’ abre sidebar com metadados
  * - ML-05: Lightbox (preview de imagem)
  * - ML-06: Editor de imagem (crop/rotate)
- * - ML-07: Delete de imagem Ã¢â€ â€™ desaparece da galeria
+ * - ML-07: Delete de imagem ââ€ ’ desaparece da galeria
  * - ML-08: VerificaÃƒÂ§ÃƒÂ£o de storage (URL da imagem ÃƒÂ© acessÃƒÂ­vel via HTTP)
  *
  * Credenciais: verificadas no seed-master-data.ts (admin@bidexpert.com.br / Admin@123)
@@ -25,12 +25,12 @@ import { loginAsAdmin } from './helpers/auth-helper';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://demo.localhost:9005';
 
-// Timeout generoso Ã¢â‚¬â€ lazy compilation em dev pode levar 30s por pÃƒÂ¡gina
+// Timeout generoso ââ‚¬” lazy compilation em dev pode levar 30s por pÃƒÂ¡gina
 test.setTimeout(180_000);
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬
 // Helpers
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬
 
 async function goToMediaPage(page: Page, baseUrl = BASE_URL) {
   await page.goto(`${baseUrl}/admin/media`, { waitUntil: 'networkidle', timeout: 120_000 });
@@ -68,13 +68,13 @@ async function snap(page: Page, name: string) {
   console.log(`[snap] Screenshot salvo: ${dir}/${name}.png`);
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬
 // Testes
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬â”â‚¬
 
-test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)', () => {
+test.describe('ML ââ‚¬” Biblioteca de MÃƒÂ­dia (MCP Abrangente)', () => {
 
-  test('ML-01 Ã¢â‚¬â€ Galeria renderiza sem erros crÃƒÂ­ticos', async ({ page }) => {
+  test('ML-01 ââ‚¬” Galeria renderiza sem erros crÃƒÂ­ticos', async ({ page }) => {
     await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
@@ -99,10 +99,10 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
     expect(errors500, `Erros 500 encontrados: ${errors500.join(', ')}`).toHaveLength(0);
 
     await snap(page, 'ML-01-gallery-renders');
-    console.log('[ML-01] Ã¢Å“â€¦ Galeria renderizou sem erros');
+    console.log('[ML-01] âÅ“â€¦ Galeria renderizou sem erros');
   });
 
-  test('ML-02 Ã¢â‚¬â€ Upload de imagem aparece na galeria (core bug fix)', async ({ page }) => {
+  test('ML-02 ââ‚¬” Upload de imagem aparece na galeria (core bug fix)', async ({ page }) => {
     await loginAsAdmin(page, BASE_URL);
 
     // Contar itens antes do upload
@@ -151,20 +151,20 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
     expect(countAfter, `Upload nÃƒÂ£o apareceu na galeria! Antes: ${countBefore}, Depois: ${countAfter}`).toBeGreaterThan(countBefore);
 
     await snap(page, 'ML-02-upload-appears');
-    console.log('[ML-02] Ã¢Å“â€¦ Imagem apareceu na galeria apÃƒÂ³s upload');
+    console.log('[ML-02] âÅ“â€¦ Imagem apareceu na galeria apÃƒÂ³s upload');
 
     // Cleanup temp file
     try { fs.unlinkSync(testImagePath); } catch { /* ignore */ }
   });
 
-  test('ML-03 Ã¢â‚¬â€ Busca/filtro por nome de arquivo', async ({ page }) => {
+  test('ML-03 ââ‚¬” Busca/filtro por nome de arquivo', async ({ page }) => {
     await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     // Verificar que existe pelo menos 1 item (se nÃƒÂ£o, pular busca)
     const count = await countGalleryCards(page);
     if (count === 0) {
-      console.log('[ML-03] Galeria vazia Ã¢â‚¬â€ pulando teste de busca');
+      console.log('[ML-03] Galeria vazia ââ‚¬” pulando teste de busca');
       return;
     }
 
@@ -186,23 +186,23 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
       'Busca por texto inexistente deveria resultar em galeria vazia'
     ).toBeTruthy();
 
-    // Limpar busca Ã¢â‚¬â€ galeria deve restaurar
+    // Limpar busca ââ‚¬” galeria deve restaurar
     await searchInput.clear();
     await page.waitForTimeout(1_500);
     const countAfterClear = await countGalleryCards(page);
     expect(countAfterClear, 'ApÃƒÂ³s limpar busca, galeria deve mostrar itens').toBeGreaterThan(0);
 
     await snap(page, 'ML-03-search-filter');
-    console.log('[ML-03] Ã¢Å“â€¦ Busca e filtro funcionando');
+    console.log('[ML-03] âÅ“â€¦ Busca e filtro funcionando');
   });
 
-  test('ML-04 Ã¢â‚¬â€ Card abre sidebar com metadados', async ({ page }) => {
+  test('ML-04 ââ‚¬” Card abre sidebar com metadados', async ({ page }) => {
     await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     const count = await countGalleryCards(page);
     if (count === 0) {
-      console.log('[ML-04] Galeria vazia Ã¢â‚¬â€ pulando teste de sidebar');
+      console.log('[ML-04] Galeria vazia ââ‚¬” pulando teste de sidebar');
       return;
     }
 
@@ -220,16 +220,16 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
     expect(sidebarText, 'Sidebar deve ter conteÃƒÂºdo').toBeTruthy();
 
     await snap(page, 'ML-04-sidebar-metadata');
-    console.log('[ML-04] Ã¢Å“â€¦ Sidebar abriu com metadados');
+    console.log('[ML-04] âÅ“â€¦ Sidebar abriu com metadados');
   });
 
-  test('ML-05 Ã¢â‚¬â€ Lightbox abre imagem em preview', async ({ page }) => {
+  test('ML-05 ââ‚¬” Lightbox abre imagem em preview', async ({ page }) => {
     await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     const count = await countGalleryCards(page);
     if (count === 0) {
-      console.log('[ML-05] Galeria vazia Ã¢â‚¬â€ pulando teste de lightbox');
+      console.log('[ML-05] Galeria vazia ââ‚¬” pulando teste de lightbox');
       return;
     }
 
@@ -252,23 +252,23 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
       await expect(lightbox).toBeVisible({ timeout: 10_000 });
 
       await snap(page, 'ML-05-lightbox-open');
-      console.log('[ML-05] Ã¢Å“â€¦ Lightbox abriu');
+      console.log('[ML-05] âÅ“â€¦ Lightbox abriu');
 
       // Fechar lightbox (Escape)
       await page.keyboard.press('Escape');
       await page.waitForTimeout(500);
     } else {
-      console.log('[ML-05] BotÃƒÂ£o de preview nÃƒÂ£o encontrado no hover Ã¢â‚¬â€ OK para este ambiente');
+      console.log('[ML-05] BotÃƒÂ£o de preview nÃƒÂ£o encontrado no hover ââ‚¬” OK para este ambiente');
     }
   });
 
-  test('ML-06 Ã¢â‚¬â€ Editor de imagem abre (crop/rotate)', async ({ page }) => {
+  test('ML-06 ââ‚¬” Editor de imagem abre (crop/rotate)', async ({ page }) => {
     await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     const count = await countGalleryCards(page);
     if (count === 0) {
-      console.log('[ML-06] Galeria vazia Ã¢â‚¬â€ pulando teste de editor');
+      console.log('[ML-06] Galeria vazia ââ‚¬” pulando teste de editor');
       return;
     }
 
@@ -289,7 +289,7 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
       await expect(editor).toBeVisible({ timeout: 15_000 });
 
       await snap(page, 'ML-06-image-editor');
-      console.log('[ML-06] Ã¢Å“â€¦ Editor de imagem abriu');
+      console.log('[ML-06] âÅ“â€¦ Editor de imagem abriu');
 
       // Fechar editor (pressionar Escape ou botÃƒÂ£o cancelar)
       const cancelBtn = page.getByRole('button', { name: /cancelar|cancel|fechar|close/i }).first();
@@ -299,11 +299,11 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
         await page.keyboard.press('Escape');
       }
     } else {
-      console.log('[ML-06] BotÃƒÂ£o de ediÃƒÂ§ÃƒÂ£o nÃƒÂ£o visÃƒÂ­vel na sidebar Ã¢â‚¬â€ OK');
+      console.log('[ML-06] BotÃƒÂ£o de ediÃƒÂ§ÃƒÂ£o nÃƒÂ£o visÃƒÂ­vel na sidebar ââ‚¬” OK');
     }
   });
 
-  test('ML-07 Ã¢â‚¬â€ Delete de imagem remove da galeria', async ({ page }) => {
+  test('ML-07 ââ‚¬” Delete de imagem remove da galeria', async ({ page }) => {
     await loginAsAdmin(page, BASE_URL);
 
     // Fazer upload de uma imagem para deletar
@@ -329,7 +329,7 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
 
     const countAfterUpload = await countGalleryCards(page);
     if (countAfterUpload === 0) {
-      console.log('[ML-07] Nenhum item para deletar Ã¢â‚¬â€ pulando');
+      console.log('[ML-07] Nenhum item para deletar ââ‚¬” pulando');
       return;
     }
 
@@ -343,7 +343,7 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
     const deleteExists = await deleteBtn.isVisible({ timeout: 5_000 }).catch(() => false);
 
     if (!deleteExists) {
-      console.log('[ML-07] BotÃƒÂ£o de delete nÃƒÂ£o encontrado Ã¢â‚¬â€ pulando');
+      console.log('[ML-07] BotÃƒÂ£o de delete nÃƒÂ£o encontrado ââ‚¬” pulando');
       return;
     }
 
@@ -365,18 +365,18 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
     expect(countAfterDelete, 'Delete deve reduzir a contagem de itens na galeria').toBeLessThan(countAfterUpload);
 
     await snap(page, 'ML-07-delete-success');
-    console.log('[ML-07] Ã¢Å“â€¦ Delete removeu o item da galeria');
+    console.log('[ML-07] âÅ“â€¦ Delete removeu o item da galeria');
 
     try { fs.unlinkSync(testImagePath); } catch { /* ignore */ }
   });
 
-  test('ML-08 Ã¢â‚¬â€ URL da imagem ÃƒÂ© acessÃƒÂ­vel via HTTP', async ({ page, request }) => {
+  test('ML-08 ââ‚¬” URL da imagem ÃƒÂ© acessÃƒÂ­vel via HTTP', async ({ page, request }) => {
     await loginAsAdmin(page, BASE_URL);
     await goToMediaPage(page);
 
     const count = await countGalleryCards(page);
     if (count === 0) {
-      console.log('[ML-08] Galeria vazia Ã¢â‚¬â€ pulando teste de URL');
+      console.log('[ML-08] Galeria vazia ââ‚¬” pulando teste de URL');
       return;
     }
 
@@ -385,7 +385,7 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
     const imgSrc = await firstImg.getAttribute('src').catch(() => null);
 
     if (!imgSrc) {
-      console.log('[ML-08] Nenhum img src encontrado Ã¢â‚¬â€ pulando');
+      console.log('[ML-08] Nenhum img src encontrado ââ‚¬” pulando');
       return;
     }
 
@@ -398,6 +398,6 @@ test.describe('ML Ã¢â‚¬â€ Biblioteca de MÃƒÂ­dia (MCP Abrangente)
     expect(response.status(), `Imagem deve ser acessÃƒÂ­vel: ${fullUrl}`).toBeLessThan(400);
 
     await snap(page, 'ML-08-image-url-accessible');
-    console.log(`[ML-08] Ã¢Å“â€¦ URL da imagem acessÃƒÂ­vel (${response.status()}): ${fullUrl}`);
+    console.log(`[ML-08] âÅ“â€¦ URL da imagem acessÃƒÂ­vel (${response.status()}): ${fullUrl}`);
   });
 });

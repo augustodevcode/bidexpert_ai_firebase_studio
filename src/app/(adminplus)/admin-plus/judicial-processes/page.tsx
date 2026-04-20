@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de Processos Judiciais â€” Admin Plus.
+ * @fileoverview Página CRUD de Processos Judiciais — Admin Plus.
  */
 'use client';
 
@@ -56,7 +56,7 @@ export default function JudicialProcessesPage() {
     if (!deleting) return;
     const res = await deleteJudicialProcess(deleting.id);
     if (res?.success) {
-      toast.success('Processo excluÃ­do.');
+      toast.success('Processo excluído.');
       setDeleting(null);
       refresh();
     } else {
@@ -68,7 +68,7 @@ export default function JudicialProcessesPage() {
     <div className="space-y-6" data-ai-id="judicial-processes-page">
       <PageHeader
         title="Processos Judiciais"
-        description="Gerencie os processos judiciais vinculados aos leilÃµes."
+        description="Gerencie os processos judiciais vinculados aos leilões."
         icon={Gavel}
       >
         <Button onClick={() => { setEditing(null); setFormOpen(true); }} data-ai-id="judicial-process-btn-new">

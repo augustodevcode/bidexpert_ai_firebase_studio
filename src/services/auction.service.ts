@@ -196,9 +196,16 @@ export class AuctionService {
         include: {
           Lot: {
             include: {
-              AssetsOnLots: { select: { assetId: true } }
+              AssetsOnLots: {
+                include: {
+                  Asset: {
+                    select: { id: true, title: true, judicialProcessId: true, publicId: true }
+                  }
+                }
+              }
             }
-          }
+          },
+          JudicialProcess: { select: { id: true, processNumber: true } }
         }
       });
 
@@ -249,7 +256,39 @@ export class AuctionService {
         }
       }
 
-      // 3. Verificar se há pelo menos 1 Lote pronto
+      // 3. Verificar congruência de Processo Judicial (RN-030)
+      // @ts-ignore
+      if (auction.judicialProcessId) {
+        const auctionJpId = auction.judicialProcessId;
+        // @ts-ignore
+        const jpNumber = auction.JudicialProcess?.processNumber || auctionJpId.toString();
+        
+        for (const lot of lots) {
+          // @ts-ignore
+          const assetsOnLots = lot.AssetsOnLots || [];
+          for (const aol of assetsOnLots) {
+            // @ts-ignore
+            const asset = aol.Asset;
+            if (!asset) continue;
+
+            if (!asset.judicialProcessId) {
+              const lotTitle = lot.title || `Lote #${lot.number || lot.id}`;
+              errors.push(
+                `O ativo '${asset.title || asset.publicId}' não possui processo judicial vinculado. ` +
+                `Não pode ser associado a leilão judicial (Lote: ${lotTitle}).`
+              );
+            } else if (asset.judicialProcessId.toString() !== auctionJpId.toString()) {
+              const lotTitle = lot.title || `Lote #${lot.number || lot.id}`;
+              errors.push(
+                `O ativo '${asset.title || asset.publicId}' pertence ao processo judicial '${asset.judicialProcessId}', ` +
+                `diferente do leilão ('${jpNumber}'). Vinculação incongruente (Lote: ${lotTitle}).`
+              );
+            }
+          }
+        }
+      }
+
+      // 4. Verificar se há pelo menos 1 Lote pronto
       if (lotsReady === 0) {
         errors.push(`Nenhum dos ${lots.length} Lotes está pronto para abertura. Todos possuem pendências.`);
       } else if (lotsWithIssues.length > 0) {

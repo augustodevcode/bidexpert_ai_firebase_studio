@@ -13,10 +13,7 @@ import type { PasswordResetTokenRow } from './types';
 import type { PaginatedResponse, ActionResult } from '@/lib/admin-plus/types';
 
 /* ───────── LIST ───────── */
-export const listPasswordResetTokens = createAdminAction<
-  z.ZodObject<{ page: z.ZodNumber; pageSize: z.ZodNumber; search: z.ZodOptional<z.ZodString> }>,
-  PaginatedResponse<PasswordResetTokenRow>
->({
+export const listPasswordResetTokens = createAdminAction({
   inputSchema: z.object({
     page: z.number().min(1).default(1),
     pageSize: z.number().min(1).max(100).default(25),

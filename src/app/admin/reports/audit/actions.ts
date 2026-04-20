@@ -9,6 +9,7 @@
 import { prisma } from '@/lib/prisma';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { buildAuditData } from './audit-utils';
+import type { AuditData } from './audit-utils';
 export type { AuditData } from './audit-utils';
 
 /**
@@ -20,7 +21,7 @@ export async function getAuditDataAction(): Promise<AuditData> {
   
   try {
     const allAuctions = await prisma.auction.findMany({
-      where: { tenantId },
+      where: { tenantId: tenantId as any },
       include: {
         _count: {
           select: { Lot: true, AuctionStage: true },
@@ -38,7 +39,7 @@ export async function getAuditDataAction(): Promise<AuditData> {
     });
 
     const allLots = await prisma.lot.findMany({
-      where: { tenantId },
+      where: { tenantId: tenantId as any },
       include: {
         _count: {
           select: { AssetsOnLots: true, Bid: true, LotQuestion: true, Review: true, LotStagePrice: true },
@@ -47,7 +48,7 @@ export async function getAuditDataAction(): Promise<AuditData> {
     });
     
     const allAssets = await prisma.asset.findMany({
-        where: { tenantId },
+        where: { tenantId: tenantId as any },
         include: {
           _count: {
             select: { AssetsOnLots: true },
@@ -56,11 +57,11 @@ export async function getAuditDataAction(): Promise<AuditData> {
     });
 
     const allDirectSales = await prisma.directSaleOffer.findMany({
-        where: { tenantId },
+        where: { tenantId: tenantId as any },
     });
 
     const allUsers = await prisma.user.findMany({
-        where: { UsersOnTenants: { some: { tenantId: tenantId } } },
+        where: { UsersOnTenants: { some: { tenantId: tenantId as any } } },
         include: {
             _count: {
                 select: { UserDocument: true }
@@ -69,17 +70,17 @@ export async function getAuditDataAction(): Promise<AuditData> {
     });
 
     const allSellers = await prisma.seller.findMany({
-        where: { tenantId },
+        where: { tenantId: tenantId as any },
     });
 
 
     return buildAuditData({
-      auctions: allAuctions,
-      lots: allLots,
-      assets: allAssets,
-      directSales: allDirectSales,
-      users: allUsers,
-      sellers: allSellers,
+      auctions: allAuctions as any,
+      lots: allLots as any,
+      assets: allAssets as any,
+      directSales: allDirectSales as any,
+      users: allUsers as any,
+      sellers: allSellers as any,
     });
   } catch (error: any) {
     console.error("[Action - getAuditDataAction] Error fetching audit data:", error);

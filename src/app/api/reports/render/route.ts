@@ -60,11 +60,11 @@ Handlebars.registerHelper('formatNumber', function(value: number | null, decimal
   }).format(value);
 });
 
-Handlebars.registerHelper('ifEquals', function(arg1: any, arg2: any, options: any) {
+Handlebars.registerHelper('ifEquals', function(this: any, arg1: any, arg2: any, options: any) {
   return (arg1 === arg2) ? options.fn(this) : options.inverse(this);
 });
 
-Handlebars.registerHelper('ifNotEquals', function(arg1: any, arg2: any, options: any) {
+Handlebars.registerHelper('ifNotEquals', function(this: any, arg1: any, arg2: any, options: any) {
   return (arg1 !== arg2) ? options.fn(this) : options.inverse(this);
 });
 
@@ -224,7 +224,7 @@ async function fetchDataForContext(
       };
     
     case 'BIDDER':
-      const user = await prisma.user.findFirst({
+      const user = await (prisma.user.findFirst as any)({
         where: { id: bigIntId, tenantId },
         include: {
           UserAddress: true,
@@ -458,7 +458,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const tenantId = await getTenantIdFromRequest();
+    const tenantIdStr = await getTenantIdFromRequest();
+    const tenantIdBigInt = tenantIdStr ? BigInt(tenantIdStr) : null;
     const body: RenderRequest = await request.json();
     
     const { 
@@ -479,7 +480,7 @@ export async function POST(request: NextRequest) {
       const report = await prisma.report.findFirst({
         where: { 
           id: BigInt(reportId), 
-          tenantId,
+          tenantId: tenantIdBigInt,
         },
       });
       
@@ -509,8 +510,8 @@ export async function POST(request: NextRequest) {
       totalPages: '{{totalPages}}',
     };
     
-    if (dataContext && entityId) {
-      const contextData = await fetchDataForContext(dataContext, entityId, tenantId);
+    if (dataContext && entityId && tenantIdBigInt) {
+      const contextData = await fetchDataForContext(dataContext, entityId, tenantIdBigInt);
       data = { ...data, ...contextData };
     }
     
@@ -538,7 +539,7 @@ export async function POST(request: NextRequest) {
     // Generate PDF
     const pdfBuffer = await generatePDF(compiledHtml, css, options);
     
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="relatorio-${Date.now()}.pdf"`,

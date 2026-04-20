@@ -64,7 +64,7 @@ jobs:
           echo "✅ DATABASE_URL válida para PostgreSQL"
 
       - name: 🗄️ Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
 
       - name: 🔐 Validate Promotion Source (DEMO ➜ PROD)
         run: |
@@ -131,7 +131,7 @@ jobs:
           echo "✅ DATABASE_URL válida para PostgreSQL"
 
       - name: 🗄️ Generate Prisma Client
-        run: npx prisma generate
+        run: npm run prisma:generate
         env:
           POSTGRES_PRISMA_URL: ${{ secrets.PROD_POSTGRES_PRISMA_URL || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL || secrets.PRD_DATABASE_URL || secrets.SUPABASE_DATABASE_URL }}
           POSTGRES_URL_NON_POOLING: ${{ secrets.PROD_POSTGRES_URL_NON_POOLING || secrets.PROD_DATABASE_URL_DIRECT || secrets.PRD_DATABASE_URL_DIRECT || secrets.SUPABASE_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL || secrets.PRD_DATABASE_URL || secrets.SUPABASE_DATABASE_URL }}
@@ -141,7 +141,7 @@ jobs:
         if: >
           (github.event_name == 'workflow_dispatch' && github.event.inputs.run_migrate == 'true') ||
           contains(github.event.head_commit.message, '[migrate]')
-        run: npx prisma db push --accept-data-loss
+        run: npx prisma@5.22.0 db push --accept-data-loss
         env:
           POSTGRES_PRISMA_URL: ${{ secrets.PROD_POSTGRES_PRISMA_URL || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL || secrets.PRD_DATABASE_URL || secrets.SUPABASE_DATABASE_URL }}
           POSTGRES_URL_NON_POOLING: ${{ secrets.PROD_POSTGRES_URL_NON_POOLING || secrets.PROD_DATABASE_URL_DIRECT || secrets.PRD_DATABASE_URL_DIRECT || secrets.SUPABASE_DATABASE_URL_DIRECT || secrets.DATABASE_URL || secrets.PROD_DATABASE_URL || secrets.PRD_DATABASE_URL || secrets.SUPABASE_DATABASE_URL }}

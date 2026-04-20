@@ -346,6 +346,18 @@
   .wrapper-filter-price-display { @apply flex justify-between text-xs text-muted-foreground; }
   .text-filter-price-min { @apply inline; }
   .text-filter-price-max { @apply inline; }
+
+  /* Booking.com-style price range component */
+  .wrapper-filter-price-booking     { @apply pt-1 space-y-3; }
+  .wrapper-filter-price-inputs      { @apply flex gap-2; }
+  .wrapper-filter-price-input-group { @apply flex-1 space-y-1; }
+  .label-filter-price-input         { @apply text-xs text-muted-foreground font-medium; }
+  .wrapper-filter-price-input-field { @apply relative flex items-center; }
+  .prefix-filter-price-input        { @apply absolute left-2 text-xs text-muted-foreground pointer-events-none select-none; }
+  .input-filter-price-value         { @apply h-8 pl-7 text-sm; }
+  .wrapper-filter-price-histogram   { @apply flex items-end gap-px h-12 px-0.5; }
+  .bar-filter-price-histogram       { @apply flex-1 bg-muted rounded-sm min-h-[3px] transition-colors duration-150; }
+  .bar-filter-price-histogram--active { @apply bg-primary/60; }
   .content-filter-accordion-scroll { @apply space-y-2 max-h-60 overflow-y-auto pr-2 pb-3; }
   .content-filter-accordion-dates { @apply space-y-3 pt-1 pb-3; }
   .wrapper-filter-date-field { @apply space-y-1; }

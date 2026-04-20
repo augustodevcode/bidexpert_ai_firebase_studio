@@ -10,7 +10,7 @@ import { SellerRepository } from '@/repositories/seller.repository';
 import { AuctionRepository } from '@/repositories/auction.repository'; // Importar
 import type { SellerFormData, SellerProfileInfo, Lot, Auction } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
-import type { Prisma } from '@prisma/client';
+import { Prisma, AuctionStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -27,7 +27,7 @@ export interface SellerDashboardData {
   salesByMonth: { name: string; Faturamento: number }[];
 }
 
-const NON_PUBLIC_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
+const NON_PUBLIC_STATUSES: AuctionStatus[] = [AuctionStatus.RASCUNHO, AuctionStatus.EM_PREPARACAO];
 
 export class SellerService {
   private sellerRepository: SellerRepository;
@@ -196,7 +196,7 @@ export class SellerService {
         cityId, stateId, latitude, longitude, ...restOfData 
       } = data;
 
-      const dataToUpdate: Partial<Prisma.SellerUpdateInput> = { ...restOfData };
+      const dataToUpdate: any = { ...restOfData };
 
       if (data.name) {
         const newSlug = slugify(data.name);

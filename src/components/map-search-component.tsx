@@ -11,6 +11,7 @@ import L, { type LatLngBounds } from 'leaflet';
 import { renderToString } from 'react-dom/server';
 import { Car, Home, Gavel, Tractor, Monitor, Package, Building2, Briefcase } from 'lucide-react';
 import type { Lot, Auction, PlatformSettings, DirectSaleOffer } from '@/types';
+import BidExpertCard from '@/components/BidExpertCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   buildLocationDescriptor,
@@ -360,32 +361,18 @@ export default function MapSearchComponent({
   }, [hoveredItemId]);
 
   const renderPopupCard = useCallback((item: CoordinatedItem) => {
-    const market = getItemMarketValue(item);
-    const bid = getItemBidValue(item);
-    const discount = getItemDiscount(item);
-
+    const cardType: 'lot' | 'auction' | 'direct_sale' =
+      itemType === 'lots' ? 'lot' : itemType === 'auctions' ? 'auction' : 'direct_sale';
     return (
-      <div className="map-popup-card" data-ai-id="map-search-popup-card">
-        <div className="map-popup-arrow" />
-        <div className="map-popup-media">
-          <img src={getItemImage(item)} alt="Item do mapa" loading="lazy" />
-        </div>
-        <div className="map-popup-content">
-          <div className="map-popup-label">Valor de mercado vs lance atual</div>
-          <div className="map-popup-values">
-            <strong>{formatPrice(market)}</strong>
-            <span>vs</span>
-            <strong>{formatPrice(bid)}</strong>
-          </div>
-          <div className="map-popup-profit">Lucro Potencial {formatPrice(Math.max(market - bid, 0))} ({discount}%)</div>
-          <svg className="map-popup-spark" viewBox="0 0 100 20" preserveAspectRatio="none">
-            <path d="M0 15 L20 10 L40 12 L60 5 L80 8 L100 0" />
-          </svg>
-          <button type="button" className="map-popup-cta" data-ai-id="map-popup-bid-button">Dar Lance</button>
-        </div>
+      <div data-ai-id="map-search-popup-card" className="w-[280px]">
+        <BidExpertCard
+          item={item as any}
+          type={cardType}
+          platformSettings={platformSettings ?? undefined}
+        />
       </div>
     );
-  }, []);
+  }, [itemType, platformSettings]);
 
   const renderMarkerPopup = useCallback((item: CoordinatedItem) => renderPopupCard(item), [renderPopupCard]);
 

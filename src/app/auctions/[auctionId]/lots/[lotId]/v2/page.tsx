@@ -178,8 +178,8 @@ export default function LotDetailPageV2({ params }: { params: { lotId: string; a
       numero: `${index + 1}ª praça`,
       data: format(new Date(stage.startDate), 'dd/MM', { locale: ptBR }),
       hora: format(new Date(stage.startDate), 'HH:mm', { locale: ptBR }),
-      lanceInicial: stage.initialPrice || 0,
-      desagio: valorAvaliacao && stage.initialPrice ? Math.round(((valorAvaliacao - stage.initialPrice) / valorAvaliacao) * 100) : 0,
+      lanceInicial: lot.initialPrice || 0,
+      desagio: valorAvaliacao && lot.initialPrice ? Math.round(((valorAvaliacao - lot.initialPrice) / valorAvaliacao) * 100) : 0,
       status: new Date() > new Date(stage.startDate) && new Date() < new Date(stage.endDate) ? 'destaque' : 'inativa'
     })) || [];
     

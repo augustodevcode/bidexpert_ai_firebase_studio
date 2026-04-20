@@ -227,6 +227,15 @@ gh run view --log
 **Causa**: o workflow não projetou os secrets do ambiente para as variáveis genéricas `POSTGRES_PRISMA_URL` e `POSTGRES_URL_NON_POOLING`.
 **Solução**: configure os secrets `DEMO_*`, `HML_*` ou `PROD_*` e mantenha os fallbacks legados apenas durante a transição.
 
+### Erro: `Provisioning integrations failed` antes do build real
+
+**Causa**: a falha pode estar na camada de integrations/storage da Vercel, mesmo com `DATABASE_URL` e `POSTGRES_*` corretas.
+
+**Solução**:
+1. Rode `vercel integration list --all --format=json` e elimine stores `suspended` órfãos com `vercel integration-resource remove <resource> --yes`.
+2. Se um resource ativo estiver marcado como `required` em `preview`, mas o projeto já usar as variáveis genéricas de banco sem depender do prefixo desse provider, desconecte o resource do projeto e retrigger o preview.
+3. Só trate como bug de aplicação depois que o deployment sair do erro instantâneo e entrar em build real.
+
 ### Erro: "Can't reach database server" em db push
 
 **Causa**: Usando URL pooled (pgbouncer) para operação de schema

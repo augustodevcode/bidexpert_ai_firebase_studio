@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,6 +41,12 @@ interface FKOption {
   id: string;
   label: string;
 }
+
+const EMPTY_SELECT_VALUE = '__none__';
+const parseOptionalNumber = (value: unknown) => {
+  if (value === '' || value === null || value === undefined) return undefined;
+  return Number(value);
+};
 
 export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitting }: LotFormProps) {
   const isEditing = Boolean(defaultValues?.id);
@@ -99,13 +105,13 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
       listStatesAction({ page: 1, pageSize: 100 }),
       listSellers({ page: 1, pageSize: 500 }),
     ]).then(([aRes, auRes, cRes, scRes, ciRes, stRes, seRes]) => {
-      if (aRes.success && aRes.data) setAuctions(aRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).title ?? (r as Record<string, unknown>).name ?? r.id) })));
-      if (auRes.success && auRes.data) setAuctioneers(auRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
-      if (cRes.success && cRes.data) setCategories(cRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
-      if (scRes.success && scRes.data) setSubcategories(scRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
-      if (ciRes.success && ciRes.data) setCities(ciRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
-      if (stRes.success && stRes.data) setStates(stRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: `${(r as Record<string, unknown>).name} (${(r as Record<string, unknown>).uf})` })));
-      if (seRes.success && seRes.data) setSellers(seRes.data.data.map((r: Record<string, unknown>) => ({ id: String(r.id), label: String((r as Record<string, unknown>).name ?? r.id) })));
+      if (aRes.success && aRes.data) setAuctions(aRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).title ?? (r as any).name ?? r.id) })));
+      if (auRes.success && auRes.data) setAuctioneers(auRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
+      if (cRes.success && cRes.data) setCategories(cRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
+      if (scRes.success && scRes.data) setSubcategories(scRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
+      if (ciRes.success && ciRes.data) setCities(ciRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
+      if (stRes.success && stRes.data) setStates(stRes.data.data.map((r) => ({ id: String(r.id), label: `${(r as any).name} (${(r as any).uf})` })));
+      if (seRes.success && seRes.data) setSellers(seRes.data.data.map((r) => ({ id: String(r.id), label: String((r as any).name ?? r.id) })));
     });
   }, [open]);
 
@@ -147,11 +153,18 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
     }
   }, [open, defaultValues, form]);
 
+  const setOptionalSelectValue = (field: keyof LotFormValues, value: string) => {
+    form.setValue(field, value === EMPTY_SELECT_VALUE ? '' : value);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-2xl overflow-y-auto" data-ai-id="lot-form-sheet">
         <SheetHeader>
           <SheetTitle>{isEditing ? 'Editar Lote' : 'Novo Lote'}</SheetTitle>
+          <SheetDescription>
+            {isEditing ? 'Atualize os dados do lote.' : 'Preencha os dados do novo lote.'}
+          </SheetDescription>
         </SheetHeader>
 
         <CrudFormShell form={form} onSubmit={onSubmit} isSubmitting={isSubmitting}>
@@ -165,7 +178,7 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
               <Input {...form.register('type')} placeholder="Tipo (ex: Imóvel, Veículo)" data-ai-id="lot-type-input" />
             </Field>
             <Field label="Número" name="number" form={form}>
-              <Input type="number" {...form.register('number', { valueAsNumber: true })} placeholder="Nº do lote" data-ai-id="lot-number-input" />
+              <Input type="number" {...form.register('number', { setValueAs: parseOptionalNumber })} placeholder="Nº do lote" data-ai-id="lot-number-input" />
             </Field>
           </div>
 
@@ -183,12 +196,12 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
               </Select>
             </Field>
             <Field label="Modo de Venda" name="saleMode" form={form}>
-              <Select value={form.watch('saleMode') ?? ''} onValueChange={(v) => form.setValue('saleMode', v)}>
+              <Select value={form.watch('saleMode') ?? ''} onValueChange={(v) => setOptionalSelectValue('saleMode', v)}>
                 <SelectTrigger data-ai-id="lot-sale-mode-select">
                   <SelectValue placeholder="Modo de venda" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>Nenhum</SelectItem>
                   {LOT_SALE_MODES.map((s) => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
@@ -233,12 +246,12 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Leiloeiro" name="auctioneerId" form={form}>
-              <Select value={form.watch('auctioneerId') ?? ''} onValueChange={(v) => form.setValue('auctioneerId', v)}>
+              <Select value={form.watch('auctioneerId') ?? ''} onValueChange={(v) => setOptionalSelectValue('auctioneerId', v)}>
                 <SelectTrigger data-ai-id="lot-auctioneer-select">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>Nenhum</SelectItem>
                   {auctioneers.map((o) => (
                     <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
                   ))}
@@ -246,12 +259,12 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
               </Select>
             </Field>
             <Field label="Vendedor" name="sellerId" form={form}>
-              <Select value={form.watch('sellerId') ?? ''} onValueChange={(v) => form.setValue('sellerId', v)}>
+              <Select value={form.watch('sellerId') ?? ''} onValueChange={(v) => setOptionalSelectValue('sellerId', v)}>
                 <SelectTrigger data-ai-id="lot-seller-select">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>Nenhum</SelectItem>
                   {sellers.map((o) => (
                     <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
                   ))}
@@ -262,12 +275,12 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Categoria" name="lotCategoryId" form={form}>
-              <Select value={form.watch('lotCategoryId') ?? ''} onValueChange={(v) => form.setValue('lotCategoryId', v)}>
+              <Select value={form.watch('lotCategoryId') ?? ''} onValueChange={(v) => setOptionalSelectValue('lotCategoryId', v)}>
                 <SelectTrigger data-ai-id="lot-category-select">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>Nenhuma</SelectItem>
                   {categories.map((o) => (
                     <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
                   ))}
@@ -275,12 +288,12 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
               </Select>
             </Field>
             <Field label="Subcategoria" name="subcategoryId" form={form}>
-              <Select value={form.watch('subcategoryId') ?? ''} onValueChange={(v) => form.setValue('subcategoryId', v)}>
+              <Select value={form.watch('subcategoryId') ?? ''} onValueChange={(v) => setOptionalSelectValue('subcategoryId', v)}>
                 <SelectTrigger data-ai-id="lot-subcategory-select">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>Nenhuma</SelectItem>
                   {subcategories.map((o) => (
                     <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
                   ))}
@@ -295,24 +308,24 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Preço *" name="price" form={form}>
-              <Input type="number" step="0.01" {...form.register('price', { valueAsNumber: true })} data-ai-id="lot-price-input" />
+              <Input type="number" step="0.01" {...form.register('price', { setValueAs: parseOptionalNumber })} data-ai-id="lot-price-input" />
             </Field>
             <Field label="Preço Inicial" name="initialPrice" form={form}>
-              <Input type="number" step="0.01" {...form.register('initialPrice', { valueAsNumber: true })} data-ai-id="lot-initial-price-input" />
+              <Input type="number" step="0.01" {...form.register('initialPrice', { setValueAs: parseOptionalNumber })} data-ai-id="lot-initial-price-input" />
             </Field>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="2º Lance Inicial" name="secondInitialPrice" form={form}>
-              <Input type="number" step="0.01" {...form.register('secondInitialPrice', { valueAsNumber: true })} data-ai-id="lot-second-price-input" />
+              <Input type="number" step="0.01" {...form.register('secondInitialPrice', { setValueAs: parseOptionalNumber })} data-ai-id="lot-second-price-input" />
             </Field>
             <Field label="Incremento de Lance" name="bidIncrementStep" form={form}>
-              <Input type="number" step="0.01" {...form.register('bidIncrementStep', { valueAsNumber: true })} data-ai-id="lot-bid-increment-input" />
+              <Input type="number" step="0.01" {...form.register('bidIncrementStep', { setValueAs: parseOptionalNumber })} data-ai-id="lot-bid-increment-input" />
             </Field>
           </div>
 
           <Field label="Desconto (%)" name="discountPercentage" form={form}>
-            <Input type="number" step="0.01" {...form.register('discountPercentage', { valueAsNumber: true })} placeholder="0.00" data-ai-id="lot-discount-input" />
+            <Input type="number" step="0.01" {...form.register('discountPercentage', { setValueAs: parseOptionalNumber })} placeholder="0.00" data-ai-id="lot-discount-input" />
           </Field>
 
           {/* === Localização === */}
@@ -321,12 +334,12 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Cidade" name="cityId" form={form}>
-              <Select value={form.watch('cityId') ?? ''} onValueChange={(v) => form.setValue('cityId', v)}>
+              <Select value={form.watch('cityId') ?? ''} onValueChange={(v) => setOptionalSelectValue('cityId', v)}>
                 <SelectTrigger data-ai-id="lot-city-select">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>Nenhuma</SelectItem>
                   {cities.map((o) => (
                     <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
                   ))}
@@ -334,12 +347,12 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
               </Select>
             </Field>
             <Field label="Estado" name="stateId" form={form}>
-              <Select value={form.watch('stateId') ?? ''} onValueChange={(v) => form.setValue('stateId', v)}>
+              <Select value={form.watch('stateId') ?? ''} onValueChange={(v) => setOptionalSelectValue('stateId', v)}>
                 <SelectTrigger data-ai-id="lot-state-select">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>Nenhum</SelectItem>
                   {states.map((o) => (
                     <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
                   ))}
@@ -354,10 +367,10 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Latitude" name="latitude" form={form}>
-              <Input type="number" step="any" {...form.register('latitude', { valueAsNumber: true })} data-ai-id="lot-lat-input" />
+              <Input type="number" step="any" {...form.register('latitude', { setValueAs: parseOptionalNumber })} data-ai-id="lot-lat-input" />
             </Field>
             <Field label="Longitude" name="longitude" form={form}>
-              <Input type="number" step="any" {...form.register('longitude', { valueAsNumber: true })} data-ai-id="lot-lng-input" />
+              <Input type="number" step="any" {...form.register('longitude', { setValueAs: parseOptionalNumber })} data-ai-id="lot-lng-input" />
             </Field>
           </div>
 
@@ -376,7 +389,7 @@ export function LotForm({ open, onOpenChange, onSubmit, defaultValues, isSubmitt
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Valor do Depósito" name="depositGuaranteeAmount" form={form}>
-              <Input type="number" step="0.01" {...form.register('depositGuaranteeAmount', { valueAsNumber: true })} data-ai-id="lot-deposit-amount-input" />
+              <Input type="number" step="0.01" {...form.register('depositGuaranteeAmount', { setValueAs: parseOptionalNumber })} data-ai-id="lot-deposit-amount-input" />
             </Field>
             <Field label="Informações do Depósito" name="depositGuaranteeInfo" form={form}>
               <Input {...form.register('depositGuaranteeInfo')} placeholder="Detalhes..." data-ai-id="lot-deposit-info-input" />

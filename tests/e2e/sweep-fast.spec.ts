@@ -607,9 +607,14 @@ test.describe('[SWEEP] Map-Search Modal z-index Fix', () => {
     );
     const src = fs.readFileSync(dialogPath, 'utf-8');
 
-    expect(src, 'DialogOverlay deve ter z-[1200]').toContain('z-[1200]');
-    expect(src, 'DialogContent deve ter z-[1201]').toContain('z-[1201]');
-    console.log('[MAP-SEARCH] ✅ z-index fix confirmado em dialog.tsx');
+    // z-index was upgraded from 1200/1201 to 3000/3001 for better stacking
+    const overlayMatch = src.match(/DialogOverlay[\s\S]*?z-\[(\d+)\]/);
+    const contentMatch = src.match(/DialogContent[\s\S]*?z-\[(\d+)\]/);
+    const overlayZ = overlayMatch ? parseInt(overlayMatch[1], 10) : 0;
+    const contentZ = contentMatch ? parseInt(contentMatch[1], 10) : 0;
+    expect(overlayZ, `DialogOverlay z-index deve ser >= 1200 (atual: ${overlayZ})`).toBeGreaterThanOrEqual(1200);
+    expect(contentZ, `DialogContent z-index deve ser >= 1201 (atual: ${contentZ})`).toBeGreaterThanOrEqual(1201);
+    console.log(`[MAP-SEARCH] ✅ z-index fix confirmado em dialog.tsx (overlay: ${overlayZ}, content: ${contentZ})`);
   });
 
   test('modal de mapa flutua acima do header (z-index ≥ 1200)', async ({ page }) => {

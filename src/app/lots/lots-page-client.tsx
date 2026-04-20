@@ -4,7 +4,7 @@
  */
 'use client';
 
-import AuctionLotCardV2 from '@/components/cards/auction-lot-card-v2';
+import BidExpertCard from '@/components/BidExpertCard';
 import type { AuctionItem } from '@/components/cards/auction-lot-card-v2.types';
 import type { GroupedLots } from '@/services/lot-card-v2.service';
 import { LotsMarketplaceOverview } from './lots-marketplace-overview';
@@ -45,7 +45,9 @@ function Section({ title, description, items, dataAiId, anchorId }: SectionProps
 
       <div className="grid grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => (
-          <AuctionLotCardV2 key={item.id} item={item} />
+          <div key={item.id} className="flex h-full w-full justify-center">
+            <BidExpertCard item={item} type="lot" />
+          </div>
         ))}
       </div>
     </section>

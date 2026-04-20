@@ -1,7 +1,7 @@
 /**
- * @fileoverview Testes unitarios do rodape de Dev Info no dashboard.
- * BDD: Garantir que o rodape exibe as informacoes padrao de ambiente.
- * TDD: Validar renderizacao de labels e valores do contexto de autenticacao.
+ * @fileoverview Testes unitarios do painel de Dev Info reutilizavel.
+ * BDD: Garantir que o painel renderiza os dados padrao e suporta uso sem titulo no modal.
+ * TDD: Validar labels, valores e variacoes de apresentacao.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -30,5 +30,12 @@ describe('DevInfoIndicator', () => {
     // DB system falls back to 'MYSQL' when NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM is not set
     expect(screen.getByTestId('dev-info-indicator')).toBeInTheDocument();
     expect(screen.getByText('Project')).toBeInTheDocument();
+  });
+
+  it('permite ocultar o titulo para uso dentro do modal', () => {
+    render(<DevInfoIndicator showTitle={false} className="border-0 bg-transparent p-0" />);
+
+    expect(screen.queryByText('Dev Info')).not.toBeInTheDocument();
+    expect(screen.getByTestId('dev-info-indicator')).toBeInTheDocument();
   });
 });

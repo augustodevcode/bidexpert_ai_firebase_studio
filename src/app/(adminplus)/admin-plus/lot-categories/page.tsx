@@ -1,5 +1,5 @@
 /**
- * @fileoverview PÃ¡gina CRUD de LotCategory â€” Admin Plus.
+ * @fileoverview Página CRUD de LotCategory — Admin Plus.
  */
 'use client';
 
@@ -48,7 +48,7 @@ export default function LotCategoriesPage() {
   const handleSubmit = useCallback(
     async (values: Record<string, unknown>) => {
       const res = editRow
-        ? await updateLotCategory({ id: editRow.id, data: values as Parameters<typeof updateLotCategory>[0]['data'] })
+        ? await updateLotCategory({ id: editRow.id, data: values as any })
         : await createLotCategory(values as Parameters<typeof createLotCategory>[0]);
       if (res?.success) {
         toast.success(editRow ? 'Categoria atualizada' : 'Categoria criada');
@@ -66,7 +66,7 @@ export default function LotCategoriesPage() {
     if (!deleteRow) return;
     const res = await deleteLotCategory({ id: deleteRow.id });
     if (res?.success) {
-      toast.success('Categoria excluÃ­da');
+      toast.success('Categoria excluída');
       setDeleteRow(null);
       table.refresh();
     } else {
@@ -106,7 +106,7 @@ export default function LotCategoriesPage() {
         onOpenChange={(v) => !v && setDeleteRow(null)}
         onConfirm={handleConfirmDelete}
         title="Excluir Categoria"
-        description={`Excluir a categoria "${deleteRow?.name}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
+        description={`Excluir a categoria "${deleteRow?.name}"? Esta ação não pode ser desfeita.`}
         data-ai-id="lot-categories-delete-dialog"
       />
     </div>
