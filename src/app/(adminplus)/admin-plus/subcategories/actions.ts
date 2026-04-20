@@ -36,8 +36,7 @@ export const listSubcategories = createAdminAction({
     const where: Record<string, unknown> = {
       OR: [
         { tenantId: ctx.tenantIdBigInt },
-        { tenantId: null },
-        { isGlobal: true },
+        { tenantId: null, isGlobal: true },
       ],
     };
     if (search) {

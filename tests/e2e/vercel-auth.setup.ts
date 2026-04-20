@@ -42,8 +42,17 @@ setup('obtain Vercel SSO cookie via share link', async ({ page }) => {
 
   expect(status).toBeLessThan(400);
 
-  // Wait a moment for any async cookie setting
-  await page.waitForTimeout(3_000);
+  // Wait deterministically for the _vercel_jwt cookie to be set
+  await expect.poll(
+    async () => {
+      const cookies = await page.context().cookies();
+      return cookies.some(c => c.name === '_vercel_jwt');
+    },
+    { timeout: 10_000, intervals: [500] }
+  ).toBe(true).catch(() => {
+    // Cookie may not appear if protection type uses a different mechanism;
+    // proceed and let the subsequent verify step log a warning.
+  });
 
   // Persist the authenticated storage state (cookies + localStorage)
   await page.context().storageState({ path: STORAGE_STATE_PATH });

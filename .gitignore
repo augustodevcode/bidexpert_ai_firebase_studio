@@ -142,3 +142,18 @@ _q3.js
 start-dev.js
 scripts/cleanup-auction-185.js
 scripts/create-lots-189.ts
+
+# Build and runtime log artifacts
+build_*.txt
+build_logs*.txt
+build_output*.txt
+tsc_exp*.txt
+test-output*.txt
+test_output*.txt
+test_full*.txt
+test_partial*.txt
+test_login*.txt
+server_logs.txt
+monitor*.txt
+last_*.txt
+output.txt

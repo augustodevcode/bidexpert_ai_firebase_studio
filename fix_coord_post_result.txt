@@ -1,3 +1,0 @@
-STATUS: 307
-BODY:
-Redirecting...

@@ -458,7 +458,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const tenantId = await getTenantIdFromRequest();
+    const tenantIdStr = await getTenantIdFromRequest();
+    const tenantIdBigInt = tenantIdStr ? BigInt(tenantIdStr) : null;
     const body: RenderRequest = await request.json();
     
     const { 
@@ -479,8 +480,8 @@ export async function POST(request: NextRequest) {
       const report = await prisma.report.findFirst({
         where: { 
           id: BigInt(reportId), 
-          tenantId,
-        } as any,
+          tenantId: tenantIdBigInt,
+        },
       });
       
       if (!report) {
@@ -509,8 +510,8 @@ export async function POST(request: NextRequest) {
       totalPages: '{{totalPages}}',
     };
     
-    if (dataContext && entityId) {
-      const contextData = await fetchDataForContext(dataContext, entityId, tenantId as unknown as bigint);
+    if (dataContext && entityId && tenantIdBigInt) {
+      const contextData = await fetchDataForContext(dataContext, entityId, tenantIdBigInt);
       data = { ...data, ...contextData };
     }
     
