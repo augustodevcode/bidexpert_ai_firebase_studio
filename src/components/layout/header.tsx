@@ -105,6 +105,7 @@ export default function Header({
   const siteTagline = platformSettings?.siteTagline;
   const siteLogoUrl = platformSettings?.logoUrl;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   const currencyOptions: Array<{ code: 'BRL' | 'USD' | 'EUR'; label: string }> = [
@@ -431,8 +432,8 @@ export default function Header({
                 <SheetContent side="left" className="sheet-mobile-menu" data-ai-id="header-mobile-sheet">
                     <SheetHeader className="header-mobile-sheet" data-ai-id="header-mobile-sheet-header">
                       <SheetTitle className="title-mobile-sheet" data-ai-id="header-mobile-sheet-title">
-                         {siteLogoUrl ? (
-                            <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="img-mobile-logo" />
+                         {siteLogoUrl && !logoError ? (
+                            <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="img-mobile-logo" onError={() => setLogoError(true)} />
                           ) : (
                             <Avatar className="avatar-mobile-logo" data-ai-id="header-mobile-avatar">
                                 <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
@@ -468,8 +469,8 @@ export default function Header({
             </div>
             <Link href="/" className="link-header-logo-main" data-ai-id="header-logo-link-main">
               <div className="wrapper-logo-text" data-ai-id="header-logo-wrapper">
-                 {siteLogoUrl ? (
-                    <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="img-header-logo" />
+                 {siteLogoUrl && !logoError ? (
+                    <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="img-header-logo" onError={() => setLogoError(true)} />
                  ) : (
                     <Coins className="icon-header-logo-main" />
                  )}
