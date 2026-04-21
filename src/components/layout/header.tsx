@@ -119,6 +119,10 @@ export default function Header({
   }, []);
 
   useEffect(() => {
+    setLogoError(false);
+  }, [siteLogoUrl]);
+
+  useEffect(() => {
     if (!isClient) return;
     async function fetchClientSideData() {
       setIsLoading(true);
@@ -469,8 +473,8 @@ export default function Header({
             </div>
             <Link href="/" className="link-header-logo-main" data-ai-id="header-logo-link-main">
               <div className="wrapper-logo-text" data-ai-id="header-logo-wrapper">
-                 {siteLogoUrl && !logoError ? (
-                    <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="img-header-logo" onError={() => setLogoError(true)} />
+                {siteLogoUrl && !logoError ? (
+                  <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="img-header-logo" onError={() => setLogoError(true)} />
                  ) : (
                     <Coins className="icon-header-logo-main" />
                  )}
