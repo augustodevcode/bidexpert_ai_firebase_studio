@@ -95,7 +95,7 @@ const formatCompactPrice = (value: number | undefined | null) => {
   return formatPrice(value);
 };
 
-const getItemImage = (item: MapSearchItem) => {
+const getItemImage = (item: MapSearchItem, platformSettings?: any) => {
   const candidate = item as unknown as {
     imageUrl?: string | null;
     image?: string | null;
@@ -109,7 +109,7 @@ const getItemImage = (item: MapSearchItem) => {
   if (candidate.thumbnailUrl) return candidate.thumbnailUrl;
   if (candidate.primaryImage) return candidate.primaryImage;
   if (Array.isArray(candidate.images) && candidate.images.length > 0) return candidate.images[0];
-  return 'https://picsum.photos/seed/map-search-fallback/160/120';
+  return platformSettings?.logoUrl || '/images/image-placeholder.png';
 };
 
 const getItemMarketValue = (item: MapSearchItem) => {

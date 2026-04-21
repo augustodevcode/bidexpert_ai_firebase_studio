@@ -60,7 +60,8 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate, 
     return Array.from(new Set(triggers));
   }, [effectiveLotEndDate, lot.bidsCount, lot.isFeatured]);
 
-  const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : `https://picsum.photos/seed/${lot.id}/600/400`;
+  const fallbackLogo = platformSettings?.logoUrl || '/images/image-placeholder.png';
+  const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : fallbackLogo;
 
   const IconComponent = auctionTypeDisplay?.icon;
   const isCompact = density === 'compact';

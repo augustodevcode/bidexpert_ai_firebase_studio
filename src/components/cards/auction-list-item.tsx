@@ -22,11 +22,12 @@ import { getAuctionEffectiveDates } from '@/lib/auction-timing';
 
 interface AuctionListItemProps {
   auction: Auction;
+  platformSettings?: import('@/types').PlatformSettings | null;
   onUpdate?: () => void;
   density?: 'default' | 'compact' | 'map';
 }
 
-export default function AuctionListItem({ auction, onUpdate, density = 'default' }: AuctionListItemProps) {
+export default function AuctionListItem({ auction, platformSettings, onUpdate, density = 'default' }: AuctionListItemProps) {
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
   const effectiveAuctionStatus = React.useMemo(() => getEffectiveAuctionStatus(auction) || auction.status, [auction]);
   const effectiveAuctionDates = React.useMemo(() => getAuctionEffectiveDates(auction), [auction]);
@@ -64,7 +65,8 @@ export default function AuctionListItem({ auction, onUpdate, density = 'default'
     return Array.from(new Set(triggers));
   }, [effectiveAuctionDates.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
   
-  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl! : `https://placehold.co/600x400.png?text=Leilao`;
+  const fallbackLogo = platformSettings?.logoUrl || '/images/image-placeholder.png';
+  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl! : fallbackLogo;
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
   const sellerSlug = auction.seller?.slug || auction.seller?.publicId || auction.seller?.id;
   const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';

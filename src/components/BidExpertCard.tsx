@@ -43,7 +43,7 @@ function isPreparedLotCardItem(item: AnyItem): item is AuctionItem {
 export default function BidExpertCard({ item, type, platformSettings, parentAuction, onUpdate, showCountdown }: BidExpertCardProps) {
   switch (type) {
     case 'auction':
-      return <AuctionCard auction={item as Auction} onUpdate={onUpdate} />;
+      return <AuctionCard auction={item as Auction} platformSettings={platformSettings ?? null} onUpdate={onUpdate} />;
     case 'lot':
       if (isPreparedLotCardItem(item)) {
         return <AuctionLotCardV2 item={item} />;
