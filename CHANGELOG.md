@@ -6,6 +6,13 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.25](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.24...v1.0.0-demo.25) (2026-04-21)
+
+### Correções
+
+* **dashboard:** fix ShoppingBag reference error in reports page ([8c7bffa](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/8c7bffa0e398f19a52e48f363d4a190983589bd5))
+* **ui:** replace hardcoded picsum/placehold fallbacks with tenant logoUrl ([6d97ba9](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/6d97ba9993f9bf60137edd1e69f2510ef30d5b5a))
+
 ## [1.0.0-demo.24](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.23...v1.0.0-demo.24) (2026-04-19)
 
 ### Funcionalidades
