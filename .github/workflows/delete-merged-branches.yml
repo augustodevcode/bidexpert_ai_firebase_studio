@@ -1,0 +1,96 @@
+name: Delete Merged Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (only list, do not delete)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  delete-merged:
+    name: Delete Merged Branches
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Delete merged branches
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const dryRun = '${{ inputs.dry_run }}' === 'true';
+
+            const BRANCHES_TO_DELETE = [
+              'chore-remove-logger-clear-console-log-20260422-5028104768883978315',
+              'copilot/add-tests-with-vitest-playwright',
+              'copilot/check-copilot-agent-rules',
+              'copilot/check-demo-stable-commits',
+              'copilot/fix-active-row-function-error',
+              'copilot/fix-tenant-selection-login',
+              'copilot/improve-report-generation-engine',
+              'copilot/merge-all-pull-requests',
+              'copilot/stack-architecture-guidelines',
+              'copilot/start-admin-panel-implementation',
+              'copilot/sub-pr-566',
+              'copilot/sub-pr-566-again',
+              'copilot/test-and-validate-on-vercel',
+            ];
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            console.log(`Mode: ${dryRun ? 'DRY RUN' : 'DELETE'}`);
+            console.log(`Branches to process: ${BRANCHES_TO_DELETE.length}`);
+            console.log('');
+
+            const results = { deleted: [], skipped: [], errors: [] };
+
+            for (const branch of BRANCHES_TO_DELETE) {
+              try {
+                // Check if branch still exists
+                try {
+                  await github.rest.git.getRef({
+                    owner,
+                    repo,
+                    ref: `heads/${branch}`,
+                  });
+                } catch (e) {
+                  if (e.status === 404) {
+                    console.log(`  SKIP (not found): ${branch}`);
+                    results.skipped.push(branch);
+                    continue;
+                  }
+                  throw e;
+                }
+
+                if (dryRun) {
+                  console.log(`  [DRY RUN] Would delete: ${branch}`);
+                  results.deleted.push(branch);
+                } else {
+                  await github.rest.git.deleteRef({
+                    owner,
+                    repo,
+                    ref: `heads/${branch}`,
+                  });
+                  console.log(`  ✅ Deleted: ${branch}`);
+                  results.deleted.push(branch);
+                }
+              } catch (error) {
+                console.error(`  ❌ Error deleting ${branch}: ${error.message}`);
+                results.errors.push({ branch, error: error.message });
+              }
+            }
+
+            console.log('');
+            console.log('=== SUMMARY ===');
+            console.log(`Deleted:  ${results.deleted.length}`);
+            console.log(`Skipped:  ${results.skipped.length}`);
+            console.log(`Errors:   ${results.errors.length}`);
+
+            if (results.errors.length > 0) {
+              core.setFailed(`Failed to delete ${results.errors.length} branch(es)`);
+            }
