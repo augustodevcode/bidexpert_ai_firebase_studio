@@ -20,6 +20,12 @@ Instructions here apply to this project and are shared with team members.
 - For Admin Plus server actions, prefer fixing `src/lib/admin-plus/safe-action.ts` when `input` or `ctx` arrive as `undefined` in multiple pages. Do not patch every page first.
 - For Prisma relation selects, confirm the model field name in schema (`name` vs `title`) before editing actions.
 - Validation order: internal browser → focused Playwright `--grep` route/test → larger sweep.
+- Before fixing auction/category/seller/auctioneer selectors, inspect the shared `EntitySelector`/`DataTable` contract first; do not fork behavior per screen when the root cause is shared.
+- Before fixing admin media preview, confirm the real media contract (`urlOriginal`, `urlThumbnail`, or documented equivalent) instead of assuming `url` exists.
+- Before fixing lot leakage on auction edit screens, confirm the list-service signature and require an explicit `auctionId` filter object.
+- Judicial wizard flows must keep process and seller/comitente synchronized across Step 2, Step 3, review, and persistence; missing seller resolution requires a conditional branch-based completion step.
+- CEP/city matching and map geocoding are shared admin contracts: normalize city matching, include house number in geocode refreshes, and normalize pt-BR masks before persistence.
+- When a root cause is cross-session or cross-surface in auction admin, update project rules and create or extend a workspace skill in the same change.
 
 ### 🕵️ Auction Sniper & QA Auto-Activation Protocol
 

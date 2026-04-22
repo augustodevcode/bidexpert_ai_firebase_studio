@@ -108,6 +108,9 @@ reports/reconciliation/audit-stderr-*.log
 # Build and server debug output files
 build_logs*.txt
 build_output*.txt
+build-prepr.log
+.vitest-cache-*/
+.vitest-attachments/
 test_full*.txt
 test-output*.txt
 test_output*.txt

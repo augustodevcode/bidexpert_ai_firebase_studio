@@ -3,6 +3,7 @@
  */
 
 import type { Auction, Lot, LotRisk, LotRiskLevel, OccupationStatus } from '@/types';
+import { getAuctionDocumentLabel, getPublicAuctionDocuments } from '@/lib/auctions/documents';
 
 export type DueDiligenceChecklistStatus = 'available' | 'attention' | 'missing';
 export type DueDiligenceAlertTone = 'success' | 'info' | 'warning' | 'critical';
@@ -50,7 +51,13 @@ export type DueDiligenceLotLike = Partial<Pick<Lot,
   | 'additionalDocumentsInfo'
 >>;
 
-export type DueDiligenceAuctionLike = Partial<Pick<Auction, 'documentsUrl' | 'auctionType'>>;
+export type DueDiligenceAuctionLike = Partial<Pick<Auction,
+  | 'documents'
+  | 'documentsUrl'
+  | 'evaluationReportUrl'
+  | 'auctionCertificateUrl'
+  | 'auctionType'
+>>;
 
 const riskPriority: LotRiskLevel[] = ['CRITICO', 'ALTO', 'MEDIO', 'BAIXO'];
 
@@ -73,6 +80,7 @@ export function buildLotDueDiligenceSummary(args: {
   auction?: DueDiligenceAuctionLike | null;
 }): LotDueDiligenceSummary {
   const { lot, auction } = args;
+  const auctionDocuments = getPublicAuctionDocuments(auction);
   const sortedRisks = sortLotRisksBySeverity(lot.lotRisks);
   const highestRisk = sortedRisks[0];
   const occupancyStatus = lot.occupancyStatus as OccupationStatus | undefined;
@@ -121,8 +129,8 @@ export function buildLotDueDiligenceSummary(args: {
     {
       key: 'edital',
       label: 'Edital e documentos oficiais',
-      status: hasText(auction?.documentsUrl) || hasText(lot.additionalDocumentsInfo) ? 'available' : 'missing',
-      detail: hasText(auction?.documentsUrl) || hasText(lot.additionalDocumentsInfo)
+      status: auctionDocuments.length > 0 || hasText(lot.additionalDocumentsInfo) ? 'available' : 'missing',
+      detail: auctionDocuments.length > 0 || hasText(lot.additionalDocumentsInfo)
         ? 'Há documento oficial ou observação documental para aprofundamento.'
         : 'A página não expõe edital ou observação documental consolidada.',
     },
@@ -140,9 +148,13 @@ export function buildLotDueDiligenceSummary(args: {
   if (hasText(lot.publicProcessUrl)) {
     links.push({ key: 'public-process', label: 'Consultar processo público', href: lot.publicProcessUrl!.trim() });
   }
-  if (hasText(auction?.documentsUrl)) {
-    links.push({ key: 'auction-notice', label: 'Abrir edital do leilão', href: auction!.documentsUrl!.trim() });
-  }
+  auctionDocuments.forEach((document, index) => {
+    links.push({
+      key: index === 0 ? 'auction-notice' : `auction-document-${index + 1}`,
+      label: index === 0 ? 'Abrir edital do leilão' : `Abrir documento: ${getAuctionDocumentLabel(document, index)}`,
+      href: document.fileUrl.trim(),
+    });
+  });
 
   let alert: DueDiligenceAlert;
   if (highestRisk?.riskLevel === 'CRITICO') {

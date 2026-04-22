@@ -145,14 +145,23 @@ export function AssetFormV2({
     }
   }, [selectedCategoryId]);
 
-  const handleMediaSelect = (media: any) => {
-    if (dialogTarget === 'main') {
-      form.setValue('imageUrl', media.url);
-      form.setValue('imageMediaId', media.id.toString());
-    } else if (dialogTarget === 'gallery') {
+    const handleMediaSelect = (selectedItems: any[]) => {
+        const media = selectedItems?.[0];
+        if (!media) {
+            setIsMediaDialogOpen(false);
+            setDialogTarget(null);
+            return;
+        }
+
+        const selectedUrl = media.urlOriginal || media.urlThumbnail || media.url || '';
+
+        if (dialogTarget === 'main') {
+            form.setValue('imageUrl', selectedUrl);
+            form.setValue('imageMediaId', media.id.toString());
+        } else if (dialogTarget === 'gallery') {
       const currentUrls = form.getValues('galleryImageUrls') || [];
       const currentIds = form.getValues('mediaItemIds') || [];
-      form.setValue('galleryImageUrls', [...currentUrls, media.url]);
+            form.setValue('galleryImageUrls', [...currentUrls, selectedUrl]);
       form.setValue('mediaItemIds', [...currentIds, media.id.toString()]);
     }
     setIsMediaDialogOpen(false);
@@ -465,11 +474,7 @@ export function AssetFormV2({
       <ChooseMediaDialog 
         isOpen={isMediaDialogOpen} 
         onOpenChange={setIsMediaDialogOpen}
-        onMediaSelect={(items) => {
-            if (items && items.length > 0) {
-                handleMediaSelect(items[0]);
-            }
-        }}
+                onMediaSelect={handleMediaSelect}
       />
     </CrudFormLayout>
   );

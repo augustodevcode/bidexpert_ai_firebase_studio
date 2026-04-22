@@ -30,7 +30,7 @@ function ReviewItemList({ items, testId }: { items: WizardReviewItem[]; testId: 
 
 export default function Step5Review() {
   const { wizardData } = useWizard();
-  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishMode, setPublishMode] = useState<'edit' | 'control-center' | null>(null);
   const { toast } = useToast();
 
 
@@ -50,12 +50,18 @@ export default function Step5Review() {
   };
   const reviewSections = buildWizardReviewSections(auctionDetails);
 
-  const handlePublish = async () => {
-    setIsPublishing(true);
+  const isPublishing = publishMode !== null;
+
+  const handlePublish = async (redirectTo: 'edit' | 'control-center') => {
+    setPublishMode(redirectTo);
     try {
       const result = await createAuctionFromWizard(wizardData);
       if (result.success) {
-        const redirectTarget = result.auctionId ? `/admin/auctions/${result.auctionId}/edit` : '/admin/auctions';
+        const redirectTarget = result.auctionId
+          ? redirectTo === 'control-center'
+            ? `/admin/auctions/${result.auctionId}/auction-control-center`
+            : `/admin/auctions/${result.auctionId}/edit`
+          : '/admin/auctions';
         toast({
           title: "Leilão Publicado!",
           description: "O leilão e seus lotes foram criados com sucesso.",
@@ -75,7 +81,7 @@ export default function Step5Review() {
         variant: "destructive",
       });
     } finally {
-      setIsPublishing(false);
+      setPublishMode(null);
     }
   };
 
@@ -184,10 +190,16 @@ export default function Step5Review() {
           <p className="text-sm text-muted-foreground mt-1 mb-4">
              Ao clicar em &quot;Publicar Leilão&quot;, o leilão e todos os lotes criados serão salvos no banco de dados.
           </p>
-          <Button size="lg" onClick={handlePublish} disabled={isPublishing}>
-            {isPublishing ? <Loader2 className="animate-spin mr-2" /> : <Rocket className="mr-2 h-5 w-5" />}
-            {isPublishing ? "Publicando..." : "Publicar Leilão"}
-          </Button>
+          <div className="flex flex-col justify-center gap-3 sm:flex-row">
+            <Button size="lg" variant="outline" onClick={() => handlePublish('edit')} disabled={isPublishing}>
+              {publishMode === 'edit' ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2 h-5 w-5" />}
+              {publishMode === 'edit' ? 'Publicando...' : 'Publicar e revisar edição'}
+            </Button>
+            <Button size="lg" onClick={() => handlePublish('control-center')} disabled={isPublishing}>
+              {publishMode === 'control-center' ? <Loader2 className="animate-spin mr-2" /> : <Rocket className="mr-2 h-5 w-5" />}
+              {publishMode === 'control-center' ? 'Publicando...' : 'Publicar e abrir central'}
+            </Button>
+          </div>
       </div>
     </div>
   );

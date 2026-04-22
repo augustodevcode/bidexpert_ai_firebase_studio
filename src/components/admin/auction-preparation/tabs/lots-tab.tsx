@@ -32,6 +32,17 @@ interface LotsTabProps {
 export function LotsTab({ auction, bids }: LotsTabProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
+  const auctionIdentifier = auction?.publicId || auction?.id;
+  const createLotHref = auction?.id
+    ? {
+        pathname: '/admin/lots/new',
+        query: {
+          auctionId: auction.id,
+          returnTo: `/admin/auctions/${auctionIdentifier}/auction-control-center?tab=lots`,
+        },
+      }
+    : '/admin/lots/new';
+
   const lots = useMemo(() => auction?.lots ?? [], [auction?.lots]);
   const bidsByLotId = useMemo(() => {
     return bids.reduce<Record<string, AuctionPreparationBid[]>>((map, bid) => {
@@ -125,7 +136,7 @@ export function LotsTab({ auction, bids }: LotsTabProps) {
               <CardTitle>Lotes do Leilão</CardTitle>
               <CardDescription>Gerencie e monitore os lotes cadastrados</CardDescription>
             </div>
-            <Link href={`/admin/auctions/${auction.id}/lots/new`}>
+            <Link href={createLotHref}>
               <Button>Adicionar Lote</Button>
             </Link>
           </div>
@@ -146,7 +157,7 @@ export function LotsTab({ auction, bids }: LotsTabProps) {
           {filteredLots.length === 0 ? (
             <div className="text-center py-12 border rounded-md">
               <p className="text-muted-foreground mb-4">Nenhum lote encontrado</p>
-              <Link href={`/admin/auctions/${auction.id}/lots/new`}>
+              <Link href={createLotHref}>
                 <Button>Criar Primeiro Lote</Button>
               </Link>
             </div>

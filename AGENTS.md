@@ -31,6 +31,12 @@ Estes guardrails foram adicionados após falhas reais em sweep/admin-plus e DEVE
 6. Se erros de `input`/`ctx` `undefined` surgirem em várias server actions, corrigir `src/lib/admin-plus/safe-action.ts` antes de duplicar patches por página.
 7. Antes de usar campos Prisma em `select`, confirmar o schema real. Não assumir `title` onde o model usa `name`.
 8. Ordem mínima de validação: browser interno → teste Playwright com `--grep` → lote maior.
+9. Antes de corrigir modal de processo/categoria/comitente/leiloeiro, validar primeiro os contratos compartilhados `EntitySelector` e `DataTable`; não criar divergência por tela.
+10. Antes de corrigir preview de imagem ou upload administrativo, confirmar o shape real do item de mídia retornado pela biblioteca (`urlOriginal`, `urlThumbnail` ou equivalente documentado).
+11. Antes de corrigir vazamento de lotes na edição do leilão, confirmar a assinatura do service de listagem e exigir filtro explícito por `auctionId`.
+12. Em fluxo judicial, processo e comitente são dependência encadeada: Step 2, Step 3, review e publicação DEVEM refletir o mesmo vínculo, e ausência de comitente resolvido exige etapa condicional por Vara.
+13. CEP/cidade/mapa e máscaras pt-BR DEVEM ser tratados como contratos reutilizáveis do admin; geocoding sem número ou matching textual rígido de cidade é considerado bug estrutural.
+14. Se a correção revelar padrão recorrente do admin de leilões, atualizar regras consolidadas e skills do workspace na mesma rodada.
 
 ## 🔀 Workflow de Branches (OBRIGATÓRIO)
 

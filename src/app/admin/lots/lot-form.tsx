@@ -74,6 +74,16 @@ const lotStatusOptions: { value: LotStatus; label: string }[] = [
     'EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO', 'RASCUNHO'
 ].map(status => ({ value: status as LotStatus, label: getAuctionStatusText(status) }));
 
+const immutableAssetLinkStatuses: LotStatus[] = [
+  'ABERTO_PARA_LANCES',
+  'ENCERRADO',
+  'VENDIDO',
+  'NAO_VENDIDO',
+  'CANCELADO',
+  'RELISTADO',
+  'RETIRADO',
+];
+
 const LotForm = forwardRef<any, LotFormProps>(({
   initialData,
   categories: initialCategories,
@@ -120,15 +130,40 @@ const LotForm = forwardRef<any, LotFormProps>(({
   const [linkedAssetsSortBy, setLinkedAssetsSortBy] = useState('title_asc');
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
+  const auctionIdFromQuery = searchParams.get('auctionId') || '';
+  const selectedAssetIdsFromQuery = useMemo(() => {
+    const queryValue = searchParams.get('assetIds');
+    if (!queryValue) return [];
+    return queryValue
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }, [searchParams]);
+
+  const initialAssetIds = useMemo(() => {
+    const fromInitialData = (initialData as any)?.assetIds || initialData?.assets?.map((asset) => asset.id) || [];
+    return Array.from(new Set([...(fromInitialData as string[]), ...selectedAssetIdsFromQuery]));
+  }, [initialData, selectedAssetIdsFromQuery]);
+
+  const inferredTypeDefault = useMemo(() => {
+    return (
+      initialData?.type ||
+      initialData?.categoryName ||
+      initialData?.assets?.[0]?.categoryName ||
+      initialData?.assets?.[0]?.subcategoryName ||
+      ''
+    );
+  }, [initialData]);
+
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
     mode: 'onChange',
     defaultValues: {
         ...initialData,
-        auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
-        type: initialData?.categoryId || initialData?.type || '',
+      auctionId: initialData?.auctionId || defaultAuctionId || auctionIdFromQuery,
+      type: inferredTypeDefault,
         price: initialData?.price || undefined,
-        assetIds: (initialData as any)?.assetIds || [],
+      assetIds: initialAssetIds,
         mediaItemIds: (initialData as any)?.mediaItemIds || [],
         galleryImageUrls: initialData?.galleryImageUrls || [],
         status: initialData?.status || 'EM_BREVE',
@@ -176,6 +211,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
   
   const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
   const watchedAssetIds = useWatch({ control: form.control, name: 'assetIds' });
+  const watchedLotStatus = useWatch({ control: form.control, name: 'status' });
   const inheritedMediaFromAssetId = useWatch({ control: form.control, name: 'inheritedMediaFromAssetId' });
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const galleryUrls = useWatch({ control: form.control, name: 'galleryImageUrls' });
@@ -198,12 +234,23 @@ const LotForm = forwardRef<any, LotFormProps>(({
     return (watchedAssetIds || []).map(id => uniqueAssets.find(asset => asset.id === id)).filter((b): b is Asset => !!b);
   }, [watchedAssetIds, currentAvailableAssets, initialData?.assets]);
 
+  const isAssetLinkingLocked = useMemo(() => {
+    const status = (watchedLotStatus || initialData?.status || 'RASCUNHO') as LotStatus;
+    return immutableAssetLinkStatuses.includes(status);
+  }, [initialData?.status, watchedLotStatus]);
+
   const inheritedAssetDetails = useMemo(() => {
       if (!inheritedMediaFromAssetId) return null;
       return linkedAssetsDetails.find(asset => asset.id === inheritedMediaFromAssetId);
   }, [inheritedMediaFromAssetId, linkedAssetsDetails]);
   
   const displayImageUrl = inheritedAssetDetails?.imageUrl || imageUrlPreview;
+
+  useEffect(() => {
+    if (isAssetLinkingLocked && Object.keys(assetRowSelection).length > 0) {
+      setAssetRowSelection({});
+    }
+  }, [assetRowSelection, isAssetLinkingLocked]);
 
 
   const handleRefetchAuctions = useCallback(async () => {
@@ -260,10 +307,13 @@ const LotForm = forwardRef<any, LotFormProps>(({
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
+        const returnToPath = searchParams.get('returnTo');
         if (onSuccessCallback) {
           onSuccessCallback();
+        } else if (returnToPath) {
+          router.push(returnToPath);
         } else {
-          router.push(watchedAuctionId ? `/admin/auctions/${watchedAuctionId}/edit` : '/admin/lots');
+          router.push(watchedAuctionId ? `/admin/auctions/${watchedAuctionId}/auction-control-center?tab=lots` : '/admin/lots');
         }
         router.refresh();
       } else {
@@ -277,6 +327,15 @@ const LotForm = forwardRef<any, LotFormProps>(({
   }
 
    const handleLinkAssets = () => {
+    if (isAssetLinkingLocked) {
+      toast({
+        title: 'Vínculos bloqueados neste status',
+        description: 'Após a abertura para lances, os bens vinculados ao lote não podem ser alterados.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const selectedAssetIds = Object.keys(assetRowSelection)
       .map(Number)
       .map(index => availableAssetsForTable[index]?.id)
@@ -292,6 +351,15 @@ const LotForm = forwardRef<any, LotFormProps>(({
   };
 
   const handleUnlinkAsset = (assetIdToUnlink: string) => {
+      if (isAssetLinkingLocked) {
+        toast({
+          title: 'Vínculos bloqueados neste status',
+          description: 'Após a abertura para lances, os bens vinculados ao lote não podem ser alterados.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const currentAssetIds = form.getValues('assetIds') || [];
       const newAssetIds = currentAssetIds.filter(id => id !== assetIdToUnlink);
       form.setValue('assetIds', newAssetIds, { shouldDirty: true });
@@ -320,6 +388,21 @@ const LotForm = forwardRef<any, LotFormProps>(({
   }, [currentAvailableAssets, watchedAssetIds]);
   
   const assetSortOptions = [ { value: 'title_asc', label: 'Título A-Z' }, { value: 'title_desc', label: 'Título Z-A' }, { value: 'evaluationValue_asc', label: 'Valor Crescente' }, { value: 'evaluationValue_desc', label: 'Valor Decrescente' }];
+  const typeOptions = useMemo(() => {
+    const options = new Set<string>();
+    categories.forEach((category) => {
+      if (category.name?.trim()) options.add(category.name.trim());
+    });
+    linkedAssetsDetails.forEach((asset) => {
+      if (asset.categoryName?.trim()) options.add(asset.categoryName.trim());
+      if (asset.subcategoryName?.trim()) options.add(asset.subcategoryName.trim());
+    });
+    if (initialData?.type?.trim()) {
+      options.add(initialData.type.trim());
+    }
+    return Array.from(options);
+  }, [categories, linkedAssetsDetails, initialData?.type]);
+
   const riskLevelStyles: Record<LotRiskLevel, string> = {
     CRITICO: 'bg-destructive/10 text-destructive border-destructive/40',
     ALTO: 'bg-amber-100 text-amber-900 border-amber-300',
@@ -344,7 +427,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
     <Card key={asset.id} className="container-bem-grid-item">
         <CardHeader className="p-3"><div className="wrapper-bem-grid-image"><Image src={asset.imageUrl || 'https://placehold.co/400x300.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div><CardTitle className="title-bem-grid-item">{asset.title}</CardTitle><CardDescription className="description-bem-grid-item">ID: {asset.publicId || asset.id}</CardDescription></CardHeader>
         <CardContent className="p-3 flex-grow space-y-1 text-xs"><p className="font-medium">Avaliação: {asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p></CardContent>
-        <CardFooter className="p-2 border-t flex justify-end items-center gap-1"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></CardFooter>
+        <CardFooter className="p-2 border-t flex justify-end items-center gap-1"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} disabled={isAssetLinkingLocked} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></CardFooter>
     </Card>
   );
 
@@ -354,7 +437,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
         <div className="wrapper-bem-list-image"><Image src={asset.imageUrl || 'https://placehold.co/120x90.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div>
         <div className="flex-grow"><h4 className="title-bem-list-item">{asset.title}</h4><p className="description-bem-list-item">ID: {asset.publicId || asset.id}</p></div>
         <div className="container-bem-list-price"><p className="price-bem-list-item">{asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p><p className="label-bem-list-price">Avaliação</p></div>
-         <div className="container-bem-list-actions"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-8 w-8 text-sky-600"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>
+         <div className="container-bem-list-actions"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-8 w-8 text-sky-600"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} disabled={isAssetLinkingLocked} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>
       </CardContent>
     </Card>
   );
@@ -376,7 +459,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
                             <div className="xl:col-span-2">
                             <FormField control={controlAny} name="title" render={({ field }) => (<FormItem><FormLabel htmlFor="admin-lot-title">Título do Lote<span className="text-destructive">*</span></FormLabel><FormControl><Input id="admin-lot-title" data-ai-id="admin-lot-title-input" placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             </div>
-                            <FormField control={controlAny} name="type" render={({ field }) => (<FormItem><FormLabel>Tipo do Bem<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Ex: Veículo, Imóvel" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={controlAny} name="type" render={({ field }) => (<FormItem data-ai-id="lot-form-asset-type-selector"><FormLabel>Tipo do Bem<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo do bem" /></SelectTrigger></FormControl><SelectContent>{typeOptions.map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent></Select><FormDescription>Campo textual para identificação comercial do tipo do bem.</FormDescription><FormMessage /></FormItem>)} />
                             <FormField control={controlAny} name="status" render={({ field }) => (<FormItem><FormLabel>Status<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -509,14 +592,39 @@ const LotForm = forwardRef<any, LotFormProps>(({
 
                       <section className="space-y-4">
                         <h3 className="text-lg font-semibold text-primary border-b pb-2">Bens Vinculados</h3>
-                        <div data-ai-id="linked-assets-section">
-                            <h4 className="title-bens-vinculados">Bens Vinculados a Este Lote</h4>
-                            {/* A DataTable agora está dentro de SearchResultsFrame */}
+                        <div data-ai-id="linked-assets-section" className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h4 className="title-bens-vinculados">Bens Vinculados a Este Lote</h4>
+                              <span className="text-xs text-muted-foreground">{linkedAssetsDetails.length} bem(ns) vinculado(s)</span>
+                            </div>
+
+                            {isAssetLinkingLocked && (
+                              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive flex items-center gap-2" data-ai-id="lot-form-linked-assets-locked-warning">
+                                <ShieldAlert className="h-4 w-4" />
+                                Vínculos bloqueados: este lote já entrou em fase de lances/resultados e não aceita alteração de bens.
+                              </div>
+                            )}
+
+                            {linkedAssetsDetails.length === 0 ? (
+                              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                                Nenhum bem vinculado até o momento.
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {linkedAssetsDetails.map((asset) => renderAssetListItem(asset))}
+                              </div>
+                            )}
                         </div>
                         <Separator />
                         <div className="container-bens-disponiveis">
-                            <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><div className="flex gap-2"><Button type="button" variant="secondary" size="sm" onClick={() => setIsAssetCreateModalOpen(true)}><PackagePlus className="mr-2 h-4 w-4"/>Cadastrar Novo Bem</Button><Button type="button" size="sm" onClick={handleLinkAssets} disabled={Object.keys(assetRowSelection).length === 0}><LinkIcon className="mr-2 h-4 w-4" /> Vincular Bem</Button></div></div>
-                            <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setAssetRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                            <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><div className="flex gap-2"><Button type="button" variant="secondary" size="sm" onClick={() => setIsAssetCreateModalOpen(true)} disabled={isAssetLinkingLocked}><PackagePlus className="mr-2 h-4 w-4"/>Cadastrar Novo Bem</Button><Button type="button" size="sm" onClick={handleLinkAssets} disabled={isAssetLinkingLocked || Object.keys(assetRowSelection).length === 0}><LinkIcon className="mr-2 h-4 w-4" /> Vincular Bem</Button></div></div>
+                            {!isAssetLinkingLocked ? (
+                              <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setAssetRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                            ) : (
+                              <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                                A listagem de bens disponíveis fica somente leitura após abertura para lances.
+                              </div>
+                            )}
                         </div>
                       </section>
 

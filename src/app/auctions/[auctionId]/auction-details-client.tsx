@@ -38,6 +38,7 @@ import BidExpertListItem from '@/components/BidExpertListItem';
 import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 import PublicSectionAdminTooltip from '@/components/admin/public-section-admin-tooltip';
+import { getPrimaryAuctionDocument } from '@/lib/auctions/documents';
 
 
 const SidebarFilter = dynamic(() => import('@/components/BidExpertFilter'), {
@@ -118,6 +119,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   
   const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(auction.lots || []), [auction.lots]);
   const sellersForFilter = useMemo(() => allSellers.filter(seller => seller.name === auction.seller?.name), [allSellers, auction.seller]);
+  const primaryAuctionDocument = useMemo(() => getPrimaryAuctionDocument(auction), [auction]);
 
 
   useEffect(() => {
@@ -333,14 +335,14 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                 />
               </CardContent>
             </Card>
-             {auction.documentsUrl && (
+             {primaryAuctionDocument && (
                   <Card className="shadow-md">
                       <CardHeader className="p-3">
                           <CardTitle className="text-md font-semibold flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" /> Documentos do Leilão</CardTitle>
                       </CardHeader>
                       <CardContent className="p-3 pt-0">
                           <Button variant="link" asChild className="p-0 h-auto text-primary">
-                              <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
+                      <a href={primaryAuctionDocument.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
                                   Ver Edital Completo <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
                               </a>
                           </Button>

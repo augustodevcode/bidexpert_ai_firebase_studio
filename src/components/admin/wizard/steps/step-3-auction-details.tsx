@@ -91,6 +91,8 @@ export default function Step3AuctionDetails({
   const initialDataForForm = {
     ...wizardData.auctionDetails,
     sellerId: initialSellerId,
+    judicialProcessId: wizardData.auctionDetails?.judicialProcessId || wizardData.judicialProcess?.id,
+    sellingBranch: wizardData.auctionDetails?.sellingBranch || wizardData.judicialProcess?.branchName,
     auctionType: wizardData.auctionType,
     auctionDate: wizardData.auctionDetails?.auctionDate ? new Date(wizardData.auctionDetails.auctionDate) : new Date(),
     endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,

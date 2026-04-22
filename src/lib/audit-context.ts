@@ -93,31 +93,38 @@ export async function createManualAuditLog(
   params: ManualAuditLogParams
 ): Promise<void> {
   const context = getAuditContext();
-  
-  // For now, just log in development - full implementation would write to AuditLog table
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[AuditLog]', {
-      ...params,
+
+  if (!context?.userId) {
+    console.warn('[AuditLog] Contexto de auditoria ausente; pulando persistência manual.', {
+      entityType: params.entityType,
       entityId: params.entityId.toString(),
-      userId: context?.userId,
-      tenantId: context?.tenantId,
-      timestamp: new Date().toISOString(),
+      action: params.action,
     });
+    return;
   }
-  
-  // TODO: When AuditLog table exists and is properly migrated, uncomment:
-  // await tx.auditLog.create({
-  //   data: {
-  //     entityType: params.entityType,
-  //     entityId: params.entityId.toString(),
-  //     action: params.action,
-  //     changes: params.changes ? JSON.stringify(params.changes) : null,
-  //     metadata: params.metadata ? JSON.stringify(params.metadata) : null,
-  //     userId: context?.userId?.toString() || 'system',
-  //     tenantId: context?.tenantId ? BigInt(context.tenantId) : null,
-  //     ipAddress: context?.ipAddress || null,
-  //     userAgent: context?.userAgent || null,
-  //     createdAt: new Date(),
-  //   },
-  // });
+
+  const before = params.changes?.before ?? null;
+  const after = params.changes?.after ?? null;
+  const changedFields = Array.from(new Set([
+    ...Object.keys(before || {}),
+    ...Object.keys(after || {}),
+  ].filter((key) => JSON.stringify(before?.[key]) !== JSON.stringify(after?.[key]))));
+
+  await tx.auditLog.create({
+    data: {
+      entityType: params.entityType,
+      entityId: BigInt(params.entityId),
+      action: params.action,
+      changes: params.changes ?? undefined,
+      oldValues: before ?? undefined,
+      newValues: after ?? undefined,
+      changedFields: changedFields.length ? changedFields.join(',') : null,
+      metadata: params.metadata ?? undefined,
+      userId: BigInt(context.userId),
+      tenantId: context.tenantId ? BigInt(context.tenantId) : null,
+      ipAddress: context.ipAddress || null,
+      userAgent: context.userAgent || null,
+      timestamp: new Date(),
+    },
+  });
 }

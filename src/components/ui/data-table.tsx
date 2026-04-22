@@ -34,26 +34,41 @@ import { AlertCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { DataTableToolbar, type BulkAction } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
 import { Button } from "./button";
+import { cn } from "@/lib/utils";
+
+function collectSearchableValues(value: unknown, result: string[] = []): string[] {
+  if (value === null || value === undefined) {
+    return result;
+  }
+
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    result.push(String(value));
+    return result;
+  }
+
+  if (value instanceof Date) {
+    result.push(value.toISOString());
+    return result;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectSearchableValues(item, result));
+    return result;
+  }
+
+  if (typeof value === 'object') {
+    Object.values(value as Record<string, unknown>).forEach((item) => collectSearchableValues(item, result));
+  }
+
+  return result;
+}
 
 const globalFilterFn: FilterFn<any> = (row, columnId, value, addMeta) => {
     const item = row.original;
-    const searchTerm = value.toLowerCase();
+    const searchTerm = String(value || '').toLowerCase().trim();
+    if (!searchTerm) return true;
 
-    // Check title (or name, which is more generic)
-    if (item.title?.toLowerCase().includes(searchTerm)) return true;
-    if (item.name?.toLowerCase().includes(searchTerm)) return true;
-
-    // Specific check for judicialProcessNumber in assets
-    if (item.judicialProcessNumber?.toLowerCase().includes(searchTerm)) return true;
-    
-    // Specific check for processNumber in judicial processes
-    if (item.processNumber?.toLowerCase().includes(searchTerm)) return true;
-    
-    // Add more fields to search globally as needed
-    if (item.email?.toLowerCase().includes(searchTerm)) return true;
-
-
-    return false;
+    return collectSearchableValues(item).some((entry) => entry.toLowerCase().includes(searchTerm));
 };
 
 
@@ -80,6 +95,8 @@ interface DataTableProps<TData, TValue> {
   tableInstance?: any;
   renderChildrenAboveTable?: (table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode;
   dataTestId?: string;
+  tableContainerClassName?: string;
+  disableResponsiveLayout?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -97,6 +114,8 @@ export function DataTable<TData, TValue>({
   tableInstance,
   renderChildrenAboveTable,
   dataTestId,
+  tableContainerClassName,
+  disableResponsiveLayout = false,
 }: DataTableProps<TData, TValue>) {
   const [uncontrolledRowSelection, setUncontrolledRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -155,9 +174,9 @@ export function DataTable<TData, TValue>({
         bulkActions={bulkActions}
       />
       {renderChildrenAboveTable && renderChildrenAboveTable(table)}
-      <div className="rounded-md border md:border-0">
+      <div className={cn("rounded-md border md:border-0", tableContainerClassName)}>
         <Table className="responsive-table">
-          <TableHeader className="hidden md:table-header-group">
+          <TableHeader className={cn(disableResponsiveLayout ? "table-header-group" : "hidden md:table-header-group")}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -224,16 +243,24 @@ export function DataTable<TData, TValue>({
                     <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="block md:table-row mb-4 md:mb-0 border md:border-b rounded-lg md:rounded-none shadow-md md:shadow-none"
+                    className={cn(
+                      disableResponsiveLayout
+                        ? "table-row border-b"
+                        : "mb-4 block rounded-lg border shadow-md md:mb-0 md:table-row md:rounded-none md:border-b md:shadow-none"
+                    )}
                     >
                     {row.getVisibleCells().map((cell) => (
                         <TableCell 
                             key={cell.id} 
-                            className="flex items-center justify-between md:table-cell px-4 py-2 md:px-4 md:py-4 border-b md:border-b-0"
+                            className={cn(
+                              disableResponsiveLayout
+                                ? "table-cell px-4 py-4 align-top"
+                                : "flex items-center justify-between border-b px-4 py-2 md:table-cell md:border-b-0 md:px-4 md:py-4"
+                            )}
                             data-label={typeof cell.column.columnDef.header === 'string' ? cell.column.columnDef.header : cell.column.id}
                         >
-                          <span className="font-bold text-sm text-foreground md:hidden mr-2">{typeof cell.column.columnDef.header === 'string' ? cell.column.columnDef.header : cell.column.id}:</span>
-                          <div className="text-right md:text-left">
+                          {!disableResponsiveLayout && <span className="mr-2 text-sm font-bold text-foreground md:hidden">{typeof cell.column.columnDef.header === 'string' ? cell.column.columnDef.header : cell.column.id}:</span>}
+                          <div className={cn(disableResponsiveLayout ? "text-left" : "text-right md:text-left")}>
                             {flexRender(
                                 cell.column.columnDef.cell,
                                 cell.getContext()

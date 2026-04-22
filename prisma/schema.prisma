@@ -288,6 +288,7 @@ model Auction {
   Seller                   Seller?                @relation(fields: [sellerId], references: [id])
   State                    State?                 @relation(fields: [stateId], references: [id])
   Tenant                   Tenant                 @relation(fields: [tenantId], references: [id])
+  AuctionDocument          AuctionDocument[]
   AuctionHabilitation      AuctionHabilitation[]
   AuctionStage             AuctionStage[]
   Bid                      Bid[]
@@ -306,6 +307,27 @@ model Auction {
   @@index([judicialProcessId])
   @@index([sellerId])
   @@index([stateId])
+  @@index([tenantId])
+}
+
+model AuctionDocument {
+  id           BigInt   @id @default(autoincrement())
+  auctionId    BigInt
+  fileName     String
+  title        String
+  description  String?  @db.Text
+  fileUrl      String   @db.Text
+  fileSize     BigInt?
+  mimeType     String?
+  displayOrder Int      @default(0)
+  isPublic     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenantId     BigInt
+  Auction      Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  Tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([auctionId])
   @@index([tenantId])
 }
 
@@ -1299,6 +1321,7 @@ model Tenant {
   JudicialProcess         JudicialProcess[]
   Lot                     Lot[]
   LotCategory             LotCategory[]
+  AuctionDocument         AuctionDocument[]
   LotDocument             LotDocument[]
   LotQuestion             LotQuestion[]
   LotRisk                 LotRisk[]

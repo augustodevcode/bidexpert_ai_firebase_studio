@@ -1,7 +1,8 @@
 // src/components/admin/auction-preparation/auction-preparation-dashboard.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -33,7 +34,10 @@ interface AuctionPreparationDashboardProps {
 }
 
 export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboardProps) {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const { auction, availableAssets, habilitations, bids, userWins } = data;
 
   const tabs = [
@@ -49,6 +53,35 @@ export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboar
     { value: 'lineage', label: 'Linhagem', icon: GitBranch },
   ];
 
+  const tabValues = useMemo(() => new Set(tabs.map((tab) => tab.value)), [tabs]);
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabFromQuery = searchParams.get('tab');
+    return tabFromQuery && tabValues.has(tabFromQuery) ? tabFromQuery : 'dashboard';
+  });
+
+  useEffect(() => {
+    const tabFromQuery = searchParams.get('tab');
+    const nextTab = tabFromQuery && tabValues.has(tabFromQuery) ? tabFromQuery : 'dashboard';
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
+    }
+  }, [activeTab, searchParams, tabValues]);
+
+  const handleTabChange = (nextTab: string) => {
+    setActiveTab(nextTab);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextTab === 'dashboard') {
+      params.delete('tab');
+    } else {
+      params.set('tab', nextTab);
+    }
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
   return (
     <div className="flex h-full min-h-0 min-w-0 w-full flex-col">
       {/* Auction Header */}
@@ -60,7 +93,7 @@ export function AuctionPreparationDashboard({ data }: AuctionPreparationDashboar
       </div>
 
       {/* Navigation Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-0 w-full flex-1 flex-col">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex min-h-0 w-full flex-1 flex-col">
         <TabsList className="mb-6 grid w-full shrink-0 grid-cols-3 lg:grid-cols-5 xl:grid-cols-10">
           {tabs.map((tab) => (
             <TabsTrigger

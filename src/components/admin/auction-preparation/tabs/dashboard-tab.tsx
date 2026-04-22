@@ -1,27 +1,30 @@
-// src/components/admin/auction-preparation/tabs/dashboard-tab.tsx
+/**
+ * @fileoverview Dashboard principal da Central de Gerenciamento do Leilão.
+ * Exibe KPIs, alertas operacionais e atalhos para as abas do control center.
+ */
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Package,
-  Users,
-  Gavel,
-  TrendingUp,
-  Calendar,
   AlertCircle,
+  Calendar,
   CheckCircle,
   ExternalLink,
+  Gavel,
+  Package,
   Pencil,
+  TrendingUp,
+  Users,
 } from 'lucide-react';
-import Link from 'next/link';
+import GoToMonitorButton from '@/components/admin/auction-preparation/go-to-monitor-button';
 import type {
   AuctionPreparationBid,
   AuctionPreparationHabilitation,
   AuctionPreparationWin,
 } from '@/types';
-import GoToMonitorButton from '@/components/admin/auction-preparation/go-to-monitor-button';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -36,18 +39,30 @@ interface DashboardTabProps {
 }
 
 export function DashboardTab({ auction, bids, habilitations, userWins }: DashboardTabProps) {
+  const auctionIdentifier = auction?.publicId || auction?.id;
+  const controlCenterBasePath = auctionIdentifier
+    ? `/admin/auctions/${auctionIdentifier}/auction-control-center`
+    : '/admin/auctions';
+
+  const tabLink = (tab: string) => `${controlCenterBasePath}?tab=${tab}`;
+  const createLotHref = auction?.id
+    ? {
+        pathname: '/admin/lots/new',
+        query: {
+          auctionId: auction.id,
+          returnTo: tabLink('lots'),
+        },
+      }
+    : '/admin/lots/new';
+
   const totalLots = auction?.lots?.length ?? 0;
   const totalBids = bids.length;
-  const highestBidsByLot = bids.reduce<Record<string, number>>((map, bid) => {
-    const current = map[bid.lotId] ?? 0;
-    if (bid.amount > current) map[bid.lotId] = bid.amount;
-    return map;
-  }, {});
-  const totalLotValue = (auction?.lots || []).reduce((sum: number, lot: any) => {
-    const baseValue = lot.initialPrice ?? lot.price ?? 0;
-    return sum + baseValue;
+  const totalHabilitations = habilitations.length;
+  const currentRevenue = userWins.reduce((sum, win) => sum + (win.value || 0), 0);
+  const projectedLotValue = (auction?.lots ?? []).reduce((sum: number, lot: any) => {
+    const baseValue = lot?.initialPrice ?? lot?.price ?? 0;
+    return sum + Number(baseValue || 0);
   }, 0);
-  const currentRevenue = Object.values(highestBidsByLot).reduce((sum, value) => sum + value, 0);
 
   const stats = [
     {
@@ -56,15 +71,15 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
       icon: Package,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
-      link: '#lots',
+      href: tabLink('lots'),
     },
     {
       title: 'Habilitados',
-      value: habilitations.length.toString(),
+      value: totalHabilitations.toString(),
       icon: Users,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
-      link: '#habilitations',
+      href: tabLink('habilitations'),
     },
     {
       title: 'Lances Recebidos',
@@ -72,53 +87,60 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
       icon: Gavel,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
-      link: '#auction',
+      href: tabLink('auction'),
     },
     {
-      title: 'Valor Total',
-      value: currencyFormatter.format(currentRevenue || totalLotValue || 0),
+      title: 'Valor Projetado',
+      value: currencyFormatter.format(currentRevenue || projectedLotValue || 0),
       icon: TrendingUp,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
-      link: '#financial',
+      href: tabLink('financial'),
     },
   ];
 
-  const identifier = auction?.publicId || auction?.id;
   const quickActions = [
-    { label: 'Criar Lote', href: `/admin/auctions/${identifier}/lots/new`, icon: Package },
-    { label: 'Gerenciar Loteamento', href: `#lotting`, icon: Package },
-    { label: 'Ver Habilitações', href: `#habilitations`, icon: Users },
-    { label: 'Configurar Marketing', href: `#marketing`, icon: ExternalLink },
-    { label: 'Editar Leilão', href: `/admin/auctions-v2/${identifier}`, icon: Pencil },
+    { label: 'Criar Lote', href: createLotHref, icon: Package },
+    { label: 'Gerenciar Loteamento', href: tabLink('lotting'), icon: Package },
+    { label: 'Configurar Marketing', href: tabLink('marketing'), icon: ExternalLink },
+    {
+      label: 'Editar Leilão',
+      href: auctionIdentifier ? `/admin/auctions-v2/${auctionIdentifier}` : '/admin/auctions-v2',
+      icon: Pencil,
+    },
   ];
 
-  const alerts = [] as { type: 'warning' | 'info'; message: string; action?: string }[];
+  const alerts = [] as { type: 'warning' | 'info'; message: string; action?: string; actionHref?: string }[];
+
   if (totalLots === 0) {
     alerts.push({
       type: 'warning',
       message: 'Ainda não há lotes cadastrados para este leilão.',
       action: 'Criar primeiro lote',
+      actionHref: typeof createLotHref === 'string' ? createLotHref : '/admin/lots/new',
     });
   }
+
   if (habilitations.length === 0) {
     alerts.push({
       type: 'info',
       message: 'Nenhuma habilitação recebida até o momento.',
-      action: 'Convidar participantes',
+      action: 'Ver habilitações',
+      actionHref: tabLink('habilitations'),
     });
   }
+
   if (totalBids === 0 && totalLots > 0) {
     alerts.push({
       type: 'warning',
-      message: 'Lotes aguardando primeiros lances.',
-      action: 'Configurar marketing',
+      message: 'Lotes cadastrados aguardando primeiros lances.',
+      action: 'Abrir pregão',
+      actionHref: tabLink('auction'),
     });
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats Grid */}
+    <div className="space-y-6" data-ai-id="auction-control-center-dashboard-tab">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title} className="hover:shadow-md transition-shadow">
@@ -130,15 +152,14 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <a href={stat.link} className="text-xs text-muted-foreground hover:underline">
-                Ver detalhes →
-              </a>
+              <Link href={stat.href} className="text-xs text-muted-foreground hover:underline">
+                Ver detalhes
+              </Link>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Alerts */}
       {alerts.length > 0 && (
         <Card>
           <CardHeader>
@@ -150,14 +171,16 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
           <CardContent className="space-y-3">
             {alerts.map((alert, idx) => (
               <div
-                key={idx}
-                className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-md"
+                key={`${alert.type}-${idx}`}
+                className="flex items-center justify-between gap-3 p-3 bg-amber-50 border border-amber-200 rounded-md"
               >
                 <p className="text-sm">{alert.message}</p>
-                {alert.action && (
-                  <Button variant="outline" size="sm">
-                    {alert.action}
-                  </Button>
+                {alert.action && alert.actionHref && (
+                  <Link href={alert.actionHref}>
+                    <Button variant="outline" size="sm">
+                      {alert.action}
+                    </Button>
+                  </Link>
                 )}
               </div>
             ))}
@@ -165,7 +188,6 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
         </Card>
       )}
 
-      {/* Quick Actions */}
       <Card>
         <CardHeader>
           <CardTitle>Ações Rápidas</CardTitle>
@@ -173,7 +195,12 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
         </CardHeader>
         <CardContent>
           <div className="mb-3" data-ai-id="dashboard-monitor-btn-container">
-            <GoToMonitorButton auction={auction} variant="default" className="w-full md:w-auto" dataAiId="admin-dashboard-go-monitor-btn" />
+            <GoToMonitorButton
+              auction={auction}
+              variant="default"
+              className="w-full md:w-auto"
+              dataAiId="admin-dashboard-go-monitor-btn"
+            />
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {quickActions.map((action) => (
@@ -188,7 +215,6 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
         </CardContent>
       </Card>
 
-      {/* Auction Timeline */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -203,7 +229,7 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="font-medium">Leilão Criado</p>
+                <p className="font-medium">Leilão criado</p>
                 <p className="text-sm text-muted-foreground">
                   {auction?.createdAt
                     ? new Date(auction.createdAt).toLocaleDateString('pt-BR')
@@ -211,26 +237,29 @@ export function DashboardTab({ auction, bids, habilitations, userWins }: Dashboa
                 </p>
               </div>
             </div>
+
             <div className="flex items-start gap-3">
               <div className="mt-1">
                 <AlertCircle className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="font-medium">Configuração Pendente</p>
+                <p className="font-medium">Configuração operacional</p>
                 <p className="text-sm text-muted-foreground">
-                  Complete o cadastro de lotes e configurações
+                  Complete lotes, habilitações e regras de pregão para iniciar com segurança.
                 </p>
               </div>
             </div>
+
             {userWins.length > 0 && (
               <div className="flex items-start gap-3">
                 <div className="mt-1">
                   <CheckCircle className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="font-medium">Arremates Registrados</p>
+                  <p className="font-medium">Arremates registrados</p>
                   <p className="text-sm text-muted-foreground">
-                    {userWins.length} lotes com arrematantes confirmados
+                    <Badge variant="secondary" className="mr-2">{userWins.length}</Badge>
+                    lote(s) com arrematante confirmado.
                   </p>
                 </div>
               </div>

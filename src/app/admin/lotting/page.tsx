@@ -145,7 +145,7 @@ export default function LoteamentoPage() {
         auctionId: selectedAuctionId,
         sellerId: selectedAuction?.sellerId,
         categoryId: asset.categoryId,
-        type: asset.categoryId,
+        type: asset.categoryName || asset.subcategoryName || asset.title,
         assetIds: [asset.id],
         imageUrl: asset.imageUrl,
         dataAiHint: asset.dataAiHint,

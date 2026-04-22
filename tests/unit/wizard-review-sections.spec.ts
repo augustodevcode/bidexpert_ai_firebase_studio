@@ -67,4 +67,50 @@ describe('buildWizardReviewSections', () => {
       { label: 'Janela de soft close', value: 'Não aplicável' },
     ]);
   });
+
+  it('prioriza documentos normalizados no resumo do wizard', () => {
+    const sections = buildWizardReviewSections({
+      documents: [
+        {
+          id: 'doc-1',
+          auctionId: 'auction-1',
+          tenantId: 'tenant-1',
+          fileName: 'edital-oficial.pdf',
+          title: 'Edital oficial',
+          description: null,
+          fileUrl: 'https://cdn.bidexpert.com.br/docs/edital-oficial.pdf',
+          fileSize: 1024n,
+          mimeType: 'application/pdf',
+          displayOrder: 0,
+          isPublic: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'doc-2',
+          auctionId: 'auction-1',
+          tenantId: 'tenant-1',
+          fileName: 'laudo-avaliacao.pdf',
+          title: 'Laudo de avaliação oficial',
+          description: null,
+          fileUrl: 'https://cdn.bidexpert.com.br/docs/laudo-avaliacao.pdf',
+          fileSize: 2048n,
+          mimeType: 'application/pdf',
+          displayOrder: 1,
+          isPublic: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ] as any,
+      sellingBranch: 'Central de Venda Direta São Paulo',
+      softCloseEnabled: false,
+    });
+
+    expect(sections.documents).toEqual([
+      { label: 'Documentos do leilão', value: 'https://cdn.bidexpert.com.br/docs/edital-oficial.pdf' },
+      { label: 'Laudo de avaliação', value: 'https://cdn.bidexpert.com.br/docs/laudo-avaliacao.pdf' },
+      { label: 'Certidão/Matrícula', value: 'Não informado' },
+      { label: 'Vara/Filial de venda', value: 'Central de Venda Direta São Paulo' },
+    ]);
+  });
 });

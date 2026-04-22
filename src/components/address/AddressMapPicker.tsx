@@ -30,6 +30,15 @@ import { consultaCepAction } from '@/lib/actions/cep';
 import { buildAddressLink } from '@/lib/helpers/address.helper';
 import type { CityInfo, StateInfo } from '@/types';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { formatCEP } from '@/lib/format';
+
+function normalizeText(value: string | null | undefined): string {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
 
 // Fix Leaflet's default icon path issue
 if (typeof window !== 'undefined') {
@@ -127,10 +136,35 @@ export default function AddressMapPicker({
   const [isClient, setIsClient] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const watchedStreet = control._getWatch('street');
+  const watchedNumber = control._getWatch('number');
+  const watchedCityId = control._getWatch('cityId');
+  const watchedStateId = control._getWatch('stateId');
+  const watchedCity = control._getWatch('city');
+  const watchedState = control._getWatch('state');
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const runGeocode = useCallback(async (query: string) => {
+    try {
+      const geoResponse = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`
+      );
+      const geoData = await geoResponse.json();
+      if (geoData && geoData.length > 0) {
+        const { lat, lon } = geoData[0];
+        const parsedLat = parseFloat(lat);
+        const parsedLon = parseFloat(lon);
+        setValue('latitude', parsedLat, { shouldDirty: true });
+        setValue('longitude', parsedLon, { shouldDirty: true });
+        setValue('addressLink', buildAddressLink(parsedLat, parsedLon), { shouldDirty: true });
+      }
+    } catch (geoError) {
+      console.error('Geocoding error:', geoError);
+    }
+  }, [setValue]);
 
   const handleCepLookup = useCallback(() => {
     const currentZipCode = control._getWatch('zipCode');
@@ -163,7 +197,7 @@ export default function AddressMapPicker({
 
           // Resolver cidade por nome + UF
           const foundCity = allCities.find(
-            (c) => c.name === result.data?.localidade && c.stateUf === result.data?.uf
+            (c) => normalizeText(c.name) === normalizeText(result.data?.localidade) && normalizeText(c.stateUf) === normalizeText(result.data?.uf)
           );
           if (foundCity) {
             setValue('cityId', foundCity.id?.toString() ?? '', { shouldDirty: true });
@@ -183,39 +217,9 @@ export default function AddressMapPicker({
           description: `${result.data.logradouro}, ${result.data.localidade} - ${result.data.uf}`,
         });
 
-        // Geocoding via Nominatim
-        try {
-          const query = encodeURIComponent(
-            `${result.data.logradouro}, ${result.data.localidade}, ${result.data.uf}, Brazil`
-          );
-          const geoResponse = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
-          );
-          const geoData = await geoResponse.json();
-          if (geoData && geoData.length > 0) {
-            const { lat, lon } = geoData[0];
-            const parsedLat = parseFloat(lat);
-            const parsedLon = parseFloat(lon);
-            setValue('latitude', parsedLat, { shouldDirty: true });
-            setValue('longitude', parsedLon, { shouldDirty: true });
-            // Auto-gerar addressLink
-            const link = buildAddressLink(parsedLat, parsedLon);
-            setValue('addressLink', link, { shouldDirty: true });
-          } else {
-            toast({
-              title: 'Geolocalização não encontrada',
-              description: 'Não foi possível encontrar as coordenadas para este CEP.',
-              variant: 'default',
-            });
-          }
-        } catch (geoError) {
-          console.error('Geocoding error:', geoError);
-          toast({
-            title: 'Erro de Geolocalização',
-            description: 'Falha ao buscar coordenadas.',
-            variant: 'destructive',
-          });
-        }
+        const houseNumber = control._getWatch('number');
+        const addressParts = [result.data.logradouro, houseNumber, result.data.localidade, result.data.uf, 'Brazil'].filter(Boolean);
+        await runGeocode(addressParts.join(', '));
       } else {
         toast({
           title: 'CEP não encontrado',
@@ -224,7 +228,30 @@ export default function AddressMapPicker({
         });
       }
     });
-  }, [control, setValue, allCities, allStates, mode, toast]);
+  }, [control, setValue, allCities, allStates, mode, toast, runGeocode]);
+
+  useEffect(() => {
+    const resolvedState = mode === 'relational'
+      ? allStates.find((state) => state.id === watchedStateId)?.uf
+      : watchedState;
+    const resolvedCity = mode === 'relational'
+      ? allCities.find((city) => city.id === watchedCityId)?.name
+      : watchedCity;
+
+    const addressParts = [watchedStreet, watchedNumber, resolvedCity, resolvedState, 'Brazil']
+      .map((value) => (typeof value === 'string' ? value.trim() : value))
+      .filter(Boolean);
+
+    if (addressParts.length < 4) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      runGeocode(addressParts.join(', '));
+    }, 700);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [allCities, allStates, mode, runGeocode, watchedCity, watchedCityId, watchedNumber, watchedState, watchedStateId, watchedStreet]);
 
   if (!isClient) {
     return <div className="h-72 w-full bg-muted animate-pulse rounded-md" data-ai-id="address-map-skeleton" />;
@@ -254,6 +281,7 @@ export default function AddressMapPicker({
                   placeholder="00000-000"
                   {...field}
                   value={field.value ?? ''}
+                  onChange={(event) => field.onChange(formatCEP(event.target.value))}
                   disabled={isPending}
                   maxLength={9}
                 />

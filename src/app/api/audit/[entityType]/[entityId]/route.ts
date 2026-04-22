@@ -5,6 +5,57 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+function parseJsonField(value: unknown): Record<string, any> | null {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof value === 'object') {
+    return value as Record<string, any>;
+  }
+
+  return null;
+}
+
+function buildFieldChanges(log: any): any[] {
+  const legacyChanges = parseJsonField(log.changes);
+  const before = parseJsonField(log.oldValues) ?? legacyChanges?.before ?? null;
+  const after = parseJsonField(log.newValues) ?? legacyChanges?.after ?? null;
+
+  if (before || after) {
+    return Array.from(new Set([...Object.keys(before || {}), ...Object.keys(after || {})]))
+      .filter((field) => JSON.stringify(before?.[field]) !== JSON.stringify(after?.[field]))
+      .map((field) => ({
+        propertyName: field,
+        oldValue: before?.[field],
+        newValue: after?.[field],
+      }));
+  }
+
+  const fieldChanges: any[] = [];
+  if (legacyChanges) {
+    for (const [field, values] of Object.entries(legacyChanges)) {
+      if (typeof values === 'object' && values !== null && 'old' in values && 'new' in values) {
+        fieldChanges.push({
+          propertyName: field,
+          oldValue: (values as any).old,
+          newValue: (values as any).new,
+        });
+      }
+    }
+  }
+
+  return fieldChanges;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { entityType: string; entityId: string } }
@@ -58,21 +109,7 @@ export async function GET(
 
     // Format response with field-level changes
     const formattedLogs = logs.map(log => {
-      const changes = log.changes ? (typeof log.changes === 'string' ? JSON.parse(log.changes) : log.changes) : null;
-      
-      // Extract field-level changes for display
-      const fieldChanges: any[] = [];
-      if (changes) {
-        for (const [field, values] of Object.entries(changes)) {
-          if (typeof values === 'object' && values !== null && 'old' in values && 'new' in values) {
-            fieldChanges.push({
-              propertyName: field,
-              oldValue: (values as any).old,
-              newValue: (values as any).new,
-            });
-          }
-        }
-      }
+      const fieldChanges = buildFieldChanges(log);
 
       return {
         id: log.id.toString(),

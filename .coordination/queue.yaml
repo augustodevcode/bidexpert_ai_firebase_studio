@@ -22,6 +22,60 @@
 #   notes: observações livres
 
 queue:
+	- id: "20260421-2120-copilot-admin-auction-governance"
+		dev_id: copilot
+		branch: feat/admin-auction-governance-20260420-2327
+		status: testing
+		title: "Admin auction governance + central de controle + lotting readiness + wizard/lot-form integrity"
+		areas_impacted:
+			- src/app/admin/auctions
+			- src/app/admin/lots
+			- src/app/admin/lotting
+			- src/app/admin/wizard
+			- src/components/admin/auction-preparation
+			- src/components/admin/wizard
+			- src/components/admin/lotting
+			- src/components/admin/auctions
+			- src/lib/auctions
+			- src/services
+			- src/repositories
+			- prisma (mysql + postgresql)
+			- tests/unit/auction-preparation
+			- tests/ui-e2e (visual)
+			- tests/itsm/features (BDD)
+		files_touched:
+			- src/components/admin/auction-preparation/tabs/lotting-tab.tsx
+			- src/components/admin/auction-preparation/tabs/dashboard-tab.tsx
+			- src/components/admin/auction-preparation/tabs/lots-tab.tsx
+			- src/components/admin/auction-preparation/auction-preparation-dashboard.tsx
+			- src/app/admin/lots/lot-form.tsx
+			- src/app/admin/lotting/page.tsx
+			- src/app/admin/auctions/auction-form.tsx
+			- src/app/admin/auctions/auction-form-schema.ts
+			- src/app/admin/auctions/actions.ts
+			- src/app/admin/auctions/[auctionId]/edit/page.tsx
+			- src/app/admin/wizard/actions.ts
+			- src/app/admin/wizard/steps/step-4-lotting.tsx
+			- src/components/admin/wizard/steps/step-2-judicial-setup.tsx
+			- src/components/admin/wizard/steps/step-3-auction-details.tsx
+			- src/components/admin/wizard/steps/step-4-lotting.tsx
+			- src/components/admin/wizard/steps/step-5-review.tsx
+			- src/components/admin/wizard/wizard-review-sections.ts
+			- prisma/schema.prisma
+			- prisma-deploy/schema.postgresql.prisma
+			- tests/unit/auction-preparation/lotting-tab.spec.tsx
+			- tests/ui-e2e/auction-lotting-readiness.visual.spec.tsx
+			- tests/itsm/features/admin-auction-lotting-readiness.feature
+			- tests/itsm/features/auction-documents-migration.feature
+			- tests/unit/auction-documents.helper.spec.ts
+			- vitest.lotting.visual.config.ts
+		risk_level: high
+		playwright_evidence: "playwright-report/index.html (smoke 5/5 green @ http://demo.localhost:9007)"
+		started_at: "2026-04-20T23:27:00Z"
+		updated_at: "2026-04-21T21:20:00-03:00"
+		pr_number: null
+		notes: "Pre-PR gate: npm ci OK, typecheck OK, build OK, unit lotting-tab 2/2, visual auction-lotting-readiness 1/1 (baseline atualizada), Playwright smoke 5/5. Fix de sintaxe em step-4-lotting.tsx (useCallback). Aguardando autorizacao humana para abrir PR para demo-stable."
+
 	- id: "20260402-1548-copilot-favorite-lots"
 		dev_id: copilot
 		branch: feat/investor-journey-20260402-1548

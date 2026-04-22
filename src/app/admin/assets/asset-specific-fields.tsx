@@ -15,6 +15,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { getFieldGroupsForCategory, type AssetFieldGroup, type AssetField } from './asset-field-config';
 import type { AssetFormData } from './asset-form-schema';
+import type { VehicleMake, VehicleModel } from '@/types';
+import { getVehicleMakes } from '../vehicle-makes/actions';
+import { getVehicleModels } from '../vehicle-models/actions';
 
 interface AssetSpecificFieldsProps {
   form: UseFormReturn<AssetFormData>;
@@ -22,6 +25,10 @@ interface AssetSpecificFieldsProps {
 }
 
 export default function AssetSpecificFields({ form, categorySlug }: AssetSpecificFieldsProps) {
+  const [vehicleMakes, setVehicleMakes] = React.useState<VehicleMake[]>([]);
+  const [vehicleModels, setVehicleModels] = React.useState<VehicleModel[]>([]);
+  const selectedMake = form.watch('make');
+
   if (!categorySlug) {
     return (
       <div className="p-4 border rounded-md bg-muted/50 text-center text-sm text-muted-foreground">
@@ -31,6 +38,44 @@ export default function AssetSpecificFields({ form, categorySlug }: AssetSpecifi
   }
 
   const fieldGroups = getFieldGroupsForCategory(categorySlug);
+  const isVehicleCategory = ['veiculos', 'automoveis', 'carros', 'motos', 'caminhoes', 'onibus'].includes(categorySlug);
+
+  React.useEffect(() => {
+    if (!isVehicleCategory) {
+      return;
+    }
+
+    async function loadVehicleMasterData() {
+      const [makes, models] = await Promise.all([getVehicleMakes(), getVehicleModels()]);
+      setVehicleMakes(makes);
+      setVehicleModels(models);
+    }
+
+    loadVehicleMasterData().catch((error) => {
+      console.error('Erro ao carregar marcas e modelos de veículos:', error);
+      setVehicleMakes([]);
+      setVehicleModels([]);
+    });
+  }, [isVehicleCategory]);
+
+  const filteredVehicleModels = React.useMemo(() => {
+    if (!selectedMake) {
+      return [];
+    }
+
+    return vehicleModels.filter((model) => model.makeName === selectedMake);
+  }, [selectedMake, vehicleModels]);
+
+  React.useEffect(() => {
+    if (!isVehicleCategory) {
+      return;
+    }
+
+    const currentModel = form.getValues('model');
+    if (currentModel && !filteredVehicleModels.some((model) => model.name === currentModel)) {
+      form.setValue('model', '');
+    }
+  }, [filteredVehicleModels, form, isVehicleCategory]);
 
   if (fieldGroups.length === 0) {
     return (
@@ -48,7 +93,13 @@ export default function AssetSpecificFields({ form, categorySlug }: AssetSpecifi
           <h4 className="text-base font-semibold text-primary mb-4">{group.title}</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {group.fields.map((field) => (
-              <FieldRenderer key={field.name} field={field} form={form} />
+              <FieldRenderer
+                key={field.name}
+                field={field}
+                form={form}
+                vehicleMakes={vehicleMakes}
+                vehicleModels={filteredVehicleModels}
+              />
             ))}
           </div>
         </div>
@@ -60,9 +111,11 @@ export default function AssetSpecificFields({ form, categorySlug }: AssetSpecifi
 interface FieldRendererProps {
   field: AssetField;
   form: UseFormReturn<AssetFormData>;
+  vehicleMakes: VehicleMake[];
+  vehicleModels: VehicleModel[];
 }
 
-function FieldRenderer({ field, form }: FieldRendererProps) {
+function FieldRenderer({ field, form, vehicleMakes, vehicleModels }: FieldRendererProps) {
   const fieldName = field.name as keyof AssetFormData;
   const fullWidth = field.type === 'textarea';
 
@@ -76,7 +129,7 @@ function FieldRenderer({ field, form }: FieldRendererProps) {
             {field.label}
             {field.required && <span className="text-destructive ml-1">*</span>}
           </FormLabel>
-          {renderFieldInput(field, formField)}
+          {renderFieldInput(field, formField, vehicleMakes, vehicleModels)}
           {field.description && <FormDescription>{field.description}</FormDescription>}
           <FormMessage />
         </FormItem>
@@ -85,7 +138,46 @@ function FieldRenderer({ field, form }: FieldRendererProps) {
   );
 }
 
-function renderFieldInput(fieldConfig: AssetField, formField: any) {
+function renderFieldInput(
+  fieldConfig: AssetField,
+  formField: any,
+  vehicleMakes: VehicleMake[],
+  vehicleModels: VehicleModel[]
+) {
+  if (fieldConfig.name === 'make') {
+    return (
+      <Select onValueChange={formField.onChange} value={formField.value ?? undefined}>
+        <SelectTrigger>
+          <SelectValue placeholder="Selecione a marca oficial" />
+        </SelectTrigger>
+        <SelectContent>
+          {vehicleMakes.map((make) => (
+            <SelectItem key={make.id} value={make.name}>
+              {make.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  if (fieldConfig.name === 'model') {
+    return (
+      <Select onValueChange={formField.onChange} value={formField.value ?? undefined} disabled={vehicleModels.length === 0}>
+        <SelectTrigger>
+          <SelectValue placeholder={vehicleModels.length === 0 ? 'Selecione a marca primeiro' : 'Selecione o modelo oficial'} />
+        </SelectTrigger>
+        <SelectContent>
+          {vehicleModels.map((model) => (
+            <SelectItem key={model.id} value={model.name}>
+              {model.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
   switch (fieldConfig.type) {
     case 'text':
     case 'number':

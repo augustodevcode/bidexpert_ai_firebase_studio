@@ -18,6 +18,8 @@ import { LotService } from '@/services/lot.service';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { getCurrentUser } from '@/app/auth/actions';
 import { hasPermission } from '@/lib/permissions';
+import { auth } from '@/lib/auth';
+import { runWithAuditContext } from '@/lib/audit-context';
 
 /**
  * @fileoverview Server Actions para o assistente de criação de leilões (Wizard).
@@ -106,7 +108,10 @@ export async function createAuctionFromWizard(wizardData: WizardData): Promise<{
       judicialProcessId: wizardData.judicialProcess?.id // Make sure to pass this along
     };
 
-    const auctionResult = await auctionService.createAuction(tenantId, auctionData);
+    const session = await auth();
+    const auctionResult = session?.user?.id
+      ? await runWithAuditContext({ userId: session.user.id, tenantId }, () => auctionService.createAuction(tenantId, auctionData))
+      : await auctionService.createAuction(tenantId, auctionData);
 
     if (!auctionResult.success || !auctionResult.auctionId) {
       return { success: false, message: `Falha ao criar o leilão: ${auctionResult.message}` };

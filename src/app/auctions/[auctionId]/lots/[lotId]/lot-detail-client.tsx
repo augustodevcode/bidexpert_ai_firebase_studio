@@ -78,6 +78,7 @@ import { ptBR } from 'date-fns/locale';
 import StickyBidBar from '@/components/auction/sticky-bid-bar';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
 import { getAuctionEffectiveDates } from '@/lib/auction-timing';
+import { getPublicAuctionDocuments } from '@/lib/auctions/documents';
 
 
 const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
@@ -564,6 +565,8 @@ export default function LotDetailClientContent({
   const currentLotHasProcessInfo = hasProcessInfo(lot);
   const showLegalProcessTab = isJudicialAuction && currentLotHasProcessInfo;
   const legalTabTitle = showLegalProcessTab ? "Documentos e Processo" : "Documentos";
+  const auctionDocuments = useMemo(() => getPublicAuctionDocuments(auction), [auction]);
+  const primaryAuctionDocument = auctionDocuments[0] ?? null;
   
   const auctioneerName = auction.auctioneer?.name || auction.auctioneerName;
   const getAuctioneerInitial = () => {
@@ -867,13 +870,13 @@ export default function LotDetailClientContent({
                               </div>
                             )}
 
-                            {auction.documentsUrl && (
-                              <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>
+                            {primaryAuctionDocument && (
+                              <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={primaryAuctionDocument.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>
                             )}
-                            {!auction.documentsUrl && !showLegalProcessTab && (
+                            {!primaryAuctionDocument && !showLegalProcessTab && (
                               <p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>
                             )}
-                            {auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (
+                            {primaryAuctionDocument && !showLegalProcessTab && !currentLotHasProcessInfo && (
                               <p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>
                             )}
                           </CardContent>

@@ -230,6 +230,88 @@ Schemas Zod + `react-hook-form` em todos formulários
 
 **RCA / prevenção:** O fluxo de publicação falhava silenciosamente com `Unique constraint failed on Auction_slug_key` em reexecuções e também com `Invalid value for argument 'status'` quando o wizard enviava string vazia. A proteção precisa existir no service, não no teste.
 
+### RN-010C: Selectors Administrativos Compartilhados do Leilão
+✅ `EntitySelector` é um contrato compartilhado do admin; antes de corrigir um modal isolado de categoria, comitente, leiloeiro ou processo judicial, a implementação DEVE avaliar a API compartilhada do selector e do `DataTable`, e não apenas o formulário chamador.
+✅ Selectors com dados tabulares relevantes DEVEM suportar colunas ricas, pesquisa por identidade determinística e rolagem interna do conteúdo, sem expandir o modal além da viewport útil.
+✅ O selector de processo judicial DEVE exibir, quando os dados existirem: número do processo, leilões já vinculados, quantidade de ativos, descrição, comarca, vara e comitente.
+✅ Fluxos E2E/admin DEVEM selecionar categoria, comitente, leiloeiro e processo judicial por identidade determinística (nome/número/`data-ai-id`), nunca pela primeira linha disponível.
+
+**RCA / prevenção:** As regressões dos modais administrativos surgiram porque a causa real estava no contrato compartilhado do `EntitySelector`, limitado a uma única coluna textual e sem rolagem interna consistente. Corrigir cada tela isoladamente mascara o problema e reintroduz divergência entre modais.
+
+**Cenário BDD - Selector judicial rico e rolável**
+- **Dado** que existem múltiplos processos judiciais no tenant
+- **Quando** o usuário abre o selector de processo judicial no cadastro de leilão
+- **Então** o modal exibe colunas ricas com barra de rolagem própria
+- **E** a seleção pode ser feita pelo número exato do processo
+
+**Cenário BDD - Modal administrativo não vaza layout**
+- **Dado** um modal de selector com dezenas de resultados
+- **Quando** o usuário navega pela listagem
+- **Então** a rolagem ocorre dentro do conteúdo do modal
+- **E** o cabeçalho e as ações principais permanecem visíveis
+
+### RN-010D: Processo Judicial deve Propagar Comitente no Wizard
+✅ No fluxo judicial do wizard, a seleção do processo DEVE propagar `judicialProcessId` e o comitente resolvido até a etapa de informações do leilão, ao review final e à persistência do leilão.
+✅ Quando o processo judicial já possuir comitente resolvido, o campo de comitente do leilão DEVE ser autoatribuído a partir do processo, preservando override manual apenas se o negócio permitir explicitamente.
+✅ Quando o processo judicial NÃO possuir comitente resolvido, o wizard DEVE abrir uma etapa condicional para criar ou completar o comitente a partir da Vara antes de permitir a continuidade do fluxo.
+✅ O resumo final do wizard DEVE refletir exatamente o processo e o comitente que serão persistidos, sem divergência entre Step 2, Step 3 e publicação.
+
+**RCA / prevenção:** Parte dos bugs do wizard surgiu porque a seleção do processo ficava restrita ao passo judicial e não propagava de forma confiável para o `AuctionForm` reutilizado na etapa seguinte. Em fluxos judiciais, processo e comitente são uma cadeia de negócio única e não podem ser tratados como campos independentes opcionais.
+
+**Cenário BDD - Processo propaga para a etapa do leilão**
+- **Dado** um processo judicial selecionado no Step 2
+- **Quando** o usuário avança para a etapa de informações do leilão
+- **Então** o processo judicial continua selecionado no formulário
+- **E** o comitente vinculado ao processo é exibido automaticamente quando existir
+
+**Cenário BDD - Vara exige etapa condicional de comitente**
+- **Dado** um processo judicial sem comitente resolvido
+- **Quando** o usuário tenta avançar no wizard
+- **Então** o fluxo abre uma etapa condicional para criar ou completar o comitente a partir da Vara
+- **E** a publicação permanece bloqueada até a cadeia processo → Vara → comitente ficar consistente
+
+### RN-010E: Endereço, Locale e Máscaras Administrativas
+✅ A busca de CEP em formulários administrativos DEVE normalizar a comparação de cidade/UF, sincronizando estado e cidade antes de gravar o resultado no formulário.
+✅ Após o usuário preencher ou sair do campo número com endereço base válido, o geocoder DEVE recalcular o pin usando rua + número + cidade + UF, e não apenas a rua.
+✅ Campos administrativos de data/hora DEVEM manter exibição consistente em português brasileiro, sem depender da formatação nativa divergente do browser como regra de negócio.
+✅ Telefone, WhatsApp e campos monetários administrativos DEVEM usar máscara de entrada com normalização explícita antes da persistência.
+✅ A URL online padrão do leilão DEVE ser derivada do domínio/origin atual quando o campo estiver vazio, preservando override manual explícito do usuário.
+
+**RCA / prevenção:** Os bugs de CEP/mapa e locale surgiram por matching textual rígido de cidade, geocodificação sem número e dependência do comportamento nativo do input do browser para data/hora. Esses contratos precisam ser centralizados para não variar entre formulários.
+
+**Cenário BDD - CEP preenche cidade e número reposiciona o mapa**
+- **Dado** um CEP válido preenchido em um formulário administrativo
+- **Quando** o endereço é resolvido e o usuário informa o número do imóvel
+- **Então** estado e cidade são sincronizados no formulário
+- **E** o pin do mapa é recalculado com o endereço completo
+
+**Cenário BDD - Máscara não altera persistência semântica**
+- **Dado** um campo de telefone, WhatsApp ou valor monetário exibido com máscara pt-BR
+- **Quando** o formulário é salvo
+- **Então** o valor persistido é a versão normalizada
+- **E** a máscara permanece apenas como camada de entrada e apresentação
+
+### RN-010F: Contratos de Documentos, Mídia, Histórico e Loteamento do Leilão
+✅ Documentos do leilão DEVEM ser tratados por um modelo genérico relacional de documentos, com título customizado e vínculo à mídia; é proibido reintroduzir campos paralelos de URL fixa como nova fonte de verdade.
+✅ Consumidores da biblioteca de mídia DEVEM respeitar o contrato real retornado pelo item de mídia (`urlOriginal`, `urlThumbnail` ou equivalente documentado), sem assumir propriedades ad hoc como `url` quando elas não existirem no tipo retornado.
+✅ A tela de edição do leilão e superfícies correlatas DEVEM buscar lotes somente por filtro explícito de `auctionId`, respeitando a assinatura real de `getLots`, para impedir vazamento de lotes de outros leilões.
+✅ O histórico de alterações do leilão só é considerado íntegro quando a mutation persistir registros de auditoria e o endpoint de leitura conseguir normalizar eventos armazenados em `changes` e também em `oldValues/newValues`.
+✅ A numeração visível dos lotes no wizard e no controle de preparação DEVE sair de uma regra centralizada, e não de contagem local de array sujeita a reinício após re-fetches ou agrupamentos.
+
+**RCA / prevenção:** Os bugs de imagem principal, vazamento de lotes e histórico vazio surgiram porque os contratos reais dos componentes/serviços compartilhados não estavam sendo respeitados: a biblioteca de mídia retornava outros campos, `getLots` exigia filtro estruturado e a trilha de auditoria não estava sendo lida e persistida de forma compatível entre caminhos diferentes.
+
+**Cenário BDD - Seleção de mídia preserva preview imediatamente**
+- **Dado** que o usuário escolhe uma imagem principal na biblioteca de mídia
+- **Quando** a seleção é confirmada no formulário do ativo ou do leilão
+- **Então** o preview reaparece imediatamente com a URL retornada pela biblioteca
+- **E** o vínculo de mídia persistível é mantido no payload salvo
+
+**Cenário BDD - Edição do leilão não vaza lotes e exibe histórico**
+- **Dado** um leilão em edição com lotes e alterações próprias
+- **Quando** o usuário abre a tela de edição
+- **Então** apenas os lotes do `auctionId` atual são exibidos
+- **E** a aba de histórico mostra mudanças persistidas da entidade em formato legível
+
 ### RN-011: Campo Propriedades em Formulários
 Campo "Propriedades" é um **campo de texto simples**  
 Usado para dados específicos de categoria de forma livre  

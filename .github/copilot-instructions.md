@@ -89,6 +89,18 @@ npm run dev
   - Antes de usar `select`/`include`, confirmar no schema Prisma se o campo realmente existe (`title` vs `name`, etc.).
 8. **Ordem mínima de validação**
   - Após a correção: browser interno da rota afetada → Playwright com `--grep` na rota/teste alvo → lote maior ou sweep completo.
+9. **Contratos compartilhados do admin de leilões**
+  - Antes de corrigir modal de processo/categoria/comitente/leiloeiro, inspecionar primeiro `EntitySelector` e `DataTable`; não criar patch local por tela sem validar o contrato compartilhado.
+  - Antes de corrigir preview de mídia, confirmar o shape real do retorno da biblioteca (`urlOriginal`, `urlThumbnail` ou equivalente) e NÃO assumir uma propriedade `url` inexistente.
+  - Antes de corrigir vazamento de lotes na edição do leilão, confirmar a assinatura real do service (`getLots({ auctionId })`) e NÃO chamar o service com argumento positional incompatível.
+  - Após migrar documentos do leilão para modelo relacional, o agente NÃO deve reintroduzir novos campos de URL fixa como fonte paralela de verdade.
+  - Se a correção revelar um padrão transversal do wizard/admin de leilões, atualizar regras consolidadas e criar/ajustar skill dedicada para impedir recorrência.
+10. **Invariantes do wizard judicial**
+  - Processo judicial selecionado no Step 2 DEVE propagar para o Step 3, review e persistência final com o comitente resolvido quando existir.
+  - Se o processo vier sem comitente resolvido, o agente deve preferir etapa condicional por Vara em vez de deixar o fluxo seguir silenciosamente com vínculo ausente.
+11. **Invariantes de endereço e locale administrativo**
+  - CEP/cidade exigem matching normalizado e o geocoding DEVE incluir o número do imóvel quando o campo for preenchido ou perder foco.
+  - Máscaras pt-BR de telefone, WhatsApp, moeda e data/hora DEVEM normalizar o valor antes da persistência; a máscara não é a fonte de verdade.
 
 ### 5. No ÚLTIMO TODO do Chat - SOLICITAR AUTORIZAÇÃO
 **OBRIGATÓRIO:** Antes de finalizar, o agente DEVE:

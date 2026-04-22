@@ -162,7 +162,7 @@ export default function EditAuctionPage() {
     try {
         const [fetchedAuction, fetchedLots, fetchedAuctioneers, fetchedSellers, settings, fetchedStates, fetchedCities, fetchedProcesses, fetchedCategories] = await Promise.all([
             getAuction(auctionId),
-            getLots(auctionId),
+          getLots({ auctionId }),
             getAuctioneers(),
             getSellers(),
             getPlatformSettings(),
@@ -330,20 +330,6 @@ export default function EditAuctionPage() {
                     data={lotsInAuction}
                 />
             </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-              <CardTitle className="text-xl font-semibold flex items-center">
-                  <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance do Leilão
-              </CardTitle>
-              <CardDescription>
-                  KPIs e métricas de desempenho para este leilão específico.
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-              <AuctionDashboardSection auctionId={auctionId} />
-          </CardContent>
         </Card>
       </div>
        <AISuggestionModal

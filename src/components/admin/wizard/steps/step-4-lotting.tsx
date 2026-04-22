@@ -3,7 +3,7 @@
 
 import { useWizard } from '../wizard-context';
 import type { Asset, Auction, Lot } from '@/types';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/components/admin/lotting/columns';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,18 @@ import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import { createLot } from '@/app/admin/lots/actions'; 
+
+function getNextLotNumber(existingLots: Lot[] = []): string {
+  const numericNumbers = existingLots
+    .map((lot) => Number(lot.number))
+    .filter((value) => Number.isInteger(value) && value > 0);
+
+  const currentBase = numericNumbers.length > 0
+    ? Math.max(...numericNumbers)
+    : existingLots.length;
+
+  return String(currentBase + 1);
+}
 
 interface Step4LottingProps {
   availableAssets: Asset[];
@@ -39,6 +51,8 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
     const selectedIndices = Object.keys(rowSelection).map(Number);
     return selectedIndices.map(index => assetsForLotting[index]).filter(Boolean) as Asset[];
   }, [rowSelection, assetsForLotting]);
+
+  const nextLotNumber = useMemo(() => getNextLotNumber(wizardData.createdLots || []), [wizardData.createdLots]);
   
   const handleViewAssetDetails = (asset: Asset) => {
     setSelectedAssetForModal(asset);
@@ -60,7 +74,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
     setIsModalOpen(true);
   };
 
-  const handleCreateIndividualLotsClick = async () => {
+  const handleCreateIndividualLotsClick = useCallback(async () => {
     if (selectedAssets.length === 0) {
         toast({ title: "Nenhum ativo selecionado", description: "Por favor, selecione pelo menos um ativo.", variant: "destructive" });
         return;
@@ -73,7 +87,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
     const isWizardMode = !auctionData.id; // No wizard, o leilão ainda não foi criado
 
     for (const asset of selectedAssets) {
-        const lotNumber = String((wizardData.createdLots?.length || 0) + successCount + 1).padStart(3, '0');
+      const lotNumber = String(Number(nextLotNumber) + successCount);
         const newLotData: Partial<Lot> = {
             title: asset.title,
             number: lotNumber,
@@ -129,7 +143,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
 
     setRowSelection({});
     setIsCreatingIndividualLots(false);
-  };
+  }, [auctionData.id, nextLotNumber, selectedAssets, setWizardData, toast, wizardData.auctionDetails, wizardData.createdLots]);
   
   const handleLotCreatedInModal = (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionId'>) => {
     const newCompleteLot: Lot = {
@@ -196,9 +210,8 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedAssets={selectedAssets}
-        auctionId={auctionData.id || ''}
-        sellerId={auctionData.sellerId}
         onLotCreated={handleLotCreatedInModal}
+        suggestedLotNumber={nextLotNumber}
       />}
        <AssetDetailsModal 
         asset={selectedAssetForModal} 

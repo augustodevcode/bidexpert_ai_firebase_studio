@@ -458,7 +458,10 @@ export function InvestorAnalysisSection({
                   additionalDocumentsInfo: lot.additionalDocumentsInfo,
                 }}
                 auction={{
+                  documents: auction?.documents,
                   documentsUrl: auction?.documentsUrl,
+                  evaluationReportUrl: auction?.evaluationReportUrl,
+                  auctionCertificateUrl: auction?.auctionCertificateUrl,
                   auctionType: auction?.auctionType,
                 }}
               />
