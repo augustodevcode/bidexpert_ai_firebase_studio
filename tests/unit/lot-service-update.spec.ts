@@ -41,6 +41,13 @@ describe('LotService.updateLot', () => {
 
   it('resolve publicId before updating lot data', async () => {
     mockedPrisma.lot.findUnique.mockResolvedValueOnce({ id: BigInt(42) });
+    mockedPrisma.lot.findUnique.mockResolvedValueOnce({ id: BigInt(42) });
+    mockedPrisma.lot.findUnique.mockResolvedValueOnce({
+      id: BigInt(42),
+      status: 'RASCUNHO',
+      Auction: { status: 'EM_PREPARACAO', title: 'Leilão de teste' }
+    });
+    mockedPrisma.lot.findUnique.mockResolvedValueOnce({ tenantId: BigInt(7), status: 'RASCUNHO' });
     mockedPrisma.lot.update.mockResolvedValueOnce({ id: BigInt(42) });
 
     const service = new LotService();

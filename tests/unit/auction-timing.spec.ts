@@ -66,7 +66,7 @@ describe('auction-timing helpers', () => {
     const status = getEffectiveLotStatus(
       {
         status: 'ABERTO_PARA_LANCES',
-        auctionDate: '2026-04-11T10:00:00Z',
+        lotSpecificAuctionDate: '2026-04-11T10:00:00Z',
         endDate: '2026-04-11T11:00:00Z',
       } as any,
       undefined,

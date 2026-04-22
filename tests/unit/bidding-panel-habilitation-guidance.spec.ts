@@ -45,6 +45,7 @@ vi.mock('@/lib/ui-helpers', () => ({
   __esModule: true,
   getAuctionStatusText: () => 'Aberto',
   calculateMinimumBid: () => 12232.2,
+  getLotPriceForStage: () => null,
 }));
 
 vi.mock('@/lib/auction-timing', () => ({
