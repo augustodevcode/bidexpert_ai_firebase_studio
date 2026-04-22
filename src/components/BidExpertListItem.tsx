@@ -30,7 +30,7 @@ interface BidExpertListItemProps {
 export default function BidExpertListItem({ item, type, platformSettings, parentAuction, onUpdate, density = 'default' }: BidExpertListItemProps) {
   switch (type) {
     case 'auction':
-      return <AuctionListItem auction={item as Auction} onUpdate={onUpdate} density={density} />;
+      return <AuctionListItem auction={item as Auction} platformSettings={platformSettings} onUpdate={onUpdate} density={density} />;
     case 'lot':
       return (
         <LotListItem

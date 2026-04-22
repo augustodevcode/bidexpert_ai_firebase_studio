@@ -6,6 +6,27 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.27](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.26...v1.0.0-demo.27) (2026-04-22)
+
+### Funcionalidades
+
+* **admin-auction-governance:** central de controle, lotting readiness, wizard/lot-form integrity ([#710](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/710)) ([ebdd8a4](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/ebdd8a4f1198358f826d4d5006894de28a21da33))
+
+## [1.0.0-demo.26](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.25...v1.0.0-demo.26) (2026-04-22)
+
+### Correções
+
+* add onError fallback for header logo to prevent broken image icon ([25c506b](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/25c506b380191c1448b80261dbe47bc1c1ad7f5a))
+* **header:** fallback when tenant logo URL fails ([d75e96e](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/d75e96e25325e012287b4584cf9e7d3ed6738741))
+* **header:** use native img for reliable logo error fallback ([3455c43](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/3455c4333e2aae3b7709a627f14513cf47f1834d))
+
+## [1.0.0-demo.25](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.24...v1.0.0-demo.25) (2026-04-21)
+
+### Correções
+
+* **dashboard:** fix ShoppingBag reference error in reports page ([8c7bffa](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/8c7bffa0e398f19a52e48f363d4a190983589bd5))
+* **ui:** replace hardcoded picsum/placehold fallbacks with tenant logoUrl ([6d97ba9](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/6d97ba9993f9bf60137edd1e69f2510ef30d5b5a))
+
 ## [1.0.0-demo.24](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.23...v1.0.0-demo.24) (2026-04-19)
 
 ### Funcionalidades

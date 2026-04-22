@@ -24,10 +24,11 @@ import { getAuctionEffectiveDates } from '@/lib/auction-timing';
 
 interface AuctionCardProps {
   auction: Auction;
+  platformSettings?: import('@/types').PlatformSettings | null;
   onUpdate?: () => void;
 }
 
-export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
+export default function AuctionCard({ auction, platformSettings, onUpdate }: AuctionCardProps) {
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
   const [auctionFullUrl, setAuctionFullUrl] = React.useState<string>(`/auctions/${auction.publicId || auction.id}`);
@@ -98,7 +99,8 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     }
   }
   
-  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl! : `https://picsum.photos/seed/${auction.id}/600/400`;
+  const fallbackLogo = platformSettings?.logoUrl || '/images/image-placeholder.png';
+  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl! : fallbackLogo;
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;

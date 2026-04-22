@@ -74,7 +74,7 @@ queue:
 		started_at: "2026-04-20T23:27:00Z"
 		updated_at: "2026-04-22T00:41:00-03:00"
 		pr_number: 711
-		notes: "PR #711 aberto para demo-stable. Preview Vercel da branch ficou Ready e a RCA do 500 confirmou drift de schema remoto: tabela AuctionDocument ausente no PostgreSQL do preview. Correção operacional executada no ambiente remoto com criacao da tabela + backfill idempotente dos campos legados; rota publica do leilao voltou a renderizar a secao Documentos sem 500. Validacao local adicional: /admin/auctions/new exibe 'Documentos do leilao' e nao exibe mais o campo legado 'URL dos Documentos do Leilao'."
+		notes: "Pre-PR gate: npm ci OK, typecheck OK, build OK, unit lotting-tab 2/2, visual auction-lotting-readiness 1/1 (baseline atualizada), Playwright smoke 5/5. PR #711 aberto para demo-stable. Preview Vercel da branch ficou Ready e a RCA do 500 confirmou drift de schema remoto: tabela AuctionDocument ausente no PostgreSQL do preview. Correção operacional executada no ambiente remoto com criacao da tabela + backfill idempotente dos campos legados; rota publica do leilao voltou a renderizar a secao Documentos sem 500. Validacao local adicional: /admin/auctions/new exibe 'Documentos do leilao' e nao exibe mais o campo legado 'URL dos Documentos do Leilao'."
 
 	- id: "20260402-1548-copilot-favorite-lots"
 		dev_id: copilot

@@ -22,7 +22,8 @@ import {
     CircleDollarSign,
     Package,
     AlertCircle,
-    Tag
+    Tag,
+    ShoppingBag
 } from 'lucide-react';
 import { 
     PieChart,
