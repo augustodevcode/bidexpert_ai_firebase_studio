@@ -19,6 +19,10 @@ vi.mock('@/lib/actions/auth', () => ({
   getTenantIdFromRequest: mockGetTenantIdFromRequest,
 }));
 
+vi.mock('@/lib/auth', () => ({
+  auth: vi.fn(),
+}));
+
 vi.mock('@/services/auction.service', () => ({
   AuctionService: class MockAuctionService {
     getAuctionById = mockGetAuctionById;

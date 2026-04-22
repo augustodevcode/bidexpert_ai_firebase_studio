@@ -25,7 +25,7 @@ queue:
 	- id: "20260421-2120-copilot-admin-auction-governance"
 		dev_id: copilot
 		branch: feat/admin-auction-governance-20260420-2327
-		status: testing
+		status: pr-open
 		title: "Admin auction governance + central de controle + lotting readiness + wizard/lot-form integrity"
 		areas_impacted:
 			- src/app/admin/auctions
@@ -72,9 +72,9 @@ queue:
 		risk_level: high
 		playwright_evidence: "playwright-report/index.html (smoke 5/5 green @ http://demo.localhost:9007)"
 		started_at: "2026-04-20T23:27:00Z"
-		updated_at: "2026-04-21T21:20:00-03:00"
-		pr_number: null
-		notes: "Pre-PR gate: npm ci OK, typecheck OK, build OK, unit lotting-tab 2/2, visual auction-lotting-readiness 1/1 (baseline atualizada), Playwright smoke 5/5. Fix de sintaxe em step-4-lotting.tsx (useCallback). Aguardando autorizacao humana para abrir PR para demo-stable."
+		updated_at: "2026-04-22T00:41:00-03:00"
+		pr_number: 711
+		notes: "Pre-PR gate: npm ci OK, typecheck OK, build OK, unit lotting-tab 2/2, visual auction-lotting-readiness 1/1 (baseline atualizada), Playwright smoke 5/5. PR #711 aberto para demo-stable. Preview Vercel da branch ficou Ready e a RCA do 500 confirmou drift de schema remoto: tabela AuctionDocument ausente no PostgreSQL do preview. Correção operacional executada no ambiente remoto com criacao da tabela + backfill idempotente dos campos legados; rota publica do leilao voltou a renderizar a secao Documentos sem 500. Validacao local adicional: /admin/auctions/new exibe 'Documentos do leilao' e nao exibe mais o campo legado 'URL dos Documentos do Leilao'."
 
 	- id: "20260402-1548-copilot-favorite-lots"
 		dev_id: copilot

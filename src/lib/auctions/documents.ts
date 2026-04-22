@@ -11,10 +11,14 @@ export type AuctionPublicDocument = Pick<
 
 type AuctionDocumentsSource = Partial<Pick<Auction,
   | 'documents'
+  | 'publicId'
+  | 'slug'
   | 'documentsUrl'
   | 'evaluationReportUrl'
   | 'auctionCertificateUrl'
 >> | null | undefined;
+
+const LEGACY_DOCS_HOSTS = new Set(['docs.bidexpert.com.br', 'www.docs.bidexpert.com.br']);
 
 function normalizeDocumentUrl(value: unknown): string | null {
   if (typeof value !== 'string') {
@@ -34,13 +38,44 @@ function normalizeDocumentUrl(value: unknown): string | null {
   }
 }
 
+function resolveLegacyAuctionRoute(auction: AuctionDocumentsSource): string | null {
+  const routeId = auction?.slug?.trim() || auction?.publicId?.trim();
+  if (!routeId) {
+    return null;
+  }
+
+  return `/auctions/${routeId}`;
+}
+
+function normalizeLegacyPrimaryDocumentUrl(auction: AuctionDocumentsSource): string | null {
+  const normalizedUrl = normalizeDocumentUrl(auction?.documentsUrl);
+  if (!normalizedUrl) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(normalizedUrl);
+    const internalAuctionRoute = resolveLegacyAuctionRoute(auction);
+    const isLegacyDocsRoute = LEGACY_DOCS_HOSTS.has(parsedUrl.hostname.toLowerCase())
+      && /^\/auction\/[^/]+\/?$/i.test(parsedUrl.pathname);
+
+    if (isLegacyDocsRoute && internalAuctionRoute) {
+      return internalAuctionRoute;
+    }
+  } catch {
+    return normalizedUrl;
+  }
+
+  return normalizedUrl;
+}
+
 function buildLegacyAuctionDocuments(auction: AuctionDocumentsSource): AuctionPublicDocument[] {
   const legacyEntries = [
     {
       key: 'documents',
       title: 'Edital e documentos do leilão',
       fileName: 'edital-leilao.pdf',
-      fileUrl: normalizeDocumentUrl(auction?.documentsUrl),
+      fileUrl: normalizeLegacyPrimaryDocumentUrl(auction),
     },
     {
       key: 'evaluation-report',

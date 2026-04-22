@@ -162,6 +162,18 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ Editar diretamente o arquivo schema.prisma  
 ❌ NÃO usar estrutura modular em múltiplos arquivos
 
+### RN-006A: Sincronia obrigatória de schema remoto antes do smoke em preview
+✅ Sempre que uma feature introduzir um **novo model Prisma**, relation ou coluna usada por rotas públicas/Admin SSR, o schema remoto do ambiente Vercel deve ser validado antes do browser smoke.
+✅ A validação mínima é: `vercel inspect` do preview + health check de schema/tabelas no ambiente remoto.
+✅ Se o preview compilar, mas a rota quebrar com `500` após incluir um model novo, a primeira hipótese deve ser **schema remoto defasado** e não bug imediato de UI.
+✅ Em mudanças desse tipo, a entrega só pode ser considerada validada em preview depois que a tabela/coluna nova existir de fato no banco remoto e a rota afetada responder sem erro.
+
+**BDD - Preview com código novo e tabela ausente**
+- **Dado** uma branch que adiciona um novo model Prisma consumido por uma rota pública ou administrativa
+- **Quando** o preview Vercel sobe, mas a rota afetada retorna `500`
+- **Então** a triagem deve verificar primeiro se a tabela/coluna nova existe no banco remoto
+- **E** a correção deve sincronizar schema/migração antes de concluir que a aplicação está funcional
+
 ### RN-007: Cronômetro (Countdown)
 ✅ Componente `LotCountdown` reutilizável  
 ✅ Controlado por configurações `showCountdownOnCards` e `showCountdownOnLotDetail`  
