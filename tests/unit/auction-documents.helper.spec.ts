@@ -79,6 +79,18 @@ describe('auction-documents helper', () => {
     expect(documents[2]?.title).toContain('Certidão');
   });
 
+  it('rewrites the broken docs subdomain fallback to the canonical auction route', () => {
+    const documents = getPublicAuctionDocuments({
+      slug: 'auction-sp-equip-1773189171312',
+      publicId: 'auction-public-75',
+      documentsUrl: 'https://docs.bidexpert.com.br/auction/75',
+      evaluationReportUrl: 'https://cdn.bidexpert.com.br/docs/laudo.pdf',
+    } as any);
+
+    expect(documents[0]?.fileUrl).toBe('/auctions/auction-sp-equip-1773189171312');
+    expect(documents[1]?.fileUrl).toBe('https://cdn.bidexpert.com.br/docs/laudo.pdf');
+  });
+
   it('builds sensible labels when title and filename are missing', () => {
     expect(getAuctionDocumentLabel({ title: '  Edital oficial  ' }, 0)).toBe('Edital oficial');
     expect(getAuctionDocumentLabel({ fileName: 'arquivo_teste.pdf' }, 1)).toBe('arquivo_teste.pdf');
