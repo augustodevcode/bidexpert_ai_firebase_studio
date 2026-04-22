@@ -3,12 +3,12 @@
 
 import * as React from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { AssetFormV2 } from '@/app/admin/assets/asset-form-v2';
 import type { AssetFormData } from '@/app/admin/assets/asset-form-schema';
 import { createAsset } from '@/app/admin/assets/actions';
@@ -81,8 +81,18 @@ export default function CreateAssetModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-2xl lg:max-w-4xl overflow-y-auto p-0"
+        data-ai-id="lot-form-create-asset-sheet"
+      >
+        <SheetHeader className="sr-only">
+          <SheetTitle>Cadastrar Novo Bem</SheetTitle>
+          <SheetDescription>
+            Cadastre um bem que ficará imediatamente disponível para loteamento.
+          </SheetDescription>
+        </SheetHeader>
         {isLoading ? (
             <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -106,7 +116,7 @@ export default function CreateAssetModal({
               description="Cadastre um bem que ficará imediatamente disponível para loteamento."
             />
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

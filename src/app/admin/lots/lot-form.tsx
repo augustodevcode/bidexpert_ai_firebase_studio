@@ -617,7 +617,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
                         </div>
                         <Separator />
                         <div className="container-bens-disponiveis">
-                            <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><div className="flex gap-2"><Button type="button" variant="secondary" size="sm" onClick={() => setIsAssetCreateModalOpen(true)} disabled={isAssetLinkingLocked}><PackagePlus className="mr-2 h-4 w-4"/>Cadastrar Novo Bem</Button><Button type="button" size="sm" onClick={handleLinkAssets} disabled={isAssetLinkingLocked || Object.keys(assetRowSelection).length === 0}><LinkIcon className="mr-2 h-4 w-4" /> Vincular Bem</Button></div></div>
+                            <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><div className="flex gap-2"><Button type="button" variant="secondary" size="sm" onClick={() => setIsAssetCreateModalOpen(true)} disabled={isAssetLinkingLocked} data-ai-id="lot-form-cadastrar-novo-bem-button"><PackagePlus className="mr-2 h-4 w-4"/>Cadastrar Novo Bem</Button><Button type="button" size="sm" onClick={handleLinkAssets} disabled={isAssetLinkingLocked || Object.keys(assetRowSelection).length === 0} data-ai-id="lot-form-vincular-bem-button"><LinkIcon className="mr-2 h-4 w-4" /> Vincular Bem</Button></div></div>
                             {!isAssetLinkingLocked ? (
                               <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setAssetRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
                             ) : (
