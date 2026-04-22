@@ -47,8 +47,15 @@ function resolveLegacyAuctionRoute(auction: AuctionDocumentsSource): string | nu
   return `/auctions/${routeId}`;
 }
 
-function normalizeLegacyPrimaryDocumentUrl(auction: AuctionDocumentsSource): string | null {
-  const normalizedUrl = normalizeDocumentUrl(auction?.documentsUrl);
+function rewriteLegacyDocumentUrl(value: unknown, auction: AuctionDocumentsSource): string | null {
+  if (typeof value === 'string') {
+    const trimmedValue = value.trim();
+    if (trimmedValue.startsWith('/')) {
+      return trimmedValue;
+    }
+  }
+
+  const normalizedUrl = normalizeDocumentUrl(value);
   if (!normalizedUrl) {
     return null;
   }
@@ -75,7 +82,7 @@ function buildLegacyAuctionDocuments(auction: AuctionDocumentsSource): AuctionPu
       key: 'documents',
       title: 'Edital e documentos do leilão',
       fileName: 'edital-leilao.pdf',
-      fileUrl: normalizeLegacyPrimaryDocumentUrl(auction),
+      fileUrl: rewriteLegacyDocumentUrl(auction?.documentsUrl, auction),
     },
     {
       key: 'evaluation-report',
@@ -119,12 +126,13 @@ export function getPublicAuctionDocuments(auction: AuctionDocumentsSource): Auct
       fileName: document.fileName,
       title: document.title,
       description: document.description ?? null,
-      fileUrl: document.fileUrl,
+      fileUrl: rewriteLegacyDocumentUrl(document.fileUrl, auction),
       fileSize: document.fileSize ?? null,
       mimeType: document.mimeType ?? null,
       displayOrder: document.displayOrder ?? 0,
       isPublic: document.isPublic,
     }))
+    .filter((document): document is AuctionPublicDocument => !!document.fileUrl)
     .sort((left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0));
 
   if (relationDocuments.length > 0) {

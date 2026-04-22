@@ -13,6 +13,7 @@ import {
 describe('auction-documents helper', () => {
   it('returns sorted and public documents from normalized relation payload', () => {
     const documents = getPublicAuctionDocuments({
+      slug: 'auction-sp-equip-1773189171312',
       documents: [
         {
           id: 'doc-2',
@@ -36,7 +37,7 @@ describe('auction-documents helper', () => {
           fileName: 'edital.pdf',
           title: 'Edital',
           description: null,
-          fileUrl: 'https://cdn.bidexpert.com.br/docs/edital.pdf',
+          fileUrl: 'https://docs.bidexpert.com.br/auction/75',
           fileSize: 2000n,
           mimeType: 'application/pdf',
           displayOrder: 1,
@@ -63,6 +64,7 @@ describe('auction-documents helper', () => {
     });
 
     expect(documents.map((document) => document.id)).toEqual(['doc-1', 'doc-2']);
+    expect(documents[0]?.fileUrl).toBe('/auctions/auction-sp-equip-1773189171312');
     expect(getPrimaryAuctionDocument({ documents: documents as any })?.id).toBe('doc-1');
   });
 
