@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.31](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.30...v1.0.0-demo.31) (2026-04-22)
+
+### Correções
+
+* **lotting:** convert Cadastrar Novo Bem from Dialog to Sheet ([#715](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/715)) ([caee1da](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/caee1dab0ce2a9810695b76573a9729ed13b2613))
+
 ## [1.0.0-demo.30](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.29...v1.0.0-demo.30) (2026-04-22)
 
 ### Correções
