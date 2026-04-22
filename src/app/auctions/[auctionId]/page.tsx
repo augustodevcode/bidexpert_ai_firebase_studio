@@ -16,6 +16,7 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { normalizeAuctionPublicRoute } from '@/lib/auctions/public-route';
 
 async function getAuctionPageData(id: string): Promise<{ 
   auction?: Auction; 
@@ -47,7 +48,10 @@ async function getAuctionPageData(id: string): Promise<{
   }
 
   // A service getAuction já deve incluir os lotes E os estágios.
-  const auction = { ...auctionFromDb, totalLots: auctionFromDb.lots?.length ?? 0 };
+  const auction = normalizeAuctionPublicRoute(
+    { ...auctionFromDb, totalLots: auctionFromDb.lots?.length ?? 0 },
+    id,
+  );
   
   let auctioneer: AuctioneerProfileInfo | null = null;
   if (auction.auctioneerId) {

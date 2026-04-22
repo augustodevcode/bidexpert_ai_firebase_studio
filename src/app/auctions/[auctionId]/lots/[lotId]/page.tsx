@@ -18,6 +18,7 @@ import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { notFound } from 'next/navigation';
 import { getAuctionContact, type AuctionContactInfo } from '@/services/auction-contact.service';
 import prisma from '@/lib/prisma';
+import { normalizeAuctionPublicRoute } from '@/lib/auctions/public-route';
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
   lot: Lot | null,
@@ -75,36 +76,38 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     }
   }
   
+  const auction = normalizeAuctionPublicRoute(auctionFromDb, currentAuctionId);
+
   // Enrich lot with its assets
   if (lotFromDb.assetIds && lotFromDb.assetIds.length > 0) {
     lotFromDb.assets = await getAssetsByIdsAction(lotFromDb.assetIds);
   }
 
   // Ensure the lots array on the auction object is populated.
-  if (!auctionFromDb.lots || auctionFromDb.lots.length === 0) {
-      auctionFromDb.lots = await getLots(auctionFromDb.id, true); // Public call
+  if (!auction.lots || auction.lots.length === 0) {
+      auction.lots = await getLots(auction.id, true); // Public call
   }
-  const lotsForThisAuction = auctionFromDb.lots || [];
+  const lotsForThisAuction = auction.lots || [];
   const lotIndex = lotsForThisAuction.findIndex(l => l.id === lotFromDb.id || (l.publicId && l.publicId === lotFromDb.publicId));
   const totalLotsInAuction = lotsForThisAuction.length;
   
   const previousLotId = lotIndex > 0 ? (lotsForThisAuction[lotIndex - 1].publicId || lotsForThisAuction[lotIndex - 1].id) : undefined;
   const nextLotId = (lotIndex > -1 && lotIndex < totalLotsInAuction - 1) ? (lotsForThisAuction[lotIndex + 1].publicId || lotsForThisAuction[lotIndex + 1].id) : undefined;
   
-  let sellerName = lotFromDb.sellerName || auctionFromDb.seller?.name;
-  const sellerIdToFetch = lotFromDb.sellerId || auctionFromDb.sellerId;
+  let sellerName = lotFromDb.sellerName || auction.seller?.name;
+  const sellerIdToFetch = lotFromDb.sellerId || auction.sellerId;
   if (!sellerName && sellerIdToFetch) {
     const seller = allSellers.find(s => s.id === sellerIdToFetch || s.publicId === sellerIdToFetch);
     sellerName = seller?.name;
   }
 
-  const auctioneer = allAuctioneers.find(a => a.id === auctionFromDb.auctioneerId) || null;
+  const auctioneer = allAuctioneers.find(a => a.id === auction.auctioneerId) || null;
   
   // Buscar informações de contato do leilão com herança (Auction -> Auctioneer -> PlatformSettings)
   let auctionContact: AuctionContactInfo | null = null;
   try {
-    if (/^\d+$/.test(String(auctionFromDb.id)) && /^\d+$/.test(String(platformSettings?.tenantId ?? ''))) {
-      const auctionIdBigInt = BigInt(String(auctionFromDb.id));
+    if (/^\d+$/.test(String(auction.id)) && /^\d+$/.test(String(platformSettings?.tenantId ?? ''))) {
+      const auctionIdBigInt = BigInt(String(auction.id));
       const tenantIdBigInt = BigInt(String(platformSettings.tenantId));
       auctionContact = await getAuctionContact(prisma, auctionIdBigInt, tenantIdBigInt);
     }
@@ -121,7 +124,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   
   return { 
     lot: JSON.parse(JSON.stringify(lotFromDb, (key, value) => typeof value === 'bigint' ? value.toString() : value)), 
-    auction: JSON.parse(JSON.stringify(auctionFromDb, (key, value) => typeof value === 'bigint' ? value.toString() : value)), 
+    auction: JSON.parse(JSON.stringify(auction, (key, value) => typeof value === 'bigint' ? value.toString() : value)), 
     platformSettings: platformSettings!, 
     sellerName, 
     lotIndex, 
