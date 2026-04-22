@@ -6,6 +6,16 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.29](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.28...v1.0.0-demo.29) (2026-04-22)
+
+### Funcionalidades
+
+* **admin-auction-governance:** governança de documentos e readiness ([#711](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/711)) ([47868c6](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/47868c653136925f3e035ebdabcbc54ef090fdf5))
+
+### Correções
+
+* **auctions:** rewrite migrated legacy document URLs ([#713](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/713)) ([4b9cb54](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/4b9cb546b888b3609bb48e5436c79f8186d21f30))
+
 ## [1.0.0-demo.28](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.27...v1.0.0-demo.28) (2026-04-22)
 
 ### Correções
