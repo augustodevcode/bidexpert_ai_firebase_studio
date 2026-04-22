@@ -34,6 +34,18 @@ const auctionStageSchema = z.object({
   discountPercent: z.coerce.number().int().min(1, "Mínimo 1%").max(100, "Máximo 100%").optional().nullable(),
 });
 
+const auctionDocumentSchema = z.object({
+  id: z.string().optional(),
+  fileName: z.string().min(1, 'Nome do arquivo é obrigatório'),
+  title: z.string().min(1, 'Título é obrigatório'),
+  description: z.string().optional().or(z.literal('')).nullable(),
+  fileUrl: z.string().url({ message: 'URL do documento inválida.' }),
+  fileSize: z.coerce.number().int().nonnegative().optional().nullable(),
+  mimeType: z.string().optional().or(z.literal('')).nullable(),
+  displayOrder: z.coerce.number().int().nonnegative().default(0),
+  isPublic: z.boolean().default(true),
+});
+
 export const auctionFormSchema = z.object({
   title: z.string().min(5, {
     message: "O título do leilão deve ter pelo menos 5 caracteres.",
@@ -68,9 +80,7 @@ export const auctionFormSchema = z.object({
   
   imageUrl: optionalUrlSchema, // Mantido para o estado interno do formulário
   imageMediaId: z.string().optional().nullable(),
-  documentsUrl: optionalUrlSchema,
-  evaluationReportUrl: optionalUrlSchema,
-  auctionCertificateUrl: optionalUrlSchema,
+  documents: z.array(auctionDocumentSchema).default([]),
   sellingBranch: z.string().max(100).optional(),
   supportPhone: z.string().max(50, { message: "Telefone muito longo." }).optional().nullable(),
   supportEmail: z.string().email({ message: "Email de suporte inválido." }).or(z.literal('')).optional().nullable(),

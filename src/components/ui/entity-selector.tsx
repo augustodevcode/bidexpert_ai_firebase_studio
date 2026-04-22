@@ -19,23 +19,42 @@ import { DataTable } from './data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 
 // Criando uma coluna de seleção padrão que pode ser usada pela DataTable dentro do modal
-export const createEntitySelectorColumns = (onSelect: (value: string) => void): ColumnDef<any>[] => [
+export const createEntitySelectorColumns = (
+  onSelect: (value: string) => void,
+  displayColumns?: ColumnDef<any>[]
+): ColumnDef<any>[] => {
+  const baseColumns = displayColumns?.length
+    ? displayColumns
+    : [
+        {
+          accessorKey: 'label',
+          header: 'Nome',
+          cell: ({ row }: any) => <div className="font-medium">{row.getValue('label')}</div>,
+        },
+      ];
+
+  return [
+    ...baseColumns,
     {
-      accessorKey: "label",
-      header: "Nome",
-      cell: ({ row }) => <div className="font-medium">{row.getValue("label")}</div>,
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
+      id: 'actions',
+      header: 'Ações',
+      cell: ({ row }: any) => (
         <div className="text-right">
-            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onSelect(row.original.value); }}>
-                Selecionar
-            </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(row.original.value);
+            }}
+          >
+            Selecionar
+          </Button>
         </div>
       ),
     },
-];
+  ];
+};
 
 interface EntitySelectorProps {
   value: string | bigint | null | undefined;
@@ -51,6 +70,8 @@ interface EntitySelectorProps {
   onRefetch?: () => void;
   isFetching?: boolean;
   disabled?: boolean;
+  displayColumns?: ColumnDef<any>[];
+  dialogDescription?: string;
 }
 
 export default function EntitySelector({
@@ -66,6 +87,8 @@ export default function EntitySelector({
   onRefetch,
   isFetching = false,
   disabled = false,
+  displayColumns,
+  dialogDescription,
 }: EntitySelectorProps) {
   const [isListModalOpen, setIsListModalOpen] = React.useState(false);
 
@@ -73,12 +96,20 @@ export default function EntitySelector({
 
   const selectedOption = options.find((option) => option.value.toString() === stringValue);
   
-  const handleSelectAndClose = (selectedValue: string | bigint) => {
+  const handleSelectAndClose = React.useCallback((selectedValue: string | bigint) => {
     onChange(selectedValue.toString());
     setIsListModalOpen(false);
-  }
+  }, [onChange]);
+
+  const tableData = React.useMemo(
+    () => options.map((opt) => ({ ...opt, id: opt.id?.toString?.() ?? opt.value.toString() })),
+    [options]
+  );
   
-  const tableColumns = React.useMemo(() => createEntitySelectorColumns(handleSelectAndClose), [handleSelectAndClose]);
+  const tableColumns = React.useMemo(
+    () => createEntitySelectorColumns(handleSelectAndClose, displayColumns),
+    [displayColumns, handleSelectAndClose]
+  );
 
   return (
     <div className="wrapper-entity-selector" data-ai-id={`entity-selector-container-${entityName}`}>
@@ -99,24 +130,26 @@ export default function EntitySelector({
                   <ChevronsUpDown className="icon-entity-selector-chevron" />
               </Button>
           </DialogTrigger>
-          <DialogContent className="content-entity-selector-dialog" data-ai-id={`entity-selector-modal-${entityName}`}>
+            <DialogContent className="content-entity-selector-dialog flex max-h-[90vh] flex-col overflow-hidden sm:max-w-5xl" data-ai-id={`entity-selector-modal-${entityName}`}>
               <DialogHeader className="header-entity-selector-dialog">
                   <DialogTitle className="title-entity-selector-dialog">
                   <ListChecks className="icon-entity-selector-title"/>
                   Selecionar {entityName}
                   </DialogTitle>
                   <DialogDescription className="desc-entity-selector-dialog">
-                  Pesquise, visualize e selecione um registro. Você também pode criar um novo, se necessário.
+                {dialogDescription || 'Pesquise, visualize e selecione um registro. Você também pode criar um novo, se necessário.'}
                   </DialogDescription>
               </DialogHeader>
-              <div className="wrapper-entity-selector-table">
+              <div className="wrapper-entity-selector-table min-h-0 flex-1 overflow-hidden">
                   <DataTable
                       columns={tableColumns}
-                      data={options.map(opt => ({...opt, id: opt.value.toString()}))}
+                  data={tableData}
                       searchColumnId="label"
                       searchPlaceholder={searchPlaceholder}
                       isLoading={isFetching}
                       emptyStateMessage={emptyStateMessage}
+                  tableContainerClassName="max-h-[60vh] overflow-auto rounded-md border"
+                  disableResponsiveLayout={true}
                   />
               </div>
               <DialogFooter className="footer-entity-selector-dialog">

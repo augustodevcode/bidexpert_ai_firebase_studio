@@ -36,6 +36,7 @@ import HeroSection from './components/hero-section';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import { useFloatingActions } from '@/components/floating-actions/floating-actions-provider';
 import GoToLiveAuctionButton from '@/components/auction/go-to-live-auction-button';
+import { getPrimaryAuctionDocument } from '@/lib/auctions/documents';
 
 const SidebarFilter = dynamic(() => import('@/components/BidExpertFilter'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -121,6 +122,7 @@ export default function AuctionDetailsClientV2({
     () => allSellers.filter(seller => seller.name === auction.seller?.name),
     [allSellers, auction.seller]
   );
+  const primaryAuctionDocument = useMemo(() => getPrimaryAuctionDocument(auction), [auction]);
 
   useEffect(() => {
     setIsClient(true);
@@ -344,7 +346,7 @@ export default function AuctionDetailsClientV2({
                 )}
 
                 {/* Documents */}
-                {auction.documentsUrl && (
+                {primaryAuctionDocument && (
                   <Card className="shadow-md">
                     <CardHeader className="p-3">
                       <CardTitle className="text-md font-semibold flex items-center">
@@ -353,7 +355,7 @@ export default function AuctionDetailsClientV2({
                     </CardHeader>
                     <CardContent className="p-3 pt-0">
                       <Button variant="link" asChild className="p-0 h-auto text-primary">
-                        <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
+                        <a href={primaryAuctionDocument.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
                           Ver Edital Completo <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
                         </a>
                       </Button>
@@ -462,9 +464,9 @@ export default function AuctionDetailsClientV2({
                 <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Documentos</p>
-                  {auction.documentsUrl ? (
+                  {primaryAuctionDocument ? (
                     <Button asChild variant="outline" className="w-full sm:w-auto">
-                      <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={primaryAuctionDocument.fileUrl} target="_blank" rel="noopener noreferrer">
                         <FileText className="mr-2 h-4 w-4" /> Download Edital
                       </a>
                     </Button>

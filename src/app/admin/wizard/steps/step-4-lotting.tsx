@@ -78,7 +78,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
         assetIds: [asset.id],
         status: 'EM_BREVE',
         categoryId: asset.categoryId,
-        type: asset.categoryId || '', 
+        type: asset.categoryName || asset.subcategoryName || asset.title,
         subcategoryId: asset.subcategoryId,
         imageUrl: asset.imageUrl,
         dataAiHint: asset.dataAiHint,

@@ -45,4 +45,36 @@ describe('lot-due-diligence', () => {
     expect(summary.checklist.find((item) => item.key === 'occupancy')?.status).toBe('attention');
     expect(summary.checklist.find((item) => item.key === 'edital')?.status).toBe('available');
   });
+
+  it('uses normalized auction documents when legacy URLs are not available', () => {
+    const summary = buildLotDueDiligenceSummary({
+      lot: {
+        occupancyStatus: 'UNOCCUPIED' as any,
+      },
+      auction: {
+        auctionType: 'EXTRAJUDICIAL' as any,
+        documents: [
+          {
+            id: 'doc-1',
+            auctionId: 'auction-1',
+            tenantId: 'tenant-1',
+            fileName: 'edital.pdf',
+            title: 'Edital oficial',
+            description: null,
+            fileUrl: 'https://cdn.bidexpert.com.br/docs/edital.pdf',
+            fileSize: 1024n,
+            mimeType: 'application/pdf',
+            displayOrder: 0,
+            isPublic: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ] as any,
+      },
+    });
+
+    expect(summary.checklist.find((item) => item.key === 'edital')?.status).toBe('available');
+    expect(summary.links.some((link) => link.key === 'auction-notice')).toBe(true);
+    expect(summary.links.find((link) => link.key === 'auction-notice')?.href).toBe('https://cdn.bidexpert.com.br/docs/edital.pdf');
+  });
 });

@@ -30,10 +30,11 @@ interface CreateLotFromAssetsModalProps {
   onClose: () => void;
   selectedAssets: Asset[];
   onLotCreated: (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>) => void;
+  suggestedLotNumber: string;
 }
 
 export default function CreateLotFromAssetsModal({
-  isOpen, onClose, selectedAssets, onLotCreated
+  isOpen, onClose, selectedAssets, onLotCreated, suggestedLotNumber
 }: CreateLotFromAssetsModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -47,7 +48,7 @@ export default function CreateLotFromAssetsModal({
   const form = useForm<LotFromModalValues>({
     resolver: zodResolver(lotModalFormSchema),
     defaultValues: {
-      number: '',
+      number: suggestedLotNumber,
       title: defaultTitle,
       initialPrice: totalEvaluationValue > 0 ? totalEvaluationValue : undefined,
       bidIncrementStep: undefined,
@@ -57,13 +58,13 @@ export default function CreateLotFromAssetsModal({
   React.useEffect(() => {
     if (isOpen) {
         form.reset({
-        number: '',
+          number: suggestedLotNumber,
         title: defaultTitle,
         initialPrice: totalEvaluationValue > 0 ? totalEvaluationValue : undefined,
         bidIncrementStep: undefined,
         });
     }
-  }, [isOpen, selectedAssets, defaultTitle, totalEvaluationValue, form]);
+        }, [isOpen, selectedAssets, defaultTitle, suggestedLotNumber, totalEvaluationValue, form]);
 
 
   async function onSubmit(values: LotFromModalValues) {
@@ -76,7 +77,7 @@ export default function CreateLotFromAssetsModal({
         status: 'EM_BREVE',
         price: values.initialPrice,
         categoryId: firstAsset?.categoryId,
-        type: firstAsset?.categoryId || '', 
+      type: firstAsset?.categoryName || firstAsset?.subcategoryName || firstAsset?.title || '',
         subcategoryId: firstAsset?.subcategoryId,
         imageUrl: firstAsset?.imageUrl,
         dataAiHint: firstAsset?.dataAiHint,

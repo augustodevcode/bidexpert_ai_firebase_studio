@@ -33,7 +33,13 @@ interface LotDueDiligencePanelProps {
     | 'knownDebts'
     | 'additionalDocumentsInfo'
   >>;
-  auction?: Partial<Pick<Auction, 'documentsUrl' | 'auctionType'>> | null;
+  auction?: Partial<Pick<Auction,
+    | 'documents'
+    | 'documentsUrl'
+    | 'evaluationReportUrl'
+    | 'auctionCertificateUrl'
+    | 'auctionType'
+  >> | null;
   className?: string;
 }
 

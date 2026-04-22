@@ -488,3 +488,14 @@ Ao criar ou modificar specs que envolvam deploy, database, ou API routes no Verc
 7. **API routes dinâmicas** DEVEM ter `export const dynamic = 'force-dynamic'`
 8. **Schemas Prisma duais**: alterar `schema.prisma` (MySQL) E `schema.postgresql.prisma` (PostgreSQL) simultaneamente
 9. **Deploy** via Git com PR: `git push origin <feature-branch>` → PR para `demo-stable`; promoção para `main` somente via PR aprovado (nunca push direto em `main`)
+
+## Admin Auctions + Wizard: Regras Obrigatórias
+
+Ao criar ou modificar specs que envolvam o wizard ou o backoffice de leilões, considerar também estas regras e as skills dedicadas do workspace:
+
+1. Selectors administrativos de processo, categoria, comitente e leiloeiro usam contrato compartilhado; a spec deve tratar `EntitySelector`/`DataTable` como superfície primária, não apenas a tela individual.
+2. Processo judicial e comitente são dependências encadeadas do wizard; se não houver comitente resolvido pelo processo, a mudança deve prever etapa condicional a partir da Vara.
+3. CEP/cidade/mapa, máscaras pt-BR, preview de mídia e valor monetário são contratos de formulário reutilizáveis e devem entrar como requisito compartilhado quando afetarem múltiplas telas.
+4. Mudanças de documentos do leilão devem considerar schema Prisma duplo, backfill obrigatório e consumidores públicos, evitando reintroduzir campos legados como fonte paralela de verdade.
+5. Mudanças na edição do leilão devem cobrir explicitamente filtro de lotes por `auctionId` e integridade do histórico/auditoria.
+6. Para detalhes operacionais, consultar e manter alinhadas as skills `.github/skills/admin-auction-wizard-integrity/SKILL.md`, `.github/skills/auction-document-governance/SKILL.md`, `.github/skills/admin-form-runtime-integrity/SKILL.md` e `.github/skills/auction-edit-audit-integrity/SKILL.md`.

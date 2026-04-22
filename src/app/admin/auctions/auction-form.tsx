@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings, AuctionStage } from '@/types';
 import { cn } from '@/lib/utils';
-import { Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save, Phone, Mail, MessageCircle, FileCheck, Link2 } from 'lucide-react';
+import { Info, Users, Landmark, Map, Gavel, ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save, Phone, Mail, MessageCircle } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
@@ -43,6 +43,9 @@ import AddressGroup from '@/components/address-group';
 import { getLotCategories } from '../categories/actions';
 import { ChangeHistoryTab } from '@/components/audit/change-history-tab';
 import { ParticipantCard, type ParticipantCardData } from '@/components/admin/participant-card';
+import { AuctionDocumentsField } from '@/components/admin/auctions/auction-documents-field';
+import type { ColumnDef } from '@tanstack/react-table';
+import { formatPhone } from '@/lib/format';
 
 const auctionStatusOptions = [
   'RASCUNHO',
@@ -203,6 +206,42 @@ const renderSectionContent = (
 
       return (
         <div className="space-y-6">
+          {(() => {
+            const judicialProcessDisplayColumns: ColumnDef<any>[] = [
+              {
+                accessorKey: 'processNumber',
+                header: 'Processo',
+                cell: ({ row }) => <div className="min-w-[180px] font-medium">{row.original.processNumber}</div>,
+              },
+              {
+                id: 'branch',
+                header: 'Vara / Comarca',
+                cell: ({ row }) => (
+                  <div className="min-w-[220px] text-sm">
+                    <div className="font-medium">{row.original.branchName || 'Vara não informada'}</div>
+                    <div className="text-muted-foreground">{row.original.districtName || 'Comarca não informada'}</div>
+                  </div>
+                ),
+              },
+              {
+                id: 'seller',
+                header: 'Comitente',
+                cell: ({ row }) => <div className="min-w-[180px] text-sm">{row.original.sellerName || 'Sem comitente vinculado'}</div>,
+              },
+              {
+                id: 'inventory',
+                header: 'Inventário',
+                cell: ({ row }) => (
+                  <div className="min-w-[120px] text-sm text-muted-foreground">
+                    {row.original.assetCount || 0} ativos
+                    <br />
+                    {row.original.lotCount || 0} lotes
+                  </div>
+                ),
+              },
+            ];
+
+            return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField control={form.control} name="auctioneerId" render={({ field }) => (
               <FormItem>
@@ -242,18 +281,31 @@ const renderSectionContent = (
                 <EntitySelector
                   value={field.value}
                   onChange={field.onChange}
-                  options={(initialJudicialProcesses || []).map((p) => ({ value: p.id, label: p.processNumber }))}
+                  options={(initialJudicialProcesses || []).map((p) => ({
+                    value: p.id,
+                    label: p.processNumber,
+                    processNumber: p.processNumber,
+                    branchName: p.branchName,
+                    districtName: p.districtName,
+                    sellerName: p.sellerName,
+                    assetCount: p.assetCount,
+                    lotCount: p.lotCount,
+                  }))}
                   placeholder="Vincule a um processo"
-                  searchPlaceholder="Buscar processo..."
+                  searchPlaceholder="Buscar processo, vara, comarca ou comitente..."
                   emptyStateMessage="Nenhum processo."
                   onRefetch={handleRefetchProcesses}
                   isFetching={isSubmitting}
+                  displayColumns={judicialProcessDisplayColumns}
+                  dialogDescription="Selecione o processo judicial correto. O comitente será sincronizado automaticamente quando o processo possuir vínculo válido."
                 />
                 <FormDescription>Para bens de origem judicial.</FormDescription>
                 <FormMessage />
               </FormItem>
             )} />
           </div>
+            );
+          })()}
 
           {/* Cards dos participantes selecionados */}
           {(auctioneerCardData || sellerCardData || processCardData) && (
@@ -348,6 +400,7 @@ const renderSectionContent = (
               <FormControl>
                 <Input placeholder="https://meet.google.com/..." {...field} value={field.value ?? ''} />
               </FormControl>
+                <FormDescription>Quando vazio, o sistema usa a origem atual como base padrão para a operação online.</FormDescription>
               <FormMessage />
             </FormItem>
           )} />
@@ -424,7 +477,13 @@ const renderSectionContent = (
               <FormItem>
                 <FormLabel className="flex items-center gap-1.5"><Phone className="h-4 w-4" />Telefone de Suporte</FormLabel>
                 <FormControl>
-                  <Input placeholder="(11) 99999-9999" {...field} value={field.value ?? ''} />
+                  <Input
+                    placeholder="(11) 99999-9999"
+                    {...field}
+                    value={field.value ?? ''}
+                    onChange={(event) => field.onChange(formatPhone(event.target.value))}
+                    inputMode="tel"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -442,7 +501,13 @@ const renderSectionContent = (
               <FormItem>
                 <FormLabel className="flex items-center gap-1.5"><MessageCircle className="h-4 w-4" />WhatsApp</FormLabel>
                 <FormControl>
-                  <Input placeholder="(11) 99999-9999" {...field} value={field.value ?? ''} />
+                  <Input
+                    placeholder="(11) 99999-9999"
+                    {...field}
+                    value={field.value ?? ''}
+                    onChange={(event) => field.onChange(formatPhone(event.target.value))}
+                    inputMode="tel"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -453,36 +518,7 @@ const renderSectionContent = (
     case 'documentos':
       return (
         <div className="space-y-4" data-ai-id="auction-form-section-documentos">
-          <FormField control={form.control} name="documentsUrl" render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center gap-1.5"><FileCheck className="h-4 w-4" />URL dos Documentos do Leilão</FormLabel>
-              <FormControl>
-                <Input placeholder="https://docs.exemplo.com/edital.pdf" {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormDescription>Link para edital, regulamento ou documentação completa.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={form.control} name="evaluationReportUrl" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-1.5"><FileTextIcon className="h-4 w-4" />URL do Laudo de Avaliação</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://..." {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="auctionCertificateUrl" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-1.5"><Link2 className="h-4 w-4" />URL da Certidão/Matrícula</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://..." {...field} value={field.value ?? ''} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-          </div>
+          <AuctionDocumentsField />
           <FormField control={form.control} name="sellingBranch" render={({ field }) => (
             <FormItem>
               <FormLabel>Vara/Filial de Venda</FormLabel>
@@ -705,6 +741,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
 
   const watchedImageMediaId = useWatch({ control: form.control, name: 'imageMediaId' });
   const watchedImageUrl = form.watch('imageUrl');
+  const watchedParticipation = useWatch({ control: form.control, name: 'participation' });
+  const watchedJudicialProcessId = useWatch({ control: form.control, name: 'judicialProcessId' });
 
   const displayImageUrl = useMemo(() => {
     if (watchedImageMediaId && watchedImageMediaId !== 'INHERIT') {
@@ -720,6 +758,39 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
     getPlatformSettings().then((settings) => setPlatformSettings(settings as PlatformSettings));
     getMediaItems().then((items) => setMediaItems(items));
   }, []);
+
+  useEffect(() => {
+    if ((watchedParticipation !== 'ONLINE' && watchedParticipation !== 'HIBRIDO') || form.getValues('onlineUrl')) {
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const auctionIdentifier = (initialData as any)?.publicId || defaultAuctionId;
+    const defaultUrl = auctionIdentifier ? `${window.location.origin}/auctions/${auctionIdentifier}` : window.location.origin;
+    form.setValue('onlineUrl', defaultUrl, { shouldDirty: false, shouldValidate: true });
+  }, [defaultAuctionId, form, initialData, watchedParticipation]);
+
+  useEffect(() => {
+    if (!watchedJudicialProcessId) {
+      return;
+    }
+
+    const selectedProcess = (initialJudicialProcesses || []).find((process) => process.id === watchedJudicialProcessId);
+    if (!selectedProcess) {
+      return;
+    }
+
+    if (selectedProcess.sellerId && form.getValues('sellerId') !== selectedProcess.sellerId) {
+      form.setValue('sellerId', selectedProcess.sellerId, { shouldDirty: true, shouldValidate: true });
+    }
+
+    if (!form.getValues('sellingBranch') && selectedProcess.branchName) {
+      form.setValue('sellingBranch', selectedProcess.branchName, { shouldDirty: true, shouldValidate: true });
+    }
+  }, [form, initialJudicialProcesses, watchedJudicialProcessId]);
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0 && selectedItems[0]) {

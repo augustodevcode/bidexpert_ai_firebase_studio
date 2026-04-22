@@ -7,6 +7,7 @@ import type {
     UserOnTenant,
     Tenant as PmTenant,
     Auction as PmAuction, 
+    AuctionDocument as PmAuctionDocument,
     AuctionStage as PmAuctionStage,
     Lot as PmLot, 
     LotCategory as PmLotCategory, 
@@ -134,6 +135,7 @@ export type Auction = Omit<PmAuction, 'id' | 'auctioneerId' | 'sellerId' | 'city
   isFeaturedOnMarketplace?: boolean;
   additionalTriggers?: string[];
   dataAiHint?: string;
+  documents?: AuctionDocument[];
 };
 
 export type Lot = Omit<PmLot, 'id' | 'auctionId' | 'categoryId' | 'subcategoryId' | 'sellerId' | 'auctioneerId' | 'cityId' | 'stateId' | 'winnerId' | 'originalLotId' | 'inheritedMediaFromAssetId' | 'tenantId' | 'price' | 'initialPrice' | 'secondInitialPrice' | 'bidIncrementStep' | 'evaluationValue' | 'latitude' | 'longitude'> & {
@@ -208,6 +210,11 @@ export type BidInfo = Omit<PmBid, 'id' | 'lotId' | 'auctionId' | 'bidderId' | 't
 };
 
 export type LotQuestion = Omit<PmLotQuestion, 'id' | 'lotId' | 'auctionId' | 'userId' | 'answeredByUserId'> & { id: string; lotId: string; auctionId: string; userId: string; answeredByUserId?: string | null };
+export type AuctionDocument = Omit<PmAuctionDocument, 'id' | 'auctionId' | 'tenantId'> & {
+  id: string;
+  auctionId: string;
+  tenantId: string;
+};
 export type LotDocument = {
   id: string;
   lotId: string;
@@ -565,6 +572,12 @@ export interface AuctionPreparationAssetSummary {
   sellerName?: string | null;
   judicialProcessNumber?: string | null;
   source: AssetSourceType;
+  lottingReadiness: 'READY' | 'PENDING';
+  lottingIssues: string[];
+  blockingLotLabel?: string | null;
+  blockingLotPublicId?: string | null;
+  city?: string | null;
+  state?: string | null;
   locationLabel?: string | null;
   createdAt?: string;
 }

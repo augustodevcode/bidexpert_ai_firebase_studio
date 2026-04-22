@@ -24,6 +24,8 @@ import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { sanitizeResponse } from '@/lib/serialization-helper';
+import { auth } from '@/lib/auth';
+import { runWithAuditContext } from '@/lib/audit-context';
 
 const auctionService = new AuctionService();
 
@@ -36,6 +38,15 @@ const decimalToNumber = (value?: Prisma.Decimal | number | bigint | null): numbe
     }
     return Number(value);
 };
+
+const ACTIVE_LOT_STATUSES = new Set<string>([
+    'RASCUNHO',
+    'EM_BREVE',
+    'ABERTO_PARA_LANCES',
+    'RELISTADO',
+]);
+
+const ASSET_READY_STATUSES = new Set(['DISPONIVEL']);
 
 export async function getAuctions(isPublicCall: boolean = false, limit?: number): Promise<Auction[]> {
     try {
@@ -98,6 +109,19 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
                 LotCategory: true,
                 Seller: true,
                 JudicialProcess: true,
+                AssetsOnLots: {
+                    include: {
+                        Lot: {
+                            select: {
+                                id: true,
+                                publicId: true,
+                                title: true,
+                                status: true,
+                                auctionId: true,
+                            },
+                        },
+                    },
+                },
             },
             orderBy: { updatedAt: 'desc' },
             take: 50,
@@ -119,22 +143,64 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
         }),
     ]);
 
-    const availableAssets: AuctionPreparationAssetSummary[] = rawAssets.map((asset) => ({
-        id: asset.id.toString(),
-        title: asset.title,
-        categoryName: asset.LotCategory?.name ?? undefined,
-        evaluationValue: decimalToNumber(asset.evaluationValue),
-        status: asset.status,
-        sellerName: asset.Seller?.name ?? null,
-        judicialProcessNumber: asset.JudicialProcess?.processNumber ?? null,
-        source: asset.judicialProcessId ? 'PROCESS' : 'CONSIGNOR',
-        locationLabel: asset.locationCity
-            ? asset.locationState
-                ? `${asset.locationCity}/${asset.locationState}`
-                : asset.locationCity
-            : asset.locationState ?? null,
-        createdAt: asset.createdAt ? asset.createdAt.toISOString() : undefined,
-    }));
+    const availableAssets: AuctionPreparationAssetSummary[] = rawAssets.map((asset) => {
+        const activeLinks = (asset.AssetsOnLots ?? []).filter((link) => {
+            const lotStatus = link.Lot?.status;
+            return lotStatus ? ACTIVE_LOT_STATUSES.has(lotStatus) : false;
+        });
+
+        const issues: string[] = [];
+
+        if (!asset.title?.trim()) {
+            issues.push('Bem sem título definido');
+        }
+
+        if (!asset.LotCategory?.name?.trim()) {
+            issues.push('Bem sem categoria vinculada');
+        }
+
+        if (decimalToNumber(asset.evaluationValue) <= 0) {
+            issues.push('Bem sem valor de avaliação válido');
+        }
+
+        if (!ASSET_READY_STATUSES.has(asset.status)) {
+            issues.push(`Status atual do bem: ${asset.status}`);
+        }
+
+        if (activeLinks.length > 0) {
+            const linkedLot = activeLinks[0].Lot;
+            issues.push(
+                `Já vinculado ao lote ativo ${linkedLot?.publicId || linkedLot?.id.toString() || 'sem identificação'}`,
+            );
+        }
+
+        const blockingLot = activeLinks[0]?.Lot;
+
+        return {
+            id: asset.id.toString(),
+            title: asset.title,
+            categoryName: asset.LotCategory?.name ?? undefined,
+            evaluationValue: decimalToNumber(asset.evaluationValue),
+            status: asset.status,
+            sellerName: asset.Seller?.name ?? null,
+            judicialProcessNumber: asset.JudicialProcess?.processNumber ?? null,
+            source: asset.judicialProcessId ? 'PROCESS' : 'CONSIGNOR',
+            lottingReadiness: issues.length === 0 ? 'READY' : 'PENDING',
+            lottingIssues: issues,
+            blockingLotPublicId: blockingLot?.publicId ?? null,
+            blockingLotLabel: blockingLot
+                ? `${blockingLot.publicId || `#${blockingLot.id.toString()}`} - ${blockingLot.title}`
+                : null,
+            city: asset.locationCity ?? null,
+            state: asset.locationState ?? null,
+            locationLabel: asset.locationCity
+                ? asset.locationState
+                    ? `${asset.locationCity}/${asset.locationState}`
+                    : asset.locationCity
+                : asset.locationState ?? null,
+            createdAt: asset.createdAt ? asset.createdAt.toISOString() : undefined,
+        };
+    });
 
     const habilitations: AuctionPreparationHabilitation[] = rawHabilitations.map((hab) => ({
         userId: hab.userId.toString(),
@@ -187,7 +253,10 @@ export async function getAuctionPreparationData(auctionIdentifier: string): Prom
 
 export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {
     const tenantId = await getTenantIdFromRequest();
-    const result = await auctionService.createAuction(tenantId, data);
+    const session = await auth();
+    const result = session?.user?.id
+      ? await runWithAuditContext({ userId: session.user.id, tenantId }, () => auctionService.createAuction(tenantId, data))
+      : await auctionService.createAuction(tenantId, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctions');
     }
@@ -196,7 +265,10 @@ export async function createAuction(data: Partial<AuctionFormData>): Promise<{ s
 
 export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
     const tenantId = await getTenantIdFromRequest();
-    const result = await auctionService.updateAuction(tenantId, id, data);
+    const session = await auth();
+    const result = session?.user?.id
+      ? await runWithAuditContext({ userId: session.user.id, tenantId }, () => auctionService.updateAuction(tenantId, id, data))
+      : await auctionService.updateAuction(tenantId, id, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctions');
         revalidatePath(`/admin/auctions/${id}/edit`);
@@ -206,7 +278,10 @@ export async function updateAuction(id: string, data: Partial<AuctionFormData>):
 
 export async function deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
     const tenantId = await getTenantIdFromRequest();
-    const result = await auctionService.deleteAuction(tenantId, id);
+        const session = await auth();
+        const result = session?.user?.id
+            ? await runWithAuditContext({ userId: session.user.id, tenantId }, () => auctionService.deleteAuction(tenantId, id))
+            : await auctionService.deleteAuction(tenantId, id);
     if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/auctions');
     }

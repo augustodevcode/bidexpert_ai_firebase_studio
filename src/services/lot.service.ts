@@ -42,6 +42,17 @@ const AUCTION_ALLOWS_LOT_OPENING: AuctionStatus[] = ['ABERTO', 'ABERTO_PARA_LANC
 // Status de Leilão que permitem modificações nos Lotes
 const AUCTION_EDITABLE_STATUSES: AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE'];
 
+// Status de Lote em que vínculos de bens devem permanecer imutáveis
+const IMMUTABLE_ASSET_LINK_STATUSES: LotStatus[] = [
+  'ABERTO_PARA_LANCES',
+  'ENCERRADO',
+  'VENDIDO',
+  'NAO_VENDIDO',
+  'CANCELADO',
+  'RELISTADO',
+  'RETIRADO',
+];
+
 // Status de Lote que requerem validação completa de integridade
 const LOT_STATUSES_REQUIRING_INTEGRITY: LotStatus[] = ['EM_BREVE', 'ABERTO_PARA_LANCES'];
 
@@ -380,6 +391,9 @@ export class LotService {
     const assetsOnLots = lot.AssetsOnLots ?? lot.assets; // Note: assets var was usually array of flat assets in old map, we need to extract from AssetsOnLots
     const documents = lot.LotDocument ?? lot.documents;
     const bidsCount = lot._count?.Bid ?? lot._count?.bids ?? lot.bidsCount ?? 0;
+    const linkedAssetIds = assetsOnLots
+      ?.map((assetLink: any) => (assetLink?.Asset?.id ?? assetLink?.asset?.id)?.toString())
+      .filter(Boolean) ?? [];
 
     // Image Mapping Logic
     const coverImage = lot.CoverImage ?? lot.coverImage;
@@ -475,6 +489,7 @@ export class LotService {
         tenantId: risk.tenantId.toString(),
         verifiedBy: risk.verifiedBy?.toString() || null,
       })),
+      assetIds: linkedAssetIds,
       assets: assetsOnLots?.map((a: any) => {
           // If came from AssetsOnLots, it has an 'Asset' property. If from 'assets', it IS the array of { asset: ... }
           const assetObj = a.Asset ?? a.asset;
@@ -498,7 +513,7 @@ export class LotService {
       actionCnjCode: primaryProcess?.actionCnjCode || null,
       // UI Fields mapping
       totalArea: assetsOnLots?.reduce((acc: number, curr: any) => acc + (Number((curr.Asset ?? curr.asset)?.totalArea) || 0), 0) || null,
-      type: lot.type || ((assetsOnLots?.[0] as any)?.Asset?.categoryId ?? (assetsOnLots?.[0] as any)?.asset?.categoryId ? 'IMOVEL' : 'OUTRO'),
+      type: lot.type || (assetsOnLots?.[0] as any)?.Asset?.categoryName || (assetsOnLots?.[0] as any)?.asset?.categoryName || (assetsOnLots?.[0] as any)?.Asset?.subcategoryName || (assetsOnLots?.[0] as any)?.asset?.subcategoryName || null,
       occupancyStatus: lot.occupancyStatus || (assetsOnLots?.[0] as any)?.Asset?.occupationStatus || (assetsOnLots?.[0] as any)?.asset?.occupationStatus || null
     } as Lot;
   }
@@ -907,7 +922,20 @@ export class LotService {
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const lotId = await this.resolveLotInternalId(id);
-      const lotRecord = await this.prisma.lot.findUnique({ where: { id: lotId }, select: { tenantId: true } });
+      const canModify = await this.canModifyLot(id);
+      if (!canModify.allowed) {
+        return {
+          success: false,
+          message: canModify.reason || 'Não é possível modificar este Lote no status atual.',
+        };
+      }
+
+      const lotRecord = await this.prisma.lot.findUnique({ where: { id: lotId }, select: { tenantId: true, status: true } });
+      if (!lotRecord) {
+        return { success: false, message: 'Lote não encontrado' };
+      }
+
+      const isAssetLinkLocked = IMMUTABLE_ASSET_LINK_STATUSES.includes(lotRecord.status as LotStatus);
       const tenantForLot = lotRecord?.tenantId ?? BigInt(data.tenantId || 1);
       
       const { 
@@ -916,6 +944,13 @@ export class LotService {
         lotRisks,
         ...cleanData 
       } = data as any;
+
+      if (Array.isArray(assetIds) && isAssetLinkLocked) {
+        return {
+          success: false,
+          message: 'Não é possível alterar bens vinculados após a abertura para lances/resultados do lote.',
+        };
+      }
 
       // Strip phantom fields that don't exist on the Prisma Lot model
       const phantomLotFields = [

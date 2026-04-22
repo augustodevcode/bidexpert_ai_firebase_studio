@@ -62,6 +62,12 @@ Antes de diagnosticar bug de página, login ou teste, o agente DEVE executar est
 5. Se o sweep for longo, preferir `NODE_OPTIONS=--max-old-space-size=8192` para `next dev`.
 6. Se erros de `input` ou `ctx` `undefined` aparecerem em várias server actions, corrigir primeiro o wrapper compartilhado (`src/lib/admin-plus/safe-action.ts`).
 7. Antes de editar queries Prisma, confirmar no schema o nome real do campo (`name` vs `title`, etc.).
+8. Antes de corrigir selectors administrativos de leilão, inspecionar os contratos compartilhados `EntitySelector` e `DataTable`; evitar patches locais por tela para sintomas comuns.
+9. Antes de corrigir preview de mídia/imagem principal, confirmar o shape retornado pela biblioteca de mídia (`urlOriginal`, `urlThumbnail` ou equivalente) e o contrato do formulário consumidor.
+10. Antes de corrigir tela de edição do leilão, confirmar assinatura do service de lotes e exigir filtro estruturado por `auctionId`.
+11. Em fluxos judiciais, processo e comitente formam cadeia única de negócio; se o processo não resolver comitente, o workflow deve prever etapa condicional por Vara.
+12. CEP/cidade/mapa e máscaras pt-BR são contratos estruturais; geocoding sem número ou matching rígido por texto não deve ser tratado como detalhe cosmético.
+13. Se a causa raiz for transversal ao admin de leilões, atualizar regras consolidadas e skill do workspace na mesma rodada de correção.
 
 ### Passo 0 — Verificar o que já está em execução
 

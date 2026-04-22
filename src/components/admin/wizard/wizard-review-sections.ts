@@ -3,6 +3,7 @@
  */
 
 import type { Auction } from '@/types';
+import { getPublicAuctionDocuments } from '@/lib/auctions/documents';
 
 export interface WizardReviewItem {
   label: string;
@@ -32,6 +33,16 @@ function formatToggle(value?: boolean | null, enabledLabel = 'Ativado', disabled
 }
 
 export function buildWizardReviewSections(auctionDetails?: Partial<Auction>): WizardReviewSections {
+  const auctionDocuments = getPublicAuctionDocuments(auctionDetails);
+  const lowerCaseIncludes = (value: string | undefined, needle: string) => value?.toLowerCase().includes(needle) ?? false;
+  const documentByKeywords = (keywords: string[]): string | undefined => {
+    return auctionDocuments.find((document) => keywords.some((keyword) => lowerCaseIncludes(document.title, keyword) || lowerCaseIncludes(document.fileName, keyword)))?.fileUrl;
+  };
+
+  const editalUrl = documentByKeywords(['edital', 'document']) ?? auctionDocuments[0]?.fileUrl;
+  const laudoUrl = documentByKeywords(['laudo', 'avali']) ?? auctionDocuments[1]?.fileUrl;
+  const certidaoUrl = documentByKeywords(['certid', 'matric']) ?? auctionDocuments[2]?.fileUrl;
+
   return {
     support: [
       { label: 'Telefone de suporte', value: formatText(auctionDetails?.supportPhone) },
@@ -39,9 +50,9 @@ export function buildWizardReviewSections(auctionDetails?: Partial<Auction>): Wi
       { label: 'WhatsApp', value: formatText(auctionDetails?.supportWhatsApp) },
     ],
     documents: [
-      { label: 'Documentos do leilão', value: formatText(auctionDetails?.documentsUrl) },
-      { label: 'Laudo de avaliação', value: formatText(auctionDetails?.evaluationReportUrl) },
-      { label: 'Certidão/Matrícula', value: formatText(auctionDetails?.auctionCertificateUrl) },
+      { label: 'Documentos do leilão', value: formatText(editalUrl) },
+      { label: 'Laudo de avaliação', value: formatText(laudoUrl) },
+      { label: 'Certidão/Matrícula', value: formatText(certidaoUrl) },
       { label: 'Vara/Filial de venda', value: formatText(auctionDetails?.sellingBranch) },
     ],
     bidding: [

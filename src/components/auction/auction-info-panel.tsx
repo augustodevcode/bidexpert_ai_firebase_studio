@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Info, FileText, Users, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { getPrimaryAuctionDocument } from '@/lib/auctions/documents';
 
 interface AuctionInfoPanelProps {
   auction: Auction;
@@ -14,6 +15,7 @@ interface AuctionInfoPanelProps {
 
 export default function AuctionInfoPanel({ auction }: AuctionInfoPanelProps) {
   const auctioneerInitial = auction.auctioneerName ? auction.auctioneerName.charAt(0).toUpperCase() : 'L';
+  const primaryDocument = getPrimaryAuctionDocument(auction);
   
   return (
     <Card className="card-auction-info" data-ai-id="auction-info-panel">
@@ -42,9 +44,9 @@ export default function AuctionInfoPanel({ auction }: AuctionInfoPanelProps) {
           </div>
         )}
         <div className="wrapper-auction-info-actions" data-ai-id="auction-info-actions">
-          {auction.documentsUrl && (
+          {primaryDocument && (
             <Button variant="outline" size="sm" asChild className="btn-auction-info-action" data-ai-id="auction-info-docs-btn">
-              <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer">
+              <a href={primaryDocument.fileUrl} target="_blank" rel="noopener noreferrer">
                 <FileText className="icon-auction-info-action" /> Ver Edital e Documentos
               </a>
             </Button>

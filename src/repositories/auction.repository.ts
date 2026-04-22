@@ -18,6 +18,9 @@ export class AuctionRepository {
         _count: { select: { Lot: true } },
         Seller: true,
         AuctionStage: true,
+        AuctionDocument: {
+          orderBy: { displayOrder: 'asc' },
+        },
       },
     });
   }
@@ -47,6 +50,9 @@ export class AuctionRepository {
         Auctioneer: true,
         Seller: true,
         AuctionStage: true,
+        AuctionDocument: {
+          orderBy: { displayOrder: 'asc' },
+        },
         CoverImage: true,
       },
     });
@@ -69,6 +75,9 @@ export class AuctionRepository {
           _count: { select: { Lot: true } },
           Seller: true,
           AuctionStage: true,
+          AuctionDocument: {
+            orderBy: { displayOrder: 'asc' },
+          },
       }
     });
   }
@@ -108,6 +117,9 @@ export class AuctionRepository {
         _count: { select: { Lot: true } },
         Seller: true,
         AuctionStage: true,
+        AuctionDocument: {
+          orderBy: { displayOrder: 'asc' },
+        },
       },
       orderBy: { auctionDate: 'desc' },
     });
@@ -130,6 +142,9 @@ export class AuctionRepository {
             _count: { select: { Lot: true } },
             Seller: true,
             AuctionStage: true,
+            AuctionDocument: {
+              orderBy: { displayOrder: 'asc' },
+            },
         }
     });
   }

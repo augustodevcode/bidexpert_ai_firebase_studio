@@ -4,9 +4,8 @@
 import { useWizard } from '../wizard-context';
 import type { JudicialProcess } from '@/types';
 import EntitySelector from '@/components/ui/entity-selector';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
 
 interface Step2JudicialSetupProps {
   processes: JudicialProcess[];
@@ -19,6 +18,40 @@ export default function Step2JudicialSetup({ processes, onRefetchRequest, onAddN
   const [isFetching, setIsFetching] = useState(false);
 
   const selectedProcess = wizardData.judicialProcess;
+
+  const processDisplayColumns = useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: 'processNumber',
+      header: 'Processo',
+      cell: ({ row }) => <div className="min-w-[180px] font-medium">{row.original.processNumber}</div>,
+    },
+    {
+      id: 'branch',
+      header: 'Vara / Comarca',
+      cell: ({ row }) => (
+        <div className="min-w-[220px] text-sm">
+          <div className="font-medium">{row.original.branchName || 'Vara não informada'}</div>
+          <div className="text-muted-foreground">{row.original.districtName || 'Comarca não informada'}</div>
+        </div>
+      ),
+    },
+    {
+      id: 'seller',
+      header: 'Comitente',
+      cell: ({ row }) => <div className="min-w-[180px] text-sm">{row.original.sellerName || 'Sem comitente vinculado'}</div>,
+    },
+    {
+      id: 'inventory',
+      header: 'Inventário',
+      cell: ({ row }) => (
+        <div className="min-w-[120px] text-sm text-muted-foreground">
+          {row.original.assetCount || 0} ativos
+          <br />
+          {row.original.lotCount || 0} lotes
+        </div>
+      ),
+    },
+  ], []);
   
   const handleRefetch = async () => {
       setIsFetching(true);
@@ -44,15 +77,26 @@ export default function Step2JudicialSetup({ processes, onRefetchRequest, onAddN
             const process = processId ? processes.find(p => p.id === processId) : undefined;
             setWizardData((prev) => ({ ...prev, judicialProcess: process }));
         }}
-        options={processes.map(p => ({ value: p.id, label: p.processNumber }))}
+        options={processes.map((p) => ({
+          value: p.id,
+          label: p.processNumber,
+          processNumber: p.processNumber,
+          branchName: p.branchName,
+          districtName: p.districtName,
+          sellerName: p.sellerName,
+          assetCount: p.assetCount,
+          lotCount: p.lotCount,
+        }))}
         placeholder="Selecione um processo..."
-        searchPlaceholder="Buscar por número..."
+        searchPlaceholder="Buscar por processo, vara, comarca ou comitente..."
         emptyStateMessage="Nenhum processo encontrado."
         createNewUrl="/admin/judicial-processes/new"
         editUrlPrefix="/admin/judicial-processes"
         onRefetch={handleRefetch}
         isFetching={isFetching}
         onAddNew={onAddNewProcess}
+        displayColumns={processDisplayColumns}
+        dialogDescription="Pesquise por número CNJ, vara, comarca, comitente ou inventário relacionado antes de vincular o processo ao leilão."
       />
       
       {selectedProcess && (
@@ -61,6 +105,7 @@ export default function Step2JudicialSetup({ processes, onRefetchRequest, onAddN
             <p className="text-sm"><strong className="text-muted-foreground">Nº do Processo:</strong> {selectedProcess.processNumber}</p>
             <p className="text-sm"><strong className="text-muted-foreground">Vara:</strong> {selectedProcess.branchName}</p>
             <p className="text-sm"><strong className="text-muted-foreground">Comarca:</strong> {selectedProcess.districtName}</p>
+            <p className="text-sm"><strong className="text-muted-foreground">Comitente:</strong> {selectedProcess.sellerName || 'Não vinculado'}</p>
             <p className="text-sm"><strong className="text-muted-foreground">Partes:</strong> {selectedProcess.parties.map(p => p.name).join(', ')}</p>
         </div>
       )}

@@ -82,6 +82,157 @@ export class AuctionService {
     return cleaned;
   }
 
+  private parseDocumentFileSize(value: unknown): bigint | null {
+    if (typeof value === 'bigint') {
+      return value >= 0n ? value : null;
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+      return BigInt(Math.floor(value));
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      if (/^\d+$/.test(normalized)) {
+        return BigInt(normalized);
+      }
+    }
+
+    return null;
+  }
+
+  private normalizeAuctionDocumentsInput(data: {
+    documents?: unknown;
+    documentsUrl?: string | null;
+    evaluationReportUrl?: string | null;
+    auctionCertificateUrl?: string | null;
+  }): Array<{
+    fileName: string;
+    title: string;
+    description: string | null;
+    fileUrl: string;
+    fileSize: bigint | null;
+    mimeType: string | null;
+    displayOrder: number;
+    isPublic: boolean;
+  }> {
+    const normalizeText = (value: unknown): string | null => {
+      if (typeof value !== 'string') {
+        return null;
+      }
+
+      const normalized = value.trim();
+      return normalized.length > 0 ? normalized : null;
+    };
+
+    const normalizeUrl = (value: unknown): string | null => {
+      const normalized = normalizeText(value);
+      if (!normalized) {
+        return null;
+      }
+
+      try {
+        const url = new URL(normalized);
+        return url.toString();
+      } catch {
+        return null;
+      }
+    };
+
+    const payloadDocuments = Array.isArray(data.documents)
+      ? data.documents
+          .map((document, index) => {
+            if (!document || typeof document !== 'object') {
+              return null;
+            }
+
+            const rawDocument = document as Record<string, unknown>;
+            const fileUrl = normalizeUrl(rawDocument.fileUrl);
+            if (!fileUrl) {
+              return null;
+            }
+
+            const rawFileName = normalizeText(rawDocument.fileName);
+            const titleFromFileName = rawFileName
+              ? rawFileName.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ').trim()
+              : null;
+            const title = normalizeText(rawDocument.title) ?? titleFromFileName ?? `Documento ${index + 1}`;
+            const fileName = rawFileName ?? `${slugify(title || `documento-${index + 1}`) || `documento-${index + 1}`}.pdf`;
+            const description = normalizeText(rawDocument.description);
+            const mimeType = normalizeText(rawDocument.mimeType);
+            const parsedDisplayOrder = typeof rawDocument.displayOrder === 'number'
+              ? Math.floor(rawDocument.displayOrder)
+              : Number(rawDocument.displayOrder);
+            const displayOrder = Number.isFinite(parsedDisplayOrder) && parsedDisplayOrder >= 0
+              ? parsedDisplayOrder
+              : index;
+
+            return {
+              fileName,
+              title,
+              description,
+              fileUrl,
+              fileSize: this.parseDocumentFileSize(rawDocument.fileSize),
+              mimeType,
+              displayOrder,
+              isPublic: rawDocument.isPublic !== false,
+            };
+          })
+          .filter((document): document is {
+            fileName: string;
+            title: string;
+            description: string | null;
+            fileUrl: string;
+            fileSize: bigint | null;
+            mimeType: string | null;
+            displayOrder: number;
+            isPublic: boolean;
+          } => document !== null)
+      : [];
+
+    if (payloadDocuments.length > 0) {
+      return payloadDocuments
+        .sort((left, right) => left.displayOrder - right.displayOrder)
+        .map((document, index) => ({ ...document, displayOrder: index }));
+    }
+
+    const legacyCandidates = [
+      {
+        fileName: 'edital-leilao.pdf',
+        title: 'Edital e documentos do leilão',
+        description: null,
+        fileUrl: normalizeUrl(data.documentsUrl),
+      },
+      {
+        fileName: 'laudo-avaliacao.pdf',
+        title: 'Laudo de avaliação',
+        description: null,
+        fileUrl: normalizeUrl(data.evaluationReportUrl),
+      },
+      {
+        fileName: 'certidao-matricula.pdf',
+        title: 'Certidão/Matrícula',
+        description: null,
+        fileUrl: normalizeUrl(data.auctionCertificateUrl),
+      },
+    ];
+
+    return legacyCandidates
+      .filter((document): document is {
+        fileName: string;
+        title: string;
+        description: string | null;
+        fileUrl: string;
+      } => document.fileUrl !== null)
+      .map((document, index) => ({
+        ...document,
+        fileSize: null,
+        mimeType: null,
+        displayOrder: index,
+        isPublic: true,
+      }));
+  }
+
   private validateAuctionStages(auctionStages?: Array<{
     name?: string | null;
     startDate?: string | Date | null;
@@ -428,6 +579,7 @@ export class AuctionService {
             Auctioneer, auctioneer, 
             LotCategory, category, 
             AuctionStage, stages, auctionStages,
+          AuctionDocument, documents,
             _count, 
             CoverImage,
             ...rest
@@ -439,6 +591,7 @@ export class AuctionService {
         const auctioneerObj = Auctioneer ?? auctioneer;
         const categoryObj = LotCategory ?? category;
         const stagesList = AuctionStage ?? stages ?? auctionStages ?? [];
+        const documentList = AuctionDocument ?? documents ?? [];
         const countLot = _count?.Lot ?? _count?.lots ?? lotList.length ?? 0;
 
         return {
@@ -468,6 +621,14 @@ export class AuctionService {
             imageUrl: a.imageMediaId === 'INHERIT'
                 ? (featuredLot?.imageUrl ?? null)
                 : (a.imageUrl || CoverImage?.urlOriginal || CoverImage?.urlThumbnail || null),
+            documents: documentList
+              .map((document: any) => ({
+                ...document,
+                id: document.id.toString(),
+                auctionId: document.auctionId?.toString() ?? a.id.toString(),
+                tenantId: document.tenantId?.toString() ?? a.tenantId.toString(),
+              }))
+              .sort((left: any, right: any) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0)),
             auctionStages: stagesList.map((stage: any) => ({
                 id: stage.id.toString(),
                 name: stage.name,
@@ -602,9 +763,15 @@ export class AuctionService {
 
       const {
         auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId,
-        auctionStages, imageMediaId,
+        auctionStages, imageMediaId, documents,
         ...restOfData
       } = data as any;
+      const normalizedAuctionDocuments = this.normalizeAuctionDocumentsInput({
+        documents,
+        documentsUrl: restOfData.documentsUrl,
+        evaluationReportUrl: restOfData.evaluationReportUrl,
+        auctionCertificateUrl: restOfData.auctionCertificateUrl,
+      });
       const derivedAddressLink = restOfData.addressLink ?? (
         restOfData.latitude != null && restOfData.longitude != null
           ? `https://www.google.com/maps?q=${restOfData.latitude},${restOfData.longitude}`
@@ -646,6 +813,17 @@ export class AuctionService {
               data: buildAuctionData(uniqueSlug),
             });
 
+            await createManualAuditLog(tx, {
+              entityType: 'Auction',
+              entityId: createdAuction.id,
+              action: 'CREATE',
+              changes: {
+                before: undefined,
+                after: { title: createdAuction.title, status: createdAuction.status, slug: createdAuction.slug, ...restOfData },
+              },
+              metadata: { operation: 'createAuction', hasStages: normalizedStages.length > 0 },
+            });
+
             if (normalizedStages.length > 0) {
               await tx.auctionStage.createMany({
                 data: normalizedStages.map((stage: any) => ({
@@ -653,6 +831,23 @@ export class AuctionService {
                   startDate: new Date(stage.startDate as Date),
                   endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
                   discountPercent: stage.discountPercent ?? 100,
+                  auctionId: createdAuction.id,
+                  tenantId: BigInt(tenantId),
+                })),
+              });
+            }
+
+            if (normalizedAuctionDocuments.length > 0) {
+              await tx.auctionDocument.createMany({
+                data: normalizedAuctionDocuments.map((document) => ({
+                  fileName: document.fileName,
+                  title: document.title,
+                  description: document.description,
+                  fileUrl: document.fileUrl,
+                  fileSize: document.fileSize,
+                  mimeType: document.mimeType,
+                  displayOrder: document.displayOrder,
+                  isPublic: document.isPublic,
                   auctionId: createdAuction.id,
                   tenantId: BigInt(tenantId),
                 })),
@@ -702,15 +897,23 @@ export class AuctionService {
       }
 
       const internalId = BigInt(auctionToUpdate.id);
-      const auctionStagesPayload = data.auctionStages !== undefined
-        ? this.mapAuctionStagesForPersistence(data.auctionStages, internalId, tenantId)
-        : undefined;
-
       const {
         categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId,
-        cityId, stateId, tenantId: _tenantId, imageMediaId,
+        cityId, stateId, tenantId: _tenantId, imageMediaId, documents,
         ...restOfData
       } = data as any;
+      const hasDocumentsPayload = Object.prototype.hasOwnProperty.call(data, 'documents');
+      const hasLegacyDocumentsPayload = ['documentsUrl', 'evaluationReportUrl', 'auctionCertificateUrl']
+        .some((fieldName) => Object.prototype.hasOwnProperty.call(data, fieldName));
+      const shouldSyncDocuments = hasDocumentsPayload || hasLegacyDocumentsPayload;
+      const normalizedAuctionDocuments = shouldSyncDocuments
+        ? this.normalizeAuctionDocumentsInput({
+            documents,
+            documentsUrl: restOfData.documentsUrl,
+            evaluationReportUrl: restOfData.evaluationReportUrl,
+            auctionCertificateUrl: restOfData.auctionCertificateUrl,
+          })
+        : [];
 
       const normalizedStages = normalizeAuctionStages(auctionStages);
       const chronologyError = getAuctionStageChronologyError(normalizedStages);
@@ -755,6 +958,21 @@ export class AuctionService {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
 
+        const beforeSnapshot = {
+          title: auctionToUpdate.title,
+          description: auctionToUpdate.description,
+          status: auctionToUpdate.status,
+          sellerId: auctionToUpdate.sellerId,
+          auctioneerId: auctionToUpdate.auctioneerId,
+          judicialProcessId: auctionToUpdate.judicialProcessId,
+          categoryId: auctionToUpdate.categoryId,
+          onlineUrl: auctionToUpdate.onlineUrl,
+          supportPhone: auctionToUpdate.supportPhone,
+          supportEmail: auctionToUpdate.supportEmail,
+          supportWhatsApp: auctionToUpdate.supportWhatsApp,
+          sellingBranch: auctionToUpdate.sellingBranch,
+        };
+
         await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });
 
         // Auditoria manual para operações em transação
@@ -763,8 +981,8 @@ export class AuctionService {
           entityId: internalId,
           action: 'UPDATE',
           changes: {
-            before: { title: auctionToUpdate.title },
-            after: { title: data.title || auctionToUpdate.title, ...restOfData },
+            before: beforeSnapshot,
+            after: { ...beforeSnapshot, ...restOfData, title: data.title || auctionToUpdate.title, sellerId, auctioneerId, judicialProcessId, categoryId, cityId, stateId },
           },
           metadata: { operation: 'updateAuction', hasStages: !!auctionStages },
         });
@@ -778,6 +996,27 @@ export class AuctionService {
                 startDate: new Date(stage.startDate as Date),
                 endDate: stage.endDate ? new Date(stage.endDate as Date) : null,
                 discountPercent: stage.discountPercent ?? 100,
+                auctionId: internalId,
+                tenantId: BigInt(tenantId),
+              })),
+            });
+          }
+        }
+
+        if (shouldSyncDocuments) {
+          await tx.auctionDocument.deleteMany({ where: { auctionId: internalId } });
+
+          if (normalizedAuctionDocuments.length > 0) {
+            await tx.auctionDocument.createMany({
+              data: normalizedAuctionDocuments.map((document) => ({
+                fileName: document.fileName,
+                title: document.title,
+                description: document.description,
+                fileUrl: document.fileUrl,
+                fileSize: document.fileSize,
+                mimeType: document.mimeType,
+                displayOrder: document.displayOrder,
+                isPublic: document.isPublic,
                 auctionId: internalId,
                 tenantId: BigInt(tenantId),
               })),
