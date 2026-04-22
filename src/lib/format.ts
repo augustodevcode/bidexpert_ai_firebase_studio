@@ -40,7 +40,7 @@ function parseRuntimeCurrency(value: string | null): SupportedCurrency | null {
   return null;
 }
 
-export function setRuntimeCurrencyPreference(currency: SupportedCurrency): void {
+export function setRuntimeCurrencyPreference(currency: SupportedCurrency | null): void {
   runtimeCurrencyPreference = currency;
 }
 
