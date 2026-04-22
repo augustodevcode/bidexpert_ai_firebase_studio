@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.32](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.31...v1.0.0-demo.32) (2026-04-22)
+
+### Funcionalidades
+
+* **admin:** expand judicial process selector grid ([#716](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/716)) ([9d8bae1](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/9d8bae16d3bfce057411edf7030c5dbaa5c0c8a1))
+
 ## [1.0.0-demo.31](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.30...v1.0.0-demo.31) (2026-04-22)
 
 ### Correções
