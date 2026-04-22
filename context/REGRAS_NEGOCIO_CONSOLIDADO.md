@@ -222,6 +222,13 @@ Schemas Zod + `react-hook-form` em todos formulários
 ✅ O comportamento legado de listar todos os ativos só é permitido enquanto nenhum ativo tiver sido rastreado na sessão atual.
 ✅ Testes E2E do wizard DEVEM selecionar ativos e processos por identidade determinística (título/número exato), nunca pela primeira linha disponível na listagem.
 
+### RN-010B: Grid compartilhado de Processo Judicial
+✅ Todo modal compartilhado de seleção de `Processo Judicial` DEVE usar a mesma configuração de colunas, sem duplicar grids locais por tela.
+✅ O grid precisa expor, no mínimo: número do processo, comitente, vara, comarca, tribunal, partes, indicador eletrônico, matrícula, registro, tipo de ação, código CNJ, descrição da ação, `Public ID`, datas de criação/atualização, quantidade de bens e quantidade de lotes.
+✅ As colunas `Bens` e `Lotes` são obrigatórias e não podem ser removidas do grid judicial.
+✅ A busca textual do modal deve considerar todas as propriedades exibidas no grid, para permitir distinção determinística entre processos parecidos.
+✅ A regra vale para qualquer superfície administrativa que reutilize o seletor judicial, inclusive wizard e formulário administrativo de leilão.
+
 **RCA / prevenção:** A regressão de lotes duplicados no fluxo de cadastro ocorreu porque o Step 4 listava todos os ativos disponíveis do tenant/comitente após cada recarga de dados, e o Playwright marcava todos os checkboxes visíveis. Isso contaminava a sessão com ativos antigos e fazia o total preparado crescer a cada execução.
 
 **Cenário BDD - Refetch não mistura ativos históricos**

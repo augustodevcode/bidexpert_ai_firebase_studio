@@ -44,7 +44,10 @@ import { getLotCategories } from '../categories/actions';
 import { ChangeHistoryTab } from '@/components/audit/change-history-tab';
 import { ParticipantCard, type ParticipantCardData } from '@/components/admin/participant-card';
 import { AuctionDocumentsField } from '@/components/admin/auctions/auction-documents-field';
-import type { ColumnDef } from '@tanstack/react-table';
+import {
+  buildJudicialProcessSelectorOptions,
+  judicialProcessSelectorColumns,
+} from '@/components/admin/judicial-processes/judicial-process-selector-config';
 import { formatPhone } from '@/lib/format';
 
 const auctionStatusOptions = [
@@ -207,39 +210,7 @@ const renderSectionContent = (
       return (
         <div className="space-y-6">
           {(() => {
-            const judicialProcessDisplayColumns: ColumnDef<any>[] = [
-              {
-                accessorKey: 'processNumber',
-                header: 'Processo',
-                cell: ({ row }) => <div className="min-w-[180px] font-medium">{row.original.processNumber}</div>,
-              },
-              {
-                id: 'branch',
-                header: 'Vara / Comarca',
-                cell: ({ row }) => (
-                  <div className="min-w-[220px] text-sm">
-                    <div className="font-medium">{row.original.branchName || 'Vara não informada'}</div>
-                    <div className="text-muted-foreground">{row.original.districtName || 'Comarca não informada'}</div>
-                  </div>
-                ),
-              },
-              {
-                id: 'seller',
-                header: 'Comitente',
-                cell: ({ row }) => <div className="min-w-[180px] text-sm">{row.original.sellerName || 'Sem comitente vinculado'}</div>,
-              },
-              {
-                id: 'inventory',
-                header: 'Inventário',
-                cell: ({ row }) => (
-                  <div className="min-w-[120px] text-sm text-muted-foreground">
-                    {row.original.assetCount || 0} ativos
-                    <br />
-                    {row.original.lotCount || 0} lotes
-                  </div>
-                ),
-              },
-            ];
+            const judicialProcessOptions = buildJudicialProcessSelectorOptions(initialJudicialProcesses || []);
 
             return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -279,25 +250,17 @@ const renderSectionContent = (
               <FormItem>
                 <FormLabel>Processo Judicial (Opcional)</FormLabel>
                 <EntitySelector
+                  entityName="Processo Judicial"
                   value={field.value}
                   onChange={field.onChange}
-                  options={(initialJudicialProcesses || []).map((p) => ({
-                    value: p.id,
-                    label: p.processNumber,
-                    processNumber: p.processNumber,
-                    branchName: p.branchName,
-                    districtName: p.districtName,
-                    sellerName: p.sellerName,
-                    assetCount: p.assetCount,
-                    lotCount: p.lotCount,
-                  }))}
+                  options={judicialProcessOptions}
                   placeholder="Vincule a um processo"
-                  searchPlaceholder="Buscar processo, vara, comarca ou comitente..."
+                  searchPlaceholder="Buscar processo, comitente, vara, comarca, tribunal, partes, matrícula, registro ou CNJ..."
                   emptyStateMessage="Nenhum processo."
                   onRefetch={handleRefetchProcesses}
                   isFetching={isSubmitting}
-                  displayColumns={judicialProcessDisplayColumns}
-                  dialogDescription="Selecione o processo judicial correto. O comitente será sincronizado automaticamente quando o processo possuir vínculo válido."
+                  displayColumns={judicialProcessSelectorColumns}
+                  dialogDescription="Selecione o processo judicial correto. O grid mostra número, comitente, vara, comarca, tribunal, partes, dados cadastrais do processo e os totais de bens/lotes para evitar seleção ambígua."
                 />
                 <FormDescription>Para bens de origem judicial.</FormDescription>
                 <FormMessage />

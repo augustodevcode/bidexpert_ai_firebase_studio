@@ -65,7 +65,8 @@ export function DataTableToolbar<TData>({
   onDeleteSelected,
   bulkActions = [],
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const globalFilterValue = (table.getState().globalFilter as string) ?? "";
+  const isFiltered = table.getState().columnFilters.length > 0 || globalFilterValue.length > 0;
   const groupableColumns = table.getAllColumns().filter(c => c.getCanGroup());
   const groupingState = table.getState().grouping;
   const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
@@ -102,10 +103,10 @@ export function DataTableToolbar<TData>({
         {searchColumnId && (
             <Input
             placeholder={searchPlaceholder}
-            value={(table.getColumn(searchColumnId)?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-                table.getColumn(searchColumnId)?.setFilterValue(event.target.value)
-            }
+          value={globalFilterValue}
+          onChange={(event) =>
+            table.setGlobalFilter(event.target.value)
+          }
             className="h-8 w-full sm:w-[150px] lg:w-[250px]"
             data-ai-id="data-table-search-input"
             />
@@ -145,7 +146,10 @@ export function DataTableToolbar<TData>({
         {isFiltered && (
           <Button
             variant="ghost"
-            onClick={() => table.resetColumnFilters()}
+            onClick={() => {
+              table.resetColumnFilters();
+              table.setGlobalFilter('');
+            }}
             className="h-8 px-2 lg:px-3"
           >
             Limpar
