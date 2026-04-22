@@ -1,6 +1,9 @@
 name: Delete Merged Branches
 
 on:
+  push:
+    branches:
+      - copilot/delete-merged-branches
   workflow_dispatch:
     inputs:
       dry_run:
@@ -22,7 +25,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const dryRun = '${{ inputs.dry_run }}' === 'true';
+            const dryRun = context.eventName === 'workflow_dispatch'
+              ? '${{ inputs.dry_run }}' === 'true'
+              : false; // on push, always delete
 
             const BRANCHES_TO_DELETE = [
               'chore-remove-logger-clear-console-log-20260422-5028104768883978315',
