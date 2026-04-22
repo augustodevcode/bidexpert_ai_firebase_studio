@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.28](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.27...v1.0.0-demo.28) (2026-04-22)
+
+### Correções
+
+* **header:** validate tenant logo before render ([c7d1598](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/c7d1598f3b601cddefede0e1a307337350d90770))
+
 ## [1.0.0-demo.27](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.26...v1.0.0-demo.27) (2026-04-22)
 
 ### Funcionalidades
