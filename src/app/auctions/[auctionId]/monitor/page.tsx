@@ -13,6 +13,7 @@ import MonitorAuditoriumClient from './monitor-auditorium-client';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { normalizeAuctionPublicRoute } from '@/lib/auctions/public-route';
 
 export default function AuctionMonitorPage() {
     const params = useParams();
@@ -45,10 +46,12 @@ export default function AuctionMonitorPage() {
 
                 if (!auction) throw new Error("Leilão não encontrado.");
 
-                const lots = await getLots({ auctionId: String(auction.id) });
+                const normalizedAuction = normalizeAuctionPublicRoute(auction, auctionId);
+
+                const lots = await getLots({ auctionId: String(normalizedAuction.id) });
                 if (lots.length === 0) throw new Error("Este leilão não possui lotes.");
 
-                const isHabilitado = user ? await checkHabilitationForAuctionAction(user.id, auction.id) : false;
+                const isHabilitado = user ? await checkHabilitationForAuctionAction(user.id, normalizedAuction.id) : false;
 
                 const currentLot = lots.find(l => l.id === targetLotId || l.publicId === targetLotId) || lots[0];
                 const upcomingLots = lots.filter(l => l.id !== currentLot.id).slice(0, 10);
@@ -58,7 +61,7 @@ export default function AuctionMonitorPage() {
                 const biddingSettings = platformSettings?.biddingSettings as any;
 
                 setData({
-                    auction,
+                    auction: normalizedAuction,
                     currentLot,
                     upcomingLots,
                     isHabilitado,
