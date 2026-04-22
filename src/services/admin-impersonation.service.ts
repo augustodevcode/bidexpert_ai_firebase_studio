@@ -83,34 +83,50 @@ export class AdminImpersonationService {
       take: 100,
     });
 
-    // Para cada advogado, conta processos ativos
-    const lawyersWithCounts = await Promise.all(
-      lawyers.map(async (lawyer) => {
-        let activeCasesCount = 0;
-        
-        if (lawyer.cpf) {
-          const processesCount = await prisma.judicialProcess.count({
-            where: {
-              JudicialParty: {
-                some: {
-                  documentNumber: lawyer.cpf,
-                  partyType: { in: ['ADVOGADO_AUTOR', 'ADVOGADO_REU'] },
-                },
-              },
-            },
-          });
-          activeCasesCount = processesCount;
-        }
+    // Lista de CPFs para busca em lote, otimizando o N+1 anterior
+    const cpfs = lawyers
+      .map((l) => l.cpf)
+      .filter((cpf): cpf is string => !!cpf);
 
-        return {
-          id: lawyer.id.toString(),
-          fullName: lawyer.fullName ?? 'Sem nome',
-          email: lawyer.email,
-          cpf: lawyer.cpf,
-          activeCasesCount,
-        };
-      })
-    );
+    const processCountsMap = new Map<string, number>();
+
+    if (cpfs.length > 0) {
+      // Busca todas as associações únicas de CPF -> Processo em uma única query
+      const partyAssociations = await prisma.judicialParty.findMany({
+        where: {
+          documentNumber: { in: cpfs },
+          partyType: { in: ['ADVOGADO_AUTOR', 'ADVOGADO_REU'] },
+        },
+        select: {
+          documentNumber: true,
+          processId: true,
+        },
+        distinct: ['documentNumber', 'processId'],
+      });
+
+      // Agrupa as contagens em memória
+      for (const assoc of partyAssociations) {
+        if (assoc.documentNumber) {
+          processCountsMap.set(
+            assoc.documentNumber,
+            (processCountsMap.get(assoc.documentNumber) || 0) + 1
+          );
+        }
+      }
+    }
+
+    // Mapeia os advogados com os contadores pré-calculados
+    const lawyersWithCounts = lawyers.map((lawyer) => {
+      const activeCasesCount = lawyer.cpf ? (processCountsMap.get(lawyer.cpf) || 0) : 0;
+
+      return {
+        id: lawyer.id.toString(),
+        fullName: lawyer.fullName ?? 'Sem nome',
+        email: lawyer.email,
+        cpf: lawyer.cpf,
+        activeCasesCount,
+      };
+    });
 
     return lawyersWithCounts.sort((a, b) => b.activeCasesCount - a.activeCasesCount);
   }
