@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.2.1](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.2.0...v1.2.1) (2026-04-22)
+
+### Performance
+
+* optimize N+1 query in lawyer judicial process count ([#719](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/719)) ([2a91b02](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/2a91b0274f4215e1d306f7da75eba08a3550a095))
+
 ## [1.2.0](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.1.0...v1.2.0) (2026-04-20)
 
 ### Funcionalidades
