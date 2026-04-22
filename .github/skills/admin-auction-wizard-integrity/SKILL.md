@@ -20,6 +20,7 @@ Evitar regressões estruturais no wizard e no cadastro administrativo de leilõe
 1. **Selectors primeiro, telas depois**
    - Antes de patch em uma tela específica, inspecione `src/components/ui/entity-selector.tsx` e `src/components/ui/data-table.tsx`.
    - Se o problema for comum a processo/categoria/comitente/leiloeiro, corrija a API compartilhada.
+   - O selector de `Processo Judicial` deve reutilizar uma configuração compartilhada de colunas e options; é proibido manter grids locais divergentes entre wizard e formulários administrativos.
 
 2. **Processo judicial e comitente são cadeia única**
    - Em fluxo judicial, o processo selecionado DEVE propagar `judicialProcessId` e o comitente resolvido até o formulário do leilão, review e persistência.
@@ -52,6 +53,7 @@ Evitar regressões estruturais no wizard e no cadastro administrativo de leilõe
 ## Checklist mínimo
 
 - [ ] O root cause está em tela específica ou no selector compartilhado?
+- [ ] O grid judicial exibe as colunas mínimas compartilhadas (processo, comitente, vara, comarca, tribunal, partes, matrícula/registro, ação/CNJ, bens e lotes)?
 - [ ] `judicialProcessId` e `sellerId` chegam ao estado final do wizard?
 - [ ] Existe etapa condicional quando o processo não resolve comitente?
 - [ ] O review final bate com o payload persistido?
