@@ -111,7 +111,6 @@ class UserActionLogger {
    */
   clear(): void {
     this.logs = [];
-    console.log('%c[LOGGER] Logs cleared', 'color: orange; font-weight: bold');
   }
 
   /**
