@@ -20,6 +20,10 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, PlusCircle, Search, Trash2, Image as ImageIcon, XCircle } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
+import {
+  buildJudicialProcessSelectorOptions,
+  judicialProcessSelectorColumns,
+} from '@/components/admin/judicial-processes/judicial-process-selector-config';
 import { consultaCepAction } from '@/lib/actions/cep';
 import { useToast } from '@/hooks/use-toast';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
@@ -312,6 +316,10 @@ export default function AuctionFormV2({
   const citiesForState = useMemo(
     () => getCitiesForState(allCities, selectedStateId),
     [selectedStateId, allCities]
+  );
+  const judicialProcessOptions = useMemo(
+    () => buildJudicialProcessSelectorOptions(judicialProcesses),
+    [judicialProcesses]
   );
   const [isCepPending, startCepTransition] = useTransition();
   const { toast } = useToast();
@@ -672,15 +680,15 @@ export default function AuctionFormV2({
                   <FormLabel>Processo Judicial</FormLabel>
                   <FormControl>
                     <EntitySelector
+                      entityName="Processo Judicial"
                       value={field.value}
                       onChange={field.onChange}
-                      options={judicialProcesses.map((item) => ({
-                        value: item.id,
-                        label: item.processNumber,
-                      }))}
+                      options={judicialProcessOptions}
                       placeholder="Associe um processo"
-                      searchPlaceholder="Buscar processo..."
+                      searchPlaceholder="Buscar processo, comitente, vara, comarca, tribunal, partes, matrícula, registro ou CNJ..."
                       emptyStateMessage="Nenhum processo encontrado"
+                      displayColumns={judicialProcessSelectorColumns}
+                      dialogDescription="Selecione o processo judicial correto. O grid mostra número, comitente, vara, comarca, tribunal, partes, dados cadastrais do processo e os totais de bens/lotes para evitar seleção ambígua."
                       isFetching={false}
                     />
                   </FormControl>

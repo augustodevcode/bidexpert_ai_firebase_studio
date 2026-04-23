@@ -25,6 +25,10 @@ import CreateLotFromAssetsModal from '@/components/admin/lotting/create-lot-moda
 import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import { createColumns } from '@/components/admin/lotting/columns';
 import EntitySelector from '@/components/ui/entity-selector';
+import {
+  buildJudicialProcessSelectorOptions,
+  judicialProcessSelectorColumns,
+} from '@/components/admin/judicial-processes/judicial-process-selector-config';
 
 const severityStyles = {
   high: 'bg-red-100 text-red-800',
@@ -53,10 +57,7 @@ export default function LoteamentoPage() {
   const selectedAuction = auctions.find(a => a.id === selectedAuctionId);
   const assets = snapshot?.assets ?? [];
 
-  const processOptions = useMemo(() => processes.map(p => ({
-    value: p.id,
-    label: `${p.processNumber} · ${(p.assetCount ?? 0).toString()} bens · ${(p.lotCount ?? 0).toString()} lotes${p.courtName ? ` · ${p.courtName}` : ''}`,
-  })), [processes]);
+  const processOptions = useMemo(() => buildJudicialProcessSelectorOptions(processes), [processes]);
 
   const auctionOptions = useMemo(() => auctions.map(a => {
     const formattedDate = a.auctionDate ? new Date(a.auctionDate).toLocaleDateString('pt-BR') : 'Data não definida';
@@ -279,9 +280,11 @@ export default function LoteamentoPage() {
                   onChange={(value) => handleFilterChange({ judicialProcessId: value || undefined })}
                   options={processOptions}
                   placeholder={isLoading ? 'Carregando...' : 'Selecione um processo'}
-                  searchPlaceholder="Buscar processo..."
+                  searchPlaceholder="Buscar processo, comitente, vara, comarca, tribunal, partes, matrícula, registro ou CNJ..."
                   emptyStateMessage="Nenhum processo encontrado"
-                  entityName="processo judicial"
+                  entityName="Processo Judicial"
+                  displayColumns={judicialProcessSelectorColumns}
+                  dialogDescription="Selecione o processo judicial correto. O grid mostra número, comitente, vara, comarca, tribunal, partes, dados cadastrais do processo e os totais de bens/lotes para evitar seleção ambígua."
                   disabled={isLoading}
                 />
               </div>

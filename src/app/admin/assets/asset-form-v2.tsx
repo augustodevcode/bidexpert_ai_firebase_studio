@@ -29,6 +29,10 @@ import { CrudFormFooter } from '@/components/crud/crud-form-footer';
 import { useCrudForm } from '@/hooks/use-crud-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+    buildJudicialProcessSelectorOptions,
+    judicialProcessSelectorColumns,
+} from '@/components/admin/judicial-processes/judicial-process-selector-config';
 
 interface AssetFormV2Props {
   initialData?: Partial<Asset> | null;
@@ -72,6 +76,10 @@ export function AssetFormV2({
   const safeSellers = sellers || [];
   const safeStates = allStates || [];
   const safeCities = allCities || [];
+    const judicialProcessOptions = React.useMemo(
+        () => buildJudicialProcessSelectorOptions(safeProcesses),
+        [safeProcesses]
+    );
 
   if (!categories) console.error('AssetFormV2: categories prop is missing or undefined');
   if (!processes) console.error('AssetFormV2: processes prop is missing or undefined');
@@ -393,13 +401,15 @@ export function AssetFormV2({
                                     <FormItem>
                                         <FormLabel>Processo Judicial (Opcional)</FormLabel>
                                         <EntitySelector
-                                            entityName="process"
-                                            options={safeProcesses.map(p => ({ value: p.id.toString(), label: p.processNumber }))}
+                                            entityName="Processo Judicial"
+                                            options={judicialProcessOptions}
                                             value={field.value || ''}
                                             onChange={field.onChange}
                                             placeholder="Vincular a processo..."
-                                            searchPlaceholder="Buscar processo..."
+                                            searchPlaceholder="Buscar processo, comitente, vara, comarca, tribunal, partes, matrícula, registro ou CNJ..."
                                             emptyStateMessage="Nenhum processo encontrado."
+                                            displayColumns={judicialProcessSelectorColumns}
+                                            dialogDescription="Selecione o processo judicial correto. O grid mostra número, comitente, vara, comarca, tribunal, partes, dados cadastrais do processo e os totais de bens/lotes para evitar seleção ambígua."
                                         />
                                         <FormMessage />
                                     </FormItem>
