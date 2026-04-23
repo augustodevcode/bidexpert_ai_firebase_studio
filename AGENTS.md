@@ -43,7 +43,7 @@ Estes guardrails foram adicionados após falhas reais em sweep/admin-plus e DEVE
 **REGRA CRÍTICA:** Todo agente AI DEVE:
 1. Criar **Git Worktree dedicado** antes de qualquer alteração: `git worktree add worktrees\bidexpert-<tipo>-<descricao> -b <tipo>/<descricao>-<timestamp> origin/demo-stable`
 2. Usar porta dedicada (9005, 9006, 9007...) para não conflitar com outros devs
-3. NO FINAL do chat, solicitar autorização do usuário para abrir PR para `demo-stable`
+3. NO FINAL do chat, reportar o que foi executado e as evidências; não exigir autorização do usuário para abrir PR ou fazer merge quando o gate local estiver verde
 
 📖 **Workflow completo:** `.agent/workflows/parallel-development.md`
 
@@ -122,14 +122,14 @@ docker compose -f docker-compose.dev-isolated.yml up -d --build
 |----------|----------------|----------|-------------|-------|-----|
 | **DEV** | Local (Docker) | MySQL `bidexpert_dev` | `demo-stable` | 9006 | Agentes AI |
 | **DEMO** | Vercel + Prisma Postgres | PostgreSQL | `demo-stable` | 9005 | Usuário humano |
-| **PROD** | Cloud Run / Vercel | PostgreSQL | `main` | - | Produção final |
+| **MAIN** | Cloud Run / Vercel | PostgreSQL | `main` | - | Linha principal pré-lançamento |
 
 ### Workflow de Branches
 
 ```
-main (produção - PROTEGIDO)
+main (linha estável pré-lançamento)
   │
-  └── demo-stable (base estável para features)
+  └── demo-stable (base de integração pré-lançamento)
         │
         ├── feat/auction-filter-20260131-1430
         ├── fix/login-bug-20260131-1500
@@ -137,10 +137,10 @@ main (produção - PROTEGIDO)
 ```
 
 **Regras de Branch:**
-1. `main` = **PRODUÇÃO** → Nunca alterar diretamente, somente via PR aprovado
-2. `demo-stable` = Base para todas as features → Sempre começar branches daqui
-3. Feature branches → Sempre merge via PR para `demo-stable`
-4. CI verde obrigatório antes de merge em `main`
+1. `main` e `demo-stable` = **DESENVOLVIMENTO PRÉ-LANÇAMENTO** → alterações automatizadas são permitidas após validação local completa
+2. `demo-stable` = Base preferencial para novas features e worktrees
+3. Feature branches e PRs continuam preferenciais para trabalho isolado ou concorrente
+4. CI verde permanece obrigatório antes de propagar mudanças mais amplas
 
 ### Detecção de Ambiente do Usuário
 
