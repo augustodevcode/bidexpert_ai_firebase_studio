@@ -10,15 +10,16 @@ import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo, Auction
 import AuctionDetailsClientV2 from './auction-details-client-v2';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
-import { getLots } from '@/app/admin/lots/actions';
+import { getAuction } from '@/app/admin/auctions/actions';
+import { getCurrentUser } from '@/app/auth/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { normalizeAuctionPublicRoute } from '@/lib/auctions/public-route';
+import { shouldUsePublicAuctionData } from '@/lib/auctions/preview-access';
 
-async function getAuctionPageData(id: string): Promise<{ 
+async function getAuctionPageData(id: string, isPublicCall: boolean): Promise<{ 
   auction?: Auction; 
   auctioneer?: AuctioneerProfileInfo | null;
   platformSettings: PlatformSettings;
@@ -35,10 +36,10 @@ async function getAuctionPageData(id: string): Promise<{
       allAuctioneersData
     ] = await Promise.all([
     getPlatformSettings(),
-    getAuction(id, true), // Public call
-    getLotCategories(true),
-    getSellers(true), // Public call
-    getAuctioneers(true) // Public call
+    getAuction(id, isPublicCall),
+    getLotCategories(isPublicCall),
+    getSellers(isPublicCall),
+    getAuctioneers(isPublicCall)
   ]);
   
   if (!auctionFromDb) {
@@ -83,7 +84,9 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     );
   }
   
-  const { auction, auctioneer, platformSettings, allCategories, allSellers } = await getAuctionPageData(params.auctionId);
+  const currentUser = await getCurrentUser();
+  const isPublicCall = shouldUsePublicAuctionData(currentUser);
+  const { auction, auctioneer, platformSettings, allCategories, allSellers } = await getAuctionPageData(params.auctionId, isPublicCall);
 
   if (!auction) {
     return (

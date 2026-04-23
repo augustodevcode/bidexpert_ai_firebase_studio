@@ -11,6 +11,7 @@ import type { Lot, Auction, PlatformSettings, LotCategory, SellerProfileInfo, Au
 import LotDetailClientContent from './lot-detail-client';
 import { getAuction } from '@/app/admin/auctions/actions';
 import { getLot, getLots, getAssetsByIdsAction } from '@/app/admin/lots/actions';
+import { getCurrentUser } from '@/app/auth/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -19,8 +20,9 @@ import { notFound } from 'next/navigation';
 import { getAuctionContact, type AuctionContactInfo } from '@/services/auction-contact.service';
 import prisma from '@/lib/prisma';
 import { normalizeAuctionPublicRoute } from '@/lib/auctions/public-route';
+import { shouldUsePublicAuctionData } from '@/lib/auctions/preview-access';
 
-async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
+async function getLotPageData(currentAuctionId: string, currentLotId: string, isPublicCall: boolean): Promise<{
   lot: Lot | null,
   auction: Auction | null,
   platformSettings: PlatformSettings,
@@ -45,11 +47,11 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
       auctioneersResult
   ] = await Promise.allSettled([
     getPlatformSettings(),
-    getAuction(currentAuctionId, true), // Public call
-    getLot(currentLotId, true), // Public call
-    getLotCategories(true),
-    getSellers(true), // Public call
-    getAuctioneers(true) // Public call
+    getAuction(currentAuctionId, isPublicCall),
+    getLot(currentLotId, isPublicCall),
+    getLotCategories(isPublicCall),
+    getSellers(isPublicCall),
+    getAuctioneers(isPublicCall)
   ]);
 
   const platformSettings = platformSettingsResult.status === 'fulfilled' && platformSettingsResult.value
@@ -85,7 +87,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 
   // Ensure the lots array on the auction object is populated.
   if (!auction.lots || auction.lots.length === 0) {
-      auction.lots = await getLots(auction.id, true); // Public call
+      auction.lots = await getLots(auction.id, isPublicCall);
   }
   const lotsForThisAuction = auction.lots || [];
   const lotIndex = lotsForThisAuction.findIndex(l => l.id === lotFromDb.id || (l.publicId && l.publicId === lotFromDb.publicId));
@@ -139,6 +141,8 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 }
 
 export default async function LotDetailPage({ params }: { params: { auctionId: string, lotId: string } }) {
+  const currentUser = await getCurrentUser();
+  const isPublicCall = shouldUsePublicAuctionData(currentUser);
   const { 
     lot, 
     auction, 
@@ -152,7 +156,7 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
     allSellers,
     auctioneer,
     auctionContact
-  } = await getLotPageData(params.auctionId, params.lotId);
+  } = await getLotPageData(params.auctionId, params.lotId, isPublicCall);
 
   if (!lot || !auction) {
     notFound();
