@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { Badge } from '../ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 import { ThemeToggle } from './theme-toggle';
+import { useMemo } from 'react';
 
 interface AdminHeaderProps {
   onSearchClick: () => void;
@@ -31,6 +32,13 @@ export default function AdminHeader({
   onQueryMonitorToggle
 }: AdminHeaderProps) {
   const { unreadNotificationsCount } = useAuth();
+  const keyboardShortcutLabel = useMemo(() => {
+    if (typeof navigator === 'undefined') {
+      return 'Ctrl+K';
+    }
+
+    return /Mac|iPhone|iPad|iPod/i.test(navigator.platform) ? 'Cmd+K' : 'Ctrl+K';
+  }, []);
 
   return (
     <header className="header-admin-sticky" data-ai-id="admin-header-main">
@@ -52,7 +60,7 @@ export default function AdminHeader({
             <Search className="icon-admin-search" />
             <span className="text-admin-search-placeholder">Buscar leilões, lotes...</span>
             <kbd className="kbd-admin-search" data-ai-id="admin-header-kbd">
-              <span className="text-kbd-symbol">⌘</span>K
+              {keyboardShortcutLabel}
             </kbd>
           </Button>
       </div>
