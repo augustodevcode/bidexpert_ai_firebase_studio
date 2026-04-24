@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.34](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.33...v1.0.0-demo.34) (2026-04-24)
+
+### Correções
+
+* move query monitor toggle to sidebar footer ([e406755](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/e40675593078f5e8450b0f0a7a2efda3c4f23112))
+
 ## [1.0.0-demo.33](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.32...v1.0.0-demo.33) (2026-04-23)
 
 ### Correções
