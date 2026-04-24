@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.38](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.37...v1.0.0-demo.38) (2026-04-24)
+
+### Funcionalidades
+
+* **admin:** add asset gallery and lot media inheritance ([7ec565d](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/7ec565d34b54e239f09755b192796fcb4783cbbb))
+
 ## [1.0.0-demo.37](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.36...v1.0.0-demo.37) (2026-04-24)
 
 ### Correções
