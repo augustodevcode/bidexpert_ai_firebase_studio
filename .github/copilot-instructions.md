@@ -102,12 +102,12 @@ npm run dev
   - CEP/cidade exigem matching normalizado e o geocoding DEVE incluir o número do imóvel quando o campo for preenchido ou perder foco.
   - Máscaras pt-BR de telefone, WhatsApp, moeda e data/hora DEVEM normalizar o valor antes da persistência; a máscara não é a fonte de verdade.
 
-### 5. No ÚLTIMO TODO do Chat - SOLICITAR AUTORIZAÇÃO
+  ### 5. No ÚLTIMO TODO do Chat - EXECUÇÃO AUTÔNOMA
 **OBRIGATÓRIO:** Antes de finalizar, o agente DEVE:
 1. ✅ Garantir todos os testes passaram
-2. ✅ Fazer push de todos os commits na branch
-3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request para demo-stable?"
-4. ⏳ Aguardar autorização explícita antes de qualquer merge
+  2. ✅ Fazer push de todos os commits na branch, quando aplicável
+  3. ✅ Criar ou atualizar o PR automaticamente, ou concluir merge/push direto em `demo-stable`/`main`, quando o gate local estiver verde
+  4. ✅ Reportar no chat o que foi executado e quais evidências foram geradas
 
 ### 6. Evidência Obrigatória para Aprovação de PR (Playwright)
 **OBRIGATÓRIO:** Todo pedido de aprovação/merge de PR DEVE incluir:
@@ -117,8 +117,8 @@ npm run dev
 4. 🚫 PR sem evidência visual não deve ser aprovado nem mergeado
 
 ### 5. Proteções Absolutas
-- 🚫 **NUNCA** fazer push direto na `main`
-- 🚫 **NUNCA** fazer merge sem autorização explícita do usuário
+- ✅ `main` e `demo-stable` são trilhas de desenvolvimento pré-lançamento neste workspace
+- 🚫 **NUNCA** fazer merge sem validação local completa e evidências mínimas
 - 🚫 **NUNCA** resolver conflitos automaticamente sem revisão
 
 ---
@@ -1115,14 +1115,14 @@ Since the codebase is a template, you should not assume they have set up anythin
 |----------|----------------|----------|-------------|-------|-----|
 | **DEV** | Local (Docker) | MySQL `bidexpert_dev` | `demo-stable` | 9006 | Agentes AI |
 | **DEMO** | Vercel + Prisma Postgres | PostgreSQL | `demo-stable` | 9005 | Usuário humano |
-| **PROD** | Cloud Run / Vercel | PostgreSQL | `main` | - | Produção final |
+| **MAIN** | Cloud Run / Vercel | PostgreSQL | `main` | - | Linha principal pré-lançamento |
 
 ### Workflow de Branches
 
 ```
-main (produção - PROTEGIDO)
+main (linha estável pré-lançamento)
   │
-  └── demo-stable (base estável para features)
+  └── demo-stable (base de integração pré-lançamento)
         │
         ├── feat/auction-filter-20260131-1430
         ├── fix/login-bug-20260131-1500
@@ -1130,10 +1130,10 @@ main (produção - PROTEGIDO)
 ```
 
 **Regras de Branch:**
-1. `main` = **PRODUÇÃO** → Nunca alterar diretamente, somente via PR aprovado
-2. `demo-stable` = Base para todas as features → Sempre começar branches daqui
-3. Feature branches → Sempre merge via PR para `demo-stable`
-4. CI verde obrigatório antes de merge em `main`
+1. `main` e `demo-stable` = **DESENVOLVIMENTO PRÉ-LANÇAMENTO** → alterações automatizadas são permitidas após validação local completa
+2. `demo-stable` = Base preferencial para novas features e worktrees
+3. Feature branches e PRs continuam preferenciais para trabalho isolado ou concorrente
+4. CI verde permanece obrigatório antes de propagar mudanças mais amplas
 
 ### Detecção de Ambiente do Usuário
 

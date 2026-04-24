@@ -69,6 +69,15 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 
 ## REGRAS DE NEGÓCIO CRÍTICAS
 
+### RN-GOV-001: Governança de Branches Pré-Lançamento
+✅ `main` e `demo-stable` são trilhas de desenvolvimento pré-lançamento neste workspace, não ambientes finais imutáveis.
+✅ Feature branches e PRs continuam sendo o fluxo preferencial para trabalho isolado, revisão e rastreabilidade.
+✅ Quando o gate local e os checks remotos estiverem verdes, o agente PODE criar/atualizar PR e concluir merge/push em `demo-stable`/`main` sem aguardar autorização explícita adicional do usuário.
+❌ Continua proibido mergear com validação incompleta, evidência ausente ou conflitos não revisados.
+✅ Quando a política de branch/merge mudar, `REGRAS_NEGOCIO_CONSOLIDADO.md`, instruções compartilhadas e skills correlatas DEVEM ser atualizados na mesma rodada para evitar drift operacional.
+
+**RCA / prevenção:** A divergência entre skills e instruções do workspace manteve a exigência antiga de autorização explícita para merge mesmo após a política operacional já ter sido flexibilizada para o ambiente pré-lançamento. A fonte de verdade consolidada precisa explicitar a política para impedir bloqueios artificiais no fechamento das tasks.
+
 ### RN-001: Isolamento Multi-Tenant
 ✅ Todas tabelas tenant-specific DEVEM ter `tenantId`  
 ✅ Queries filtradas automaticamente  

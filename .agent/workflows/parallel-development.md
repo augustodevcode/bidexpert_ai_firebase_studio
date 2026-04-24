@@ -237,8 +237,8 @@ Ambos dentro do mesmo workspace VS Code → Copilot pode acessar ambos
 1. ✅ Todos os testes passaram
 2. ✅ Push de todos os commits
 3. ✅ Gate Pré-PR executado (ver abaixo)
-4. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request para demo-stable?"
-5. ⏳ Aguardar autorização explícita antes de qualquer merge
+4. ✅ Criar/atualizar PR automaticamente, ou concluir merge/push direto em `demo-stable`/`main`, quando o gate local estiver verde
+5. ✅ Reportar no chat o branch/PR/merge executado e as evidências coletadas
 
 ### Gate Pré-PR (OBRIGATÓRIO)
 
@@ -269,7 +269,7 @@ git branch -d $branch         # Deleta branch local
 Write-Host "✅ Worktree removido." -ForegroundColor Green
 ```
 
-### Mensagem Padrão para Solicitar Autorização
+### Mensagem Padrão de Conclusão
 
 ```markdown
 ---
@@ -277,11 +277,10 @@ Write-Host "✅ Worktree removido." -ForegroundColor Green
 
 **Worktree:** `<dir>` | **Branch:** `<branch>` | **Porta:** `<porta>`
 **Commits:** <quantidade> commits | **Testes:** ✅ Todos passaram
+**Status:** PR/merge/push executado conforme o gate local
 
 ### Alterações Realizadas:
 - [Lista de alterações]
-
-**Deseja que eu crie o Pull Request para demo-stable?** (sim/não)
 ---
 ```
 
@@ -289,8 +288,8 @@ Write-Host "✅ Worktree removido." -ForegroundColor Green
 
 ## ⚠️ Regras de Proteção
 
-- 🚫 **NUNCA** fazer push direto na `main`
-- 🚫 **NUNCA** fazer merge sem autorização explícita
+- ✅ `main` e `demo-stable` são trilhas de desenvolvimento pré-lançamento neste workspace
+- 🚫 **NUNCA** fazer merge sem validação local completa
 - 🚫 **NUNCA** resolver conflitos automaticamente sem revisão
 - 🚫 **NUNCA** verificar a mesma branch em dois worktrees simultâneos
 - 🚫 **NUNCA** compartilhar `.env.local` entre worktrees

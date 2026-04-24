@@ -105,9 +105,9 @@ Manter `.coordination/queue.yaml` atualizado com:
 ### 5. Submeter PR com Evidência
 1. ✅ Garantir TODOS os testes passaram (evidência JSON válida)
 2. ✅ Fazer push de todos os commits na branch
-3. ✅ Submeter evidência JSON junto com o PR
-4. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request e faça merge na demo-stable?"
-5. ⏳ Aguardar autorização explícita antes de qualquer merge
+3. ✅ Submeter evidência JSON junto com o PR, quando houver fluxo de PR
+4. ✅ Criar/atualizar o PR automaticamente, ou concluir merge/push direto em `demo-stable`/`main`, quando o gate local estiver verde
+5. ✅ Reportar no chat o que foi executado e as evidências coletadas
 
 ### 6. Cleanup do Container
 ```powershell
@@ -117,8 +117,8 @@ Remove-Item .coordination/dev1.flag -ErrorAction SilentlyContinue
 ```
 
 ### Proteções Absolutas
-- 🚫 **NUNCA** fazer push direto na `main` ou `demo-stable`
-- 🚫 **NUNCA** fazer merge sem autorização explícita do usuário
+- ✅ `main` e `demo-stable` são trilhas de desenvolvimento pré-lançamento neste workspace
+- 🚫 **NUNCA** fazer merge sem validação local completa e evidências mínimas
 - 🚫 **NUNCA** resolver conflitos automaticamente sem revisão
 - 🚫 **NUNCA** desenvolver fora de um ambiente isolado confirmado (Git Worktree ou container sandbox)
 - 🚫 **NUNCA** usar `npm run dev` bare-metal fora do worktree/ambiente isolado validado
@@ -135,13 +135,13 @@ Remove-Item .coordination/dev1.flag -ErrorAction SilentlyContinue
 | **DEV (Container)** | Docker Isolado | MySQL `bidexpert_dev` | `demo-stable` | 9101+ | Agentes AI (PREFERENCIAL) |
 | **DEV (Fallback)** | Local bare-metal | MySQL `bidexpert_dev` | `demo-stable` | 9006 | Agentes AI (sem Docker) |
 | **DEMO** | Vercel + Prisma Postgres | PostgreSQL | `demo-stable` | 9005 | Usuário humano |
-| **PROD** | Cloud Run / Vercel | PostgreSQL | `main` | - | Produção final |
+| **MAIN** | Cloud Run / Vercel | PostgreSQL | `main` | - | Linha principal pré-lançamento |
 
 ### Workflow de Branches
 ```
-main (produção - PROTEGIDO)
+main (linha estável pré-lançamento)
   │
-  └── demo-stable (base estável para features)
+  └── demo-stable (base de integração pré-lançamento)
 ```
 
 ---

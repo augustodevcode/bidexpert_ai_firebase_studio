@@ -56,14 +56,14 @@ Esta skill define o workflow de desenvolvimento com isolamento de ambientes para
 |----------|----------------|----------|-------|-------------|---------------|
 | **DEV** | Docker local | MySQL `bidexpert_dev` | 9006 | `demo-stable` | Agentes AI |
 | **DEMO** | Vercel | PostgreSQL | - | `demo-stable` | Usuário humano |
-| **PROD** | Vercel | PostgreSQL | - | `main` | Produção |
+| **MAIN** | Vercel | PostgreSQL | - | `main` | Linha principal pré-lançamento |
 
 ## Workflow de Branches
 
 ```
-main (produção - PROTEGIDO)
+main (linha estável pré-lançamento)
   │
-  └── demo-stable (base estável para features)
+  └── demo-stable (base de integração pré-lançamento)
         │
         ├── feat/auction-filter-20260131-1430
         ├── fix/login-bug-20260131-1500
@@ -72,10 +72,10 @@ main (produção - PROTEGIDO)
 
 ### Regras de Branch
 
-1. **`main`** = **PRODUÇÃO**
-   - Nunca alterar diretamente
-   - Somente via PR aprovado com CI verde
-   - Branch protection ativo
+1. **`main` e `demo-stable`** = **DESENVOLVIMENTO PRÉ-LANÇAMENTO**
+   - Alterações automatizadas são permitidas após validação local completa
+   - CI verde continua obrigatório antes de promover mudanças mais amplas
+   - Branch protection e revisão seguem recomendados para reduzir risco operacional
 
 2. **`demo-stable`** = Base para features
    - Sempre começar branches daqui
@@ -135,7 +135,8 @@ $env:PORT = $porta ; npm install ; npm run dev
 1. Push de todos os commits
 2. Criar PR para `demo-stable`
 3. Aguardar CI verde
-4. **SOLICITAR AUTORIZAÇÃO** do usuário antes de merge
+4. Criar ou atualizar o PR automaticamente, ou concluir merge/push direto em `demo-stable`/`main`, quando o gate local estiver verde
+5. Reportar no chat o branch/PR/merge executado e as evidências coletadas
 
 ## Compatibilidade MySQL ↔ PostgreSQL
 

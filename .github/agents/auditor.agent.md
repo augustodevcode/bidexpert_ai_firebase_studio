@@ -55,16 +55,16 @@ npm run dev
 - Testes a cada alteração significativa
 - Documentação inline
 
-### 4. No ÚLTIMO TODO do Chat - SOLICITAR AUTORIZAÇÃO
+### 4. No ÚLTIMO TODO do Chat - EXECUÇÃO AUTÔNOMA
 **OBRIGATÓRIO:** Antes de finalizar, o agente DEVE:
 1. ✅ Garantir todos os testes passaram
-2. ✅ Fazer push de todos os commits na branch
-3. ✅ **PERGUNTAR AO USUÁRIO:** "Deseja que eu crie o Pull Request para demo-stable?"
-4. ⏳ Aguardar autorização explícita antes de qualquer merge
+2. ✅ Fazer push de todos os commits na branch, quando aplicável
+3. ✅ Criar ou atualizar o PR automaticamente, ou concluir merge/push direto em `demo-stable`/`main`, quando o gate local estiver verde
+4. ✅ Reportar no chat o que foi executado e quais evidências foram geradas
 
 ### 5. Proteções Absolutas
-- 🚫 **NUNCA** fazer push direto na `main`
-- 🚫 **NUNCA** fazer merge sem autorização explícita do usuário
+- ✅ `main` e `demo-stable` são trilhas de desenvolvimento pré-lançamento neste workspace
+- 🚫 **NUNCA** fazer merge sem validação local completa e evidências mínimas
 - 🚫 **NUNCA** resolver conflitos automaticamente sem revisão
 
 ### 6. Evidência Obrigatória para Aprovação de PR (Playwright)
