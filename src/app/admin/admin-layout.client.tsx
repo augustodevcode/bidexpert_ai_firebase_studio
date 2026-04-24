@@ -12,6 +12,7 @@ import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context
 import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 import { ThemeProvider } from '@/components/theme-provider';
 import dynamic from 'next/dynamic';
+import CommandPalette from '@/components/layout/command-palette';
 
 // Lazy-load query monitor so it doesn't affect the bundle when disabled
 const AdminQueryMonitor = dynamic(() => import('@/components/support/admin-query-monitor'), { ssr: false });
@@ -149,6 +150,10 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
         <WidgetConfigurationModal
           isOpen={isWidgetConfigModalOpen}
           onClose={() => setIsWidgetConfigModalOpen(false)}
+        />
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onOpenChange={setCommandPaletteOpen}
         />
       </WidgetPreferencesProvider>
     </ThemeProvider>
