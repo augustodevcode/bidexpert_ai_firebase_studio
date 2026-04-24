@@ -6,7 +6,7 @@
  */
 'use client';
 
-import { Search, Bell, Settings, MessageSquare, Menu, Globe, Activity } from 'lucide-react';
+import { Search, Bell, Settings, MessageSquare, Menu, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
 import UserNav from './user-nav';
@@ -14,9 +14,6 @@ import Link from 'next/link';
 import { Badge } from '../ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 import { ThemeToggle } from './theme-toggle';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
 
 interface AdminHeaderProps {
   onSearchClick: () => void;
@@ -61,36 +58,6 @@ export default function AdminHeader({
       </div>
 
       <div className="wrapper-admin-header-spacer">
-        {/* Feature Flag: Query Monitor Toggle */}
-        <div className="flex items-center gap-2 px-2 border-r border-border/50" data-ai-id="admin-header-query-monitor-toggle">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild side="bottom">
-                <div className="flex items-center gap-2 cursor-help">
-                  <Activity className={cn(
-                    "h-4 w-4 transition-colors",
-                    queryMonitorEnabled ? "text-primary animate-pulse" : "text-muted-foreground"
-                  )} />
-                  <Label htmlFor="query-monitor-toggle" className="text-xs font-medium cursor-pointer hidden md:inline-block">
-                    Monitor
-                  </Label>
-                  <Switch
-                    id="query-monitor-toggle"
-                    checked={queryMonitorEnabled}
-                    onCheckedChange={onQueryMonitorToggle}
-                    data-ai-id="query-monitor-toggle-switch"
-                    className="scale-75"
-                  />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p className="text-xs">
-                  {queryMonitorEnabled ? 'Desativar' : 'Ativar'} Monitor de Queries (Debug)
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
       </div>
 
       {/* Ícones de Ação e Menu do Usuário */}
