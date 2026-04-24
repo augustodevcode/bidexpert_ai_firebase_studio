@@ -210,7 +210,8 @@ $env:PORT = $porta ; npm install ; npm run dev
 1. Push de todos os commits
 2. Criar PR para `demo-stable`
 3. Aguardar CI verde
-4. **SOLICITAR AUTORIZAÇÃO** do usuário antes de merge
+4. Criar ou atualizar o PR automaticamente, ou concluir merge/push direto em `demo-stable`/`main`, quando o gate local estiver verde
+5. Reportar no chat o branch/PR/merge executado e as evidências coletadas
 
 ## Compatibilidade MySQL ↔ PostgreSQL
 
