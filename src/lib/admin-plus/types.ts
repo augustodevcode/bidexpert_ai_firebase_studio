@@ -89,19 +89,15 @@ export interface EntityConfig {
 }
 
 export type EntityGroup =
-  | 'foundation'
-  | 'base'
-  | 'config'
-  | 'participants'
-  | 'catalog'
+  | 'auctions_and_lots'
   | 'judicial'
-  | 'business'
-  | 'transactions'
-  | 'post-sale'
-  | 'communications'
-  | 'analytics'
-  | 'support'
-  | 'validation';
+  | 'participants_and_registries'
+  | 'bids_and_financial'
+  | 'post_sale'
+  | 'communication_and_support'
+  | 'reports_and_audit'
+  | 'auxiliary_tables'
+  | 'configurations';
 
 export interface BreadcrumbItem {
   label: string;
