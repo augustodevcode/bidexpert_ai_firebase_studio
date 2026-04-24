@@ -128,6 +128,8 @@ export function AssetFormV2({
   });
 
   const selectedCategoryId = useWatch({ control: form.control, name: 'categoryId' });
+    const watchedMainImageUrl = useWatch({ control: form.control, name: 'imageUrl' });
+    const watchedGalleryImageUrls = useWatch({ control: form.control, name: 'galleryImageUrls' }) || [];
   const selectedCategory = safeCategories.find(c => c.id.toString() === selectedCategoryId);
   console.log('AssetFormV2: selectedCategoryId', selectedCategoryId);
   console.log('AssetFormV2: selectedCategory', selectedCategory);
@@ -146,27 +148,53 @@ export function AssetFormV2({
   }, [selectedCategoryId]);
 
     const handleMediaSelect = (selectedItems: any[]) => {
-        const media = selectedItems?.[0];
-        if (!media) {
+        if (!selectedItems?.length) {
             setIsMediaDialogOpen(false);
             setDialogTarget(null);
             return;
         }
 
-        const selectedUrl = media.urlOriginal || media.urlThumbnail || media.url || '';
-
         if (dialogTarget === 'main') {
-            form.setValue('imageUrl', selectedUrl);
-            form.setValue('imageMediaId', media.id.toString());
+            const media = selectedItems[0];
+            const selectedUrl = media?.urlOriginal || media?.urlThumbnail || media?.url || '';
+            const selectedId = media?.id?.toString?.();
+            form.setValue('imageUrl', selectedUrl, { shouldDirty: true, shouldValidate: true });
+            form.setValue('imageMediaId', selectedId || '', { shouldDirty: true, shouldValidate: true });
         } else if (dialogTarget === 'gallery') {
-      const currentUrls = form.getValues('galleryImageUrls') || [];
-      const currentIds = form.getValues('mediaItemIds') || [];
-            form.setValue('galleryImageUrls', [...currentUrls, selectedUrl]);
-      form.setValue('mediaItemIds', [...currentIds, media.id.toString()]);
-    }
-    setIsMediaDialogOpen(false);
-    setDialogTarget(null);
-  };
+            const currentUrls = form.getValues('galleryImageUrls') || [];
+            const currentIds = form.getValues('mediaItemIds') || [];
+            const nextUrls = [...currentUrls];
+            const nextIds = [...currentIds];
+
+            selectedItems.forEach((media: any) => {
+                const selectedUrl = media?.urlOriginal || media?.urlThumbnail || media?.url || '';
+                const selectedId = media?.id?.toString?.();
+                if (selectedUrl && !nextUrls.includes(selectedUrl)) nextUrls.push(selectedUrl);
+                if (selectedId && !nextIds.includes(selectedId)) nextIds.push(selectedId);
+            });
+
+            form.setValue('galleryImageUrls', nextUrls, { shouldDirty: true, shouldValidate: true });
+            form.setValue('mediaItemIds', nextIds, { shouldDirty: true, shouldValidate: true });
+        }
+
+        setIsMediaDialogOpen(false);
+        setDialogTarget(null);
+    };
+
+    const handleRemoveGalleryImage = (indexToRemove: number) => {
+        const currentUrls = form.getValues('galleryImageUrls') || [];
+        const currentIds = form.getValues('mediaItemIds') || [];
+        form.setValue(
+            'galleryImageUrls',
+            currentUrls.filter((_, index) => index !== indexToRemove),
+            { shouldDirty: true, shouldValidate: true }
+        );
+        form.setValue(
+            'mediaItemIds',
+            currentIds.filter((_, index) => index !== indexToRemove),
+            { shouldDirty: true, shouldValidate: true }
+        );
+    };
 
   return (
     <CrudFormLayout
@@ -181,7 +209,7 @@ export function AssetFormV2({
       }
     >
       <Form {...form}>
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8" data-ai-id="asset-form">
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column: Basic Info */}
@@ -417,10 +445,10 @@ export function AssetFormV2({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 min-h-[150px] bg-muted/10">
-                                {form.watch('imageUrl') ? (
+                                {watchedMainImageUrl ? (
                                     <div className="relative w-full aspect-video">
                                         <Image 
-                                            src={form.watch('imageUrl')!} 
+                                            src={watchedMainImageUrl} 
                                             alt="Preview" 
                                             fill 
                                             className="object-cover rounded-md"
@@ -431,8 +459,8 @@ export function AssetFormV2({
                                             size="icon"
                                             className="absolute top-2 right-2 h-6 w-6"
                                             onClick={() => {
-                                                form.setValue('imageUrl', '');
-                                                form.setValue('imageMediaId', '');
+                                                form.setValue('imageUrl', '', { shouldDirty: true, shouldValidate: true });
+                                                form.setValue('imageMediaId', '', { shouldDirty: true, shouldValidate: true });
                                             }}
                                         >
                                             <Trash2 className="h-3 w-3" />
@@ -453,9 +481,67 @@ export function AssetFormV2({
                                     setDialogTarget('main');
                                     setIsMediaDialogOpen(true);
                                 }}
+                                data-ai-id="asset-main-image-open-library-button"
                             >
                                 Selecionar da Biblioteca
                             </Button>
+                        </CardContent>
+                    </Card>
+
+                    <Card data-ai-id="asset-gallery-card">
+                        <CardHeader>
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <ImagePlus className="h-4 w-4" />
+                                Galeria de Fotos
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4" data-ai-id="asset-gallery-content">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => {
+                                    setDialogTarget('gallery');
+                                    setIsMediaDialogOpen(true);
+                                }}
+                                data-ai-id="asset-gallery-open-library-button"
+                            >
+                                Adicionar à Galeria
+                            </Button>
+
+                            <div className="grid grid-cols-3 gap-2" data-ai-id="asset-gallery-grid">
+                                {watchedGalleryImageUrls.length > 0 ? (
+                                    watchedGalleryImageUrls.map((url, index) => (
+                                        <div key={`${url}-${index}`} className="relative aspect-square rounded-md overflow-hidden border bg-muted/10" data-ai-id="asset-gallery-item">
+                                            <Image
+                                                src={url}
+                                                alt={`Imagem da galeria ${index + 1}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                size="icon"
+                                                className="absolute top-1 right-1 h-6 w-6"
+                                                onClick={() => handleRemoveGalleryImage(index)}
+                                                aria-label={`Remover imagem ${index + 1} da galeria`}
+                                                data-ai-id="asset-gallery-remove-button"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="col-span-3 text-xs text-muted-foreground text-center py-4" data-ai-id="asset-gallery-empty-state">
+                                        Nenhuma imagem na galeria.
+                                    </p>
+                                )}
+                            </div>
+
+                            <FormDescription>
+                                As imagens da galeria podem ser herdadas pelos lotes vinculados quando desejado.
+                            </FormDescription>
                         </CardContent>
                     </Card>
                 </div>
@@ -475,6 +561,7 @@ export function AssetFormV2({
         isOpen={isMediaDialogOpen} 
         onOpenChange={setIsMediaDialogOpen}
                 onMediaSelect={handleMediaSelect}
+                allowMultiple={dialogTarget === 'gallery'}
       />
     </CrudFormLayout>
   );

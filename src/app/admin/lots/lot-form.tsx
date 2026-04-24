@@ -243,6 +243,17 @@ const LotForm = forwardRef<any, LotFormProps>(({
       if (!inheritedMediaFromAssetId) return null;
       return linkedAssetsDetails.find(asset => asset.id === inheritedMediaFromAssetId);
   }, [inheritedMediaFromAssetId, linkedAssetsDetails]);
+
+  const normalizeAssetMediaIds = useCallback((rawMediaIds: unknown): string[] => {
+    if (!Array.isArray(rawMediaIds)) return [];
+    return Array.from(
+      new Set(
+        rawMediaIds
+          .map((mediaId) => (mediaId === null || mediaId === undefined ? '' : String(mediaId).trim()))
+          .filter((mediaId) => mediaId.length > 0)
+      )
+    );
+  }, []);
   
   const displayImageUrl = inheritedAssetDetails?.imageUrl || imageUrlPreview;
 
@@ -251,6 +262,14 @@ const LotForm = forwardRef<any, LotFormProps>(({
       setAssetRowSelection({});
     }
   }, [assetRowSelection, isAssetLinkingLocked]);
+
+  useEffect(() => {
+    if (!inheritedMediaFromAssetId) return;
+    const inheritedStillLinked = linkedAssetsDetails.some((asset) => asset.id === inheritedMediaFromAssetId);
+    if (!inheritedStillLinked) {
+      form.setValue('inheritedMediaFromAssetId', null, { shouldDirty: true });
+    }
+  }, [form, inheritedMediaFromAssetId, linkedAssetsDetails]);
 
 
   const handleRefetchAuctions = useCallback(async () => {
@@ -304,7 +323,33 @@ const LotForm = forwardRef<any, LotFormProps>(({
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await onSubmitAction(values);
+      const payload: LotFormValues = {
+        ...values,
+      };
+
+      if (payload.inheritedMediaFromAssetId) {
+        const sourceAsset = linkedAssetsDetails.find((asset) => asset.id === payload.inheritedMediaFromAssetId);
+        if (!sourceAsset) {
+          toast({
+            title: 'Bem de origem não encontrado',
+            description: 'Selecione novamente o bem para herdar a galeria ou use galeria customizada.',
+            variant: 'destructive',
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        const inheritedGalleryUrls = Array.from(
+          new Set((sourceAsset.galleryImageUrls || []).filter((url): url is string => typeof url === 'string' && url.trim().length > 0))
+        );
+
+        payload.imageUrl = sourceAsset.imageUrl || payload.imageUrl || '';
+        payload.imageMediaId = sourceAsset.imageMediaId || null;
+        payload.galleryImageUrls = inheritedGalleryUrls;
+        payload.mediaItemIds = normalizeAssetMediaIds(sourceAsset.mediaItemIds);
+      }
+
+      const result = await onSubmitAction(payload);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
         const returnToPath = searchParams.get('returnTo');
@@ -363,6 +408,9 @@ const LotForm = forwardRef<any, LotFormProps>(({
       const currentAssetIds = form.getValues('assetIds') || [];
       const newAssetIds = currentAssetIds.filter(id => id !== assetIdToUnlink);
       form.setValue('assetIds', newAssetIds, { shouldDirty: true });
+      if (form.getValues('inheritedMediaFromAssetId') === assetIdToUnlink) {
+        form.setValue('inheritedMediaFromAssetId', null, { shouldDirty: true });
+      }
       toast({ title: 'Bem desvinculado.' });
   };
     
@@ -630,9 +678,9 @@ const LotForm = forwardRef<any, LotFormProps>(({
 
                       <Separator />
 
-                      <section className="space-y-4">
+                       <section className="space-y-4" data-ai-id="lot-form-media-section">
                          <h3 className="text-lg font-semibold text-primary border-b pb-2">Mídia do Lote</h3>
-                         <FormField control={controlAny} name="inheritedMediaFromAssetId" render={({ field }) => (<FormItem className="space-y-3 p-4 border rounded-md bg-background"><FormLabel className="text-base font-semibold">Fonte da Galeria de Imagens</FormLabel><FormControl><RadioGroup onValueChange={(value) => field.onChange(value === "custom" ? null : value)} value={field.value ? field.value : "custom"} className="flex flex-col sm:flex-row gap-4"><Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label><Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedAssetsDetails.length === 0 && "cursor-not-allowed opacity-50")}><RadioGroupItem value={linkedAssetsDetails[0]?.id || ''} disabled={linkedAssetsDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label></RadioGroup></FormControl></FormItem>)}/>
+                         <FormField control={controlAny} name="inheritedMediaFromAssetId" render={({ field }) => (<FormItem className="space-y-3 p-4 border rounded-md bg-background" data-ai-id="lot-form-media-source"><FormLabel className="text-base font-semibold">Fonte da Galeria de Imagens</FormLabel><FormControl><RadioGroup onValueChange={(value) => field.onChange(value === "custom" ? null : value)} value={field.value ? field.value : "custom"} className="flex flex-col sm:flex-row gap-4" data-ai-id="lot-form-media-source-group"><Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1" data-ai-id="lot-form-media-source-custom"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label><Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedAssetsDetails.length === 0 && "cursor-not-allowed opacity-50")} data-ai-id="lot-form-media-source-inherit"><RadioGroupItem value={linkedAssetsDetails[0]?.id || ''} disabled={linkedAssetsDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label></RadioGroup></FormControl></FormItem>)}/>
                           {inheritedMediaFromAssetId && (<FormField control={controlAny} name="inheritedMediaFromAssetId" render={({ field }) => (<FormItem><FormLabel>Selecione o Bem para Herdar a Galeria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={linkedAssetsDetails.map(b => ({value: b.id, label: b.title}))} placeholder="Selecione um bem" searchPlaceholder="Buscar bem..." emptyStateMessage="Nenhum bem vinculado para selecionar."/><FormMessage /></FormItem>)} />)}
                           <fieldset disabled={!!inheritedMediaFromAssetId} className="space-y-4 group">
                               <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{isValidImageUrl(displayImageUrl) ? (<Image src={displayImageUrl ?? ''} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div><div className="space-y-2 flex-grow"><Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} className="group-disabled:cursor-not-allowed">{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={controlAny} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} /><FormMessage /></div></div></FormItem>

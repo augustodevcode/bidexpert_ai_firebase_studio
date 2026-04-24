@@ -382,6 +382,65 @@ export class LotService {
     return lotRecord.id;
   }
 
+  private parseJsonStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return Array.from(
+      new Set(
+        value
+          .map((item) => (item === null || item === undefined ? '' : String(item).trim()))
+          .filter((item) => item.length > 0)
+      )
+    );
+  }
+
+  private async resolveInheritedMediaPayloadFromAsset(
+    inheritedMediaFromAssetId: string,
+    tenantId: bigint
+  ): Promise<{ success: true; payload: { imageUrl: string | null; imageMediaId: bigint | null; galleryImageUrls: string[]; mediaItemIds: string[] } } | { success: false; message: string }> {
+    const assetWhereClause = /^\d+$/.test(inheritedMediaFromAssetId)
+      ? { id: BigInt(inheritedMediaFromAssetId) }
+      : { publicId: inheritedMediaFromAssetId };
+
+    const sourceAsset = await this.prisma.asset.findFirst({
+      where: {
+        ...assetWhereClause,
+        tenantId,
+      },
+      include: {
+        AssetMedia: {
+          include: { MediaItem: true },
+          orderBy: { displayOrder: 'asc' },
+        },
+      },
+    });
+
+    if (!sourceAsset) {
+      return { success: false, message: 'O bem selecionado para herdar mídia não foi encontrado no tenant atual.' };
+    }
+
+    const galleryFromJson = this.parseJsonStringArray(sourceAsset.galleryImageUrls);
+    const galleryFromRelation = sourceAsset.AssetMedia
+      .map((assetMedia) => assetMedia.MediaItem?.urlOriginal)
+      .filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+    const inheritedGalleryUrls = Array.from(new Set([...galleryFromJson, ...galleryFromRelation]));
+
+    const mediaIdsFromJson = this.parseJsonStringArray(sourceAsset.mediaItemIds);
+    const mediaIdsFromRelation = sourceAsset.AssetMedia.map((assetMedia) => assetMedia.mediaItemId.toString());
+    const inheritedMediaIds = Array.from(new Set([...mediaIdsFromJson, ...mediaIdsFromRelation]));
+
+    const inheritedImageUrl = sourceAsset.imageUrl || inheritedGalleryUrls[0] || null;
+
+    return {
+      success: true,
+      payload: {
+        imageUrl: inheritedImageUrl,
+        imageMediaId: sourceAsset.imageMediaId ? BigInt(sourceAsset.imageMediaId.toString()) : null,
+        galleryImageUrls: inheritedGalleryUrls,
+        mediaItemIds: inheritedMediaIds,
+      },
+    };
+  }
+
   private mapLotWithDetails(lot: any): Lot {
     const primaryProcess = lot.JudicialProcess?.[0] ?? lot.judicialProcesses?.[0];
     const lotAuction = lot.Auction ?? lot.auction;
@@ -405,11 +464,13 @@ export class LotService {
     // Gallery Mapping Logic
     let galleryImageUrls: string[] = [];
     if (Array.isArray(lot.galleryImageUrls)) {
-        galleryImageUrls = [...lot.galleryImageUrls];
+      galleryImageUrls = [...lot.galleryImageUrls];
     }
-    
-    // If we have AssetsOnLots with deeply nested Media, use them
-    if (assetsOnLots) {
+
+    const shouldFallbackToAssets = galleryImageUrls.length === 0 && !imageUrl;
+
+    // Fallback for legacy lots without own gallery: derive from linked assets
+    if (shouldFallbackToAssets && assetsOnLots) {
         assetsOnLots.forEach((assetLink: any) => {
             const asset = assetLink.Asset ?? assetLink.asset;
             if (asset && Array.isArray(asset.AssetMedia)) {
@@ -759,6 +820,7 @@ export class LotService {
       const { 
         assetIds = [],
         lotRisks = [],
+        inheritedMediaFromAssetId,
         ...cleanData 
       } = data as any;
 
@@ -775,6 +837,30 @@ export class LotService {
           createdAt: new Date(),
           updatedAt: new Date(),
       };
+
+      if (inheritedMediaFromAssetId) {
+        const inheritedMedia = await this.resolveInheritedMediaPayloadFromAsset(
+          String(inheritedMediaFromAssetId),
+          BigInt(tenantId)
+        );
+
+        if (!inheritedMedia.success) {
+          return { success: false, message: inheritedMedia.message };
+        }
+
+        createData.imageUrl = inheritedMedia.payload.imageUrl;
+        createData.imageMediaId = inheritedMedia.payload.imageMediaId;
+        createData.galleryImageUrls = inheritedMedia.payload.galleryImageUrls;
+        createData.mediaItemIds = inheritedMedia.payload.mediaItemIds;
+      }
+
+      if (createData.imageMediaId !== undefined) {
+        if (createData.imageMediaId === '' || createData.imageMediaId === null) {
+          createData.imageMediaId = null;
+        } else {
+          createData.imageMediaId = BigInt(String(createData.imageMediaId));
+        }
+      }
 
       // Strip phantom fields that don't exist on the Prisma Lot model
       const phantomLotFields = [
@@ -942,6 +1028,7 @@ export class LotService {
         assetIds = [],
         auctionId,
         lotRisks,
+        inheritedMediaFromAssetId,
         ...cleanData 
       } = data as any;
 
@@ -950,6 +1037,30 @@ export class LotService {
           success: false,
           message: 'Não é possível alterar bens vinculados após a abertura para lances/resultados do lote.',
         };
+      }
+
+      if (inheritedMediaFromAssetId) {
+        const inheritedMedia = await this.resolveInheritedMediaPayloadFromAsset(
+          String(inheritedMediaFromAssetId),
+          tenantForLot
+        );
+
+        if (!inheritedMedia.success) {
+          return { success: false, message: inheritedMedia.message };
+        }
+
+        cleanData.imageUrl = inheritedMedia.payload.imageUrl;
+        cleanData.imageMediaId = inheritedMedia.payload.imageMediaId;
+        cleanData.galleryImageUrls = inheritedMedia.payload.galleryImageUrls;
+        cleanData.mediaItemIds = inheritedMedia.payload.mediaItemIds;
+      }
+
+      if (cleanData.imageMediaId !== undefined) {
+        if (cleanData.imageMediaId === '' || cleanData.imageMediaId === null) {
+          cleanData.imageMediaId = null;
+        } else {
+          cleanData.imageMediaId = BigInt(String(cleanData.imageMediaId));
+        }
       }
 
       // Strip phantom fields that don't exist on the Prisma Lot model

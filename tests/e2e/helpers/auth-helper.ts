@@ -267,11 +267,13 @@ export async function loginAs(
     customTenant?: string | RegExp;
     waitPattern?: RegExp;
     timeout?: number;
+    fallbackPath?: string;
   } = {},
 ): Promise<string[]> {
   const cred = CREDENTIALS[role];
   const timeout = options.timeout ?? 60_000;
   const waitPattern = options.waitPattern ?? /\/(admin|dashboard|lawyer|home)/i;
+  const fallbackPath = options.fallbackPath ?? '/dashboard/overview';
   const consoleErrors: string[] = [];
 
   // Browser console telemetry routed to Node.js stdout
@@ -440,9 +442,9 @@ export async function loginAs(
       throw new Error(`Login failed with page error: ${pageState.error}`);
     }
 
-    // Session should be valid — navigate directly to dashboard
-    console.log('[loginAs] Navigating manually to /dashboard/overview ...');
-    await page.goto(`${baseUrl}/dashboard/overview`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    // Session should be valid — navigate directly to fallback path
+    console.log(`[loginAs] Navigating manually to ${fallbackPath} ...`);
+    await page.goto(`${baseUrl}${fallbackPath}`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 
     const afterUrl = page.url();
     if (afterUrl.includes('/auth/login') || afterUrl.includes('/auth/')) {
@@ -463,7 +465,8 @@ export async function loginAs(
  */
 export async function loginAsAdmin(page: Page, baseUrl: string): Promise<string[]> {
   return loginAs(page, 'admin', baseUrl, {
-    waitPattern: /\/(admin|dashboard)/i,
+    waitPattern: /\/admin/i,
+    fallbackPath: '/admin',
   });
 }
 
