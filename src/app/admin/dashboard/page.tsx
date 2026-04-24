@@ -238,22 +238,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="container-admin-dashboard flex flex-col gap-8 pb-10" data-ai-id="admin-dashboard-page-container">
-      <section className="space-y-4" aria-labelledby="admin-dashboard-quick-access-title">
-        <div className="space-y-1">
-          <h2 id="admin-dashboard-quick-access-title" className="text-2xl font-bold tracking-tight text-foreground">
-            Acessos rápidos
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Atalhos para as superfícies mais usadas na operação diária da plataforma.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5" data-ai-id="admin-dashboard-quicklinks-grid">
-          {QUICK_LINKS.map((item) => (
-            <QuickLinkCard key={item.dataAiId} {...item} />
-          ))}
-        </div>
-      </section>
-
       <section className="space-y-4" aria-labelledby="admin-dashboard-kpis-title">
         <div className="space-y-1">
           <h2 id="admin-dashboard-kpis-title" className="text-2xl font-bold tracking-tight text-foreground">
@@ -349,6 +333,22 @@ export default function AdminDashboardPage() {
             isLoading={isLoading}
             dataAiId="admin-dashboard-stat-sellers"
           />
+        </div>
+      </section>
+
+      <section className="space-y-4" aria-labelledby="admin-dashboard-quick-access-title">
+        <div className="space-y-1">
+          <h2 id="admin-dashboard-quick-access-title" className="text-2xl font-bold tracking-tight text-foreground">
+            Acessos rápidos
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Atalhos para as superfícies mais usadas na operação diária da plataforma.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5" data-ai-id="admin-dashboard-quicklinks-grid">
+          {QUICK_LINKS.map((item) => (
+            <QuickLinkCard key={item.dataAiId} {...item} />
+          ))}
         </div>
       </section>
 

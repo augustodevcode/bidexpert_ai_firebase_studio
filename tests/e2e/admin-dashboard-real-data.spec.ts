@@ -32,5 +32,13 @@ test.describe('Dashboard Admin - Dados Reais', () => {
     await expect(quickLinksGrid).toContainText('Novo leilão');
     await expect(quickLinksGrid).toContainText('Marketing');
     await expect(quickLinksGrid).toContainText('Processos');
+
+    const kpiSection = page.getByRole('region', { name: 'Visão geral e KPIs' });
+    const quickAccessSection = page.getByRole('region', { name: 'Acessos rápidos' });
+
+    const kpiBottom = await kpiSection.evaluate((el) => el.getBoundingClientRect().bottom);
+    const quickAccessTop = await quickAccessSection.evaluate((el) => el.getBoundingClientRect().top);
+
+    expect(kpiBottom).toBeLessThan(quickAccessTop);
   });
 });

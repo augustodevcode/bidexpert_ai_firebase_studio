@@ -3249,6 +3249,21 @@ interface EntityConfig {
 
 ---
 
+### RN-AP-008A: Hierarquia visual do dashboard administrativo
+
+✅ A rota `/admin/dashboard` DEVE renderizar a seção `Visão geral e KPIs` antes da seção `Acessos rápidos`.
+✅ Os atalhos operacionais DEVEM permanecer agrupados em uma seção única imediatamente abaixo dos KPIs.
+✅ A seção `Acessos rápidos` DEVE aparecer antes dos gráficos de desempenho; é proibido intercalar os atalhos entre cards de KPI ou abaixo dos gráficos.
+✅ Mudanças de ordenação nessas seções DEVEM ser cobertas por teste E2E com verificação explícita da posição relativa entre `Visão geral e KPIs` e `Acessos rápidos`.
+
+**BDD - KPIs antecedem os atalhos no dashboard administrativo**
+- **Dado** que o dashboard administrativo possui métricas e atalhos operacionais disponíveis
+- **Quando** o administrador acessa `/admin/dashboard`
+- **Então** a seção `Visão geral e KPIs` deve aparecer antes da seção `Acessos rápidos`
+- **E** a seção `Acessos rápidos` deve permanecer acima dos gráficos de desempenho
+
+---
+
 ### RN-AP-009: Componentes de Infraestrutura
 
 **Componentes compartilhados em `src/components/admin-plus/`:**
