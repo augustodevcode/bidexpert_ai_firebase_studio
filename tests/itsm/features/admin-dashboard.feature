@@ -15,3 +15,9 @@ Funcionalidade: Dashboard Administrativo - Dados Reais
     Quando eu acesso o dashboard administrativo
     Então devo ver atalhos para Novo leilão, Leilões, Lotes, Ativos, Mídias, Marketing, Processos, Comitentes, Usuários e Configurações
     E devo ver os indicadores Taxa de sucesso, Ticket médio, Lotes por leilão e Comitentes ativos
+
+  Cenário: Posicionar KPIs antes dos acessos rápidos
+    Dado que existem métricas e atalhos operacionais disponíveis para o administrador
+    Quando eu acesso o dashboard administrativo
+    Então a seção "Visão geral e KPIs" deve aparecer antes da seção "Acessos rápidos"
+    E a seção "Acessos rápidos" deve permanecer antes dos gráficos de desempenho
