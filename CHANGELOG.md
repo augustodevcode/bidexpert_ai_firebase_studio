@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.37](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.36...v1.0.0-demo.37) (2026-04-24)
+
+### Correções
+
+* reorder admin dashboard kpis and quick links ([ff99c63](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/ff99c63d09ce84909026600aae0178d401ae5b17))
+
 ## [1.0.0-demo.36](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.35...v1.0.0-demo.36) (2026-04-24)
 
 ### Refatorações
