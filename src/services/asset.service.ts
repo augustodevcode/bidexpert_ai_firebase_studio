@@ -169,12 +169,16 @@ export class AssetService {
       // Gera o publicId usando a máscara configurada
       const publicId = await generatePublicId(tenantId, 'asset');
 
+      const safeMediaIds = Array.isArray(mediaItemIds)
+        ? Array.from(new Set(mediaItemIds.filter((mediaId) => mediaId !== null && mediaId !== undefined && mediaId !== '')))
+        : [];
+
       const dataToCreate: Prisma.AssetCreateInput = {
         title: assetData.title,
         ...normalizedAssetData,
         publicId,
         Tenant: { connect: { id: BigInt(tenantId) } },
-        mediaItemIds: mediaItemIds ? (mediaItemIds as any) : undefined, // Save to JSON field as well
+        mediaItemIds: safeMediaIds.length > 0 ? (safeMediaIds as any) : undefined, // Save to JSON field as well
       };
 
       // Conecta relacionamentos
@@ -200,8 +204,7 @@ export class AssetService {
           const asset = await tx.asset.create({ data: dataToCreate });
 
           // Create AssetMedia records if mediaItemIds are present
-              if (mediaItemIds && Array.isArray(mediaItemIds) && mediaItemIds.length > 0) {
-                const safeMediaIds = mediaItemIds.filter((mediaId) => mediaId !== null && mediaId !== undefined && mediaId !== '');
+              if (safeMediaIds.length > 0) {
                 await Promise.all((safeMediaIds as Array<string | number | bigint>).map((mediaId, index) => {
                   return tx.assetMedia.create({
                     data: {
@@ -235,6 +238,7 @@ export class AssetService {
       const { 
         categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, 
         street, number, complement, neighborhood, zipCode,
+        mediaItemIds,
         imageMediaId, occupationUpdatedBy,
         ...assetData 
       } = data;
@@ -262,13 +266,26 @@ export class AssetService {
       });
 
       const dataToUpdate: Prisma.AssetUpdateInput = { ...normalizedAssetData };
+
+      const safeMediaIds = Array.isArray(mediaItemIds)
+        ? Array.from(new Set(mediaItemIds.filter((mediaId) => mediaId !== null && mediaId !== undefined && mediaId !== '')))
+        : undefined;
       
       // Conecta relacionamentos
       if (categoryId) (dataToUpdate as any).LotCategory = { connect: { id: BigInt(categoryId) } };
       if (subcategoryId) (dataToUpdate as any).Subcategory = { connect: { id: BigInt(subcategoryId) } };
       if (judicialProcessId) (dataToUpdate as any).JudicialProcess = { connect: { id: BigInt(judicialProcessId) } };
       if (sellerId) (dataToUpdate as any).Seller = { connect: { id: BigInt(sellerId) } };
-      if (imageMediaId) (dataToUpdate as any).CoverImage = { connect: { id: BigInt(imageMediaId) } };
+      if (imageMediaId !== undefined) {
+        if (imageMediaId) {
+          (dataToUpdate as any).CoverImage = { connect: { id: BigInt(imageMediaId) } };
+        } else {
+          (dataToUpdate as any).CoverImage = { disconnect: true };
+        }
+      }
+      if (safeMediaIds !== undefined) {
+        (dataToUpdate as any).mediaItemIds = safeMediaIds as any;
+      }
       if (occupationUpdatedBy) (dataToUpdate as any).User = { connect: { id: BigInt(occupationUpdatedBy) } };
       
       // Atualiza locationCity e locationState baseado nos IDs se fornecidos
@@ -281,7 +298,31 @@ export class AssetService {
           if(state) dataToUpdate.locationState = state.uf;
       }
 
-      await this.repository.update(id, dataToUpdate);
+      const updatedAsset = await this.repository.update(id, dataToUpdate);
+
+      if (safeMediaIds !== undefined) {
+        const updatedAssetId = typeof (updatedAsset as any).id === 'bigint'
+          ? (updatedAsset as any).id
+          : BigInt((updatedAsset as any).id);
+        const updatedTenantId = typeof (updatedAsset as any).tenantId === 'bigint'
+          ? (updatedAsset as any).tenantId
+          : BigInt((updatedAsset as any).tenantId);
+
+        await this.prisma.assetMedia.deleteMany({ where: { assetId: updatedAssetId } });
+
+        if (safeMediaIds.length > 0) {
+          await this.prisma.assetMedia.createMany({
+            data: safeMediaIds.map((mediaId, index) => ({
+              assetId: updatedAssetId,
+              tenantId: updatedTenantId,
+              mediaItemId: BigInt(mediaId),
+              displayOrder: index,
+              isPrimary: index === 0,
+            })),
+          });
+        }
+      }
+
       return { success: true, message: 'Ativo atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AssetService.updateAsset for id ${id}:`, error);

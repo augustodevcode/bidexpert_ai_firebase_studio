@@ -165,6 +165,21 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ Leilão pode herdar imagem de Lote vinculado  
 ✅ Prioriza galeria/imagem customizada se existir  
 ✅ Lógica centralizada nos Services
+✅ Formulário de `Asset` DEVE permitir cadastro de galeria de fotos com vínculo persistível (`mediaItemIds`) além da imagem principal.
+✅ Quando o operador escolher herança no formulário de `Lot`, o payload salvo DEVE receber um snapshot da mídia do `Asset` escolhido (imagem principal + galeria), sem depender de campo sentinela em FK BigInt.
+✅ Quando o operador optar por galeria customizada do `Lot`, a leitura pública DEVE priorizar mídia própria do lote e NÃO mesclar automaticamente fallback de `Asset` quando já existir mídia customizada.
+
+**Cenário BDD - Ativo com galeria persistível**
+- **Dado** um ativo em cadastro administrativo
+- **Quando** a pessoa adiciona imagens na galeria pela biblioteca de mídia
+- **Então** o sistema persiste `galleryImageUrls` e `mediaItemIds`
+- **E** as miniaturas permanecem visíveis no formulário para revisão
+
+**Cenário BDD - Lote com herança opcional de galeria**
+- **Dado** um lote com bens vinculados e um bem com galeria preenchida
+- **Quando** a pessoa seleciona herdar a galeria desse bem e salva o lote
+- **Então** o lote persiste imagem principal e galeria herdadas do bem selecionado
+- **E** se a pessoa escolher modo customizado, prevalece apenas a galeria própria do lote
 
 ### RN-006: Schema Prisma
 ✅ Usar arquivo único tradicional `prisma/schema.prisma`  
