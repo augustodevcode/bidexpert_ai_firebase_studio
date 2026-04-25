@@ -507,6 +507,7 @@ export class LotService {
       cityId: lot.cityId?.toString(),
       stateId: lot.stateId?.toString(),
       winnerId: lot.winnerId?.toString(),
+      imageMediaId: lot.imageMediaId?.toString(),
       originalLotId: lot.originalLotId?.toString(),
       inheritedMediaFromAssetId: lot.inheritedMediaFromAssetId?.toString(),
       price: Number(lot.price),
@@ -1055,12 +1056,14 @@ export class LotService {
         cleanData.mediaItemIds = inheritedMedia.payload.mediaItemIds;
       }
 
+      let coverImageRelation: Prisma.MediaItemUpdateOneWithoutLotCoversNestedInput | undefined;
       if (cleanData.imageMediaId !== undefined) {
-        if (cleanData.imageMediaId === '' || cleanData.imageMediaId === null) {
-          cleanData.imageMediaId = null;
-        } else {
-          cleanData.imageMediaId = BigInt(String(cleanData.imageMediaId));
-        }
+        const imageMediaId = cleanData.imageMediaId;
+        delete cleanData.imageMediaId;
+
+        coverImageRelation = imageMediaId === '' || imageMediaId === null
+          ? { disconnect: true }
+          : { connect: { id: BigInt(String(imageMediaId)) } };
       }
 
       // Strip phantom fields that don't exist on the Prisma Lot model
@@ -1083,6 +1086,10 @@ export class LotService {
 
       if (auctionId) {
         updateRelations.Auction = { connect: { id: BigInt(auctionId) } };
+      }
+
+      if (coverImageRelation) {
+        updateRelations.CoverImage = coverImageRelation;
       }
 
       if (cleanData.categoryId) {

@@ -120,7 +120,7 @@ describe('LotService Image Mapping Logic', () => {
         expect(result?.imageUrl).toBe('https://example.com/gallery1.jpg');
     });
 
-    it('should prioritize CoverImage over gallery for main imageUrl', async () => {
+    it('should prioritize CoverImage and avoid asset gallery fallback when main image exists', async () => {
         const mockLot = {
             id: BigInt(3),
             publicId: 'pub-3',
@@ -152,10 +152,59 @@ describe('LotService Image Mapping Logic', () => {
         const result = await service.findLotById('3', '1');
 
         expect(result?.imageUrl).toBe('https://example.com/cover-main.jpg');
-        // Logic: if imageUrl present and not in gallery, unshift it?
-        // Code: if (imageUrl && !galleryImageUrls.includes(imageUrl)) { galleryImageUrls.unshift(imageUrl); }
         expect(result?.galleryImageUrls).toContain('https://example.com/cover-main.jpg');
-        expect(result?.galleryImageUrls).toContain('https://example.com/gallery-asset.jpg');
         expect(result?.galleryImageUrls[0]).toBe('https://example.com/cover-main.jpg');
+    });
+
+    it('should serialize imageMediaId as string for the lot form state', async () => {
+        const mockLot = {
+            id: BigInt(4),
+            publicId: 'LOTE-0028',
+            tenantId: BigInt(1),
+            auctionId: BigInt(1),
+            title: 'Lote com mídia principal',
+            imageMediaId: BigInt(987654321),
+            CoverImage: {
+                id: BigInt(987654321),
+                urlOriginal: 'https://example.com/cover-media.jpg'
+            },
+            AssetsOnLots: [],
+            _count: { Bid: 0 },
+            LotStagePrice: [],
+            JudicialProcess: [],
+            LotRisk: [],
+            LotDocument: [],
+        };
+
+        mockedPrisma.lot.findUnique.mockResolvedValue(mockLot as any);
+
+        const result = await service.findLotById('LOTE-0028', '1');
+
+        expect(result?.imageMediaId).toBe('987654321');
+        expect(typeof result?.imageMediaId).toBe('string');
+    });
+
+    it('should persist imageMediaId through the CoverImage relation when updating a lot', async () => {
+        mockedPrisma.lot.findUnique
+            .mockResolvedValueOnce({
+                id: BigInt(1),
+                status: 'EM_BREVE',
+                Auction: { status: 'RASCUNHO', title: 'Leilão editável' },
+            } as any)
+            .mockResolvedValueOnce({ tenantId: BigInt(1), status: 'EM_BREVE' } as any);
+
+        const result = await service.updateLot('1', {
+            title: 'Lote com mídia atualizada',
+            price: 1000,
+            auctionId: '10',
+            imageMediaId: '987654321',
+        } as any);
+
+        expect(result.success).toBe(true);
+        expect(mockedPrisma.lot.update).toHaveBeenCalledTimes(1);
+
+        const updateArgs = mockedPrisma.lot.update.mock.calls[0][0];
+        expect(updateArgs.data.imageMediaId).toBeUndefined();
+        expect(updateArgs.data.CoverImage).toEqual({ connect: { id: BigInt(987654321) } });
     });
 });

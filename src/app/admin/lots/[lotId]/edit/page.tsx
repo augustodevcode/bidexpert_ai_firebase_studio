@@ -55,10 +55,6 @@ export default function EditLotPage() {
   const [isRelistModalOpen, setIsRelistModalOpen] = useState(false);
   const [isNotFound, setIsNotFound] = useState(false);
 
-  if (isNotFound) {
-    notFound();
-  }
-
   const fetchPageData = useCallback(async () => {
     if (!lotId) return;
     setIsLoading(true);
@@ -102,6 +98,10 @@ export default function EditLotPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData]);
+
+  if (isNotFound) {
+    notFound();
+  }
 
   const handleUpdateLot = async (data: Partial<LotFormData>) => {
     return updateLot(lotId, data);
