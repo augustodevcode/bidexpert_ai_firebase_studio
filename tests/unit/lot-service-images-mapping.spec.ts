@@ -120,7 +120,7 @@ describe('LotService Image Mapping Logic', () => {
         expect(result?.imageUrl).toBe('https://example.com/gallery1.jpg');
     });
 
-    it('should prioritize CoverImage and avoid asset gallery fallback when main image exists', async () => {
+    it('should prioritize CoverImage over gallery for main imageUrl', async () => {
         const mockLot = {
             id: BigInt(3),
             publicId: 'pub-3',
@@ -152,7 +152,10 @@ describe('LotService Image Mapping Logic', () => {
         const result = await service.findLotById('3', '1');
 
         expect(result?.imageUrl).toBe('https://example.com/cover-main.jpg');
+        // Logic: if imageUrl present and not in gallery, unshift it?
+        // Code: if (imageUrl && !galleryImageUrls.includes(imageUrl)) { galleryImageUrls.unshift(imageUrl); }
         expect(result?.galleryImageUrls).toContain('https://example.com/cover-main.jpg');
+        expect(result?.galleryImageUrls).toContain('https://example.com/gallery-asset.jpg');
         expect(result?.galleryImageUrls[0]).toBe('https://example.com/cover-main.jpg');
     });
 

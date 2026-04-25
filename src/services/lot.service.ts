@@ -467,7 +467,7 @@ export class LotService {
       galleryImageUrls = [...lot.galleryImageUrls];
     }
 
-    const shouldFallbackToAssets = galleryImageUrls.length === 0 && !imageUrl;
+    const shouldFallbackToAssets = galleryImageUrls.length === 0;
 
     // Fallback for legacy lots without own gallery: derive from linked assets
     if (shouldFallbackToAssets && assetsOnLots) {
