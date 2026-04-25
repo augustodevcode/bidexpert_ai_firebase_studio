@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.42](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.41...v1.0.0-demo.42) (2026-04-25)
+
+### Correções
+
+* **lots:** constrain linked asset thumbnails ([e054909](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/e054909fcd0c997679ace975514b77267e1c3fb7))
+
 ## [1.0.0-demo.41](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.40...v1.0.0-demo.41) (2026-04-25)
 
 ### Correções
