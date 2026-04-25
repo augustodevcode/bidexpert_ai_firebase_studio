@@ -155,12 +155,12 @@ describe('LotService media inheritance', () => {
         data: expect.objectContaining({
           title: 'Lote Atualizado',
           imageUrl: 'https://cdn.exemplo.com/assets/88-gallery-1.jpg',
-          imageMediaId: null,
           galleryImageUrls: [
             'https://cdn.exemplo.com/assets/88-gallery-1.jpg',
             'https://cdn.exemplo.com/assets/88-gallery-2.jpg',
           ],
           mediaItemIds: ['700', '701'],
+          CoverImage: { disconnect: true },
         }),
       })
     );

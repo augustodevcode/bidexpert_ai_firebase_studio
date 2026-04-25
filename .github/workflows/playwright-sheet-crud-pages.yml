@@ -74,13 +74,14 @@ jobs:
       - name: 🧪 Executar testes Sheet CRUD (com screenshots sempre)
         id: run_tests
         run: |
-          PLAYWRIGHT_BASE_URL="${{ github.event.inputs.base_url || 'https://bidexpertaifirebasestudio.vercel.app' }}" \
+          BASE_URL="${{ github.event.inputs.base_url || 'https://bidexpertaifirebasestudio.vercel.app' }}"
+          PLAYWRIGHT_BASE_URL="$BASE_URL" \
           npx playwright test \
             --config=playwright.vercel.config.ts \
             tests/e2e/admin/admin-plus-sheet-crud-vercel.spec.ts \
             --reporter=list,html \
             2>&1 | tee test-output.txt
-          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
         env:
           CI: true
         continue-on-error: true
@@ -134,7 +135,7 @@ jobs:
           retention-days: 30
 
       - name: 📦 Preparar artefato para GitHub Pages
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/demo-stable' || github.event_name == 'workflow_dispatch'
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v3
         with:
           path: pages-output
@@ -147,7 +148,7 @@ jobs:
     name: 📄 Publicar em GitHub Pages
     needs: test-and-report
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/demo-stable' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -176,12 +177,12 @@ jobs:
             const exitCode = '${{ needs.test-and-report.outputs.test_status }}';
             const status = exitCode === '0' ? '✅ PASSOU' : '❌ FALHOU';
             const emoji = exitCode === '0' ? '🟢' : '🔴';
-            const isMainBranch = context.ref === 'refs/heads/main' || context.ref === 'refs/heads/demo-stable';
+            const isPagesBranch = context.ref === 'refs/heads/main';
             const pagesUrl = 'https://augustodevcode.github.io/bidexpert_ai_firebase_studio/';
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const artifactUrl = `${runUrl}#artifacts`;
 
-            const screenshotLine = isMainBranch
+            const screenshotLine = isPagesBranch
               ? `- **📊 Relatório GitHub Pages (com screenshots):** [Abrir relatório ↗](${pagesUrl})`
               : `- **📸 Screenshots (artefatos da Action):** [Ver screenshots ↗](${artifactUrl})`;
 
@@ -223,4 +224,3 @@ jobs:
                 body,
               });
             }
-
