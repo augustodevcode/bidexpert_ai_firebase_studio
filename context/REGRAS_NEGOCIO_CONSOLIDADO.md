@@ -253,6 +253,22 @@ Schemas Zod + `react-hook-form` em todos formulários
 ✅ A busca textual do modal deve considerar todas as propriedades exibidas no grid, para permitir distinção determinística entre processos parecidos.
 ✅ A regra vale para qualquer superfície administrativa que reutilize o seletor judicial, inclusive wizard e formulário administrativo de leilão.
 
+### RN-010C: Busca Global do Admin (Command Palette)
+✅ A busca global do Admin DEVE estar montada no layout administrativo legado e ser acionável pelo botão do header (`data-ai-id="admin-header-search-button"`) e pelo atalho de teclado.
+✅ O hint visual do atalho no header DEVE ser contextual por plataforma: `Ctrl+K` em Windows/Linux e `Cmd+K` em macOS.
+✅ A navegação por item selecionado no palette DEVE redirecionar imediatamente para a rota alvo sem exigir confirmação adicional.
+✅ O item de navegação `Lotes` (`data-ai-id="cmd-nav-lotes"`) é obrigatório para smoke de regressão do palette e deve levar para `/admin/lots`.
+
+**Cenário BDD - Busca global redireciona para Lotes**
+- **Dado** que a pessoa administradora está no dashboard do Admin
+- **Quando** abre a busca global pelo header e seleciona `Lotes`
+- **Então** a navegação redireciona para `/admin/lots`
+
+**Cenário BDD - Hint de atalho contextual**
+- **Dado** que o header do Admin está renderizado
+- **Quando** o hint de atalho da busca é exibido
+- **Então** ele mostra `Ctrl+K` em Windows/Linux e `Cmd+K` em macOS
+
 **RCA / prevenção:** A regressão de lotes duplicados no fluxo de cadastro ocorreu porque o Step 4 listava todos os ativos disponíveis do tenant/comitente após cada recarga de dados, e o Playwright marcava todos os checkboxes visíveis. Isso contaminava a sessão com ativos antigos e fazia o total preparado crescer a cada execução.
 
 **Cenário BDD - Refetch não mistura ativos históricos**

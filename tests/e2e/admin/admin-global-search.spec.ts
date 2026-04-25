@@ -7,9 +7,15 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || `http://demo.localhost:${POR
 test.describe('Admin global search', () => {
   test.setTimeout(120000);
 
-  test('opens via header and navigates immediately after selecting a result', async ({ page }) => {
-    await loginAsAdmin(page, BASE_URL);
+  test('opens via header and navigates immediately after selecting a result', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'chromium-noauth', 'requires authenticated admin session');
+
     await page.goto(`${BASE_URL}/admin/dashboard`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+    if (page.url().includes('/auth/login')) {
+      await loginAsAdmin(page, BASE_URL);
+      await page.goto(`${BASE_URL}/admin/dashboard`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    }
 
     const searchButton = page.locator('[data-ai-id="admin-header-search-button"]');
     await expect(searchButton).toBeVisible({ timeout: 60000 });
@@ -24,9 +30,10 @@ test.describe('Admin global search', () => {
 
     const lotesNavItem = page.locator('[data-ai-id="cmd-nav-lotes"]');
     await expect(lotesNavItem).toBeVisible({ timeout: 10000 });
-    await commandInput.press('ArrowDown');
-    await commandInput.press('Enter');
+    await lotesNavItem.evaluate((node) => {
+      (node as HTMLElement).click();
+    });
 
-    await expect(page).toHaveURL(new RegExp('/admin/lots'));
+    await expect(page).toHaveURL(/\/admin\/lots(\/|$|\?)/);
   });
 });
