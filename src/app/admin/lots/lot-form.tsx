@@ -473,7 +473,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
   ];
   const renderAssetGridItem = (asset: Asset) => (
     <Card key={asset.id} className="container-bem-grid-item">
-        <CardHeader className="p-3"><div className="wrapper-bem-grid-image"><Image src={asset.imageUrl || 'https://placehold.co/400x300.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div><CardTitle className="title-bem-grid-item">{asset.title}</CardTitle><CardDescription className="description-bem-grid-item">ID: {asset.publicId || asset.id}</CardDescription></CardHeader>
+        <CardHeader className="p-3"><div className="wrapper-bem-grid-image"><Image src={asset.imageUrl || 'https://placehold.co/400x300.png'} alt={asset.title} fill sizes="(max-width: 640px) 40vw, 150px" className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div><CardTitle className="title-bem-grid-item">{asset.title}</CardTitle><CardDescription className="description-bem-grid-item">ID: {asset.publicId || asset.id}</CardDescription></CardHeader>
         <CardContent className="p-3 flex-grow space-y-1 text-xs"><p className="font-medium">Avaliação: {asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p></CardContent>
         <CardFooter className="p-2 border-t flex justify-end items-center gap-1"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} disabled={isAssetLinkingLocked} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></CardFooter>
     </Card>
@@ -482,7 +482,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
   const renderAssetListItem = (asset: Asset) => (
     <Card key={asset.id} className="container-bem-list-item">
       <CardContent className="content-bem-list-item">
-        <div className="wrapper-bem-list-image"><Image src={asset.imageUrl || 'https://placehold.co/120x90.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div>
+        <div className="wrapper-bem-list-image"><Image src={asset.imageUrl || 'https://placehold.co/120x90.png'} alt={asset.title} fill sizes="80px" className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div>
         <div className="flex-grow"><h4 className="title-bem-list-item">{asset.title}</h4><p className="description-bem-list-item">ID: {asset.publicId || asset.id}</p></div>
         <div className="container-bem-list-price"><p className="price-bem-list-item">{asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p><p className="label-bem-list-price">Avaliação</p></div>
          <div className="container-bem-list-actions"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-8 w-8 text-sky-600"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} disabled={isAssetLinkingLocked} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>
