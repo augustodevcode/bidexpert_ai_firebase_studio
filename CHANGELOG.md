@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.40](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.39...v1.0.0-demo.40) (2026-04-25)
+
+### Correções
+
+* **lots:** persist gallery media cover id safely ([123d263](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/123d263cab06daa274f0c4c7a1c37d4b31f4425b)), closes [#730](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/730)
+
 ## [1.0.0-demo.39](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.38...v1.0.0-demo.39) (2026-04-24)
 
 ### Correções
