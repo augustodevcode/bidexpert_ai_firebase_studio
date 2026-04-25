@@ -357,6 +357,8 @@ jobs:
             }
 
       - name: ❌ Falhar se houver commits pendentes
+        # Pushes em demo-stable continuam abrindo/atualizando issue e summary;
+        # o bloqueio fica reservado para execuções manuais/agendadas sem PR de promoção.
         if: >
           steps.divergence.outputs.ahead != '0' &&
           steps.promotion_pr.outputs.exists != 'true' &&
