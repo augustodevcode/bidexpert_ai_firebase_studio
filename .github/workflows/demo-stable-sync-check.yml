@@ -72,11 +72,13 @@ jobs:
           DEMO_SHA=$(git rev-parse origin/demo-stable)
           MAIN_SHA=$(git rev-parse origin/main)
 
-          echo "ahead=${AHEAD}"   >> $GITHUB_OUTPUT
-          echo "behind=${BEHIND}" >> $GITHUB_OUTPUT
-          echo "merge_base=${MERGE_BASE}" >> $GITHUB_OUTPUT
-          echo "demo_sha=${DEMO_SHA}"     >> $GITHUB_OUTPUT
-          echo "main_sha=${MAIN_SHA}"     >> $GITHUB_OUTPUT
+          {
+            echo "ahead=${AHEAD}"
+            echo "behind=${BEHIND}"
+            echo "merge_base=${MERGE_BASE}"
+            echo "demo_sha=${DEMO_SHA}"
+            echo "main_sha=${MAIN_SHA}"
+          } >> "$GITHUB_OUTPUT"
 
           echo "============================================"
           echo "📊 DIVERGÊNCIA: demo-stable vs main"
@@ -96,7 +98,7 @@ jobs:
 
           if [ "${AHEAD}" -eq 0 ]; then
             echo "✅ Nenhum commit pendente. demo-stable está sincronizado com main."
-            echo "list=" >> $GITHUB_OUTPUT
+            echo "list=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -110,7 +112,7 @@ jobs:
             echo "list<<EOF"
             echo "${COMMIT_LIST}"
             echo "EOF"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
       - name: 🔎 Verificar PR aberto demo-stable → main
         id: promotion_pr
@@ -139,34 +141,42 @@ jobs:
           MAIN_SHA=${{ steps.divergence.outputs.main_sha }}
           MERGE_BASE=${{ steps.divergence.outputs.merge_base }}
 
-          echo "## 🔍 Verificação demo-stable → main" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Informação | Valor |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| \`main\` HEAD | \`${MAIN_SHA:0:8}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`demo-stable\` HEAD | \`${DEMO_SHA:0:8}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Merge base comum | \`${MERGE_BASE:0:8}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Commits em demo-stable **fora** do main | **${AHEAD}** |" >> $GITHUB_STEP_SUMMARY
-          echo "| Commits em main **fora** do demo-stable | ${BEHIND} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🔍 Verificação demo-stable → main"
+            echo ""
+            echo "| Informação | Valor |"
+            echo "|-----------|-------|"
+            echo "| \`main\` HEAD | \`${MAIN_SHA:0:8}\` |"
+            echo "| \`demo-stable\` HEAD | \`${DEMO_SHA:0:8}\` |"
+            echo "| Merge base comum | \`${MERGE_BASE:0:8}\` |"
+            echo "| Commits em demo-stable **fora** do main | **${AHEAD}** |"
+            echo "| Commits em main **fora** do demo-stable | ${BEHIND} |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${AHEAD}" -eq 0 ]; then
-            echo "### ✅ Branches sincronizadas" >> $GITHUB_STEP_SUMMARY
-            echo "Nenhum commit pendente. \`demo-stable\` está sincronizado com \`main\`." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "### ✅ Branches sincronizadas"
+              echo "Nenhum commit pendente. \`demo-stable\` está sincronizado com \`main\`."
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "### ⚠️ ${AHEAD} commit(s) em demo-stable NÃO estão em main" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Estes commits precisam ser mergeados em \`main\` via Pull Request:" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            git log --oneline origin/main..origin/demo-stable >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+            {
+              echo "### ⚠️ ${AHEAD} commit(s) em demo-stable NÃO estão em main"
+              echo ""
+              echo "Estes commits precisam ser mergeados em \`main\` via Pull Request:"
+              echo ""
+              echo "\`\`\`"
+              git log --oneline origin/main..origin/demo-stable
+              echo "\`\`\`"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
             if [ "${{ steps.promotion_pr.outputs.exists }}" = "true" ]; then
-              echo "**Status:** já existe um PR aberto de promoção para \`main\`: #${{ steps.promotion_pr.outputs.number }}" >> $GITHUB_STEP_SUMMARY
-              echo "**Ação recomendada:** acompanhe o PR aberto e não bloqueie a branch apenas por divergência já encaminhada." >> $GITHUB_STEP_SUMMARY
+              {
+                echo "**Status:** já existe um PR aberto de promoção para \`main\`: #${{ steps.promotion_pr.outputs.number }}"
+                echo "**Ação recomendada:** acompanhe o PR aberto e não bloqueie a branch apenas por divergência já encaminhada."
+              } >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "**Ação recomendada:** Crie um Pull Request de \`demo-stable\` → \`main\` (ou dispare este workflow manualmente com \`create_pr=true\` se o token tiver permissão)." >> $GITHUB_STEP_SUMMARY
+              echo "**Ação recomendada:** Crie um Pull Request de \`demo-stable\` → \`main\` (ou dispare este workflow manualmente com \`create_pr=true\` se o token tiver permissão)." >> "$GITHUB_STEP_SUMMARY"
             fi
           fi
 
@@ -347,9 +357,12 @@ jobs:
             }
 
       - name: ❌ Falhar se houver commits pendentes
+        # Pushes em demo-stable continuam abrindo/atualizando issue e summary;
+        # o bloqueio fica reservado para execuções manuais/agendadas sem PR de promoção.
         if: >
           steps.divergence.outputs.ahead != '0' &&
-          steps.promotion_pr.outputs.exists != 'true'
+          steps.promotion_pr.outputs.exists != 'true' &&
+          github.event_name != 'push'
         run: |
           echo "::error::demo-stable tem ${{ steps.divergence.outputs.ahead }} commit(s) que não estão em main."
           echo "::error::Crie um Pull Request de demo-stable → main para sincronizar."
