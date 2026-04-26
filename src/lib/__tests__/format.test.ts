@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { formatCurrency, toMonetaryNumber, getRuntimeCurrencyPreference, setRuntimeCurrencyPreference } from '@/lib/format';
+import { formatCurrency, toMonetaryNumber, getRuntimeCurrencyPreference, setRuntimeCurrencyPreference, formatPercent } from '@/lib/format';
 
 describe('toMonetaryNumber', () => {
   it('converte number sem alteração', () => {
@@ -103,5 +103,31 @@ describe('formatCurrency', () => {
 
   it('formata EUR com locale de-DE', () => {
     expect(formatCurrency(2473.45, { currency: 'EUR' })).toBe('2.473,45 €');
+  });
+});
+
+describe('formatPercent', () => {
+  it('retorna "0%" quando o valor for null ou undefined', () => {
+    expect(formatPercent(null)).toBe('0%');
+    expect(formatPercent(undefined)).toBe('0%');
+  });
+
+  it('formata valores normais corretamente (default 2 casas decimais)', () => {
+    // Intl.NumberFormat pt-BR usa vírgula como separador decimal.
+    // E.g., 25.5 percent will be formatted as "25,50%"
+    // Let's test standard values
+    expect(formatPercent(25)).toBe('25,00%');
+    expect(formatPercent(0.5)).toBe('0,50%');
+    expect(formatPercent(100)).toBe('100,00%');
+  });
+
+  it('formata com casas decimais customizadas', () => {
+    expect(formatPercent(25.555, 1)).toBe('25,6%'); // it usually rounds up
+    expect(formatPercent(25, 0)).toBe('25%');
+  });
+
+  it('formata valor zero corretamente', () => {
+    expect(formatPercent(0)).toBe('0,00%');
+    expect(formatPercent(0, 0)).toBe('0%');
   });
 });
