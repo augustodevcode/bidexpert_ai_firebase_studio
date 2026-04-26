@@ -26,10 +26,10 @@ interface UseGridExportParams {
 export function useGridExport({ config, currentParams }: UseGridExportParams) {
   const [isExporting, setIsExporting] = useState(false);
 
-  const exportData = useCallback(async (format: 'excel' | 'csv') => {
+  const exportData = useCallback(async (format: 'excel' | 'csv' | 'pdf') => {
     setIsExporting(true);
     const toastId = toast.loading(
-      format === 'excel' ? 'Gerando Excel...' : 'Gerando CSV...'
+      format === 'excel' ? 'Gerando Excel...' : format === 'pdf' ? 'Gerando PDF...' : 'Gerando CSV...'
     );
 
     try {
@@ -52,6 +52,8 @@ export function useGridExport({ config, currentParams }: UseGridExportParams) {
           format,
           options: format === 'excel'
             ? config.export.excel
+            : format === 'pdf'
+            ? config.export.pdf
             : config.export.csv,
         }),
       });
@@ -65,9 +67,8 @@ export function useGridExport({ config, currentParams }: UseGridExportParams) {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = format === 'excel'
-        ? `export_${Date.now()}.xlsx`
-        : `export_${Date.now()}.csv`;
+      const extension = format === 'excel' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+      link.download = `export_${Date.now()}.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

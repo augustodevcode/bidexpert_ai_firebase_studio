@@ -386,6 +386,9 @@ function SuperGridInner<TEntity extends Record<string, unknown>>({
             return (
               <div
                 className="cursor-cell min-h-[20px]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   state.startCellEdit(rowId, colConfig.id, value);
@@ -465,6 +468,7 @@ function SuperGridInner<TEntity extends Record<string, unknown>>({
       sorting: state.sorting,
       columnFilters: state.columnFilters,
       columnVisibility: state.columnVisibility,
+      columnSizing: state.columnSizing,
       rowSelection: state.rowSelection,
       grouping: state.grouping,
     },
@@ -472,6 +476,7 @@ function SuperGridInner<TEntity extends Record<string, unknown>>({
     onSortingChange: state.setSorting,
     onColumnFiltersChange: state.setColumnFilters,
     onColumnVisibilityChange: state.setColumnVisibility,
+    onColumnSizingChange: state.setColumnSizing,
     onRowSelectionChange: state.setRowSelection,
     onGroupingChange: (updater) => {
       const newGrouping = typeof updater === 'function' ? updater(state.grouping) : updater;
@@ -642,7 +647,7 @@ function SuperGridInner<TEntity extends Record<string, unknown>>({
         }`}
         data-ai-id="supergrid-table-container"
       >
-        <Table>
+        <Table containerClassName="overflow-visible">
           <TableHeader className={config.behavior.stickyHeader ? 'sticky top-0 z-10 bg-background' : ''}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -907,6 +912,14 @@ function DataRow<TEntity>({
 
   // Grouped row header
   if (row.getIsGrouped()) {
+    const groupIndentClass = row.depth === 0
+      ? ''
+      : row.depth === 1
+      ? 'pl-5'
+      : row.depth === 2
+      ? 'pl-10'
+      : 'pl-14';
+
     return (
       <TableRow className="bg-muted/30 font-medium">
         <TableCell
@@ -915,7 +928,8 @@ function DataRow<TEntity>({
         >
           <button
             onClick={row.getToggleExpandedHandler()}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${groupIndentClass}`}
+            data-ai-id={`supergrid-group-row-${row.depth}-${row.id}`}
           >
             {row.getIsExpanded() ? (
               <ChevronDownIcon className="h-4 w-4" />

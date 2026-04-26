@@ -17,7 +17,7 @@ import type { GridLocale } from '../SuperGrid.i18n';
 
 interface ExportMenuProps {
   config: ExportConfig;
-  onExport: (format: 'excel' | 'csv') => void;
+  onExport: (format: 'excel' | 'csv' | 'pdf') => void;
   isExporting: boolean;
   disabled?: boolean;
   locale: GridLocale;
@@ -44,7 +44,7 @@ export function ExportMenu({
           data-ai-id="supergrid-export-btn"
         >
           <Download className="mr-2 h-4 w-4" />
-          {isExporting ? locale.export.exporting : locale.export.exportButton}
+          {isExporting ? locale.export.exporting : locale.export.button}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" data-ai-id="supergrid-export-menu">
@@ -66,7 +66,18 @@ export function ExportMenu({
             {locale.export.csv}
           </DropdownMenuItem>
         )}
+        {formats.includes('pdf') && (
+          <DropdownMenuItem
+            onClick={() => onExport('pdf')}
+            data-ai-id="supergrid-export-pdf"
+          >
+            <FileText className="mr-2 h-4 w-4 text-red-600" />
+            {locale.export.pdf}
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+
+export default ExportMenu;

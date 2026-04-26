@@ -139,7 +139,7 @@ export interface EditingConfig<TEntity = Record<string, unknown>> {
 // ==========================================
 
 export interface ExportConfig {
-  formats: Array<'csv' | 'excel'>;
+  formats: Array<'csv' | 'excel' | 'pdf'>;
   excel?: {
     includeStyles: boolean;
     sheetName?: string;
@@ -148,6 +148,10 @@ export interface ExportConfig {
     delimiter: ',' | ';' | '\t';
     encoding: 'utf-8' | 'utf-8-sig' | 'iso-8859-1';
     includeHeaders: boolean;
+  };
+  pdf?: {
+    title?: string;
+    orientation?: 'landscape' | 'portrait';
   };
   maxRows?: number;
 }

@@ -37,7 +37,7 @@ interface GridToolbarProps {
   grouping: string[];
   onGroupingChange: (grouping: string[]) => void;
   // Export
-  onExport: (format: 'excel' | 'csv') => void;
+  onExport: (format: 'excel' | 'csv' | 'pdf') => void;
   isExporting: boolean;
   // CRUD
   onAddNew: () => void;
@@ -106,7 +106,7 @@ export function GridToolbar({
               data-ai-id="supergrid-add-new-btn"
             >
               <Plus className="mr-2 h-4 w-4" />
-              {locale.toolbar.addNew}
+              {locale.toolbar.newButton}
             </Button>
           )}
 
@@ -161,6 +161,7 @@ export function GridToolbar({
 
         {features.filtering.queryBuilder.enabled && (
           <QueryBuilderPanel
+            gridId={config.id}
             config={features.filtering.queryBuilder as QueryBuilderConfig}
             isOpen={isQueryBuilderOpen}
             onOpenChange={onQueryBuilderOpenChange}

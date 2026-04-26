@@ -35,6 +35,7 @@ export interface GridLocale {
     exporting: string;
     excel: string;
     csv: string;
+    pdf: string;
   };
 
   // Column visibility
@@ -56,6 +57,22 @@ export interface GridLocale {
   queryBuilder: {
     advancedFilter: string;
     clear: string;
+    savedFilters: string;
+    savedFiltersPlaceholder: string;
+    noSavedFilters: string;
+    saveCurrent: string;
+    saveDialogTitle: string;
+    saveDialogDescription: string;
+    filterNameLabel: string;
+    filterNamePlaceholder: string;
+    saveConfirm: string;
+    deleteSaved: string;
+    savedSuccess: string;
+    deletedSuccess: string;
+    combinators: {
+      and: string;
+      or: string;
+    };
     operators: Record<string, string>;
   };
 
@@ -165,6 +182,7 @@ export const PT_BR_LOCALE: GridLocale = {
     exporting: 'Exportando...',
     excel: 'Excel (.xlsx)',
     csv: 'CSV (.csv)',
+    pdf: 'PDF (.pdf)',
   },
 
   columnVisibility: {
@@ -183,12 +201,31 @@ export const PT_BR_LOCALE: GridLocale = {
   queryBuilder: {
     advancedFilter: 'Filtro Avançado',
     clear: 'Limpar',
+    savedFilters: 'Filtros salvos',
+    savedFiltersPlaceholder: 'Selecione um filtro salvo',
+    noSavedFilters: 'Nenhum filtro salvo',
+    saveCurrent: 'Salvar filtro atual',
+    saveDialogTitle: 'Salvar filtro avançado',
+    saveDialogDescription: 'Salve a combinação atual para reutilizar neste grid e neste tenant.',
+    filterNameLabel: 'Nome do filtro',
+    filterNamePlaceholder: 'Ex.: Leilões abertos por status',
+    saveConfirm: 'Salvar filtro',
+    deleteSaved: 'Excluir filtro salvo',
+    savedSuccess: 'Filtro salvo com sucesso.',
+    deletedSuccess: 'Filtro excluído com sucesso.',
+    combinators: {
+      and: 'E',
+      or: 'OU',
+    },
     operators: {
       '=': 'Igual a',
       '!=': 'Diferente de',
       contains: 'Contém',
+      doesNotContain: 'Não contém',
       beginsWith: 'Começa com',
+      doesNotBeginWith: 'Não começa com',
       endsWith: 'Termina com',
+      doesNotEndWith: 'Não termina com',
       '>': 'Maior que',
       '>=': 'Maior ou igual',
       '<': 'Menor que',
@@ -301,6 +338,7 @@ export const EN_US_LOCALE: GridLocale = {
     exporting: 'Exporting...',
     excel: 'Excel (.xlsx)',
     csv: 'CSV (.csv)',
+    pdf: 'PDF (.pdf)',
   },
 
   columnVisibility: {
@@ -319,12 +357,31 @@ export const EN_US_LOCALE: GridLocale = {
   queryBuilder: {
     advancedFilter: 'Advanced Filter',
     clear: 'Clear',
+    savedFilters: 'Saved filters',
+    savedFiltersPlaceholder: 'Select a saved filter',
+    noSavedFilters: 'No saved filters',
+    saveCurrent: 'Save current filter',
+    saveDialogTitle: 'Save advanced filter',
+    saveDialogDescription: 'Save the current combination to reuse it in this grid and tenant.',
+    filterNameLabel: 'Filter name',
+    filterNamePlaceholder: 'E.g. Open auctions by status',
+    saveConfirm: 'Save filter',
+    deleteSaved: 'Delete saved filter',
+    savedSuccess: 'Filter saved successfully.',
+    deletedSuccess: 'Filter deleted successfully.',
+    combinators: {
+      and: 'AND',
+      or: 'OR',
+    },
     operators: {
       '=': 'Equals',
       '!=': 'Not equals',
       contains: 'Contains',
+      doesNotContain: 'Does not contain',
       beginsWith: 'Starts with',
+      doesNotBeginWith: 'Does not start with',
       endsWith: 'Ends with',
+      doesNotEndWith: 'Does not end with',
       '>': 'Greater than',
       '>=': 'Greater or equal',
       '<': 'Less than',

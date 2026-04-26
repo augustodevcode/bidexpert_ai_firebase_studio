@@ -60,7 +60,7 @@ export function GroupingPanel({
     >
       <span className="text-sm text-muted-foreground flex items-center gap-1">
         <Layers className="h-4 w-4" />
-        Agrupado por:
+        {locale.grouping.groupedBy}
       </span>
 
       {grouping.length === 0 && (
@@ -80,7 +80,7 @@ export function GroupingPanel({
           <button
             onClick={() => removeGroup(columnId)}
             className="ml-1 rounded-full hover:bg-muted-foreground/20 p-0.5"
-            title={locale.clearGrouping}
+            title={locale.grouping.clear}
           >
             <X className="h-3 w-3" />
           </button>
@@ -97,7 +97,7 @@ export function GroupingPanel({
               data-ai-id="supergrid-add-group-btn"
             >
               <Plus className="h-3 w-3 mr-1" />
-              {locale.grouping.addGroup}
+              {locale.grouping.add}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-48 p-1" align="start">
@@ -124,9 +124,11 @@ export function GroupingPanel({
           data-ai-id="supergrid-clear-groups-btn"
         >
           <X className="h-3 w-3 mr-1" />
-          {locale.grouping.clearGrouping}
+          {locale.grouping.clear}
         </Button>
       )}
     </div>
   );
 }
+
+export default GroupingPanel;
