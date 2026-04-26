@@ -22,15 +22,32 @@ O caso `EXTRAJUDICIAL - VENDA PARTICULAR` foi mantido fora da matriz primaria po
 - BDD: `tests/itsm/features/cadastral-source-sync.feature`.
 - Screenshots Playwright: `test-results/superbid-source-matrix/*.png`.
 - Relatorio HTML Playwright: `playwright-report/index.html`.
+- PR: `https://github.com/augustodevcode/bidexpert_ai_firebase_studio/pull/736`.
+- Reteste remoto DEMO publicado: `https://demo.bidexpert.com.br/`, `/lots` e `/search` no browser integrado.
 
 ## Validacoes executadas
 
 | Comando | Resultado |
 |---|---|
+| `npm ci` | passed apos liberar lock local do Prisma engine na porta 9024 |
+| `npm run typecheck` | exit code 0 |
+| `npm run build` | passed; `.next/BUILD_ID = 6AvhMeevCIjGgRH7W3PkP` |
 | `npx vitest run tests/unit/realtime-bids-service-bootstrap.spec.ts tests/unit/superbid-source-matrix.spec.ts --config vitest.unit.config.ts` | 2 arquivos, 4 testes, 4 passed |
 | `BASE_URL=http://demo.localhost:9024 PLAYWRIGHT_SKIP_WEBSERVER=1 npx playwright test tests/e2e/superbid-source-matrix.spec.ts --config=playwright.config.local.ts --project=chromium --headed` | 3 testes, 3 passed |
-| `npm run typecheck` | exit code 0 |
+| `BASE_URL=https://demo.bidexpert.com.br PLAYWRIGHT_SKIP_WEBSERVER=1 npx playwright test tests/e2e/superbid-source-matrix.spec.ts --config=playwright.config.local.ts --project=chromium --headed` | bloqueado antes dos testes por Vercel Protection/SSO: `/api/public/tenants` retornou 401 e `/auth/login` redirecionou para `vercel.com/login` |
 | VS Code Problems nos arquivos alterados de teste/fixture | sem erros |
+
+## Reteste remoto em `demo.bidexpert.com.br`
+
+O dominio DEMO publicado foi validado separadamente do PR, porque o conteudo deste PR ainda nao esta mergeado/deployado no dominio remoto.
+
+| Rota | Evidencia no browser integrado | Resultado |
+|---|---|---|
+| `/` | Home renderizada com header, busca, menu de modalidades e vitrine principal | Acessivel; console reportou erros React minificados `#425` e `#422` ja presentes no DEMO publicado |
+| `/lots` | Pagina `Lotes em Leilao` renderizada com 80 lotes e contadores por modalidade (`Judicial`, `Extrajudicial`, `Venda Direta`, `Tomada de Precos`) | Acessivel; request `.well-known/vercel/jwe` abortado pelo contexto Vercel |
+| `/search` | Pagina `Busca Avancada` renderizada com tabs `Leiloes`, `Lotes`, `Venda Direta` e `Tomada de Precos` | Acessivel; requests RSC abortados durante navegacao, sem impedir renderizacao inicial |
+
+Classificacao RCA: o bloqueio do Playwright CLI remoto e `Vercel Protection/SSO`, nao bug da branch. As evidencias do codigo novo continuam sendo o gate local e o PR; as evidencias remotas acima comprovam apenas o estado atualmente publicado em DEMO.
 
 ## RCA dos ajustes feitos no teste
 
@@ -40,6 +57,6 @@ O caso `EXTRAJUDICIAL - VENDA PARTICULAR` foi mantido fora da matriz primaria po
 
 ## Status
 
-Readiness de fonte, admin e publico concluida no worktree `E:/bw/superbid-platform-audit-20260426` em `http://demo.localhost:9024`.
+Readiness de fonte, admin e publico concluida no worktree `E:/bw/superbid-platform-audit-20260426` em `http://demo.localhost:9024`; PR aberto em `qa/superbid-platform-audit-20260426-1714` -> `demo-stable`.
 
 O proximo bloco, caso seja executado, deve usar a matriz versionada para cadastrar ou reutilizar entidades no Admin e comparar as telas publicas finais, sem copiar imagens/PDFs/descricoes protegidas de terceiros em massa.

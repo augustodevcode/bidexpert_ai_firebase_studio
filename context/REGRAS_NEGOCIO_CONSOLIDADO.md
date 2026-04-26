@@ -86,6 +86,7 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 ✅ Divergências DEVEM ser classificadas antes de qualquer patch como: limitação da fonte, falha cadastral, bug de UI admin, bug de service/model, contrato de mídia/documentos, status machine, moeda/locale, auth/habilitação, runtime/infra ou teste.
 ✅ Ao abrir PR de correções ou artefatos do ciclo Superbid, o relatório DEVE registrar: branch/head, PR para `demo-stable`, comandos locais verdes, screenshots Playwright, link do relatório HTML e reteste remoto em `https://demo.bidexpert.com.br` pelo browser integrado ou Playwright CLI/MCP.
 ✅ O reteste remoto em `demo.bidexpert.com.br` DEVE separar evidência do domínio DEMO já publicado da evidência da feature branch/PR; se o pacote ainda não estiver mergeado, registrar isso explicitamente para não confundir validação de ambiente com validação de código novo.
+✅ Se Playwright CLI/MCP remoto for bloqueado por Vercel Protection, SSO ou status 401/403 antes de iniciar os testes, o agente DEVE classificar como blocker de infraestrutura remoto, registrar URL/erro e complementar com evidência do browser integrado nas rotas públicas afetadas.
 ❌ É proibido copiar em massa imagens, PDFs ou descrições protegidas de terceiros para seed ou fixtures permanentes; usar evidência pública, dados sintéticos equivalentes ou registro via UI apenas quando o uso for necessário para validação.
 
 **Cenário BDD - Auditoria cadastral multi-modal**
