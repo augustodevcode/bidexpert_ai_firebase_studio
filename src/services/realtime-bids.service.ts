@@ -1,6 +1,6 @@
 // src/services/realtime-bids.service.ts
 import { EventEmitter } from 'events';
-import logger from '@/lib/logger';
+import logger from '../lib/logger';
 
 export interface BidEvent {
   lotId: bigint;
