@@ -150,7 +150,15 @@ export function getSearchableColumns(columns: GridColumn[]): string[] {
   return columns
     .filter(col =>
       col.filterable !== false &&
-      (col.type === 'string' || col.type === 'email' || col.type === 'url')
+      (
+        col.type === 'string' ||
+        col.type === 'email' ||
+        col.type === 'url' ||
+        col.type === 'select' ||
+        col.type === 'multiselect' ||
+        col.type === 'relation' ||
+        Boolean(col.relation)
+      )
     )
     .map(col => col.accessorKey);
 }

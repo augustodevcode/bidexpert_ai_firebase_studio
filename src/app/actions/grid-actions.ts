@@ -6,11 +6,7 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import { getTenantIdFromRequest } from '@/lib/actions/auth';
-import { convertQueryBuilderToPrisma } from '@/components/super-grid/utils/prismaQueryBuilder';
-import { FetchParamsSchema } from '@/components/super-grid/SuperGrid.types';
-import type { GridFetchParams, GridFetchResult } from '@/components/super-grid/SuperGrid.types';
+import { getGridDataService } from '@/server/services/grid-data.service';
 import { sanitizeResponse } from '@/lib/serialization-helper';
 
 function serializeData<T>(data: T): T {
@@ -18,23 +14,7 @@ function serializeData<T>(data: T): T {
 }
 
 /** Resolve o modelo Prisma dinamicamente a partir do nome da entidade */
-function getPrismaModel(entity: string) {
-  // Normalizar: primeira letra minúscula para acessar prisma.auction, prisma.lot, etc.
-  const key = entity.charAt(0).toLowerCase() + entity.slice(1);
-  const model = (prisma as unknown as Record<string, unknown>)[key];
-  if (!model) {
-    throw new Error(`[SuperGrid] Entidade Prisma não encontrada: ${entity}. Verifique o nome do modelo.`);
-  }
-  return model as {
-    findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
-    count: (args: Record<string, unknown>) => Promise<number>;
-    create: (args: Record<string, unknown>) => Promise<unknown>;
-    update: (args: Record<string, unknown>) => Promise<unknown>;
-    findUnique: (args: Record<string, unknown>) => Promise<unknown | null>;
-    deleteMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
-    aggregate: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
-  };
-}
+// (Removed getPrismaModel as it is now in the service)
 
 /**
  * Busca dados paginados de qualquer entidade Prisma.
@@ -51,65 +31,13 @@ export async function fetchGridData(
   // 2. Multi-tenant isolation
   const tenantId = await getTenantIdFromRequest();
 
-  // 3. Resolver modelo Prisma
-  const model = getPrismaModel(validated.entity);
-
-  // 4. Construir WHERE
-  let where: Record<string, unknown> = { tenantId: BigInt(tenantId) };
-
-  // 4.1 Filtros do Query Builder
-  if (validated.filters && Object.keys(validated.filters).length > 0) {
-    const qbWhere = convertQueryBuilderToPrisma(
-      validated.filters as unknown as Parameters<typeof convertQueryBuilderToPrisma>[0]
-    );
-    if (Object.keys(qbWhere).length > 0) {
-      where = { AND: [where, qbWhere] };
-    }
-  }
-
-  // 4.2 Busca global (quick filter)
-  if (validated.globalFilter && validated.globalFilter.trim() !== '') {
-    const searchTerm = validated.globalFilter.trim();
-    const searchableFields = validated.searchableColumns || ['title', 'name'];
-
-    const orConditions = searchableFields.map(field => {
-      // Para campos simples
-      if (!field.includes('.')) {
-        return { [field]: { contains: searchTerm } };
-      }
-      // Para campos aninhados (ex: 'Auctioneer.name')
-      const parts = field.split('.');
-      let condition: Record<string, unknown> = { [parts[parts.length - 1]]: { contains: searchTerm } };
-      for (let i = parts.length - 2; i >= 0; i--) {
-        condition = { [parts[i]]: condition };
-      }
-      return condition;
-    });
-
-    if (orConditions.length > 0) {
-      const currentWhere = where;
-      where = { AND: [currentWhere, { OR: orConditions }] };
-    }
-  }
-
-  // 5. Construir ORDER BY
-  const orderBy = validated.sorting?.map(sort => {
-    if (sort.id.includes('.')) {
-      const parts = sort.id.split('.');
-      let obj: Record<string, unknown> = { [parts[parts.length - 1]]: sort.desc ? 'desc' : 'asc' };
-      for (let i = parts.length - 2; i >= 0; i--) {
-        obj = { [parts[i]]: obj };
-      }
-      return obj;
-    }
-    return { [sort.id]: sort.desc ? 'desc' : 'asc' };
-  }) || [{ createdAt: 'desc' }]; // Default: mais recentes primeiro
-
-  // 6. Construir INCLUDE (relações)
-  const include = validated.includes || {};
-
-  // 7. Executar queries em paralelo
   try {
+    return await getGridDataService(validated, tenantId);
+  } catch (error) {
+    console.error(`[fetchGridData] Erro ao buscar dados da entidade ${validated.entity}:`, error);
+    throw error;
+  }
+}
     const [data, totalCount] = await Promise.all([
       model.findMany({
         where,

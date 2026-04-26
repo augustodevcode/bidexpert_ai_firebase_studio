@@ -51,7 +51,7 @@ export function AggregateFooter({
               >
                 {col === columns[0] ? (
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                    {locale.aggregates.totals(allRows.length)}
+                    {locale.aggregates.totalsLabel(allRows.length)}
                   </span>
                 ) : null}
               </TableCell>

@@ -6,6 +6,11 @@
  */
 
 import type { FieldType } from '../SuperGrid.types';
+import {
+  insensitiveContains,
+  insensitiveEndsWith,
+  insensitiveStartsWith,
+} from '@/lib/prisma/query-helpers';
 
 interface QueryRule {
   field: string;
@@ -124,17 +129,17 @@ function buildOperatorCondition(
       return { not: coercedValue };
 
     case 'contains':
-      return { contains: String(value ?? '') };
+      return insensitiveContains(String(value ?? ''));
 
     case 'doesNotContain':
-      return { not: { contains: String(value ?? '') } };
+      return { not: insensitiveContains(String(value ?? '')) };
 
     case 'beginsWith':
     case 'startsWith':
-      return { startsWith: String(value ?? '') };
+      return insensitiveStartsWith(String(value ?? ''));
 
     case 'endsWith':
-      return { endsWith: String(value ?? '') };
+      return insensitiveEndsWith(String(value ?? ''));
 
     case '>':
     case 'greaterThan':

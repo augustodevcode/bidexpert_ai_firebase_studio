@@ -5,8 +5,9 @@
  */
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
+  ColumnSizingState,
   PaginationState,
   SortingState,
   ColumnFiltersState,
@@ -14,8 +15,12 @@ import type {
   VisibilityState,
 } from '@tanstack/react-table';
 import type { SuperGridConfig, GridDensity } from '../SuperGrid.types';
+import { readPersistedGridState, writePersistedGridState } from '../utils/statePersistence';
 
 export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
+  const persistedStateRef = useRef(readPersistedGridState(config.id));
+  const persistedState = persistedStateRef.current;
+
   // Paginação
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -31,7 +36,7 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
 
   // Agrupamento
   const [grouping, setGrouping] = useState<string[]>(
-    config.features.grouping.defaultGroupedColumns || []
+    persistedState.grouping ?? config.features.grouping.defaultGroupedColumns ?? []
   );
 
   // Seleção
@@ -39,6 +44,10 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
 
   // Visibilidade de colunas (inicializar com colunas ocultas)
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
+    if (persistedState.columnVisibility) {
+      return persistedState.columnVisibility;
+    }
+
     const visibility: VisibilityState = {};
     config.columns.forEach(col => {
       if (col.visible === false) {
@@ -49,7 +58,12 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
   });
 
   // Densidade
-  const [density, setDensity] = useState<GridDensity>('normal');
+  const [density, setDensity] = useState<GridDensity>(persistedState.density ?? 'normal');
+
+  // Redimensionamento de colunas
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(
+    persistedState.columnSizing ?? {}
+  );
 
   // Query Builder
   const [isQueryBuilderOpen, setIsQueryBuilderOpen] = useState(false);
@@ -93,6 +107,15 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
     setEditingCellValue(undefined);
   }
 
+  useEffect(() => {
+    writePersistedGridState(config.id, {
+      columnSizing,
+      columnVisibility,
+      density,
+      grouping,
+    });
+  }, [config.id, columnSizing, columnVisibility, density, grouping]);
+
   return {
     pagination,
     setPagination,
@@ -108,6 +131,8 @@ export function useGridState<TEntity>(config: SuperGridConfig<TEntity>) {
     setRowSelection,
     columnVisibility,
     setColumnVisibility,
+    columnSizing,
+    setColumnSizing,
     density,
     setDensity,
     isQueryBuilderOpen,

@@ -1,5 +1,5 @@
 /**
- * @fileoverview API Route para exportação de dados do SuperGrid em Excel/CSV.
+ * @fileoverview API Route para exportação de dados do SuperGrid em Excel/CSV/PDF.
  * Recebe configuração de colunas + parâmetros de filtro via POST,
  * busca todos os dados correspondentes e retorna arquivo binário.
  */
@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchGridData } from '@/app/actions/grid-actions';
 import { generateExcelBuffer } from '@/components/super-grid/utils/excelGenerator';
 import { generateCsvString } from '@/components/super-grid/utils/csvGenerator';
+import { generatePdfBuffer } from '@/components/super-grid/utils/pdfGenerator';
 import type { GridColumn, GridFetchParams } from '@/components/super-grid/SuperGrid.types';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export const dynamic = 'force-dynamic';
 interface ExportRequestBody {
   params: GridFetchParams;
   columns: GridColumn[];
-  format: 'excel' | 'csv';
+  format: 'excel' | 'csv' | 'pdf';
   options?: {
     sheetName?: string;
     includeStyles?: boolean;
@@ -23,6 +24,8 @@ interface ExportRequestBody {
     encoding?: 'utf-8' | 'utf-8-sig' | 'iso-8859-1';
     includeHeaders?: boolean;
     maxRows?: number;
+    title?: string;
+    orientation?: 'landscape' | 'portrait';
   };
 }
 
@@ -55,7 +58,24 @@ export async function POST(request: NextRequest) {
           'Content-Disposition': `attachment; filename="export_${Date.now()}.xlsx"`,
         },
       });
-    } else {
+    }
+
+    if (format === 'pdf') {
+      const buffer = generatePdfBuffer(allData.data, columns, {
+        title: options?.title || 'Exportação SuperGrid',
+        orientation: options?.orientation || 'landscape',
+      });
+
+      return new NextResponse(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="export_${Date.now()}.pdf"`,
+        },
+      });
+    }
+
+    {
       // CSV
       const csvString = generateCsvString(
         allData.data,
@@ -76,8 +96,13 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
-    console.error('[SuperGrid Export] Erro:', error);
+    console.error('[SuperGrid Export] Erro:', error instanceof Error ? error.message : error);
     return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro interno na exportação' },
+      { status: 500 }
+    );
+  }
+}
       { error: error instanceof Error ? error.message : 'Erro na exportação' },
       { status: 500 }
     );

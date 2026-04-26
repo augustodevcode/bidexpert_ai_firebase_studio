@@ -68,7 +68,7 @@ export function ColumnVisibility({
           data-ai-id="supergrid-column-visibility-btn"
         >
           <Columns3 className="mr-2 h-4 w-4" />
-          Colunas ({visibleCount}/{columns.length})
+          {locale.columnVisibility.button(visibleCount, columns.length)}
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -77,7 +77,7 @@ export function ColumnVisibility({
         data-ai-id="supergrid-column-visibility-panel"
       >
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <span className="text-sm font-medium">{locale.columnVisibility.visibleColumns}</span>
+          <span className="text-sm font-medium">{locale.columnVisibility.title}</span>
           <div className="flex gap-1">
             <Button variant="ghost" size="sm" onClick={showAll} className="h-7 text-xs px-2">
               {locale.columnVisibility.showAll}
@@ -94,8 +94,7 @@ export function ColumnVisibility({
               return (
                 <div
                   key={col.id}
-                  className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50 cursor-pointer"
-                  onClick={() => toggleColumn(col.id)}
+                  className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50"
                   data-ai-id={`supergrid-col-toggle-${col.id}`}
                 >
                   <Checkbox
@@ -118,3 +117,5 @@ export function ColumnVisibility({
     </Popover>
   );
 }
+
+export default ColumnVisibility;

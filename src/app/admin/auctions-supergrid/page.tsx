@@ -11,7 +11,166 @@
 import { SuperGrid } from '@/components/super-grid';
 import type { SuperGridConfig } from '@/components/super-grid';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { z } from 'zod';
+
+type AuctionStageLike = {
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+};
+
+type AuctionPartyLike = {
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
+type AuctionGridRow = Record<string, unknown> & {
+  auctionDate?: string | Date | null;
+  endDate?: string | Date | null;
+  AuctionStage?: AuctionStageLike[];
+  auctionStages?: AuctionStageLike[];
+  Auctioneer?: AuctionPartyLike | null;
+  Seller?: AuctionPartyLike | null;
+  totalLots?: number | null;
+  visits?: number | null;
+  initialOffer?: number | null;
+  achievedRevenue?: number | null;
+};
+
+const auctionDateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+  dateStyle: 'short',
+  timeStyle: 'short',
+});
+
+function toDateOrNull(value: unknown): Date | null {
+  if (!value) return null;
+
+  const candidate = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(candidate.getTime()) ? null : candidate;
+}
+
+function getAuctionStages(row: AuctionGridRow): AuctionStageLike[] {
+  if (Array.isArray(row.auctionStages)) {
+    return row.auctionStages;
+  }
+
+  if (Array.isArray(row.AuctionStage)) {
+    return row.AuctionStage;
+  }
+
+  return [];
+}
+
+function getDerivedAuctionDates(row: AuctionGridRow): { auctionDate: Date | null; endDate: Date | null } {
+  const stages = getAuctionStages(row);
+  const stageStarts = stages
+    .map(stage => toDateOrNull(stage.startDate))
+    .filter((value): value is Date => value instanceof Date)
+    .sort((left, right) => left.getTime() - right.getTime());
+  const stageEnds = stages
+    .map(stage => toDateOrNull(stage.endDate))
+    .filter((value): value is Date => value instanceof Date)
+    .sort((left, right) => left.getTime() - right.getTime());
+
+  return {
+    auctionDate: stageStarts[0] ?? toDateOrNull(row.auctionDate),
+    endDate: stageEnds.at(-1) ?? toDateOrNull(row.endDate),
+  };
+}
+
+function formatAuctionDate(value: Date | null): string {
+  return value ? auctionDateTimeFormatter.format(value) : '—';
+}
+
+function toSafeNumber(value: unknown): number {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+function getAuctionAnalytics(row: AuctionGridRow) {
+  const totalLots = toSafeNumber(row.totalLots);
+  const visits = toSafeNumber(row.visits);
+  const initialOffer = toSafeNumber(row.initialOffer);
+  const achievedRevenue = toSafeNumber(row.achievedRevenue);
+
+  return {
+    stagesCount: getAuctionStages(row).length,
+    visitsPerLot: totalLots > 0 ? visits / totalLots : null,
+    averageTicket: totalLots > 0 ? achievedRevenue / totalLots : null,
+    revenueCoverage: initialOffer > 0 ? (achievedRevenue / initialOffer) * 100 : null,
+  };
+}
+
+function AuctionPartyHoverCell({
+  row,
+  value,
+  relationKey,
+  dataAiId,
+}: {
+  row: AuctionGridRow;
+  value: unknown;
+  relationKey: 'Auctioneer' | 'Seller';
+  dataAiId: string;
+}) {
+  const party = row[relationKey] as AuctionPartyLike | null | undefined;
+  const name = String(party?.name || value || '—');
+  const email = party?.email || 'Não informado';
+  const phone = party?.phone || 'Não informado';
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="text-left underline decoration-dotted underline-offset-4"
+            data-ai-id={dataAiId}
+          >
+            {name}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-xs px-3 py-2">
+          <div className="space-y-1">
+            <p className="font-medium">{name}</p>
+            <p className="text-xs text-muted-foreground">E-mail: {email}</p>
+            <p className="text-xs text-muted-foreground">Telefone: {phone}</p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function AuctionAnalyticsCell({ row }: { row: AuctionGridRow; value: unknown }) {
+  const analytics = getAuctionAnalytics(row);
+
+  return (
+    <div className="space-y-1" data-ai-id="auctions-supergrid-analytics-cell">
+      <Badge variant="secondary">
+        Cobertura {analytics.revenueCoverage !== null ? `${analytics.revenueCoverage.toFixed(0)}%` : '—'}
+      </Badge>
+      <div className="space-y-0.5 text-xs text-muted-foreground">
+        <p>
+          {analytics.visitsPerLot !== null
+            ? `${analytics.visitsPerLot.toFixed(1)} visitas/lote`
+            : 'Sem visitas por lote'}
+        </p>
+        <p>
+          {analytics.averageTicket !== null
+            ? `Ticket médio ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(analytics.averageTicket)}`
+            : 'Sem ticket médio'}
+        </p>
+        <p>{analytics.stagesCount} praça(s)</p>
+      </div>
+    </div>
+  );
+}
 
 /** Mapeamento de status para label + cor */
 const auctionStatusOptions = [
@@ -124,6 +283,15 @@ const auctionsGridConfig: SuperGridConfig = {
       width: 170,
       sortable: true,
       editable: true,
+      relation: {
+        relationName: 'AuctionStage',
+        displayField: 'startDate',
+        valueField: 'id',
+      },
+      Cell: ({ row }) => {
+        const derivedDates = getDerivedAuctionDates(row as AuctionGridRow);
+        return <span>{formatAuctionDate(derivedDates.auctionDate)}</span>;
+      },
     },
     {
       id: 'endDate',
@@ -132,6 +300,10 @@ const auctionsGridConfig: SuperGridConfig = {
       type: 'datetime',
       width: 170,
       sortable: true,
+      Cell: ({ row }) => {
+        const derivedDates = getDerivedAuctionDates(row as AuctionGridRow);
+        return <span>{formatAuctionDate(derivedDates.endDate)}</span>;
+      },
     },
     {
       id: 'totalLots',
@@ -167,6 +339,17 @@ const auctionsGridConfig: SuperGridConfig = {
       format: { currencyCode: 'BRL', decimalPlaces: 2 },
     },
     {
+      id: 'analyticsSummary',
+      accessorKey: 'analyticsSummary',
+      header: 'Analytics',
+      type: 'string',
+      width: 220,
+      sortable: false,
+      filterable: false,
+      groupable: false,
+      Cell: ({ row, value }) => <AuctionAnalyticsCell row={row as AuctionGridRow} value={value} />,
+    },
+    {
       id: 'visits',
       accessorKey: 'visits',
       header: 'Visitas',
@@ -191,6 +374,14 @@ const auctionsGridConfig: SuperGridConfig = {
         displayField: 'name',
         valueField: 'id',
       },
+      Cell: ({ row, value }) => (
+        <AuctionPartyHoverCell
+          row={row as AuctionGridRow}
+          value={value}
+          relationKey="Auctioneer"
+          dataAiId="auctions-supergrid-auctioneer-hover"
+        />
+      ),
     },
     {
       id: 'sellerName',
@@ -205,6 +396,14 @@ const auctionsGridConfig: SuperGridConfig = {
         displayField: 'name',
         valueField: 'id',
       },
+      Cell: ({ row, value }) => (
+        <AuctionPartyHoverCell
+          row={row as AuctionGridRow}
+          value={value}
+          relationKey="Seller"
+          dataAiId="auctions-supergrid-seller-hover"
+        />
+      ),
     },
     {
       id: 'cityName',
@@ -336,9 +535,10 @@ const auctionsGridConfig: SuperGridConfig = {
       }) as unknown as z.ZodSchema<unknown>,
     },
     export: {
-      formats: ['excel', 'csv'],
+      formats: ['excel', 'csv', 'pdf'],
       excel: { includeStyles: true, sheetName: 'Leilões' },
       csv: { delimiter: ';', encoding: 'utf-8-sig', includeHeaders: true },
+      pdf: { title: 'Leilões SuperGrid', orientation: 'landscape' },
       maxRows: 50000,
     },
     selection: {
