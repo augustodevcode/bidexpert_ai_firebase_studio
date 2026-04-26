@@ -41,11 +41,15 @@ vi.mock('@/lib/permissions', () => ({
   hasPermission: () => false,
 }));
 
-vi.mock('@/lib/ui-helpers', () => ({
-  __esModule: true,
-  getAuctionStatusText: () => 'Aberto',
-  calculateMinimumBid: () => 12232.2,
-}));
+vi.mock('@/lib/ui-helpers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/ui-helpers')>();
+  return {
+    __esModule: true,
+    ...actual,
+    getAuctionStatusText: () => 'Aberto',
+    calculateMinimumBid: () => 12232.2,
+  };
+});
 
 vi.mock('@/lib/auction-timing', () => ({
   __esModule: true,
