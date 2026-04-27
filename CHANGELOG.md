@@ -6,6 +6,16 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.43](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.42...v1.0.0-demo.43) (2026-04-27)
+
+### Funcionalidades
+
+* implement supergrid for admin auctions with filters, persistence and pdf export ([5bf2eb3](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/5bf2eb38bb5033536bb8e92def3214957145e2a6))
+
+### Correções
+
+* repair broken supergrid deployment files ([9760e07](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/9760e07fd2b8d246f6a61c1f96810ceac71bff87))
+
 ## [1.0.0-demo.42](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.41...v1.0.0-demo.42) (2026-04-25)
 
 ### Correções
