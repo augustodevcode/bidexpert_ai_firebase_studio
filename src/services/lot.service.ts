@@ -393,6 +393,13 @@ export class LotService {
     );
   }
 
+  private isPlaceholderMediaUrl(url: string | null | undefined): boolean {
+    if (!url) return false;
+
+    const normalizedUrl = url.trim().toLowerCase();
+    return normalizedUrl.includes('picsum.photos/') || normalizedUrl.includes('placehold.co/');
+  }
+
   private async resolveInheritedMediaPayloadFromAsset(
     inheritedMediaFromAssetId: string,
     tenantId: bigint
@@ -462,30 +469,47 @@ export class LotService {
     }
 
     // Gallery Mapping Logic
-    let galleryImageUrls: string[] = [];
-    if (Array.isArray(lot.galleryImageUrls)) {
-      galleryImageUrls = [...lot.galleryImageUrls];
-    }
+    let galleryImageUrls = this.parseJsonStringArray(lot.galleryImageUrls);
+    const galleryHasMeaningfulMedia = galleryImageUrls.some((url) => !this.isPlaceholderMediaUrl(url));
+    const shouldFallbackToAssets = galleryImageUrls.length === 0 || !galleryHasMeaningfulMedia;
 
-    const shouldFallbackToAssets = galleryImageUrls.length === 0;
-
-    // Fallback for legacy lots without own gallery: derive from linked assets
+    // Fallback for legacy lots without own gallery or lots that still point to placeholder media.
     if (shouldFallbackToAssets && assetsOnLots) {
-        assetsOnLots.forEach((assetLink: any) => {
-            const asset = assetLink.Asset ?? assetLink.asset;
-            if (asset && Array.isArray(asset.AssetMedia)) {
-                 asset.AssetMedia.forEach((media: any) => {
-                     const mediaItem = media.MediaItem ?? media.mediaItem;
-                     if (mediaItem?.urlOriginal) {
-                         galleryImageUrls.push(mediaItem.urlOriginal);
-                     }
-                 });
-            }
+      const assetFallbackUrls: string[] = [];
+
+      assetsOnLots.forEach((assetLink: any) => {
+        const asset = assetLink.Asset ?? assetLink.asset;
+        if (!asset) return;
+
+        if (typeof asset.imageUrl === 'string' && asset.imageUrl.trim().length > 0 && !this.isPlaceholderMediaUrl(asset.imageUrl)) {
+          assetFallbackUrls.push(asset.imageUrl);
+        }
+
+        this.parseJsonStringArray(asset.galleryImageUrls).forEach((url) => {
+          if (!this.isPlaceholderMediaUrl(url)) {
+            assetFallbackUrls.push(url);
+          }
         });
+
+        if (Array.isArray(asset.AssetMedia)) {
+          asset.AssetMedia.forEach((media: any) => {
+            const mediaItem = media.MediaItem ?? media.mediaItem;
+            if (mediaItem?.urlOriginal && !this.isPlaceholderMediaUrl(mediaItem.urlOriginal)) {
+              assetFallbackUrls.push(mediaItem.urlOriginal);
+            }
+          });
+        }
+      });
+
+      if (assetFallbackUrls.length > 0) {
+        galleryImageUrls = Array.from(new Set(assetFallbackUrls));
+      }
     }
+
     // De-duplicate gallery
     galleryImageUrls = Array.from(new Set(galleryImageUrls));
-    if (!imageUrl && galleryImageUrls.length > 0) {
+
+    if ((!imageUrl || this.isPlaceholderMediaUrl(imageUrl)) && galleryImageUrls.length > 0) {
         imageUrl = galleryImageUrls[0];
     }
     if (imageUrl && !galleryImageUrls.includes(imageUrl)) {

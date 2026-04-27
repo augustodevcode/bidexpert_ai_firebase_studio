@@ -187,6 +187,54 @@ describe('LotService Image Mapping Logic', () => {
         expect(typeof result?.imageMediaId).toBe('string');
     });
 
+    it('should replace placeholder lot media with linked asset media when available', async () => {
+        const mockLot = {
+            id: BigInt(5),
+            publicId: 'LOTE-0155',
+            tenantId: BigInt(1),
+            auctionId: BigInt(1),
+            title: 'Lote com mídia placeholder',
+            imageUrl: 'https://picsum.photos/seed/flNk73NR8V/800/600',
+            galleryImageUrls: [
+                'https://picsum.photos/seed/flNk73NR8V/800/600',
+                'https://placehold.co/800x600.png?text=placeholder'
+            ],
+            AssetsOnLots: [
+                {
+                    Asset: {
+                        id: BigInt(77),
+                        tenantId: BigInt(1),
+                        title: 'Caminhão Utilitário X',
+                        imageUrl: 'https://example.com/truck-main.jpg',
+                        galleryImageUrls: ['https://example.com/truck-gallery-json.jpg'],
+                        AssetMedia: [
+                            { MediaItem: { urlOriginal: 'https://example.com/truck-gallery-1.jpg' } },
+                            { MediaItem: { urlOriginal: 'https://example.com/truck-gallery-2.jpg' } },
+                        ],
+                    },
+                },
+            ],
+            CoverImage: null,
+            _count: { Bid: 0 },
+            LotStagePrice: [],
+            JudicialProcess: [],
+            LotRisk: [],
+            LotDocument: [],
+        };
+
+        mockedPrisma.lot.findUnique.mockResolvedValue(mockLot as any);
+
+        const result = await service.findLotById('LOTE-0155', '1');
+
+        expect(result).not.toBeNull();
+        expect(result?.imageUrl).toBe('https://example.com/truck-main.jpg');
+        expect(result?.galleryImageUrls).toContain('https://example.com/truck-main.jpg');
+        expect(result?.galleryImageUrls).toContain('https://example.com/truck-gallery-json.jpg');
+        expect(result?.galleryImageUrls).toContain('https://example.com/truck-gallery-1.jpg');
+        expect(result?.galleryImageUrls).not.toContain('https://picsum.photos/seed/flNk73NR8V/800/600');
+        expect(result?.galleryImageUrls).not.toContain('https://placehold.co/800x600.png?text=placeholder');
+    });
+
     it('should persist imageMediaId through the CoverImage relation when updating a lot', async () => {
         mockedPrisma.lot.findUnique
             .mockResolvedValueOnce({
