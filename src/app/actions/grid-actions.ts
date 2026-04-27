@@ -6,6 +6,10 @@
  */
 'use server';
 
+import { FetchParamsSchema } from '@/components/super-grid/SuperGrid.types';
+import type { GridFetchParams, GridFetchResult } from '@/components/super-grid/SuperGrid.types';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { prisma } from '@/lib/prisma';
 import { getGridDataService } from '@/server/services/grid-data.service';
 import { sanitizeResponse } from '@/lib/serialization-helper';
 
@@ -14,7 +18,23 @@ function serializeData<T>(data: T): T {
 }
 
 /** Resolve o modelo Prisma dinamicamente a partir do nome da entidade */
-// (Removed getPrismaModel as it is now in the service)
+function getPrismaModel(entity: string) {
+  const key = entity.charAt(0).toLowerCase() + entity.slice(1);
+  const model = (prisma as unknown as Record<string, unknown>)[key];
+
+  if (!model) {
+    throw new Error(`[SuperGrid] Entidade Prisma não encontrada: ${entity}. Verifique o nome do modelo.`);
+  }
+
+  return model as {
+    findMany: (args: Record<string, unknown>) => Promise<unknown[]>;
+    count: (args: Record<string, unknown>) => Promise<number>;
+    create: (args: Record<string, unknown>) => Promise<unknown>;
+    update: (args: Record<string, unknown>) => Promise<unknown>;
+    findUnique: (args: Record<string, unknown>) => Promise<unknown | null>;
+    deleteMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
+  };
+}
 
 /**
  * Busca dados paginados de qualquer entidade Prisma.
@@ -23,47 +43,22 @@ function serializeData<T>(data: T): T {
 export async function fetchGridData(
   params: GridFetchParams
 ): Promise<GridFetchResult> {
+  const validated = FetchParamsSchema.parse(params);
+  const tenantId = await getTenantIdFromRequest();
   const startTime = Date.now();
 
-  // 1. Validação
-  const validated = FetchParamsSchema.parse(params);
-
-  // 2. Multi-tenant isolation
-  const tenantId = await getTenantIdFromRequest();
-
   try {
-    return await getGridDataService(validated, tenantId);
+    const result = await getGridDataService(validated, tenantId);
+    const elapsed = Date.now() - startTime;
+
+    console.log(
+      `[SuperGrid] ${validated.entity}: ${result.totalCount} registros, página ${validated.pagination.pageIndex}, ${elapsed}ms`
+    );
+
+    return serializeData(result);
   } catch (error) {
     console.error(`[fetchGridData] Erro ao buscar dados da entidade ${validated.entity}:`, error);
     throw error;
-  }
-}
-    const [data, totalCount] = await Promise.all([
-      model.findMany({
-        where,
-        orderBy,
-        skip: validated.pagination.pageIndex * validated.pagination.pageSize,
-        take: validated.pagination.pageSize,
-        include: Object.keys(include).length > 0 ? include : undefined,
-      }),
-      model.count({ where }),
-    ]);
-
-    const elapsed = Date.now() - startTime;
-    console.log(`[SuperGrid] ${validated.entity}: ${totalCount} registros, página ${validated.pagination.pageIndex}, ${elapsed}ms`);
-
-    return serializeData({
-      data: data as Record<string, unknown>[],
-      totalCount,
-      pageCount: Math.ceil(totalCount / validated.pagination.pageSize),
-    });
-  } catch (error) {
-    console.error(`[SuperGrid] Error fetching ${validated.entity}:`, error);
-    return serializeData({
-      data: [] as Record<string, unknown>[],
-      totalCount: 0,
-      pageCount: 0,
-    });
   }
 }
 

@@ -75,35 +75,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    {
-      // CSV
-      const csvString = generateCsvString(
-        allData.data,
-        columns,
-        {
-          delimiter: options?.delimiter || ';',
-          encoding: options?.encoding || 'utf-8-sig',
-          includeHeaders: options?.includeHeaders !== false,
-        }
-      );
+    const csvString = generateCsvString(
+      allData.data,
+      columns,
+      {
+        delimiter: options?.delimiter || ';',
+        encoding: options?.encoding || 'utf-8-sig',
+        includeHeaders: options?.includeHeaders !== false,
+      }
+    );
 
-      return new NextResponse(csvString, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename="export_${Date.now()}.csv"`,
-        },
-      });
-    }
+    return new NextResponse(csvString, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="export_${Date.now()}.csv"`,
+      },
+    });
   } catch (error) {
     console.error('[SuperGrid Export] Erro:', error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro interno na exportação' },
-      { status: 500 }
-    );
-  }
-}
-      { error: error instanceof Error ? error.message : 'Erro na exportação' },
       { status: 500 }
     );
   }
