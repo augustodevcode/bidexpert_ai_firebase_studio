@@ -1,4 +1,7 @@
-// src/app/admin/auctions/auction-form.tsx
+/**
+ * @fileoverview Renderiza o formulário clássico de cadastro e edição de leilões,
+ * incluindo participantes, praça, mídia, documentos, contato e opções operacionais.
+ */
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
@@ -65,6 +68,14 @@ const auctionStatusOptions = [
 const auctionTypeOptions = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'VENDA_DIRETA'];
 const auctionParticipationOptions = ['ONLINE', 'PRESENCIAL', 'HIBRIDO'];
 const auctionMethodOptions = ['STANDARD', 'DUTCH', 'SILENT'];
+
+const toDateTimeLocalInputValue = (value?: Date | string | null) => {
+  if (!value) return '';
+  const parsed = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(parsed.getTime())) return '';
+  const offset = parsed.getTimezoneOffset() * 60000;
+  return new Date(parsed.getTime() - offset).toISOString().slice(0, 16);
+};
 
 interface AuctionFormProps {
   initialData?: Partial<Auction> | null;
@@ -494,7 +505,9 @@ const renderSectionContent = (
           )} />
         </div>
       );
-    case 'opcoes':
+    case 'opcoes': {
+      const isProposalDeadlineRequired = Boolean(form.watch('allowProposals'));
+      const showProposalDeadlineField = Boolean(form.watch('allowProposals') || form.watch('directSaleEnabled'));
       return (
         <div className="space-y-4" data-ai-id="auction-form-section-opcoes">
           {watchedAuctionMethod === 'DUTCH' && (
@@ -556,6 +569,92 @@ const renderSectionContent = (
               <FormMessage />
             </FormItem>
           )} />
+          <section className="space-y-4 rounded-lg border p-4" data-ai-id="auction-sale-modes-card" aria-labelledby="auction-sale-modes-heading">
+            <div className="flex items-center gap-2">
+              <Gavel className="h-5 w-5" aria-hidden="true" />
+              <h3 id="auction-sale-modes-heading" className="text-lg font-semibold">Modalidades de venda</h3>
+            </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField control={form.control} name="allowSublots" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background" data-ai-id="auction-sale-mode-allow-sublots">
+                    <div className="space-y-0.5">
+                      <FormLabel>Permitir Sublote</FormLabel>
+                      <FormDescription>Permite dividir o leilão em sublotes operacionais.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch data-ai-id="auction-sale-mode-allow-sublots-switch" checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="perLotEnrollmentEnabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background" data-ai-id="auction-sale-mode-per-lot-enrollment">
+                    <div className="space-y-0.5">
+                      <FormLabel>Habilitação por Lote</FormLabel>
+                      <FormDescription>Exige habilitação específica para participar por lote.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch data-ai-id="auction-sale-mode-per-lot-enrollment-switch" checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="preferenceRightEnabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background" data-ai-id="auction-sale-mode-preference-right">
+                    <div className="space-y-0.5">
+                      <FormLabel>Direito de Preferência</FormLabel>
+                      <FormDescription>Marca o leilão como elegível para preferência operacional.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch data-ai-id="auction-sale-mode-preference-right-switch" checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="allowProposals" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background" data-ai-id="auction-sale-mode-allow-proposals">
+                    <div className="space-y-0.5">
+                      <FormLabel>Permitir Propostas</FormLabel>
+                      <FormDescription>Recebe propostas formais antes ou durante a negociação.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch data-ai-id="auction-sale-mode-allow-proposals-switch" checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="directSaleEnabled" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background" data-ai-id="auction-sale-mode-direct-sale">
+                    <div className="space-y-0.5">
+                      <FormLabel>Venda Direta</FormLabel>
+                      <FormDescription>Permite negociação direta vinculada ao leilão.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch data-ai-id="auction-sale-mode-direct-sale-switch" checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )} />
+              </div>
+              {showProposalDeadlineField && (
+                <FormField control={form.control} name="proposalDeadline" render={({ field }) => (
+                  <FormItem data-ai-id="auction-proposal-deadline-field">
+                    <FormLabel>
+                      Data Limite para Propostas{isProposalDeadlineRequired ? <span aria-hidden="true"> *</span> : null}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="datetime-local"
+                        data-ai-id="auction-proposal-deadline-input"
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        value={toDateTimeLocalInputValue(field.value)}
+                        onChange={(event) => field.onChange(event.target.value ? new Date(event.target.value) : null)}
+                        aria-required={isProposalDeadlineRequired || undefined}
+                      />
+                    </FormControl>
+                    <FormDescription>Obrigatória quando o leilão aceita propostas.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              )}
+          </section>
           <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
               <div className="space-y-0.5">
@@ -634,6 +733,7 @@ const renderSectionContent = (
           )} />
         </div>
       );
+    }
     default:
       return null;
   }
@@ -671,6 +771,14 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       auctionMethod: initialData?.auctionMethod ?? '',
       participation: initialData?.participation ?? '',
       status: initialData?.status ?? '',
+      allowSublots: (initialData as Partial<AuctionFormValues>)?.allowSublots ?? false,
+      perLotEnrollmentEnabled: (initialData as Partial<AuctionFormValues>)?.perLotEnrollmentEnabled ?? false,
+      preferenceRightEnabled: (initialData as Partial<AuctionFormValues>)?.preferenceRightEnabled ?? false,
+      allowProposals: (initialData as Partial<AuctionFormValues>)?.allowProposals ?? false,
+      directSaleEnabled: (initialData as Partial<AuctionFormValues>)?.directSaleEnabled ?? false,
+      proposalDeadline: (initialData as Partial<AuctionFormValues>)?.proposalDeadline
+        ? new Date((initialData as Partial<AuctionFormValues>).proposalDeadline as Date)
+        : null,
       softCloseEnabled: initialData?.softCloseEnabled ?? false,
       softCloseMinutes: initialData?.softCloseMinutes ?? 2,
       auctionStages: initialData?.auctionStages?.length

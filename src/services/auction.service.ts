@@ -66,6 +66,8 @@ export class AuctionService {
       'onlineUrl', 'address', 'addressLink', 'zipCode',
       'latitude', 'longitude', 'documentsUrl',
       'isFeaturedOnMarketplace', 'softCloseEnabled', 'softCloseMinutes',
+      'allowSublots', 'perLotEnrollmentEnabled', 'preferenceRightEnabled',
+      'allowProposals', 'directSaleEnabled', 'proposalDeadline',
       'achievedRevenue', 'evaluationReportUrl', 'auctionCertificateUrl',
       'floorPrice', 'decrementAmount', 'decrementIntervalSeconds',
       'sellingBranch', 'additionalTriggers',
@@ -971,6 +973,12 @@ export class AuctionService {
           supportEmail: auctionToUpdate.supportEmail,
           supportWhatsApp: auctionToUpdate.supportWhatsApp,
           sellingBranch: auctionToUpdate.sellingBranch,
+          allowSublots: auctionToUpdate.allowSublots,
+          perLotEnrollmentEnabled: auctionToUpdate.perLotEnrollmentEnabled,
+          preferenceRightEnabled: auctionToUpdate.preferenceRightEnabled,
+          allowProposals: auctionToUpdate.allowProposals,
+          directSaleEnabled: auctionToUpdate.directSaleEnabled,
+          proposalDeadline: auctionToUpdate.proposalDeadline,
         };
 
         await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });

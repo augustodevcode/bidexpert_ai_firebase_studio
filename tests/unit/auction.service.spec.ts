@@ -143,6 +143,28 @@ describe('AuctionService', () => {
       expect(result.success).toBe(true);
     });
 
+    it('persiste modalidades de venda ABA no Auction', async () => {
+      const proposalDeadline = new Date('2026-05-06T18:00:00.000Z');
+      const result = await service.updateAuction('1', '40', {
+        allowSublots: true,
+        perLotEnrollmentEnabled: true,
+        preferenceRightEnabled: true,
+        allowProposals: true,
+        directSaleEnabled: true,
+        proposalDeadline,
+      });
+
+      expect(tx.auction.update).toHaveBeenCalledOnce();
+      const updateArgs = tx.auction.update.mock.calls[0][0];
+      expect(updateArgs.data.allowSublots).toBe(true);
+      expect(updateArgs.data.perLotEnrollmentEnabled).toBe(true);
+      expect(updateArgs.data.preferenceRightEnabled).toBe(true);
+      expect(updateArgs.data.allowProposals).toBe(true);
+      expect(updateArgs.data.directSaleEnabled).toBe(true);
+      expect(updateArgs.data.proposalDeadline).toEqual(proposalDeadline);
+      expect(result.success).toBe(true);
+    });
+
     it('falha antes de recriar estágios quando endDate está ausente', async () => {
       const result = await service.updateAuction('1', '40', {
         auctionStages: [

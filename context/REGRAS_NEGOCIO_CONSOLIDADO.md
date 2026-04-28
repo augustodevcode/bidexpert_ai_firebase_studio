@@ -388,7 +388,28 @@ Schemas Zod + `react-hook-form` em todos formulários
 - **E** as preferências operacionais são salvas automaticamente com indicador visual
 - **E** processo judicial e leilão de destino não são restaurados como preferência persistente em uma nova sessão
 
-### RN-010G: Auditoria mínima no topo do formulário de leilão
+### RN-010G: Modalidades de Venda no Cadastro de Leilões
+✅ O cadastro administrativo de leilões DEVE persistir as modalidades de venda observadas no fluxo ABA: `Permitir Sublote`, `Habilitação por Lote`, `Direito de Preferência`, `Permitir Propostas`, `Venda Direta` e `Data Limite para Propostas`.
+✅ Os formulários clássico e V2 de leilão DEVEM expor o mesmo contrato de modalidades de venda, usando rótulos equivalentes e salvando nos mesmos campos do modelo `Auction`.
+✅ Quando `Permitir Propostas` estiver habilitado, `Data Limite para Propostas` DEVE ser obrigatório, visível e persistido como data/hora do leilão.
+✅ `Venda Direta` pode ser habilitada independentemente de propostas, mas quando combinada com propostas deve compartilhar o mesmo prazo de recebimento de propostas.
+✅ Os controles de modalidades de venda DEVEM ter `data-ai-id` estável para validação automatizada e suporte operacional.
+
+**RCA / prevenção:** O gap de paridade com o ABA ocorreu porque BidExpert tratava lances, marketplace e soft close como opções de leilão, mas não possuía contrato persistente para modalidades operacionais de venda que impactam habilitação, preferência e negociação direta. Esses campos precisam ser parte do modelo do leilão, não apenas instruções textuais.
+
+**Cenário BDD - Modalidades de venda são salvas no leilão**
+- **Dado** que o administrador está editando um leilão
+- **Quando** habilita propostas, direito de preferência e venda direta com prazo de propostas
+- **Então** o leilão salva as modalidades selecionadas
+- **E** ao reabrir o cadastro os controles aparecem com os valores persistidos
+
+**Cenário BDD - Propostas exigem data limite**
+- **Dado** que o administrador habilitou `Permitir Propostas`
+- **Quando** tenta salvar sem preencher `Data Limite para Propostas`
+- **Então** o formulário bloqueia a submissão
+- **E** informa que a data limite é obrigatória para receber propostas
+
+### RN-010H: Auditoria mínima no topo do formulário de leilão
 ✅ Superfícies administrativas de edição/cadastro de leilão DEVEM expor um resumo mínimo de auditoria quando existirem dados auditáveis da entidade atual.
 ✅ O resumo mínimo DEVE mostrar, no mínimo: `Criado por`, `Atualizado em`, `Enviado para validação`, `Validado por` e `Validado em`, com fallback explícito quando alguma informação ainda não existir.
 ✅ Quando o leilão já existir, o bloco de auditoria DEVE oferecer atalho direto para `/admin/auctions/{auctionId}/history`.

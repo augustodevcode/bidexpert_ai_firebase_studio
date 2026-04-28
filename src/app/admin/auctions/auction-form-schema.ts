@@ -24,6 +24,10 @@ const autoRelistSettingsSchema = z.object({
 
 // Helper to validate URLs but allow them to be empty strings. This prevents saving "https:///" alone.
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
+const optionalDateTimeSchema = z.preprocess(
+  (value) => (value === '' || value === undefined || value === null ? null : value),
+  z.coerce.date({ invalid_type_error: 'Data inválida.' }).nullable().optional()
+);
 
 const auctionStageSchema = z.object({
   id: z.string().optional(),
@@ -89,6 +93,12 @@ export const auctionFormSchema = z.object({
   allowInstallmentBids: z.boolean().optional().default(true),
   silentBiddingEnabled: z.boolean().optional().default(false),
   allowMultipleBidsPerUser: z.boolean().optional().default(true),
+  allowSublots: z.boolean().optional().default(false),
+  perLotEnrollmentEnabled: z.boolean().optional().default(false),
+  preferenceRightEnabled: z.boolean().optional().default(false),
+  allowProposals: z.boolean().optional().default(false),
+  directSaleEnabled: z.boolean().optional().default(false),
+  proposalDeadline: optionalDateTimeSchema,
   softCloseEnabled: z.boolean().optional().default(false), 
   softCloseMinutes: z.coerce.number().int().min(1, "Mínimo de 1 minuto").max(30, "Máximo de 30 minutos").optional().default(2), 
   estimatedRevenue: z.coerce.number().positive({message: "Estimativa deve ser positiva."}).optional().nullable(),
@@ -124,6 +134,11 @@ export const auctionFormSchema = z.object({
 }, {
     message: "Para Leilões Holandeses, o Valor do Decremento, Intervalo e Preço Mínimo são obrigatórios.",
     path: ["decrementAmount"],
+}).refine(data => {
+  return !data.allowProposals || !!data.proposalDeadline;
+}, {
+  message: "Informe a data limite para receber propostas.",
+  path: ["proposalDeadline"],
 });
 
 
