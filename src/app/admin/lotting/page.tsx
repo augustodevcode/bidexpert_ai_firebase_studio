@@ -20,7 +20,7 @@ import { getAuctions } from '../auctions/actions';
 import { createLot } from '../lots/actions';
 import { getLottingSnapshotAction } from './actions';
 import type { JudicialProcess, Asset, Auction } from '@/types';
-import type { LottingFilterState, LottingSnapshot } from '@/types/lotting';
+import type { LottingFilterState, LottingMode, LottingSnapshot } from '@/types/lotting';
 import CreateLotFromAssetsModal from '@/components/admin/lotting/create-lot-modal';
 import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import { createColumns } from '@/components/admin/lotting/columns';
@@ -29,6 +29,11 @@ import {
   buildJudicialProcessSelectorOptions,
   judicialProcessSelectorColumns,
 } from '@/components/admin/judicial-processes/judicial-process-selector-config';
+import {
+  getDefaultLottingFilters,
+  loadLottingPreferences,
+  saveLottingPreferences,
+} from '@/lib/lotting/preferences';
 
 const severityStyles = {
   high: 'bg-red-100 text-red-800',
@@ -36,12 +41,70 @@ const severityStyles = {
   low: 'bg-slate-100 text-slate-800',
 } as const;
 
+const lottingModeConfig: Record<
+  LottingMode,
+  {
+    label: string;
+    title: string;
+    description: string;
+    filterPatch: Partial<LottingFilterState>;
+  }
+> = {
+  quick: {
+    label: 'Modo rápido',
+    title: 'Seleção assistida para operação imediata',
+    description:
+      'Mantém o fluxo padrão do BidExpert para selecionar ativos elegíveis e gerar lotes com poucos cliques.',
+    filterPatch: {},
+  },
+  spreadsheet: {
+    label: 'Modo planilha operacional',
+    title: 'Revisão em massa com contexto persistido',
+    description:
+      'Prioriza a conferência em massa. Ao ativar este modo, o operador já vê também ativos previamente agrupados para reconciliação rápida.',
+    filterPatch: {
+      includeGroupedAssets: true,
+    },
+  },
+  ai: {
+    label: 'Modo IA assistida',
+    title: 'Priorização por alertas e sinais inteligentes',
+    description:
+      'Destaca ativos sinalizados pela IA e coloca o painel de alertas judiciais antes da grade para acelerar a triagem operacional.',
+    filterPatch: {
+      onlyHighlighted: true,
+    },
+  },
+};
+
+type LottingAutosaveState = 'idle' | 'saving' | 'saved' | 'error';
+
 const formatCurrency = (value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const formatSavedAt = (timestamp: string | null) => {
+  if (!timestamp) {
+    return null;
+  }
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 export default function LoteamentoPage() {
   const [processes, setProcesses] = useState<JudicialProcess[]>([]);
   const [auctions, setAuctions] = useState<Auction[]>([]);
-  const [filters, setFilters] = useState<LottingFilterState>({ includeGroupedAssets: false, onlyHighlighted: false, minimumValuation: 0 });
+  const [filters, setFilters] = useState<LottingFilterState>(getDefaultLottingFilters());
+  const [lottingMode, setLottingMode] = useState<LottingMode>('quick');
+  const [autosaveState, setAutosaveState] = useState<LottingAutosaveState>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [hasLoadedPreferences, setHasLoadedPreferences] = useState(false);
   const [snapshot, setSnapshot] = useState<LottingSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSnapshotLoading, setIsSnapshotLoading] = useState(true);
@@ -61,6 +124,24 @@ export default function LoteamentoPage() {
     () => buildJudicialProcessSelectorOptions(processes),
     [processes]
   );
+  const activeModeConfig = lottingModeConfig[lottingMode];
+  const showInsightsFirst = lottingMode === 'ai';
+  const autosaveLabel = useMemo(() => {
+    if (autosaveState === 'saving') {
+      return 'Salvando preferências...';
+    }
+
+    if (autosaveState === 'error') {
+      return 'Falha ao salvar preferências';
+    }
+
+    const savedAt = formatSavedAt(lastSavedAt);
+    if (savedAt) {
+      return `Preferências salvas às ${savedAt}`;
+    }
+
+    return 'Auto-save ativo';
+  }, [autosaveState, lastSavedAt]);
 
   const auctionOptions = useMemo(() => auctions.map(a => {
     const formattedDate = a.auctionDate ? new Date(a.auctionDate).toLocaleDateString('pt-BR') : 'Data não definida';
@@ -103,6 +184,53 @@ export default function LoteamentoPage() {
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const storedPreferences = loadLottingPreferences(window.localStorage);
+
+    setLottingMode(storedPreferences.mode);
+    setFilters((previous) => ({
+      ...previous,
+      ...storedPreferences.filters,
+    }));
+    setLastSavedAt(storedPreferences.updatedAt ?? null);
+    setAutosaveState(storedPreferences.updatedAt ? 'saved' : 'idle');
+    setHasLoadedPreferences(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedPreferences || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      setAutosaveState('saving');
+
+      const savedPreferences = saveLottingPreferences(
+        {
+          mode: lottingMode,
+          filters,
+        },
+        window.localStorage,
+      );
+
+      setLastSavedAt(savedPreferences.updatedAt ?? null);
+      setAutosaveState('saved');
+    } catch (error) {
+      console.error(error);
+      setAutosaveState('error');
+    }
+  }, [
+    filters.includeGroupedAssets,
+    filters.minimumValuation,
+    filters.onlyHighlighted,
+    hasLoadedPreferences,
+    lottingMode,
+  ]);
 
   useEffect(() => {
     fetchSnapshot(filters);
@@ -180,6 +308,14 @@ export default function LoteamentoPage() {
 
   const handleFilterChange = (partial: Partial<LottingFilterState>) => {
     setFilters(prev => ({ ...prev, ...partial }));
+  };
+
+  const handleModeChange = (nextMode: LottingMode) => {
+    setLottingMode(nextMode);
+    setFilters((previous) => ({
+      ...previous,
+      ...lottingModeConfig[nextMode].filterPatch,
+    }));
   };
 
   const handleRefreshSnapshot = () => fetchSnapshot(filters);
@@ -305,10 +441,56 @@ export default function LoteamentoPage() {
                 />
               </div>
             </div>
+            <Card data-ai-id="lotting-mode-card">
+              <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <CardTitle className="text-base">Modos operacionais</CardTitle>
+                  <CardDescription>
+                    {activeModeConfig.title}. {activeModeConfig.description}
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary" data-ai-id="lotting-autosave-badge">
+                  {autosaveLabel}
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div
+                  aria-label="Modo de loteamento"
+                  className="grid gap-2 md:grid-cols-3"
+                  role="radiogroup"
+                >
+                  {(Object.entries(lottingModeConfig) as Array<[LottingMode, (typeof lottingModeConfig)[LottingMode]]>).map(([modeKey, config]) => (
+                    <Button
+                      key={modeKey}
+                      aria-checked={lottingMode === modeKey}
+                      className="justify-start"
+                      data-ai-id={`lotting-mode-${modeKey}`}
+                      onClick={() => handleModeChange(modeKey)}
+                      role="radio"
+                      type="button"
+                      variant={lottingMode === modeKey ? 'default' : 'outline'}
+                    >
+                      {config.label}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="rounded-lg border bg-muted/40 p-3" data-ai-id="lotting-mode-summary">
+                  <p className="text-sm font-medium">{activeModeConfig.title}</p>
+                  <p className="text-sm text-muted-foreground">{activeModeConfig.description}</p>
+                </div>
+              </CardContent>
+            </Card>
             <Card data-ai-id="lotting-toggle-card">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Preferências inteligentes</CardTitle>
-                <CardDescription>Refine os ativos sugeridos pela IA.</CardDescription>
+                <CardDescription>
+                  {lottingMode === 'spreadsheet'
+                    ? 'As preferências abaixo ficam persistidas localmente para apoiar a revisão operacional em massa.'
+                    : lottingMode === 'ai'
+                      ? 'As preferências abaixo refinam a triagem de ativos sinalizados e alimentam a priorização assistida.'
+                      : 'Refine os ativos sugeridos pela IA.'}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -316,7 +498,7 @@ export default function LoteamentoPage() {
                     <p className="text-sm font-medium">Incluir ativos já loteados</p>
                     <p className="text-xs text-muted-foreground">Mostra ativos em lotes existentes.</p>
                   </div>
-                  <Switch checked={!!filters.includeGroupedAssets} onCheckedChange={(value) => handleFilterChange({ includeGroupedAssets: value })} data-ai-id="lotting-toggle-include-grouped" />
+                  <Switch aria-label="Incluir ativos já loteados" checked={!!filters.includeGroupedAssets} onCheckedChange={(value) => handleFilterChange({ includeGroupedAssets: value })} data-ai-id="lotting-toggle-include-grouped" />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -324,7 +506,7 @@ export default function LoteamentoPage() {
                     <p className="text-sm font-medium">Somente ativos sinalizados</p>
                     <p className="text-xs text-muted-foreground">Usa dicas de IA para priorizar ativos.</p>
                   </div>
-                  <Switch checked={!!filters.onlyHighlighted} onCheckedChange={(value) => handleFilterChange({ onlyHighlighted: value })} data-ai-id="lotting-toggle-ai" />
+                  <Switch aria-label="Somente ativos sinalizados" checked={!!filters.onlyHighlighted} onCheckedChange={(value) => handleFilterChange({ onlyHighlighted: value })} data-ai-id="lotting-toggle-ai" />
                 </div>
                 <Separator />
                 <div>
@@ -347,7 +529,13 @@ export default function LoteamentoPage() {
               <CardHeader className="flex flex-row justify-between items-center">
                 <div>
                   <CardTitle className="text-lg flex items-center gap-2" data-ai-id="lotting-assets-title"><Package className="h-4 w-4" /> Ativos compatíveis</CardTitle>
-                  <CardDescription>Selecione ativos para loteamento.</CardDescription>
+                  <CardDescription>
+                    {lottingMode === 'spreadsheet'
+                      ? 'Revise os ativos em massa e mantenha o contexto do operador salvo automaticamente entre sessões.'
+                      : lottingMode === 'ai'
+                        ? 'Selecione ativos para loteamento com prioridade nos sinais inteligentes e alertas judiciais.'
+                        : 'Selecione ativos para loteamento.'}
+                  </CardDescription>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <Button onClick={handleCreateIndividualLotsClick} variant="outline" disabled={selectedAssets.length === 0 || isSubmitting} data-ai-id="lotting-action-individual">
@@ -382,10 +570,19 @@ export default function LoteamentoPage() {
 
             {renderKpis()}
 
-            <div className="grid lg:grid-cols-2 gap-4">
-              {renderAlerts()}
-              {renderLotsSummary()}
-            </div>
+            {showInsightsFirst ? (
+              <div className="grid lg:grid-cols-2 gap-4">
+                {renderAlerts()}
+                {renderLotsSummary()}
+              </div>
+            ) : null}
+
+            {!showInsightsFirst ? (
+              <div className="grid lg:grid-cols-2 gap-4">
+                {renderAlerts()}
+                {renderLotsSummary()}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>
