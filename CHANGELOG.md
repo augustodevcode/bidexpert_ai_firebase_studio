@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.48](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.47...v1.0.0-demo.48) (2026-04-28)
+
+### Funcionalidades
+
+* add auction sale mode controls ([#745](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/issues/745)) ([674d724](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/674d72410dedf81fc902cdae9c75977f7944d235))
+
 ## [1.0.0-demo.47](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.46...v1.0.0-demo.47) (2026-04-28)
 
 ### Funcionalidades
