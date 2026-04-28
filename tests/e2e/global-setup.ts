@@ -65,7 +65,7 @@ function resolveTenantPattern(baseUrl: URL) {
 }
 
 async function globalSetup(config: FullConfig) {
-  const baseURL = process.env.BASE_URL || config.projects[0].use.baseURL || 'http://localhost:9005';
+  const baseURL = (process.env.BASE_URL || config.projects[0].use.baseURL || 'http://localhost:9005').trim();
   const baseUrlObject = new URL(baseURL);
   const isDemoTenant = baseUrlObject.hostname.startsWith('demo.') || baseUrlObject.hostname.includes('demo');
   const bypassHeaders = buildBypassHeaders();

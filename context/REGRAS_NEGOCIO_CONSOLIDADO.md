@@ -364,6 +364,8 @@ Schemas Zod + `react-hook-form` em todos formulários
 ✅ A tela de edição do leilão e superfícies correlatas DEVEM buscar lotes somente por filtro explícito de `auctionId`, respeitando a assinatura real de `getLots`, para impedir vazamento de lotes de outros leilões.
 ✅ O histórico de alterações do leilão só é considerado íntegro quando a mutation persistir registros de auditoria e o endpoint de leitura conseguir normalizar eventos armazenados em `changes` e também em `oldValues/newValues`.
 ✅ A numeração visível dos lotes no wizard e no controle de preparação DEVE sair de uma regra centralizada, e não de contagem local de array sujeita a reinício após re-fetches ou agrupamentos.
+✅ O loteamento administrativo DEVE expor modos operacionais explícitos (`Rápido`, `Planilha Operacional`, `IA Assistida`) para que o operador entenda em qual estratégia de triagem está atuando antes de criar lotes.
+✅ As preferências operacionais do loteamento (modo, incluir agrupados, somente sinalizados e valor mínimo) DEVEM ser auto-salvas localmente com feedback visual imediato, sem persistir seleções transitórias de processo/leilão como se fossem preferência estável.
 
 **RCA / prevenção:** Os bugs de imagem principal, vazamento de lotes e histórico vazio surgiram porque os contratos reais dos componentes/serviços compartilhados não estavam sendo respeitados: a biblioteca de mídia retornava outros campos, `getLots` exigia filtro estruturado e a trilha de auditoria não estava sendo lida e persistida de forma compatível entre caminhos diferentes.
 
@@ -378,6 +380,13 @@ Schemas Zod + `react-hook-form` em todos formulários
 - **Quando** o usuário abre a tela de edição
 - **Então** apenas os lotes do `auctionId` atual são exibidos
 - **E** a aba de histórico mostra mudanças persistidas da entidade em formato legível
+
+**Cenário BDD - Loteamento salva modo operacional automaticamente**
+- **Dado** que o operador está na tela administrativa de loteamento
+- **Quando** ele alterna entre `Rápido`, `Planilha Operacional` e `IA Assistida`
+- **Então** a tela deixa claro qual modo está ativo
+- **E** as preferências operacionais são salvas automaticamente com indicador visual
+- **E** processo judicial e leilão de destino não são restaurados como preferência persistente em uma nova sessão
 
 ### RN-010G: Auditoria mínima no topo do formulário de leilão
 ✅ Superfícies administrativas de edição/cadastro de leilão DEVEM expor um resumo mínimo de auditoria quando existirem dados auditáveis da entidade atual.

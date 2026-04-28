@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 const shouldStartWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER !== '1';
 const isCI = process.env.CI === '1' || process.env.CI === 'true';
 
-const baseURL = process.env.BASE_URL || 'http://localhost:9002';
+const baseURL = (process.env.BASE_URL || 'http://localhost:9002').trim();
 
 export default defineConfig({
 	testDir: './tests/e2e',

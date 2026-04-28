@@ -9,6 +9,8 @@ export type LottingFilterState = {
   minimumValuation?: number;
 };
 
+export type LottingMode = 'quick' | 'spreadsheet' | 'ai';
+
 export type LottingKpi = {
   id: string;
   label: string;
