@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.46](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.45...v1.0.0-demo.46) (2026-04-28)
+
+### Funcionalidades
+
+* **admin:** align judicial selector and audit summary ([9281834](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/92818344aa7a761ed550370885d460e5acbd4abf))
+
 ## [1.0.0-demo.45](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.44...v1.0.0-demo.45) (2026-04-27)
 
 ### Correções
