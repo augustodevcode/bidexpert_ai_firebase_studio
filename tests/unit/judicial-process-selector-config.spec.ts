@@ -54,7 +54,6 @@ describe('judicial-process-selector-config', () => {
         sellerName: 'Massa Falida XPTO',
         lotCount: 5,
         assetCount: 2,
-        auctions: [],
         lots: [],
         assets: [],
       },

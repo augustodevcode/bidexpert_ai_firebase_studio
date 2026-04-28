@@ -1,5 +1,6 @@
 /**
- * @fileoverview Configuração compartilhada do grid/modal de seleção de Processo Judicial.
+ * @fileoverview Configuração compartilhada do seletor de processos judiciais.
+ * Centraliza as colunas e a montagem de opções ricas para evitar seleções ambíguas.
  */
 
 import type { JudicialProcess } from '@/types';

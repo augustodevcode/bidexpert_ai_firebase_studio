@@ -21,6 +21,10 @@ import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import EntitySelector from '@/components/ui/entity-selector';
+import {
+    buildJudicialProcessSelectorOptions,
+    judicialProcessSelectorColumns,
+} from '@/components/admin/judicial-processes/judicial-process-selector-config';
 import AddressGroup from '@/components/address-group';
 import AssetSpecificFields from './asset-specific-fields';
 import { CrudFormLayout } from '@/components/crud/crud-form-layout';
@@ -131,6 +135,10 @@ export function AssetFormV2({
     const watchedMainImageUrl = useWatch({ control: form.control, name: 'imageUrl' });
     const watchedGalleryImageUrls = useWatch({ control: form.control, name: 'galleryImageUrls' }) || [];
   const selectedCategory = safeCategories.find(c => c.id.toString() === selectedCategoryId);
+    const judicialProcessOptions = React.useMemo(
+        () => buildJudicialProcessSelectorOptions(safeProcesses),
+        [safeProcesses]
+    );
   console.log('AssetFormV2: selectedCategoryId', selectedCategoryId);
   console.log('AssetFormV2: selectedCategory', selectedCategory);
 
@@ -421,13 +429,15 @@ export function AssetFormV2({
                                     <FormItem>
                                         <FormLabel>Processo Judicial (Opcional)</FormLabel>
                                         <EntitySelector
-                                            entityName="process"
-                                            options={safeProcesses.map(p => ({ value: p.id.toString(), label: p.processNumber }))}
+                                            entityName="processo judicial"
+                                            options={judicialProcessOptions}
                                             value={field.value || ''}
                                             onChange={field.onChange}
                                             placeholder="Vincular a processo..."
-                                            searchPlaceholder="Buscar processo..."
+                                            searchPlaceholder="Buscar processo, comitente, vara, comarca, tribunal, partes, matrícula, registro ou CNJ..."
                                             emptyStateMessage="Nenhum processo encontrado."
+                                            displayColumns={judicialProcessSelectorColumns}
+                                            dialogDescription="Selecione o processo judicial correto. O grid mostra número, comitente, vara, comarca, tribunal, partes e os totais de bens/lotes para evitar seleção ambígua."
                                         />
                                         <FormMessage />
                                     </FormItem>

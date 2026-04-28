@@ -4,14 +4,10 @@
 
 import { expect, test } from '@playwright/test';
 
-import { loginAsAdmin } from '../helpers/auth-helper';
-
-const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL ?? 'http://demo.localhost:9006';
+const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL ?? process.env.BASE_URL ?? 'http://demo.localhost:9006';
 
 test('admin auction form mostra colunas ampliadas no selector de processo judicial', async ({ page }) => {
   test.setTimeout(240_000);
-
-  await loginAsAdmin(page, BASE_URL);
 
   await page.request.get(`${BASE_URL}/admin/auctions/new`, {
     failOnStatusCode: false,

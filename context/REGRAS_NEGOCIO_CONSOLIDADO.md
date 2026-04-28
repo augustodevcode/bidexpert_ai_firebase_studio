@@ -252,6 +252,8 @@ Schemas Zod + `react-hook-form` em todos formulários
 ✅ As colunas `Bens` e `Lotes` são obrigatórias e não podem ser removidas do grid judicial.
 ✅ A busca textual do modal deve considerar todas as propriedades exibidas no grid, para permitir distinção determinística entre processos parecidos.
 ✅ A regra vale para qualquer superfície administrativa que reutilize o seletor judicial, inclusive wizard e formulário administrativo de leilão.
+✅ As superfícies `auction-form`, `auction-form-v2`, `asset-form-v2` e `lotting/page` DEVEM consumir o helper compartilhado `buildJudicialProcessSelectorOptions` com `judicialProcessSelectorColumns`; é proibido voltar a montar opções simplificadas locais com apenas `processNumber`.
+✅ Os headers do grid judicial DEVEM manter `data-ai-id` estáveis (`judicial-process-selector-header-*`) para garantir regressão automatizada do modal compartilhado.
 
 ### RN-010C: Busca Global do Admin (Command Palette)
 ✅ A busca global do Admin DEVE estar montada no layout administrativo legado e ser acionável pelo botão do header (`data-ai-id="admin-header-search-button"`) e pelo atalho de teclado.
@@ -282,6 +284,12 @@ Schemas Zod + `react-hook-form` em todos formulários
 - **Quando** o fluxo do wizard precisa vincular o processo de referência
 - **Então** o processo é selecionado pelo número exato
 - **E** nunca pela primeira linha disponível da listagem
+
+**Cenário BDD - Superfícies compartilham o mesmo grid judicial**
+- **Dado** que o admin abre o seletor de processo judicial no leilão, no ativo ou no loteamento
+- **Quando** o modal de processo é exibido
+- **Então** as mesmas colunas ampliadas permanecem visíveis em todas as telas
+- **E** a busca textual continua cobrindo comitente, vara, comarca, tribunal, partes, matrícula, registro e CNJ
 
 ### RN-010B: Publicação de Leilão deve ser idempotente para slug
 ✅ A criação de leilão DEVE tolerar colisão de `slug` em reexecuções de testes e cadastros repetidos, gerando um sufixo incremental quando houver conflito de unicidade.
@@ -370,6 +378,18 @@ Schemas Zod + `react-hook-form` em todos formulários
 - **Quando** o usuário abre a tela de edição
 - **Então** apenas os lotes do `auctionId` atual são exibidos
 - **E** a aba de histórico mostra mudanças persistidas da entidade em formato legível
+
+### RN-010G: Auditoria mínima no topo do formulário de leilão
+✅ Superfícies administrativas de edição/cadastro de leilão DEVEM expor um resumo mínimo de auditoria quando existirem dados auditáveis da entidade atual.
+✅ O resumo mínimo DEVE mostrar, no mínimo: `Criado por`, `Atualizado em`, `Enviado para validação`, `Validado por` e `Validado em`, com fallback explícito quando alguma informação ainda não existir.
+✅ Quando o leilão já existir, o bloco de auditoria DEVE oferecer atalho direto para `/admin/auctions/{auctionId}/history`.
+✅ O resumo é complementar ao histórico completo: ele não substitui a aba/página de histórico nem pode omitir o link quando houver entidade persistida.
+
+**Cenário BDD - Resumo mínimo de auditoria aparece na edição**
+- **Dado** que o admin abriu o formulário de um leilão já persistido
+- **Quando** a tela de edição é renderizada
+- **Então** o topo do formulário mostra os metadados mínimos de auditoria disponíveis
+- **E** existe um atalho para abrir o histórico completo do leilão
 
 ### RN-011: Campo Propriedades em Formulários
 Campo "Propriedades" é um **campo de texto simples**  

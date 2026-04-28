@@ -43,6 +43,7 @@ import AddressGroup from '@/components/address-group';
 import { getLotCategories } from '../categories/actions';
 import { ChangeHistoryTab } from '@/components/audit/change-history-tab';
 import { ParticipantCard, type ParticipantCardData } from '@/components/admin/participant-card';
+import { AuctionAuditSummary } from '@/components/admin/auctions/auction-audit-summary';
 import { AuctionDocumentsField } from '@/components/admin/auctions/auction-documents-field';
 import {
   buildJudicialProcessSelectorOptions,
@@ -798,6 +799,15 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
         <FormProvider {...form}>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+              <AuctionAuditSummary
+                createdByUserId={initialData?.createdByUserId ?? null}
+                updatedAt={initialData?.updatedAt ?? null}
+                submittedAt={initialData?.submittedAt ?? null}
+                validatedAt={initialData?.validatedAt ?? null}
+                validatedBy={initialData?.validatedBy ?? null}
+                historyHref={initialData?.id ? `/admin/auctions/${initialData.id}/history` : undefined}
+              />
 
               <Card>
                 <CardHeader>
