@@ -6,6 +6,12 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.
 e este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [1.0.0-demo.47](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.46...v1.0.0-demo.47) (2026-04-28)
+
+### Funcionalidades
+
+* add lotting operating modes autosave ([e67ceb7](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/commit/e67ceb7f2d2a3ba9b763a35dc5e25e1dec7d99ef))
+
 ## [1.0.0-demo.46](https://github.com/augustodevcode/bidexpert_ai_firebase_studio/compare/v1.0.0-demo.45...v1.0.0-demo.46) (2026-04-28)
 
 ### Funcionalidades
