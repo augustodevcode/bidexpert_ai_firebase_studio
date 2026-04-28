@@ -26,6 +26,10 @@ const optionalUrlSchema = z
   .or(z.literal(''))
   .optional()
   .nullable();
+const optionalDateTimeSchema = z.preprocess(
+  (value) => (value === '' || value === undefined || value === null ? null : value),
+  z.coerce.date({ invalid_type_error: 'Data inválida.' }).nullable().optional()
+);
 
 // Schema para etapas/praças do leilão
 const auctionStageSchema = z.object({
@@ -98,6 +102,12 @@ export const auctionFormSchema = z.object({
   allowInstallmentBids: z.boolean().optional().default(true),
   silentBiddingEnabled: z.boolean().optional().default(false),
   allowMultipleBidsPerUser: z.boolean().optional().default(true),
+  allowSublots: z.boolean().optional().default(false),
+  perLotEnrollmentEnabled: z.boolean().optional().default(false),
+  preferenceRightEnabled: z.boolean().optional().default(false),
+  allowProposals: z.boolean().optional().default(false),
+  directSaleEnabled: z.boolean().optional().default(false),
+  proposalDeadline: optionalDateTimeSchema,
   
   // Soft Close
   softCloseEnabled: z.boolean().optional().default(false),
@@ -181,6 +191,13 @@ export const auctionFormSchema = z.object({
       message:
         'Para Leilões Holandeses, o Valor do Decremento, Intervalo e Preço Mínimo são obrigatórios.',
       path: ['decrementAmount'],
+    }
+  )
+  .refine(
+    (data) => !data.allowProposals || !!data.proposalDeadline,
+    {
+      message: 'Informe a data limite para receber propostas.',
+      path: ['proposalDeadline'],
     }
   );
 

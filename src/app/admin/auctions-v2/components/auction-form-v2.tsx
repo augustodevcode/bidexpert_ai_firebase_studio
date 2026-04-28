@@ -174,6 +174,15 @@ const auctionFormV2Schema = z
     imageMediaId: z.string().optional(),
     allowInstallmentBids: z.boolean().default(true),
     isFeaturedOnMarketplace: z.boolean().default(false),
+    allowSublots: z.boolean().default(false),
+    perLotEnrollmentEnabled: z.boolean().default(false),
+    preferenceRightEnabled: z.boolean().default(false),
+    allowProposals: z.boolean().default(false),
+    directSaleEnabled: z.boolean().default(false),
+    proposalDeadline: z
+      .string()
+      .optional()
+      .refine((value) => !value || !Number.isNaN(new Date(value).getTime()), 'Informe uma data limite válida'),
     softCloseEnabled: z.boolean().default(false),
     softCloseMinutes: z
       .string()
@@ -187,6 +196,13 @@ const auctionFormV2Schema = z
         code: z.ZodIssueCode.custom,
         message: 'Informe o intervalo',
         path: ['softCloseMinutes'],
+      });
+    }
+    if (values.allowProposals && !values.proposalDeadline) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Informe a data limite para receber propostas.',
+        path: ['proposalDeadline'],
       });
     }
     // Validação condicional: campos de endereço obrigatórios para PRESENCIAL ou HIBRIDO
@@ -297,6 +313,14 @@ export default function AuctionFormV2({
     imageMediaId: initialData?.imageMediaId ? String(initialData.imageMediaId) : '',
     allowInstallmentBids: (initialData as Record<string, unknown>)?.allowInstallmentBids as boolean ?? true,
     isFeaturedOnMarketplace: initialData?.isFeaturedOnMarketplace ?? false,
+    allowSublots: (initialData as Record<string, unknown>)?.allowSublots as boolean ?? false,
+    perLotEnrollmentEnabled: (initialData as Record<string, unknown>)?.perLotEnrollmentEnabled as boolean ?? false,
+    preferenceRightEnabled: (initialData as Record<string, unknown>)?.preferenceRightEnabled as boolean ?? false,
+    allowProposals: (initialData as Record<string, unknown>)?.allowProposals as boolean ?? false,
+    directSaleEnabled: (initialData as Record<string, unknown>)?.directSaleEnabled as boolean ?? false,
+    proposalDeadline: (initialData as Record<string, unknown>)?.proposalDeadline
+      ? toDateTimeLocal((initialData as Record<string, unknown>).proposalDeadline as string | Date)
+      : '',
     softCloseEnabled: (initialData as Record<string, unknown>)?.softCloseEnabled as boolean ?? false,
     softCloseMinutes: (initialData as Record<string, unknown>)?.softCloseMinutes ? String((initialData as Record<string, unknown>).softCloseMinutes) : '',
     auctionStages: initialStages,
@@ -314,6 +338,8 @@ export default function AuctionFormV2({
   const watchedLatitude = useWatch({ control: form.control, name: 'latitude' });
   const watchedLongitude = useWatch({ control: form.control, name: 'longitude' });
   const watchedImageId = useWatch({ control: form.control, name: 'imageMediaId' });
+  const watchedAllowProposals = useWatch({ control: form.control, name: 'allowProposals' });
+  const watchedDirectSaleEnabled = useWatch({ control: form.control, name: 'directSaleEnabled' });
   const citiesForState = useMemo(
     () => getCitiesForState(allCities, selectedStateId),
     [selectedStateId, allCities]
@@ -477,6 +503,14 @@ export default function AuctionFormV2({
       onlineUrl: cleanText(values.onlineUrl),
       imageMediaId: imageMediaIdValue || null,
       isFeaturedOnMarketplace: values.isFeaturedOnMarketplace,
+      allowSublots: values.allowSublots,
+      perLotEnrollmentEnabled: values.perLotEnrollmentEnabled,
+      preferenceRightEnabled: values.preferenceRightEnabled,
+      allowProposals: values.allowProposals,
+      directSaleEnabled: values.directSaleEnabled,
+      proposalDeadline: values.proposalDeadline ? new Date(values.proposalDeadline) : null,
+      softCloseEnabled: values.softCloseEnabled,
+      softCloseMinutes: values.softCloseMinutes ? Number(values.softCloseMinutes) : undefined,
       auctionStages: values.auctionStages.map((stage) => ({
         name: stage.name.trim(),
         startDate: new Date(stage.startDate),
@@ -1081,6 +1115,111 @@ export default function AuctionFormV2({
                 )}
               />
             </div>
+            <Separator />
+            <section className="space-y-4 rounded-lg border p-4" data-ai-id="auction-v2-sale-modes-card" aria-labelledby="auction-v2-sale-modes-heading">
+              <h3 id="auction-v2-sale-modes-heading" className="text-base font-semibold">Modalidades de venda</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="allowSublots"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3" data-ai-id="auction-v2-sale-mode-allow-sublots">
+                        <div className="space-y-0.5">
+                          <FormLabel>Permitir Sublote</FormLabel>
+                          <FormDescription>Divide o leilão em sublotes operacionais.</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch data-ai-id="auction-v2-sale-mode-allow-sublots-switch" checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="perLotEnrollmentEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3" data-ai-id="auction-v2-sale-mode-per-lot-enrollment">
+                        <div className="space-y-0.5">
+                          <FormLabel>Habilitação por Lote</FormLabel>
+                          <FormDescription>Exige habilitação específica por lote.</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch data-ai-id="auction-v2-sale-mode-per-lot-enrollment-switch" checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="preferenceRightEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3" data-ai-id="auction-v2-sale-mode-preference-right">
+                        <div className="space-y-0.5">
+                          <FormLabel>Direito de Preferência</FormLabel>
+                          <FormDescription>Marca preferência operacional no leilão.</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch data-ai-id="auction-v2-sale-mode-preference-right-switch" checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="allowProposals"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3" data-ai-id="auction-v2-sale-mode-allow-proposals">
+                        <div className="space-y-0.5">
+                          <FormLabel>Permitir Propostas</FormLabel>
+                          <FormDescription>Recebe propostas formais no fluxo administrativo.</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch data-ai-id="auction-v2-sale-mode-allow-proposals-switch" checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="directSaleEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3" data-ai-id="auction-v2-sale-mode-direct-sale">
+                        <div className="space-y-0.5">
+                          <FormLabel>Venda Direta</FormLabel>
+                          <FormDescription>Habilita negociação direta vinculada ao leilão.</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch data-ai-id="auction-v2-sale-mode-direct-sale-switch" checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                {(watchedAllowProposals || watchedDirectSaleEnabled) && (
+                  <FormField
+                    control={form.control}
+                    name="proposalDeadline"
+                    render={({ field }) => (
+                      <FormItem data-ai-id="auction-v2-proposal-deadline-field">
+                        <FormLabel>
+                          Data Limite para Propostas{watchedAllowProposals ? <span aria-hidden="true"> *</span> : null}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            data-ai-id="auction-v2-proposal-deadline-input"
+                            aria-required={watchedAllowProposals || undefined}
+                            {...field}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormDescription>Obrigatória quando o leilão aceita propostas.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+            </section>
             <Separator />
             <FormField
               control={form.control}

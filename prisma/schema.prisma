@@ -248,6 +248,12 @@ model Auction {
   longitude                Decimal?               @db.Decimal(11, 8)
   documentsUrl             String?                @db.VarChar(500)
   isFeaturedOnMarketplace  Boolean                @default(false)
+  allowSublots             Boolean                @default(false)
+  perLotEnrollmentEnabled  Boolean                @default(false)
+  preferenceRightEnabled   Boolean                @default(false)
+  allowProposals           Boolean                @default(false)
+  directSaleEnabled        Boolean                @default(false)
+  proposalDeadline         DateTime?
   softCloseEnabled         Boolean?               @default(false)
   softCloseMinutes         Int?
   achievedRevenue          Decimal?               @db.Decimal(15, 2)
