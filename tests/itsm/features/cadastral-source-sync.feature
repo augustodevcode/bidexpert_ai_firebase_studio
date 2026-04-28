@@ -13,3 +13,10 @@ Feature: Sincronização cadastral orientada a fonte no BidExpert
     Then as listagens e detalhes administrativos devem refletir os títulos, localizações, modalidades e vínculos
     And as páginas públicas de leilão, lote, busca, home, home-v2 e lots devem exibir os dados sem divergência material
     And não deve existir erro de runtime, hidratação, FK quebrada ou praça sem nome na UI
+
+  Scenario: Fixar matriz Superbid multi-modal com mais de cinco lotes visíveis por fonte
+    Given que o QA selecionou fontes Superbid para Judicial, Leilão corporativo, Tomada de preço e Mercado Balcão
+    When a matriz de fontes é usada como base do cadastro BidExpert
+    Then cada fonte primária deve ter mais de cinco anúncios visíveis na página do evento
+    And cada fonte deve mapear para uma modalidade BidExpert distinta
+    And páginas de oferta agrupada com apenas um anúncio visível devem ficar fora da matriz primária

@@ -78,6 +78,22 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 
 **RCA / prevenção:** A divergência entre skills e instruções do workspace manteve a exigência antiga de autorização explícita para merge mesmo após a política operacional já ter sido flexibilizada para o ambiente pré-lançamento. A fonte de verdade consolidada precisa explicitar a política para impedir bloqueios artificiais no fechamento das tasks.
 
+### RN-QA-SUPERBID-001: QA Cadastral Multi-Modal por Fonte Externa
+✅ Todo ciclo de QA cadastral inspirado em Superbid DEVE cobrir, quando solicitado, ao menos uma fonte de cada modalidade: leilão judicial, leilão extrajudicial, tomada de preços e venda direta/mercado balcão.
+✅ Cada fonte selecionada DEVE possuir mais de 5 lotes visíveis e evidência capturada no browser integrado: URL, timestamp, snapshot/screenshot e matriz de campos confirmados, inferidos, ausentes ou não aplicáveis.
+✅ A comparação fonte → BidExpert DEVE validar dados críticos para decisão de lance/proposta: modalidade, comitente, leiloeiro/agente, praça/status, preço mínimo, incremento, comissão, ônus, documentos, condições de pagamento, habilitação, localização, imagens e riscos.
+✅ A validação jurídica e de confiança DEVE confrontar a tela final com requisitos práticos do CPC arts. 879-903, Decreto 21.981/1932 e, quando aplicável, Lei 14.133/2021, sem tratar esse checklist como aconselhamento jurídico.
+✅ Divergências DEVEM ser classificadas antes de qualquer patch como: limitação da fonte, falha cadastral, bug de UI admin, bug de service/model, contrato de mídia/documentos, status machine, moeda/locale, auth/habilitação, runtime/infra ou teste.
+✅ Ao abrir PR de correções ou artefatos do ciclo Superbid, o relatório DEVE registrar: branch/head, PR para `demo-stable`, comandos locais verdes, screenshots Playwright, link do relatório HTML e reteste remoto em `https://demo.bidexpert.com.br` pelo browser integrado ou Playwright CLI/MCP.
+✅ O reteste remoto em `demo.bidexpert.com.br` DEVE separar evidência do domínio DEMO já publicado da evidência da feature branch/PR; se o pacote ainda não estiver mergeado, registrar isso explicitamente para não confundir validação de ambiente com validação de código novo.
+✅ Se Playwright CLI/MCP remoto for bloqueado por Vercel Protection, SSO ou status 401/403 antes de iniciar os testes, o agente DEVE classificar como blocker de infraestrutura remoto, registrar URL/erro e complementar com evidência do browser integrado nas rotas públicas afetadas.
+❌ É proibido copiar em massa imagens, PDFs ou descrições protegidas de terceiros para seed ou fixtures permanentes; usar evidência pública, dados sintéticos equivalentes ou registro via UI apenas quando o uso for necessário para validação.
+
+**Cenário BDD - Auditoria cadastral multi-modal**
+- **Dado** que existem quatro fontes públicas Superbid com mais de 5 lotes cada
+- **Quando** o agente executa o ciclo Superbid → BidExpert via UI administrativa
+- **Então** cada modalidade é rastreada por evidência de origem, cadastro/reuso de entidades, validação admin, validação pública e relatório de divergências com RCA antes de qualquer correção
+
 ### RN-001: Isolamento Multi-Tenant
 ✅ Todas tabelas tenant-specific DEVEM ter `tenantId`  
 ✅ Queries filtradas automaticamente  
