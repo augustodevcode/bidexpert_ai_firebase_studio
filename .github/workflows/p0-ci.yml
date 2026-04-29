@@ -162,6 +162,7 @@ jobs:
           PLAYWRIGHT_SKIP_WEBSERVER: '1'
 
       - name: Run E2E Tests
+        timeout-minutes: 20
         run: npm run test:e2e -- --reporter=html --reporter=json
         env:
           DATABASE_URL: mysql://root:root@localhost:3306/bidexpert_test
