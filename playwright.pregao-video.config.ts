@@ -20,8 +20,8 @@ export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/pregao-disputas-video.spec.ts',
 
-  // Timeout generoso: 10 minutos para acomodar o pregão de 5 min + setup
-  timeout: 10 * 60 * 1000,
+  // Timeout generoso: atores separados, lifecycle, 10 compradores e evidência visual
+  timeout: 20 * 60 * 1000,
   expect: { timeout: 30_000 },
 
   // Serial: todos os passos rodam em sequência para vídeo coerente
@@ -38,15 +38,15 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
 
-    // ── Gravação de vídeo SEMPRE ativa ──────────────────────────────────────
-    video: 'on',
+    // A gravação é habilitada manualmente apenas no cameraPage principal.
+    video: 'off',
     videoSize: { width: 1280, height: 720 },
 
-    // Screenshots em cada passo
-    screenshot: 'on',
+    // A spec captura screenshots nomeados nos marcos BDD.
+    screenshot: 'only-on-failure',
 
-    // Trace completo para debugging pós-test
-    trace: 'on',
+    // Evita artefatos massivos em execuções com muitos contextos.
+    trace: 'retain-on-failure',
 
     // Timeouts
     actionTimeout: 30_000,

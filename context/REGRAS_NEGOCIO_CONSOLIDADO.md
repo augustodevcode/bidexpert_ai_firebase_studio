@@ -160,6 +160,21 @@ Controller (Server Action) → Service → Repository → ZOD → Prisma ORM →
 - **Quando** a interface renderiza card/lista/detalhe/modal de leilão/lote
 - **Então** o CTA "Ir para pregão online" não é exibido
 
+### RN-017A: Pregão Multi-Perfil Filmado
+✅ Toda evidência filmada de pregão competitivo deve usar atores separados por perfil em contextos Playwright independentes: agente do leilão, administrador, leiloeiro, 10 compradores, analista e câmera do monitor.
+✅ O administrador habilita compradores, mas nunca pode ser usado como comprador ou origem de lance.
+✅ Os 10 compradores devem ter perfil de arrematante, associação ao tenant e habilitação específica no leilão antes do primeiro lance.
+✅ O leiloeiro controla abertura do leilão, início do lote em pregão, confirmação do vencedor, fechamento do lote e encerramento do leilão pela máquina de estado oficial.
+✅ Lances da jornada automatizada devem passar pelo `BidEngineV2`; gravação direta de `Bid` no banco só é permitida para fixtures legadas explicitamente marcadas como não filmadas.
+✅ O monitor de auditório (`/auctions/{auctionId}/monitor`) é a câmera principal e deve registrar valor atual, quantidade de lances, líder e banner de vencedor quando aplicável.
+✅ O vencedor é sempre o maior lance ativo confirmado pela máquina de estado; relatórios, laudos, cobrança e parcelas do analista só podem referenciar esse vencedor.
+✅ Toda mudança nesse fluxo exige BDD rastreável, teste unitário das regras puras/fixture e execução Playwright com vídeo/print/relatório.
+
+**Cenário BDD - Jornada filmada multi-perfil**
+- **Dado** um pregão criado por agente de leilão e 10 compradores habilitados pelo administrador
+- **Quando** o leiloeiro abre o pregão e os compradores disputam lances pelo motor oficial
+- **Então** o monitor filmado mostra a evolução da disputa, o maior lance é confirmado como vencedor e o analista emite artefatos somente para esse vencedor
+
 ### RN-005: Herança de Mídia
 ✅ Lote pode herdar galeria de `Asset` vinculado  
 ✅ Leilão pode herdar imagem de Lote vinculado  

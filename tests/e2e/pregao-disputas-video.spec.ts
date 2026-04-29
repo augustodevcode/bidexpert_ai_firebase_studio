@@ -1,630 +1,272 @@
 /**
- * pregao-disputas-video.spec.ts
- * Simulação E2E de Pregão com 1 admin (monitor) + 10 robôs arrematantes.
- *
- * BDD:
- *   Feature: Captura em Vídeo da Disputa de Lances no Pregão BidExpert
- *
- *     Como equipe de QA
- *     Quero simular 10 robôs competindo num pregão de 5 minutos
- *     Para produzir evidência visual (vídeo) da disputa de lances em tempo real
- *
- * Fluxo:
- *   1. Setup de dados (tenant, leilão, 10 robôs) via Prisma
- *   2. Admin abre o Monitor de Pregão (vídeo gravado)
- *   3. 10 robôs fazem lances sequenciais no DB (simula disputa rápida)
- *   4. Monitor exibe atualizações a cada polling (3 s)
- *   5. Robôs também interagem via UI (contextos separados, cada um com vídeo)
- *   6. Leilão encerrado; vencedor identificado
- *   7. Teardown: dados de teste removidos
- *
- * Artefatos gerados:
- *   - test-results/pregao-video/artifacts/        (screenshots + vídeos)
- *   - test-results/pregao-video/report/           (HTML report)
- *   - test-results/pregao-video/results.json
+ * @fileoverview Jornada E2E filmada do pregão multi-perfil.
+ * Usa atores Playwright separados, BidEngineV2 para lances e máquina de estado
+ * para abertura, arrematação e encerramento.
  */
 
-import {
-  test,
-  expect,
-  type Browser,
-  type BrowserContext,
-  type Page,
-} from '@playwright/test';
+import { test, expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as crypto from 'node:crypto';
-import { CREDENTIALS as AUTH_CREDENTIALS } from './helpers/auth-helper';
+import fs from 'node:fs';
+import path from 'node:path';
 
-// ─── Configuração Central ─────────────────────────────────────────────────────
+import { ensureSeedExecuted } from './helpers/auth-helper';
+import {
+  PREGAO_BUYER_COUNT,
+  PREGAO_INITIAL_PRICE,
+  finalizePregaoWithWinner,
+  groupPregaoScheduleByRound,
+  parseBrazilianCurrency,
+  placePregaoBid,
+  provisionPregaoFixture,
+  resolvePregaoWinner,
+  runPregaoOpeningLifecycle,
+  seedPregaoActorSession,
+  teardownPregaoFixture,
+  type PregaoActor,
+  type PregaoBidResult,
+  type PregaoFixture,
+} from './helpers/pregao-multiperfil-fixture';
 
 const BASE_URL = process.env.PREGAO_BASE_URL || 'http://demo.localhost:9005';
-const LOGIN_URL = `${BASE_URL}/auth/login`;
+const ARTIFACT_ROOT = 'test-results/pregao-video';
+const SCREENSHOT_DIR = path.join(ARTIFACT_ROOT, 'screenshots');
+const VIDEO_DIR = path.join(ARTIFACT_ROOT, 'artifacts');
+const VIEWPORT = { width: 1280, height: 720 } as const;
 
-/**
- * Credenciais do admin (devem existir no seed).
- * Usuário: admin@lordland.com / password123
- */
-const ADMIN_CREDENTIALS = {
-  email: AUTH_CREDENTIALS.admin.email,
-  password: AUTH_CREDENTIALS.admin.password,
-};
+let prisma: PrismaClient;
+let fixture: PregaoFixture | undefined;
 
-const LOGIN_CANDIDATES = [
-  { email: AUTH_CREDENTIALS.admin.email, password: AUTH_CREDENTIALS.admin.password },
-  ADMIN_CREDENTIALS,
-  { email: AUTH_CREDENTIALS.leiloeiro.email, password: AUTH_CREDENTIALS.leiloeiro.password },
-  { email: AUTH_CREDENTIALS.comprador.email, password: AUTH_CREDENTIALS.comprador.password },
-];
+test.describe.serial('Pregão multi-perfil filmado', () => {
+  test.setTimeout(20 * 60 * 1000);
 
-/** Senha padrão para todos os robôs de teste. */
-const BOT_PASSWORD = 'RoboLance@2025';
-
-/** Número de robôs que disputam o leilão. */
-const BOT_COUNT = 10;
-
-/** Valor inicial do lote (R$). */
-const INITIAL_PRICE = 5_000;
-
-/** Incremento por lance (R$). */
-const BID_INCREMENT = 500;
-
-/** Número de rodadas de lances (cada robô lance 1x por rodada = 10 lances/rodada). */
-const BID_ROUNDS = 9; // ~90 lances totais; com polling 3 s o monitor atualiza ~30 vezes
-
-/** Intervalo entre rodadas de lances (ms). Mantém o vídeo interessante sem ser longo demais. */
-const ROUND_INTERVAL_MS = 3_000;
-
-/** Diretório de screenshots manuais. */
-const SCREENSHOT_DIR = 'test-results/pregao-video/screenshots';
-
-// ─── Utilitários ──────────────────────────────────────────────────────────────
-
-function ensureDirs(): void {
-  [SCREENSHOT_DIR, 'test-results/pregao-video/artifacts'].forEach((d) => {
-    if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
-  });
-}
-
-async function captureStep(page: Page, label: string): Promise<void> {
-  const filename = `${Date.now()}-${label.replace(/[^a-z0-9]/gi, '_')}.png`;
-  await page.screenshot({
-    path: path.join(SCREENSHOT_DIR, filename),
-    fullPage: false,
-  });
-}
-
-function generateBotEmail(index: number, runId: string): string {
-  return `robo.lance.${runId}.${index}@lordland.test`;
-}
-
-/** Hash SHA-256 simples para gerar publicId único sem bcrypt. */
-function makePublicId(seed: string): string {
-  return crypto.createHash('sha256').update(seed + Date.now()).digest('hex').slice(0, 16);
-}
-
-// ─── Login helper ────────────────────────────────────────────────────────────
-
-async function doLogin(page: Page, email: string, password: string): Promise<void> {
-  let lastNavigationError: unknown = null;
-  for (let attempt = 1; attempt <= 4; attempt++) {
-    try {
-      await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-      lastNavigationError = null;
-      break;
-    } catch (error) {
-      lastNavigationError = error;
-      const message = error instanceof Error ? error.message : String(error);
-      const isTransientConnectionError =
-        message.includes('ERR_CONNECTION_REFUSED') ||
-        message.includes('ERR_CONNECTION_RESET') ||
-        message.includes('ERR_CONNECTION_CLOSED');
-
-      if (!isTransientConnectionError || attempt === 4) {
-        throw error;
-      }
-
-      await page.waitForTimeout(1500 * attempt);
-    }
-  }
-
-  if (lastNavigationError) {
-    throw lastNavigationError;
-  }
-
-  if (!page.url().includes('/auth/login')) {
-    return;
-  }
-
-  const devAutoLoginTrigger = page.getByText('Selecione para auto-login...', { exact: false }).first();
-  if (await devAutoLoginTrigger.isVisible({ timeout: 5_000 }).catch(() => false)) {
-    await devAutoLoginTrigger.click();
-    const preferredAutoLoginOption = page.getByRole('option', { name: new RegExp(email, 'i') }).first();
-    const firstAutoLoginOption = page.locator('[role="option"]').first();
-
-    if (await preferredAutoLoginOption.isVisible({ timeout: 2_000 }).catch(() => false)) {
-      await preferredAutoLoginOption.click();
-    } else if (await firstAutoLoginOption.isVisible({ timeout: 8_000 }).catch(() => false)) {
-      await firstAutoLoginOption.click();
-    }
-
-    await page.waitForURL((u) => !u.toString().includes('/auth/login'), { timeout: 40_000 }).catch(() => null);
-    if (!page.url().includes('/auth/login')) {
-      return;
-    }
-
-    await page.keyboard.press('Escape').catch(() => null);
-  }
-
-  await page.keyboard.press('Escape').catch(() => null);
-
-  const tenantTrigger = page.locator('[data-ai-id="auth-login-tenant-select"]').first();
-  const tenantVisible = await tenantTrigger.isVisible({ timeout: 5_000 }).catch(() => false);
-  if (tenantVisible) {
-    const tenantReady = await expect
-      .poll(async () => {
-        const isDisabled = await tenantTrigger.isDisabled().catch(() => false);
-        const triggerText = ((await tenantTrigger.textContent().catch(() => '')) || '').toLowerCase();
-        const hasValue = !/selecione|carregando/i.test(triggerText);
-
-        if (/carregando/i.test(triggerText)) return false;
-
-        if (isDisabled) {
-          return hasValue;
-        }
-
-        return true;
-      }, {
-        timeout: 60_000,
-        intervals: [500, 1000, 1500, 2000],
-      })
-      .toBeTruthy()
-      .then(() => true)
-      .catch(() => false);
-
-    if (!tenantReady) {
-      throw new Error('Tenant não ficou pronto para login (subdomínio ainda não resolvido).');
-    }
-
-    await page.waitForTimeout(300);
-  }
-
-  const emailInput = page.locator(
-    '[data-ai-id="auth-login-email-input"], input[type="email"], input[name="email"], input[placeholder*="email" i]'
-  ).first();
-  const passInput = page.locator(
-    '[data-ai-id="auth-login-password-input"], input[type="password"], input[name="password"]'
-  ).first();
-
-  const hasEmailInput = await emailInput.isVisible({ timeout: 2_000 }).catch(() => false);
-  const hasPasswordInput = await passInput.isVisible({ timeout: 2_000 }).catch(() => false);
-
-  if (hasEmailInput && hasPasswordInput) {
-    await emailInput.fill(email);
-    await passInput.fill(password);
-
-    await Promise.all([
-      page.waitForURL((u) => !u.toString().includes('/auth/login'), { timeout: 30_000 }).catch(() => null),
-      page.locator(
-        '[data-ai-id="auth-login-submit-button"], button[type="submit"], button:has-text("Entrar"), button:has-text("Login")'
-      ).first().click(),
-    ]);
-    return;
-  }
-
-  const submitButton = page.locator(
-    '[data-ai-id="auth-login-submit-button"], button[type="submit"], button:has-text("Entrar"), button:has-text("Login")'
-  ).first();
-
-  if (await submitButton.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await Promise.all([
-      page.waitForURL((u) => !u.toString().includes('/auth/login'), { timeout: 30_000 }).catch(() => null),
-      submitButton.click(),
-    ]);
-    return;
-  }
-
-  throw new Error('UI de login em estado não suportado (sem campos e sem botão de submit).');
-}
-
-async function loginWithFallback(page: Page): Promise<void> {
-  if (page.isClosed()) {
-    throw new Error('Página foi fechada antes do login.');
-  }
-
-  let lastErrorMessage = 'sem detalhes';
-  for (const candidate of LOGIN_CANDIDATES) {
-    await doLogin(page, candidate.email, candidate.password);
-
-    if (!page.url().includes('/auth/login')) {
-      return;
-    }
-
-    const authErrorText = await page
-      .locator('.text-auth-error, [role="alert"]')
-      .first()
-      .innerText()
-      .catch(() => 'sem mensagem de erro visível');
-
-    const tenantState = await page
-      .locator('[data-ai-id="auth-login-tenant-select"]')
-      .first()
-      .textContent()
-      .catch(() => 'tenant-select indisponível');
-
-    lastErrorMessage = `email=${candidate.email} authError="${authErrorText}" tenantState="${tenantState}"`;
-  }
-
-  throw new Error(`Nenhuma estratégia de login funcionou: ${lastErrorMessage}`);
-}
-
-// ─── Setup/Teardown de Dados via Prisma ──────────────────────────────────────
-
-interface TestFixture {
-  prisma: PrismaClient;
-  tenantId: bigint;
-  auctionId: bigint;
-  auctionPublicId: string;
-  lotId: bigint;
-  lotPublicId: string;
-  botUserIds: bigint[];
-  botEmails: string[];
-  runId: string;
-}
-
-let fixture: TestFixture;
-
-async function setupTestData(): Promise<TestFixture> {
-  const prisma = new PrismaClient();
-  const runId = Date.now().toString(36);
-
-  // Descobrir tenant existente (subdomain "demo" ou primeiro disponível)
-  let tenant = await prisma.tenant.findFirst({ where: { subdomain: 'demo' } });
-  if (!tenant) {
-    tenant = await prisma.tenant.findFirst();
-  }
-  if (!tenant) {
-    throw new Error('Nenhum tenant encontrado no banco de dados. Execute o seed antes dos testes.');
-  }
-
-  // Criar leilão de teste com duração de 5 minutos
-  const endDate = new Date(Date.now() + 5 * 60 * 1000);
-
-  const auction = await prisma.auction.create({
-    data: {
-      publicId: makePublicId(`auction-${runId}`),
-      title: `Pregao Robotico ${runId} - Disputa de Lances`,
-      description: 'Leilão automatizado para captura de vídeo de disputas.',
-      status: 'ABERTO_PARA_LANCES',
-      auctionDate: new Date(),
-      endDate,
-      tenantId: tenant.id,
-      updatedAt: new Date(),
-    },
-  });
-
-  // Criar lote de teste
-  const lot = await prisma.lot.create({
-    data: {
-      publicId: makePublicId(`lot-${runId}`),
-      title: `Lote Robotico ${runId} - iPhone 15 Pro Max`,
-      description: 'Lote criado automaticamente para simulação de disputa de lances.',
-      number: '001',
-      status: 'ABERTO_PARA_LANCES',
-      type: 'MOVENTE',
-      price: INITIAL_PRICE,
-      initialPrice: INITIAL_PRICE,
-      auctionId: auction.id,
-      tenantId: tenant.id,
-      updatedAt: new Date(),
-    },
-  });
-
-  // Criar 10 robôs
-  const botUserIds: bigint[] = [];
-  const botEmails: string[] = [];
-
-  for (let i = 1; i <= BOT_COUNT; i++) {
-    const email = generateBotEmail(i, runId);
-    botEmails.push(email);
-
-    // Robôs não precisam de senha real; o login via UI usa a senha padrão
-    // Para o teste, inserimos bids diretamente via Prisma (sem necessidade de login dos robôs)
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: { updatedAt: new Date() },
-      create: {
-        email,
-        fullName: `Robo Arrematante ${i}`,
-        updatedAt: new Date(),
-      },
-    });
-
-    botUserIds.push(user.id);
-  }
-
-  return {
-    prisma,
-    tenantId: tenant.id,
-    auctionId: auction.id,
-    auctionPublicId: auction.publicId ?? auction.id.toString(),
-    lotId: lot.id,
-    lotPublicId: lot.publicId ?? lot.id.toString(),
-    botUserIds,
-    botEmails,
-    runId,
-  };
-}
-
-async function teardownTestData(f: TestFixture): Promise<void> {
-  const { prisma, auctionId, botUserIds, botEmails } = f;
-
-  // Remove bids do lote de teste
-  await prisma.bid.deleteMany({ where: { auctionId } });
-
-  // Remove lotes
-  await prisma.lot.deleteMany({ where: { auctionId } });
-
-  // Remove o leilão
-  await prisma.auction.delete({ where: { id: auctionId } }).catch(() => null);
-
-  // Remove os robôs
-  for (const email of botEmails) {
-    await prisma.user.delete({ where: { email } }).catch(() => null);
-  }
-
-  await prisma.$disconnect();
-}
-
-// ─── Simulação de Lances (via Prisma) ────────────────────────────────────────
-
-/**
- * Insere um lance diretamente no banco, simulando o arrematante `botIndex`.
- * O monitor irá buscar este lance no próximo polling (3 s).
- */
-async function insertRobotBid(
-  prisma: PrismaClient,
-  f: TestFixture,
-  botIndex: number,
-  amount: number
-): Promise<void> {
-  const bidderId = f.botUserIds[botIndex];
-
-  await prisma.bid.create({
-    data: {
-      lotId: f.lotId,
-      auctionId: f.auctionId,
-      bidderId,
-      amount,
-      status: 'ATIVO',
-      isAutoBid: true,
-      tenantId: f.tenantId,
-      timestamp: new Date(),
-    },
-  });
-
-  // Atualiza o preço atual do lote
-  await prisma.lot.update({
-    where: { id: f.lotId },
-    data: {
-      price: amount,
-      bidsCount: { increment: 1 },
-      updatedAt: new Date(),
-    },
-  });
-}
-
-// ─── Abertura do Contexto de Admin (com vídeo) ────────────────────────────────
-
-async function openAdminMonitorContext(
-  browser: Browser,
-  f: TestFixture
-): Promise<{ context: BrowserContext; page: Page }> {
-  const context = await browser.newContext({
-    recordVideo: {
-      dir: 'test-results/pregao-video/artifacts',
-      size: { width: 1280, height: 720 },
-    },
-    viewport: { width: 1280, height: 720 },
-  });
-
-  let page = await context.newPage();
-  const monitorUrl = `${BASE_URL}/auctions/${f.auctionPublicId}/monitor`;
-
-  await page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  if (!page.url().includes('/auth/login')) {
-    return { context, page };
-  }
-
-  // Faz login com fallback para novo fluxo de tenant/subdomínio
-  try {
-    await loginWithFallback(page);
-  } catch (error) {
-    if (!page.isClosed()) {
-      throw error;
-    }
-    page = await context.newPage();
-    await loginWithFallback(page);
-  }
-
-  await page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-
-  return { context, page };
-}
-
-// ─── Suíte Principal ──────────────────────────────────────────────────────────
-
-test.describe.serial('🎬 Pregão BidExpert - Disputas em Vídeo', () => {
-  test.setTimeout(10 * 60 * 1000); // 10 minutos total
-
-  // ── Setup global ────────────────────────────────────────────────────────────
   test.beforeAll(async () => {
     ensureDirs();
-    fixture = await setupTestData();
+    await ensureSeedExecuted(BASE_URL);
+    prisma = new PrismaClient();
+    fixture = await provisionPregaoFixture(prisma);
   });
 
   test.afterAll(async () => {
-    if (fixture) {
-      await teardownTestData(fixture);
-    }
+    await teardownPregaoFixture(prisma, fixture);
+    await prisma?.$disconnect();
   });
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // TESTE 1: Admin abre o Monitor e Robôs disputam lances
-  // ──────────────────────────────────────────────────────────────────────────
-  test('Disputa de lances: 10 robôs × 9 rodadas com monitor em tempo real', async ({ browser }) => {
-    // 1. Admin abre o monitor (vídeo começa aqui)
-    const { context: adminCtx, page: adminPage } = await openAdminMonitorContext(browser, fixture);
+  test('filma criação, habilitação, disputa, arrematação e laudo com atores separados', async ({ browser }, testInfo) => {
+    const f = requiredFixture();
+    const contexts: BrowserContext[] = [];
+    const bidResults: PregaoBidResult[] = [];
+    const monitorUrl = `${BASE_URL}/auctions/${f.auctionPublicId}/monitor`;
 
     try {
-      // Espera o monitor carregar
-      const monitorEl = adminPage.locator('[data-ai-id="monitor-auditorium"]');
-      const monitorLoaded = await monitorEl.isVisible({ timeout: 20_000 }).catch(() => false);
+      const camera = await openRecordedActor(browser, 'camera-monitor');
+      contexts.push(camera.context);
+      await camera.page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+      await expect(camera.page.locator('[data-ai-id="monitor-auditorium"]')).toBeVisible({ timeout: 60_000 });
+      await captureStep(camera.page, '00-camera-monitor-criado');
 
-      if (!monitorLoaded) {
-        // Se não houver monitor (seed não tem leilão aberto), apenas verifica a página
-        console.log('Monitor não encontrado — verificando estado da página...');
-        await captureStep(adminPage, 'admin-page-state');
-        // A estrutura do teste permanece válida; o vídeo captura o que existe
-      } else {
-        await captureStep(adminPage, '01-monitor-aberto');
-        console.log(`✅ Monitor aberto para leilão ${fixture.auctionPublicId}`);
+      const auctionAgent = await openLoggedActor(browser, f.actors.auctionAgent, monitorUrl, contexts, f.tenantId);
+      await captureStep(auctionAgent, '01-agente-criou-leilao-lote');
+
+      const admin = await openAdminActor(browser, contexts, f, monitorUrl);
+      await captureStep(admin, '02-admin-habilitou-compradores');
+
+      const auctioneer = await openLoggedActor(browser, f.actors.auctioneer, monitorUrl, contexts, f.tenantId);
+      await runPregaoOpeningLifecycle(prisma, f);
+      await camera.page.reload({ waitUntil: 'domcontentloaded', timeout: 120_000 });
+      await expect(camera.page.locator('[data-ai-id="monitor-auditorium"]')).toBeVisible({ timeout: 60_000 });
+      await captureStep(auctioneer, '03-leiloeiro-abriu-pregao');
+      await captureStep(camera.page, '04-camera-pregao-aberto');
+
+      const buyerPages: Page[] = [];
+      for (const buyer of f.actors.buyers) {
+        const buyerPage = await openLoggedActor(browser, buyer, monitorUrl, contexts, f.tenantId);
+        buyerPages.push(buyerPage);
       }
 
-      // 2. Simula as rodadas de disputa
-      let currentBid = INITIAL_PRICE;
-      const bidLog: Array<{ round: number; bot: number; amount: number }> = [];
+      await captureStep(buyerPages[0], '05-comprador-01-pronto');
+      await captureStep(buyerPages[buyerPages.length - 1], '06-comprador-10-pronto');
+      await assertBuyerRoleIsolation(f);
+      await assertBuyerHabilitations(f);
 
-      for (let round = 1; round <= BID_ROUNDS; round++) {
-        console.log(`\n📢 Rodada ${round}/${BID_ROUNDS} de lances...`);
-
-        // Cada robô dá 1 lance por rodada (lances sequenciais)
-        for (let botIdx = 0; botIdx < BOT_COUNT; botIdx++) {
-          currentBid += BID_INCREMENT;
-          await insertRobotBid(fixture.prisma, fixture, botIdx, currentBid);
-
-          bidLog.push({ round, bot: botIdx + 1, amount: currentBid });
-          console.log(`   Robô ${botIdx + 1} → R$ ${currentBid.toLocaleString('pt-BR')}`);
+      const groupedRounds = groupPregaoScheduleByRound(f.bidSchedule);
+      for (const roundEntries of groupedRounds) {
+        for (const entry of roundEntries) {
+          bidResults.push(await placePregaoBid(prisma, f, entry));
         }
 
-        // Pausa para o polling do monitor capturar os novos lances
-        await adminPage.waitForTimeout(ROUND_INTERVAL_MS);
+        const roundLastBid = roundEntries[roundEntries.length - 1];
+        await expect.poll(async () => {
+          const lot = await prisma.lot.findUnique({ where: { id: f.lotId }, select: { price: true, bidsCount: true } });
+          return { price: Number(lot?.price ?? 0), bidsCount: lot?.bidsCount ?? 0 };
+        }, {
+          timeout: 30_000,
+          intervals: [500, 1_000, 2_000],
+        }).toEqual({ price: roundLastBid.amount, bidsCount: bidResults.length });
 
-        // Screenshot da rodada para o relatório
-        await captureStep(adminPage, `rodada-${round.toString().padStart(2, '0')}`);
+        await camera.page.reload({ waitUntil: 'domcontentloaded', timeout: 120_000 });
+        await expect(camera.page.locator('[data-ai-id="monitor-current-amount"]')).toBeVisible({ timeout: 60_000 });
+        await expect.poll(async () => {
+          const amountText = await camera.page.locator('[data-ai-id="monitor-current-amount"]').textContent().catch(() => '');
+          return parseBrazilianCurrency(amountText);
+        }, {
+          timeout: 30_000,
+          intervals: [1_000, 2_000, 3_000],
+        }).toBeGreaterThanOrEqual(roundLastBid.amount);
+        await expectVisibleBidCount(camera.page, bidResults.length);
+        await captureStep(camera.page, `07-camera-rodada-${roundLastBid.round}`);
       }
 
-      // 3. Screenshot final antes de encerrar
-      await captureStep(adminPage, 'final-disputa');
+      const expectedWinner = resolvePregaoWinner(f.bidSchedule);
+      const finalization = await finalizePregaoWithWinner(prisma, f);
+      expect(finalization.winningAmount).toBe(expectedWinner.amount);
 
-      // 4. Validações básicas de UI (se o monitor estiver visível)
-      if (monitorLoaded) {
-        // O monitor deve continuar visível após todas as rodadas
-        await expect(monitorEl).toBeVisible({ timeout: 10_000 });
+      await camera.page.reload({ waitUntil: 'domcontentloaded', timeout: 120_000 });
+      await expect(camera.page.locator('[data-ai-id="monitor-auditorium"]')).toBeVisible({ timeout: 60_000 });
+      await expectVisibleBidCount(camera.page, bidResults.length);
+      await captureStep(camera.page, '08-camera-vencedor-confirmado');
 
-        // Verifica que há alguma informação de lance no display
-        const bidDisplay = adminPage.locator('[data-ai-id="monitor-bid-display"]');
-        const displayVisible = await bidDisplay.isVisible().catch(() => false);
-        if (displayVisible) {
-          await expect(bidDisplay).toBeVisible();
-        }
-      }
+      const analyst = await openLoggedActor(browser, f.actors.analyst, monitorUrl, contexts, f.tenantId);
+      await captureStep(analyst, '09-analista-laudo-cobranca');
+      await assertWinnerOnlyArtifacts(f, finalization.winnerUserId, finalization.reportId);
 
-      // 5. Salva log de lances como JSON
-      const logPath = 'test-results/pregao-video/bid-log.json';
-      fs.writeFileSync(
-        logPath,
-        JSON.stringify(
-          {
-            runId: fixture.runId,
-            auctionId: fixture.auctionPublicId,
-            lotId: fixture.lotPublicId,
-            totalBids: bidLog.length,
-            finalAmount: currentBid,
-            rounds: BID_ROUNDS,
-            bots: BOT_COUNT,
-            timestamp: new Date().toISOString(),
-            bids: bidLog,
-          },
-          null,
-          2
-        )
-      );
-      console.log(`\n✅ Log de lances salvo em: ${logPath}`);
-      console.log(`✅ Total de lances: ${bidLog.length}`);
-      console.log(`✅ Lance final: R$ ${currentBid.toLocaleString('pt-BR')}`);
+      const bidLog = {
+        runId: f.runId,
+        baseUrl: BASE_URL,
+        auctionId: f.auctionId.toString(),
+        lotId: f.lotId.toString(),
+        buyerCount: PREGAO_BUYER_COUNT,
+        initialPrice: PREGAO_INITIAL_PRICE,
+        totalBids: bidResults.length,
+        expectedWinner,
+        finalization: {
+          winnerUserId: finalization.winnerUserId.toString(),
+          winningAmount: finalization.winningAmount,
+          userWinId: finalization.userWinId.toString(),
+          reportId: finalization.reportId.toString(),
+        },
+        bids: bidResults,
+      };
 
-    } finally {
-      // Garante que o vídeo é salvo mesmo em caso de falha
-      await captureStep(adminPage, 'teardown-monitor');
-      await adminCtx.close();
-    }
-  });
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // TESTE 2: Verificação pós-disputa — lances registrados no banco
-  // ──────────────────────────────────────────────────────────────────────────
-  test('Verifica lances registrados no banco após a disputa', async () => {
-    const prisma = fixture.prisma;
-
-    const bids = await prisma.bid.findMany({
-      where: { auctionId: fixture.auctionId, lotId: fixture.lotId },
-      orderBy: { timestamp: 'asc' },
-    });
-
-    const expectedBids = BOT_COUNT * BID_ROUNDS;
-
-    console.log(`\n📊 Lances registrados no banco: ${bids.length} (esperado: ${expectedBids})`);
-
-    // Deve haver pelo menos 1 lance (tolerante a falhas parciais)
-    expect(bids.length).toBeGreaterThan(0);
-
-    // O lance mais alto deve ser o da última rodada
-    const maxAmount = Math.max(...bids.map((b) => Number(b.amount)));
-    const expectedMax = INITIAL_PRICE + BID_INCREMENT * BOT_COUNT * BID_ROUNDS;
-    console.log(`📊 Lance mais alto: R$ ${maxAmount.toLocaleString('pt-BR')} (esperado: R$ ${expectedMax.toLocaleString('pt-BR')})`);
-
-    expect(maxAmount).toBeGreaterThanOrEqual(INITIAL_PRICE + BID_INCREMENT);
-
-    // Todos os robôs devem ter pelo menos 1 lance
-    const bidderIds = new Set(bids.map((b) => b.bidderId));
-    console.log(`📊 Robôs que deram lance: ${bidderIds.size}/${BOT_COUNT}`);
-    expect(bidderIds.size).toBeGreaterThan(0);
-  });
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // TESTE 3: Monitor acessível após a disputa (smoke check)
-  // ──────────────────────────────────────────────────────────────────────────
-  test('Monitor continua acessível após a disputa', async ({ page }) => {
-    const monitorUrl = `${BASE_URL}/auctions/${fixture.auctionPublicId}/monitor`;
-    await page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-
-    if (page.url().includes('/auth/login')) {
-      await loginWithFallback(page);
-      await page.goto(monitorUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-    }
-
-    // Captura estado final da página
-    await captureStep(page, 'pos-disputa-monitor');
-
-    // A página deve carregar sem redirecionar para login
-    expect(page.url()).toContain(`/auctions/${fixture.auctionPublicId}/monitor`);
-
-    await expect.poll(async () => {
-      return await page.evaluate(() => {
-        const body = document.body;
-        if (!body) return 0;
-        return body.childElementCount;
+      const bidLogPath = path.join(ARTIFACT_ROOT, 'bid-log.json');
+      fs.writeFileSync(bidLogPath, JSON.stringify(bidLog, jsonBigIntReplacer, 2));
+      await testInfo.attach('pregao-multiperfil-bid-log', {
+        body: JSON.stringify(bidLog, jsonBigIntReplacer, 2),
+        contentType: 'application/json',
       });
-    }, {
-      timeout: 20_000,
-      intervals: [500, 1000, 1500],
-    }).toBeGreaterThan(0);
-
-    const htmlSize = await page.content().then((html) => html.length).catch(() => 0);
-    expect(htmlSize).toBeGreaterThan(200);
-
-    console.log('\n✅ Monitor pós-disputa acessível. URL e conteúdo da página validados.');
+    } finally {
+      for (const context of contexts.reverse()) {
+        await context.close().catch(() => undefined);
+      }
+    }
   });
 });
+
+async function openLoggedActor(
+  browser: Browser,
+  actor: PregaoActor,
+  evidenceUrl: string,
+  contexts: BrowserContext[],
+  tenantId: bigint,
+): Promise<Page> {
+  const { context, page } = await openRecordedActor(browser, actor.key);
+  contexts.push(context);
+  await seedPregaoActorSession(context, actor, BASE_URL, tenantId);
+  await page.goto(evidenceUrl, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  expect(page.url(), `${actor.key} não deve voltar para login`).not.toContain('/auth/login');
+  return page;
+}
+
+async function openAdminActor(browser: Browser, contexts: BrowserContext[], f: PregaoFixture, evidenceUrl: string): Promise<Page> {
+  const { context, page } = await openRecordedActor(browser, 'admin');
+  contexts.push(context);
+  await seedPregaoActorSession(context, f.actors.admin, BASE_URL, f.tenantId);
+  await page.goto(evidenceUrl, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+  expect(page.url(), 'admin da matriz multi-perfil não deve voltar para login').not.toContain('/auth/login');
+  return page;
+}
+
+async function openRecordedActor(browser: Browser, label: string): Promise<{ context: BrowserContext; page: Page }> {
+  const shouldRecordVideo = label === 'camera-monitor';
+  const context = await browser.newContext({
+    viewport: VIEWPORT,
+    ...(shouldRecordVideo ? { recordVideo: { dir: VIDEO_DIR, size: VIEWPORT } } : {}),
+  });
+  const page = await context.newPage();
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      console.log(`[${label}] browser-error: ${message.text()}`);
+    }
+  });
+  return { context, page };
+}
+
+async function assertBuyerRoleIsolation(f: PregaoFixture): Promise<void> {
+  const buyerIds = f.actors.buyers.map((buyer) => buyer.userId).filter((id): id is bigint => Boolean(id));
+  const roleAssignments = await prisma.usersOnRoles.findMany({
+    where: { userId: { in: buyerIds } },
+    include: { Role: { select: { name: true } } },
+  });
+
+  expect(roleAssignments.some((assignment) => assignment.Role.name === 'ADMIN')).toBe(false);
+  expect(new Set(roleAssignments.filter((assignment) => assignment.Role.name === 'COMPRADOR').map((assignment) => assignment.userId.toString())).size).toBe(PREGAO_BUYER_COUNT);
+}
+
+async function assertBuyerHabilitations(f: PregaoFixture): Promise<void> {
+  const count = await prisma.auctionHabilitation.count({ where: { auctionId: f.auctionId } });
+  expect(count).toBe(PREGAO_BUYER_COUNT);
+}
+
+async function assertWinnerOnlyArtifacts(f: PregaoFixture, winnerUserId: bigint, reportId: bigint): Promise<void> {
+  const [userWin, wonLots, report] = await Promise.all([
+    prisma.userWin.findUnique({ where: { lotId: f.lotId } }),
+    prisma.wonLot.findMany({ where: { auctionId: f.auctionId } }),
+    prisma.report.findUnique({ where: { id: reportId } }),
+  ]);
+
+  expect(userWin?.userId).toBe(winnerUserId);
+  expect(wonLots).toHaveLength(1);
+  expect(report?.createdById).toBe(f.actors.analyst.userId);
+
+  const nonWinnerUserIds = f.actors.buyers
+    .map((buyer) => buyer.userId)
+    .filter((userId): userId is bigint => Boolean(userId && userId !== winnerUserId));
+  const leakedWins = await prisma.userWin.count({ where: { userId: { in: nonWinnerUserIds } } });
+  expect(leakedWins).toBe(0);
+}
+
+async function captureStep(page: Page, label: string): Promise<void> {
+  const filename = `${Date.now()}-${label.replace(/[^a-z0-9-]/gi, '_')}.png`;
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, filename), fullPage: false });
+}
+
+async function expectVisibleBidCount(page: Page, expectedMinimum: number): Promise<void> {
+  const counter = page.locator('[data-ai-id="monitor-bid-count"]');
+  await expect(counter).toBeVisible({ timeout: 30_000 });
+  await expect.poll(async () => {
+    const text = await counter.textContent().catch(() => '');
+    const [firstNumber] = text.match(/\d+/) ?? [];
+    return firstNumber ? Number(firstNumber) : 0;
+  }, {
+    timeout: 30_000,
+    intervals: [500, 1_000, 2_000],
+  }).toBeGreaterThanOrEqual(expectedMinimum);
+}
+
+function requiredFixture(): PregaoFixture {
+  if (!fixture) {
+    throw new Error('Fixture de pregão não inicializada.');
+  }
+  return fixture;
+}
+
+function ensureDirs(): void {
+  for (const directory of [ARTIFACT_ROOT, SCREENSHOT_DIR, VIDEO_DIR]) {
+    if (!fs.existsSync(directory)) {
+      fs.mkdirSync(directory, { recursive: true });
+    }
+  }
+}
+
+function jsonBigIntReplacer(_key: string, value: unknown): unknown {
+  return typeof value === 'bigint' ? value.toString() : value;
+}

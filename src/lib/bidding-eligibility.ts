@@ -30,8 +30,8 @@ export interface BidEligibilityState {
   description: string;
 }
 
-const ACTIVE_AUCTION_STATUSES = new Set<AuctionStatus>(['ABERTO', 'ABERTO_PARA_LANCES']);
-const OPEN_LOT_STATUS: LotStatus = 'ABERTO_PARA_LANCES';
+const ACTIVE_AUCTION_STATUSES = new Set<AuctionStatus>(['ABERTO', 'ABERTO_PARA_LANCES', 'EM_PREGAO']);
+const ACTIVE_LOT_STATUSES = new Set<LotStatus>(['ABERTO_PARA_LANCES', 'EM_PREGAO']);
 
 const getDocumentationCopy = (status?: UserHabilitationStatus | null) => {
   switch (status) {
@@ -78,7 +78,7 @@ export const getBidEligibilityState = ({
     };
   }
 
-  if (lotStatus && lotStatus !== OPEN_LOT_STATUS) {
+  if (lotStatus && !ACTIVE_LOT_STATUSES.has(lotStatus)) {
     return {
       canBid: false,
       canPlaceMaxBid: false,

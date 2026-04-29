@@ -71,6 +71,9 @@ export default function MonitorAuditoriumClient({
     const prevLotStatusRef = useRef<string>(initialCurrentLot.status);
 
     // V2 Real-time hook
+    const realtimeLotId = currentLot.id || currentLot.publicId;
+    const realtimeAuctionId = auction.id || auction.publicId;
+
     const {
         bids: realtimeBids,
         lotState,
@@ -79,8 +82,8 @@ export default function MonitorAuditoriumClient({
         connectionType,
         clearSoftCloseAlert,
     } = useRealtimeBids({
-        lotId: currentLot.publicId || currentLot.id,
-        auctionId: auction.publicId || auction.id,
+        lotId: realtimeLotId,
+        auctionId: realtimeAuctionId,
         enabled: true,
         strategy: communicationStrategy,
         pollingIntervalMs: 3000,
@@ -127,8 +130,8 @@ export default function MonitorAuditoriumClient({
         if (lotState) {
             setCurrentLot(prev => ({
                 ...prev,
-                price: lotState.price,
-                bidsCount: lotState.bidsCount,
+                price: lotState.price ?? prev.price,
+                bidsCount: Math.max(prev.bidsCount ?? 0, lotState.bidsCount ?? 0),
                 status: lotState.status as any,
                 endDate: lotState.endDate ? new Date(lotState.endDate) : prev.endDate,
             }));
@@ -184,6 +187,12 @@ export default function MonitorAuditoriumClient({
         null,
         bidHistory.length,
         bidHistory[0]?.amount ?? currentLot?.price ?? null
+    );
+
+    const displayBidCount = Math.max(
+        lotState?.bidsCount ?? 0,
+        currentLot.bidsCount ?? 0,
+        bidHistory.length
     );
 
     const handleLotSelect = useCallback((lot: Lot) => {
@@ -327,7 +336,7 @@ export default function MonitorAuditoriumClient({
                                 user={realtimeBids[0]?.bidderDisplay || bidHistory[0]?.bidderDisplay || '---'}
                                 amount={realtimeBids[0]?.amount || bidHistory[0]?.amount || currentLot.price || 0}
                                 endDate={currentLot.endDate}
-                                bidCount={lotState?.bidsCount ?? bidHistory.length}
+                                bidCount={displayBidCount}
                             />
                             <MonitorSoftCloseAlert
                                 softCloseEvent={softCloseAlert}
