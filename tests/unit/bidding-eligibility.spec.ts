@@ -57,6 +57,20 @@ describe('getBidEligibilityState', () => {
     expect(state.reason).toBe('ALLOWED');
   });
 
+  it('libera comprador habilitado durante o pregão ao vivo', () => {
+    const state = getBidEligibilityState({
+      isAuthenticated: true,
+      lotStatus: 'EM_PREGAO',
+      auctionStatus: 'EM_PREGAO',
+      userHabilitationStatus: 'HABILITADO',
+      isAuctionHabilitated: true,
+    });
+
+    expect(state.canBid).toBe(true);
+    expect(state.canPlaceMaxBid).toBe(true);
+    expect(state.reason).toBe('ALLOWED');
+  });
+
   it('bloqueia lances quando o lote não está aberto', () => {
     const state = getBidEligibilityState({
       isAuthenticated: true,
